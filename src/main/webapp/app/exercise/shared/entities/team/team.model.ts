@@ -41,7 +41,7 @@ export class Team implements BaseEntity {
 /**
  * This class is used for importing teams from a file
  * Either registration number or login must be set
- * Additionally student has teamName to identify which team he/she belongs to
+ * Additionally student has teamName to identify which team they belong to
  */
 export class StudentWithTeam {
     public firstName?: string;

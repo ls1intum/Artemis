@@ -35,11 +35,9 @@ class FaqImportServiceTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
 
         sourceCourse = courseUtilService.createCourse();
-        sourceCourse.setFaqEnabled(true);
         sourceCourse = courseRepository.save(sourceCourse);
 
         targetCourse = courseUtilService.createCourse();
-        targetCourse.setFaqEnabled(true);
         targetCourse = courseRepository.save(targetCourse);
     }
 

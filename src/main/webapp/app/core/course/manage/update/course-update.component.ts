@@ -1,5 +1,6 @@
-import { ActivatedRoute, Router } from '@angular/router';
-import { Component, ElementRef, OnInit, inject, viewChild } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Component, DestroyRef, ElementRef, OnInit, inject, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
@@ -14,7 +15,7 @@ import { ImageComponent } from 'app/shared/image/image.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
+import { COURSE_SHORT_NAME_MAX_LENGTH, SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -73,6 +74,7 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
         FeatureOverlayComponent,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
+        RouterLink,
     ],
 })
 export class CourseUpdateComponent implements OnInit {
@@ -89,10 +91,12 @@ export class CourseUpdateComponent implements OnInit {
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly router = inject(Router);
     private readonly accountService = inject(AccountService);
+    private readonly destroyRef = inject(DestroyRef);
 
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
     protected readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
+    protected readonly COURSE_SHORT_NAME_MAX_LENGTH = COURSE_SHORT_NAME_MAX_LENGTH;
 
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
@@ -122,7 +126,6 @@ export class CourseUpdateComponent implements OnInit {
     courseOrganizations: Organization[];
     isAdmin = false;
 
-    faqEnabled = true;
     communicationEnabled = true;
     messagingEnabled = true;
     atlasEnabled = false;
@@ -153,7 +156,6 @@ export class CourseUpdateComponent implements OnInit {
                     this.courseOrganizations = organizations;
                 });
                 this.originalTimeZone = this.course.timeZone;
-                this.faqEnabled = course.faqEnabled;
                 // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
                 this.complaintsEnabled =
                     (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) &&
@@ -206,7 +208,7 @@ export class CourseUpdateComponent implements OnInit {
                 shortName: new FormControl(
                     { value: this.course.shortName, disabled: !!this.course.id },
                     {
-                        validators: [Validators.required, Validators.minLength(3), regexValidator(SHORT_NAME_PATTERN)],
+                        validators: [Validators.required, Validators.minLength(3), Validators.maxLength(COURSE_SHORT_NAME_MAX_LENGTH), regexValidator(SHORT_NAME_PATTERN)],
                         updateOn: 'blur',
                     },
                 ),
@@ -227,7 +229,6 @@ export class CourseUpdateComponent implements OnInit {
                 studentCourseAnalyticsDashboardEnabled: new FormControl(this.course.studentCourseAnalyticsDashboardEnabled),
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled),
-                faqEnabled: new FormControl(this.faqEnabled),
                 requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled),
                 maxPoints: new FormControl(this.course.maxPoints, {
                     validators: [Validators.min(1)],
@@ -269,6 +270,22 @@ export class CourseUpdateComponent implements OnInit {
             },
             { validators: CourseValidator },
         );
+
+        // Sync form date control values back to this.course so that validation getters
+        // (isValidDate, isValidEnrollmentPeriod, isValidUnenrollmentEndDate) reflect
+        // the current form state and the Save button is properly enabled/disabled.
+        const dateFields: (keyof Pick<Course, 'startDate' | 'endDate' | 'enrollmentStartDate' | 'enrollmentEndDate' | 'unenrollmentEndDate'>)[] = [
+            'startDate',
+            'endDate',
+            'enrollmentStartDate',
+            'enrollmentEndDate',
+            'unenrollmentEndDate',
+        ];
+        for (const field of dateFields) {
+            this.courseForm.controls[field].valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
+                this.course[field] = value;
+            });
+        }
 
         this.isAdmin = this.accountService.isAdmin();
     }
@@ -431,6 +448,7 @@ export class CourseUpdateComponent implements OnInit {
             this.courseForm.controls['onlineCourse'].setValue(false);
             if (!this.course.enrollmentStartDate) {
                 this.course.enrollmentStartDate = this.course.startDate;
+                // Note: the valueChanges subscription in ngOnInit also syncs this back to this.course
                 this.courseForm.controls['enrollmentStartDate'].setValue(this.course.startDate);
             }
             if (!this.course.enrollmentEndDate) {
@@ -438,15 +456,18 @@ export class CourseUpdateComponent implements OnInit {
                 // therefore default enrollment end date should be before unenrollment end date to be valid
                 const defaultEnrollmentEndDate = this.course.endDate?.subtract(1, 'minute');
                 this.course.enrollmentEndDate = defaultEnrollmentEndDate;
+                // Note: the valueChanges subscription in ngOnInit also syncs this back to this.course
                 this.courseForm.controls['enrollmentEndDate'].setValue(defaultEnrollmentEndDate);
             }
         } else {
             if (this.course.enrollmentStartDate) {
                 this.course.enrollmentStartDate = undefined;
+                // Note: the valueChanges subscription in ngOnInit also syncs this back to this.course
                 this.courseForm.controls['enrollmentStartDate'].setValue(undefined);
             }
             if (this.course.enrollmentEndDate) {
                 this.course.enrollmentEndDate = undefined;
+                // Note: the valueChanges subscription in ngOnInit also syncs this back to this.course
                 this.courseForm.controls['enrollmentEndDate'].setValue(undefined);
             }
             if (this.course.unenrollmentEnabled) {
@@ -464,9 +485,11 @@ export class CourseUpdateComponent implements OnInit {
         this.courseForm.controls['unenrollmentEnabled'].setValue(this.course.unenrollmentEnabled);
         if (this.course.unenrollmentEnabled && !this.course.unenrollmentEndDate) {
             this.course.unenrollmentEndDate = this.course.endDate;
+            // Note: the valueChanges subscription in ngOnInit also syncs this back to this.course
             this.courseForm.controls['unenrollmentEndDate'].setValue(this.course.unenrollmentEndDate);
         } else if (!this.course.unenrollmentEnabled && this.course.unenrollmentEndDate) {
             this.course.unenrollmentEndDate = undefined;
+            // Note: the valueChanges subscription in ngOnInit also syncs this back to this.course
             this.courseForm.controls['unenrollmentEndDate'].setValue(undefined);
         }
     }
@@ -541,10 +564,6 @@ export class CourseUpdateComponent implements OnInit {
         this.courseForm.controls['instructorGroupName'].setValue(instructorGroupName);
     }
 
-    changeFaqEnabled() {
-        this.faqEnabled = !this.faqEnabled;
-        this.courseForm.controls['faqEnabled'].setValue(this.faqEnabled);
-    }
     /**
      * Enable or disable test course
      */

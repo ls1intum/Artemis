@@ -28,24 +28,21 @@ describe('CourseDetailDoughnutChartComponent', () => {
     const max = 100;
 
     beforeEach(async () => {
-        await TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [CourseDetailDoughnutChartComponent, RouterModule.forRoot([])],
             providers: [
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        })
-            .overrideComponent(CourseDetailDoughnutChartComponent, {
-                set: {
-                    imports: [RouterLink, NgClass, MockComponent(FaIconComponent), MockModule(PieChartModule), MockPipe(ArtemisTranslatePipe)],
-                },
-            })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CourseDetailDoughnutChartComponent);
-                component = fixture.componentInstance;
-                componentRef = fixture.componentRef;
-            });
+        }).overrideComponent(CourseDetailDoughnutChartComponent, {
+            set: {
+                imports: [RouterLink, NgClass, MockComponent(FaIconComponent), MockModule(PieChartModule), MockPipe(ArtemisTranslatePipe)],
+            },
+        });
+        await TestBed.compileComponents();
+        fixture = TestBed.createComponent(CourseDetailDoughnutChartComponent);
+        component = fixture.componentInstance;
+        componentRef = fixture.componentRef;
     });
 
     beforeEach(() => {

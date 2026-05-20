@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, effect, inject, input, output, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, effect, inject, input, output, untracked, viewChild } from '@angular/core';
 import { faShare } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
@@ -45,27 +45,29 @@ export class ForwardedMessageComponent implements AfterViewInit {
 
     constructor() {
         effect(() => {
-            try {
-                const post = this.originalPostDetails();
-                if (post) {
-                    this.isAnswerPost = 'post' in post;
-                    this.conversation = this.isAnswerPost ? (post as AnswerPost).post?.conversation : (post as Post).conversation;
-                    this.updateSourceName();
-                    this.isChannel();
-                    this.postingIsOfToday = dayjs().isSame(post.creationDate, 'day');
-                    this.todayFlag = this.getTodayFlag();
-                } else {
+            const post = this.originalPostDetails();
+            untracked(() => {
+                try {
+                    if (post) {
+                        this.isAnswerPost = 'post' in post;
+                        this.conversation = this.isAnswerPost ? (post as AnswerPost).post?.conversation : (post as Post).conversation;
+                        this.updateSourceName();
+                        this.isChannel();
+                        this.postingIsOfToday = dayjs().isSame(post.creationDate, 'day');
+                        this.todayFlag = this.getTodayFlag();
+                    } else {
+                        this.sourceName = '';
+                        this.conversation = undefined;
+                        this.viewButtonVisible = false;
+                        this.postingIsOfToday = false;
+                        this.todayFlag = undefined;
+                    }
+                } catch (error) {
                     this.sourceName = '';
                     this.conversation = undefined;
                     this.viewButtonVisible = false;
-                    this.postingIsOfToday = false;
-                    this.todayFlag = undefined;
                 }
-            } catch (error) {
-                this.sourceName = '';
-                this.conversation = undefined;
-                this.viewButtonVisible = false;
-            }
+            });
         });
     }
 

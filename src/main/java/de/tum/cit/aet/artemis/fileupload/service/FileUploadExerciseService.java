@@ -29,7 +29,6 @@ public class FileUploadExerciseService {
     public FileUploadExerciseService(ExerciseSpecificationService exerciseSpecificationService, FileUploadExerciseRepository fileUploadExerciseRepository) {
         this.exerciseSpecificationService = exerciseSpecificationService;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
-
     }
 
     /**

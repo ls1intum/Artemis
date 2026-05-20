@@ -37,13 +37,13 @@ export class ProgrammingExerciseCreationPage extends AbstractExerciseCreationPag
     }
 
     async generate() {
-        const responsePromise = this.page.waitForResponse(`${PROGRAMMING_EXERCISE_BASE}/setup`);
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(`${PROGRAMMING_EXERCISE_BASE}/setup`));
         await this.page.locator('#save-entity').click();
         return await responsePromise;
     }
 
     async import() {
-        const responsePromise = this.page.waitForResponse(`${PROGRAMMING_EXERCISE_BASE}/import/*`);
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(`${PROGRAMMING_EXERCISE_BASE}/import/`));
         await this.page.locator('#save-entity').click();
         return await responsePromise;
     }

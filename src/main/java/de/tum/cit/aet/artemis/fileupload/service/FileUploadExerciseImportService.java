@@ -10,14 +10,15 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseImportService;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.fileupload.config.FileUploadEnabled;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
@@ -35,16 +36,16 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    private final ExerciseService exerciseService;
+    private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
     public FileUploadExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             FileUploadExerciseRepository fileUploadExerciseRepository, ChannelService channelService, FeedbackService feedbackService,
-            Optional<CompetencyProgressApi> competencyProgressApi, ExerciseService exerciseService) {
+            Optional<CompetencyProgressApi> competencyProgressApi, CompetencyExerciseLinkService competencyExerciseLinkService) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
-        this.exerciseService = exerciseService;
+        this.competencyExerciseLinkService = competencyExerciseLinkService;
     }
 
     /**
@@ -61,7 +62,13 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         FileUploadExercise newExercise = copyFileUploadExerciseBasis(importedExercise);
 
-        FileUploadExercise newFileUploadExercise = exerciseService.saveWithCompetencyLinks(newExercise, fileUploadExerciseRepository::save);
+        var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
+        FileUploadExercise savedExercise = fileUploadExerciseRepository.save(newExercise);
+        if (!competencyLinks.isEmpty()) {
+            competencyExerciseLinkService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
+            savedExercise = fileUploadExerciseRepository.save(savedExercise);
+        }
+        final FileUploadExercise newFileUploadExercise = savedExercise;
 
         channelService.createExerciseChannel(newFileUploadExercise, Optional.ofNullable(importedExercise.getChannelName()));
 
@@ -82,6 +89,7 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
         log.debug("Copying the exercise basis from {}", importedExercise);
         FileUploadExercise newExercise = new FileUploadExercise();
         super.copyExerciseBasis(newExercise, importedExercise, new HashMap<>());
+        newExercise.setAssessmentType(AssessmentType.MANUAL);
         newExercise.setFilePattern(importedExercise.getFilePattern());
         newExercise.setExampleSolution(importedExercise.getExampleSolution());
         return newExercise;

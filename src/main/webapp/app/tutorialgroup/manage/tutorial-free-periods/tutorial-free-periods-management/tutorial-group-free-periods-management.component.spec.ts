@@ -12,7 +12,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { TutorialGroupFreePeriodsManagementComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component';
-import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
+import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { Router } from '@angular/router';
 import { generateExampleTutorialGroupsConfiguration } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { generateExampleTutorialGroupFreePeriod } from 'test/helpers/sample/tutorialgroup/tutorialGroupFreePeriodExampleModel';
@@ -26,6 +26,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { TutorialGroupFreePeriodsTableComponent } from './tutorial-group-free-periods-table/tutorial-group-free-periods-table.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { tutorialGroupConfigurationDtoFromEntity } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
 @Component({
     selector: 'jhi-tutorial-group-free-periods-table',
@@ -105,7 +106,9 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
         configuration.tutorialGroupFreePeriods = [firstOfJanuaryPeriod, secondOfJanuaryPeriod, thirdOfJanuaryPeriod];
 
         configurationService = TestBed.inject(TutorialGroupsConfigurationService);
-        findConfigurationSpy = vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: configuration })));
+        findConfigurationSpy = vi
+            .spyOn(configurationService, 'getOneOfCourse')
+            .mockReturnValue(of(new HttpResponse({ body: tutorialGroupConfigurationDtoFromEntity(configuration) })));
         fixture.detectChanges();
     });
 

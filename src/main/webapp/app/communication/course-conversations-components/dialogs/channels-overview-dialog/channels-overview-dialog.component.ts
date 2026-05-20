@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Observable, Subject, debounceTime, distinctUntilChanged, finalize, map, takeUntil } from 'rxjs';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -32,9 +32,9 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
 
     canCreateChannel = canCreateChannel;
 
-    @Input() createChannelFn?: (channel: ChannelDTO) => Observable<never>;
-    @Input() course: Course;
-    @Input() channelSubType: ChannelSubType;
+    createChannelFn = signal<((channel: ChannelDTO) => Observable<never>) | undefined>(undefined);
+    course = signal<Course | undefined>(undefined);
+    channelSubType = signal<ChannelSubType | undefined>(undefined);
 
     channelActions$ = new Subject<ChannelAction>();
 
@@ -54,7 +54,8 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
         }
     }
 
-    ngOnInit(): void {
+    override ngOnInit(): void {
+        super.ngOnInit();
         this.channelActions$.pipe(debounceTime(500), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((channelAction) => {
             this.performChannelAction(channelAction);
         });
@@ -81,7 +82,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
         switch (channelAction.action) {
             case 'register':
                 this.channelService
-                    .registerUsersToChannel(this.course.id!, channelAction.channel.id!)
+                    .registerUsersToChannel(this.course()!.id!, channelAction.channel.id!)
                     .pipe(takeUntil(this.ngUnsubscribe))
                     .subscribe(() => {
                         this.loadChannelsOfCourse();
@@ -90,7 +91,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
                 break;
             case 'deregister':
                 this.channelService
-                    .deregisterUsersFromChannel(this.course.id!, channelAction.channel.id!)
+                    .deregisterUsersFromChannel(this.course()!.id!, channelAction.channel.id!)
                     .pipe(takeUntil(this.ngUnsubscribe))
                     .subscribe(() => {
                         this.loadChannelsOfCourse();
@@ -106,7 +107,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
     loadChannelsOfCourse() {
         this.isLoading = true;
         this.channelService
-            .getChannelsOfCourse(this.course.id!)
+            .getChannelsOfCourse(this.course()!.id!)
             .pipe(
                 map((res: HttpResponse<ChannelDTO[]>) => res.body),
                 finalize(() => {

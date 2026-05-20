@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    Fix MySQL columns where NOT NULL was accidentally dropped by modifyDataType/renameColumn.
+
+    Root cause: MySQL's ALTER TABLE ... MODIFY COLUMN / CHANGE COLUMN replaces the entire
+    column definition, silently stripping NOT NULL and DEFAULT when Liquibase does not re-specify
+    them. PostgreSQL's equivalent operations preserve existing constraints.
+
+    Affected columns (all MySQL-only, PG is already correct):
+      1. learner_profile.feedback_formality  - renameColumn changed type to tinyint, dropped NOT NULL + DEFAULT
+      2. learner_profile.feedback_detail     - same
+      3. global_notification_setting.global_notification_type - modifyDataType dropped NOT NULL
+      4. participation.discriminator         - modifyDataType (varchar->enum) dropped NOT NULL
+      5. submission.discriminator            - modifyDataType (varchar->enum) dropped NOT NULL
+      6. passkey_credential.credential_id    - modifyDataType (varchar(64)->varchar(255)) dropped NOT NULL
+    -->
+
+    <!-- Fix feedback_formality: tinyint NULL -> tinyint NOT NULL DEFAULT 2 -->
+    <changeSet id="20260407-01-fix-feedback-formality" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="mysql"/>
+        </preConditions>
+        <update tableName="learner_profile">
+            <column name="feedback_formality" valueNumeric="2"/>
+            <where>feedback_formality IS NULL</where>
+        </update>
+        <addNotNullConstraint tableName="learner_profile" columnName="feedback_formality" columnDataType="tinyint"/>
+        <addDefaultValue tableName="learner_profile" columnName="feedback_formality" columnDataType="tinyint" defaultValueNumeric="2"/>
+    </changeSet>
+
+    <!-- Fix feedback_detail: tinyint NULL -> tinyint NOT NULL DEFAULT 2 -->
+    <changeSet id="20260407-02-fix-feedback-detail" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="mysql"/>
+        </preConditions>
+        <update tableName="learner_profile">
+            <column name="feedback_detail" valueNumeric="2"/>
+            <where>feedback_detail IS NULL</where>
+        </update>
+        <addNotNullConstraint tableName="learner_profile" columnName="feedback_detail" columnDataType="tinyint"/>
+        <addDefaultValue tableName="learner_profile" columnName="feedback_detail" columnDataType="tinyint" defaultValueNumeric="2"/>
+    </changeSet>
+
+    <!-- Fix global_notification_type: NULL -> NOT NULL -->
+    <changeSet id="20260407-03-fix-global-notification-type" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="mysql"/>
+        </preConditions>
+        <addNotNullConstraint tableName="global_notification_setting" columnName="global_notification_type"
+                              columnDataType="ENUM('NEW_LOGIN','NEW_PASSKEY_ADDED','VCS_TOKEN_EXPIRED','SSH_KEY_EXPIRED','MAINTENANCE')"/>
+    </changeSet>
+
+    <!-- Fix participation.discriminator: NULL -> NOT NULL -->
+    <changeSet id="20260407-04-fix-participation-discriminator" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="mysql"/>
+        </preConditions>
+        <addNotNullConstraint tableName="participation" columnName="discriminator"
+                              columnDataType="enum('P','SP','PESP','SPEP','TPEP')"/>
+    </changeSet>
+
+    <!-- Fix submission.discriminator: NULL -> NOT NULL -->
+    <changeSet id="20260407-05-fix-submission-discriminator" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="mysql"/>
+        </preConditions>
+        <addNotNullConstraint tableName="submission" columnName="discriminator"
+                              columnDataType="enum('P','Q','M','T','F')"/>
+    </changeSet>
+
+    <!-- Fix passkey_credential.credential_id: NULL -> NOT NULL -->
+    <changeSet id="20260407-06-fix-credential-id" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="mysql"/>
+        </preConditions>
+        <addNotNullConstraint tableName="passkey_credential" columnName="credential_id"
+                              columnDataType="varchar(255)"/>
+    </changeSet>
+
+</databaseChangeLog>

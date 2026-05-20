@@ -1,4 +1,3 @@
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { UserCredentials, admin, studentOne, studentThree, studentTwo, users } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
@@ -8,6 +7,7 @@ import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 import { ExamParticipationPage } from '../../../support/pageobjects/exam/ExamParticipationPage';
 import { ExamNavigationBar } from '../../../support/pageobjects/exam/ExamNavigationBar';
+import { SEED_COURSES } from '../../../support/seedData';
 
 // Common primitives
 const uid = generateUUID();
@@ -17,17 +17,13 @@ const studentNames = new Map<UserCredentials, string>();
 
 let examExercise: Exercise;
 
+const course = { id: SEED_COURSES.testExam.id } as any;
+
 test.describe('Test Exam - student exams', { tag: '@slow' }, () => {
-    let course: Course;
     let exam: Exam;
 
-    test.beforeEach('Create course and exam', async ({ login, courseManagementAPIRequests, examAPIRequests, examExerciseGroupCreation, examParticipation, examNavigation }) => {
+    test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation, examParticipation, examNavigation }) => {
         await login(admin);
-        course = await courseManagementAPIRequests.createCourse();
-
-        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentThree);
 
         const examConfig = {
             course,
@@ -35,7 +31,7 @@ test.describe('Test Exam - student exams', { tag: '@slow' }, () => {
             testExam: true,
             startDate: dayjs().subtract(1, 'day'),
             visibleDate: dayjs().subtract(2, 'days'),
-            workingTime: 5,
+            workingTime: 120,
             examMaxPoints: 10,
             numberOfCorrectionRoundsInExam: 1,
         };
@@ -61,11 +57,8 @@ test.describe('Test Exam - student exams', { tag: '@slow' }, () => {
     });
 
     test.describe('Check exam participants and their submissions', () => {
-        test('Open the list of exam students', async ({ page, navigationBar, courseManagement, examManagement, studentExamManagement }) => {
-            await page.goto('/');
-            await navigationBar.openCourseManagement();
-            await courseManagement.openExamsOfCourse(course.id!);
-            await examManagement.openStudentExams(exam.id!);
+        test('Open the list of exam students', async ({ page, studentExamManagement }) => {
+            await page.goto(`/course-management/${course.id}/exams/${exam.id!}/students`);
 
             await studentExamManagement.checkExamStudent(studentOne.username);
             await studentExamManagement.checkExamStudent(studentTwo.username);
@@ -73,22 +66,18 @@ test.describe('Test Exam - student exams', { tag: '@slow' }, () => {
 
             await expect(studentExamManagement.getStudentExamRows()).toHaveCount(3);
 
-            await studentExamManagement.checkStudentExamProperty(studentOne.username, 'Started', 'Yes');
-            await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'Started', 'Yes');
-            await studentExamManagement.checkStudentExamProperty(studentThree.username, 'Started', 'No');
-
-            await studentExamManagement.checkStudentExamProperty(studentOne.username, 'Submitted', 'Yes');
-            await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'Submitted', 'No');
-            await studentExamManagement.checkStudentExamProperty(studentThree.username, 'Submitted', 'No');
+            await studentExamManagement.checkStudentExamProperty(studentOne.username, 'Progress', 'Submitted');
+            await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'Progress', 'Started');
+            await studentExamManagement.checkStudentExamProperty(studentThree.username, 'Progress', 'Not started');
 
             await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'Used working time', '0s');
         });
 
-        test('Search for a student in exams', async ({ page, navigationBar, courseManagement, examManagement, studentExamManagement }) => {
-            await page.goto('/');
-            await navigationBar.openCourseManagement();
-            await courseManagement.openExamsOfCourse(course.id!);
-            await examManagement.openStudentExams(exam.id!);
+        test('Search for a student in exams', async ({ page, studentExamManagement }) => {
+            await page.goto(`/course-management/${course.id}/exams/${exam.id!}/students`);
+            // Wait for the data table to load before searching
+            await page.locator('p-table').first().waitFor({ state: 'visible' });
+            await studentExamManagement.getStudentExamRows().first().waitFor({ state: 'visible' });
 
             let searchText = studentOne.username + ', ' + studentTwo.username;
             await studentExamManagement.typeSearchText(searchText);
@@ -109,7 +98,7 @@ test.describe('Test Exam - student exams', { tag: '@slow' }, () => {
 
     async function participateInExam(
         student: UserCredentials,
-        course: Course,
+        course: any,
         exam: Exam,
         toStart: boolean,
         toSubmit: boolean,
@@ -133,7 +122,7 @@ test.describe('Test Exam - student exams', { tag: '@slow' }, () => {
         }
     }
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
+    test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+        await examAPIRequests.deleteExam(exam);
     });
 });

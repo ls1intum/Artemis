@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseCompetenciesRelationModalComponent } from 'app/atlas/manage/course-competencies-relation-modal/course-competencies-relation-modal.component';
 import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
@@ -11,8 +12,12 @@ import { MockNgbActiveModalService } from 'test/helpers/mocks/service/mock-ngb-a
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideNoopAnimationsForTests } from 'test/helpers/animations';
+import { CourseCompetenciesRelationGraphComponent } from 'app/atlas/manage/course-competencies-relation-graph/course-competencies-relation-graph.component';
+import { MockComponent } from 'ng-mocks';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CourseCompetenciesRelationModalComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: CourseCompetenciesRelationModalComponent;
     let fixture: ComponentFixture<CourseCompetenciesRelationModalComponent>;
     let courseCompetencyApiService: CourseCompetencyApiService;
@@ -53,12 +58,17 @@ describe('CourseCompetenciesRelationModalComponent', () => {
                 {
                     provide: CourseCompetencyApiService,
                     useValue: {
-                        getCourseCompetencyRelationsByCourseId: jest.fn(),
+                        getCourseCompetencyRelationsByCourseId: vi.fn(),
                     },
                 },
                 provideNoopAnimationsForTests(),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(CourseCompetenciesRelationModalComponent, {
+                remove: { imports: [CourseCompetenciesRelationGraphComponent] },
+                add: { imports: [MockComponent(CourseCompetenciesRelationGraphComponent)] },
+            })
+            .compileComponents();
 
         courseCompetencyApiService = TestBed.inject(CourseCompetencyApiService);
         alertService = TestBed.inject(AlertService);
@@ -67,14 +77,14 @@ describe('CourseCompetenciesRelationModalComponent', () => {
         fixture = TestBed.createComponent(CourseCompetenciesRelationModalComponent);
         component = fixture.componentInstance;
 
-        jest.spyOn(courseCompetencyApiService, 'getCourseCompetencyRelationsByCourseId').mockResolvedValue(relations);
+        vi.spyOn(courseCompetencyApiService, 'getCourseCompetencyRelationsByCourseId').mockResolvedValue(relations);
 
         fixture.componentRef.setInput('courseId', courseId);
         fixture.componentRef.setInput('courseCompetencies', courseCompetencies);
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should initialize', () => {
@@ -89,8 +99,8 @@ describe('CourseCompetenciesRelationModalComponent', () => {
     });
 
     it('should show alert on error', async () => {
-        const errorSpy = jest.spyOn(alertService, 'addAlert');
-        jest.spyOn(courseCompetencyApiService, 'getCourseCompetencyRelationsByCourseId').mockReturnValue(Promise.reject(new Error('Error')));
+        const errorSpy = vi.spyOn(alertService, 'addAlert');
+        vi.spyOn(courseCompetencyApiService, 'getCourseCompetencyRelationsByCourseId').mockReturnValue(Promise.reject(new Error('Error')));
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -99,7 +109,7 @@ describe('CourseCompetenciesRelationModalComponent', () => {
     });
 
     it('should set isLoading correctly', async () => {
-        const isLoadingSpy = jest.spyOn(component.isLoading, 'set');
+        const isLoadingSpy = vi.spyOn(component.isLoading, 'set');
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -109,7 +119,7 @@ describe('CourseCompetenciesRelationModalComponent', () => {
     });
 
     it('should closeModal', () => {
-        const closeSpy = jest.spyOn(activeModal, 'close');
+        const closeSpy = vi.spyOn(activeModal, 'close');
 
         component['closeModal']();
 
@@ -122,7 +132,7 @@ describe('CourseCompetenciesRelationModalComponent', () => {
 
         fixture.detectChanges(); // required as the viewChild is only available after effect() has run (-> second update)
         const courseCompetencyId = 1;
-        const selectSpy = jest.spyOn(component['courseCompetencyRelationFormComponent'](), 'selectCourseCompetency');
+        const selectSpy = vi.spyOn(component['courseCompetencyRelationFormComponent'](), 'selectCourseCompetency');
 
         component['selectCourseCompetency'](courseCompetencyId);
 

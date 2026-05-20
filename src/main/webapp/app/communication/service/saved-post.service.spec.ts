@@ -1,4 +1,6 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TestBed } from '@angular/core/testing';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { SavedPostService } from 'app/communication/service/saved-post.service';
@@ -10,11 +12,14 @@ import { ConversationType } from 'app/communication/shared/entities/conversation
 import Dayjs from 'dayjs/esm';
 
 describe('SavedPostService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: SavedPostService;
     let httpMock: HttpTestingController;
     const resourceUrl = 'api/communication/saved-posts/';
 
     beforeEach(() => {
+        vi.useFakeTimers();
         TestBed.configureTestingModule({
             providers: [SavedPostService, provideHttpClient(), provideHttpClientTesting()],
         });
@@ -23,12 +28,14 @@ describe('SavedPostService', () => {
         httpMock = TestBed.inject(HttpTestingController);
     });
 
-    it('should create', () => {
-        expect(service).toBeTruthy();
+    afterEach(() => {
+        vi.useRealTimers();
+        httpMock.verify();
+        vi.restoreAllMocks();
     });
 
-    afterEach(() => {
-        httpMock.verify();
+    it('should create', () => {
+        expect(service).toBeTruthy();
     });
 
     describe('Save post', () => {
@@ -98,7 +105,7 @@ describe('SavedPostService', () => {
     });
 
     describe('Fetch saved posts', () => {
-        it('should fetch saved posts and convert dates accordingly', fakeAsync(() => {
+        it('should fetch saved posts and convert dates accordingly', () => {
             const courseId = 1;
             const status = SavedPostStatus.IN_PROGRESS;
             const mockPosts = [
@@ -120,9 +127,9 @@ describe('SavedPostService', () => {
             const req = httpMock.expectOne(`${resourceUrlNoTrailingSlash}?status=${SavedPostStatus.IN_PROGRESS.toLowerCase()}&courseId=${courseId}`);
             expect(req.request.method).toBe('GET');
             req.flush(mockPosts, { status: 200, statusText: 'OK' });
-            tick();
+            vi.advanceTimersByTime(0);
             fetchPost.unsubscribe();
-        }));
+        });
     });
 
     describe('Conversions of posts', () => {

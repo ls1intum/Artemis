@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UserService } from 'app/core/user/shared/user.service';
 import { of, throwError } from 'rxjs';
@@ -9,8 +11,12 @@ import { FormsModule } from '@angular/forms';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TypeAheadUserSearchFieldComponent } from 'app/core/legal/data-export/type-ahead-search-field/type-ahead-user-search-field.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('TypeAheadUserSearchFieldComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: TypeAheadUserSearchFieldComponent;
     let fixture: ComponentFixture<TypeAheadUserSearchFieldComponent>;
     let userService: UserService;
@@ -18,7 +24,7 @@ describe('TypeAheadUserSearchFieldComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [MockModule(FormsModule), TypeAheadUserSearchFieldComponent, MockPipe(ArtemisTranslatePipe), MockDirective(NgbTypeahead), MockDirective(TranslateDirective)],
-            providers: [provideHttpClient()],
+            providers: [provideHttpClient(), { provide: TranslateService, useClass: MockTranslateService }],
         });
         fixture = TestBed.createComponent(TypeAheadUserSearchFieldComponent);
         component = fixture.componentInstance;
@@ -26,11 +32,15 @@ describe('TypeAheadUserSearchFieldComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should create', () => {
         expect(component).toBeTruthy();
     });
     it('should call the user service on search', () => {
-        const searchSpy = jest.spyOn(userService, 'search').mockReturnValue(
+        const searchSpy = vi.spyOn(userService, 'search').mockReturnValue(
             of({
                 body: [{ login: 'ge12abc', name: 'abc' }],
             } as unknown as HttpResponse<User[]>),
@@ -41,28 +51,28 @@ describe('TypeAheadUserSearchFieldComponent', () => {
     });
 
     it('should not call the user service on search for string with less than three characters', () => {
-        const searchSpy = jest.spyOn(userService, 'search');
+        const searchSpy = vi.spyOn(userService, 'search');
 
         component.search(of('ge')).subscribe();
         expect(searchSpy).not.toHaveBeenCalled();
-        expect(component.searchQueryTooShort()).toBeTrue();
-        expect(component.searching()).toBeFalse();
+        expect(component.searchQueryTooShort()).toBe(true);
+        expect(component.searching()).toBe(false);
     });
 
     it('should set searchNoResults to true if no users are found', () => {
-        jest.spyOn(userService, 'search').mockReturnValue(
+        vi.spyOn(userService, 'search').mockReturnValue(
             of({
                 body: [],
             } as unknown as HttpResponse<User[]>),
         );
 
         component.search(of('ge12abc')).subscribe();
-        expect(component.searchNoResults()).toBeTrue();
-        expect(component.searching()).toBeFalse();
+        expect(component.searchNoResults()).toBe(true);
+        expect(component.searching()).toBe(false);
     });
 
     it('should set searchFailed to true if the user service throws an error', () => {
-        jest.spyOn(userService, 'search').mockReturnValue(
+        vi.spyOn(userService, 'search').mockReturnValue(
             throwError(
                 () =>
                     new HttpErrorResponse({
@@ -71,15 +81,15 @@ describe('TypeAheadUserSearchFieldComponent', () => {
             ),
         );
         component.search(of('ge12abc')).subscribe();
-        expect(component.searchFailed()).toBeTrue();
-        expect(component.searching()).toBeFalse();
+        expect(component.searchFailed()).toBe(true);
+        expect(component.searching()).toBe(false);
     });
 
     it('should update loginOrName on change with the correct value and update searchQueryTooShort', () => {
         component.loginOrName.set('ge12abc');
         component.onChange();
         expect(component.loginOrName()).toBe('ge12abc');
-        expect(component.searchQueryTooShort()).toBeFalse();
+        expect(component.searchQueryTooShort()).toBe(false);
 
         // When loginOrName is set to a User object (from typeahead selection), onChange should extract the login
         component.loginOrName.set({ login: 'ge12abc' } as User);
@@ -88,7 +98,7 @@ describe('TypeAheadUserSearchFieldComponent', () => {
 
         component.loginOrName.set('ge');
         component.onChange();
-        expect(component.searchQueryTooShort()).toBeTrue();
+        expect(component.searchQueryTooShort()).toBe(true);
     });
 
     it('should format the result correctly', () => {

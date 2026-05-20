@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.util;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -13,7 +14,6 @@ import static org.mockito.Mockito.mockStatic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,7 +56,7 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -153,7 +153,11 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
-import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil;
+import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
@@ -329,7 +333,7 @@ public class CourseTestService {
     private Optional<IrisChatSessionUtilService> irisChatSessionUtilService;
 
     @Autowired
-    private Optional<IrisCourseChatSessionRepository> irisCourseChatSessionRepository;
+    private Optional<IrisChatSessionRepository> irisChatSessionRepository;
 
     @Autowired
     private LLMTokenUsageTraceTestRepository llmTokenUsageTraceRepository;
@@ -348,6 +352,12 @@ public class CourseTestService {
 
     @Autowired
     private Optional<CourseLearnerProfileRepository> courseLearnerProfileRepository;
+
+    @Autowired(required = false)
+    private WeaviateService weaviateService;
+
+    @Autowired(required = false)
+    private SearchableEntityWeaviateService searchableEntityWeaviateService;
 
     @Autowired
     private Optional<TutorialGroupUtilService> tutorialGroupUtilService;
@@ -592,11 +602,27 @@ public class CourseTestService {
             }
         }
 
+        // Insert exercises into Weaviate before deletion to verify cleanup
+        List<Long> allExerciseIds = new ArrayList<>();
+        for (Course course : courses) {
+            for (Exercise exercise : course.getExercises()) {
+                allExerciseIds.add(exercise.getId());
+                if (searchableEntityWeaviateService != null) {
+                    searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(exercise));
+                }
+            }
+        }
+
         for (Course course : courses) {
             if (!course.getExercises().isEmpty()) {
                 groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(course.getExercises().iterator().next());
             }
             request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
+        }
+
+        // Verify exercises are removed from Weaviate after course deletion
+        for (Long exerciseId : allExerciseIds) {
+            WeaviateTestUtil.assertExerciseNotInWeaviate(weaviateService, exerciseId);
         }
 
         for (Course course : courses) {
@@ -608,7 +634,7 @@ public class CourseTestService {
             assertThat(conversationRepository.findAllByCourseId(course.getId())).as("All Conversations are deleted").isEmpty();
 
             // Verify new data is also deleted
-            irisCourseChatSessionRepository.ifPresent(repo -> assertThat(repo.countByCourseId(course.getId())).as("All Iris chat sessions are deleted").isZero());
+            irisChatSessionRepository.ifPresent(repo -> assertThat(repo.countByCourseId(course.getId())).as("All Iris chat sessions are deleted").isZero());
 
             assertThat(llmTokenUsageTraceRepository.findAllByCourseId(course.getId())).as("All LLM token usage traces are deleted").isEmpty();
             assertThat(llmTokenUsageRequestRepository.findAllByTraceCourseId(course.getId())).as("All LLM token usage requests are deleted").isEmpty();
@@ -3327,11 +3353,11 @@ public class CourseTestService {
         assertThat(dto.registrationId()).isEqualTo(clientId);
     }
 
-    public MockHttpServletRequestBuilder buildCreateCourse(@NonNull Course course) throws JsonProcessingException {
+    public MockMultipartHttpServletRequestBuilder buildCreateCourse(@NonNull Course course) throws JsonProcessingException {
         return buildCreateCourse(course, null);
     }
 
-    public MockHttpServletRequestBuilder buildCreateCourse(@NonNull Course course, String fileContent) throws JsonProcessingException {
+    public MockMultipartHttpServletRequestBuilder buildCreateCourse(@NonNull Course course, String fileContent) throws JsonProcessingException {
         CourseCreateDTO dto = toCourseCreateDTO(course);
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(dto).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/core/admin/courses").file(coursePart);
@@ -3354,16 +3380,16 @@ public class CourseTestService {
                 course.getEnrollmentStartDate(), course.getEnrollmentEndDate(), course.getUnenrollmentEndDate(), course.isTestCourse(), course.isOnlineCourse(),
                 course.getLanguage(), course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(),
                 course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(), course.getColor(),
-                course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(), course.isFaqEnabled(), course.getLearningPathsEnabled(),
+                course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(), course.getLearningPathsEnabled(),
                 course.getStudentCourseAnalyticsDashboardEnabled(), course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(),
                 course.getRestrictedAthenaModulesAccess(), course.getTimeZone(), course.getCourseInformationSharingConfiguration());
     }
 
-    public MockHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course) throws JsonProcessingException {
+    public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course) throws JsonProcessingException {
         return buildUpdateCourse(id, course, null);
     }
 
-    public MockHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course, String fileContent) throws JsonProcessingException {
+    public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course, String fileContent) throws JsonProcessingException {
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(course).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/core/courses/" + id).file(coursePart);
         if (fileContent != null) {

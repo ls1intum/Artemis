@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ImportCompetenciesComponent } from 'app/atlas/manage/import/import-competencies.component';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -14,8 +15,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ImportPrerequisitesComponent', () => {
+    setupTestBed({ zoneless: true });
     let componentFixture: ComponentFixture<ImportPrerequisitesComponent>;
     let component: ImportPrerequisitesComponent;
     let prerequisiteService: PrerequisiteService;
@@ -48,7 +51,7 @@ describe('ImportPrerequisitesComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -58,13 +61,13 @@ describe('ImportPrerequisitesComponent', () => {
 
     it('should import prerequisites on submit', () => {
         const competencyDTOs: CompetencyWithTailRelationDTO[] = [{ competency: { id: 1 } }, { competency: { id: 2 } }];
-        const importBulkSpy = jest.spyOn(prerequisiteService, 'importBulk').mockReturnValue(
+        const importBulkSpy = vi.spyOn(prerequisiteService, 'importBulk').mockReturnValue(
             of({
                 body: competencyDTOs,
             } as HttpResponse<CompetencyWithTailRelationDTO[]>),
         );
         const router: Router = TestBed.inject(Router);
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const navigateSpy = vi.spyOn(router, 'navigate');
 
         component.onSubmit();
 

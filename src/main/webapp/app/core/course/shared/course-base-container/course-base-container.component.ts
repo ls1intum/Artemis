@@ -1,19 +1,17 @@
 import {
     AfterViewInit,
-    ChangeDetectorRef,
     Component,
     EmbeddedViewRef,
     HostListener,
     OnDestroy,
     OnInit,
-    QueryList,
     TemplateRef,
-    ViewChild,
-    ViewChildren,
     ViewContainerRef,
     effect,
     inject,
     signal,
+    viewChild,
+    viewChildren,
 } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
@@ -26,7 +24,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { LtiService } from 'app/shared/service/lti.service';
 import { sortCourses } from 'app/shared/util/course.util';
 import { SidebarItem } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI, PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI, MODULE_FEATURE_TUTORIALGROUP, PROFILE_LOCALCI } from 'app/app.constants';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
@@ -48,7 +46,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected courseManagementService = inject(CourseManagementService);
     protected courseStorageService = inject(CourseStorageService);
     protected route = inject(ActivatedRoute);
-    protected changeDetectorRef = inject(ChangeDetectorRef);
     protected metisConversationService = inject(MetisConversationService);
     protected router = inject(Router);
     protected courseAccessStorageService = inject(CourseAccessStorageService);
@@ -76,6 +73,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     lectureEnabled: boolean = false;
     irisEnabled: boolean = false;
     ltiEnabled: boolean = false;
+    tutorialGroupEnabled: boolean = false;
     localCIActive: boolean = false;
     isProduction: boolean = true;
     isTestServer: boolean = false;
@@ -104,8 +102,8 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected controlsSubscription?: Subscription;
     protected vcSubscription?: Subscription;
 
-    @ViewChild('controlsViewContainer', { read: ViewContainerRef }) controlsViewContainer: ViewContainerRef;
-    @ViewChildren('controlsViewContainer') controlsViewContainerAsList: QueryList<ViewContainerRef>;
+    readonly controlsViewContainer = viewChild('controlsViewContainer', { read: ViewContainerRef });
+    readonly controlsViewContainerAsList = viewChildren<ViewContainerRef>('controlsViewContainer');
 
     protected readonly FeatureToggle = FeatureToggle;
 
@@ -144,6 +142,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         this.lectureEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LECTURE);
         this.irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
         this.ltiEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI);
+        this.tutorialGroupEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TUTORIALGROUP);
         this.localCIActive = this.profileService.isProfileActive(PROFILE_LOCALCI);
 
         this.getCollapseStateFromStorage();
@@ -189,11 +188,11 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     abstract switchCourse(course: Course): void;
 
     ngAfterViewInit() {
-        if (this.controlsViewContainer) {
+        if (this.controlsViewContainer()) {
             this.tryRenderControls();
-        } else {
-            this.vcSubscription = this.controlsViewContainerAsList.changes.subscribe(() => this.tryRenderControls());
         }
+        // Note: With signal-based viewChildren, we don't need to subscribe to changes.
+        // The controls rendering is handled in onSubRouteActivate via the controlsSubscription.
     }
 
     ngOnDestroy() {
@@ -258,9 +257,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         }
 
         this.handleComponentActivation(componentRef);
-
-        // Since we change the pageTitle + might be pulling data upwards during a render cycle, we need to re-run change detection
-        this.changeDetectorRef.detectChanges();
     }
 
     /**
@@ -271,7 +267,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         this.controls.set(undefined);
         this.controlConfiguration.set(undefined);
         this.controlsSubscription?.unsubscribe();
-        this.changeDetectorRef.detectChanges();
     }
 
     private removeCurrentControlsView() {
@@ -283,10 +278,10 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
      * Mounts the controls as specified by the currently mounted sub-route component to the ng-container in the top bar
      */
     tryRenderControls() {
-        if (this.controlConfiguration() && this.controls() && this.controlsViewContainer) {
+        const controlsViewContainer = this.controlsViewContainer();
+        if (this.controlConfiguration() && this.controls() && controlsViewContainer) {
             this.removeCurrentControlsView();
-            this.controlsEmbeddedView = this.controlsViewContainer.createEmbeddedView(this.controls()!);
-            this.controlsEmbeddedView.detectChanges();
+            this.controlsEmbeddedView = controlsViewContainer.createEmbeddedView(this.controls()!);
         }
     }
 

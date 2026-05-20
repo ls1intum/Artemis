@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.iris.service.pyris.dto.transcriptionIngestion;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureTranscriptionDTO;
 
 /**
  * Represents a webhook data transfer object for lecture transcriptions on lecture unit level in the Pyris system.
@@ -11,6 +11,6 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 
-public record PyrisTranscriptionIngestionWebhookDTO(LectureTranscription transcription, long lectureId, String lectureName, long courseId, String courseName,
+public record PyrisTranscriptionIngestionWebhookDTO(PyrisLectureTranscriptionDTO transcription, long lectureId, String lectureName, long courseId, String courseName,
         String courseDescription, long lectureUnitId, String lectureUnitName, String lectureUnitLink) {
 }

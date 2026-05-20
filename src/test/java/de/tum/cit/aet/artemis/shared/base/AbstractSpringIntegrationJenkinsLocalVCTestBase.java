@@ -17,16 +17,17 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.testcontainers.weaviate.WeaviateContainer;
 
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
-import de.tum.cit.aet.artemis.core.connector.AeolusRequestMockProvider;
 import de.tum.cit.aet.artemis.core.connector.JenkinsRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -36,12 +37,27 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTrigge
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration;
+import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
 
 /**
  * Base class containing shared configuration and mock setup for Jenkins+LocalVC integration tests.
  * Subclasses should add their own @Tag and @ResourceLock annotations to control parallel execution.
  */
 public abstract class AbstractSpringIntegrationJenkinsLocalVCTestBase extends AbstractArtemisIntegrationTest {
+
+    protected static final WeaviateContainer weaviateContainer;
+
+    private static final String UNIQUE_COLLECTION_PREFIX = "JenkinsLocalVC_";
+
+    static {
+        weaviateContainer = WeaviateTestContainerFactory.getContainer();
+    }
+
+    @DynamicPropertySource
+    static void registerWeaviateProperties(DynamicPropertyRegistry registry) {
+        WeaviateTestConfiguration.registerWeaviateProperties(registry, weaviateContainer, UNIQUE_COLLECTION_PREFIX);
+    }
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Jenkins using the corresponding RestTemplate.
     @MockitoSpyBean
@@ -62,9 +78,6 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTestBase extends Ab
 
     @Autowired
     protected JenkinsRequestMockProvider jenkinsRequestMockProvider;
-
-    @Autowired
-    protected AeolusRequestMockProvider aeolusRequestMockProvider;
 
     @MockitoSpyBean
     protected ExamLiveEventsService examLiveEventsService;
@@ -104,14 +117,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTestBase extends Ab
         String templateBuildJobName = projectKey + "-" + templatePlanKey;
         String solutionBuildJobName = projectKey + "-" + solutionPlanKey;
         if (useCustomBuildPlanDefinition) {
-            aeolusRequestMockProvider.enableMockingOfRequests();
-            if (useCustomBuildPlanWorked) {
-                aeolusRequestMockProvider.mockSuccessfulPublishBuildPlan(AeolusTarget.JENKINS, templateBuildJobName);
-                aeolusRequestMockProvider.mockSuccessfulPublishBuildPlan(AeolusTarget.JENKINS, solutionBuildJobName);
-            }
-            else {
-                aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
-                aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
+            if (!useCustomBuildPlanWorked) {
                 jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, templateBuildJobName, false);
                 jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, solutionBuildJobName, false);
             }

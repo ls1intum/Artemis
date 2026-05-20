@@ -9,19 +9,13 @@ export class ProgrammingExerciseParticipationsPage {
         this.page = page;
     }
 
-    getParticipation(participationId: number) {
-        return this.getParticipationByText(participationId.toString());
+    getParticipation(participantName: string) {
+        return this.page.getByRole('table').getByRole('row').filter({ hasText: participantName });
     }
 
     getStudentParticipation(user: UserCredentials) {
-        return this.getParticipationByText(user.username);
-    }
-
-    private getParticipationByText(text: string) {
-        return this.page
-            .getByRole('table')
-            .getByRole('row')
-            .filter({ hasText: `${text}` });
+        const namePattern = user.displayName ?? user.username;
+        return this.page.getByRole('table').getByRole('row').filter({ hasText: namePattern });
     }
 
     public async openStudentParticipationSubmissions(user: UserCredentials) {
@@ -43,14 +37,14 @@ export class ProgrammingExerciseParticipationsPage {
         }
     }
 
-    private async getParticipationCell(participationId: number, columnName: string) {
-        let participationRow: Locator = this.getParticipation(participationId);
+    private async getParticipationCell(participantName: string, columnName: string) {
+        let participationRow: Locator = this.getParticipation(participantName);
         return await this.getParticipationCellByLocator(participationRow, columnName);
     }
 
-    async openRepositoryOnNewPage(participationId: number): Promise<RepositoryPage> {
-        console.log(`[openRepositoryOnNewPage] Opening repository for participation ${participationId}`);
-        const participation = this.getParticipation(participationId);
+    async openRepositoryOnNewPage(participantName: string): Promise<RepositoryPage> {
+        console.log(`[openRepositoryOnNewPage] Opening repository for participation with participant ${participantName}`);
+        const participation = this.getParticipation(participantName);
         await participation.locator('.code-button').click();
         console.log('[openRepositoryOnNewPage] Clicked code button, waiting for popover...');
 
@@ -73,26 +67,20 @@ export class ProgrammingExerciseParticipationsPage {
         console.log(`[openRepositoryOnNewPage] Navigating to: ${absoluteUrl}`);
 
         const newPage = await this.page.context().newPage();
-        await newPage.goto(absoluteUrl, { waitUntil: 'networkidle' });
+        await newPage.goto(absoluteUrl, { waitUntil: 'domcontentloaded' });
         console.log(`[openRepositoryOnNewPage] Navigation complete. New page URL: ${newPage.url()}`);
 
         return new RepositoryPage(newPage);
     }
 
-    async checkParticipationBuildPlan(participation: any) {
-        const buildPlanIdCell = await this.getParticipationCell(participation.id, 'Build Plan Id');
-        expect(buildPlanIdCell).not.toBeUndefined();
-        await expect(buildPlanIdCell!.filter({ hasText: participation.buildPlanId })).toBeVisible();
-    }
-
-    async checkParticipationTeam(participationId: number, teamName: string) {
-        const teamCell = await this.getParticipationCell(participationId, 'Team');
+    async checkParticipationTeam(participantName: string, teamName: string) {
+        const teamCell = await this.getParticipationCell(participantName, 'Team');
         expect(teamCell).not.toBeUndefined();
         await expect(teamCell!.filter({ hasText: teamName })).toBeVisible();
     }
 
-    async checkParticipationStudents(participationId: number, studentUsernames: string[]) {
-        const studentsCell = await this.getParticipationCell(participationId, 'Students');
+    async checkParticipationStudents(participantName: string, studentUsernames: string[]) {
+        const studentsCell = await this.getParticipationCell(participantName, 'Students');
         expect(studentsCell).not.toBeUndefined();
         for (const studentName of studentUsernames) {
             await expect(studentsCell!.filter({ hasText: studentName })).toBeVisible();

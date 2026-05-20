@@ -1,60 +1,63 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { THEME_LOCAL_STORAGE_KEY, THEME_OVERRIDE_ID, Theme, ThemeService } from 'app/core/theme/shared/theme.service';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 describe('ThemeService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ThemeService;
     let localStorageService: LocalStorageService;
 
     let linkElement: HTMLElement;
-    let documentGetElementMock: jest.SpyInstance;
+    let documentGetElementMock: ReturnType<typeof vi.spyOn>;
     let headElement: HTMLElement;
-    let documentGetElementsByTagNameMock: jest.SpyInstance;
-    let headElementGetElementsByTagNameMock: jest.SpyInstance;
+    let documentGetElementsByTagNameMock: ReturnType<typeof vi.spyOn>;
+    let headElementGetElementsByTagNameMock: ReturnType<typeof vi.spyOn>;
     let newElement: HTMLLinkElement;
-    let documentCreateElementMock: jest.SpyInstance;
-    let storeSpy: jest.SpyInstance;
-    let windowMatchMediaSpy: jest.SpyInstance;
+    let documentCreateElementMock: ReturnType<typeof vi.spyOn>;
+    let storeSpy: ReturnType<typeof vi.spyOn>;
+    let windowMatchMediaSpy: ReturnType<typeof vi.spyOn>;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
             providers: [{ provide: ThemeService, useClass: ThemeService }],
-        })
-            .compileComponents()
-            .then(() => {
-                service = TestBed.inject(ThemeService);
-                localStorageService = TestBed.inject(LocalStorageService);
-                linkElement = {
-                    remove: jest.fn(),
-                } as unknown as HTMLElement;
-                documentGetElementMock = jest.spyOn(document, 'getElementById').mockReturnValue(linkElement);
+        });
+        await TestBed.compileComponents();
 
-                headElement = {
-                    getElementsByTagName: jest.fn().mockReturnValue([{}, {}]),
-                    insertBefore: jest.fn(),
-                } as unknown as HTMLElement;
-                documentGetElementsByTagNameMock = jest.spyOn(document, 'getElementsByTagName').mockReturnValue([headElement] as unknown as HTMLCollectionOf<HTMLElement>);
-                headElementGetElementsByTagNameMock = jest.spyOn(headElement, 'getElementsByTagName');
+        service = TestBed.inject(ThemeService);
+        localStorageService = TestBed.inject(LocalStorageService);
+        linkElement = {
+            remove: vi.fn(),
+        } as unknown as HTMLElement;
+        documentGetElementMock = vi.spyOn(document, 'getElementById').mockReturnValue(linkElement);
 
-                newElement = {} as HTMLLinkElement;
-                documentCreateElementMock = jest.spyOn(document, 'createElement').mockReturnValue(newElement);
+        headElement = {
+            getElementsByTagName: vi.fn().mockReturnValue([{}, {}]),
+            insertBefore: vi.fn(),
+        } as unknown as HTMLElement;
+        documentGetElementsByTagNameMock = vi.spyOn(document, 'getElementsByTagName').mockReturnValue([headElement] as unknown as HTMLCollectionOf<HTMLElement>);
+        headElementGetElementsByTagNameMock = vi.spyOn(headElement, 'getElementsByTagName');
 
-                storeSpy = jest.spyOn(localStorageService, 'store');
+        newElement = {} as HTMLLinkElement;
+        documentCreateElementMock = vi.spyOn(document, 'createElement').mockReturnValue(newElement);
 
-                windowMatchMediaSpy = jest.spyOn(window, 'matchMedia').mockImplementation((query: string) => {
-                    if (query === '(prefers-color-scheme)') {
-                        return { media: '(prefers-color-scheme)', addEventListener: jest.fn() } as unknown as MediaQueryList;
-                    }
-                    if (query === '(prefers-color-scheme: dark)') {
-                        return { media: '(prefers-color-scheme: dark)', matches: false, addEventListener: jest.fn() } as unknown as MediaQueryList;
-                    }
-                    throw new Error('Should not happen');
-                });
-            });
+        storeSpy = vi.spyOn(localStorageService, 'store');
+
+        windowMatchMediaSpy = vi.spyOn(window, 'matchMedia').mockImplementation((query: string) => {
+            if (query === '(prefers-color-scheme)') {
+                return { media: '(prefers-color-scheme)', addEventListener: vi.fn() } as unknown as MediaQueryList;
+            }
+            if (query === '(prefers-color-scheme: dark)') {
+                return { media: '(prefers-color-scheme: dark)', matches: false, addEventListener: vi.fn() } as unknown as MediaQueryList;
+            }
+            throw new Error('Should not happen');
+        });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
         documentGetElementMock.mockRestore();
         windowMatchMediaSpy.mockRestore();
     });
@@ -76,7 +79,7 @@ describe('ThemeService', () => {
 
         expect(newElement.id).toBe(THEME_OVERRIDE_ID);
         expect(newElement.rel).toBe('stylesheet');
-        expect(newElement.href).toStartWith('theme-dark.css');
+        expect(newElement.href).toMatch(new RegExp(`^${String('theme-dark.css')}`));
         expect(newElement.onload).toEqual(expect.any(Function));
         expect(headElementGetElementsByTagNameMock).toHaveBeenCalledOnce();
         expect(headElementGetElementsByTagNameMock).toHaveBeenCalledWith('link');
@@ -99,7 +102,7 @@ describe('ThemeService', () => {
     });
 
     it('restores stored theme correctly', () => {
-        const retrieveSpy = jest.spyOn(localStorageService, 'retrieve').mockReturnValue('LIGHT');
+        const retrieveSpy = vi.spyOn(localStorageService, 'retrieve').mockReturnValue('LIGHT');
 
         service.initialize();
         TestBed.tick();
@@ -109,14 +112,14 @@ describe('ThemeService', () => {
     });
 
     it('applies dark OS preferences', () => {
-        const retrieveSpy = jest.spyOn(localStorageService, 'retrieve').mockReturnValue(undefined);
+        const retrieveSpy = vi.spyOn(localStorageService, 'retrieve').mockReturnValue(undefined);
         windowMatchMediaSpy.mockRestore();
-        windowMatchMediaSpy = jest.spyOn(window, 'matchMedia').mockImplementation((query: string) => {
+        windowMatchMediaSpy = vi.spyOn(window, 'matchMedia').mockImplementation((query: string) => {
             if (query === '(prefers-color-scheme)') {
-                return { media: '(prefers-color-scheme)', addEventListener: jest.fn() } as unknown as MediaQueryList;
+                return { media: '(prefers-color-scheme)', addEventListener: vi.fn() } as unknown as MediaQueryList;
             }
             if (query === '(prefers-color-scheme: dark)') {
-                return { media: '(prefers-color-scheme: dark)', matches: true, addEventListener: jest.fn() } as unknown as MediaQueryList;
+                return { media: '(prefers-color-scheme: dark)', matches: true, addEventListener: vi.fn() } as unknown as MediaQueryList;
             }
             throw new Error('Should not happen');
         });
@@ -133,7 +136,7 @@ describe('ThemeService', () => {
     });
 
     it('applies light OS preferences', () => {
-        const retrieveSpy = jest.spyOn(localStorageService, 'retrieve').mockReturnValue(undefined);
+        const retrieveSpy = vi.spyOn(localStorageService, 'retrieve').mockReturnValue(undefined);
 
         service.initialize();
         TestBed.tick();
@@ -144,12 +147,13 @@ describe('ThemeService', () => {
         expect(service.currentTheme()).toBe(Theme.LIGHT);
     });
 
-    it('does print correctly', fakeAsync(() => {
+    it('does print correctly', async () => {
+        vi.useFakeTimers();
         const initialDisplayClass = 'someDisplayClass';
 
-        const winSpy = jest.spyOn(window, 'print').mockImplementation();
-        const returnedElement = { rel: 'stylesheet', style: { display: initialDisplayClass }, remove: jest.fn() };
-        const docSpy = jest.spyOn(document, 'getElementById').mockReturnValue(returnedElement as unknown as HTMLElement);
+        const winSpy = vi.spyOn(window, 'print').mockImplementation(() => {});
+        const returnedElement = { rel: 'stylesheet', style: { display: initialDisplayClass }, remove: vi.fn() };
+        const docSpy = vi.spyOn(document, 'getElementById').mockReturnValue(returnedElement as unknown as HTMLElement);
 
         service.print();
         TestBed.tick();
@@ -157,12 +161,13 @@ describe('ThemeService', () => {
         expect(docSpy).toHaveBeenCalledTimes(2);
         expect(docSpy).toHaveBeenCalledWith(THEME_OVERRIDE_ID);
         expect(returnedElement.rel).toBe('none-tmp');
-        tick(250);
+        await vi.advanceTimersByTimeAsync(250);
         expect(docSpy).toHaveBeenCalledWith('notification-sidebar');
         expect(docSpy).toHaveBeenCalledTimes(4); // 1x for theme override, 2x for notification sidebar (changing style to display: none and back to initial value)
         expect(winSpy).toHaveBeenCalledOnce();
-        tick(250);
+        await vi.advanceTimersByTimeAsync(250);
         expect(returnedElement.rel).toBe('stylesheet');
         expect(returnedElement.style.display).toBe(initialDisplayClass);
-    }));
+        vi.useRealTimers();
+    });
 });

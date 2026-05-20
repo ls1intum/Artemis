@@ -34,10 +34,12 @@
             "athena": "Athena",
             "apollon": "Apollon Conversion Server",
             "pyris": "Pyris",
+            "atlasML": "AtlasML",
             "ssl": "SSL",
             "hermes": "Hermes Push Notifications",
             "sharing": "Sharing Plattform Connector",
             "redis": "Redis",
+            "weaviate": "Weaviate",
             "reactiveDiscoveryClients": "Reactive Discovery Clients"
         },
         "table": {

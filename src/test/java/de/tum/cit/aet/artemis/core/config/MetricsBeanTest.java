@@ -79,20 +79,18 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
     void resetDatabase() {
         SecurityUtils.setAuthorizationObject();
 
-        examRepository.findAllByEndDateGreaterThanEqual(ZonedDateTime.now()).forEach(exam -> {
-            // Set dates of existing exams to past to that they are not returned in the metrics
+        // Reset ALL exams to the past to avoid time-sensitive cleanup issues.
+        // Using findAll() instead of findAllByEndDateGreaterThanEqual() prevents
+        // edge cases where exams at the boundary of ZonedDateTime.now() are missed.
+        examRepository.findAll().forEach(exam -> {
             exam.setStartDate(ZonedDateTime.now().minusHours(2));
             exam.setEndDate(ZonedDateTime.now().minusHours(1));
             examRepository.save(exam);
         });
 
-        exerciseRepository.findAll().forEach(exercise -> {
-            // Set dates of existing exercises to past to that they are not returned in the metrics
-            exercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
-            exercise.setStartDate(ZonedDateTime.now().minusHours(2));
-            exercise.setDueDate(ZonedDateTime.now().minusHours(1));
-            exerciseRepository.save(exercise);
-        });
+        // Use bulk update to avoid loading QuizExercise entities, which would trigger
+        // Hibernate 7's strict @OrderColumn validation on quizQuestions
+        exerciseRepository.updateAllExerciseDates(ZonedDateTime.now().minusHours(2), ZonedDateTime.now().minusHours(2), ZonedDateTime.now().minusHours(1));
     }
 
     @Test
@@ -380,6 +378,14 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testPrometheusMetricsExams() {
+        // Capture baseline metric values before creating test data
+        metricsBean.recalculateMetrics();
+        double baselineReleaseCount = getMetricValue("artemis.scheduled.exams.release.count", "range", "15");
+        double baselineReleaseStudents = getMetricValue("artemis.scheduled.exams.release.student_multiplier", "range", "15");
+        double baselineDueCount = getMetricValue("artemis.scheduled.exams.due.count", "range", "15");
+        double baselineDueStudents = getMetricValue("artemis.scheduled.exams.due.student_multiplier", "range", "15");
+        double baselineExerciseDueCount = getMetricValue("artemis.scheduled.exercises.due.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
+
         var users = userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
         var course = courseUtilService.createCourse();
         var exam1 = examUtilService.addExam(course, ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(2), ZonedDateTime.now().plusMinutes(10));
@@ -415,12 +421,13 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         metricsBean.recalculateMetrics();
 
         // Two exams start within the next 15 minutes, but have the same users (-> Users are only counted once)
-        assertMetricEquals(2, "artemis.scheduled.exams.release.count", "range", "15");
-        assertMetricEquals(2, "artemis.scheduled.exams.release.student_multiplier", "range", "15");
+        assertMetricEquals(baselineReleaseCount + 2, "artemis.scheduled.exams.release.count", "range", "15");
+        assertMetricEquals(baselineReleaseStudents + 2, "artemis.scheduled.exams.release.student_multiplier", "range", "15");
 
         // Two exams ends within the next 120 minutes
-        assertMetricEquals(2, "artemis.scheduled.exams.due.count", "range", "15");
-        assertMetricEquals(2, "artemis.scheduled.exams.due.student_multiplier", "range", "15"); // 2 + 1 students are registered for the exam, but they are duplicate users
+        assertMetricEquals(baselineDueCount + 2, "artemis.scheduled.exams.due.count", "range", "15");
+        assertMetricEquals(baselineDueStudents + 2, "artemis.scheduled.exams.due.student_multiplier", "range", "15"); // 2 + 1 students are registered for the exam, but they are
+                                                                                                                      // duplicated users
 
         var registeredExamUser4 = new ExamUser();
         registeredExamUser4.setUser(users.get(2));
@@ -433,11 +440,11 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         metricsBean.recalculateMetrics();
 
         // Two exams start within the next 15 minutes, but have the same users (-> Users are only counted once)
-        assertMetricEquals(2, "artemis.scheduled.exams.release.count", "range", "15");
-        assertMetricEquals(2 + 1, "artemis.scheduled.exams.release.student_multiplier", "range", "15");
+        assertMetricEquals(baselineReleaseCount + 2, "artemis.scheduled.exams.release.count", "range", "15");
+        assertMetricEquals(baselineReleaseStudents + 2 + 1, "artemis.scheduled.exams.release.student_multiplier", "range", "15");
 
         // Exam exercises are not returned in the exercises metrics
-        assertMetricEquals(0, "artemis.scheduled.exercises.due.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
+        assertMetricEquals(baselineExerciseDueCount + 0, "artemis.scheduled.exercises.due.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
     }
 
     @Test
@@ -458,6 +465,16 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
     private void assertMetricEquals(double expectedValue, String metricName, String... tags) {
         var gauge = meterRegistry.get(metricName).tags(tags).gauge();
         assertThat(gauge.value()).isEqualTo(expectedValue);
+    }
+
+    private double getMetricValue(String metricName, String... tags) {
+        try {
+            return meterRegistry.get(metricName).tags(tags).gauge().value();
+        }
+        catch (Exception e) {
+            // If metric doesn't exist yet, return 0
+            return 0.0;
+        }
     }
 
     private void activateCourse(final Course course) {

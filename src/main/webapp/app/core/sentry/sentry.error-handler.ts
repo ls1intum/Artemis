@@ -40,11 +40,12 @@ export class SentryErrorHandler extends ErrorHandler {
             release: VERSION,
             environment: this.environment,
             integrations: integrations,
+            sendDefaultPii: false,
             tracesSampler: (samplingContext) => {
                 const { name, inheritOrSampleWith } = samplingContext;
 
-                // Sample none of the time transactions
-                if (name.includes('api/core/public/time')) {
+                // Drop /api/public/time transactions entirely
+                if (/^\/api\/public\/time(?:\?|$)/.test(name)) {
                     return 0.0;
                 }
                 // Sample less of the iris status transactions
@@ -54,9 +55,72 @@ export class SentryErrorHandler extends ErrorHandler {
                 // Fall back to default sample rate
                 return inheritOrSampleWith(defaultSampleRate);
             },
+            beforeSend: (event) => {
+                return this.scrubSentryPayload(event);
+            },
+            beforeSendTransaction: (t) => {
+                return this.scrubSentryPayload(t);
+            },
+            beforeBreadcrumb: (crumb) => {
+                if (crumb.message) {
+                    crumb.message = this.scrubStringMessage(crumb.message);
+                }
+                return crumb;
+            },
         });
 
         this.reportIfPasskeyIsNotSupported();
+    }
+
+    private scrubSentryPayload(trans: any): any {
+        if (trans.user) {
+            delete trans.user;
+        }
+
+        if (trans.message) {
+            trans.message = this.scrubStringMessage(trans.message);
+        }
+
+        if (trans.request) {
+            if (trans.request.cookies) {
+                delete trans.request.cookies;
+            }
+
+            if (trans.request.headers) {
+                trans.request.headers = Object.fromEntries(Object.entries(trans.request.headers).filter(([key]) => !key.toLowerCase().startsWith('x-artemis-client-')));
+            }
+        }
+
+        if (trans.exception && trans.exception.values) {
+            for (const ex of trans.exception.values) {
+                if (ex.value) {
+                    ex.value = this.scrubStringMessage(ex.value);
+                }
+            }
+        }
+
+        if (trans.request && trans.request.url) {
+            trans.request.url = this.scrubUrl(trans.request.url);
+        }
+
+        return trans;
+    }
+
+    private scrubStringMessage(message: string): string {
+        const piiPatterns = [/user=\S+/g, /User\{[^}]*\}/g, /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g];
+        for (const pattern of piiPatterns) {
+            message = message.replace(pattern, '');
+        }
+        return message;
+    }
+
+    private scrubUrl(url: string): string {
+        const scrubbed: string = url.replace(/\/git\/([A-Z0-9]+)\/([^/]+)-[^/]+\.git/g, '/git/$1/$2.git');
+
+        if (url.includes('-tests.git') || url.includes('-exercise.git') || url.includes('-solution.git')) {
+            return url;
+        }
+        return scrubbed;
     }
 
     /**

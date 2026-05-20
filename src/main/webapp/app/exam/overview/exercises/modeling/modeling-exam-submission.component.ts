@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, input, output, viewChild } from '@angular/core';
-import { UMLModel } from '@ls1intum/apollon';
+import { UMLModel, importDiagram } from '@tumaet/apollon';
+import { ChangeDetectionStrategy, Component, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -48,7 +48,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
     studentSubmission = input.required<ModelingSubmission>();
-    problemStatementHtml: SafeHtml;
+    readonly problemStatementHtml = signal<SafeHtml | undefined>(undefined);
 
     exercise = input.required<ModelingExercise>();
     umlModel: UMLModel; // input model for Apollon+
@@ -67,7 +67,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
     ngOnInit(): void {
         // show submission answers in UI
-        this.problemStatementHtml = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise()?.problemStatement);
+        this.problemStatementHtml.set(this.artemisMarkdown.safeHtmlForMarkdown(this.exercise()?.problemStatement));
         this.updateViewFromSubmission();
     }
 
@@ -76,7 +76,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
      * @param newProblemStatementHtml is the updated problem statement html that should be displayed to the user.
      */
     updateProblemStatement(newProblemStatementHtml: SafeHtml): void {
-        this.problemStatementHtml = newProblemStatementHtml;
+        this.problemStatementHtml.set(newProblemStatementHtml);
         this.changeDetectorReference.detectChanges();
     }
 
@@ -96,7 +96,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         if (this.studentSubmission()) {
             if (this.studentSubmission()!.model) {
                 // Updates the Apollon editor model state (view) with the latest modeling submission
-                this.umlModel = JSON.parse(this.studentSubmission()!.model!);
+                this.umlModel = importDiagram(JSON.parse(this.studentSubmission()!.model!));
             }
             // Updates explanation text with the latest submission
             this.explanationText = this.studentSubmission()!.explanationText ?? '';
@@ -111,8 +111,8 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         if (!this.modelingEditor() || !this.modelingEditor().getCurrentModel()) {
             return;
         }
-        const currentApollonModel = this.modelingEditor().getCurrentModel();
-        const diagramJson = JSON.stringify(currentApollonModel);
+
+        const diagramJson = JSON.stringify(this.modelingEditor().getCurrentModel());
 
         if (this.studentSubmission()) {
             if (diagramJson) {
@@ -161,10 +161,9 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
             // and need to remove the content that was added before the string is saved to the db to get valid JSON
             let model = this.submissionVersion.content.substring(0, this.submissionVersion.content.indexOf('; Explanation:'));
             // if we do not wait here for apollon, the redux store might be undefined
-            await this.modelingEditor()!.apollonEditor!.nextRender;
             model = model.replace('Model: ', '');
             // updates the Apollon editor model state (view) with the latest modeling submission
-            this.umlModel = JSON.parse(model);
+            this.umlModel = importDiagram(JSON.parse(model));
             // same as above regarding the string operations
             const numberOfCharactersToSkip = 13; // Explanation:  is 13 characters long
             this.explanationText = this.submissionVersion.content.substring(this.submissionVersion.content.indexOf('Explanation:') + numberOfCharactersToSkip) ?? '';

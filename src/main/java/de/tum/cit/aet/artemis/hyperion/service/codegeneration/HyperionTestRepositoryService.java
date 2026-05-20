@@ -11,13 +11,13 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
+import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 
 /**
@@ -39,52 +39,81 @@ public class HyperionTestRepositoryService extends HyperionCodeGenerationService
     /**
      * Creates a new TestRepository with required dependencies.
      *
-     * @param programmingExerciseRepository repository for accessing programming exercise data
-     * @param chatClient                    AI chat client for generating test code
-     * @param templates                     service for rendering prompt templates
-     * @param gitService                    service for Git operations
-     * @param contextRenderer               service for rendering programming exercise context
+     * @param chatClient           AI chat client for generating test code
+     * @param templates            service for rendering prompt templates
+     * @param gitService           service for Git operations
+     * @param contextRenderer      service for rendering programming exercise context
+     * @param llmTokenUsageService service for persisting LLM token usage telemetry
      */
-    public HyperionTestRepositoryService(ProgrammingExerciseRepository programmingExerciseRepository, ChatClient chatClient, HyperionPromptTemplateService templates,
-            GitService gitService, HyperionProgrammingExerciseContextRendererService contextRenderer) {
-        super(programmingExerciseRepository, chatClient, templates);
+    public HyperionTestRepositoryService(ChatClient chatClient, HyperionPromptTemplateService templates, GitService gitService,
+            HyperionProgrammingExerciseContextRendererService contextRenderer, LLMTokenUsageService llmTokenUsageService) {
+        super(chatClient, templates, llmTokenUsageService);
         this.gitService = gitService;
         this.contextRenderer = contextRenderer;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @throws IllegalArgumentException if {@code exercise}, {@code repositoryStructure}, or {@code consistencyIssues} is {@code null}
+     * @throws NetworkingException      if repository access fails or AI service communication fails
+     */
     @Override
-    protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, String previousBuildLogs, String repositoryStructure)
-            throws NetworkingException {
+    protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
+            String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
         // Get existing solution code from repository instead of generating new code
         String solutionCode = contextRenderer.getExistingSolutionCode(exercise, gitService);
-        var templateVariables = Map.<String, Object>of("problemStatement", exercise.getProblemStatement(), "solutionCode", solutionCode, "programmingLanguage",
-                exercise.getProgrammingLanguage(), "previousBuildLogs", previousBuildLogs != null ? previousBuildLogs : "", "repositoryStructure",
-                repositoryStructure != null ? repositoryStructure : "");
-        return callChatClient("/prompts/hyperion/test/1_plan.st", templateVariables);
+        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, buildEnvironmentContext, consistencyIssues);
+        templateVariables.put("problemStatement", exercise.getProblemStatement());
+        templateVariables.put("solutionCode", solutionCode);
+        templateVariables.put("previousBuildLogs", previousBuildLogs != null ? previousBuildLogs : "");
+        return callChatClient(user, exercise, courseId, "/prompts/hyperion/test/1_plan.st", templateVariables);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @throws IllegalArgumentException if {@code exercise}, {@code repositoryStructure}, or {@code consistencyIssues} is {@code null}
+     * @throws NetworkingException      if AI service communication fails
+     */
     @Override
-    protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure) throws NetworkingException {
-        var templateVariables = Map.<String, Object>of("solutionPlan", solutionPlan, "programmingLanguage", exercise.getProgrammingLanguage(), "repositoryStructure",
-                repositoryStructure != null ? repositoryStructure : "");
-        return callChatClient("/prompts/hyperion/test/2_file_structure.st", templateVariables);
+    protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
+            String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
+        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, buildEnvironmentContext, consistencyIssues);
+        templateVariables.put("solutionPlan", solutionPlan);
+        return callChatClient(user, exercise, courseId, "/prompts/hyperion/test/2_file_structure.st", templateVariables);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @throws IllegalArgumentException if {@code exercise}, {@code repositoryStructure}, or {@code consistencyIssues} is {@code null}
+     * @throws NetworkingException      if AI service communication fails
+     */
     @Override
-    protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure)
-            throws NetworkingException {
-        var fileStructure = defineFileStructure(user, exercise, solutionPlan, repositoryStructure);
-        var templateVariables = Map.<String, Object>of("solutionPlan", solutionPlan, "fileStructure", fileStructure.getFiles(), "programmingLanguage",
-                exercise.getProgrammingLanguage(), "repositoryStructure", repositoryStructure != null ? repositoryStructure : "");
-        return callChatClient("/prompts/hyperion/test/3_headers.st", templateVariables);
+    protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
+            String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
+        CodeGenerationResponseDTO fileStructure = defineFileStructure(user, exercise, courseId, solutionPlan, repositoryStructure, buildEnvironmentContext, consistencyIssues);
+        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, buildEnvironmentContext, consistencyIssues);
+        templateVariables.put("solutionPlan", solutionPlan);
+        templateVariables.put("fileStructure", fileStructure.getFiles());
+        return callChatClient(user, exercise, courseId, "/prompts/hyperion/test/3_headers.st", templateVariables);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @throws IllegalArgumentException if {@code exercise}, {@code repositoryStructure}, or {@code consistencyIssues} is {@code null}
+     * @throws NetworkingException      if AI service communication fails
+     */
     @Override
-    protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure) throws NetworkingException {
-        var headers = generateClassAndMethodHeaders(user, exercise, solutionPlan, repositoryStructure);
-        var templateVariables = Map.<String, Object>of("solutionPlan", solutionPlan, "filesWithHeaders", headers.getFiles(), "programmingLanguage",
-                exercise.getProgrammingLanguage(), "repositoryStructure", repositoryStructure != null ? repositoryStructure : "");
-        return callChatClient("/prompts/hyperion/test/4_logic.st", templateVariables);
+    protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
+            String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
+        CodeGenerationResponseDTO headers = generateClassAndMethodHeaders(user, exercise, courseId, solutionPlan, repositoryStructure, buildEnvironmentContext, consistencyIssues);
+        Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, buildEnvironmentContext, consistencyIssues);
+        templateVariables.put("solutionPlan", solutionPlan);
+        templateVariables.put("filesWithHeaders", headers.getFiles());
+        return callChatClient(user, exercise, courseId, "/prompts/hyperion/test/4_logic.st", templateVariables);
     }
 
     @Override

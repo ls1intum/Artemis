@@ -97,6 +97,8 @@ export class ComplaintsForTutorComponent implements OnInit {
             .subscribe({
                 next: (response) => {
                     this.complaintResponse = response.body!;
+                    this.complaintResponse.complaint = this.complaint();
+                    this.complaintResponse.complaint!.complaintResponse = this.complaintResponse;
                     this.complaint.set(this.complaintResponse.complaint!);
                     this.lockedByCurrentUser = true;
                     this.showLockDuration = true;
@@ -111,7 +113,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     private refreshLock() {
         this.complaintResponse = this.complaint().complaintResponse!;
         this.showLockDuration = true;
-        // if a lock exists we have to check if it affects the currently logged-in user
+        // if a lock exists, we have to check if it affects the currently logged-in user
         this.isLockedForLoggedInUser = this.complaintResponseService.isComplaintResponseLockedForLoggedInUser(this.complaintResponse, this.exercise()!);
         if (!this.isLockedForLoggedInUser) {
             // update the lock
@@ -126,6 +128,8 @@ export class ComplaintsForTutorComponent implements OnInit {
                 .subscribe({
                     next: (response) => {
                         this.complaintResponse = response.body!;
+                        this.complaintResponse.complaint = this.complaint();
+                        this.complaintResponse.complaint!.complaintResponse = this.complaintResponse;
                         this.complaint.set(this.complaintResponse.complaint!);
                         this.lockedByCurrentUser = true;
                         this.alertService.success('artemisApp.locks.acquired');
@@ -218,6 +222,9 @@ export class ComplaintsForTutorComponent implements OnInit {
                         this.alertService.success('artemisApp.complaintResponse.created');
                     }
                     this.complaintResponse = response.body!;
+                    this.complaintResponse.complaint = this.complaint();
+                    this.complaintResponse.complaint!.complaintResponse = this.complaintResponse;
+                    this.complaintResponse.complaint!.accepted = this.complaintResponseUpdate.complaintIsAccepted;
                     this.complaint.set(this.complaintResponse.complaint!);
                     this.isLockedForLoggedInUser = false;
                     this.showLockDuration = false;
@@ -241,8 +248,8 @@ export class ComplaintsForTutorComponent implements OnInit {
     }
 
     /**
-     * For team exercises, the team tutor is the assessor and handles both complaints and feedback requests himself
-     * For individual exercises, complaints are handled by a secondary reviewer and feedback requests by the assessor himself
+     * For team exercises, the team tutor is the assessor and handles both complaints and feedback requests themselves
+     * For individual exercises, complaints are handled by a secondary reviewer and feedback requests by the assessor themselves
      * For exam test runs, the original assessor is allowed to respond to complaints.
      */
     get isAllowedToRespond(): boolean {

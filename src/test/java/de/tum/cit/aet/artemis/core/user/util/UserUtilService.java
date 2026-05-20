@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.core.user.util;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -211,7 +211,7 @@ public class UserUtilService {
     }
 
     /**
-     * Deletes all tokens and saves the calendarSubscriptionToken in his calendarSubscriptionTokenStore of the user.
+     * Deletes all tokens and saves the calendarSubscriptionToken in their calendarSubscriptionTokenStore of the user.
      *
      * @param user                      The User to update
      * @param calendarSubscriptionToken The calendarSubscriptionToken to set

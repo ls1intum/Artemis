@@ -40,3 +40,40 @@ export class BonusResult {
     public achievedPresentationScore?: number;
     public presentationScoreThreshold?: number;
 }
+
+export class BonusDTO {
+    public id: number;
+    public sourceGradingScaleId: number;
+    public weight?: number;
+}
+
+/**
+ * Converts a {@link Bonus} entity into a {@link BonusDTO}.
+ *
+ * @param bonus the bonus entity to convert
+ * @returns the corresponding DTO
+ */
+export const toBonusDTO = (bonus: Bonus): BonusDTO => {
+    if (!bonus.id) {
+        throw new Error('Bonus id must be defined');
+    }
+    if (!bonus.sourceGradingScale?.id) {
+        throw new Error('Bonus sourceGradingScale id must be defined');
+    }
+
+    return {
+        id: bonus.id,
+        sourceGradingScaleId: bonus.sourceGradingScale.id,
+        weight: bonus.weight,
+    };
+};
+
+/**
+ * Converts an array of {@link Bonus} entities into {@link BonusDTO}s.
+ *
+ * @param bonuses the bonus entities
+ * @returns the corresponding DTOs
+ */
+export const toBonusDTOs = (bonuses: Bonus[] = []): BonusDTO[] => {
+    return bonuses.map(toBonusDTO);
+};

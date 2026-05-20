@@ -22,22 +22,20 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
     const initialStats = [0, 11, 9, 23];
     const course = { startDate: dayjs().subtract(5, 'weeks'), endDate: dayjs().add(5, 'weeks') } as Course;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 provideNoopAnimationsForTests(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CourseManagementOverviewStatisticsComponent);
-                component = fixture.componentInstance;
-                componentRef = fixture.componentRef;
-                componentRef.setInput('course', course);
-                componentRef.setInput('amountOfStudentsInCourse', amountOfStudentsInCourse);
-            });
+        });
+        await TestBed.compileComponents();
+        fixture = TestBed.createComponent(CourseManagementOverviewStatisticsComponent);
+        component = fixture.componentInstance;
+        componentRef = fixture.componentRef;
+        componentRef.setInput('course', course);
+        componentRef.setInput('amountOfStudentsInCourse', amountOfStudentsInCourse);
     });
 
     afterEach(() => {

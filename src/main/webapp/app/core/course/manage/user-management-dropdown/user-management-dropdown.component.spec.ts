@@ -42,7 +42,7 @@ describe('UserManagementDropdownComponent', () => {
     it('should initialize userAddActions with correct links and translations when courseId is provided', () => {
         fixture.componentRef.setInput('courseId', 123);
         fixture.changeDetectorRef.detectChanges();
-        expect(component.userAddActions).toEqual([
+        expect(component.userAddActions()).toEqual([
             {
                 icon: faSchool,
                 routerLink: ['/course-management/123/groups/students'],
@@ -73,6 +73,6 @@ describe('UserManagementDropdownComponent', () => {
     it('should not initialize userAddActions when courseId is undefined', () => {
         fixture.componentRef.setInput('courseId', undefined);
         fixture.changeDetectorRef.detectChanges();
-        expect(component.userAddActions).toEqual([]);
+        expect(component.userAddActions()).toEqual([]);
     });
 });

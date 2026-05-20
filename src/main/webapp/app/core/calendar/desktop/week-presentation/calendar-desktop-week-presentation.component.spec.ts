@@ -1,26 +1,53 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
+import { signal } from '@angular/core';
 import { CalendarDesktopWeekPresentationComponent } from './calendar-desktop-week-presentation.component';
 import { CalendarEventsPerDaySectionComponent } from 'app/core/calendar/shared/calendar-events-per-day-section/calendar-events-per-day-section.component';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 describe('CalendarDesktopWeekPresentationComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CalendarDesktopWeekPresentationComponent>;
 
     const startOfMonday = dayjs('2025-05-05');
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CalendarDesktopWeekPresentationComponent],
-            declarations: [
+            imports: [
+                CalendarDesktopWeekPresentationComponent,
                 MockComponent(CalendarDayBadgeComponent),
                 MockComponent(CalendarEventsPerDaySectionComponent),
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
+            ],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                {
+                    provide: CalendarService,
+                    useValue: {
+                        eventMap: signal(new Map()),
+                        subscriptionToken: signal(undefined),
+                        eventFilterOptions: [],
+                        includedEventFilterOptions: signal([]),
+                        reloadEvents: vi.fn(),
+                        toggleEventFilterOption: vi.fn(),
+                        loadEventsForCurrentMonth: vi.fn(),
+                    },
+                },
             ],
         }).compileComponents();
 

@@ -1,5 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
 import { generateExampleGroupChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,11 +13,14 @@ import { GroupChatDTO } from 'app/communication/shared/entities/conversation/gro
 import { provideHttpClient } from '@angular/common/http';
 
 describe('GroupChatService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: GroupChatService;
     let httpMock: HttpTestingController;
     let elemDefault: GroupChatDTO;
 
     beforeEach(() => {
+        vi.useFakeTimers();
         TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(),
@@ -31,10 +36,12 @@ describe('GroupChatService', () => {
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         httpMock.verify();
+        vi.restoreAllMocks();
     });
 
-    it('create', fakeAsync(() => {
+    it('create', () => {
         const returnedFromService = { ...elemDefault, id: 0 };
         const expected = { ...returnedFromService };
         service
@@ -44,10 +51,10 @@ describe('GroupChatService', () => {
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
-    it('update', fakeAsync(() => {
+    it('update', () => {
         const returnedFromService = { ...elemDefault, name: 'test' };
         const expected = { ...returnedFromService };
 
@@ -58,10 +65,10 @@ describe('GroupChatService', () => {
 
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
-    it('removeUsersFromGroupChat', fakeAsync(() => {
+    it('removeUsersFromGroupChat', () => {
         service
             .removeUsersFromGroupChat(1, 1)
             .pipe(take(1))
@@ -69,10 +76,10 @@ describe('GroupChatService', () => {
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush({});
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
-    it('addUsersToGroupChat', fakeAsync(() => {
+    it('addUsersToGroupChat', () => {
         service
             .addUsersToGroupChat(1, 1, ['user1', 'user2'])
             .pipe(take(1))
@@ -80,6 +87,6 @@ describe('GroupChatService', () => {
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush({});
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 });

@@ -63,7 +63,7 @@ describe('CourseManagementCardComponent', () => {
     exerciseDTO.averageScoreInPercent = 50;
     courseStatisticsDTO.exerciseDTOS = [exerciseDTO];
 
-    beforeEach(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
             imports: [CourseManagementCardComponent, RouterModule.forRoot([])],
             providers: [
@@ -73,32 +73,29 @@ describe('CourseManagementCardComponent', () => {
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: ProfileService, useClass: MockProfileService },
             ],
-        })
-            .overrideComponent(CourseManagementCardComponent, {
-                set: {
-                    imports: [
-                        NgStyle,
-                        RouterLink,
-                        MockComponent(ImageComponent),
-                        MockDirective(TranslateDirective),
-                        MockComponent(FaIconComponent),
-                        MockComponent(CourseManagementExerciseRowComponent),
-                        MockComponent(CourseManagementOverviewStatisticsComponent),
-                        MockDirective(NgbTooltip),
-                        MockDirective(FeatureToggleHideDirective),
-                        MockPipe(ArtemisDatePipe),
-                        MockPipe(ArtemisTranslatePipe),
-                        MockComponent(FeatureOverlayComponent),
-                    ],
-                },
-            })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CourseManagementCardComponent);
-                component = fixture.componentInstance;
-                componentRef = fixture.componentRef;
-                componentRef.setInput('course', course);
-            });
+        }).overrideComponent(CourseManagementCardComponent, {
+            set: {
+                imports: [
+                    NgStyle,
+                    RouterLink,
+                    MockComponent(ImageComponent),
+                    MockDirective(TranslateDirective),
+                    MockComponent(FaIconComponent),
+                    MockComponent(CourseManagementExerciseRowComponent),
+                    MockComponent(CourseManagementOverviewStatisticsComponent),
+                    MockDirective(NgbTooltip),
+                    MockDirective(FeatureToggleHideDirective),
+                    MockPipe(ArtemisDatePipe),
+                    MockPipe(ArtemisTranslatePipe),
+                    MockComponent(FeatureOverlayComponent),
+                ],
+            },
+        });
+        await TestBed.compileComponents();
+        fixture = TestBed.createComponent(CourseManagementCardComponent);
+        component = fixture.componentInstance;
+        componentRef = fixture.componentRef;
+        componentRef.setInput('course', course);
     });
 
     afterEach(() => {

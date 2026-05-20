@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -13,13 +14,14 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 
 @Entity
 @Table(name = "programming_exercise_build_config")
@@ -229,22 +231,23 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     }
 
     /**
-     * We store the build plan configuration as a JSON string in the database, as it is easier to handle than a complex object structure.
-     * This method parses the JSON string and returns a {@link Windfile} object.
+     * Tries to deserialize the buildPlanConfiguration as a {@link BuildPlanPhasesDTO} object.
      *
-     * @return the {@link Windfile} object or null if the JSON string could not be parsed
+     * @return the {@link BuildPlanPhasesDTO} object, or empty if the configuration is null, empty, or invalid
      */
-    public Windfile getWindfile() {
+    @JsonIgnore
+    public Optional<BuildPlanPhasesDTO> getBuildPlanPhases() {
         if (buildPlanConfiguration == null) {
-            return null;
+            return Optional.empty();
         }
         try {
-            return Windfile.deserialize(buildPlanConfiguration);
+            BuildPlanPhasesDTO phases = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildPlanConfiguration);
+            return Optional.of(phases);
         }
         catch (JsonProcessingException e) {
-            log.error("Could not parse build plan configuration for programming exercise {}", this.getId(), e);
+            log.warn("Could not parse build plan phases for programming exercise {}", getId(), e);
+            return Optional.empty();
         }
-        return null;
     }
 
     public void filterSensitiveInformation() {

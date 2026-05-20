@@ -6,12 +6,12 @@ on:
     workflows: ["Build"]
     types: [completed]
 
+# Single-line concurrency group to avoid YAML block-scalar quirks and keep the
+# group key reliably comparable across runs. head_branch is set on branch /
+# default-branch pushes (groups all E2E for that branch into one slot); head_sha
+# is the fallback for events with no branch.
 concurrency:
-  group: |
-    ${{
-      github.event.workflow_run.head_branch && format('e2e-{0}', github.event.workflow_run.head_branch)
-      || format('e2e-{0}', github.event.workflow_run.head_sha)
-    }}
+  group: e2e-${{ github.event.workflow_run.head_branch || github.event.workflow_run.head_sha }}
   cancel-in-progress: true
 
 env:
@@ -21,18 +21,54 @@ env:
   STATUSES_REQUEST_URL: "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.event.workflow_run.head_sha }}"
   # This is the URL to the workflow run in the GitHub Actions UI.
   TARGET_URL: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+  PLAYWRIGHT_REPORT_SERVER_URL: ${{ vars.PLAYWRIGHT_REPORT_SERVER_URL }}
+  PLAYWRIGHT_REPORT_TOKEN: ${{ secrets.PLAYWRIGHT_REPORT_TOKEN }}
+  PLAYWRIGHT_REPORT_BRANCH: ${{ github.event.workflow_run.head_branch }}
+  PLAYWRIGHT_REPORT_COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
+  PLAYWRIGHT_REPORT_TRIGGERED_BY: ${{ github.event.workflow_run.event }}
 
 jobs:
+  # Guard against workflow_run queue stacking. Each Build retry fires a new
+  # workflow_run event that queues another E2E run for the same SHA; built-in
+  # concurrency cancel-in-progress does not reliably dedupe queued runs that
+  # sit waiting for the [self-hosted, e2e-test] pool. This job runs on
+  # ubuntu-latest (instant pickup) and uses styfle/cancel-workflow-action to
+  # cancel older same-SHA runs of this workflow, and self-cancels if a newer
+  # run already exists. Cross-SHA cancellation is the built-in `concurrency`
+  # block's responsibility (it works reliably when the next run starts
+  # immediately).
+  cancel-superseded:
+    name: Cancel superseded E2E runs
+    # Skip on Build failures — those workflow_run events would produce skipped
+    # E2E runs anyway, because all dependent jobs are if-gated on
+    # conclusion == 'success'. No queue stacking comes from failed Builds.
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      actions: write
+    steps:
+      - name: Cancel older E2E runs for this SHA
+        uses: styfle/cancel-workflow-action@0.13.1
+        with:
+          # all_but_latest: cancels every queued or in-progress run of this
+          # workflow except the absolute newest, including self if a newer run
+          # exists. ignore_sha defaults to false → only same-SHA runs are
+          # cancelled (we don't want to cancel a PR's E2E because of an
+          # unrelated develop push).
+          all_but_latest: true
+          access_token: ${{ github.token }}
+
   # Job to determine which tests are relevant based on changed files (only for PRs)
   determine-tests:
     name: Determine Relevant Tests
+    needs: cancel-superseded
     if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request'
     runs-on: ubuntu-latest
     outputs:
       run_all_tests: ${{ steps.determine.outputs.RUN_ALL_TESTS }}
       relevant_tests: ${{ steps.determine.outputs.RELEVANT_TESTS }}
       remaining_tests: ${{ steps.determine.outputs.REMAINING_TESTS }}
-      ignore_tests: ${{ steps.determine.outputs.IGNORE_TESTS }}
       relevant_count: ${{ steps.determine.outputs.RELEVANT_COUNT }}
       remaining_count: ${{ steps.determine.outputs.REMAINING_COUNT }}
     steps:
@@ -80,8 +116,10 @@ jobs:
       TEST_RETRIES: ${{ vars.TEST_RETRIES }}
       TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
       TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+      PLAYWRIGHT_REPORT_PHASE: phase1
+      PLAYWRIGHT_REPORT_PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
     outputs:
-      phase1_status: ${{ job.status }}
+      reporter_failed: ${{ steps.run-tests-phase1.outputs.reporter_failed }}
     steps:
       # workflow_run events do not create check runs, so we set a status manually
       - name: Create pending status
@@ -109,34 +147,143 @@ jobs:
           artifact-name-suffix: phase1
           test-notice: "Running Phase 1 with relevant tests: ${{ needs.determine-tests.outputs.relevant_tests }}"
 
+      - name: Record test start time
+        id: test-timer
+        shell: bash
+        run: .github/scripts/wall-clock-timer.sh start
+
       - name: Run E2E Playwright tests (Phase 1 - Relevant Tests)
-        run: .ci/E2E-tests/execute.sh mysql-localci playwright "${{ needs.determine-tests.outputs.relevant_tests }}"
+        id: run-tests-phase1
+        run: .ci/E2E-tests/execute.sh postgres-localci playwright "${{ needs.determine-tests.outputs.relevant_tests }}"
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
+
+      - name: Calculate wall-clock duration
+        id: wall-clock
+        if: success() || failure()
+        shell: bash
+        run: .github/scripts/wall-clock-timer.sh stop ${{ steps.test-timer.outputs.start }}
 
       - name: E2E Teardown
         if: success() || failure()
         uses: ./.github/actions/e2e-teardown
         with:
           artifact-name-suffix: Phase 1
-          require-tests: warn
+          require-tests: error
 
       - name: E2E Test Report
+        id: e2e-report
         if: success() || failure()
         uses: ./.github/actions/e2e-test-report
         with:
-          phase-name: "Phase 1"
           artifact-name: "JUnit Test Results Phase 1"
           download-path: "phase1-test-results"
           check-name: "Phase 1: E2E Test Report"
           commit-sha: ${{ github.event.workflow_run.head_sha }}
-          tests-run: ${{ needs.determine-tests.outputs.relevant_tests }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ github.repository }}
-          repository-owner: ${{ github.repository_owner }}
-          run-id: ${{ github.run_id }}
-          head-branch: ${{ github.event.workflow_run.head_branch }}
-          is-pr: ${{ github.event.workflow_run.event == 'pull_request' }}
+
+      - name: Extract failed tests
+        id: failed-tests
+        if: success() || failure()
+        shell: bash
+        run: .github/scripts/extract-failed-tests.sh phase1-test-results/results.xml
+
+      - name: Format test results
+        id: format-results
+        if: success() || failure()
+        uses: actions/github-script@v9
+        env:
+          INPUT_SUMMARY: ${{ steps.e2e-report.outputs.summary }}
+          INPUT_WALL_CLOCK: ${{ steps.wall-clock.outputs.duration }}
+          INPUT_FAILURES: ${{ steps.failed-tests.outputs.failures }}
+          INPUT_PHASE_LABEL: Phase 1
+          INPUT_TEST_OUTCOME: ${{ steps.run-tests-phase1.outcome }}
+          INPUT_JOB_STATUS: ${{ job.status }}
+          INPUT_REPORTER_FAILED: ${{ steps.run-tests-phase1.outputs.reporter_failed }}
+        with:
+          script: require('./.github/scripts/format-test-results.js')(core);
+
+      - name: Find E2E PR comment
+        id: find-e2e-comment
+        if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
+        uses: ./.github/actions/find-e2e-comment
+
+      - name: Post E2E comment (Phase 1)
+        if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
+        uses: actions/github-script@v9
+        continue-on-error: true
+        env:
+          HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
+          INPUT_RELEVANT_TESTS: ${{ needs.determine-tests.outputs.relevant_tests }}
+          INPUT_REMAINING_TESTS: ${{ needs.determine-tests.outputs.remaining_tests }}
+          INPUT_DETAILS: ${{ steps.format-results.outputs.details }}
+          INPUT_FAILURES_SECTION: ${{ steps.format-results.outputs.failures-section }}
+          INPUT_REPORTER_NOTE: ${{ steps.format-results.outputs.reporter-note }}
+          INPUT_INFRA_NOTE: ${{ steps.format-results.outputs.infra-note }}
+        with:
+          script: |
+            const { parseFailedTests, fetchFlakinessScores, buildFlakinessTable } = require('./.github/scripts/fetch-flakiness.js');
+
+            const prNumber = Number('${{ steps.find-e2e-comment.outputs.pr-number }}');
+            if (!prNumber) return;
+            const existingCommentId = Number('${{ steps.find-e2e-comment.outputs.comment-id }}') || null;
+
+            const relevantTests = process.env.INPUT_RELEVANT_TESTS || '';
+            const remainingTests = process.env.INPUT_REMAINING_TESTS || '';
+            const emoji = '${{ steps.format-results.outputs.status-emoji }}';
+            const status = '${{ steps.format-results.outputs.status-text }}';
+            const details = process.env.INPUT_DETAILS || '';
+            const failuresSection = process.env.INPUT_FAILURES_SECTION || '';
+            const reporterNote = process.env.INPUT_REPORTER_NOTE || '';
+            const infraNote = process.env.INPUT_INFRA_NOTE || '';
+
+            // Fetch flakiness scores for failed tests
+            const failedTests = parseFailedTests('phase1-test-results/results.xml');
+            const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
+            const flakinessTable = buildFlakinessTable(flakinessResults);
+
+            let body = `## End-to-End Test Results\n\n`;
+            body += `| Phase | Status | Details |\n`;
+            body += `|-------|--------|---------|\n`;
+            body += `| **Phase 1** (Relevant) | ${emoji} ${status} | ${details} |\n`;
+            if (remainingTests) {
+              body += `<!-- PHASE2 -->| **Phase 2** (Remaining) | ⏳ Pending... | |<!-- /PHASE2 -->\n`;
+            } else {
+              body += `| **Phase 2** (Remaining) | ⏭ Skipped | No remaining tests |\n`;
+            }
+            body += failuresSection;
+            body += reporterNote;
+            body += infraNote;
+            body += flakinessTable;
+            body += `\n\n**Test Strategy:** Two-phase execution\n`;
+            body += `- **Phase 1:** \`${relevantTests}\`\n`;
+            body += `- **Phase 2:** \`${remainingTests || 'None'}\`\n`;
+            // <!-- OVERALL --> is a placeholder that the report-results job replaces
+            // with Phase 2 notes (if any) and the final overall status line.
+            body += `<!-- OVERALL -->\n\n`;
+            body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+            if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+              body += ` · 📊 [Test Report Phase 1](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase1)`;
+            }
+            body += `\n`;
+            body += `<!-- E2E Test Results -->`;
+
+            if (existingCommentId) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingCommentId,
+                body: body
+              });
+              console.log(`Updated existing comment ${existingCommentId}`);
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: body
+              });
+              console.log(`Created new comment on PR #${prNumber}`);
+            }
 
   # Phase 2: Run remaining tests only if Phase 1 succeeds
   run-e2e-remaining:
@@ -151,6 +298,9 @@ jobs:
     runs-on: [self-hosted, e2e-test]
     timeout-minutes: 120
     environment: playwright-e2e-tests
+    outputs:
+      reporter_failed: ${{ steps.run-tests-phase2.outputs.reporter_failed }}
+      phase2_notes: ${{ steps.update-comment.outputs.phase2_notes }}
     env:
       ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
       ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
@@ -161,6 +311,8 @@ jobs:
       TEST_RETRIES: ${{ vars.TEST_RETRIES }}
       TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
       TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+      PLAYWRIGHT_REPORT_PHASE: phase2
+      PLAYWRIGHT_REPORT_PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
     steps:
       - name: Update status to Phase 2
         run: |
@@ -187,34 +339,154 @@ jobs:
           artifact-name-suffix: phase2
           test-notice: "Running Phase 2 with remaining tests: ${{ needs.determine-tests.outputs.remaining_tests }}"
 
+      - name: Record test start time
+        id: test-timer
+        shell: bash
+        run: .github/scripts/wall-clock-timer.sh start
+
       - name: Run E2E Playwright tests (Phase 2 - Remaining Tests)
-        run: .ci/E2E-tests/execute.sh mysql-localci playwright "${{ needs.determine-tests.outputs.remaining_tests }}" "${{ needs.determine-tests.outputs.ignore_tests }}"
+        id: run-tests-phase2
+        run: .ci/E2E-tests/execute.sh postgres-localci playwright "${{ needs.determine-tests.outputs.remaining_tests }}"
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
+
+      - name: Calculate wall-clock duration
+        id: wall-clock
+        if: success() || failure()
+        shell: bash
+        run: .github/scripts/wall-clock-timer.sh stop ${{ steps.test-timer.outputs.start }}
 
       - name: E2E Teardown
         if: success() || failure()
         uses: ./.github/actions/e2e-teardown
         with:
           artifact-name-suffix: Phase 2
-          require-tests: warn
+          require-tests: error
 
       - name: E2E Test Report
+        id: e2e-report
         if: success() || failure()
         uses: ./.github/actions/e2e-test-report
         with:
-          phase-name: "Phase 2"
           artifact-name: "JUnit Test Results Phase 2"
           download-path: "phase2-test-results"
           check-name: "Phase 2: E2E Test Report"
           commit-sha: ${{ github.event.workflow_run.head_sha }}
-          tests-run: ${{ needs.determine-tests.outputs.remaining_tests }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ github.repository }}
-          repository-owner: ${{ github.repository_owner }}
-          run-id: ${{ github.run_id }}
-          head-branch: ${{ github.event.workflow_run.head_branch }}
-          is-pr: ${{ github.event.workflow_run.event == 'pull_request' }}
+
+      - name: Extract failed tests
+        id: failed-tests
+        if: success() || failure()
+        shell: bash
+        run: .github/scripts/extract-failed-tests.sh phase2-test-results/results.xml
+
+      - name: Format test results
+        id: format-results
+        if: success() || failure()
+        uses: actions/github-script@v9
+        env:
+          INPUT_SUMMARY: ${{ steps.e2e-report.outputs.summary }}
+          INPUT_WALL_CLOCK: ${{ steps.wall-clock.outputs.duration }}
+          INPUT_FAILURES: ${{ steps.failed-tests.outputs.failures }}
+          INPUT_PHASE_LABEL: Phase 2
+          INPUT_TEST_OUTCOME: ${{ steps.run-tests-phase2.outcome }}
+          INPUT_JOB_STATUS: ${{ job.status }}
+          INPUT_REPORTER_FAILED: ${{ steps.run-tests-phase2.outputs.reporter_failed }}
+        with:
+          script: require('./.github/scripts/format-test-results.js')(core);
+
+      - name: Find E2E PR comment
+        id: find-e2e-comment
+        if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
+        uses: ./.github/actions/find-e2e-comment
+
+      - name: Update E2E comment (Phase 2)
+        id: update-comment
+        if: (success() || failure()) && github.event.workflow_run.event == 'pull_request'
+        uses: actions/github-script@v9
+        continue-on-error: true
+        env:
+          HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
+          INPUT_DETAILS: ${{ steps.format-results.outputs.details }}
+          INPUT_FAILURES_SECTION: ${{ steps.format-results.outputs.failures-section }}
+          INPUT_REPORTER_NOTE: ${{ steps.format-results.outputs.reporter-note }}
+          INPUT_INFRA_NOTE: ${{ steps.format-results.outputs.infra-note }}
+        with:
+          script: |
+            const { parseFailedTests, fetchFlakinessScores, buildFlakinessTable } = require('./.github/scripts/fetch-flakiness.js');
+
+            const prNumber = Number('${{ steps.find-e2e-comment.outputs.pr-number }}');
+            if (!prNumber) return;
+            const existingCommentId = Number('${{ steps.find-e2e-comment.outputs.comment-id }}') || null;
+
+            const emoji = '${{ steps.format-results.outputs.status-emoji }}';
+            const status = '${{ steps.format-results.outputs.status-text }}';
+            const details = process.env.INPUT_DETAILS || '';
+            const failuresSection = process.env.INPUT_FAILURES_SECTION || '';
+            const reporterNote = process.env.INPUT_REPORTER_NOTE || '';
+            const infraNote = process.env.INPUT_INFRA_NOTE || '';
+
+            const phase2Row = `| **Phase 2** (Remaining) | ${emoji} ${status} | ${details} |`;
+
+            // Fetch flakiness scores for Phase 2 failed tests
+            const failedTests = parseFailedTests('phase2-test-results/results.xml');
+            const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
+            const flakinessTable = buildFlakinessTable(flakinessResults);
+
+            // Pass Phase 2 notes as output so the report-results job can insert them
+            // alongside the overall status when it replaces <!-- OVERALL -->.
+            core.setOutput('phase2_notes', failuresSection + reporterNote + infraNote + flakinessTable);
+
+            if (existingCommentId) {
+              let body = (await github.rest.issues.getComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingCommentId
+              })).data.body;
+
+              // Only replace the Phase 2 row placeholder. The <!-- OVERALL --> marker
+              // is left untouched for the report-results job to handle.
+              body = body.replace(/<!-- PHASE2 -->.*<!-- \/PHASE2 -->/s, phase2Row);
+
+              // Append Phase 2 report link to the footer (idempotent).
+              if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+                const phase2ReportUrl = `${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase2`;
+                if (!body.includes(phase2ReportUrl)) {
+                  body = body.replace('\n<!-- E2E Test Results -->', ` · 📊 [Test Report Phase 2](${phase2ReportUrl})\n<!-- E2E Test Results -->`);
+                }
+              }
+
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingCommentId,
+                body: body
+              });
+              console.log(`Updated comment ${existingCommentId} with Phase 2 results`);
+            } else {
+              // Fallback: create new comment if Phase 1 comment not found.
+              // Failures and flakiness are omitted here — the report-results job will
+              // insert them via phase2_notes when it replaces <!-- OVERALL -->.
+              let body = `## End-to-End Test Results\n\n`;
+              body += `| Phase | Status | Details |\n`;
+              body += `|-------|--------|---------|\n`;
+              body += `| **Phase 1** (Relevant) | ✅ Passed | *(completed in previous step)* |\n`;
+              body += `${phase2Row}\n`;
+              body += `<!-- OVERALL -->\n\n`;
+              body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+              if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+                body += ` · 📊 [Test Report Phase 2](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase2)`;
+              }
+              body += `\n`;
+              body += `<!-- E2E Test Results -->`;
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: body
+              });
+              console.log(`Created fallback comment on PR #${prNumber}`);
+            }
 
   # Run all tests for PR when run_all_tests is triggered, or when no specific tests detected
   run-e2e-all-pr:
@@ -227,6 +499,8 @@ jobs:
     runs-on: [self-hosted, e2e-test]
     timeout-minutes: 120
     environment: playwright-e2e-tests
+    outputs:
+      reporter_failed: ${{ steps.run-tests-all-pr.outputs.reporter_failed }}
     env:
       ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
       ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
@@ -237,6 +511,8 @@ jobs:
       TEST_RETRIES: ${{ vars.TEST_RETRIES }}
       TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
       TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+      PLAYWRIGHT_REPORT_PHASE: all
+      PLAYWRIGHT_REPORT_PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
     steps:
       - name: Create pending status
         run: |
@@ -262,10 +538,22 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           test-notice: "Running all tests (infrastructure/config changes detected)"
 
-      - name: Run E2E Playwright tests (MySQL, Local)
-        run: .ci/E2E-tests/execute.sh mysql-localci playwright
+      - name: Record test start time
+        id: test-timer
+        shell: bash
+        run: .github/scripts/wall-clock-timer.sh start
+
+      - name: Run E2E Playwright tests (PostgreSQL, Local)
+        id: run-tests-all-pr
+        run: .ci/E2E-tests/execute.sh postgres-localci playwright
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
+
+      - name: Calculate wall-clock duration
+        id: wall-clock
+        if: success() || failure()
+        shell: bash
+        run: .github/scripts/wall-clock-timer.sh stop ${{ steps.test-timer.outputs.start }}
 
       - name: E2E Teardown
         if: success() || failure()
@@ -275,14 +563,15 @@ jobs:
 
       - name: Download all tests results
         if: success() || failure()
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: JUnit Test Results
           path: all-test-results
 
       - name: All Tests Report (PR)
-        uses: mikepenz/action-junit-report@v5.6.2
+        id: test-report
+        uses: mikepenz/action-junit-report@v6.4.0
         if: success() || failure()
         with:
           commit: ${{ github.event.workflow_run.head_sha }}
@@ -294,9 +583,98 @@ jobs:
           include_time_in_summary: true
           report_paths: 'all-test-results/results.xml'
 
+      - name: Extract failed tests
+        id: failed-tests
+        if: success() || failure()
+        shell: bash
+        run: .github/scripts/extract-failed-tests.sh all-test-results/results.xml
+
+      - name: Format test results
+        id: format-results
+        if: success() || failure()
+        uses: actions/github-script@v9
+        env:
+          INPUT_SUMMARY: ${{ steps.test-report.outputs.summary }}
+          INPUT_WALL_CLOCK: ${{ steps.wall-clock.outputs.duration }}
+          INPUT_FAILURES: ${{ steps.failed-tests.outputs.failures }}
+          INPUT_TEST_OUTCOME: ${{ steps.run-tests-all-pr.outcome }}
+          INPUT_JOB_STATUS: ${{ job.status }}
+          INPUT_REPORTER_FAILED: ${{ steps.run-tests-all-pr.outputs.reporter_failed }}
+        with:
+          script: require('./.github/scripts/format-test-results.js')(core);
+
+      - name: Find E2E PR comment
+        id: find-e2e-comment
+        if: success() || failure()
+        uses: ./.github/actions/find-e2e-comment
+
+      - name: Post E2E comment (All Tests)
+        if: success() || failure()
+        uses: actions/github-script@v9
+        continue-on-error: true
+        env:
+          HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
+          INPUT_DETAILS: ${{ steps.format-results.outputs.details }}
+          INPUT_FAILURES_SECTION: ${{ steps.format-results.outputs.failures-section }}
+          INPUT_REPORTER_NOTE: ${{ steps.format-results.outputs.reporter-note }}
+          INPUT_INFRA_NOTE: ${{ steps.format-results.outputs.infra-note }}
+        with:
+          script: |
+            const { parseFailedTests, fetchFlakinessScores, buildFlakinessTable } = require('./.github/scripts/fetch-flakiness.js');
+
+            const prNumber = Number('${{ steps.find-e2e-comment.outputs.pr-number }}');
+            if (!prNumber) return;
+            const existingCommentId = Number('${{ steps.find-e2e-comment.outputs.comment-id }}') || null;
+
+            const emoji = '${{ steps.format-results.outputs.status-emoji }}';
+            const status = '${{ steps.format-results.outputs.status-text }}';
+            const details = process.env.INPUT_DETAILS || '';
+            const failuresSection = process.env.INPUT_FAILURES_SECTION || '';
+            const reporterNote = process.env.INPUT_REPORTER_NOTE || '';
+            const infraNote = process.env.INPUT_INFRA_NOTE || '';
+
+            // Fetch flakiness scores for failed tests
+            const failedTests = parseFailedTests('all-test-results/results.xml');
+            const flakinessResults = await fetchFlakinessScores(failedTests, process.env.HELIOS_REPO_SECRET);
+            const flakinessTable = buildFlakinessTable(flakinessResults);
+
+            let body = `## End-to-End Test Results\n\n`;
+            body += `| Phase | Status | Details |\n`;
+            body += `|-------|--------|---------|\n`;
+            body += `| **All Tests** | ${emoji} ${status} | ${details} |\n`;
+            body += failuresSection;
+            body += reporterNote;
+            body += infraNote;
+            body += flakinessTable;
+            body += `\n\n**Test Strategy:** Running all tests (configuration or infrastructure changes detected)\n`;
+            body += `<!-- OVERALL -->\n\n`;
+            body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+            if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+              body += ` · 📊 [Test Report](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-all)`;
+            }
+            body += `\n`;
+            body += `<!-- E2E Test Results -->`;
+
+            if (existingCommentId) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingCommentId,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: body
+              });
+            }
+
   # Run all tests for non-PR events (push to develop, main, release branches)
   run-e2e-all-non-pr:
     name: Run All E2E Tests (Non-PR)
+    needs: cancel-superseded
     if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event != 'pull_request'
     runs-on: [self-hosted, e2e-test]
     timeout-minutes: 120
@@ -311,6 +689,7 @@ jobs:
       TEST_RETRIES: ${{ vars.TEST_RETRIES }}
       TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
       TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+      PLAYWRIGHT_REPORT_PHASE: all
     steps:
       - name: Create pending status
         run: |
@@ -335,7 +714,8 @@ jobs:
           workflow-head-sha: ${{ github.event.workflow_run.head_sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run E2E Playwright tests (MySQL, Local, Multi-Node)
+      - name: Run E2E Playwright tests (PostgreSQL, Local, Multi-Node)
+        id: run-tests-all-non-pr
         run: .ci/E2E-tests/execute.sh multi-node playwright
         env:
           FAST_TEST_TIMEOUT_SECONDS: 75
@@ -348,14 +728,14 @@ jobs:
 
       - name: Download all tests results
         if: success() || failure()
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: JUnit Test Results
           path: all-test-results
 
       - name: All Tests Report (Non-PR)
-        uses: mikepenz/action-junit-report@v5.6.2
+        uses: mikepenz/action-junit-report@v6.4.0
         if: success() || failure()
         with:
           commit: ${{ github.event.workflow_run.head_sha }}
@@ -382,12 +762,12 @@ jobs:
           REMAINING_RESULT="${{ needs.run-e2e-remaining.result }}"
           ALL_PR_RESULT="${{ needs.run-e2e-all-pr.result }}"
           ALL_NON_PR_RESULT="${{ needs.run-e2e-all-non-pr.result }}"
-          
+
           echo "Phase 1 (relevant): $RELEVANT_RESULT"
           echo "Phase 2 (remaining): $REMAINING_RESULT"
           echo "All tests (PR): $ALL_PR_RESULT"
           echo "All tests (Non-PR): $ALL_NON_PR_RESULT"
-          
+
           # Determine the overall status
           if [ "$ALL_NON_PR_RESULT" = "success" ]; then
             echo "status=success" >> $GITHUB_OUTPUT
@@ -438,57 +818,90 @@ jobs:
             "${{ env.STATUSES_REQUEST_URL }}" \
             -d "$JSON_PAYLOAD"
 
-      - name: Find PR number
+      - name: Checkout repository for local actions
         if: always() && github.event.workflow_run.event == 'pull_request'
-        id: find-pr
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ github.event.workflow_run.head_branch }}
+          sparse-checkout: .github/actions
+          fetch-depth: 1
+
+      - name: Find E2E PR comment
+        id: find-e2e-comment
+        if: always() && github.event.workflow_run.event == 'pull_request'
+        uses: ./.github/actions/find-e2e-comment
+
+      - name: Update E2E comment with overall status
+        if: always() && github.event.workflow_run.event == 'pull_request'
+        uses: actions/github-script@v9
         continue-on-error: true
-        run: |
-          BRANCH_NAME=${{ github.event.workflow_run.head_branch }}
-          echo "Checking if PR exists for head ref: $BRANCH_NAME."
-
-          PR_RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:$BRANCH_NAME")
-
-          PR_NUMBER=$(echo "$PR_RESPONSE" | grep -o '"number": [0-9]*,' | head -1 | sed 's/"number": //g' | sed 's/,//g' | tr -d ' \t\n\r')
-
-          if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
-            echo "Found PR: $PR_NUMBER from branch: $BRANCH_NAME."
-            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-          else
-            echo "No PR found from branch: $BRANCH_NAME."
-          fi
-
-      - name: Add test results comment to PR
-        if: always() && steps.find-pr.outputs.pr_number != ''
-        uses: actions/github-script@v8
-        continue-on-error: true
+        env:
+          INPUT_PHASE2_NOTES: ${{ needs.run-e2e-remaining.outputs.phase2_notes || '' }}
         with:
           script: |
-            const prNumber = ${{ steps.find-pr.outputs.pr_number }};
-            const status = `${{ steps.overall-status.outputs.status }}`;
-            const description = `${{ steps.overall-status.outputs.description }}`;
+            const prNumber = Number('${{ steps.find-e2e-comment.outputs.pr-number }}');
+            if (!prNumber) return;
+            const existingCommentId = Number('${{ steps.find-e2e-comment.outputs.comment-id }}') || null;
 
-            const runAllTests = `${{ needs.determine-tests.outputs.run_all_tests || 'unknown' }}`;
-            const relevantTests = `${{ needs.determine-tests.outputs.relevant_tests || '' }}`;
-            const remainingTests = `${{ needs.determine-tests.outputs.remaining_tests || '' }}`;
+            const status = '${{ steps.overall-status.outputs.status }}';
+            const description = '${{ steps.overall-status.outputs.description }}';
+            const overallEmoji = status === 'success' ? '✅' : '❌';
+            const overallLine = `\n**Overall: ${overallEmoji} ${description}**`;
 
-            let phaseInfo = '';
-            if (runAllTests === 'true') {
-              phaseInfo = '**Test Strategy:** Running all tests (configuration or infrastructure changes detected)\n\n';
-            } else if (relevantTests || remainingTests) {
-              phaseInfo = `**Test Strategy:** Two-phase execution\n`;
-              phaseInfo += `- **Phase 1 (Relevant):** ${relevantTests || 'None'}\n`;
-              phaseInfo += `- **Phase 2 (Remaining):** ${remainingTests || 'None'}\n\n`;
+            const phase1Result = '${{ needs.run-e2e-relevant.result }}';
+            const phase2Result = '${{ needs.run-e2e-remaining.result }}';
+            const phase2Notes = process.env.INPUT_PHASE2_NOTES || '';
+
+            if (existingCommentId) {
+              let body = (await github.rest.issues.getComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingCommentId
+              })).data.body;
+
+              // If Phase 2 was never run, update the placeholder
+              if (body.includes('<!-- PHASE2 -->')) {
+                let phase2Reason = 'Skipped';
+                if (phase1Result === 'failure') {
+                  phase2Reason = 'Skipped (Phase 1 failed)';
+                } else if (phase2Result === 'skipped') {
+                  phase2Reason = 'Skipped (no remaining tests)';
+                }
+                body = body.replace(
+                  /<!-- PHASE2 -->.*<!-- \/PHASE2 -->/s,
+                  `| **Phase 2** (Remaining) | ⏭ ${phase2Reason} | |`
+                );
+              }
+
+              // Replace <!-- OVERALL --> with Phase 2 notes (if any) and the overall
+              // status line. This is the only place that touches this marker.
+              body = body.replace('<!-- OVERALL -->', phase2Notes + overallLine);
+
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingCommentId,
+                body: body
+              });
+              console.log(`Updated comment ${existingCommentId} with overall status`);
             } else {
-              phaseInfo = '**Test Strategy:** Running all tests\n\n';
-            }
+              // Fallback: create a summary-only comment
+              const marker = '<!-- E2E Test Results -->';
+              let body = `## End-to-End Test Results\n\n`;
+              body += `**Overall: ${overallEmoji} ${description}**\n\n`;
+              body += `🔗 [Workflow Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+              if (process.env.PLAYWRIGHT_REPORT_SERVER_URL) {
+                body += ` · 📊 [Test Report Phase 1](${process.env.PLAYWRIGHT_REPORT_SERVER_URL}/runs/${{ github.run_id }}-phase1)`;
+              }
+              body += `\n`;
+              body += marker;
 
-            const detailsNote = '**Detailed Results:** Check the individual phase reports in the [workflow run](${{ env.TARGET_URL }}) for test counts, timing, and results.\n\n';
-
-            github.rest.issues.createComment({
+              await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: prNumber,
-                body: `### End-to-End (E2E) Test Results Summary\n\n${phaseInfo}**Status:** ${description}\n\n${detailsNote}`
+                body: body
               });
+              console.log(`Created fallback summary comment on PR #${prNumber}`);
+            }

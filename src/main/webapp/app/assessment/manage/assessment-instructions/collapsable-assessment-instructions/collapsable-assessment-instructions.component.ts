@@ -1,8 +1,9 @@
-import { AfterViewInit, Component, input, model } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, input, model } from '@angular/core';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faChevronLeft, faChevronRight, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import interact from 'interactjs';
+import { Interactable } from '@interactjs/core/Interactable';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AssessmentInstructionsComponent } from '../assessment-instructions/assessment-instructions.component';
@@ -13,12 +14,14 @@ import { AssessmentInstructionsComponent } from '../assessment-instructions/asse
     styleUrls: ['./collapsable-assessment-instructions.scss'],
     imports: [FaIconComponent, TranslateDirective, AssessmentInstructionsComponent],
 })
-export class CollapsableAssessmentInstructionsComponent implements AfterViewInit {
+export class CollapsableAssessmentInstructionsComponent implements AfterViewInit, OnDestroy {
     readonly isAssessmentTraining = input(false);
     readonly showAssessmentInstructions = input(true);
     readonly exercise = input.required<Exercise>();
     collapsed = model(false);
     readonly readOnly = input.required<boolean>();
+
+    private interactable: Interactable | undefined;
 
     // Icons
     faChevronRight = faChevronRight;
@@ -30,7 +33,7 @@ export class CollapsableAssessmentInstructionsComponent implements AfterViewInit
      * Configures interact to make instructions expandable
      */
     ngAfterViewInit(): void {
-        interact('.expanded-instructions')
+        this.interactable = interact('.expanded-instructions')
             .resizable({
                 edges: { left: '.draggable-left', right: false, bottom: false, top: false },
                 modifiers: [
@@ -52,5 +55,9 @@ export class CollapsableAssessmentInstructionsComponent implements AfterViewInit
                 const target = event.target;
                 target.style.width = event.rect.width + 'px';
             });
+    }
+
+    ngOnDestroy(): void {
+        this.interactable?.unset();
     }
 }

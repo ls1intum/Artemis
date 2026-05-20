@@ -5,12 +5,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -20,7 +19,6 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -43,8 +41,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDTO;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
@@ -54,7 +51,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupRegistr
 import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupScheduleTestRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupTestRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
-import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource;
 
 public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -77,7 +73,6 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     @Autowired
     protected TutorialGroupRegistrationTestRepository tutorialGroupRegistrationTestRepository;
 
-    // External Repositories
     @Autowired
     protected UserTestRepository userRepository;
 
@@ -93,18 +88,15 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     @Autowired
     protected PostTestRepository postRepository;
 
-    // Services
     @Autowired
     protected TutorialGroupService tutorialGroupService;
 
     @Autowired
     protected TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
 
-    // Util Services
     @Autowired
     protected TutorialGroupUtilService tutorialGroupUtilService;
 
-    // External Util Services
     @Autowired
     protected CourseUtilService courseUtilService;
 
@@ -114,33 +106,30 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     @Autowired
     protected ConversationUtilService conversationUtilService;
 
-    // Misc
     @Autowired
     protected CourseTestService courseTestService;
-
-    Long exampleCourseId;
-
-    Long exampleConfigurationId;
-
-    String exampleTimeZone = "Europe/Bucharest";
-
-    String testPrefix = "";
-
-    Integer defaultSessionStartHour = 10;
-
-    Integer defaultSessionEndHour = 12;
 
     static final LocalDate FIRST_AUGUST_MONDAY = LocalDate.of(2022, 8, 1);
 
     static final LocalDate SECOND_AUGUST_MONDAY = LocalDate.of(2022, 8, 8);
 
-    static final LocalDate THIRD_AUGUST_MONDAY = LocalDate.of(2022, 8, 15);
-
     static final LocalDate FOURTH_AUGUST_MONDAY = LocalDate.of(2022, 8, 22);
+
+    static final LocalDate FIFTH_AUGUST_MONDAY = LocalDate.of(2022, 8, 29);
 
     static final LocalDate FIRST_SEPTEMBER_MONDAY = LocalDate.of(2022, 9, 5);
 
     static final LocalDateTime FIRST_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 1, 0, 0);
+
+    static final LocalDate MONDAY_AFTER_DST_SWITCH = LocalDate.of(2020, 3, 30);
+
+    static final LocalDateTime MONDAY_BEFORE_DST_SWITCH_10_00 = LocalDateTime.of(2020, 3, 23, 10, 0);
+
+    static final LocalDateTime MONDAY_BEFORE_DST_SWITCH_12_00 = LocalDateTime.of(2020, 3, 23, 12, 0);
+
+    static final LocalDateTime MONDAY_AFTER_DST_SWITCH_10_00 = LocalDateTime.of(2020, 3, 30, 10, 0);
+
+    static final LocalDateTime MONDAY_AFTER_DST_SWITCH_12_00 = LocalDateTime.of(2020, 3, 30, 12, 0);
 
     static final LocalDateTime FIRST_AUGUST_MONDAY_08_00 = LocalDateTime.of(2022, 8, 1, 8, 0);
 
@@ -152,6 +141,8 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
 
     static final LocalDateTime FIRST_AUGUST_MONDAY_13_00 = LocalDateTime.of(2022, 8, 1, 13, 0);
 
+    static final LocalDateTime FIRST_AUGUST_MONDAY_14_00 = LocalDateTime.of(2022, 8, 1, 14, 0);
+
     static final LocalDateTime FIRST_AUGUST_MONDAY_18_00 = LocalDateTime.of(2022, 8, 1, 18, 0);
 
     static final LocalDateTime FIRST_AUGUST_MONDAY_23_59 = LocalDateTime.of(2022, 8, 1, 23, 59);
@@ -160,71 +151,178 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
 
     static final LocalDateTime SECOND_AUGUST_MONDAY_23_59 = LocalDateTime.of(2022, 8, 8, 23, 59);
 
-    static final LocalDateTime THIRD_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 15, 0, 0);
-
-    static final LocalDateTime THIRD_AUGUST_MONDAY_23_59 = LocalDateTime.of(2022, 8, 15, 23, 59);
-
     static final LocalDateTime FOURTH_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 22, 0, 0);
 
-    static final LocalDateTime FIFTH_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 29, 0, 0);
-
     static final LocalDateTime FIRST_SEPTEMBER_MONDAY_00_00 = LocalDateTime.of(2022, 9, 5, 0, 0);
+
+    static final LocalDateTime FIRST_SEPTEMBER_MONDAY_10_00 = LocalDateTime.of(2022, 9, 5, 10, 0);
+
+    static final LocalDateTime FIRST_SEPTEMBER_MONDAY_12_00 = LocalDateTime.of(2022, 9, 5, 12, 0);
+
+    static final LocalDateTime SECOND_SEPTEMBER_MONDAY_10_00 = LocalDateTime.of(2022, 9, 12, 10, 0);
+
+    static final LocalDateTime SECOND_SEPTEMBER_MONDAY_12_00 = LocalDateTime.of(2022, 9, 12, 12, 0);
+
+    protected static final String FIRST_COURSE_INSTRUCTOR1_LOGIN = "firstcourseinstructor1";
+
+    protected static final String FIRST_COURSE_EDITOR1_LOGIN = "firstcourseeditor1";
+
+    protected static final String FIRST_COURSE_TUTOR1_LOGIN = "firstcoursetutor1";
+
+    protected static final String FIRST_COURSE_TUTOR2_LOGIN = "firstcoursetutor2";
+
+    protected static final String FIRST_COURSE_STUDENT1_LOGIN = "firstcoursestudent1";
+
+    protected static final String FIRST_COURSE_STUDENT2_LOGIN = "firstcoursestudent2";
+
+    protected static final String FIRST_COURSE_STUDENT3_LOGIN = "firstcoursestudent3";
+
+    protected static final String FIRST_COURSE_STUDENT4_LOGIN = "firstcoursestudent4";
+
+    protected static final String SECOND_COURSE_EDITOR1_LOGIN = "secondcourseeditor1";
+
+    protected static final String SECOND_COURSE_TUTOR1_LOGIN = "secondcoursetutor1";
+
+    protected static final String SECOND_COURSE_INSTRUCTOR1_LOGIN = "secondcourseinstructor1";
+
+    Course exampleCourse;
+
+    Long exampleCourseId;
+
+    Long exampleConfigurationId;
+
+    Course exampleCourse2;
+
+    Long exampleCourse2Id;
+
+    String exampleTimeZone = "Europe/Bucharest";
+
+    String testPrefix = "";
+
+    Integer defaultSessionStartHour = 10;
+
+    Integer defaultSessionEndHour = 12;
 
     @BeforeEach
     void setupTestScenario() {
         this.testPrefix = getTestPrefix();
-        var course = courseUtilService.createCourse();
-        course.setTimeZone(exampleTimeZone);
-        courseRepository.save(course);
-        exampleCourseId = course.getId();
+        var firstCourse = courseUtilService.createCourseWithUserPrefix(testPrefix + "firstCourse");
+        firstCourse.setTimeZone(exampleTimeZone);
+        this.exampleCourse = courseRepository.save(firstCourse);
+        exampleCourseId = firstCourse.getId();
         exampleConfigurationId = tutorialGroupUtilService.createTutorialGroupConfiguration(exampleCourseId, LocalDate.of(2022, 8, 1), LocalDate.of(2022, 9, 1)).getId();
+
+        var secondCourse = courseUtilService.createCourseWithUserPrefix(testPrefix + "secondCourse");
+        secondCourse.setTimeZone(exampleTimeZone);
+        this.exampleCourse2 = courseRepository.save(secondCourse);
+        exampleCourse2Id = secondCourse.getId();
     }
 
-    // === Abstract Methods ===
     abstract String getTestPrefix();
 
-    // === Paths ===
-    String getTutorialGroupsPath(Long courseId) {
-        return "/api/tutorialgroup/courses/" + courseId + "/tutorial-groups";
+    // === Creation of Test Scenarios ===
+
+    protected record UsersInCourseOne(User instructor, User tutor1, User tutor2, User student1, User student2, User student3, User student4) {
+    };
+
+    protected record UsersInCourseTwo(User instructor, User editor, User tutor) {
+    };
+
+    protected record TutorialGroupOneInCourseOneData(TutorialGroup group, TutorialGroupSchedule schedule, List<TutorialGroupSession> sessions, Channel channel) {
+    };
+
+    protected record TutorialGroupTwoInCourseOneData(TutorialGroup group, TutorialGroupSession session, Channel channel) {
+    };
+
+    protected record TutorialGroupOneInCourseTwoData(TutorialGroup group, List<TutorialGroupSession> sessions) {
+    };
+
+    UsersInCourseOne createAndSaveUsersInCourseOneData() {
+        userUtilService.addStudent(exampleCourse.getStudentGroupName(), FIRST_COURSE_STUDENT1_LOGIN);
+        userUtilService.addStudent(exampleCourse.getStudentGroupName(), FIRST_COURSE_STUDENT2_LOGIN);
+        userUtilService.addStudent(exampleCourse.getStudentGroupName(), FIRST_COURSE_STUDENT3_LOGIN);
+        userUtilService.addStudent(exampleCourse.getStudentGroupName(), FIRST_COURSE_STUDENT4_LOGIN);
+        userUtilService.addTeachingAssistant(exampleCourse.getTeachingAssistantGroupName(), FIRST_COURSE_TUTOR1_LOGIN);
+        userUtilService.addTeachingAssistant(exampleCourse.getTeachingAssistantGroupName(), FIRST_COURSE_TUTOR2_LOGIN);
+        userUtilService.addEditor(exampleCourse.getEditorGroupName(), FIRST_COURSE_EDITOR1_LOGIN);
+        userUtilService.addInstructor(exampleCourse.getInstructorGroupName(), FIRST_COURSE_INSTRUCTOR1_LOGIN);
+
+        var instructor = userRepository.findOneByLogin(FIRST_COURSE_INSTRUCTOR1_LOGIN).orElseThrow();
+        var tutor1 = userRepository.findOneByLogin(FIRST_COURSE_TUTOR1_LOGIN).orElseThrow();
+        var tutor2 = userRepository.findOneByLogin(FIRST_COURSE_TUTOR2_LOGIN).orElseThrow();
+        var student1 = userRepository.findOneByLogin(FIRST_COURSE_STUDENT1_LOGIN).orElseThrow();
+        var student2 = userRepository.findOneByLogin(FIRST_COURSE_STUDENT2_LOGIN).orElseThrow();
+        var student3 = userRepository.findOneByLogin(FIRST_COURSE_STUDENT3_LOGIN).orElseThrow();
+        var student4 = userRepository.findOneByLogin(FIRST_COURSE_STUDENT4_LOGIN).orElseThrow();
+
+        student3.setRegistrationNumber("3");
+        userRepository.save(student3);
+        student4.setRegistrationNumber("4");
+        userRepository.save(student4);
+
+        return new UsersInCourseOne(instructor, tutor1, tutor2, student1, student2, student3, student4);
     }
 
-    String getTutorialGroupsPath(Long courseId, Long tutorialGroupId) {
-        return this.getTutorialGroupsPath(courseId) + "/" + tutorialGroupId;
+    UsersInCourseTwo createAndSaveUsersInCourseTwoData() {
+        userUtilService.addTeachingAssistant(exampleCourse2.getTeachingAssistantGroupName(), SECOND_COURSE_TUTOR1_LOGIN);
+        userUtilService.addEditor(exampleCourse2.getEditorGroupName(), SECOND_COURSE_EDITOR1_LOGIN);
+        userUtilService.addInstructor(exampleCourse2.getInstructorGroupName(), SECOND_COURSE_INSTRUCTOR1_LOGIN);
+
+        var instructor = userRepository.findOneByLogin(SECOND_COURSE_INSTRUCTOR1_LOGIN).orElseThrow();
+        var editor = userRepository.findOneByLogin(SECOND_COURSE_EDITOR1_LOGIN).orElseThrow();
+        var tutor = userRepository.findOneByLogin(SECOND_COURSE_TUTOR1_LOGIN).orElseThrow();
+
+        return new UsersInCourseTwo(instructor, editor, tutor);
     }
 
-    String getTutorialGroupsConfigurationPath(Long courseId) {
-        return "/api/tutorialgroup/courses/" + courseId + "/tutorial-groups-configuration";
+    TutorialGroupOneInCourseOneData createAndSaveTutorialGroupOneInCourseOneData(User tutor, User student) {
+        var tutorialGroup = tutorialGroupUtilService.createAndSaveTutorialGroup(exampleCourse.getId(), "TG Mo 13", "SampleInfo1", 10, false, "Garching", Language.ENGLISH.name(),
+                tutor, Set.of(student));
+
+        TutorialGroupSchedule schedule = tutorialGroupUtilService.createAndSaveTutorialGroupSchedule(tutorialGroup, 1, "13:00:00", "14:00:00", 1, FIRST_AUGUST_MONDAY.toString(),
+                FIFTH_AUGUST_MONDAY.toString(), "01.05.13");
+
+        var scheduleConformingSessions = tutorialGroupUtilService.createAndSaveRegularSessionsFromTutorialGroupSchedule(exampleCourse, tutorialGroup, schedule);
+        scheduleConformingSessions.getFirst().setStatus(TutorialGroupSessionStatus.CANCELLED);
+        scheduleConformingSessions.get(1).setLocation("new room");
+        scheduleConformingSessions.get(2).setStart(scheduleConformingSessions.get(2).getStart().plusHours(2));
+        scheduleConformingSessions.get(2).setEnd(scheduleConformingSessions.get(2).getEnd().plusHours(2));
+        scheduleConformingSessions.get(3).setStart(scheduleConformingSessions.get(3).getStart().plusDays(1));
+        scheduleConformingSessions.get(3).setEnd(scheduleConformingSessions.get(3).getEnd().plusDays(1));
+        scheduleConformingSessions.get(4).setAttendanceCount(10);
+        List<TutorialGroupSession> sessions = new LinkedList<>(scheduleConformingSessions);
+
+        TutorialGroupSession individualSession = tutorialGroupUtilService.createTutorialGroupSession(ZonedDateTime.of(SECOND_SEPTEMBER_MONDAY_10_00, ZoneId.of(exampleTimeZone)),
+                ZonedDateTime.of(SECOND_SEPTEMBER_MONDAY_12_00, ZoneId.of(exampleTimeZone)), "01.05.13", null, TutorialGroupSessionStatus.ACTIVE, null, tutorialGroup);
+        sessions.add(individualSession);
+        tutorialGroupSessionRepository.saveAllAndFlush(sessions);
+
+        var channel = tutorialGroupChannelManagementService.createChannelForTutorialGroup(tutorialGroup);
+
+        return new TutorialGroupOneInCourseOneData(tutorialGroup, schedule, sessions, channel);
     }
 
-    String getTutorialGroupsConfigurationPath(Long courseId, Long configurationId) {
-        return this.getTutorialGroupsConfigurationPath(courseId) + "/" + configurationId;
+    TutorialGroupTwoInCourseOneData createAndSaveTutorialGroupTwoInCourseOneData(User tutor, User student) {
+        var tutorialGroup = tutorialGroupUtilService.createAndSaveTutorialGroup(exampleCourse.getId(), "TG Tue 13", "SampleInfo2", 20, true, null, Language.GERMAN.name(), tutor,
+                Set.of(student));
+        TutorialGroupSession session = tutorialGroupUtilService.createTutorialGroupSession(ZonedDateTime.of(SECOND_SEPTEMBER_MONDAY_10_00, ZoneId.of(exampleTimeZone)),
+                ZonedDateTime.of(SECOND_SEPTEMBER_MONDAY_12_00, ZoneId.of(exampleTimeZone)), "01.05.13", null, TutorialGroupSessionStatus.ACTIVE, null, tutorialGroup);
+        tutorialGroupSessionRepository.saveAndFlush(session);
+        var channel = tutorialGroupChannelManagementService.createChannelForTutorialGroup(tutorialGroup);
+        return new TutorialGroupTwoInCourseOneData(tutorialGroup, session, channel);
     }
 
-    String getTutorialGroupFreePeriodsPath() {
-        return this.getTutorialGroupsConfigurationPath(exampleCourseId, exampleConfigurationId) + "/tutorial-free-periods";
+    TutorialGroupOneInCourseTwoData createAndSaveTutorialGroupOneInCourseTwoData(User tutor) {
+        TutorialGroup group = tutorialGroupUtilService.createAndSaveTutorialGroup(exampleCourse2.getId(), "TG Wed 10", "SampleInfo3", 15, false, "01.05.12",
+                Language.ENGLISH.name(), tutor, Set.of());
+        TutorialGroupSession session = tutorialGroupUtilService.createIndividualTutorialGroupSession(group.getId(),
+                ZonedDateTime.of(SECOND_SEPTEMBER_MONDAY_10_00, ZoneId.of(exampleTimeZone)), ZonedDateTime.of(SECOND_SEPTEMBER_MONDAY_12_00, ZoneId.of(exampleTimeZone)), null);
+        return new TutorialGroupOneInCourseTwoData(group, List.of(session));
     }
 
-    String getTutorialGroupFreePeriodsPath(Long freePeriodId) {
-        return this.getTutorialGroupFreePeriodsPath() + "/" + freePeriodId;
-    }
-
-    String getSessionsPathOfTutorialGroup(Long tutorialGroupId) {
-        return this.getTutorialGroupsPath(this.exampleCourseId, tutorialGroupId) + "/sessions";
-    }
-
-    String getSessionsPathOfTutorialGroup(Long tutorialGroupId, Long sessionId) {
-        return this.getSessionsPathOfTutorialGroup(tutorialGroupId) + "/" + sessionId;
-    }
-
-    // === UTILS ===
     TutorialGroupSession buildAndSaveExampleIndividualTutorialGroupSession(Long tutorialGroupId, LocalDateTime localDate) {
         return tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroupId, getExampleSessionStartOnDate(localDate.toLocalDate()),
                 getExampleSessionEndOnDate(localDate.toLocalDate()), null);
-    }
-
-    TutorialGroupSession buildAndSaveExampleIndividualTutorialGroupSession(Long tutorialGroupId, LocalDate localDate, Integer attendanceCount) {
-        return tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroupId, getExampleSessionStartOnDate(localDate), getExampleSessionEndOnDate(localDate),
-                attendanceCount);
     }
 
     TutorialGroupsConfiguration buildExampleConfiguration(Long courseId) {
@@ -249,83 +347,30 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
         return newTutorialGroupSchedule;
     }
 
-    TutorialGroup buildAndSaveTutorialGroupWithoutSchedule(String tutorLogin, String... studentLogins) {
-        Set<User> students = Set.of();
-        if (studentLogins != null) {
-            students = Arrays.stream(studentLogins).map(login -> userRepository.findOneByLogin(login).orElseThrow()).collect(Collectors.toSet());
-        }
-        return tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum", 10, false, "Garching", Language.ENGLISH.name(),
-                userRepository.findOneByLogin(testPrefix + tutorLogin).orElseThrow(), students);
-    }
-
     TutorialGroup buildTutorialGroupWithoutSchedule(String tutorLogin) {
         var course = courseRepository.findByIdElseThrow(exampleCourseId);
         var tutorialGroup = new TutorialGroup();
         tutorialGroup.setCourse(course);
         tutorialGroup.setTitle(generateRandomTitle());
-        tutorialGroup.setTeachingAssistant(userRepository.findOneByLogin(testPrefix + tutorLogin).orElseThrow());
+        tutorialGroup.setTeachingAssistant(userRepository.findOneByLogin(tutorLogin).orElseThrow());
         tutorialGroup.setCapacity(15);
         tutorialGroup.setCampus("Garching");
         return tutorialGroup;
     }
 
-    /**
-     * Builds a TutorialGroupDTO for API requests (without schedule).
-     * Uses the same structure as the entity but only includes required fields.
-     */
-    TutorialGroupDTO buildTutorialGroupDTOWithoutSchedule(String tutorLogin) {
-        return new TutorialGroupDTO(null, // id
-                generateRandomTitle(), new TutorialGroupDTO.TeachingAssistantDTO(testPrefix + tutorLogin), null, // additionalInformation
-                15, // capacity
-                false, // isOnline
-                Language.ENGLISH.name(), // language
-                "Garching" // campus
-        );
-    }
-
-    /**
-     * Builds a TutorialGroupDTO with an ID set (for testing creation with ID should fail).
-     */
-    TutorialGroupDTO buildTutorialGroupDTOWithId(Long id, String tutorLogin) {
-        return new TutorialGroupDTO(id, generateRandomTitle(), new TutorialGroupDTO.TeachingAssistantDTO(testPrefix + tutorLogin), null, 15, false, Language.ENGLISH.name(),
-                "Garching");
-    }
-
-    /**
-     * Builds a TutorialGroupDTO with a specific title.
-     */
-    TutorialGroupDTO buildTutorialGroupDTOWithTitle(String title, String tutorLogin) {
-        return new TutorialGroupDTO(null, title, new TutorialGroupDTO.TeachingAssistantDTO(testPrefix + tutorLogin), null, 15, false, Language.ENGLISH.name(), "Garching");
-    }
-
-    TutorialGroup buildTutorialGroupWithExampleSchedule(LocalDate validFromInclusive, LocalDate validToInclusive, String tutorLogin) {
-        var course = courseRepository.findByIdElseThrow(exampleCourseId);
-        var newTutorialGroup = new TutorialGroup();
-        newTutorialGroup.setCourse(course);
-        newTutorialGroup.setTitle(generateRandomTitle());
-        newTutorialGroup.setTeachingAssistant(userRepository.findOneByLogin(testPrefix + tutorLogin).orElseThrow());
-
-        newTutorialGroup.setTutorialGroupSchedule(this.buildExampleSchedule(validFromInclusive, validToInclusive));
-
-        return newTutorialGroup;
-    }
-
     TutorialGroup setUpTutorialGroupWithSchedule(Long courseId, String tutorLogin) throws Exception {
-        // First create the tutorial group using DTO (create endpoint doesn't support schedules)
-        var tutorialGroupDTO = buildTutorialGroupDTOWithoutSchedule(tutorLogin);
-        var persistedTutorialGroup = request.postWithResponseBody(getTutorialGroupsPath(courseId), tutorialGroupDTO, TutorialGroup.class, HttpStatus.CREATED);
-        var persistedTutorialGroupId = persistedTutorialGroup.getId();
-
-        // Then update the tutorial group to add the schedule
-        var scheduleToCreate = this.buildExampleSchedule(FIRST_AUGUST_MONDAY_00_00.toLocalDate(), SECOND_AUGUST_MONDAY_00_00.toLocalDate());
-        persistedTutorialGroup.setTutorialGroupSchedule(scheduleToCreate);
-        var updateDTO = new TutorialGroupResource.TutorialGroupUpdateDTO(persistedTutorialGroup, null, false);
-        request.putWithResponseBody(getTutorialGroupsPath(courseId, persistedTutorialGroupId), updateDTO, TutorialGroup.class, HttpStatus.OK);
-
-        var newTutorialGroup = tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroupId);
-        this.assertTutorialGroupPersistedWithSchedule(newTutorialGroup, scheduleToCreate);
-        return newTutorialGroup;
+        var tutor = userRepository.findOneByLogin(testPrefix + tutorLogin).orElseThrow();
+        var tutorialGroup = tutorialGroupUtilService.createAndSaveTutorialGroup(courseId, "TG Mo 13", "SampleInfo1", 15, false, "Garching", Language.ENGLISH.name(), tutor,
+                Set.of());
+        TutorialGroupSchedule schedule = tutorialGroupUtilService.createAndSaveTutorialGroupSchedule(tutorialGroup, 1, "10:00:00", "12:00:00", 1, FIRST_AUGUST_MONDAY.toString(),
+                SECOND_AUGUST_MONDAY.toString(), "LoremIpsum");
+        tutorialGroupUtilService.createAndSaveRegularSessionsFromTutorialGroupSchedule(exampleCourse, tutorialGroup, schedule);
+        tutorialGroupChannelManagementService.createChannelForTutorialGroup(tutorialGroup);
+        this.assertTutorialGroupPersistedWithSchedule(tutorialGroup, schedule);
+        return tutorialGroup;
     }
+
+    // === UTILS ===
 
     List<TutorialGroupSession> getTutorialGroupSessionsAscending(Long tutorialGroupId) {
         var sessions = new ArrayList<>(tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroupId).stream().toList());
@@ -349,36 +394,20 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
         return ZonedDateTime.of(date.getYear(), date.getMonthValue(), date.getDayOfMonth(), hour, 0, 0, 0, ZoneId.of("Europe/Berlin"));
     }
 
-    public List<TutorialGroupSession> createAndSaveSessionsForTutorialGroupDetailGroupDTOTest(Course course, TutorialGroup tutorialGroup, TutorialGroupSchedule schedule) {
-        List<TutorialGroupSession> sessions = new ArrayList<>();
-        ZonedDateTime firstSessionStart = ZonedDateTime.of(LocalDate.parse(schedule.getValidFromInclusive()), LocalTime.parse(schedule.getStartTime()),
-                ZoneId.of(course.getTimeZone()));
-        ZonedDateTime firstSessionEnd = ZonedDateTime.of(LocalDate.parse(schedule.getValidFromInclusive()), LocalTime.parse(schedule.getEndTime()),
-                ZoneId.of(course.getTimeZone()));
+    String getTutorialGroupsConfigurationPath(Long courseId) {
+        return "/api/tutorialgroup/courses/" + courseId + "/tutorial-groups-configuration";
+    }
 
-        TutorialGroupSession cancelledSession = tutorialGroupUtilService.createTutorialGroupSession(firstSessionStart, firstSessionEnd, schedule.getLocation(), null,
-                TutorialGroupSessionStatus.CANCELLED, tutorialGroup, schedule);
-        sessions.add(cancelledSession);
+    String getTutorialGroupsConfigurationPath(Long courseId, Long configurationId) {
+        return this.getTutorialGroupsConfigurationPath(courseId) + "/" + configurationId;
+    }
 
-        TutorialGroupSession relocatedSession = tutorialGroupUtilService.createTutorialGroupSession(firstSessionStart.plusWeeks(1), firstSessionEnd.plusWeeks(1), "new room", null,
-                TutorialGroupSessionStatus.ACTIVE, tutorialGroup, schedule);
-        sessions.add(relocatedSession);
+    String getTutorialGroupFreePeriodsPath() {
+        return this.getTutorialGroupsConfigurationPath(exampleCourseId, exampleConfigurationId) + "/tutorial-free-periods";
+    }
 
-        TutorialGroupSession changedTimeSession = tutorialGroupUtilService.createTutorialGroupSession(firstSessionStart.plusWeeks(2).plusHours(2),
-                firstSessionEnd.plusWeeks(2).plusHours(2), schedule.getLocation(), null, TutorialGroupSessionStatus.ACTIVE, tutorialGroup, schedule);
-        sessions.add(changedTimeSession);
-
-        TutorialGroupSession changedDateSession = tutorialGroupUtilService.createTutorialGroupSession(firstSessionStart.plusWeeks(3).plusDays(1),
-                firstSessionEnd.plusWeeks(3).plusDays(1), schedule.getLocation(), null, TutorialGroupSessionStatus.ACTIVE, tutorialGroup, schedule);
-        sessions.add(changedDateSession);
-
-        TutorialGroupSession attendanceCountSession = tutorialGroupUtilService.createTutorialGroupSession(firstSessionStart.plusWeeks(4), firstSessionEnd.plusWeeks(4),
-                schedule.getLocation(), 10, TutorialGroupSessionStatus.ACTIVE, tutorialGroup, schedule);
-        sessions.add(attendanceCountSession);
-
-        tutorialGroupSessionRepository.saveAll(sessions);
-
-        return sessions;
+    String getTutorialGroupFreePeriodsPath(Long freePeriodId) {
+        return this.getTutorialGroupFreePeriodsPath() + "/" + freePeriodId;
     }
 
     // === ASSERTIONS ===
@@ -493,14 +522,14 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
         }
     }
 
-    void assertGroupDTOHasCorrectFields(TutorialGroupDetailSessionDTO dto, TutorialGroupSession session) {
+    void assertGroupDTOHasCorrectFields(TutorialGroupSessionDTO dto, TutorialGroupSession session) {
         assertThat(dto.start().toInstant()).isEqualTo(session.getStart().toInstant());
         assertThat(dto.end().toInstant()).isEqualTo(session.getEnd().toInstant());
         assertThat(dto.location()).isEqualTo(session.getLocation());
         assertThat(dto.attendanceCount()).isEqualTo(session.getAttendanceCount());
     }
 
-    void assertGroupDTOHasCorrectFlags(TutorialGroupDetailSessionDTO dto, boolean expectIsCancelled, boolean expectLocationChanged, boolean expectTimeChanged,
+    void assertGroupDTOHasCorrectFlags(TutorialGroupSessionDTO dto, boolean expectIsCancelled, boolean expectLocationChanged, boolean expectTimeChanged,
             boolean expectDateChanged) {
         assertThat(dto.isCancelled()).isEqualTo(expectIsCancelled);
         assertThat(dto.locationChanged()).isEqualTo(expectLocationChanged);

@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/communication/service/metis.service';
 import { DebugElement } from '@angular/core';
@@ -26,20 +28,22 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('PostingHeaderComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: PostingHeaderComponent;
     let fixture: ComponentFixture<PostingHeaderComponent>;
     let debugElement: DebugElement;
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), NgbTooltip],
-            providers: [
-                FormBuilder,
-                { provide: MetisService, useClass: MockMetisService },
-                { provide: AccountService, useClass: MockAccountService },
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
-            declarations: [
+            imports: [
+                MockModule(FormsModule),
+                MockModule(ReactiveFormsModule),
+                NgbTooltip,
                 PostingHeaderComponent,
                 FaIconComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -49,15 +53,17 @@ describe('PostingHeaderComponent', () => {
                 ConfirmIconComponent,
                 ProfilePictureComponent,
             ],
-        }).compileComponents();
+            providers: [
+                FormBuilder,
+                { provide: MetisService, useClass: MockMetisService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        });
 
         fixture = TestBed.createComponent(PostingHeaderComponent);
         component = fixture.componentInstance;
         debugElement = fixture.debugElement;
-    });
-
-    afterEach(() => {
-        jest.restoreAllMocks();
     });
 
     it('should set date information correctly for post of today', () => {
@@ -111,7 +117,7 @@ describe('PostingHeaderComponent', () => {
 
         const badge = getElement(debugElement, '#role-badge');
         expect(badge).not.toBeNull();
-        expect(badge.classList.contains(param.expectClass)).toBeTrue();
+        expect(badge.classList.contains(param.expectClass)).toBe(true);
     });
 
     it.each`
@@ -148,7 +154,7 @@ describe('PostingHeaderComponent', () => {
         fixture.detectChanges();
         component.ngOnInit();
 
-        expect(component.isAuthorOfPosting).toBeTrue();
+        expect(component.isAuthorOfPosting).toBe(true);
     });
 
     it('should handle undefined posting gracefully', () => {
@@ -156,7 +162,7 @@ describe('PostingHeaderComponent', () => {
         fixture.detectChanges();
         component.ngOnInit();
 
-        expect(component.isPostResolved()).toBeFalse();
+        expect(component.isPostResolved()).toBe(false);
         expect(getElement(debugElement, '.resolved')).toBeNull();
     });
 

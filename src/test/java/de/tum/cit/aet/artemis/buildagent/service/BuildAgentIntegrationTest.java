@@ -12,6 +12,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -254,12 +255,30 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     }
 
     @Test
-    void testBuildAgentJobCancelled() {
-        // High timeout to ensure that the job is not finished before it is canceled. This will not affect the test runtime since the job is canceled.
+    void testBuildAgentJobCancelled() throws InterruptedException {
+        // Two latches drive deterministic ordering:
+        // - containerStartedLatch lets the test know the build has entered container start, so
+        // it can publish the cancellation only after the job is mid-execution.
+        // - testCompletedLatch keeps the mock blocked for the rest of the test so the build does
+        // not race ahead to SUCCESSFUL while the cancellation propagates. The test releases it
+        // in a finally block so the worker thread always exits cleanly.
+        CountDownLatch containerStartedLatch = new CountDownLatch(1);
+        CountDownLatch testCompletedLatch = new CountDownLatch(1);
         StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
         when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
         doAnswer(invocation -> {
-            Thread.sleep(5000);
+            containerStartedLatch.countDown();
+            try {
+                // The cancellation logic interrupts the executor thread, which propagates here. A
+                // long safety timeout prevents this thread from blocking forever if cancellation
+                // never lands.
+                if (!testCompletedLatch.await(30, TimeUnit.SECONDS)) {
+                    // Timed out — return so the worker can finish and the test can fail cleanly.
+                }
+            }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
             return null;
         }).when(startContainerCmd).exec();
 
@@ -267,19 +286,27 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         buildJobQueue.add(queueItem);
 
-        // poll delay will slow down tests, but will remove flaky to make sure that the job was added to the map before sending the cancellation message
-        await().atMost(30, TimeUnit.SECONDS).pollDelay(500, TimeUnit.MILLISECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+        // Wait for the build agent to enter the container start. Combined with the buildStartDate
+        // check this guarantees the job is mid-execution when we publish the cancellation.
+        assertThat(containerStartedLatch.await(30, TimeUnit.SECONDS)).as("container start should be reached within 30s").isTrue();
+        await().atMost(30, TimeUnit.SECONDS).pollInterval(50, TimeUnit.MILLISECONDS).until(() -> {
             var processingJob = processingJobs.get(queueItem.id());
             return processingJob != null && processingJob.jobTimingInfo().buildStartDate() != null;
         });
 
         canceledBuildJobsTopic.publish(queueItem.id());
 
-        await().atMost(30, TimeUnit.SECONDS).until(() -> {
-            var resultQueueItem = resultQueue.poll();
-            return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
-                    && resultQueueItem.buildJobQueueItem().status() == BuildStatus.CANCELLED;
-        });
+        try {
+            await().atMost(30, TimeUnit.SECONDS).until(() -> {
+                var resultQueueItem = resultQueue.poll();
+                return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
+                        && resultQueueItem.buildJobQueueItem().status() == BuildStatus.CANCELLED;
+            });
+        }
+        finally {
+            // Always release the worker thread so it does not linger past the end of the test.
+            testCompletedLatch.countDown();
+        }
     }
 
     @Test
@@ -344,11 +371,17 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     }
 
     @Test
-    void testPauseBuildAgentBehavior() {
+    void testPauseBuildAgentBehavior() throws InterruptedException {
+        CountDownLatch buildStarted = new CountDownLatch(1);
+
         StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
         when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
         doAnswer(invocation -> {
-            Thread.sleep(5000);
+            buildStarted.countDown();
+            // Sleep longer than the pause grace period (2s in test config) so the build is still
+            // running when the grace period expires, causing handleTimeoutAndCancelRunningJobs to
+            // cancel and re-queue the job. The sleep is interrupted via future.cancel(true).
+            Thread.sleep(60_000);
             return null;
         }).when(startContainerCmd).exec();
 
@@ -356,10 +389,8 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         buildJobQueue.add(queueItem);
 
-        await().atMost(30, TimeUnit.SECONDS).until(() -> {
-            var buildAgent = buildAgentInformation.get(buildAgentShortName);
-            return buildAgent != null && buildAgent.status() == BuildAgentStatus.ACTIVE;
-        });
+        // Wait for the build job to actually start executing (not just agent being ACTIVE)
+        assertThat(buildStarted.await(30, TimeUnit.SECONDS)).as("Build job should start executing").isTrue();
 
         pauseBuildAgentTopic.publish(buildAgentShortName);
 
@@ -368,7 +399,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
             return buildAgent != null && buildAgent.status() == BuildAgentStatus.PAUSED;
         });
 
-        await().atMost(30, TimeUnit.SECONDS).until(() -> {
+        await().atMost(60, TimeUnit.SECONDS).until(() -> {
             var queued = buildJobQueue.peek();
             return queued != null && queued.id().equals(queueItem.id());
         });

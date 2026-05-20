@@ -1,0 +1,20 @@
+@if (stateType() === 'loading') {
+    <!-- Loading state -->
+    <div class="text-center py-5 text-secondary">
+        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+        <span>{{ 'global.search.searching' | artemisTranslate }}</span>
+    </div>
+} @else if (stateType() === 'empty') {
+    <!-- Empty state -->
+    <div class="text-center py-5 text-secondary">
+        <fa-icon [icon]="faSearch" size="2x" class="mb-3" aria-hidden="true" />
+        <p class="mb-0">{{ 'global.search.noResultsFound' | artemisTranslate }}</p>
+    </div>
+} @else if (stateType() === 'fallback') {
+    <!-- Fallback state -->
+    <div class="text-center py-5 px-4 text-secondary">
+        <fa-icon [icon]="faSearch" size="2x" class="mb-3" aria-hidden="true" />
+        <p class="mb-2 fw-bold">{{ 'global.search.tipTitle' | artemisTranslate }}</p>
+        <p class="small mb-0">{{ 'global.search.tipDescription' | artemisTranslate }}</p>
+    </div>
+}

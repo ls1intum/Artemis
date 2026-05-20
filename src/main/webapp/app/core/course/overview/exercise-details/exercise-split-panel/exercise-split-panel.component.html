@@ -1,0 +1,93 @@
+<jhi-resizable-panels class="flex-fill h-100 overflow-hidden">
+    @if (showEditorPanel()) {
+        <ng-template jhiPanel [label]="editorLabelKey()" [icon]="getIcon(exercise().type)">
+            @if (usesRouterOutlet()) {
+                <router-outlet (activate)="onOutletActivate($event)" (deactivate)="onOutletDeactivate()" />
+            }
+        </ng-template>
+    }
+
+    @if (exercise().type !== ExerciseType.QUIZ) {
+        <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.problemStatement'" [icon]="faAlignLeft">
+            <jhi-problem-statement [exerciseInput]="exercise()" [participationInput]="studentParticipation()" />
+            @if (exercise().type === ExerciseType.PROGRAMMING && exercise().studentParticipations && exercise().studentParticipations!.length) {
+                <jhi-reset-repo-button [exercise]="exercise()" [participations]="exercise().studentParticipations!" [smallButtons]="false" />
+            }
+            @if (exampleSolutionInfo()?.exampleSolutionPublished) {
+                <p-panel [header]="'artemisApp.exercise.exampleSolution' | artemisTranslate" [toggleable]="true" [collapsed]="true">
+                    <dl class="row-md jh-entity-details markdown-preview">
+                        @if (exampleSolutionInfo()?.exampleSolutionUML && exampleSolutionInfo()?.modelingExercise) {
+                            <dd>
+                                <jhi-modeling-editor
+                                    [readOnly]="true"
+                                    [diagramType]="exampleSolutionInfo()?.modelingExercise?.diagramType"
+                                    [umlModel]="exampleSolutionInfo()?.exampleSolutionUML"
+                                    [withExplanation]="!!exampleSolutionInfo()?.modelingExercise?.exampleSolutionExplanation"
+                                    [explanation]="exampleSolutionInfo()?.modelingExercise?.exampleSolutionExplanation || ''"
+                                />
+                            </dd>
+                        }
+                        @if (exampleSolutionInfo()?.exampleSolution) {
+                            <dd class="editor-outline-background" [innerHTML]="exampleSolutionInfo()?.exampleSolution"></dd>
+                        }
+                        @if (exercise().type === ExerciseType.PROGRAMMING) {
+                            <dd class="editor-outline-background">
+                                <jhi-programming-exercise-example-solution-repo-download
+                                    class="ms-2"
+                                    [exerciseId]="exercise().id!"
+                                    [title]="'artemisApp.programmingExercise.export.downloadExampleSolution'"
+                                />
+                            </dd>
+                            @if (exampleSolutionInfo()?.programmingExercise?.releaseTestsWithExampleSolution) {
+                                <dd class="editor-outline-background">
+                                    <jhi-programming-exercise-example-solution-repo-download
+                                        class="ms-2"
+                                        [exerciseId]="exercise().id!"
+                                        [includeTests]="true"
+                                        [title]="'artemisApp.programmingExercise.export.downloadTestsWithExampleSolution'"
+                                        ngbTooltip="{{ 'artemisApp.programmingExercise.studentDownloadTestsTooltip' | artemisTranslate }}"
+                                    />
+                                </dd>
+                            }
+                        }
+                    </dl>
+                </p-panel>
+            }
+            @if (showComplaintView()) {
+                <jhi-complaint-student-view
+                    class="mb-2 mt-2 ms-3"
+                    [exercise]="exercise()"
+                    [participation]="gradedStudentParticipation()!"
+                    [result]="resultWithComplaint() ? resultWithComplaint()! : latestRatedResult()!"
+                />
+            }
+            @if (showRating()) {
+                <div class="row">
+                    <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult()!" [participation]="gradedStudentParticipation()!" />
+                </div>
+            }
+            @if (plagiarismCaseInfo()?.verdict === PlagiarismVerdict.NO_PLAGIARISM) {
+                <a class="btn btn-info btn-sm me-2" [routerLink]="['/courses', courseId(), 'plagiarism-cases', plagiarismCaseInfo()?.id]">
+                    <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.resolvedPlagiarismCase"></span>
+                </a>
+            }
+            <jhi-competency-contribution [courseId]="courseId()" [learningObjectId]="exercise().id!" [isExercise]="true" />
+        </ng-template>
+    }
+
+    @if (showIris()) {
+        <ng-template #irisLogoTpl>
+            <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
+        </ng-template>
+        <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.iris'" [iconTemplate]="irisLogoTpl">
+            <jhi-iris-base-chatbot class="h-100" [layout]="'embedded'" [isChatHistoryAvailable]="false" />
+        </ng-template>
+    }
+
+    @if (showDiscussion()) {
+        <ng-template jhiPanel [label]="'artemisApp.metis.communication.label'" [icon]="faComment">
+            <jhi-discussion-section [exercise]="exercise()" [embedded]="true" />
+        </ng-template>
+    }
+</jhi-resizable-panels>
+<jhi-lti-initializer />

@@ -51,9 +51,9 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
 
     @AfterEach
     void teardown() {
-        userRepository.delete(user);
-        // make sure the configurations are empty to avoid flaky tests
+        // Delete configurations before user to respect FK constraints
         pushNotificationDeviceConfigurationRepository.deleteAll();
+        userRepository.delete(user);
     }
 
     @Test

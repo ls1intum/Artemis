@@ -31,18 +31,16 @@ describe('Header Course Component', () => {
     };
 
     beforeEach(async () => {
-        await TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(HeaderCourseComponent);
-                component = fixture.componentInstance;
-                componentRef = fixture.componentRef;
-            });
+        });
+        await TestBed.compileComponents();
+        fixture = TestBed.createComponent(HeaderCourseComponent);
+        component = fixture.componentInstance;
+        componentRef = fixture.componentRef;
         window['innerWidth'] = 1920;
     });
 

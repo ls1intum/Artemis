@@ -28,7 +28,7 @@ export class UserService {
     }
 
     /**
-     * Updates consent to external LLM usage policy.
+     * Updates the user's AI experience selection.
      */
     updateLLMSelectionDecision(selection: LLMSelectionDecision): Observable<HttpResponse<void>> {
         const updateLLMSelectionDecisionDto: UpdateLLMSelectionDecisionDto = { selection };

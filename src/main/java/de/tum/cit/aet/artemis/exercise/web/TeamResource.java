@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.core.util.StringUtil.stripIllegalCharacters
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -53,7 +54,9 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.TeamImportDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamImportStrategyType;
+import de.tum.cit.aet.artemis.exercise.dto.TeamInputDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamSearchUserDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -123,16 +126,16 @@ public class TeamResource {
     /**
      * POST /exercises/{exerciseId}/teams : Create a new team for an exercise.
      *
-     * @param team       the team to create
+     * @param dto        the team DTO to create
      * @param exerciseId the exercise id for which to create a team
      * @return the ResponseEntity with status 201 (Created) and with body the new team, or with status 400 (Bad Request) if the team already has an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("exercises/{exerciseId}/teams")
     @EnforceAtLeastTutor
-    public ResponseEntity<Team> createTeam(@RequestBody Team team, @PathVariable long exerciseId) throws URISyntaxException {
-        log.debug("REST request to save Team : {}", team);
-        if (team.getId() != null) {
+    public ResponseEntity<Team> createTeam(@RequestBody TeamInputDTO dto, @PathVariable long exerciseId) throws URISyntaxException {
+        log.debug("REST request to save Team : {}", dto);
+        if (dto.id() != null) {
             throw new BadRequestAlertException("A new team cannot already have an ID", ENTITY_NAME, "idExists");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -141,21 +144,37 @@ public class TeamResource {
         if (!exercise.isTeamMode()) {
             throw new BadRequestAlertException("A team cannot be created for an exercise that is not team-based.", ENTITY_NAME, "exerciseNotTeamBased");
         }
-        if (teamRepository.existsByExerciseCourseIdAndShortName(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), team.getShortName())) {
+        if (teamRepository.existsByExerciseCourseIdAndShortName(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), dto.shortName())) {
             throw new BadRequestAlertException("A team with this short name already exists in the course.", ENTITY_NAME, "teamShortNameAlreadyExistsInCourse");
         }
         // Remove all special characters and check if the resulting shortname is valid
-        var shortName = team.getShortName().replaceAll("[^0-9a-z]", "").toLowerCase();
+        var shortName = dto.shortName().replaceAll("[^0-9a-z]", "").toLowerCase();
         Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(shortName);
         if (!shortNameMatcher.matches()) {
             throw new BadRequestAlertException("The team name must start with a letter.", ENTITY_NAME, "teamShortNameInvalid");
         }
-        // Also remove illegal characters from the long name
-        team.setName(stripIllegalCharacters(team.getName()));
+
+        // Build the team entity from DTO
+        Team team = new Team();
+        team.setName(stripIllegalCharacters(dto.name()));
+        team.setShortName(dto.shortName());
+        team.setImage(dto.image());
+
+        // Resolve student IDs to User entities
+        Set<User> students = new HashSet<>();
+        for (Long studentId : dto.studentsOrEmpty()) {
+            students.add(userRepository.findByIdElseThrow(studentId));
+        }
+        team.setStudents(students);
+
         // Tutors can only create teams for themselves while instructors can select any tutor as the team owner
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
             team.setOwner(user);
         }
+        else if (dto.ownerId() != null) {
+            team.setOwner(userRepository.findByIdElseThrow(dto.ownerId()));
+        }
+
         Team savedTeam = teamRepository.save(exercise, team);
         savedTeam.filterSensitiveInformation();
         savedTeam.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
@@ -167,7 +186,7 @@ public class TeamResource {
     /**
      * PUT /exercises/:exerciseId/teams/:id : Updates an existing team.
      *
-     * @param team       the team to update
+     * @param dto        the team DTO to update
      * @param exerciseId the id of the exercise that the team belongs to
      * @param teamId     the id of the team which to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated team, or with status 400 (Bad Request) if the team is not valid, or with status 500 (Internal
@@ -175,47 +194,65 @@ public class TeamResource {
      */
     @PutMapping("exercises/{exerciseId}/teams/{teamId}")
     @EnforceAtLeastTutor
-    public ResponseEntity<Team> updateTeam(@RequestBody Team team, @PathVariable long exerciseId, @PathVariable long teamId) {
-        log.debug("REST request to update Team : {}", team);
-        if (team.getId() == null) {
+    public ResponseEntity<Team> updateTeam(@RequestBody TeamInputDTO dto, @PathVariable long exerciseId, @PathVariable long teamId) {
+        log.debug("REST request to update Team : {}", dto);
+        if (dto.id() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idNull");
         }
-        if (!team.getId().equals(teamId)) {
+        if (!dto.id().equals(teamId)) {
             throw new BadRequestAlertException("The team has an incorrect id.", ENTITY_NAME, "wrongId");
         }
-        Optional<Team> existingTeam = teamRepository.findWithStudentsById(teamId);
-        if (existingTeam.isEmpty()) {
+        Optional<Team> optionalExistingTeam = teamRepository.findWithStudentsById(teamId);
+        if (optionalExistingTeam.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        if (!existingTeam.get().getExercise().getId().equals(exerciseId)) {
+        Team existingTeam = optionalExistingTeam.get();
+        if (!existingTeam.getExercise().getId().equals(exerciseId)) {
             throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
         }
-        if (!team.getShortName().equals(existingTeam.get().getShortName())) {
+        if (!dto.shortName().equals(existingTeam.getShortName())) {
             throw new BadRequestAlertException("The team's short name cannot be changed after the team has been created.", ENTITY_NAME, "shortNameChangeNotAllowed");
         }
-        // Remove illegal characters from the long name
-        team.setName(stripIllegalCharacters(team.getName()));
 
         // Prepare auth checks
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         final boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         final boolean isAtLeastTeachingAssistantAndOwner = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)
-                && authCheckService.isOwnerOfTeam(existingTeam.get(), user);
+                && authCheckService.isOwnerOfTeam(existingTeam, user);
 
         // User must be (1) at least instructor or (2) TA but the owner of the team
         if (!isAtLeastInstructor && !isAtLeastTeachingAssistantAndOwner) {
             throw new AccessForbiddenException();
         }
 
+        // Resolve the new owner from DTO
+        User newOwner = dto.ownerId() != null ? userRepository.findByIdElseThrow(dto.ownerId()) : null;
+
         // The team owner can only be changed by instructors
-        final boolean ownerWasChanged = !Objects.equals(existingTeam.get().getOwner(), team.getOwner());
+        final boolean ownerWasChanged = !Objects.equals(existingTeam.getOwner(), newOwner);
         if (!isAtLeastInstructor && ownerWasChanged) {
             throw new AccessForbiddenException();
         }
 
-        // Save team (includes check for conflicts that no student is assigned to multiple teams for an exercise)
-        Team savedTeam = teamRepository.save(exercise, team);
+        // Create a copy of existing team for websocket notification (before modifications)
+        Team existingTeamCopy = new Team(existingTeam);
+        existingTeamCopy.setId(existingTeam.getId());
+
+        // Update only the fields that should be changed from client data on the existing managed entity
+        existingTeam.setName(stripIllegalCharacters(dto.name()));
+        existingTeam.setImage(dto.image());
+
+        // Resolve student IDs to User entities
+        Set<User> students = new HashSet<>();
+        for (Long studentId : dto.studentsOrEmpty()) {
+            students.add(userRepository.findByIdElseThrow(studentId));
+        }
+        existingTeam.setStudents(students);
+        existingTeam.setOwner(newOwner);
+
+        // Save the existing managed team (includes check for conflicts that no student is assigned to multiple teams for an exercise)
+        Team savedTeam = teamRepository.save(exercise, existingTeam);
 
         // Propagate team owner change to other instances of this team in the course
         if (ownerWasChanged) {
@@ -228,8 +265,8 @@ public class TeamResource {
         savedTeam.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
         var participationsOfSavedTeam = studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentIdWithSubmissionsAndResults(exercise.getId(),
                 savedTeam.getId());
-        teamWebsocketService.sendTeamAssignmentUpdate(exercise, existingTeam.get(), savedTeam, participationsOfSavedTeam);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, team.getId().toString())).body(savedTeam);
+        teamWebsocketService.sendTeamAssignmentUpdate(exercise, existingTeamCopy, savedTeam, participationsOfSavedTeam);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, dto.id().toString())).body(savedTeam);
     }
 
     /**
@@ -351,13 +388,14 @@ public class TeamResource {
      * PUT /exercises/:destinationExerciseId/teams/import-from-file : add given teams into exercise
      *
      * @param exerciseId         the exercise id of the exercise for which to import teams
-     * @param teams              teams whose students have login or registration number as identifiers
+     * @param teamDTOs           team DTOs whose students have login or registration number as identifiers
      * @param importStrategyType the import strategy to use when importing the teams
      * @return the ResponseEntity with status 200 (OK) and the list of created teams in body
      */
     @PutMapping("exercises/{exerciseId}/teams/import-from-list")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<Team>> importTeamsFromList(@PathVariable long exerciseId, @RequestBody List<Team> teams, @RequestParam TeamImportStrategyType importStrategyType) {
+    public ResponseEntity<List<Team>> importTeamsFromList(@PathVariable long exerciseId, @RequestBody List<TeamImportDTO> teamDTOs,
+            @RequestParam TeamImportStrategyType importStrategyType) {
         log.debug("REST request import given teams into destination exercise with id {}", exerciseId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -367,6 +405,9 @@ public class TeamResource {
         if (!exercise.isTeamMode()) {
             throw new BadRequestAlertException("The exercise must be a team-based exercise.", ENTITY_NAME, "destinationExerciseNotTeamBased");
         }
+
+        // Convert DTOs to Team entities
+        List<Team> teams = teamDTOs.stream().map(TeamImportDTO::toTeam).toList();
 
         List<Team> filledTeams = teamService.convertTeamsStudentsToUsersInDatabase(exercise.getCourseViaExerciseGroupOrCourseMember(), teams);
 

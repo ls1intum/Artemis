@@ -12,9 +12,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -27,8 +24,10 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
 
+    // No @Cache here on purpose. A second-level cache with NONSTRICT_READ_WRITE used to produce partial / stale selected-option collections
+    // under concurrent activity (autosave, evaluation) on a clustered setup, see Artemis issue #12574. Selected options are small and
+    // rarely re-read for the same submission, so always fetching from the database is both simpler and deterministic.
     @ManyToMany(fetch = FetchType.EAGER)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JoinTable(name = "multiple_choice_submitted_answer_selected_options", joinColumns = @JoinColumn(name = "multiple_choice_submitted_answers_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "selected_options_id", referencedColumnName = "id"))
     private Set<AnswerOption> selectedOptions = new HashSet<>();
 

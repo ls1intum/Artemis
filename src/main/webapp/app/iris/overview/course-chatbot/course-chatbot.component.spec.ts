@@ -63,4 +63,39 @@ describe('CourseChatbotComponent', () => {
 
         expect(chatService.switchTo).toHaveBeenCalledWith(ChatServiceMode.COURSE, 2);
     });
+
+    it('should not call switchTo when courseId is undefined', async () => {
+        fixture.componentRef.setInput('courseId', undefined);
+        await fixture.whenStable();
+
+        expect(chatService.switchTo).not.toHaveBeenCalled();
+    });
+
+    it('should return early in toggleChatHistory when baseChatbot is not available', () => {
+        expect(() => component.toggleChatHistory()).not.toThrow();
+    });
+
+    it('should open chat history when it is currently closed', () => {
+        const mockBaseChatbot = {
+            isChatHistoryOpen: vi.fn().mockReturnValue(false),
+            setChatHistoryVisibility: vi.fn(),
+        };
+        vi.spyOn(component as any, 'irisBaseChatbot').mockReturnValue(mockBaseChatbot);
+
+        component.toggleChatHistory();
+
+        expect(mockBaseChatbot.setChatHistoryVisibility).toHaveBeenCalledWith(true);
+    });
+
+    it('should close chat history when it is currently open', () => {
+        const mockBaseChatbot = {
+            isChatHistoryOpen: vi.fn().mockReturnValue(true),
+            setChatHistoryVisibility: vi.fn(),
+        };
+        vi.spyOn(component as any, 'irisBaseChatbot').mockReturnValue(mockBaseChatbot);
+
+        component.toggleChatHistory();
+
+        expect(mockBaseChatbot.setChatHistoryVisibility).toHaveBeenCalledWith(false);
+    });
 });

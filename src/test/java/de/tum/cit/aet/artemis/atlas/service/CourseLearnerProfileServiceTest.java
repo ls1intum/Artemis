@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -31,15 +32,24 @@ class CourseLearnerProfileServiceTest {
     @Mock
     private LearnerProfileRepository learnerProfileRepository;
 
+    // while it's not used directly, the mock is needed for the service to work properly, otherwise the test fails with database exceptions
+    @SuppressWarnings("unused")
     @Mock
     private LearnerProfileService learnerProfileService;
 
     @InjectMocks
     private CourseLearnerProfileService courseLearnerProfileService;
 
+    private AutoCloseable closeable;
+
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        closeable.close();
     }
 
     @Test

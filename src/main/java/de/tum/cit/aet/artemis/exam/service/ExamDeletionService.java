@@ -41,6 +41,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
@@ -87,12 +89,16 @@ public class ExamDeletionService {
 
     private final ExamUserRepository examUserRepository;
 
+    private final StudentExamService studentExamService;
+
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
+
     public ExamDeletionService(ExerciseDeletionService exerciseDeletionService, ParticipationDeletionService participationDeletionService, CacheManager cacheManager,
             UserRepository userRepository, ExamRepository examRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository,
             GradingScaleRepository gradingScaleRepository, StudentParticipationRepository studentParticipationRepository, ChannelRepository channelRepository,
             ChannelService channelService, ExamLiveEventRepository examLiveEventRepository, ExamSessionRepository examSessionRepository, BuildJobRepository buildJobRepository,
             PostRepository postRepository, AnswerPostRepository answerPostRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ExamUserRepository examUserRepository) {
+            ExamUserRepository examUserRepository, final StudentExamService studentExamService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationDeletionService = participationDeletionService;
         this.cacheManager = cacheManager;
@@ -111,6 +117,8 @@ public class ExamDeletionService {
         this.answerPostRepository = answerPostRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.examUserRepository = examUserRepository;
+        this.studentExamService = studentExamService;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
     }
 
     /**
@@ -154,6 +162,9 @@ public class ExamDeletionService {
         }
 
         deleteGradingScaleOfExam(exam);
+
+        searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.EXAM, examId));
+
         // fetch the exam again to allow Hibernate to delete it properly
         exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
         examRepository.delete(exam);
@@ -241,6 +252,7 @@ public class ExamDeletionService {
             }
         }
         studentExamRepository.deleteAll(exam.getStudentExams());
+        studentExamService.invalidateExerciseStartStatus(examId);
     }
 
     /**
@@ -267,7 +279,7 @@ public class ExamDeletionService {
         List<StudentExam> otherTestRunsOfInstructor = studentExamRepository.findAllTestRunsWithExercisesByExamIdForUser(testRun.getExam().getId(), instructor.getId()).stream()
                 .filter(studentExam -> !studentExam.getId().equals(testRunId)).toList();
 
-        // We cannot delete participations which are referenced by other test runs. (an instructor is free to create as many test runs as he likes)
+        // We cannot delete participations which are referenced by other test runs. (an instructor is free to create as many test runs as they like)
         var testRunExercises = testRun.getExercises();
         // Collect all distinct exercises of other instructor test runs
         var allInstructorTestRunExercises = otherTestRunsOfInstructor.stream().flatMap(studentExam -> studentExam.getExercises().stream()).distinct().toList();

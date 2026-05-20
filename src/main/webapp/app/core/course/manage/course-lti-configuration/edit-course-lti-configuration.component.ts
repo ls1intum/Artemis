@@ -87,7 +87,7 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
             id: new FormControl(this.onlineCourseConfiguration.id),
             userPrefix: new FormControl(this.onlineCourseConfiguration?.userPrefix, { validators: [regexValidator(LOGIN_PATTERN)] }),
             requireExistingUser: new FormControl(this.onlineCourseConfiguration.requireExistingUser),
-            ltiPlatformConfiguration: new FormControl(''),
+            ltiPlatformConfiguration: new FormControl(this.onlineCourseConfiguration?.ltiPlatformConfiguration ?? null),
         });
 
         this.loadInitialPlatforms();

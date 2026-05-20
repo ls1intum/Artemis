@@ -1,120 +1,121 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { DataExportConfirmationDialogComponent } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { DebugElement, OutputEmitterRef } from '@angular/core';
+import { MockDirective, MockPipe } from 'ng-mocks';
+import { DebugElement } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { Observable, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
 
-// Helper to create a mock OutputEmitterRef
-function createMockOutputEmitterRef<T>(): OutputEmitterRef<T> & { emit: jest.Mock } {
-    const emitMock = jest.fn();
-    return {
-        emit: emitMock,
-        subscribe: jest.fn(),
-        destroyed: false,
-        listeners: new Set(),
-        errorHandler: undefined,
-    } as unknown as OutputEmitterRef<T> & { emit: jest.Mock };
-}
-
 describe('DataExportConfirmationDialogComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: DataExportConfirmationDialogComponent;
     let fixture: ComponentFixture<DataExportConfirmationDialogComponent>;
     let debugElement: DebugElement;
-    let ngbActiveModal: NgbActiveModal;
 
     beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ReactiveFormsModule, FormsModule, NgbModule],
-            declarations: [DataExportConfirmationDialogComponent, ConfirmEntityNameComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
-            providers: [JhiLanguageHelper, AlertService, MockProvider(NgbActiveModal)],
-        }).compileComponents();
+        TestBed.configureTestingModule({
+            imports: [
+                TranslateModule.forRoot(),
+                ReactiveFormsModule,
+                FormsModule,
+                DataExportConfirmationDialogComponent,
+                ConfirmEntityNameComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(TranslateDirective),
+            ],
+            providers: [JhiLanguageHelper, AlertService],
+        });
+        await TestBed.compileComponents();
         fixture = TestBed.createComponent(DataExportConfirmationDialogComponent);
         comp = fixture.componentInstance;
         debugElement = fixture.debugElement;
-        ngbActiveModal = TestBed.inject(NgbActiveModal);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should initialize dialog correctly', () => {
-        const closeSpy = jest.spyOn(ngbActiveModal, 'close');
-        comp.adminDialog.set(true);
+        fixture.componentRef.setInput('adminDialog', true);
         comp.expectedLogin.set('login');
         comp.expectedLoginOfOtherUser.set('other login');
-        comp.dialogError = new Observable<string>();
+        comp.visible.set(true);
         fixture.changeDetectorRef.detectChanges();
         const cancelButton = debugElement.query(By.css('.btn.btn-secondary'));
-        const closeButton = debugElement.query(By.css('.btn-close'));
-        expect(closeButton).not.toBeNull();
-        closeButton.nativeElement.click();
-        expect(closeSpy).toHaveBeenCalledOnce();
         expect(cancelButton).not.toBeNull();
         cancelButton.nativeElement.click();
-        expect(closeSpy).toHaveBeenCalledTimes(2);
+        expect(comp.visible()).toBe(false);
 
         const inputFormGroup = debugElement.query(By.css('.form-group'));
         expect(inputFormGroup).not.toBeNull();
     });
 
-    it('should correctly enable and disable request button', fakeAsync(async () => {
-        // Form can't be submitted if the expected login doesn't match the entered login
-        comp.expectedLogin.set('login');
+    it('should correctly enable and disable request button', async () => {
+        // Set expectedLogin via the component input so ngOnInit picks it up correctly
+        fixture.componentRef.setInput('expectedLogin', 'login');
         comp.enteredLogin.set('');
-        comp.dialogError = new Observable<string>();
+        comp.visible.set(true);
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         fixture.changeDetectorRef.detectChanges();
-        expect(comp.dataExportConfirmationForm().invalid).toBeTrue();
-        expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeTrue();
+        expect(comp.dataExportConfirmationForm().invalid).toBe(true);
+        let confirmButton = debugElement.query(By.css('.btn.btn-primary'));
+        expect(confirmButton.nativeElement.disabled).toBe(true);
 
         // User entered incorrect login --> button is disabled
         comp.enteredLogin.set('my login');
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         fixture.changeDetectorRef.detectChanges();
-        expect(comp.dataExportConfirmationForm().invalid).toBeTrue();
-        expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeTrue();
+        expect(comp.dataExportConfirmationForm().invalid).toBe(true);
+        confirmButton = debugElement.query(By.css('.btn.btn-primary'));
+        expect(confirmButton.nativeElement.disabled).toBe(true);
 
         // User entered correct login --> button is enabled
         comp.enteredLogin.set('login');
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         fixture.changeDetectorRef.detectChanges();
-        expect(comp.dataExportConfirmationForm().invalid).toBeFalse();
-        expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeFalse();
-    }));
+        expect(comp.dataExportConfirmationForm().invalid).toBe(false);
+        confirmButton = debugElement.query(By.css('.btn.btn-primary'));
+        expect(confirmButton.nativeElement.disabled).toBe(false);
+    });
 
     it('should handle dialog error events correctly', () => {
         comp.enteredLogin.set('login');
         comp.expectedLogin.set('login');
         const dialogErrorSource = new Subject<string>();
-        comp.dialogError = dialogErrorSource.asObservable();
-        comp.dataExportRequest = createMockOutputEmitterRef<void>();
+        fixture.componentRef.setInput('dialogError', dialogErrorSource.asObservable());
+        comp.visible.set(true);
+        // detectChanges triggers ngOnInit which subscribes to the dialogError input
         fixture.changeDetectorRef.detectChanges();
+
         let confirmButton = debugElement.query(By.css('.btn.btn-primary'));
-        expect(confirmButton.nativeElement.disabled).toBeFalse();
+        expect(confirmButton.nativeElement.disabled).toBe(false);
 
         // external component request method was executed
         comp.confirmDataExportRequest();
         fixture.changeDetectorRef.detectChanges();
         confirmButton = debugElement.query(By.css('.btn.btn-primary'));
-        expect(confirmButton.nativeElement.disabled).toBeTrue();
+        expect(confirmButton.nativeElement.disabled).toBe(true);
 
         // external component emits error to the dialog
         dialogErrorSource.next('example error');
         fixture.changeDetectorRef.detectChanges();
         confirmButton = debugElement.query(By.css('.btn.btn-primary'));
-        expect(confirmButton.nativeElement.disabled).toBeFalse();
+        expect(confirmButton.nativeElement.disabled).toBe(false);
 
         // external component completed request method successfully
-        const clearStub = jest.spyOn(comp, 'clear');
+        const clearStub = vi.spyOn(comp, 'clear');
         clearStub.mockReturnValue();
         dialogErrorSource.next('');
         expect(clearStub).toHaveBeenCalledOnce();
@@ -141,21 +142,21 @@ describe('DataExportConfirmationDialogComponent', () => {
         }
     });
 
-    it('should emit correct even when clicking confirm button', () => {
+    it('should emit correct event when clicking confirm button', () => {
         comp.expectedLogin.set('login');
-        const mockDataExportRequestForAnotherUser = createMockOutputEmitterRef<string>();
-        comp.dataExportRequestForAnotherUser = mockDataExportRequestForAnotherUser;
+        const dataExportRequestForAnotherUserSpy = vi.fn();
+        comp.dataExportRequestForAnotherUser.subscribe(dataExportRequestForAnotherUserSpy);
         comp.requestForAnotherUser.set(true);
         comp.confirmDataExportRequest();
-        expect(mockDataExportRequestForAnotherUser.emit).toHaveBeenCalledOnce();
-        expect(mockDataExportRequestForAnotherUser.emit).toHaveBeenCalledWith('login');
-        mockDataExportRequestForAnotherUser.emit.mockReset();
+        expect(dataExportRequestForAnotherUserSpy).toHaveBeenCalledOnce();
+        expect(dataExportRequestForAnotherUserSpy).toHaveBeenCalledWith('login');
+        dataExportRequestForAnotherUserSpy.mockReset();
 
-        const mockDataExportRequest = createMockOutputEmitterRef<void>();
-        comp.dataExportRequest = mockDataExportRequest;
+        const dataExportRequestSpy = vi.fn();
+        comp.dataExportRequest.subscribe(dataExportRequestSpy);
         comp.requestForAnotherUser.set(false);
         comp.confirmDataExportRequest();
-        expect(mockDataExportRequest.emit).toHaveBeenCalledOnce();
-        expect(mockDataExportRequestForAnotherUser.emit).not.toHaveBeenCalled();
+        expect(dataExportRequestSpy).toHaveBeenCalledOnce();
+        expect(dataExportRequestForAnotherUserSpy).not.toHaveBeenCalled();
     });
 });

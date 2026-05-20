@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { faBan, faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
-import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { UnsavedChangesWarningComponent } from 'app/core/admin/legal/unsaved-changes-warning/unsaved-changes-warning.component';
 import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/core/shared/entities/legal-document.model';
 import { ActivatedRoute } from '@angular/router';
@@ -22,11 +22,19 @@ import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-b
     selector: 'jhi-privacy-statement-update-component',
     styleUrls: ['./legal-document-update.component.scss'],
     templateUrl: './legal-document-update.component.html',
-    imports: [TranslateDirective, MarkdownEditorMonacoComponent, FaIconComponent, NgbTooltip, ModePickerComponent, ArtemisTranslatePipe, AdminTitleBarTitleDirective],
+    imports: [
+        TranslateDirective,
+        MarkdownEditorMonacoComponent,
+        FaIconComponent,
+        NgbTooltip,
+        ModePickerComponent,
+        ArtemisTranslatePipe,
+        AdminTitleBarTitleDirective,
+        UnsavedChangesWarningComponent,
+    ],
 })
 export class LegalDocumentUpdateComponent implements OnInit {
     private readonly legalDocumentService = inject(LegalDocumentService);
-    private readonly modalService = inject(NgbModal);
     private readonly route = inject(ActivatedRoute);
     private readonly languageHelper = inject(JhiLanguageHelper);
 
@@ -66,8 +74,14 @@ export class LegalDocumentUpdateComponent implements OnInit {
     /** Currently selected language */
     readonly currentLanguage = signal(this.DEFAULT_LANGUAGE);
 
-    /** Modal reference for unsaved changes warning */
-    unsavedChangesWarning: NgbModalRef;
+    /** Whether the unsaved changes warning dialog is visible */
+    readonly showUnsavedChangesWarning = signal(false);
+
+    /** The language that was selected when the warning was triggered */
+    private pendingLanguageChange: LegalDocumentLanguage | undefined;
+
+    /** The warning text message for unsaved changes */
+    readonly warningTextMessage = signal('');
 
     /** Translation key for the page title */
     titleKey: string;
@@ -146,22 +160,22 @@ export class LegalDocumentUpdateComponent implements OnInit {
     }
 
     showWarning(legalDocumentLanguage: LegalDocumentLanguage) {
-        this.unsavedChangesWarning = this.modalService.open(UnsavedChangesWarningComponent, { size: 'lg', backdrop: 'static' });
+        this.pendingLanguageChange = legalDocumentLanguage;
         if (this.legalDocumentType === LegalDocumentType.PRIVACY_STATEMENT) {
-            this.unsavedChangesWarning.componentInstance.textMessage = 'artemisApp.legal.privacyStatement.unsavedChangesWarning';
+            this.warningTextMessage.set('artemisApp.legal.privacyStatement.unsavedChangesWarning');
         } else if (this.legalDocumentType === LegalDocumentType.IMPRINT) {
-            this.unsavedChangesWarning.componentInstance.textMessage = 'artemisApp.legal.imprint.unsavedChangesWarning';
+            this.warningTextMessage.set('artemisApp.legal.imprint.unsavedChangesWarning');
         } else {
             throw new Error('Unknown legal document type!');
         }
+        this.showUnsavedChangesWarning.set(true);
+    }
 
-        this.unsavedChangesWarning.result
-            .then(() => {
-                this.unsavedChanges.set(false);
-                this.onLanguageChange(legalDocumentLanguage);
-            })
-            .catch(() => {
-                // Ignore - prevents console error about rejected promise
-            });
+    onDiscardChanges() {
+        this.unsavedChanges.set(false);
+        if (this.pendingLanguageChange) {
+            this.onLanguageChange(this.pendingLanguageChange);
+            this.pendingLanguageChange = undefined;
+        }
     }
 }

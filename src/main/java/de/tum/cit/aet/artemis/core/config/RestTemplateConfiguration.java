@@ -24,7 +24,6 @@ import org.springframework.web.client.RestTemplate;
 import de.tum.cit.aet.artemis.athena.config.AthenaAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.config.PyrisAuthorizationInterceptor;
-import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingEnabled;
 
@@ -76,17 +75,6 @@ public class RestTemplateConfiguration {
         return createShortTimeoutRestTemplate();
     }
 
-    /**
-     * Creates a RestTemplate that can be used to communicate with Aeolus
-     *
-     * @return a RestTemplate with short timeouts
-     */
-    @Bean
-    @Profile("aeolus | localci")
-    public RestTemplate aeolusRestTemplate() {
-        return createRestTemplate();
-    }
-
     @Bean
     @Conditional(IrisEnabled.class)
     public RestTemplate pyrisRestTemplate(PyrisAuthorizationInterceptor pyrisAuthorizationInterceptor) {
@@ -131,23 +119,6 @@ public class RestTemplateConfiguration {
     @Conditional(IrisEnabled.class)
     public RestTemplate shortTimeoutPyrisRestTemplate(PyrisAuthorizationInterceptor pyrisAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(pyrisAuthorizationInterceptor, createShortTimeoutRestTemplate());
-    }
-
-    @Bean
-    @Conditional(NebulaEnabled.class)
-    public RestTemplate nebulaRestTemplate() {
-        return createRestTemplate();
-    }
-
-    /**
-     * Creates a RestTemplate that can be used to communicate with Aeolus
-     *
-     * @return a RestTemplate with short timeouts
-     */
-    @Bean
-    @Profile("aeolus | localci")
-    public RestTemplate shortTimeoutAeolusRestTemplate() {
-        return createShortTimeoutRestTemplate();
     }
 
     @NonNull

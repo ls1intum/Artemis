@@ -3,6 +3,10 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { createRequestOption } from 'app/shared/util/request.util';
+import { PageableResult, ParticipationScoreSearch, ParticipationSearch } from 'app/shared/table/pageable-table';
+import { ParticipationNameExportDTO } from 'app/exercise/exercise-scores/participation-name-export-dto.model';
+import { ParticipationScoreDTO } from 'app/exercise/exercise-scores/participation-score-dto.model';
+import { ParticipationManagementDTO } from 'app/exercise/participation/participation-management-dto.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
@@ -16,6 +20,24 @@ import dayjs from 'dayjs/esm';
 export type EntityResponseType = HttpResponse<StudentParticipation>;
 export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;
 
+/**
+ * DTO for updating a participation's presentation score.
+ */
+export interface ParticipationUpdateDTO {
+    id: number;
+    exerciseId: number;
+    presentationScore?: number;
+}
+
+/**
+ * DTO for updating a participation's individual due date.
+ */
+export interface ParticipationDueDateUpdateDTO {
+    id: number;
+    exerciseId: number;
+    individualDueDate?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ParticipationService {
     private http = inject(HttpClient);
@@ -25,23 +47,30 @@ export class ParticipationService {
     public resourceUrl = 'api/exercise/participations';
 
     update(exercise: Exercise, participation: StudentParticipation): Observable<EntityResponseType> {
-        const copy = this.convertParticipationForServer(participation, exercise);
+        // Create DTO with only the fields needed for updating presentation score
+        const dto: ParticipationUpdateDTO = {
+            id: participation.id!,
+            exerciseId: exercise.id!,
+            presentationScore: participation.presentationScore,
+        };
         return this.http
-            .put<StudentParticipation>(`api/exercise/exercises/${exercise.id}/participations`, copy, { observe: 'response' })
+            .put<StudentParticipation>(`api/exercise/exercises/${exercise.id}/participations`, dto, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
     updateIndividualDueDates(exercise: Exercise, participations: StudentParticipation[]): Observable<EntityArrayResponseType> {
-        const copies = participations.map((participation) => this.convertParticipationForServer(participation, exercise));
+        const dtos = participations.map((participation) => this.toDueDateUpdateDTO(participation, exercise.id!));
         return this.http
-            .put<StudentParticipation[]>(`api/exercise/exercises/${exercise.id}/participations/update-individual-due-date`, copies, { observe: 'response' })
+            .put<StudentParticipation[]>(`api/exercise/exercises/${exercise.id}/participations/update-individual-due-date`, dtos, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.processParticipationEntityArrayResponseType(res)));
     }
 
-    private convertParticipationForServer(participation: StudentParticipation, exercise: Exercise): StudentParticipation {
-        // make sure participation and exercise are connected, because this is expected by the server
-        participation.exercise = ExerciseService.convertExerciseFromClient(exercise);
-        return this.convertParticipationDatesFromClient(participation);
+    private toDueDateUpdateDTO(participation: StudentParticipation, exerciseId: number): ParticipationDueDateUpdateDTO {
+        return {
+            id: participation.id!,
+            exerciseId: exerciseId,
+            individualDueDate: convertDateFromClient(participation.individualDueDate),
+        };
     }
 
     find(participationId: number): Observable<EntityResponseType> {
@@ -60,14 +89,77 @@ export class ParticipationService {
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
-    findAllParticipationsByExercise(exerciseId: number, withLatestResults = false): Observable<EntityArrayResponseType> {
-        const options = createRequestOption({ withLatestResults });
+    getQuizParticipationResult(quizExerciseId: number, participationId: number, submissionId?: number): Observable<EntityResponseType> {
+        const params: Record<string, string> = submissionId !== undefined ? { submissionId: String(submissionId) } : {};
         return this.http
-            .get<StudentParticipation[]>(`api/exercise/exercises/${exerciseId}/participations`, {
-                params: options,
+            .get<StudentParticipation>(`api/quiz/quiz-exercises/${quizExerciseId}/participations/${participationId}/result`, { params, observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
+    }
+
+    searchParticipations(exerciseId: number, search: ParticipationSearch): Observable<PageableResult<ParticipationManagementDTO>> {
+        const params: Record<string, string | number> = {
+            page: search.page,
+            pageSize: search.pageSize,
+            sortingOrder: search.sortingOrder,
+            sortedColumn: search.sortedColumn,
+            searchTerm: search.searchTerm,
+        };
+        if (search.filterProp) {
+            params['filterProp'] = search.filterProp;
+        }
+        return this.http
+            .get<ParticipationManagementDTO[]>(`api/exercise/exercises/${exerciseId}/participations/page`, {
+                params,
                 observe: 'response',
             })
-            .pipe(map((res: EntityArrayResponseType) => this.processParticipationEntityArrayResponseType(res)));
+            .pipe(
+                map((res: HttpResponse<ParticipationManagementDTO[]>) => {
+                    const content = res.body ?? [];
+                    content.forEach((dto) => {
+                        dto.initializationDate = convertDateFromServer(dto.initializationDate);
+                        dto.individualDueDate = convertDateFromServer(dto.individualDueDate);
+                    });
+                    return { content, totalElements: Number(res.headers.get('X-Total-Count') ?? 0) };
+                }),
+            );
+    }
+
+    searchParticipationScores(exerciseId: number, search: ParticipationScoreSearch): Observable<PageableResult<ParticipationScoreDTO>> {
+        const params: Record<string, string | number> = {
+            page: search.page,
+            pageSize: search.pageSize,
+            sortingOrder: search.sortingOrder,
+            sortedColumn: search.sortedColumn,
+            searchTerm: search.searchTerm,
+        };
+        if (search.filterProp) {
+            params['filterProp'] = search.filterProp;
+        }
+        if (search.scoreRangeLower !== undefined) {
+            params['scoreRangeLower'] = search.scoreRangeLower;
+        }
+        if (search.scoreRangeUpper !== undefined) {
+            params['scoreRangeUpper'] = search.scoreRangeUpper;
+        }
+        return this.http
+            .get<ParticipationScoreDTO[]>(`api/exercise/exercises/${exerciseId}/participations/scores`, {
+                params,
+                observe: 'response',
+            })
+            .pipe(
+                map((res: HttpResponse<ParticipationScoreDTO[]>) => {
+                    const content = res.body ?? [];
+                    content.forEach((dto) => {
+                        dto.initializationDate = convertDateFromServer(dto.initializationDate);
+                        dto.completionDate = convertDateFromServer(dto.completionDate);
+                    });
+                    return { content, totalElements: Number(res.headers.get('X-Total-Count') ?? 0) };
+                }),
+            );
+    }
+
+    getParticipationNamesForExport(exerciseId: number): Observable<ParticipationNameExportDTO[]> {
+        return this.http.get<ParticipationNameExportDTO[]>(`api/exercise/exercises/${exerciseId}/participations/names`);
     }
 
     delete(participationId: number, req?: any): Observable<HttpResponse<void>> {

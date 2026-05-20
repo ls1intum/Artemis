@@ -27,10 +27,6 @@
                 "description": "Enable or disable features for all users. Changes take effect immediately without server restart."
             },
             "profiles": {
-                "iris": {
-                    "name": "Iris (AI Assistant)",
-                    "description": "Enables the Iris AI virtual tutor powered by LLMs for personalized student support and code assistance."
-                },
                 "athena": {
                     "name": "Athena (AI Assessment)",
                     "description": "Enables Athena ML-based automated feedback suggestions for text and programming exercises."
@@ -38,10 +34,6 @@
                 "apollon": {
                     "name": "Apollon (Modeling)",
                     "description": "Enables the Apollon UML modeling editor for creating and editing diagrams in modeling exercises."
-                },
-                "theia": {
-                    "name": "Theia (Online IDE)",
-                    "description": "Enables the Theia cloud-based IDE for programming exercises, allowing students to code in the browser."
                 },
                 "ldap": {
                     "name": "LDAP Authentication",
@@ -59,16 +51,16 @@
                     "name": "Integrated Build Agent",
                     "description": "Enables the integrated build agent on the server node for Local CI, eliminating the need for separate build agent nodes."
                 },
-                "aeolus": {
-                    "name": "Aeolus (Build Plans)",
-                    "description": "Enables Aeolus for dynamic build plan generation and customization for programming exercises."
-                },
                 "jenkins": {
                     "name": "Jenkins CI",
                     "description": "Enables Jenkins as the continuous integration system for programming exercise builds."
                 }
             },
             "modules": {
+                "iris": {
+                    "name": "Iris (AI Assistant)",
+                    "description": "Enables the Iris AI virtual tutor powered by LLMs for personalized student support and code assistance."
+                },
                 "atlas": {
                     "name": "Atlas (Adaptive Learning)",
                     "description": "Enables competency-based learning features including learning paths, competency tracking, and analytics."
@@ -105,9 +97,9 @@
                     "name": "Tutorial Groups",
                     "description": "Enables tutorial group management for organizing students and tutors."
                 },
-                "nebula": {
-                    "name": "Nebula (Video Processing)",
-                    "description": "Enables lecture video processing and transcription for AI-enhanced content understanding."
+                "theia": {
+                    "name": "Theia (Online IDE)",
+                    "description": "Enables the Theia cloud-based IDE for programming exercises, allowing students to code in the browser."
                 },
                 "sharing": {
                     "name": "Exercise Sharing",
@@ -180,13 +172,23 @@
                 },
                 "LectureContentProcessing": {
                     "name": "Lecture Video Processing",
-                    "description": "Uses Nebula to automatically generate transcriptions from lecture videos and sends them to Pyris/Iris, enabling AI assistants to answer questions about lecture content and provide more accurate, content-aware responses.",
-                    "disableWarning": "Lecture videos will not be transcribed by Nebula and Iris will not be able to reference lecture content in its responses."
+                    "description": "Enables automated lecture content processing: transcription, slide extraction, and Pyris ingestion.",
+                    "disableWarning": "Disabling lecture content processing stops all ongoing transcription and ingestion jobs for new lectures."
                 },
                 "RateLimit": {
                     "name": "API Rate Limiting",
                     "description": "Protects the application from abuse and overload by limiting the number of specific API requests per user within a given time period.",
                     "disableWarning": "Specific API endpoints are not protected by rate limiting, which can lead to potential abuse or overload."
+                },
+                "AutonomousTutor": {
+                    "name": "Autonomous Tutor",
+                    "description": "Enables the Iris-powered autonomous tutor that automatically responds to student posts in course channels with contextually relevant answers.",
+                    "disableWarning": "The autonomous tutor will not automatically respond to student posts. Students will need to wait for manual tutor responses."
+                },
+                "GlobalSearch": {
+                    "name": "Global Search",
+                    "description": "Enables a unified search interface accessible via Cmd+K/Ctrl+K that allows users to quickly search across courses, exercises, lectures, and other content.",
+                    "disableWarning": "Users will not have access to the global search functionality and must navigate manually through the interface."
                 }
             }
         }

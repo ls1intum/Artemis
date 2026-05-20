@@ -1,4 +1,4 @@
-import { expect } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -23,38 +23,37 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 
 describe('HeaderExercisePageWithDetails', () => {
     setupTestBed({ zoneless: true });
+
     let component: HeaderExercisePageWithDetailsComponent;
 
     let exam: Exam;
     let exercise: ProgrammingExercise;
     let participation: StudentParticipation;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [
+                HeaderExercisePageWithDetailsComponent,
                 MockComponent(DifficultyBadgeComponent),
                 MockComponent(IncludedInScoreBadgeComponent),
                 MockComponent(NotReleasedTagComponent),
                 MockPipe(ArtemisTimeAgoPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ExerciseTypePipe),
-                HeaderExercisePageWithDetailsComponent,
             ],
             providers: [],
-        })
-            .compileComponents()
-            .then(() => {
-                const fixture = TestBed.createComponent(HeaderExercisePageWithDetailsComponent);
-                component = fixture.componentInstance;
+        }).compileComponents();
 
-                exercise = new ProgrammingExercise(undefined, undefined);
-                exercise.dueDate = undefined;
-                exercise.assessmentType = AssessmentType.AUTOMATIC;
-                component.exercise = exercise;
+        const fixture = TestBed.createComponent(HeaderExercisePageWithDetailsComponent);
+        component = fixture.componentInstance;
 
-                exam = new Exam();
-                participation = new StudentParticipation(ParticipationType.PROGRAMMING);
-            });
+        exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.dueDate = undefined;
+        exercise.assessmentType = AssessmentType.AUTOMATIC;
+        component.exercise = exercise;
+
+        exam = new Exam();
+        participation = new StudentParticipation(ParticipationType.PROGRAMMING);
     });
 
     it('should initialise badges, icons, and categories', () => {

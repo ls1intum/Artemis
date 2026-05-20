@@ -19,7 +19,6 @@ import {
     faStamp,
     faTachometerAlt,
     faTasks,
-    faThLarge,
     faToggleOn,
     faUniversity,
     faUser,
@@ -286,16 +285,6 @@ export class AdminSidebarComponent {
                 testId: 'admin-system-notifications',
             },
         ];
-
-        if (this.examEnabled()) {
-            systemConfigItems.push({
-                routerLink: '/admin/exam-rooms',
-                icon: faThLarge,
-                title: 'Exam Rooms',
-                translation: 'global.menu.admin.sidebar.examRooms',
-                testId: 'admin-exam-rooms',
-            });
-        }
 
         // Sort alphabetically by title
         systemConfigItems.sort((a, b) => a.title.localeCompare(b.title));

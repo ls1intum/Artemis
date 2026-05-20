@@ -1,8 +1,12 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { TemplateRef } from '@angular/core';
 import { CourseTitleBarService } from './course-title-bar.service';
 
 describe('CourseTitleBarService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: CourseTitleBarService;
 
     beforeEach(() => {
@@ -10,6 +14,10 @@ describe('CourseTitleBarService', () => {
             providers: [CourseTitleBarService],
         });
         service = TestBed.inject(CourseTitleBarService);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should have undefined titleTemplate and actionsTemplate by default', () => {

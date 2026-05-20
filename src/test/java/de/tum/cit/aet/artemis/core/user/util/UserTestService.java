@@ -1,9 +1,9 @@
 package de.tum.cit.aet.artemis.core.user.util;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -78,9 +77,6 @@ public class UserTestService {
     private PasswordService passwordService;
 
     @Autowired
-    private CacheManager cacheManager;
-
-    @Autowired
     private CourseTestRepository courseRepository;
 
     @Autowired
@@ -132,13 +128,11 @@ public class UserTestService {
 
     public void setup(String testPrefix) throws Exception {
         this.TEST_PREFIX = testPrefix;
-        List<User> users = userUtilService.addUsers(testPrefix, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, NUMBER_OF_EDITORS, NUMBER_OF_INSTRUCTORS);
+        userUtilService.addUsers(testPrefix, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, NUMBER_OF_EDITORS, NUMBER_OF_INSTRUCTORS);
         student = userTestRepository.getUserByLoginElseThrow(testPrefix + "student1");
         student.setInternal(true);
         student = userTestRepository.save(student);
         student = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
-
-        users.forEach(user -> cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin()));
 
         final var event = new ScienceEvent();
         event.setIdentity(student.getLogin());

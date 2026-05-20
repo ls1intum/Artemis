@@ -1,8 +1,8 @@
+import { describe, expect, it } from 'vitest';
 import { getLoginCredentialFromMalformed1Password8Object, getRegistrationCredentialFromMalformed1Password8Object } from './1password8.util';
 import { Malformed1Password8RegistrationCredential } from 'app/core/user/settings/passkey-settings/entities/malformed1-password8-registration-credential';
 import { Malformed1Password8LoginCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-1password8-login-credential';
 import { expectBase64UrlFieldsForLogin, expectBase64UrlFieldsForRegistration } from '../test.helpers';
-import { describe, expect, it } from '@jest/globals';
 
 describe('1Password8 Util', () => {
     function createArrayBuffer(values: number[]): ArrayBuffer {

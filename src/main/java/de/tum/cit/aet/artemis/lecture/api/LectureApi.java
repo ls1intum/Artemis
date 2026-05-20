@@ -36,8 +36,8 @@ public class LectureApi extends AbstractLectureApi {
         this.lectureRepository = lectureRepository;
     }
 
-    public Set<Lecture> filterVisibleLecturesWithActiveAttachments(Course course, Set<Lecture> lecturesWithAttachments, User user) {
-        return lectureService.filterVisibleLecturesWithActiveAttachments(course, lecturesWithAttachments, user);
+    public Set<Lecture> filterLecturesWithActiveAttachments(Course course, Set<Lecture> lecturesWithAttachments, User user) {
+        return lectureService.filterLecturesWithActiveAttachments(course, lecturesWithAttachments, user);
     }
 
     public Lecture importLecture(final Lecture importedLecture, final Course course, boolean importLectureUnits) {

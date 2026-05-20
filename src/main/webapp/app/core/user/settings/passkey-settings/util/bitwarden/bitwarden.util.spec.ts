@@ -1,8 +1,8 @@
+import { describe, expect, it } from 'vitest';
 import { convertToBase64, getLoginCredentialFromMalformedBitwardenObject, getRegistrationCredentialFromMalformedBitwardenObject } from './bitwarden.util';
 import { MalformedBitwardenRegistrationCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-registration-credential';
 import { MalformedBitwardenLoginCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-login-credential';
 import { expectBase64UrlFieldsForLogin, expectBase64UrlFieldsForRegistration } from '../test.helpers';
-import { describe, expect, it } from '@jest/globals';
 
 describe('Bitwarden Util', () => {
     describe('convertToBase64', () => {

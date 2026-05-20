@@ -1,6 +1,6 @@
 <div class="modal-header">
     <h4 class="modal-title" jhiTranslate="artemisApp.metis.forward.forwardMessage"></h4>
-    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
+    <button type="button" class="btn-close" aria-label="Close" (click)="dialogRef.destroy()"></button>
 </div>
 <div class="modal-body">
     <div class="autocomplete-container mt-1 mb-2 form-group">
@@ -79,6 +79,9 @@
         [resizableMinHeight]="editorHeight()"
         [resizableMaxHeight]="MarkdownEditorHeight.MEDIUM"
     />
+    <div class="col mt-1 text-end">
+        <p class="small my-0 ms-2" [style.color]="isMessageValid() ? 'inherit' : 'red'">{{ newPost.content?.length ?? 0 }} / {{ maxContentLength }}</p>
+    </div>
 
     @if (postToForward()) {
         <div class="forwarded-message-container">
@@ -118,5 +121,11 @@
     }
 </div>
 <div class="modal-footer">
-    <button type="button" class="btn btn-primary" [disabled]="!hasSelections()" (click)="send()" jhiTranslate="artemisApp.conversationsLayout.sendMessage"></button>
+    <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="!hasSelections() || !isMessageValid()"
+        (click)="send()"
+        jhiTranslate="artemisApp.conversationsLayout.sendMessage"
+    ></button>
 </div>

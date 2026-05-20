@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service.localvc;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.regex.Pattern;
 
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -217,7 +218,7 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      * @return The normalized repository type or username, free of the project key prefix and "practice-" designation.
      */
     private String getRepositoryTypeOrUserName(String repositorySlug, String projectKey) {
-        String pattern = projectKey.toLowerCase() + "\\d*-";
+        String pattern = Pattern.quote(projectKey.toLowerCase()) + "\\d*-";
         String repositoryTypeOrUserNameWithPracticePrefix = repositorySlug.toLowerCase().replaceAll(pattern, "");
         return repositoryTypeOrUserNameWithPracticePrefix.replace("practice-", "");
     }

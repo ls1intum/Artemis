@@ -84,6 +84,16 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: 'programming-exercises/:exerciseId/version-history',
+        loadComponent: () =>
+            import('app/programming/manage/version-history/programming-exercise-version-history.component').then((m) => m.ProgrammingExerciseVersionHistoryComponent),
+        data: {
+            authorities: IS_AT_LEAST_EDITOR,
+            pageTitle: 'artemisApp.exercise.versionHistory.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: 'programming-exercises/:exerciseId/plagiarism',
         loadComponent: () => import('app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.component').then((m) => m.PlagiarismInspectorComponent),
         resolve: {

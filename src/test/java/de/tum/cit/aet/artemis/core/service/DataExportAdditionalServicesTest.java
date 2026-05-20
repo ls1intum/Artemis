@@ -9,10 +9,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -21,22 +23,27 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyProgressUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
+import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationSetting;
 import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
+import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.domain.SavedPostStatus;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.SavedPostTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.export.IrisChatSessionExportDTO;
+import de.tum.cit.aet.artemis.core.dto.export.IrisMessageExportDTO;
 import de.tum.cit.aet.artemis.core.service.export.DataExportCommunicationDataService;
 import de.tum.cit.aet.artemis.core.service.export.DataExportCompetencyProgressService;
 import de.tum.cit.aet.artemis.core.service.export.DataExportIrisService;
@@ -44,6 +51,10 @@ import de.tum.cit.aet.artemis.core.service.export.DataExportLearnerProfileServic
 import de.tum.cit.aet.artemis.core.service.export.DataExportTutorialGroupService;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
+import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
+import de.tum.cit.aet.artemis.iris.util.IrisChatSessionFactory;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
@@ -85,7 +96,16 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
     private GlobalNotificationSettingRepository globalNotificationSettingRepository;
 
     @Autowired
+    private PostTestRepository postRepository;
+
+    @Autowired
+    private ChannelRepository channelRepository;
+
+    @Autowired
     private Optional<IrisChatSessionUtilService> irisChatSessionUtilService;
+
+    @Autowired
+    private Optional<IrisSessionRepository> irisSessionRepository;
 
     @Autowired
     private Optional<LearnerProfileUtilService> learnerProfileUtilService;
@@ -268,8 +288,8 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
             if (irisChatSessionUtilService.isPresent()) {
                 assertThat(irisFile).exists();
 
-                ObjectMapper objectMapper = new ObjectMapper();
-                objectMapper.registerModule(new JavaTimeModule());
+                ObjectMapper objectMapper = JsonObjectMapper.get();
+
                 List<IrisChatSessionExportDTO> sessions = objectMapper.readValue(irisFile.toFile(), new TypeReference<>() {
                 });
                 assertThat(sessions).isNotEmpty();
@@ -296,8 +316,8 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
             if (irisChatSessionUtilService.isPresent()) {
                 assertThat(irisFile).exists();
 
-                ObjectMapper objectMapper = new ObjectMapper();
-                objectMapper.registerModule(new JavaTimeModule());
+                ObjectMapper objectMapper = JsonObjectMapper.get();
+
                 List<IrisChatSessionExportDTO> sessions = objectMapper.readValue(irisFile.toFile(), new TypeReference<>() {
                 });
                 assertThat(sessions).isNotEmpty();
@@ -325,6 +345,40 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
             assertThat(irisFile).doesNotExist();
         }
 
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testExportIncludesTutorSuggestionSessions() throws IOException {
+            Path irisFile = workingDirectory.resolve("iris_chat_sessions.json");
+            Assumptions.assumeTrue(irisSessionRepository.isPresent(), "Iris is disabled in this test profile");
+
+            var tutorSuggestionSession = IrisChatSessionFactory.createSessionWithMessages(new IrisTutorSuggestionSession(createPostForTutorSuggestion().getId(), testUser));
+            irisSessionRepository.get().save(tutorSuggestionSession);
+
+            dataExportIrisService.createIrisExport(testUser.getId(), workingDirectory);
+
+            ObjectMapper objectMapper = JsonObjectMapper.get();
+            List<IrisChatSessionExportDTO> sessions = objectMapper.readValue(irisFile.toFile(), new TypeReference<>() {
+            });
+            assertThat(sessions).extracting(IrisChatSessionExportDTO::sessionId).contains(tutorSuggestionSession.getId());
+            var exportedSession = sessions.stream().filter(session -> session.sessionId().equals(tutorSuggestionSession.getId())).findFirst().orElseThrow();
+            assertThat(exportedSession.messages()).hasSize(2);
+            assertThat(exportedSession.messages()).extracting(IrisMessageExportDTO::content).allSatisfy(content -> assertThat(content).isNotBlank());
+        }
+
+    }
+
+    private Post createPostForTutorSuggestion() {
+        Channel channel = new Channel();
+        channel.setCourse(testCourse);
+        channel.setName("ts-" + UUID.randomUUID().toString().substring(0, 8));
+        channel = channelRepository.save(channel);
+
+        Post post = new Post();
+        post.setAuthor(testUser);
+        post.setContent("Test tutor suggestion post");
+        post.setConversation(channel);
+        post.setDisplayPriority(DisplayPriority.NONE);
+        return postRepository.save(post);
     }
 
     @Nested

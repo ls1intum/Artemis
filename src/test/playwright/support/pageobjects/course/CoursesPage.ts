@@ -11,7 +11,11 @@ export class CoursesPage {
     }
 
     async openCourse(courseId: number) {
-        await this.page.locator(`#course-${courseId}-header`).click();
+        const header = this.page.locator(`#course-${courseId}-header`);
+        // The courses API may be slow under parallel test load.
+        // Wait explicitly for the course card to appear before clicking.
+        await header.waitFor({ state: 'visible', timeout: 30000 });
+        await header.click();
         await this.page.waitForURL(/\/exercises/);
     }
 }

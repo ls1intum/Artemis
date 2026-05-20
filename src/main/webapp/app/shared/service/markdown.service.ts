@@ -21,11 +21,12 @@ export class ArtemisMarkdownService {
         extensions: PluginSimple[] = [],
         allowedHtmlTags: string[] | undefined = undefined,
         allowedHtmlAttributes: string[] | undefined = undefined,
+        lineBreaks: boolean = false,
     ): SafeHtml {
         if (!markdownText || markdownText === '') {
             return '';
         }
-        const convertedString = htmlForMarkdown(markdownText, extensions, allowedHtmlTags, allowedHtmlAttributes);
+        const convertedString = htmlForMarkdown(markdownText, extensions, allowedHtmlTags, allowedHtmlAttributes, lineBreaks);
         return this.sanitizer.bypassSecurityTrustHtml(convertedString);
     }
 

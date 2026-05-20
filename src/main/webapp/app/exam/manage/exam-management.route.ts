@@ -167,12 +167,8 @@ export const examManagementRoutes: Routes = [
     },
     {
         path: ':examId/student-exams',
-        loadComponent: () => import('app/exam/manage/student-exams/student-exams.component').then((m) => m.StudentExamsComponent),
-        data: {
-            authorities: IS_AT_LEAST_INSTRUCTOR,
-            pageTitle: 'artemisApp.examManagement.title',
-        },
-        canActivate: [UserRouteAccessService],
+        redirectTo: ':examId/students',
+        pathMatch: 'full',
     },
     {
         path: ':examId/grading',
@@ -564,6 +560,16 @@ export const examManagementRoutes: Routes = [
         data: {
             authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/version-history',
+        loadComponent: () =>
+            import('app/programming/manage/version-history/programming-exercise-version-history.component').then((m) => m.ProgrammingExerciseVersionHistoryComponent),
+        data: {
+            authorities: IS_AT_LEAST_EDITOR,
+            pageTitle: 'artemisApp.exercise.versionHistory.title',
         },
         canActivate: [UserRouteAccessService],
     },

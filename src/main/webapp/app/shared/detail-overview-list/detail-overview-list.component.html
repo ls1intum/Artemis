@@ -47,7 +47,7 @@
                     }
                     @case (DetailType.ModelingEditor) {
                         <dd class="p-3 border" id="detail-value-{{ detail.title }}">
-                            @if (!isEmpty(detail.data.umlModel?.elements) && detail.data.diagramType && detail.data.umlModel) {
+                            @if (!isEmpty(detail.data.umlModel?.nodes) && detail.data.diagramType && detail.data.umlModel) {
                                 @if (detail.data.isApollonProfileActive) {
                                     <button
                                         (click)="downloadApollonDiagramAsPDf(detail.data.umlModel, detail.data.title)"

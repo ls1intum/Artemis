@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { FeatureOverviewComponent, TargetAudience } from 'app/core/feature-overview/feature-overview.component';
 import { By } from '@angular/platform-browser';
@@ -9,6 +11,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('Feature Overview Component', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: FeatureOverviewComponent;
     let fixture: ComponentFixture<FeatureOverviewComponent>;
     let debugElement: DebugElement;
@@ -30,6 +34,10 @@ describe('Feature Overview Component', () => {
             comp = fixture.componentInstance;
         });
 
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
         describe('onInit', () => {
             it('should load all features for instructors', () => {
                 // WHEN
@@ -48,7 +56,7 @@ describe('Feature Overview Component', () => {
                 for (const featureA of comp.features) {
                     for (const featureB of comp.features) {
                         if (featureA !== featureB) {
-                            expect(featureA.id === featureB.id).toBeFalse();
+                            expect(featureA.id === featureB.id).toBe(false);
                         }
                     }
                 }
@@ -56,20 +64,20 @@ describe('Feature Overview Component', () => {
         });
 
         describe('Navigate to Feature Details', () => {
-            it('should scroll to the correct feature detail', fakeAsync(() => {
-                const navigateToFeatureSpy = jest.spyOn(comp, 'navigateToFeature');
+            it('should scroll to the correct feature detail', async () => {
+                const navigateToFeatureSpy = vi.spyOn(comp, 'navigateToFeature');
                 // WHEN
                 comp.ngOnInit();
                 fixture.detectChanges();
+                await fixture.whenStable();
                 const id = '#featureOverview' + comp.features[0].id;
-                tick();
                 const featureOverview = debugElement.query(By.css(id));
 
                 featureOverview.nativeElement.click();
 
                 // THEN
                 expect(navigateToFeatureSpy).toHaveBeenCalledWith(comp.features[0].id);
-            }));
+            });
         });
     });
 });

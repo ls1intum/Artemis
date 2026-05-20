@@ -4,6 +4,7 @@ import { Component } from '@angular/core';
 import { KnowledgeAreaDTO, KnowledgeAreaForTree, StandardizedCompetencyDTO, convertToKnowledgeAreaForTree } from 'app/atlas/shared/entities/standardized-competency.model';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { StandardizedCompetencyFilterPageComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-filter-page.component';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 @Component({ template: '' })
 class DummyImportComponent extends StandardizedCompetencyFilterPageComponent {
@@ -13,6 +14,7 @@ class DummyImportComponent extends StandardizedCompetencyFilterPageComponent {
 }
 
 describe('StandardizedCompetencyFilterPageComponent', () => {
+    setupTestBed({ zoneless: true });
     let componentFixture: ComponentFixture<DummyImportComponent>;
     let component: DummyImportComponent;
     let filterTree: KnowledgeAreaForTree[];
@@ -77,9 +79,9 @@ describe('StandardizedCompetencyFilterPageComponent', () => {
         const validIds = [1, 11, 111];
         for (const knowledgeArea of component['knowledgeAreaMap'].values()) {
             if (validIds.includes(knowledgeArea.id!)) {
-                expect(knowledgeArea.isVisible).toBeTrue();
+                expect(knowledgeArea.isVisible).toBeTruthy();
             } else {
-                expect(knowledgeArea.isVisible).toBeFalse();
+                expect(knowledgeArea.isVisible).toBeFalsy();
             }
         }
 
@@ -87,7 +89,7 @@ describe('StandardizedCompetencyFilterPageComponent', () => {
         component['filterByKnowledgeArea'](undefined);
 
         for (const knowledgeArea of component['knowledgeAreaMap'].values()) {
-            expect(knowledgeArea.isVisible).toBeTrue();
+            expect(knowledgeArea.isVisible).toBeTruthy();
         }
     });
 
@@ -124,9 +126,9 @@ describe('StandardizedCompetencyFilterPageComponent', () => {
         const knowledgeArea = component['knowledgeAreaMap'].get(1)!;
         for (const competency of knowledgeArea.competencies!) {
             if (validIds.includes(competency.id!)) {
-                expect(competency.isVisible).toBeTrue();
+                expect(competency.isVisible).toBeTruthy();
             } else {
-                expect(competency.isVisible).toBeFalse();
+                expect(competency.isVisible).toBeFalsy();
             }
         }
 
@@ -134,7 +136,7 @@ describe('StandardizedCompetencyFilterPageComponent', () => {
         component['filterByCompetencyTitle']('   ');
 
         for (const competency of knowledgeArea.competencies!) {
-            expect(competency.isVisible).toBeTrue();
+            expect(competency.isVisible).toBeTruthy();
         }
     });
 

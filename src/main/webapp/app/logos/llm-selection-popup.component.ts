@@ -5,31 +5,38 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-
-export type LLMSelectionChoice = 'cloud' | 'local' | 'no_ai' | 'none';
+import { LLMModalResult, LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { AccountService } from 'app/core/auth/account.service';
+import { FormsModule } from '@angular/forms';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
 @Component({
     selector: 'jhi-llm-selection-modal',
     templateUrl: './llm-selection-popup.component.html',
     styleUrls: ['./llm-selection-popup.component.scss'],
-    imports: [TranslateDirective],
+    imports: [TranslateDirective, FormsModule, ToggleSwitchModule],
 })
 export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     private modalService = inject(LLMSelectionModalService);
     private cdr = inject(ChangeDetectorRef);
     protected themeService = inject(ThemeService);
     private profileService = inject(ProfileService);
+    private accountService = inject(AccountService);
     private router = inject(Router);
 
-    @Output() choice = new EventEmitter<LLMSelectionChoice>();
+    @Output() choice = new EventEmitter<LLMModalResult>();
 
     isVisible = false;
+    currentSelection?: LLMSelectionDecision;
+    memirisEnabled = true;
     private modalSubscription?: Subscription;
 
     isOnPremiseEnabled: boolean;
 
     ngOnInit(): void {
-        this.modalSubscription = this.modalService.openModal$.subscribe(() => {
+        this.modalSubscription = this.modalService.openModal$.subscribe((currentSelection) => {
+            this.currentSelection = currentSelection;
+            this.memirisEnabled = this.accountService.userIdentity()?.memirisEnabled ?? true;
             this.open();
             this.cdr.detectChanges(); // Manually trigger change detection
         });
@@ -49,37 +56,42 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     }
 
     selectCloud(): void {
-        this.choice.emit('cloud');
-        this.modalService.emitChoice('cloud');
+        this.choice.emit(LLMSelectionDecision.CLOUD_AI);
+        this.modalService.emitChoice(LLMSelectionDecision.CLOUD_AI);
         this.close();
     }
 
     selectLocal(): void {
-        this.choice.emit('local');
-        this.modalService.emitChoice('local');
+        this.choice.emit(LLMSelectionDecision.LOCAL_AI);
+        this.modalService.emitChoice(LLMSelectionDecision.LOCAL_AI);
         this.close();
     }
 
     selectNone(): void {
-        this.choice.emit('no_ai');
-        this.modalService.emitChoice('no_ai');
+        this.choice.emit(LLMSelectionDecision.NO_AI);
+        this.modalService.emitChoice(LLMSelectionDecision.NO_AI);
         this.close();
+    }
+
+    onMemirisToggle(): void {
+        this.accountService.setUserEnabledMemiris(this.memirisEnabled);
     }
 
     onBackdropClick(event: MouseEvent): void {
         if (event.target === event.currentTarget) {
-            this.choice.emit('none');
-            this.modalService.emitChoice('none');
+            this.choice.emit(LLM_MODAL_DISMISSED);
+            this.modalService.emitChoice(LLM_MODAL_DISMISSED);
             this.close();
         }
     }
 
     onLearnMoreClick(event: MouseEvent): void {
         event.preventDefault();
-        this.modalService.emitChoice('none');
-        this.router.navigate(['/llm-selection']);
+        this.modalService.emitChoice(LLM_MODAL_DISMISSED);
+        this.router.navigate(['/ai-experience-info']);
         this.close();
     }
 
     protected readonly Theme = Theme;
+    protected readonly LLMSelectionDecision = LLMSelectionDecision;
 }

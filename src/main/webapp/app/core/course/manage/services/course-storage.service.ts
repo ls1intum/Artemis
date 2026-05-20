@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Injectable, OnDestroy, inject } from '@angular/core';
+import { Observable, Subscription } from 'rxjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { SubjectObservablePair } from 'app/shared/util/rxjs.utils';
+import { AccountService } from 'app/core/auth/account.service';
 
 /**
  * This service is used to store {@link Course} objects for the currently logged-in user.
@@ -11,10 +12,40 @@ import { SubjectObservablePair } from 'app/shared/util/rxjs.utils';
  * Components that need to be notified about these changes can use the {@link subscribeToCourseUpdates} method.
  */
 @Injectable({ providedIn: 'root' })
-export class CourseStorageService {
+export class CourseStorageService implements OnDestroy {
+    private readonly accountService = inject(AccountService);
+
     private storedCourses: Course[] = [];
 
     private readonly courseUpdateSubscriptions: Map<number, SubjectObservablePair<Course>> = new Map();
+
+    private currentUserId?: number;
+    private authenticationStateSubscription: Subscription;
+
+    constructor() {
+        this.currentUserId = this.accountService.userIdentity()?.id;
+        this.authenticationStateSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
+            if (this.currentUserId !== user?.id) {
+                this.currentUserId = user?.id;
+                this.resetState();
+            }
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.authenticationStateSubscription?.unsubscribe();
+    }
+
+    /**
+     * Clears all stored courses and update subscriptions. Called on logout / user change so the next user
+     * does not see the previous user's courses cached. Existing subject observers receive an end-of-life
+     * `complete` so they unwind cleanly instead of being silently dropped.
+     */
+    private resetState(): void {
+        this.storedCourses = [];
+        this.courseUpdateSubscriptions.forEach((pair) => pair.subject.complete());
+        this.courseUpdateSubscriptions.clear();
+    }
 
     setCourses(courses?: Course[]) {
         this.storedCourses = courses ?? [];

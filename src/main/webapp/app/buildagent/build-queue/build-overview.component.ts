@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BuildJob, FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
 import { faFilter, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -73,7 +73,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     private modalService = inject(NgbModal);
 
     /** Reference to the statistics component for real-time updates */
-    @ViewChild('statisticsComponent') statisticsComponent?: BuildJobStatisticsComponent;
+    statisticsComponent = viewChild<BuildJobStatisticsComponent>('statisticsComponent');
 
     /** List of all build agents for capacity calculation */
     buildAgents = signal<BuildAgentInformation[]>([]);
@@ -274,7 +274,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
      */
     private handleFinishedBuildJobUpdate(finishedBuildJob: FinishedBuildJob) {
         // Always update statistics regardless of filters or pagination
-        this.statisticsComponent?.incrementStatisticsByStatus(finishedBuildJob.status);
+        this.statisticsComponent()?.incrementStatisticsByStatus(finishedBuildJob.status);
 
         // Only update the list if no filters are applied
         if (this.hasActiveFilters()) {

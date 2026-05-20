@@ -1,7 +1,7 @@
 import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { DebugElement } from '@angular/core';
+import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { TeamService } from 'app/exercise/team/team.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -18,6 +18,8 @@ import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities
 import { Router } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('TeamParticipationTableComponent', () => {
     setupTestBed({ zoneless: true });
@@ -159,13 +161,21 @@ describe('TeamParticipationTableComponent', () => {
                 LocalStorageService,
                 { provide: AccountService, useClass: MockAccountService },
             ],
-        }).compileComponents();
-
-        fixture = TestBed.createComponent(TeamParticipationTableComponent);
-        comp = fixture.componentInstance;
-        debugElement = fixture.debugElement;
-        teamService = TestBed.inject(TeamService);
-        router = TestBed.inject(Router);
+        })
+            .overrideComponent(TeamParticipationTableComponent, {
+                set: {
+                    imports: [ArtemisDatePipe, ArtemisTranslatePipe],
+                    schemas: [NO_ERRORS_SCHEMA],
+                },
+            })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(TeamParticipationTableComponent);
+                comp = fixture.componentInstance;
+                debugElement = fixture.debugElement;
+                teamService = TestBed.inject(TeamService);
+                router = TestBed.inject(Router);
+            });
     });
 
     afterEach(() => {
@@ -178,6 +188,7 @@ describe('TeamParticipationTableComponent', () => {
         comp.exercise = exercise4;
         comp.team = mockTeam;
         comp.ngOnInit();
+        fixture.detectChanges();
     });
 
     it('Exercises for one team are loaded correctly', () => {

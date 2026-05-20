@@ -77,6 +77,14 @@ public final class Constants {
 
     public static final Pattern SHORT_NAME_PATTERN = Pattern.compile(SHORT_NAME_REGEX);
 
+    // Maximum length for course and programming exercise short names. The combined value appears twice in
+    // student repository URLs ({base}/git/{COURSE+EXERCISE}/{course+exercise}-{login}.git) and the slug must fit
+    // in NAME_MAX (255 bytes) and the participation.repository_url column (varchar(255)).
+    // NOTE: keep these values in sync with input.constants.ts.
+    public static final int COURSE_SHORT_NAME_MAX_LENGTH = 24;
+
+    public static final int PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH = 36;
+
     public static final String FILE_ENDING_REGEX = "^[a-zA-Z0-9]{1,5}";
 
     public static final Pattern FILE_ENDING_PATTERN = Pattern.compile(FILE_ENDING_REGEX);
@@ -166,6 +174,10 @@ public final class Constants {
     public static final String UNENROLL_FROM_COURSE = "UNENROLL_FROM_COURSE";
 
     public static final String CLEANUP_COURSE = "CLEANUP_COURSE";
+
+    public static final String DELETE_ALL_IRIS_SESSIONS = "DELETE_ALL_IRIS_SESSIONS";
+
+    public static final String DELETE_IRIS_SESSION = "DELETE_IRIS_SESSION";
 
     public static final String CLEANUP_EXAM = "CLEANUP_EXAM";
 
@@ -321,11 +333,6 @@ public final class Constants {
     public static final String PROFILE_APOLLON = "apollon";
 
     /**
-     * The name of the Spring profile used for the external Aeolus system.
-     */
-    public static final String PROFILE_AEOLUS = "aeolus";
-
-    /**
      * The name of the Spring profile used for the external LDAP system.
      * Use this profile if you want to synchronize users with an external LDAP system, but you want to route the authentication through another system
      */
@@ -354,9 +361,9 @@ public final class Constants {
     public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
 
     /**
-     * The name of the Spring profile used for Theia as an external online IDE.
+     * The name of the module feature used for Theia as an external online IDE.
      */
-    public static final String PROFILE_THEIA = "theia";
+    public static final String MODULE_FEATURE_THEIA = "theia";
 
     /**
      * The name of the profile for integration independent tests
@@ -387,6 +394,11 @@ public final class Constants {
      * The name of the module feature used for Atlas functionality.
      */
     public static final String MODULE_FEATURE_ATLAS = "atlas";
+
+    /**
+     * The name of the module feature used for AtlasML functionality.
+     */
+    public static final String MODULE_FEATURE_ATLASML = "atlasml";
 
     /**
      * The name of the module feature used for Hyperion functionality.
@@ -434,11 +446,6 @@ public final class Constants {
     public static final String MODULE_FEATURE_TUTORIALGROUP = "tutorialgroup";
 
     /**
-     * The name of the module feature used for nebula functionality.
-     */
-    public static final String MODULE_FEATURE_NEBULA = "nebula";
-
-    /**
      * The name of the module feature used for Sharing functionality.
      */
     public static final String MODULE_FEATURE_SHARING = "sharing";
@@ -452,6 +459,11 @@ public final class Constants {
      * The name of the property used to enable or disable Atlas functionality.
      */
     public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
+
+    /**
+     * The name of the property used to enable or disable AtlasML functionality.
+     */
+    public static final String ATLASML_ENABLED_PROPERTY_NAME = "artemis.atlas.atlasml.enabled";
 
     /**
      * The name of the property used to enable or disable Hyperion functionality.
@@ -514,14 +526,19 @@ public final class Constants {
     public static final String SHARING_ENABLED_PROPERTY_NAME = "artemis.sharing.enabled";
 
     /**
-     * The name of the property used to enable or disable nebula functionalities.
-     */
-    public static final String NEBULA_ENABLED_PROPERTY_NAME = "artemis.nebula.enabled";
-
-    /**
      * The name of the property used to enable or disable LTI functionality.
      */
     public static final String LTI_ENABLED_PROPERTY_NAME = "artemis.lti.enabled";
+
+    /**
+     * The name of the property used to enable or disable Theia functionality.
+     */
+    public static final String THEIA_ENABLED_PROPERTY_NAME = "artemis.theia.enabled";
+
+    /**
+     * The name of the property used to enable or disable Weaviate integration.
+     */
+    public static final String WEAVIATE_ENABLED_PROPERTY_NAME = "artemis.weaviate.enabled";
 
     /**
      * The name of the property used to define the directories for file uploads.
@@ -576,6 +593,8 @@ public final class Constants {
     public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
 
     public static final String JWT_COOKIE_NAME = "jwt";
+
+    public static final String WEBAUTHN_CHALLENGE_COOKIE_NAME = "webauthn-challenge";
 
     public static final String BEARER_PREFIX = "Bearer ";
 

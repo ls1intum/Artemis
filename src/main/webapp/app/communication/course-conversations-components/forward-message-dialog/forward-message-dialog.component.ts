@@ -1,5 +1,5 @@
 import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, HostListener, OnInit, Renderer2, inject, input, signal, viewChild } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
@@ -28,6 +28,7 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faHashtag, faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { MAX_CONTENT_LENGTH } from 'app/communication/directive/posting-create-edit.directive';
 
 interface CombinedOption {
     id: number;
@@ -63,9 +64,11 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     showFullForwardedMessage = false;
     isContentLong = false;
 
-    protected activeModal = inject(NgbActiveModal);
+    protected dialogRef = inject(DynamicDialogRef);
+    private dialogConfig = inject(DynamicDialogConfig);
     protected searchInput = viewChild<ElementRef>('searchInput');
     protected messageContent = viewChild<ElementRef>('messageContent');
+    readonly maxContentLength = MAX_CONTENT_LENGTH;
 
     private courseManagementService = inject(CourseManagementService);
     private cdr = inject(ChangeDetectorRef);
@@ -75,6 +78,21 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     protected readonly faHashtag = faHashtag;
 
     ngOnInit(): void {
+        // Populate signals from DynamicDialogConfig data if available
+        if (this.dialogConfig?.data) {
+            if (this.dialogConfig.data.users !== undefined) {
+                this.users.set(this.dialogConfig.data.users);
+            }
+            if (this.dialogConfig.data.channels !== undefined) {
+                this.channels.set(this.dialogConfig.data.channels);
+            }
+            if (this.dialogConfig.data.postToForward !== undefined) {
+                this.postToForward.set(this.dialogConfig.data.postToForward);
+            }
+            if (this.dialogConfig.data.courseId !== undefined) {
+                this.courseId.set(this.dialogConfig.data.courseId);
+            }
+        }
         this.filteredChannels = this.channels() || [];
         this.defaultActions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new QuoteAction(), new CodeAction(), new CodeBlockAction(), new UrlAction()];
         this.filteredUsers = this.users();
@@ -111,7 +129,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
      * Checks whether the forwarded message content exceeds its visible container height.
      */
     checkIfContentOverflows(): void {
-        if (this.messageContent) {
+        if (this.messageContent()) {
             const nativeElement = this.messageContent()!.nativeElement;
             this.isContentLong = nativeElement.scrollHeight > nativeElement.clientHeight;
             this.cdr.detectChanges();
@@ -144,7 +162,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         if (this.searchTerm) {
             const lowerCaseSearchTerm = this.searchTerm.toLowerCase();
 
-            if (lowerCaseSearchTerm.length >= 3) {
+            if (lowerCaseSearchTerm.length >= 3 && this.courseId()) {
                 this.courseManagementService
                     .searchUsers(this.courseId()!, lowerCaseSearchTerm, ['students', 'tutors', 'instructors'])
                     .pipe(
@@ -248,12 +266,18 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
             users: this.selectedUsers,
             messageContent: this.newPost.content,
         };
-        this.activeModal.close(selectedItems);
+        this.dialogRef.close(selectedItems);
     }
 
     /** Returns true if any users or channels are selected */
     hasSelections(): boolean {
         return this.selectedChannels.length > 0 || this.selectedUsers.length > 0;
+    }
+
+    /** Returns true if the message content is valid, i.e. does not exceed the max length */
+    isMessageValid(): boolean {
+        const content = this.newPost.content ?? '';
+        return content.length <= this.maxContentLength;
     }
 
     /** Sets input focus and opens dropdown */
@@ -270,7 +294,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
 
     /** Programmatically focuses on the search input field */
     focusInput(): void {
-        if (this.searchInput) {
+        if (this.searchInput()) {
             this.renderer.selectRootElement(this.searchInput()!.nativeElement, true).focus();
         }
     }
@@ -280,7 +304,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
      */
     @HostListener('document:click', ['$event'])
     onClickOutside(event: Event): void {
-        if (this.searchInput && !this.searchInput()!.nativeElement.contains(event.target)) {
+        if (this.searchInput() && !this.searchInput()!.nativeElement.contains(event.target)) {
             this.showDropdown = false;
         }
     }

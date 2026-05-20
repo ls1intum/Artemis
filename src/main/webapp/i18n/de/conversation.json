@@ -172,7 +172,12 @@
                     "muteChannel": "Kanal stummschalten",
                     "notificationsDisabled": "Kursweite Benachrichtigungen sind deaktiviert.",
                     "seeSettingsPrefix": " Siehe",
-                    "seeSettingsLink": "Benachrichtigungseinstellungen."
+                    "seeSettingsLink": "Benachrichtigungseinstellungen.",
+                    "muted": "Stummgeschaltet",
+                    "unmuted": "Nicht stummgeschaltet",
+                    "saving": "Speichern...",
+                    "saved": "Gespeichert",
+                    "unsaved": "Nicht gespeichert"
                 }
             },
             "addUsers": {

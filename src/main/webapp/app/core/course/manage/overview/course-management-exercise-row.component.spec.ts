@@ -38,33 +38,30 @@ describe('CourseManagementExerciseRowComponent', () => {
     exerciseStatisticsDTO.averageScoreInPercent = 50;
     exerciseStatisticsDTO.exerciseMaxPoints = 10;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
             imports: [CourseManagementExerciseRowComponent, RouterModule.forRoot([])],
             providers: [LocalStorageService, { provide: TranslateService, useClass: MockTranslateService }, { provide: ActivatedRoute, useValue: new MockActivatedRoute() }],
-        })
-            .overrideComponent(CourseManagementExerciseRowComponent, {
-                set: {
-                    imports: [
-                        RouterLink,
-                        NgClass,
-                        MockComponent(FaIconComponent),
-                        MockDirective(NgbTooltip),
-                        MockComponent(ExerciseCategoriesComponent),
-                        MockDirective(TranslateDirective),
-                        MockComponent(ProgressBarComponent),
-                        MockPipe(ArtemisDatePipe),
-                        MockPipe(ArtemisTranslatePipe),
-                        MockPipe(ArtemisTimeAgoPipe),
-                    ],
-                },
-            })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CourseManagementExerciseRowComponent);
-                component = fixture.componentInstance;
-                componentRef = fixture.componentRef;
-            });
+        }).overrideComponent(CourseManagementExerciseRowComponent, {
+            set: {
+                imports: [
+                    RouterLink,
+                    NgClass,
+                    MockComponent(FaIconComponent),
+                    MockDirective(NgbTooltip),
+                    MockComponent(ExerciseCategoriesComponent),
+                    MockDirective(TranslateDirective),
+                    MockComponent(ProgressBarComponent),
+                    MockPipe(ArtemisDatePipe),
+                    MockPipe(ArtemisTranslatePipe),
+                    MockPipe(ArtemisTimeAgoPipe),
+                ],
+            },
+        });
+        await TestBed.compileComponents();
+        fixture = TestBed.createComponent(CourseManagementExerciseRowComponent);
+        component = fixture.componentInstance;
+        componentRef = fixture.componentRef;
     });
 
     afterEach(() => {

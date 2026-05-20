@@ -2,11 +2,10 @@
  * Vitest tests for CleanupOperationModalComponent.
  * Tests the modal component for executing and monitoring cleanup operations.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentRef, signal } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
@@ -34,7 +33,6 @@ describe('CleanupOperationModalComponent', () => {
     let component: CleanupOperationModalComponent;
     let componentRef: ComponentRef<CleanupOperationModalComponent>;
     let fixture: ComponentFixture<CleanupOperationModalComponent>;
-    let activeModal: NgbActiveModal;
     let dataCleanupService: DataCleanupService;
 
     const mockOrphanCounts: OrphanCleanupCountDTO = {
@@ -74,10 +72,6 @@ describe('CleanupOperationModalComponent', () => {
             imports: [CleanupOperationModalComponent],
             providers: [
                 {
-                    provide: NgbActiveModal,
-                    useValue: { close: vi.fn() },
-                },
-                {
                     provide: DataCleanupService,
                     useValue: {
                         countOrphans: vi.fn().mockReturnValue(of(new HttpResponse({ body: mockOrphanCounts }))),
@@ -100,8 +94,11 @@ describe('CleanupOperationModalComponent', () => {
         fixture = TestBed.createComponent(CleanupOperationModalComponent);
         component = fixture.componentInstance;
         componentRef = fixture.componentRef;
-        activeModal = TestBed.inject(NgbActiveModal);
         dataCleanupService = TestBed.inject(DataCleanupService);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should create component', () => {
@@ -120,89 +117,82 @@ describe('CleanupOperationModalComponent', () => {
         expect(component.operationExecuted()).toBe(false);
     });
 
-    describe('ngOnInit', () => {
-        it('should fetch orphan counts for deleteOrphans operation', () => {
+    describe('loading counts on visible', () => {
+        it('should fetch orphan counts for deleteOrphans operation when visible', () => {
             componentRef.setInput('operation', deleteOrphansOperation);
+            component.visible.set(true);
             fixture.detectChanges();
-            component.ngOnInit();
 
             expect(dataCleanupService.countOrphans).toHaveBeenCalled();
             expect(component.counts()).toEqual(mockOrphanCounts);
         });
 
-        it('should fetch plagiarism counts for deletePlagiarismComparisons operation', () => {
+        it('should fetch plagiarism counts for deletePlagiarismComparisons operation when visible', () => {
             componentRef.setInput('operation', deletePlagiarismOperation);
+            component.visible.set(true);
             fixture.detectChanges();
-            component.ngOnInit();
 
             expect(dataCleanupService.countPlagiarismComparisons).toHaveBeenCalledWith(deletePlagiarismOperation.deleteFrom, deletePlagiarismOperation.deleteTo);
             expect(component.counts()).toEqual(mockPlagiarismCounts);
         });
 
-        it('should fetch non-rated counts for deleteNonRatedResults operation', () => {
+        it('should fetch non-rated counts for deleteNonRatedResults operation when visible', () => {
             componentRef.setInput('operation', deleteNonRatedOperation);
+            component.visible.set(true);
             fixture.detectChanges();
-            component.ngOnInit();
 
             expect(dataCleanupService.countNonRatedResults).toHaveBeenCalledWith(deleteNonRatedOperation.deleteFrom, deleteNonRatedOperation.deleteTo);
             expect(component.counts()).toEqual(mockNonRatedCounts);
         });
 
-        it('should fetch old rated counts for deleteOldRatedResults operation', () => {
+        it('should fetch old rated counts for deleteOldRatedResults operation when visible', () => {
             componentRef.setInput('operation', deleteOldRatedOperation);
+            component.visible.set(true);
             fixture.detectChanges();
-            component.ngOnInit();
 
             expect(dataCleanupService.countOldRatedResults).toHaveBeenCalledWith(deleteOldRatedOperation.deleteFrom, deleteOldRatedOperation.deleteTo);
             expect(component.counts()).toEqual(mockOldRatedCounts);
         });
 
-        it('should fetch submission version counts for deleteOldSubmissionVersions operation', () => {
+        it('should fetch submission version counts for deleteOldSubmissionVersions operation when visible', () => {
             componentRef.setInput('operation', deleteSubmissionVersionsOperation);
+            component.visible.set(true);
             fixture.detectChanges();
-            component.ngOnInit();
 
             expect(dataCleanupService.countOldSubmissionVersions).toHaveBeenCalledWith(deleteSubmissionVersionsOperation.deleteFrom, deleteSubmissionVersionsOperation.deleteTo);
             expect(component.counts()).toEqual(mockSubmissionVersionCounts);
         });
 
-        it('should throw error for unsupported operation', () => {
-            const unsupportedOperation = createOperation('deleteOrphans');
-            unsupportedOperation.name = 'unsupportedOperation' as any;
-            componentRef.setInput('operation', unsupportedOperation);
-
-            // The error is thrown during fixture.detectChanges() which calls ngOnInit
-            expect(() => fixture.detectChanges()).toThrow('Unsupported operation: unsupportedOperation');
-        });
-
         it('should emit error to dialogError when fetching counts fails', () => {
             vi.spyOn(dataCleanupService, 'countOrphans').mockReturnValue(throwError(() => new Error('Network error')));
             componentRef.setInput('operation', deleteOrphansOperation);
-            fixture.detectChanges();
 
             let emittedError: string | undefined;
             component.dialogError.subscribe((error) => (emittedError = error));
 
-            component.ngOnInit();
+            component.visible.set(true);
+            fixture.detectChanges();
 
             expect(emittedError).toBe('An error occurred while fetching updated counts.');
         });
     });
 
     describe('close', () => {
-        it('should close the active modal', () => {
+        it('should set visible to false', () => {
             componentRef.setInput('operation', deleteOrphansOperation);
+            component.visible.set(true);
             fixture.detectChanges();
 
             component.close();
 
-            expect(activeModal.close).toHaveBeenCalled();
+            expect(component.visible()).toBe(false);
         });
     });
 
     describe('executeCleanupOperation', () => {
         it('should execute deleteOrphans operation', () => {
             componentRef.setInput('operation', deleteOrphansOperation);
+            component.visible.set(true);
             fixture.detectChanges();
 
             component.executeCleanupOperation();
@@ -213,6 +203,7 @@ describe('CleanupOperationModalComponent', () => {
 
         it('should execute deletePlagiarismComparisons operation', () => {
             componentRef.setInput('operation', deletePlagiarismOperation);
+            component.visible.set(true);
             fixture.detectChanges();
 
             component.executeCleanupOperation();
@@ -223,6 +214,7 @@ describe('CleanupOperationModalComponent', () => {
 
         it('should execute deleteNonRatedResults operation', () => {
             componentRef.setInput('operation', deleteNonRatedOperation);
+            component.visible.set(true);
             fixture.detectChanges();
 
             component.executeCleanupOperation();
@@ -233,6 +225,7 @@ describe('CleanupOperationModalComponent', () => {
 
         it('should execute deleteOldRatedResults operation', () => {
             componentRef.setInput('operation', deleteOldRatedOperation);
+            component.visible.set(true);
             fixture.detectChanges();
 
             component.executeCleanupOperation();
@@ -243,6 +236,7 @@ describe('CleanupOperationModalComponent', () => {
 
         it('should execute deleteOldSubmissionVersions operation', () => {
             componentRef.setInput('operation', deleteSubmissionVersionsOperation);
+            component.visible.set(true);
             fixture.detectChanges();
 
             component.executeCleanupOperation();
@@ -253,11 +247,12 @@ describe('CleanupOperationModalComponent', () => {
 
         it('should update counts after successful operation execution', () => {
             componentRef.setInput('operation', deleteOrphansOperation);
+            component.visible.set(true);
             fixture.detectChanges();
 
             component.executeCleanupOperation();
 
-            // countOrphans called twice: once in ngOnInit, once after execution
+            // countOrphans called twice: once on visible, once after execution
             expect(dataCleanupService.countOrphans).toHaveBeenCalledTimes(2);
         });
 
@@ -265,6 +260,7 @@ describe('CleanupOperationModalComponent', () => {
             const httpError = new HttpErrorResponse({ status: 500, statusText: 'Server Error', error: { message: 'Delete failed' } });
             vi.spyOn(dataCleanupService, 'deleteOrphans').mockReturnValue(throwError(() => httpError));
             componentRef.setInput('operation', deleteOrphansOperation);
+            component.visible.set(true);
             fixture.detectChanges();
 
             let emittedError: string | undefined;
@@ -279,6 +275,7 @@ describe('CleanupOperationModalComponent', () => {
         it('should emit generic error message for non-HttpErrorResponse failures', () => {
             vi.spyOn(dataCleanupService, 'deleteOrphans').mockReturnValue(throwError(() => new Error('Some error')));
             componentRef.setInput('operation', deleteOrphansOperation);
+            component.visible.set(true);
             fixture.detectChanges();
 
             let emittedError: string | undefined;
@@ -293,8 +290,8 @@ describe('CleanupOperationModalComponent', () => {
     describe('computed properties', () => {
         it('should return cleanup keys from counts object', () => {
             componentRef.setInput('operation', deleteOrphansOperation);
+            component.visible.set(true);
             fixture.detectChanges();
-            component.ngOnInit();
 
             const keys = component.cleanupKeys();
             expect(keys).toContain('totalCount');
@@ -303,8 +300,8 @@ describe('CleanupOperationModalComponent', () => {
 
         it('should return hasEntriesToDelete true when there are entries to delete', () => {
             componentRef.setInput('operation', deleteOrphansOperation);
+            component.visible.set(true);
             fixture.detectChanges();
-            component.ngOnInit();
 
             expect(component.hasEntriesToDelete()).toBe(true);
         });
@@ -325,8 +322,8 @@ describe('CleanupOperationModalComponent', () => {
             };
             vi.spyOn(dataCleanupService, 'countOrphans').mockReturnValue(of(new HttpResponse({ body: zeroCounts })));
             componentRef.setInput('operation', deleteOrphansOperation);
+            component.visible.set(true);
             fixture.detectChanges();
-            component.ngOnInit();
 
             expect(component.hasEntriesToDelete()).toBe(false);
         });

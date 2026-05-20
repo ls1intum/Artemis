@@ -390,7 +390,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(response.getScore()).isEqualTo(105);
 
         // Check that result is capped to maximum of maxScore + bonus points -> 110
-        feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
+        manualResult.addFeedback(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
         points = manualResult.calculateTotalPointsForProgrammingExercises();
         manualResult.score(points);
 
@@ -485,8 +485,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         // Result has to be manual to be updated
         manualResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
-        // Remove feedbacks, change text and score.
-        manualResult.setFeedbacks(manualResult.getFeedbacks().subList(0, 1));
+        // Remove feedbacks, change text and score. Keep the "theory" feedback (+2 credits) deterministically so the asserted score below is stable.
+        Feedback keptFeedback = manualResult.getFeedbacks().stream().filter(f -> "theory".equals(f.getReference())).findFirst().orElseThrow();
+        manualResult.setFeedbacks(List.of(keptFeedback));
         double points = manualResult.calculateTotalPointsForProgrammingExercises();
         manualResult.setScore(points);
         manualResult = resultRepository.save(manualResult);
@@ -511,8 +512,10 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         programmingSubmission.setParticipation(programmingExerciseStudentParticipation);
         manualResult.setSubmission(programmingSubmission);
 
-        // Remove feedbacks, change text and score.
-        manualResult.setFeedbacks(manualResult.getFeedbacks().subList(0, 1));
+        // Remove feedbacks, change text and score. Keep the "theory" feedback deterministically; this test only asserts size, but a stable
+        // selection avoids flakes if other parts of the response start depending on the kept feedback.
+        Feedback keptFeedback = manualResult.getFeedbacks().stream().filter(f -> "theory".equals(f.getReference())).findFirst().orElseThrow();
+        manualResult.setFeedbacks(List.of(keptFeedback));
         manualResult.setScore(77D);
         manualResult.rated(true);
 
@@ -568,7 +571,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         result = request.putWithResponseBodyAndParams("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result,
                 Result.class, HttpStatus.OK, params);
 
-        var longFeedbackText = longFeedbackTextRepository.findByFeedbackId(result.getFeedbacks().getFirst().getId());
+        var longFeedbackText = longFeedbackTextRepository.findByFeedbackId(result.getFeedbacks().iterator().next().getId());
         assertThat(longFeedbackText).isPresent();
         assertThat(longFeedbackText.get().getText()).isEqualTo(longText);
     }
@@ -585,7 +588,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         result = resultRepository.save(result);
 
         var newLongText = "def".repeat(5000);
-        manualLongFeedback = result.getFeedbacks().getFirst();
+        manualLongFeedback = result.getFeedbacks().iterator().next();
 
         // The actual complete longtext is still stored in the detailText field when the result is sent from the client
         var detailText = Feedback.class.getDeclaredField("detailText");
@@ -597,7 +600,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         result = request.putWithResponseBodyAndParams("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result,
                 Result.class, HttpStatus.OK, params);
 
-        var longFeedbackText = longFeedbackTextRepository.findByFeedbackId(result.getFeedbacks().getFirst().getId());
+        var longFeedbackText = longFeedbackTextRepository.findByFeedbackId(result.getFeedbacks().iterator().next().getId());
         assertThat(longFeedbackText).isPresent();
         assertThat(longFeedbackText.get().getText()).isEqualTo(newLongText);
     }
@@ -822,7 +825,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(assessedSubmissionList.getFirst().getResultForCorrectionRound(0)).isEqualTo(firstSubmittedManualResult);
 
         // change the user here, so that for the next query the result will show up again.
-        // set to true, if a tutor is only able to assess a submission if he has not assessed it any prior correction rounds
+        // set to true, if a tutor is only able to assess a submission if they have not assessed it any prior correction rounds
         firstSubmittedManualResult.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
         resultRepository.save(firstSubmittedManualResult);
         assertThat(firstSubmittedManualResult.getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "instructor1");

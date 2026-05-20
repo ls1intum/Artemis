@@ -67,7 +67,9 @@ export class ExamExerciseGroupCreationPage {
         let exercise = { ...response!, additionalData };
         if (exerciseType == ExerciseType.QUIZ) {
             const quiz = response as QuizExercise;
-            additionalData!.quizExerciseID = quiz.quizQuestions![0].id;
+            if (quiz.quizQuestions && quiz.quizQuestions.length > 0) {
+                additionalData!.quizExerciseID = quiz.quizQuestions[0].id;
+            }
             exercise = { ...quiz, additionalData };
         }
 
@@ -88,15 +90,31 @@ export class ExamExerciseGroupCreationPage {
         exerciseTemplate?: any,
     ): Promise<Exercise | undefined> {
         const exerciseGroup = await this.examAPIRequests.addExerciseGroupForExam(exam, 'Group ' + generateUUID(), isMandatory);
+        let exercise: Exercise | undefined;
         switch (exerciseType) {
             case ExerciseType.TEXT:
-                return await this.exerciseAPIRequests.createTextExercise({ exerciseGroup }, title, exerciseTemplate);
+                exercise = await this.exerciseAPIRequests.createTextExercise({ exerciseGroup }, title, exerciseTemplate);
+                break;
             case ExerciseType.MODELING:
-                return await this.exerciseAPIRequests.createModelingExercise({ exerciseGroup }, title);
+                exercise = await this.exerciseAPIRequests.createModelingExercise({ exerciseGroup }, title);
+                break;
             case ExerciseType.QUIZ:
-                return await this.exerciseAPIRequests.createQuizExercise({ body: { exerciseGroup }, quizQuestions: [multipleChoiceTemplate], title });
+                exercise = await this.exerciseAPIRequests.createQuizExercise({ body: { exerciseGroup }, quizQuestions: [multipleChoiceTemplate], title });
+                break;
             case ExerciseType.PROGRAMMING:
-                return await this.exerciseAPIRequests.createProgrammingExercise({ exerciseGroup, title, assessmentType: additionalData.progExerciseAssessmentType });
+                exercise = await this.exerciseAPIRequests.createProgrammingExercise({
+                    exerciseGroup,
+                    title,
+                    assessmentType: additionalData.progExerciseAssessmentType,
+                    programmingLanguage: additionalData.programmingLanguage,
+                });
+                break;
         }
+        // Ensure exerciseGroup is always attached to the returned exercise,
+        // as the server response may not include it
+        if (exercise && !exercise.exerciseGroup) {
+            exercise.exerciseGroup = exerciseGroup;
+        }
+        return exercise;
     }
 }

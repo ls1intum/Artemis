@@ -86,7 +86,7 @@ describe('ExampleTextSubmissionComponent', () => {
                 MockComponent(AssessmentInstructionsComponent),
                 MockComponent(UnreferencedFeedbackComponent),
                 MockComponent(HelpIconComponent),
-                MockComponent(ConfirmAutofocusButtonComponent),
+                ConfirmAutofocusButtonComponent,
                 MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
@@ -122,7 +122,7 @@ describe('ExampleTextSubmissionComponent', () => {
                     imports: [
                         MockDirective(TranslateDirective),
                         MockComponent(HelpIconComponent),
-                        MockComponent(ConfirmAutofocusButtonComponent),
+                        ConfirmAutofocusButtonComponent,
                         MockComponent(ResizeableContainerComponent),
                         MockComponent(ScoreDisplayComponent),
                         MockComponent(TextAssessmentAreaComponent),

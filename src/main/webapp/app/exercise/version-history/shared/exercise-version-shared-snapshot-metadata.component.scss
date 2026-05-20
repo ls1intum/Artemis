@@ -1,0 +1,36 @@
+@use 'version-metadata-shared' as shared;
+
+@include shared.version-metadata-base;
+@include shared.version-meta-panel-overrides;
+
+.category-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.markdown-block {
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    padding: 0.65rem;
+    background: var(--surface-ground);
+}
+
+// ::ng-deep is required to override Angular-injected markdown-preview border styles
+:host ::ng-deep .markdown-preview.markdown-block {
+    border: 1px solid var(--surface-border) !important;
+}
+
+.markdown-block--problem {
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    background: transparent;
+}
+
+.metadata-section--problem {
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    padding: 0.75rem;
+    background: var(--surface-ground);
+}

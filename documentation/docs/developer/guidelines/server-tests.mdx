@@ -7,20 +7,21 @@ import FileUploadUtilServiceFactory from './assets/FileUpload_UtilService_Factor
 
 This section covers recommended practices for writing Artemis server tests.
 
+**Docker is required** to run server tests. Tests run against PostgreSQL via Testcontainers by default to match the production database engine.
+
 You can execute server tests with the following commands:
 
+* Execute all tests (PostgreSQL, default): `./gradlew test -x webapp`
 * Execute tests with a coverage report: `./gradlew test jacocoTestReport -x webapp`
-* Execute tests without a coverage report: `./gradlew test -x webapp`
-* Execute tests with coverage report and verification: `./gradlew test jacocoTestReport -x webapp jacocoTestCoverageVerification`
-* Run a single test: `./gradlew test --tests ExamIntegrationTest -x webapp` or `./gradlew test --tests ExamIntegrationTest.testGetExamScore -x webapp`
+* Run a single test: `./gradlew test --tests ExamIntegrationTest -x webapp`
+* Execute all tests against H2 (in-memory, no Docker needed, for quick local iteration): `./gradlew test -x webapp -Dzonky.test.database.type=H2`
 * Verify code coverage (after tests): `./gradlew jacocoTestCoverageVerification -x webapp`
 
 The code coverage thresholds are defined in [jacoco.gradle](https://github.com/ls1intum/Artemis/blob/develop/gradle/jacoco.gradle).
 
-To run the server tests against a real database in a Docker test container, use:
+To run the server tests against MySQL in a Docker test container, use:
 
-* Execute tests with Postgres container: `SPRING_PROFILES_INCLUDE=postgres ./gradlew test -x webapp`
-* Execute tests with MySQL container: `SPRING_PROFILES_INCLUDE=mysql ./gradlew test -x webapp`
+* Execute tests with MySQL container: `./gradlew testMysql -x webapp`
 
 ## General testing tips
 

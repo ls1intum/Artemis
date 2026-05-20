@@ -1,22 +1,22 @@
-<div class="resizable-container" [style.display]="isBeingPrinted ? 'block' : 'flex'">
+<div class="resizable-container" [style.display]="isBeingPrinted() ? 'block' : 'flex'">
     <!--region LEFT SIDE-->
-    <div class="left card" [class.border-0]="isExerciseParticipation">
-        @if (!isExerciseParticipation) {
+    <div class="left card" [class.border-0]="isExerciseParticipation()">
+        @if (!isExerciseParticipation()) {
             <div class="card-header bg-primary text-white">
                 <ng-content select="span[left-header]" />
                 <span class="flex-fill"></span>
                 <ng-content select="jhi-score-display[left-header]" />
             </div>
         }
-        <div class="left-body card-body" [class.p-0]="isExerciseParticipation">
+        <div class="left-body card-body" [class.p-0]="isExerciseParticipation()">
             <ng-content select="[left-body]" />
         </div>
     </div>
     <!--endregion LEFT SIDE-->
     <!--region RIGHT SIDE-->
-    @if (!examTimeline) {
-        @if (collapsed && !expandProblemStatement) {
-            <div class="collapsed right text-white bg-primary" (click)="collapsed = !collapsed">
+    @if (!examTimeline() && showRightPanel()) {
+        @if (collapsed() && !expandProblemStatement()) {
+            <div class="collapsed right text-white bg-primary" (click)="collapsed.set(!collapsed())">
                 <fa-icon [icon]="faChevronLeft" />
                 <div class="header">
                     <ng-container *ngTemplateOutlet="rightHeaderSpan" />
@@ -24,12 +24,12 @@
                 <fa-icon [icon]="faChevronLeft" />
             </div>
         } @else {
-            <div class="expanded right" [style.width]="isBeingPrinted ? 'fit-content' : '30vw'">
+            <div #expandedPanel class="expanded right" [style.width]="isBeingPrinted() ? 'fit-content' : '30vw'">
                 <div class="draggable-left">
                     <fa-icon [icon]="faGripLinesVertical" />
                 </div>
                 <div class="card">
-                    <div class="card-header text-white bg-primary" (click)="collapsed = !collapsed">
+                    <div class="card-header text-white bg-primary" (click)="collapsed.set(!collapsed())">
                         <h3 class="card-title">
                             <span class="me-1">
                                 <ng-content select="fa-icon[right-header]" />

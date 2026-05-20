@@ -1,9 +1,16 @@
 <?xml version="1.1" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
-    <changeSet id="20250417182300" author="krusche">
+    <changeSet id="20260406120000" author="krusche">
         <sql>
-            DELETE FROM DATABASECHANGELOG WHERE ID not like '00000000000001';
+            DELETE FROM DATABASECHANGELOG WHERE ID not like '0000000000000%'
+                AND FILENAME NOT LIKE '%20260205132454%'
+                AND FILENAME NOT LIKE '%20260301010101%'
+                AND FILENAME NOT LIKE '%20260304120000%'
+                AND FILENAME NOT LIKE '%20260312120000%'
+                AND FILENAME NOT LIKE '%20260313112454%'
+                AND FILENAME NOT LIKE '%20260327190000%'
+                AND FILENAME NOT LIKE '%20260330120000%';
         </sql>
         <sql>
             DELETE FROM migration_changelog;

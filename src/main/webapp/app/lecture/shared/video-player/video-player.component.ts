@@ -1,17 +1,18 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, effect, input, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranscriptViewerComponent } from '../transcript-viewer/transcript-viewer.component';
 import Hls from 'hls.js';
 import interact from 'interactjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 
 @Component({
     selector: 'jhi-video-player',
     standalone: true,
-    imports: [CommonModule, TranscriptViewerComponent, FaIconComponent],
+    imports: [CommonModule, TranscriptViewerComponent, FaIconComponent, ArtemisTranslatePipe],
     templateUrl: './video-player.component.html',
     styleUrls: ['./video-player.component.scss'],
 })
@@ -26,13 +27,16 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     videoColumn = viewChild<ElementRef<HTMLDivElement>>('videoColumn');
 
     /** Reference to the resizer handle */
-    resizerHandle = viewChild<ElementRef<HTMLDivElement>>('resizerHandle');
+    resizerHandle = viewChild<ElementRef<HTMLButtonElement>>('resizerHandle');
 
     /** The URL of the video to play (required input) */
     videoUrl = input<string | undefined>();
 
     /** Transcript segments to highlight and sync */
     transcriptSegments = input<TranscriptSegment[]>([]);
+
+    /** Optional timestamp to seek to once the player is ready */
+    initialTimestamp = input<number | undefined>(undefined);
 
     /** The HLS.js instance */
     private hls: Hls | undefined = undefined;
@@ -55,16 +59,52 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** Store reference to window resize handler for cleanup */
     private resizeHandler: (() => void) | undefined = undefined;
 
+    /** Store reference to loadedmetadata handler for cleanup */
+    private loadedmetadataHandler: (() => void) | undefined = undefined;
+
     /** ResizeObserver for syncing transcript height with video column */
     private resizeObserver: ResizeObserver | undefined = undefined;
 
     /** Minimum height for the transcript column */
     private readonly MIN_TRANSCRIPT_HEIGHT = 500;
 
+    private viewReady = signal<boolean>(false);
+    private lastInitialTimestamp: number | undefined;
+    private pendingInitialSeek: number | undefined;
+
+    constructor() {
+        effect(() => {
+            if (!this.viewReady()) {
+                return;
+            }
+
+            const timestamp = this.initialTimestamp();
+            if (timestamp === undefined || !Number.isFinite(timestamp) || timestamp < 0) {
+                this.lastInitialTimestamp = undefined;
+                this.pendingInitialSeek = undefined;
+                return;
+            }
+
+            if (this.lastInitialTimestamp === timestamp) {
+                return;
+            }
+
+            const videoElement = this.videoRef()?.nativeElement;
+            if (!videoElement) {
+                return;
+            }
+
+            this.lastInitialTimestamp = timestamp;
+            this.queueInitialSeek(videoElement, timestamp);
+        });
+    }
+
     ngAfterViewInit(): void {
         const elRef = this.videoRef();
         const videoElement = elRef ? elRef.nativeElement : undefined;
         const src = this.videoUrl();
+
+        this.viewReady.set(true);
 
         if (!videoElement || !src) {
             return;
@@ -128,26 +168,37 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
                 move: (event) => {
                     const wrapperRect = wrapperEl.getBoundingClientRect();
                     const minWidth = 300;
-                    const maxWidth = wrapperRect.width - 250; // Leave space for transcript
+                    const minTranscriptWidth = 250;
+                    const wrapperWidth = wrapperRect.width;
+
+                    // Skip resize if wrapper is too narrow to accommodate both columns
+                    if (wrapperWidth <= minWidth + minTranscriptWidth) {
+                        return;
+                    }
+
+                    const maxWidth = wrapperWidth - minTranscriptWidth; // Leave space for transcript
 
                     // Calculate new width based on drag position
                     const newWidth = event.clientX - wrapperRect.left;
                     const clampedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
 
-                    // Set video column width and disable flex
-                    videoColumnEl.style.flex = 'none';
-                    videoColumnEl.style.width = `${clampedWidth}px`;
+                    // Calculate percentage for flex-basis (allows natural scaling on resize)
+                    const flexBasisPercent = Math.min((clampedWidth / wrapperWidth) * 100, 100);
+
+                    // Use percentage-based flex-basis so layout naturally follows container resizes
+                    videoColumnEl.style.flex = `0 0 ${flexBasisPercent}%`;
+                    videoColumnEl.style.width = '';
                     // ResizeObserver will automatically sync transcript height
                 },
             },
             cursorChecker: () => 'col-resize',
         });
 
-        // Reset to default flex layout on window resize to prevent overflow
+        // On window resize, sync transcript height (percentage-based flex scales automatically)
         this.resizeHandler = () => {
-            videoColumnEl.style.flex = '';
-            videoColumnEl.style.width = '';
-            // ResizeObserver will automatically sync transcript height
+            if (wrapperEl && videoColumnEl) {
+                this.syncTranscriptHeight();
+            }
         };
         window.addEventListener('resize', this.resizeHandler);
 
@@ -156,6 +207,18 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
             this.syncTranscriptHeight();
         });
         this.resizeObserver.observe(videoColumnEl);
+    }
+
+    /**
+     * Resets the video/transcript split ratio to default layout.
+     * Can be triggered by double-clicking the resizer handle.
+     */
+    resetSplitRatio(): void {
+        const videoColumnEl = this.videoColumn()?.nativeElement;
+        if (videoColumnEl) {
+            videoColumnEl.style.flex = '';
+            videoColumnEl.style.width = '';
+        }
     }
 
     /**
@@ -193,6 +256,43 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         videoElement.play();
     }
 
+    private queueInitialSeek(videoElement: HTMLVideoElement, seconds: number): void {
+        const target = Math.max(0, seconds);
+        if (videoElement.readyState >= 1) {
+            this.applyInitialSeek(videoElement, target);
+            return;
+        }
+
+        this.pendingInitialSeek = target;
+
+        // Remove any existing listener before adding a new one
+        if (this.loadedmetadataHandler) {
+            videoElement.removeEventListener('loadedmetadata', this.loadedmetadataHandler);
+        }
+
+        // Create a named listener function that can be removed later
+        this.loadedmetadataHandler = () => {
+            const pending = this.pendingInitialSeek;
+            this.pendingInitialSeek = undefined;
+            this.loadedmetadataHandler = undefined; // Clear reference after firing
+            if (pending !== undefined) {
+                this.applyInitialSeek(videoElement, pending);
+            }
+        };
+
+        videoElement.addEventListener('loadedmetadata', this.loadedmetadataHandler, { once: true });
+    }
+
+    private applyInitialSeek(videoElement: HTMLVideoElement, seconds: number): void {
+        const duration = videoElement.duration;
+        if (Number.isFinite(duration) && seconds > duration) {
+            return;
+        }
+        const clamped = Number.isFinite(duration) ? Math.max(0, seconds) : seconds;
+        videoElement.currentTime = clamped;
+        this.updateCurrentSegment(clamped);
+    }
+
     /**
      * Updates the `currentSegmentIndex` signal based on playback time.
      * Scrolls the active transcript line into view via the transcript viewer component.
@@ -221,6 +321,13 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         if (videoElement && this.timeupdateHandler) {
             videoElement.removeEventListener('timeupdate', this.timeupdateHandler);
             this.timeupdateHandler = undefined;
+        }
+
+        // Remove loadedmetadata listener to prevent memory leaks
+        if (videoElement && this.loadedmetadataHandler) {
+            videoElement.removeEventListener('loadedmetadata', this.loadedmetadataHandler);
+            this.loadedmetadataHandler = undefined;
+            this.pendingInitialSeek = undefined; // Clear pending seek as well
         }
 
         // Destroy HLS instance

@@ -22,16 +22,19 @@ public class NewCpcPlagiarismCaseNotification extends CourseNotification {
 
     protected String postMarkdownContent;
 
+    protected Long examId;
+
     /**
      * Default constructor used when creating a new cpc plagiarism case notification
      */
     public NewCpcPlagiarismCaseNotification(Long courseId, String courseTitle, String courseImageUrl, Long exerciseId, String exerciseTitle, String exerciseType,
-            String postMarkdownContent) {
+            String postMarkdownContent, Long examId) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
         this.exerciseId = exerciseId;
         this.exerciseTitle = exerciseTitle;
         this.exerciseType = exerciseType;
         this.postMarkdownContent = postMarkdownContent;
+        this.examId = examId;
     }
 
     /**
@@ -58,6 +61,9 @@ public class NewCpcPlagiarismCaseNotification extends CourseNotification {
 
     @Override
     public String getRelativeWebAppUrl() {
+        if (examId != null) {
+            return "/courses/" + courseId + "/exams/" + examId;
+        }
         return "/courses/" + courseId + "/exercises/" + exerciseId;
     }
 }

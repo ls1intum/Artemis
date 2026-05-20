@@ -141,6 +141,8 @@ describe('ExerciseImportComponent', () => {
         pagingServiceSpy.mockReturnValue(of({ numberOfPages } as SearchResult<TextExercise>));
 
         fixture.detectChanges();
+        vi.runAllTimers();
+        pagingServiceSpy.mockClear();
 
         let expectedPageNumber = 1;
         comp.onPageChange(expectedPageNumber);
@@ -294,28 +296,36 @@ describe('ExerciseImportComponent', () => {
     ];
 
     it.each(pagingServiceCases)('uses the correct paging service', (exerciseType: ExerciseType, expectedPagingService: ExercisePagingService) => {
-        const getSpy = vi.spyOn(injector, 'get');
-        // This is needed for `.toHaveBeenCalledWith` to work properly:
-        getSpy.mockImplementation(() => undefined);
+        vi.useFakeTimers();
+        const pagingServiceMock = {
+            search: vi.fn().mockReturnValue(of({ numberOfPages: 0, resultsOnPage: [] })),
+        };
+        const getSpy = vi.spyOn(injector, 'get').mockReturnValue(pagingServiceMock as any);
 
         comp.exerciseType = exerciseType;
 
         comp.ngOnInit();
+        vi.advanceTimersByTime(300);
         expect(getSpy).toHaveBeenCalledWith(expectedPagingService, {});
+        expect(pagingServiceMock.search).toHaveBeenCalled();
     });
 
     it('should allow importing SCA configurations', () => {
-        const getSpy = vi.spyOn(injector, 'get');
-        // This is needed for `.toHaveBeenCalledWith` to work properly:
-        getSpy.mockImplementation(() => undefined);
+        vi.useFakeTimers();
+        const pagingServiceMock = {
+            search: vi.fn().mockReturnValue(of({ numberOfPages: 0, resultsOnPage: [] })),
+        };
+        const getSpy = vi.spyOn(injector, 'get').mockReturnValue(pagingServiceMock as any);
 
         comp.exerciseType = ExerciseType.PROGRAMMING;
         comp.programmingLanguage = ProgrammingLanguage.JAVA;
 
         comp.ngOnInit();
+        vi.advanceTimersByTime(300);
 
         expect(comp.titleKey).toContain('configureGrading');
         expect(getSpy).toHaveBeenCalledWith(CodeAnalysisPagingService, {});
+        expect(pagingServiceMock.search).toHaveBeenCalled();
     });
 
     it('should sort by exam title when only the exam filter is active', () => {

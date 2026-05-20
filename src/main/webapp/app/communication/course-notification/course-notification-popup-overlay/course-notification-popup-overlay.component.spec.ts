@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseNotificationPopupOverlayComponent } from 'app/communication/course-notification/course-notification-popup-overlay/course-notification-popup-overlay.component';
 import { CourseNotificationWebsocketService } from 'app/communication/course-notification/course-notification-websocket.service';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
@@ -12,11 +14,14 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { CourseNotificationComponent } from 'app/communication/course-notification/course-notification/course-notification.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { MockComponent } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
 
 describe('CourseNotificationPopupOverlayComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CourseNotificationPopupOverlayComponent;
     let fixture: ComponentFixture<CourseNotificationPopupOverlayComponent>;
     let courseNotificationWebsocketService: CourseNotificationWebsocketService;
@@ -61,7 +66,13 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         );
     };
 
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
     beforeEach(async () => {
+        vi.useFakeTimers();
         websocketNotificationSubject = new Subject<CourseNotification>();
 
         conversationSelectionState = new ConversationSelectionState();
@@ -71,9 +82,12 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         } as unknown as CourseNotificationWebsocketService;
 
         courseNotificationService = {
-            setNotificationStatus: jest.fn(),
-            setNotificationStatusInMap: jest.fn(),
-            decreaseNotificationCountBy: jest.fn(),
+            setNotificationStatus: vi.fn(),
+            setNotificationStatusInMap: vi.fn(),
+            decreaseNotificationCountBy: vi.fn(),
+            getIconFromType: vi.fn().mockReturnValue(faTimes),
+            getDateTranslationKey: vi.fn().mockReturnValue('artemisApp.courseNotification.temporal.now'),
+            getDateTranslationParams: vi.fn().mockReturnValue({}),
         } as unknown as CourseNotificationService;
 
         mockRoute = {
@@ -95,15 +109,17 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            imports: [CommonModule, FaIconComponent],
-            declarations: [CourseNotificationPopupOverlayComponent, MockComponent(CourseNotificationComponent)],
+            imports: [CommonModule, FaIconComponent, CourseNotificationPopupOverlayComponent],
             providers: [
                 { provide: CourseNotificationWebsocketService, useValue: courseNotificationWebsocketService },
                 { provide: CourseNotificationService, useValue: courseNotificationService },
                 { provide: ActivatedRoute, useValue: mockRoute },
                 { provide: ConversationSelectionState, useValue: conversationSelectionState },
             ],
-        }).compileComponents();
+        }).overrideComponent(CourseNotificationPopupOverlayComponent, {
+            remove: { imports: [CourseNotificationComponent] },
+            add: { imports: [MockComponent(CourseNotificationComponent)] },
+        });
 
         fixture = TestBed.createComponent(CourseNotificationPopupOverlayComponent);
         component = fixture.componentInstance;
@@ -111,15 +127,11 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         componentAsAny = component as any;
     });
 
-    afterEach(() => {
-        jest.restoreAllMocks();
-    });
-
     it('should create', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should add notification when websocket emits one', fakeAsync(() => {
+    it('should add notification when websocket emits one', () => {
         const mockNotification = createMockNotification(1, 101, 0);
 
         websocketNotificationSubject.next(mockNotification);
@@ -128,10 +140,10 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         expect(componentAsAny.notifications).toHaveLength(1);
         expect(componentAsAny.notifications[0]).toBe(mockNotification);
 
-        discardPeriodicTasks();
-    }));
+        vi.clearAllTimers();
+    });
 
-    it('should not add notification when conversation is open', fakeAsync(() => {
+    it('should not add notification when conversation is open', () => {
         const mockNotification = createMockNotification(1, 101, 20);
 
         websocketNotificationSubject.next(mockNotification);
@@ -139,10 +151,10 @@ describe('CourseNotificationPopupOverlayComponent', () => {
 
         expect(componentAsAny.notifications).toHaveLength(0);
 
-        discardPeriodicTasks();
-    }));
+        vi.clearAllTimers();
+    });
 
-    it('should add reply notification when thread is not open', fakeAsync(() => {
+    it('should add reply notification when thread is not open', () => {
         const mockNotification = createMockAnswerNotification(1, 101, 20, 50);
 
         websocketNotificationSubject.next(mockNotification);
@@ -150,10 +162,10 @@ describe('CourseNotificationPopupOverlayComponent', () => {
 
         expect(componentAsAny.notifications).toHaveLength(1);
 
-        discardPeriodicTasks();
-    }));
+        vi.clearAllTimers();
+    });
 
-    it('should not add reply notification when thread is open', fakeAsync(() => {
+    it('should not add reply notification when thread is open', () => {
         const mockNotification = createMockAnswerNotification(1, 101, 20, 50);
 
         conversationSelectionState.setOpenPostId(50);
@@ -163,8 +175,8 @@ describe('CourseNotificationPopupOverlayComponent', () => {
 
         expect(componentAsAny.notifications).toHaveLength(0);
 
-        discardPeriodicTasks();
-    }));
+        vi.clearAllTimers();
+    });
 
     it('should set isExpanded to false when removing the last notification', () => {
         const mockNotification = createMockNotification(1, 101, 0);
@@ -174,7 +186,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
 
         component.removeNotification(1);
 
-        expect(componentAsAny.isExpanded).toBeFalse();
+        expect(componentAsAny.isExpanded).toBe(false);
     });
 
     it('should handle closeClicked correctly', () => {
@@ -205,7 +217,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
 
         component.overlayClicked();
 
-        expect(componentAsAny.isExpanded).toBeTrue();
+        expect(componentAsAny.isExpanded).toBe(true);
     });
 
     it('should not change isExpanded when overlayClicked and notifications.length <= 1', () => {
@@ -216,31 +228,31 @@ describe('CourseNotificationPopupOverlayComponent', () => {
 
         component.overlayClicked();
 
-        expect(componentAsAny.isExpanded).toBeFalse();
+        expect(componentAsAny.isExpanded).toBe(false);
     });
 
-    it('should set isExpanded to false when collapseOverlayClicked', fakeAsync(() => {
+    it('should set isExpanded to false when collapseOverlayClicked', () => {
         componentAsAny.isExpanded = true;
         fixture.changeDetectorRef.detectChanges();
 
         component.collapseOverlayClicked();
-        tick(0);
+        vi.advanceTimersByTime(0);
 
-        expect(componentAsAny.isExpanded).toBeFalse();
-    }));
+        expect(componentAsAny.isExpanded).toBe(false);
+    });
 
-    it('should do nothing when collapseOverlayClicked and isExpanded is false', fakeAsync(() => {
+    it('should do nothing when collapseOverlayClicked and isExpanded is false', () => {
         componentAsAny.isExpanded = false;
         fixture.changeDetectorRef.detectChanges();
 
         component.collapseOverlayClicked();
-        tick(0);
+        vi.advanceTimersByTime(0);
 
-        expect(componentAsAny.isExpanded).toBeFalse();
-    }));
+        expect(componentAsAny.isExpanded).toBe(false);
+    });
 
     it('should unsubscribe from websocket on ngOnDestroy', () => {
-        const unsubscribeSpy = jest.spyOn(componentAsAny.courseNotificationWebsocketSubscription, 'unsubscribe');
+        const unsubscribeSpy = vi.spyOn(componentAsAny.courseNotificationWebsocketSubscription, 'unsubscribe');
 
         component.ngOnDestroy();
 
@@ -282,7 +294,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         const mockNotification2 = createMockNotification(2, 102, 0);
         componentAsAny.notifications = [mockNotification1, mockNotification2];
         fixture.changeDetectorRef.detectChanges();
-        const overlayClickedSpy = jest.spyOn(component, 'overlayClicked');
+        const overlayClickedSpy = vi.spyOn(component, 'overlayClicked');
         const overlayElement = fixture.debugElement.query(By.css('.course-notification-popup-overlay'));
 
         overlayElement.nativeElement.click();
@@ -294,7 +306,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         const mockNotification = createMockNotification(1, 101, 0);
         componentAsAny.notifications = [mockNotification];
         fixture.changeDetectorRef.detectChanges();
-        const collapseOverlayClickedSpy = jest.spyOn(component, 'collapseOverlayClicked');
+        const collapseOverlayClickedSpy = vi.spyOn(component, 'collapseOverlayClicked');
         const collapseButton = fixture.debugElement.query(By.css('.btn-outline-primary'));
 
         collapseButton.nativeElement.click();
@@ -302,7 +314,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         expect(collapseOverlayClickedSpy).toHaveBeenCalledOnce();
     });
 
-    it('should clear all notifications when clearAllNotifications is called', fakeAsync(() => {
+    it('should clear all notifications when clearAllNotifications is called', () => {
         const mockNotification1 = createMockNotification(1, 101, 0);
         const mockNotification2 = createMockNotification(2, 102, 0);
         componentAsAny.notifications = [mockNotification1, mockNotification2];
@@ -310,11 +322,11 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         component.clearAllNotifications();
-        tick(0); // Process the setTimeout
+        vi.advanceTimersByTime(0); // Process the setTimeout
 
         expect(componentAsAny.notifications).toHaveLength(0);
-        expect(componentAsAny.isExpanded).toBeFalse();
-    }));
+        expect(componentAsAny.isExpanded).toBe(false);
+    });
 
     it('should do nothing when clearAllNotifications is called and isExpanded is false', () => {
         const mockNotification = createMockNotification(1, 101, 0);
@@ -322,9 +334,9 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         componentAsAny.isExpanded = false;
         fixture.changeDetectorRef.detectChanges();
 
-        const setNotificationStatusSpy = jest.spyOn(courseNotificationService, 'setNotificationStatus');
-        const setNotificationStatusInMapSpy = jest.spyOn(courseNotificationService, 'setNotificationStatusInMap');
-        const decreaseNotificationCountBySpy = jest.spyOn(courseNotificationService, 'decreaseNotificationCountBy');
+        const setNotificationStatusSpy = vi.spyOn(courseNotificationService, 'setNotificationStatus');
+        const setNotificationStatusInMapSpy = vi.spyOn(courseNotificationService, 'setNotificationStatusInMap');
+        const decreaseNotificationCountBySpy = vi.spyOn(courseNotificationService, 'decreaseNotificationCountBy');
 
         component.clearAllNotifications();
 
@@ -334,7 +346,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         expect(componentAsAny.notifications).toHaveLength(1);
     });
 
-    it('should mark all notifications as seen on server when clearAllNotifications is called', fakeAsync(() => {
+    it('should mark all notifications as seen on server when clearAllNotifications is called', () => {
         const mockNotification1 = createMockNotification(1, 101, 0);
         const mockNotification2 = createMockNotification(2, 101, 0);
         const mockNotification3 = createMockNotification(3, 102, 0);
@@ -343,7 +355,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         component.clearAllNotifications();
-        tick(0);
+        vi.advanceTimersByTime(0);
 
         expect(courseNotificationService.setNotificationStatus).toHaveBeenCalledWith(101, [1, 2], CourseNotificationViewingStatus.SEEN);
         expect(courseNotificationService.setNotificationStatusInMap).toHaveBeenCalledWith(101, [1, 2], CourseNotificationViewingStatus.SEEN);
@@ -352,7 +364,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         expect(courseNotificationService.setNotificationStatus).toHaveBeenCalledWith(102, [3], CourseNotificationViewingStatus.SEEN);
         expect(courseNotificationService.setNotificationStatusInMap).toHaveBeenCalledWith(102, [3], CourseNotificationViewingStatus.SEEN);
         expect(courseNotificationService.decreaseNotificationCountBy).toHaveBeenCalledWith(102, 1);
-    }));
+    });
 
     it('should trigger clearAllNotifications when clicking the clear button', () => {
         const mockNotification = createMockNotification(1, 101, 0);
@@ -360,7 +372,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         componentAsAny.isExpanded = true;
         fixture.changeDetectorRef.detectChanges();
 
-        const clearAllNotificationsSpy = jest.spyOn(component, 'clearAllNotifications');
+        const clearAllNotificationsSpy = vi.spyOn(component, 'clearAllNotifications');
 
         const clearButton = fixture.debugElement.queryAll(By.css('.btn-outline-primary'))[1];
         clearButton.nativeElement.click();

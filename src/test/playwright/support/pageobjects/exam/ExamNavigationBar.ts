@@ -15,7 +15,11 @@ export class ExamNavigationBar {
      * @param exerciseGroupTitle
      */
     async openOrSaveExerciseByTitle(exerciseGroupTitle: string) {
-        await this.page.getByText(exerciseGroupTitle).nth(0).click();
+        const exerciseLink = this.page.getByText(exerciseGroupTitle).nth(0);
+        await exerciseLink.waitFor({ state: 'visible', timeout: 30000 });
+        await exerciseLink.click();
+        // Wait for page transition to complete
+        await this.page.waitForLoadState('domcontentloaded');
     }
 
     async openFromOverviewByTitle(exerciseGroupTitle: string) {
@@ -30,7 +34,7 @@ export class ExamNavigationBar {
      * Presses the hand in early button in the navigation bar.
      */
     async handInEarly() {
-        await this.page.locator('#hand-in-early').click();
+        await this.page.locator('#hand-in-early').click({ timeout: 30000 });
     }
 
     async clickSave() {

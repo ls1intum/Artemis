@@ -38,7 +38,7 @@ export class PasskeyAuthenticationPageComponent implements OnInit, OnDestroy {
         });
 
         this.routeSubscription = this.route.queryParams.subscribe((params) => {
-            this.returnUrl = params['returnUrl'] || '/';
+            this.returnUrl = params['returnUrl'] || '/sign-in';
         });
     }
 
@@ -59,7 +59,13 @@ export class PasskeyAuthenticationPageComponent implements OnInit, OnDestroy {
     }
 
     async signInWithPasskey() {
-        await this.webauthnService.loginWithPasskey();
+        try {
+            await this.webauthnService.loginWithPasskey();
+        } catch {
+            // Error alerts are already handled inside loginWithPasskey().
+            // User cancellation (NotAllowedError) is silently re-thrown — just stop here.
+            return;
+        }
         await this.accountService.identity(true);
 
         if (this.accountService.isUserLoggedInWithApprovedPasskey()) {
@@ -73,7 +79,7 @@ export class PasskeyAuthenticationPageComponent implements OnInit, OnDestroy {
         if (this.returnUrl) {
             this.router.navigateByUrl(this.returnUrl);
         } else {
-            this.router.navigate(['/']);
+            this.router.navigate(['/sign-in']);
         }
     }
 }

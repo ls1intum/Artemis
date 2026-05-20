@@ -16,8 +16,22 @@ import { ProgrammingExerciseEditSelectedComponent } from 'app/programming/manage
 import { AlertService } from 'app/shared/service/alert.service';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { faBook, faCheckDouble, faDownload, faFileSignature, faListAlt, faPencilAlt, faPlus, faSort, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { PROFILE_LOCALCI, PROFILE_THEIA } from 'app/app.constants';
+import {
+    faBook,
+    faCheck,
+    faCheckDouble,
+    faDownload,
+    faListAlt,
+    faPencilAlt,
+    faPlus,
+    faSort,
+    faTable,
+    faTimes,
+    faTrash,
+    faUsers,
+    faWrench,
+} from '@fortawesome/free-solid-svg-icons';
+import { MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { FormsModule } from '@angular/forms';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
@@ -62,7 +76,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     ],
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
-    protected exerciseService = inject(ExerciseService); // needed in html code
+    protected exerciseService = inject(ExerciseService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private courseExerciseService = inject(CourseExerciseService);
     private accountService = inject(AccountService);
@@ -95,7 +109,8 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     faTrash = faTrash;
     faListAlt = faListAlt;
     faPencilAlt = faPencilAlt;
-    faFileSignature = faFileSignature;
+    faCheck = faCheck;
+    faTimes = faTimes;
 
     protected get exercises() {
         return this.programmingExercises;
@@ -112,7 +127,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 const profileInfo = this.profileService.getProfileInfo();
                 this.buildPlanLinkTemplate = profileInfo.buildPlanURLTemplate;
                 this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
-                this.onlineIdeEnabled = this.profileService.isProfileActive(PROFILE_THEIA);
+                this.onlineIdeEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
                 // reconnect exercise with course
                 this.programmingExercises.forEach((exercise) => {
                     exercise.course = this.course;
@@ -220,7 +235,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         modalRef.componentInstance.exercisesToCheck = this.selectedExercises;
     }
 
-    fetchExerciseDeletionSummary(exerciseId: number): Observable<EntitySummary> {
-        return this.programmingExerciseService.getDeletionSummary(exerciseId);
+    fetchExerciseDeletionSummary(exercise: ProgrammingExercise): Observable<EntitySummary> {
+        return this.exerciseService.getDeletionSummary(exercise);
     }
 }

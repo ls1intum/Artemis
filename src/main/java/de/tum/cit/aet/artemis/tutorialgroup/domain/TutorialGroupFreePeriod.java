@@ -9,9 +9,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -19,13 +16,11 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 @Entity
 @Table(name = "tutorial_group_free_period")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TutorialGroupFreePeriod extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "tutorial_groups_configuration_id")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties(value = "tutorialFreePeriods", allowSetters = true)
     private TutorialGroupsConfiguration tutorialGroupsConfiguration;
 

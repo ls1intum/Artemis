@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LearningPathsStateComponent } from 'app/atlas/manage/learning-paths-state/learning-paths-state.component';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
@@ -11,14 +12,16 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { HealthStatus, LearningPathHealthDTO } from 'app/atlas/shared/entities/learning-path-health.model';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('LearningPathsStateComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: LearningPathsStateComponent;
     let fixture: ComponentFixture<LearningPathsStateComponent>;
     let learningPathApiService: LearningPathApiService;
     let alertService: AlertService;
     let router: Router;
-    let getLearningPathHealthStatusSpy: jest.SpyInstance;
+    let getLearningPathHealthStatusSpy: ReturnType<typeof vi.spyOn>;
 
     const courseId = 1;
 
@@ -61,7 +64,7 @@ describe('LearningPathsStateComponent', () => {
         alertService = TestBed.inject(AlertService);
         router = TestBed.inject(Router);
 
-        getLearningPathHealthStatusSpy = jest.spyOn(learningPathApiService, 'getLearningPathHealthStatus').mockResolvedValue(learningPathHealth);
+        getLearningPathHealthStatusSpy = vi.spyOn(learningPathApiService, 'getLearningPathHealthStatus').mockResolvedValue(learningPathHealth);
 
         fixture = TestBed.createComponent(LearningPathsStateComponent);
         component = fixture.componentInstance;
@@ -81,7 +84,7 @@ describe('LearningPathsStateComponent', () => {
     });
 
     it('should set isLoading correctly', async () => {
-        const isLoadingSpy = jest.spyOn(component.isLoading, 'set');
+        const isLoadingSpy = vi.spyOn(component.isLoading, 'set');
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -91,8 +94,8 @@ describe('LearningPathsStateComponent', () => {
     });
 
     it('should show error when loading fails', async () => {
-        jest.spyOn(learningPathApiService, 'getLearningPathHealthStatus').mockRejectedValue(new Error('Error loading learning path health status'));
-        const onErrorSpy = jest.spyOn(alertService, 'addAlert');
+        vi.spyOn(learningPathApiService, 'getLearningPathHealthStatus').mockRejectedValue(new Error('Error loading learning path health status'));
+        const onErrorSpy = vi.spyOn(alertService, 'addAlert');
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -101,7 +104,7 @@ describe('LearningPathsStateComponent', () => {
     });
 
     it.each([HealthStatus.NO_COMPETENCIES, HealthStatus.NO_RELATIONS])('should navigate to competencies page on %s status', async (status) => {
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const navigateSpy = vi.spyOn(router, 'navigate');
         getLearningPathHealthStatusSpy.mockResolvedValue({ ...learningPathHealth, status: [status] });
 
         await clickHealthStateButton(`#health-state-button-${status}`);
@@ -110,8 +113,8 @@ describe('LearningPathsStateComponent', () => {
     });
 
     it('should generate missing learning paths', async () => {
-        const generateMissingLearningPathsSpy = jest.spyOn(learningPathApiService, 'generateMissingLearningPaths').mockResolvedValue();
-        const successSpy = jest.spyOn(alertService, 'success');
+        const generateMissingLearningPathsSpy = vi.spyOn(learningPathApiService, 'generateMissingLearningPaths').mockResolvedValue();
+        const successSpy = vi.spyOn(alertService, 'success');
         getLearningPathHealthStatusSpy.mockResolvedValue({ ...learningPathHealth, status: [HealthStatus.MISSING] });
 
         await clickHealthStateButton(`#health-state-button-${HealthStatus.MISSING}`);
@@ -122,8 +125,8 @@ describe('LearningPathsStateComponent', () => {
     });
 
     it('should show error when generating missing learning paths fails', async () => {
-        jest.spyOn(learningPathApiService, 'generateMissingLearningPaths').mockRejectedValue(new Error('Error generating missing learning paths'));
-        const onErrorSpy = jest.spyOn(alertService, 'addAlert');
+        vi.spyOn(learningPathApiService, 'generateMissingLearningPaths').mockRejectedValue(new Error('Error generating missing learning paths'));
+        const onErrorSpy = vi.spyOn(alertService, 'addAlert');
         getLearningPathHealthStatusSpy.mockResolvedValue({ ...learningPathHealth, status: [HealthStatus.MISSING] });
 
         await clickHealthStateButton(`#health-state-button-${HealthStatus.MISSING}`);

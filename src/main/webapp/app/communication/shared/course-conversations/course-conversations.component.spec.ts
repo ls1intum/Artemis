@@ -1,19 +1,23 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { BreakpointObserver, BreakpointState, Breakpoints } from '@angular/cdk/layout';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { MockComponent, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { LoadingIndicatorContainerStubComponent } from 'test/helpers/stubs/shared/loading-indicator-container-stub.component';
+import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { ConversationHeaderComponent } from 'app/communication/course-conversations-components/layout/conversation-header/conversation-header.component';
 import { CourseWideSearchComponent } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
 import { ConversationMessagesComponent } from 'app/communication/course-conversations-components/layout/conversation-messages/conversation-messages.component';
 import { ConversationThreadSidebarComponent } from 'app/communication/course-conversations-components/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
-import { BehaviorSubject, EMPTY, of } from 'rxjs';
-import { NgbModal, NgbModalRef, NgbModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { BehaviorSubject, EMPTY, Subject, of } from 'rxjs';
+import { NgbModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MetisService } from 'app/communication/service/metis.service';
@@ -47,7 +51,7 @@ import { ConversationGlobalSearchComponent } from 'app/communication/shared/conv
 import { AlertService } from 'app/shared/service/alert.service';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { TranslateModule } from '@ngx-translate/core';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 const examples: (ConversationDTO | undefined)[] = [
@@ -59,17 +63,19 @@ const examples: (ConversationDTO | undefined)[] = [
 
 examples.forEach((activeConversation) => {
     describe('CourseConversationComponent with ' + (activeConversation?.type || 'no active conversation'), () => {
+        setupTestBed({ zoneless: true });
+
         let component: CourseConversationsComponent;
         let fixture: ComponentFixture<CourseConversationsComponent>;
         const course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING } as Course;
         let queryParamsSubject: BehaviorSubject<Params>;
         const router = new MockRouter();
         let postsSubject: BehaviorSubject<Post[]>;
-        let acceptCodeOfConductSpy: jest.SpyInstance;
-        let setActiveConversationSpy: jest.SpyInstance;
+        let acceptCodeOfConductSpy: ReturnType<typeof vi.spyOn>;
+        let setActiveConversationSpy: ReturnType<typeof vi.spyOn>;
         let metisConversationService: MetisConversationService;
         let courseOverviewService: CourseOverviewService;
-        let modalService: NgbModal;
+        let dialogService: DialogService;
         let courseSidebarService: CourseSidebarService;
         let activatedRoute: ActivatedRoute;
         let breakpoint$: BehaviorSubject<BreakpointState>;
@@ -80,10 +86,14 @@ examples.forEach((activeConversation) => {
         // @ts-ignore
         MockInstance(ConversationGlobalSearchComponent, 'searchElement', signal([new ElementRef(document.createElement('div'))]));
         MockInstance(ConversationThreadSidebarComponent, 'threadContainer', signal(new ElementRef(document.createElement('div'))));
-        const dummyTooltip = { close: jest.fn() } as unknown as NgbTooltip;
+        const dummyTooltip = { close: vi.fn() } as unknown as NgbTooltip;
         MockInstance(ConversationThreadSidebarComponent, 'expandTooltip', signal(dummyTooltip));
 
-        beforeEach(waitForAsync(() => {
+        beforeEach(() => {
+            vi.useFakeTimers();
+        });
+
+        beforeEach(async () => {
             breakpoint$ = new BehaviorSubject<BreakpointState>({
                 matches: false,
                 breakpoints: { [Breakpoints.Handset]: false },
@@ -92,9 +102,8 @@ examples.forEach((activeConversation) => {
             queryParamsSubject = new BehaviorSubject(convertToParamMap({}));
 
             TestBed.configureTestingModule({
-                declarations: [
+                imports: [
                     CourseConversationsComponent,
-                    LoadingIndicatorContainerStubComponent,
                     MockComponent(ConversationHeaderComponent),
                     MockComponent(DocumentationButtonComponent),
                     MockComponent(ConversationMessagesComponent),
@@ -107,7 +116,13 @@ examples.forEach((activeConversation) => {
                     MockComponent(SidebarAccordionComponent),
                     MockPipe(ArtemisTranslatePipe),
                     MockPipe(HtmlForMarkdownPipe),
+                    FormsModule,
+                    ReactiveFormsModule,
+                    FontAwesomeModule,
+                    NgbModule,
+                    TranslateModule.forRoot(),
                 ],
+                declarations: [LoadingIndicatorContainerStubComponent],
                 providers: [
                     {
                         provide: BreakpointObserver,
@@ -136,23 +151,51 @@ examples.forEach((activeConversation) => {
                         },
                     },
                     MockProvider(CourseOverviewService),
-                    MockProvider(NgbModal),
+                    MockProvider(DialogService),
                     MockProvider(MetisConversationService),
                     MockProvider(SidebarEventService),
                     MockProvider(ProfileService),
                     MockProvider(AlertService),
-                    MockProvider(FaqService),
+                    MockProvider(FaqService, {
+                        findAllByCourseIdAndState: () => of(new HttpResponse({ body: [] })),
+                    }),
                     provideHttpClient(),
                     provideHttpClientTesting(),
                 ],
-                imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, NgbModule, TranslateModule.forRoot()],
-            }).compileComponents();
+            });
 
             const metisService = new MockMetisService();
 
             TestBed.overrideComponent(CourseConversationsComponent, {
                 set: {
                     providers: [{ provide: MetisService, useValue: metisService }],
+                },
+            });
+
+            TestBed.overrideComponent(CourseConversationsComponent, {
+                remove: {
+                    imports: [
+                        LoadingIndicatorContainerComponent,
+                        SidebarComponent,
+                        ConversationHeaderComponent,
+                        ConversationMessagesComponent,
+                        CourseWideSearchComponent,
+                        ConversationThreadSidebarComponent,
+                        ConversationGlobalSearchComponent,
+                        CourseConversationsCodeOfConductComponent,
+                    ],
+                },
+                add: {
+                    imports: [
+                        MockComponent(LoadingIndicatorContainerComponent),
+                        MockComponent(SidebarComponent),
+                        MockComponent(ConversationHeaderComponent),
+                        MockComponent(ConversationMessagesComponent),
+                        MockComponent(CourseWideSearchComponent),
+                        MockComponent(ConversationThreadSidebarComponent),
+                        MockComponent(ConversationGlobalSearchComponent),
+                        MockComponent(CourseConversationsCodeOfConductComponent),
+                    ],
                 },
             });
 
@@ -166,30 +209,30 @@ examples.forEach((activeConversation) => {
             Object.defineProperty(metisConversationService, 'isLoading$', { get: () => new BehaviorSubject(false).asObservable() });
             Object.defineProperty(metisConversationService, 'isCodeOfConductAccepted$', { get: () => new BehaviorSubject(true).asObservable() });
             Object.defineProperty(metisConversationService, 'isCodeOfConductPresented$', { get: () => new BehaviorSubject(false).asObservable() });
-            metisConversationService.checkIsCodeOfConductAccepted = jest.fn();
-            metisConversationService.setActiveConversation = jest.fn();
-            metisConversationService.setUpConversationService = jest.fn().mockReturnValue(EMPTY);
-            metisConversationService.forceRefresh = jest.fn().mockReturnValue(EMPTY);
-            metisConversationService.markAsRead = jest.fn();
-            metisConversationService.acceptCodeOfConduct = jest.fn();
-            metisConversationService.createGroupChat = jest.fn().mockReturnValue(EMPTY);
-            metisConversationService.createOneToOneChat = jest.fn().mockReturnValue(EMPTY);
-            metisConversationService.createChannel = jest.fn().mockReturnValue(EMPTY);
-            metisConversationService.markAllChannelsAsRead = jest.fn().mockReturnValue(of());
+            metisConversationService.checkIsCodeOfConductAccepted = vi.fn();
+            metisConversationService.setActiveConversation = vi.fn();
+            metisConversationService.setUpConversationService = vi.fn().mockReturnValue(EMPTY);
+            metisConversationService.forceRefresh = vi.fn().mockReturnValue(EMPTY);
+            metisConversationService.markAsRead = vi.fn();
+            metisConversationService.acceptCodeOfConduct = vi.fn();
+            metisConversationService.createGroupChat = vi.fn().mockReturnValue(EMPTY);
+            metisConversationService.createOneToOneChat = vi.fn().mockReturnValue(EMPTY);
+            metisConversationService.createChannel = vi.fn().mockReturnValue(EMPTY);
+            metisConversationService.markAllChannelsAsRead = vi.fn().mockReturnValue(of());
 
             fixture = TestBed.createComponent(CourseConversationsComponent);
             component = fixture.componentInstance;
 
             postsSubject = new BehaviorSubject([]);
-            jest.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
-            jest.spyOn(metisConversationService, 'activeConversation$', 'get').mockReturnValue(new BehaviorSubject(activeConversation).asObservable());
-            setActiveConversationSpy = jest.spyOn(metisConversationService, 'setActiveConversation');
-            acceptCodeOfConductSpy = jest.spyOn(metisConversationService, 'acceptCodeOfConduct');
-            jest.spyOn(metisService, 'posts', 'get').mockReturnValue(postsSubject.asObservable());
-            modalService = TestBed.inject(NgbModal);
+            vi.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
+            vi.spyOn(metisConversationService, 'activeConversation$', 'get').mockReturnValue(new BehaviorSubject(activeConversation).asObservable());
+            setActiveConversationSpy = vi.spyOn(metisConversationService, 'setActiveConversation');
+            acceptCodeOfConductSpy = vi.spyOn(metisConversationService, 'acceptCodeOfConduct');
+            vi.spyOn(metisService, 'posts', 'get').mockReturnValue(postsSubject.asObservable());
+            dialogService = TestBed.inject(DialogService);
             component.sidebarConversations = [];
 
-            jest.spyOn(courseOverviewService, 'mapConversationsToSidebarCardElements').mockReturnValue([
+            vi.spyOn(courseOverviewService, 'mapConversationsToSidebarCardElements').mockReturnValue([
                 {
                     id: 1,
                     title: 'Test Channel 1',
@@ -206,7 +249,7 @@ examples.forEach((activeConversation) => {
                 },
             ]);
 
-            jest.spyOn(courseOverviewService, 'groupConversationsByChannelType').mockReturnValue({
+            vi.spyOn(courseOverviewService, 'groupConversationsByChannelType').mockReturnValue({
                 recents: {
                     entityData: [
                         {
@@ -220,110 +263,98 @@ examples.forEach((activeConversation) => {
                 },
                 generalChannels: { entityData: [] },
             });
-        }));
+        });
 
         afterEach(() => {
             component.ngOnDestroy();
-            jest.resetAllMocks();
+            vi.useRealTimers();
+            vi.resetAllMocks();
         });
 
         it('should have service set up', () => {
             fixture.detectChanges();
-            expect(component.isServiceSetUp).toBeTrue();
-            expect(component.isLoading).toBeFalse();
+            expect(component.isServiceSetUp).toBe(true);
+            expect(component.isLoading).toBe(false);
             expect(component.conversationsOfUser).toHaveLength(1);
             expect(component.activeConversation).toEqual(activeConversation);
         });
 
         describe('Dialog Opening', () => {
-            const expectedResults = [undefined, true];
-            const mockModalRef: Partial<NgbModalRef> = {
-                componentInstance: {
-                    course: {},
-                    initialize: jest.fn(),
-                },
-            };
+            setupTestBed({ zoneless: true });
+
+            const mockOnClose = new Subject<any>();
+            const mockDialogRef = { onClose: mockOnClose.asObservable(), close: vi.fn() } as unknown as DynamicDialogRef;
 
             beforeEach(() => {
                 // Set a mock course with id 1
                 component.course.set({ id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING } as Course);
             });
 
-            it('should open the group chat creation dialog', fakeAsync(() => {
-                mockModalRef.result = Promise.resolve(undefined);
-                const spy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+            it('should open the group chat creation dialog', () => {
+                const spy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
                 component.openCreateGroupChatDialog();
-                tick();
                 expect(spy).toHaveBeenCalledExactlyOnceWith(GroupChatCreateDialogComponent, expect.anything());
-            }));
+            });
 
-            it('should open the one-to-one chat creation dialog', fakeAsync(() => {
-                const spy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+            it('should open the one-to-one chat creation dialog', () => {
+                const spy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
                 component.openCreateOneToOneChatDialog();
-                tick();
                 expect(spy).toHaveBeenCalledExactlyOnceWith(OneToOneChatCreateDialogComponent, expect.anything());
-            }));
+            });
 
-            it('should open the channel overview dialog', fakeAsync(() => {
-                mockModalRef.result = Promise.resolve(expectedResults);
-                const spy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+            it('should open the channel overview dialog', () => {
+                const spy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
                 component.openChannelOverviewDialog();
-                tick();
                 expect(spy).toHaveBeenCalledExactlyOnceWith(ChannelsOverviewDialogComponent, expect.anything());
-                expect(mockModalRef.componentInstance.initialize).toHaveBeenCalled();
-            }));
+            });
 
-            it('should open the create channel dialog when onCreateChannelPressed is called', fakeAsync(() => {
+            it('should open the create channel dialog when onCreateChannelPressed is called', () => {
                 fixture.detectChanges();
-                mockModalRef.result = Promise.resolve(expectedResults);
-                const spy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+                const spy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
 
                 component.openCreateChannelDialog();
-                tick();
 
                 expect(spy).toHaveBeenCalledExactlyOnceWith(ChannelsCreateDialogComponent, expect.anything());
-                expect(mockModalRef.componentInstance.course).toEqual(course);
-                expect(mockModalRef.componentInstance.initialize).toHaveBeenCalled();
-            }));
+            });
         });
 
-        it('should update thread in post', fakeAsync(() => {
+        it('should update thread in post', () => {
             fixture.detectChanges();
             component.postInThread = { id: 1, content: 'loremIpsum' } as Post;
             fixture.changeDetectorRef.detectChanges();
             const updatedPost = { id: 1, content: 'updatedContent' } as Post;
             postsSubject.next([updatedPost]);
-            tick();
+            vi.advanceTimersByTime(0);
             expect(component.postInThread).toEqual(updatedPost);
-        }));
+        });
 
-        it('should set active conversation depending on the query param', fakeAsync(() => {
+        it('should set active conversation depending on the query param', () => {
             queryParamsSubject.next({ conversationId: '12' });
             // mock setActiveConversationById method
             fixture.changeDetectorRef.detectChanges();
-            tick();
+            vi.advanceTimersByTime(0);
             expect(setActiveConversationSpy).toHaveBeenCalledWith(12);
-        }));
+        });
 
-        it('should call sidebar collapse if conversation changes', fakeAsync(() => {
-            const closeSidebarOnMobileSpy = jest.spyOn(component, 'closeSidebarOnMobile');
+        it('should call sidebar collapse if conversation changes', () => {
+            const closeSidebarOnMobileSpy = vi.spyOn(component, 'closeSidebarOnMobile');
             queryParamsSubject.next({ conversationId: '12' });
             fixture.changeDetectorRef.detectChanges();
-            tick();
+            vi.advanceTimersByTime(0);
             expect(closeSidebarOnMobileSpy).toHaveBeenCalled();
-        }));
+        });
 
-        it('should call sidebar collapse if thread opens', fakeAsync(() => {
-            const closeSidebarOnMobileSpy = jest.spyOn(component, 'closeSidebarOnMobile');
+        it('should call sidebar collapse if thread opens', () => {
+            const closeSidebarOnMobileSpy = vi.spyOn(component, 'closeSidebarOnMobile');
             queryParamsSubject.next({ messageId: '12' });
             fixture.changeDetectorRef.detectChanges();
-            tick();
+            vi.advanceTimersByTime(0);
             expect(closeSidebarOnMobileSpy).toHaveBeenCalled();
-        }));
+        });
 
         it('should set the query params when an active conversation is selected', () => {
             const activatedRoute = TestBed.inject(ActivatedRoute);
-            const navigateSpy = jest.spyOn(router, 'navigate');
+            const navigateSpy = vi.spyOn(router, 'navigate');
             fixture.detectChanges();
             expect(navigateSpy).toHaveBeenCalledWith([], {
                 relativeTo: activatedRoute,
@@ -352,26 +383,26 @@ examples.forEach((activeConversation) => {
 
         it('should toggle isNavbarCollapsed when toggleCollapseState is called', () => {
             component.toggleSidebar();
-            expect(component.isCollapsed).toBeTrue();
+            expect(component.isCollapsed).toBe(true);
 
             component.toggleSidebar();
-            expect(component.isCollapsed).toBeFalse();
+            expect(component.isCollapsed).toBe(false);
         });
 
         it('should toggle isCollapsed when service emits corresponding event', () => {
             fixture.detectChanges();
             courseSidebarService.openSidebar();
-            expect(component.isCollapsed).toBeTrue();
+            expect(component.isCollapsed).toBe(true);
 
             courseSidebarService.closeSidebar();
-            expect(component.isCollapsed).toBeFalse();
+            expect(component.isCollapsed).toBe(false);
 
             courseSidebarService.toggleSidebar();
-            expect(component.isCollapsed).toBeTrue();
+            expect(component.isCollapsed).toBe(true);
         });
 
         it('should reload sidebar when reloadSidebar$ event is emitted', () => {
-            const prepareSidebarDataSpy = jest.spyOn(component, 'prepareSidebarData');
+            const prepareSidebarDataSpy = vi.spyOn(component, 'prepareSidebarData');
             fixture.detectChanges(); // ngOnInit is called here
 
             courseSidebarService.reloadSidebar();
@@ -380,19 +411,19 @@ examples.forEach((activeConversation) => {
         });
 
         it('should switch to mobile if breakpoint returns true and open sidebar', () => {
-            const openSidebarSpy = jest.spyOn(courseSidebarService, 'openSidebar');
-            expect(component.isMobile()).toBeFalse();
+            const openSidebarSpy = vi.spyOn(courseSidebarService, 'openSidebar');
+            expect(component.isMobile()).toBe(false);
             breakpoint$.next({
                 matches: true,
                 breakpoints: { [Breakpoints.Handset]: true },
             });
             component.ngOnInit();
-            expect(component.isMobile()).toBeTrue();
+            expect(component.isMobile()).toBe(true);
             expect(openSidebarSpy).toHaveBeenCalled();
         });
 
         it('should call close sidebar if conversation is selected', () => {
-            const closeSidebarSpy = jest.spyOn(courseSidebarService, 'closeSidebar');
+            const closeSidebarSpy = vi.spyOn(courseSidebarService, 'closeSidebar');
             breakpoint$.next({
                 matches: true,
                 breakpoints: { [Breakpoints.Handset]: true },
@@ -404,7 +435,7 @@ examples.forEach((activeConversation) => {
         });
 
         it('should call close sidebar and search term is set and open sidebar otherwise if on mobile', () => {
-            const openSidebarSpy = jest.spyOn(courseSidebarService, 'openSidebar');
+            const openSidebarSpy = vi.spyOn(courseSidebarService, 'openSidebar');
             fixture.detectChanges();
             breakpoint$.next({
                 matches: true,
@@ -437,12 +468,14 @@ examples.forEach((activeConversation) => {
         });
 
         it('onConversationSelected should change active conversation', () => {
-            const setActiveConversationSpy = jest.spyOn(metisConversationService, 'setActiveConversation').mockImplementation();
+            const setActiveConversationSpy = vi.spyOn(metisConversationService, 'setActiveConversation').mockImplementation(() => {});
             component.onConversationSelected(activeConversation?.id ?? 1);
             expect(setActiveConversationSpy).toHaveBeenCalled();
         });
 
         describe('performChannelAction', () => {
+            setupTestBed({ zoneless: true });
+
             let channelAction: ChannelAction;
             let channel: ChannelDTO;
 
@@ -459,8 +492,8 @@ examples.forEach((activeConversation) => {
                 component.createChannelFn = undefined;
                 component.ngOnInit();
 
-                component.createChannelFn = jest.fn().mockReturnValue(EMPTY);
-                jest.spyOn(component, 'prepareSidebarData').mockImplementation();
+                component.createChannelFn = vi.fn().mockReturnValue(EMPTY);
+                vi.spyOn(component, 'prepareSidebarData').mockImplementation(() => {});
             });
 
             it('should call createChannelFn with the provided channel', () => {
@@ -469,7 +502,7 @@ examples.forEach((activeConversation) => {
             });
 
             it('should call prepareSidebarData on successful completion', () => {
-                component.createChannelFn = jest.fn().mockReturnValue({
+                component.createChannelFn = vi.fn().mockReturnValue({
                     pipe: () => ({
                         subscribe: ({ complete }: any) => {
                             complete();
@@ -482,7 +515,7 @@ examples.forEach((activeConversation) => {
             });
 
             it('should log an error if createChannelFn throws an error', () => {
-                component.createChannelFn = jest.fn().mockReturnValue({
+                component.createChannelFn = vi.fn().mockReturnValue({
                     pipe: () => ({
                         subscribe: ({ error }: any) => {
                             error('Test Error');
@@ -495,26 +528,27 @@ examples.forEach((activeConversation) => {
 
             it('should not call createChannelFn or prepareSidebarData if createChannelFn is undefined', () => {
                 component.createChannelFn = undefined;
-                const prepareSidebarDataSpy = jest.spyOn(component, 'prepareSidebarData');
+                const prepareSidebarDataSpy = vi.spyOn(component, 'prepareSidebarData');
                 component.performChannelAction(channelAction);
                 expect(component.createChannelFn).toBeUndefined();
                 // Since createChannelFn is undefined, prepareSidebarData should not be called
                 expect(prepareSidebarDataSpy).not.toHaveBeenCalled();
             });
 
-            it('should correctly populate the recents group in accordionConversationGroups using existing mocks', fakeAsync(() => {
-                (metisConversationService.forceRefresh as jest.Mock).mockReturnValue(of({}));
+            it('should correctly populate the recents group in accordionConversationGroups using existing mocks', () => {
+                (metisConversationService.forceRefresh as ReturnType<typeof vi.fn>).mockReturnValue(of({}));
 
                 component.prepareSidebarData();
-                tick();
                 const recentsGroup = component.accordionConversationGroups.recents;
                 expect(recentsGroup).toBeDefined();
                 expect(recentsGroup.entityData).toHaveLength(1);
-                expect(recentsGroup.entityData[0].isCurrent).toBeTrue();
-            }));
+                expect(recentsGroup.entityData[0].isCurrent).toBe(true);
+            });
         });
 
         describe('query parameter handling', () => {
+            setupTestBed({ zoneless: true });
+
             it('should handle SavedPostStatus in conversationId', () => {
                 const queryParams = {
                     conversationId: SavedPostStatus.ARCHIVED.toString().toLowerCase(),
@@ -532,7 +566,7 @@ examples.forEach((activeConversation) => {
                     conversationId: '123',
                 };
                 activatedRoute.queryParams = of(queryParams);
-                const spy = jest.spyOn(component, 'closeSidebarOnMobile');
+                const spy = vi.spyOn(component, 'closeSidebarOnMobile');
 
                 component.subscribeToQueryParameter();
 
@@ -601,6 +635,8 @@ examples.forEach((activeConversation) => {
         });
 
         describe('navigate to post functionality', () => {
+            setupTestBed({ zoneless: true });
+
             it('should handle answer post navigation correctly', () => {
                 const answerPost: Posting = {
                     referencePostId: 123,
@@ -613,7 +649,7 @@ examples.forEach((activeConversation) => {
                 component.onNavigateToPost(answerPost);
 
                 expect(component['focusPostId']).toBe(123);
-                expect(component['openThreadOnFocus']).toBeTrue();
+                expect(component['openThreadOnFocus']).toBe(true);
                 expect(setActiveConversationSpy).toHaveBeenCalledWith(456);
             });
 
@@ -629,7 +665,7 @@ examples.forEach((activeConversation) => {
                 component.onNavigateToPost(questionPost);
 
                 expect(component['focusPostId']).toBe(123);
-                expect(component['openThreadOnFocus']).toBeFalse();
+                expect(component['openThreadOnFocus']).toBe(false);
                 expect(setActiveConversationSpy).toHaveBeenCalledWith(456);
             });
 
@@ -661,8 +697,8 @@ examples.forEach((activeConversation) => {
 
         it('should mark all channels as read', () => {
             fixture.detectChanges();
-            const markAllChannelsAsRead = jest.spyOn(metisConversationService, 'markAllChannelsAsRead').mockReturnValue(of());
-            const forceRefresh = jest.spyOn(metisConversationService, 'forceRefresh');
+            const markAllChannelsAsRead = vi.spyOn(metisConversationService, 'markAllChannelsAsRead').mockReturnValue(of());
+            const forceRefresh = vi.spyOn(metisConversationService, 'forceRefresh');
             forceRefresh.mockClear();
             component.markAllChannelAsRead();
             expect(markAllChannelsAsRead).toHaveBeenCalledOnce();
@@ -670,6 +706,8 @@ examples.forEach((activeConversation) => {
         });
 
         describe('conversation selection', () => {
+            setupTestBed({ zoneless: true });
+
             it('should handle numeric conversationId', () => {
                 fixture.detectChanges();
                 component.onConversationSelected(123);
@@ -687,25 +725,25 @@ examples.forEach((activeConversation) => {
                 expect(component.activeConversation).toBeUndefined();
             });
 
-            it('should ignore invalid string conversationId', fakeAsync(() => {
+            it('should ignore invalid string conversationId', () => {
                 fixture.detectChanges();
                 const invalidStatus = 'invalidStatus';
                 setActiveConversationSpy.mockClear();
                 component.onConversationSelected(invalidStatus);
-                tick();
+                vi.advanceTimersByTime(0);
                 expect(component.selectedSavedPostStatus).toBeUndefined();
                 expect(setActiveConversationSpy).not.toHaveBeenCalled();
-                discardPeriodicTasks();
-            }));
+                vi.clearAllTimers();
+            });
 
             it('should toggle the value of showOnlyPinned', () => {
-                expect(component.showOnlyPinned).toBeFalse();
+                expect(component.showOnlyPinned).toBe(false);
 
                 component.togglePinnedView();
-                expect(component.showOnlyPinned).toBeTrue();
+                expect(component.showOnlyPinned).toBe(true);
 
                 component.togglePinnedView();
-                expect(component.showOnlyPinned).toBeFalse();
+                expect(component.showOnlyPinned).toBe(false);
             });
 
             it('should update pinnedCount when onPinnedCountChanged is called', () => {
@@ -718,21 +756,23 @@ examples.forEach((activeConversation) => {
             it('should set showOnlyPinned to false if pinnedCount becomes 0', () => {
                 component.showOnlyPinned = true;
                 component.onPinnedCountChanged(0);
-                expect(component.showOnlyPinned).toBeFalse();
+                expect(component.showOnlyPinned).toBe(false);
             });
 
             it('should not change showOnlyPinned if pinnedCount changes but is not 0', () => {
                 component.showOnlyPinned = true;
                 component.onPinnedCountChanged(5);
-                expect(component.showOnlyPinned).toBeTrue();
+                expect(component.showOnlyPinned).toBe(true);
 
                 component.showOnlyPinned = false;
                 component.onPinnedCountChanged(10);
-                expect(component.showOnlyPinned).toBeFalse();
+                expect(component.showOnlyPinned).toBe(false);
             });
         });
 
         describe('CourseConversationsComponent onTriggerNavigateToPost Tests', () => {
+            setupTestBed({ zoneless: true });
+
             let component: CourseConversationsComponent;
 
             beforeEach(() => {
@@ -758,7 +798,7 @@ examples.forEach((activeConversation) => {
                 } as Posting;
 
                 component.onTriggerNavigateToPost(post);
-                expect(component.openThreadOnFocus).toBeTrue();
+                expect(component.openThreadOnFocus).toBe(true);
             });
 
             it('should set openThreadOnFocus = false if postingType is POST (question post)', () => {
@@ -769,7 +809,7 @@ examples.forEach((activeConversation) => {
                 } as Posting;
 
                 component.onTriggerNavigateToPost(post);
-                expect(component.openThreadOnFocus).toBeFalse();
+                expect(component.openThreadOnFocus).toBe(false);
             });
 
             it('should call setActiveConversation if conversation.id is defined', () => {
@@ -807,12 +847,14 @@ examples.forEach((activeConversation) => {
                 component.onTriggerNavigateToPost(post);
 
                 expect(component.focusPostId).toBe(10);
-                expect(component.openThreadOnFocus).toBeFalse();
+                expect(component.openThreadOnFocus).toBe(false);
                 expect(setActiveConversationSpy).toHaveBeenCalledWith(444);
             });
         });
 
         describe('Search Clear and Conversation Restoration', () => {
+            setupTestBed({ zoneless: true });
+
             beforeEach(() => {
                 fixture.detectChanges();
             });
@@ -863,9 +905,9 @@ examples.forEach((activeConversation) => {
             it('should trigger All messages search when no conversation to restore', () => {
                 component.previousConversationBeforeSearch = undefined;
                 component.lastKnownConversationId = undefined;
-                const updateQueryParamsSpy = jest.spyOn(component, 'updateQueryParameters');
-                const courseWideSearchMock = { onSearch: jest.fn() };
-                jest.spyOn(component, 'courseWideSearch').mockReturnValue(courseWideSearchMock as any);
+                const updateQueryParamsSpy = vi.spyOn(component, 'updateQueryParameters');
+                const courseWideSearchMock = { onSearch: vi.fn() };
+                vi.spyOn(component, 'courseWideSearch').mockReturnValue(courseWideSearchMock as any);
 
                 component.courseWideSearchConfig.searchTerm = 'test search';
                 component.courseWideSearchConfig.selectedConversations = [{ id: 1 } as ConversationDTO];
@@ -883,15 +925,15 @@ examples.forEach((activeConversation) => {
                 expect(courseWideSearchMock.onSearch).toHaveBeenCalled();
             });
 
-            it('should track last known conversation ID when active conversation changes', fakeAsync(() => {
+            it('should track last known conversation ID when active conversation changes', () => {
                 const newConversation = { id: 123, type: 'channel' } as ConversationDTO;
-                jest.spyOn(metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(newConversation));
+                vi.spyOn(metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(newConversation));
 
                 component.ngOnInit();
-                tick();
+                vi.advanceTimersByTime(0);
 
                 expect(component.lastKnownConversationId).toBe(123);
-            }));
+            });
 
             it('should save active conversation only once when search starts', () => {
                 const conversation = { id: 50, type: 'channel' } as ConversationDTO;
@@ -935,7 +977,7 @@ examples.forEach((activeConversation) => {
             });
 
             it('should call closeSidebarOnMobile when clearing search', () => {
-                const closeSidebarSpy = jest.spyOn(component, 'closeSidebarOnMobile');
+                const closeSidebarSpy = vi.spyOn(component, 'closeSidebarOnMobile');
                 component.lastKnownConversationId = 1;
 
                 component.onClearSearchAndRestorePrevious();

@@ -19,23 +19,27 @@ import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { Subject, of, throwError } from 'rxjs';
-import { UMLDiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@tumaet/apollon';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('Exam Import Component', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ExamImportComponent;
     let fixture: ComponentFixture<ExamImportComponent>;
     let dialogRef: DynamicDialogRef;
-    let dialogRefCloseSpy: jest.SpyInstance;
+    let dialogRefCloseSpy: ReturnType<typeof vi.fn>;
     let examManagementService: ExamManagementService;
     let alertService: AlertService;
     let profileService: ProfileService;
-    let getProfileInfoStub: jest.SpyInstance;
+    let getProfileInfoStub: ReturnType<typeof vi.spyOn>;
 
     const exam1 = { id: 1 } as Exam;
 
@@ -47,16 +51,17 @@ describe('Exam Import Component', () => {
     exerciseGroup1.exercises = [modelingExercise];
     const exam1WithExercises = { id: 1, exerciseGroups: [exerciseGroup1] } as Exam;
 
-    beforeEach(() => {
-        dialogRefCloseSpy = jest.fn();
+    beforeEach(async () => {
+        dialogRefCloseSpy = vi.fn();
         dialogRef = {
             close: dialogRefCloseSpy,
             onClose: new Subject<any>(),
         } as unknown as DynamicDialogRef;
 
-        TestBed.configureTestingModule({
-            imports: [FormsModule, FaIconComponent],
-            declarations: [
+        await TestBed.configureTestingModule({
+            imports: [
+                FormsModule,
+                FaIconComponent,
                 ExamImportComponent,
                 ExamExerciseImportComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -75,27 +80,25 @@ describe('Exam Import Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExamImportComponent);
-                component = fixture.componentInstance;
-                examManagementService = TestBed.inject(ExamManagementService);
-                alertService = TestBed.inject(AlertService);
+        }).compileComponents();
 
-                profileService = TestBed.inject(ProfileService);
+        fixture = TestBed.createComponent(ExamImportComponent);
+        component = fixture.componentInstance;
+        examManagementService = TestBed.inject(ExamManagementService);
+        alertService = TestBed.inject(AlertService);
 
-                getProfileInfoStub = jest.spyOn(profileService, 'getProfileInfo');
-                getProfileInfoStub.mockReturnValue(of({ activeModuleFeatures: [MODULE_FEATURE_TEXT] }));
-            });
+        profileService = TestBed.inject(ProfileService);
+
+        getProfileInfoStub = vi.spyOn(profileService, 'getProfileInfo');
+        getProfileInfoStub.mockReturnValue(of({ activeModuleFeatures: [MODULE_FEATURE_TEXT] }));
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should correctly open the exercise selection', () => {
-        jest.spyOn(examManagementService, 'findWithExercisesAndWithoutCourseId').mockReturnValue(of(new HttpResponse({ body: exam1WithExercises })));
+        vi.spyOn(examManagementService, 'findWithExercisesAndWithoutCourseId').mockReturnValue(of(new HttpResponse({ body: exam1WithExercises })));
         component.openExerciseSelection(exam1);
         expect(component.exam).toEqual(exam1WithExercises);
     });
@@ -104,16 +107,16 @@ describe('Exam Import Component', () => {
         const error = new HttpErrorResponse({
             status: 400,
         });
-        jest.spyOn(examManagementService, 'findWithExercisesAndWithoutCourseId').mockReturnValue(throwError(() => error));
-        const alertSpy = jest.spyOn(alertService, 'error');
+        vi.spyOn(examManagementService, 'findWithExercisesAndWithoutCourseId').mockReturnValue(throwError(() => error));
+        const alertSpy = vi.spyOn(alertService, 'error');
         component.openExerciseSelection(exam1);
         expect(component.exam).toBeUndefined();
         expect(alertSpy).toHaveBeenCalledOnce();
     });
 
     it('should only perform input of exercise groups if prerequisites are met', () => {
-        const importSpy = jest.spyOn(examManagementService, 'importExerciseGroup');
-        const alertSpy = jest.spyOn(alertService, 'error');
+        const importSpy = vi.spyOn(examManagementService, 'importExerciseGroup');
+        const alertSpy = vi.spyOn(alertService, 'error');
         component.subsequentExerciseGroupSelection.set(false);
         component.performImportOfExerciseGroups();
 
@@ -135,7 +138,7 @@ describe('Exam Import Component', () => {
     });
 
     it('should perform import of exercise groups successfully', () => {
-        const importSpy = jest.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(
+        const importSpy = vi.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(
             of(
                 new HttpResponse({
                     status: 200,
@@ -143,7 +146,7 @@ describe('Exam Import Component', () => {
                 }),
             ),
         );
-        const alertSpy = jest.spyOn(alertService, 'error');
+        const alertSpy = vi.spyOn(alertService, 'error');
 
         performImport(importSpy);
         expect(alertSpy).not.toHaveBeenCalled();
@@ -152,7 +155,7 @@ describe('Exam Import Component', () => {
     });
 
     it('should trigger an alarm for a wrong user input', () => {
-        const importSpy = jest.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(
+        const importSpy = vi.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(
             of(
                 new HttpResponse({
                     status: 200,
@@ -160,7 +163,7 @@ describe('Exam Import Component', () => {
                 }),
             ),
         );
-        const alertSpy = jest.spyOn(alertService, 'error');
+        const alertSpy = vi.spyOn(alertService, 'error');
 
         component.subsequentExerciseGroupSelection.set(true);
         const exerciseGroup2 = { title: 'exerciseGroup2' } as ExerciseGroup;
@@ -184,8 +187,8 @@ describe('Exam Import Component', () => {
                 error: { errorKey: errorKey, numberOfInvalidProgrammingExercises: 0, params: { exerciseGroups: [exerciseGroup1] } },
                 status: 400,
             });
-            const importSpy = jest.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(throwError(() => preCheckError));
-            const alertSpy = jest.spyOn(alertService, 'error');
+            const importSpy = vi.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(throwError(() => preCheckError));
+            const alertSpy = vi.spyOn(alertService, 'error');
 
             performImport(importSpy);
             if (errorKey == 'invalidKey') {
@@ -201,15 +204,15 @@ describe('Exam Import Component', () => {
         const error = new HttpErrorResponse({
             status: 400,
         });
-        const importSpy = jest.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(throwError(() => error));
-        const alertSpy = jest.spyOn(alertService, 'error');
+        const importSpy = vi.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(throwError(() => error));
+        const alertSpy = vi.spyOn(alertService, 'error');
         performImport(importSpy);
 
         expect(alertSpy).toHaveBeenCalledOnce();
         expect(dialogRefCloseSpy).not.toHaveBeenCalled();
     });
 
-    function performImport(importSpy: jest.SpyInstance): void {
+    function performImport(importSpy: ReturnType<typeof vi.spyOn>): void {
         component.exam = exam1WithExercises;
         component.subsequentExerciseGroupSelection.set(true);
         component.targetCourseId.set(1);

@@ -39,6 +39,14 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
     @EntityGraph(type = LOAD, attributePaths = { "competencyLinks.competency", "categories" })
     Optional<TextExercise> findWithEagerCompetenciesAndCategoriesById(long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks.competency", "categories", "gradingCriteria", "plagiarismDetectionConfig", "exampleSubmissions" })
+    Optional<TextExercise> findWithCompetenciesCategoriesAndGradingCriteriaById(long exerciseId);
+
+    @NonNull
+    default TextExercise findWithCompetenciesCategoriesAndGradingCriteriaByIdElseThrow(long exerciseId) {
+        return getValueElseThrow(findWithCompetenciesCategoriesAndGradingCriteriaById(exerciseId), exerciseId);
+    }
+
     @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencyLinks.competency" })
     Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(long exerciseId);
 

@@ -8,6 +8,7 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { CourseSummaryDTO } from 'app/core/course/shared/entities/course-summary.model';
 import { CourseOperationProgressDTO } from 'app/core/course/shared/entities/course-operation-progress.model';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
+import { toCourseCreateDTO } from 'app/core/course/shared/entities/course-update-dto.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -32,9 +33,9 @@ export class CourseAdminService {
      * @param courseImage - the course icon file
      */
     create(course: Course, courseImage?: Blob): Observable<EntityResponseType> {
-        const copy = CourseManagementService.convertCourseDatesFromClient(course);
+        const dto = toCourseCreateDTO(course);
         const formData = new FormData();
-        formData.append('course', objectToJsonBlob(copy));
+        formData.append('course', objectToJsonBlob(dto));
         if (courseImage) {
             // The image was cropped by us and is a blob, so we need to set a placeholder name for the server check
             formData.append('file', courseImage, 'placeholderName.png');

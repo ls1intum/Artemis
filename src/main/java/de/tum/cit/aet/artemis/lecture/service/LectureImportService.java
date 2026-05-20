@@ -59,9 +59,6 @@ public class LectureImportService {
         newLecture.setDescription(importedLecture.getDescription());
         newLecture.setStartDate(importedLecture.getStartDate());
         newLecture.setEndDate(importedLecture.getEndDate());
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code OR comment back in */
-        // lecture.setVisibleDate(importedLecture.getVisibleDate());
         newLecture.setCourse(course);
 
         newLecture = lectureRepository.save(newLecture);

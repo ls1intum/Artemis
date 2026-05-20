@@ -37,13 +37,11 @@ export class RepositoryPage {
                 console.log(`[checkCommitHistory] Found commit message "${commit.message}"`);
 
                 if (commit.result) {
-                    // First wait for ANY result to appear (not filtered by expected text)
-                    const anyResultLocator = commitRow.locator('#result-score');
-                    console.log(`[checkCommitHistory] Waiting for result-score element to appear...`);
-                    await Commands.reloadUntilFound(this.page, anyResultLocator, POLLING_INTERVAL, BUILD_RESULT_TIMEOUT);
+                    const resultLocator = commitRow.locator('#result-score');
+                    console.log(`[checkCommitHistory] Waiting for result "${commit.result}" to appear...`);
+                    await Commands.reloadUntilTextFound(this.page, resultLocator, commit.result, POLLING_INTERVAL, BUILD_RESULT_TIMEOUT);
 
-                    // Now check if the actual result matches expected
-                    const actualResult = await anyResultLocator.textContent();
+                    const actualResult = await resultLocator.textContent();
                     console.log(`[checkCommitHistory] Found result: "${actualResult}", expected: "${commit.result}"`);
 
                     if (!actualResult?.includes(commit.result)) {

@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupUpdateDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
@@ -124,28 +125,30 @@ public class ExerciseGroupResource {
     /**
      * PUT /courses/{courseId}/exams/{examId}/exercise-groups : Update an existing exercise group.
      *
-     * @param courseId             the course to which the exercise group belongs to
-     * @param examId               the exam to which the exercise group belongs to
-     * @param updatedExerciseGroup the exercise group to update
+     * @param courseId               the course to which the exercise group belongs to
+     * @param examId                 the exam to which the exercise group belongs to
+     * @param exerciseGroupUpdateDTO the exercise group update DTO containing the new values
      * @return the ResponseEntity with status 200 (OK) and with the body of the updated exercise group
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("courses/{courseId}/exams/{examId}/exercise-groups")
     @EnforceAtLeastEditor
-    public ResponseEntity<ExerciseGroup> updateExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody ExerciseGroup updatedExerciseGroup)
-            throws URISyntaxException {
-        log.debug("REST request to update an exercise group : {}", updatedExerciseGroup);
-        if (updatedExerciseGroup.getId() == null) {
-            return createExerciseGroup(courseId, examId, updatedExerciseGroup);
+    public ResponseEntity<ExerciseGroup> updateExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody ExerciseGroupUpdateDTO exerciseGroupUpdateDTO) {
+        log.debug("REST request to update an exercise group : {}", exerciseGroupUpdateDTO);
+
+        if (exerciseGroupUpdateDTO.id() == null) {
+            throw new BadRequestAlertException("An exercise group update must have an ID", ENTITY_NAME, "idMissing");
         }
 
-        if (updatedExerciseGroup.getExam() == null) {
-            throw new ConflictException("The exercise group has to belong to an exam.", ENTITY_NAME, "missingExam");
-        }
+        // Fetch the existing exercise group from the database (this is the managed entity)
+        ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdElseThrow(exerciseGroupUpdateDTO.id());
 
-        examAccessService.checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.EDITOR, courseId, examId, updatedExerciseGroup);
+        // Check access using the managed entity
+        examAccessService.checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.EDITOR, courseId, examId, exerciseGroup);
 
-        ExerciseGroup result = exerciseGroupRepository.save(updatedExerciseGroup);
+        // Apply DTO values to the managed entity
+        exerciseGroupUpdateDTO.applyTo(exerciseGroup);
+
+        ExerciseGroup result = exerciseGroupRepository.save(exerciseGroup);
         return ResponseEntity.ok(result);
     }
 

@@ -80,16 +80,36 @@ For each service being used in these *docker compose* files, a **base service** 
 
 ### Testing Services
 
-For testing mails or SAML logins, you can append the following services to any setup with an Artemis container:
+The following services can be used for testing email and SAML2 authentication locally.
+They can be run **standalone** (when running Artemis from IntelliJ or `./gradlew bootRun`) or **combined** with a containerized Artemis setup.
 
-- `mailhog.yml`: **Mailhog Service** (email testing tool)
-- `saml-test.yml`: **Saml-Test Service** (SAML Test Identity Provider for testing SAML features)
+- `mailpit.yml`: **Mailpit Service** (email testing tool, web UI at `http://localhost:8025`)
+- `saml-test.yml`: **Keycloak Service** (SAML2 Identity Provider for testing SAML features, admin console at `http://localhost:9080`)
+- `local-development.yml`: **Combined** setup that includes both Mailpit and Keycloak
 
-An example command to run such an extended setup:
+#### Standalone Usage (Non-Containerized Artemis)
+
+When running Artemis from IntelliJ or via `./gradlew bootRun`, start only the infrastructure services in Docker:
 
 ```bash
-docker compose -f docker/artemis-dev-mysql.yml -f docker/mailhog.yml up
+# Email testing only
+docker compose -f docker/mailpit.yml up
+
+# SAML2 testing only
+docker compose -f docker/saml-test.yml up
+
+# Both services
+docker compose -f docker/local-development.yml up
+
+# Or selectively from the combined file
+docker compose -f docker/local-development.yml up mailpit
+docker compose -f docker/local-development.yml up keycloak
 ```
+
+Then configure Artemis to connect to these services via `application-local.yml`. See the dedicated setup guides for detailed instructions:
+
+- **[Mailpit Setup](./mailpit-setup.mdx)** — Email testing configuration and troubleshooting
+- **[Keycloak SAML2 Setup](./keycloak-saml2-setup.mdx)** — SAML2 Identity Provider configuration, signing credentials, and troubleshooting
 
 <Callout variant={CalloutVariant.warning}>
     If you want to run multiple *docker compose* setups in parallel on one host, you might have to modify volume, container, and network names!

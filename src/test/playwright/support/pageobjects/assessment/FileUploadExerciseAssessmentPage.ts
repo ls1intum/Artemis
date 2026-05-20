@@ -1,4 +1,4 @@
-import { ExerciseType } from '../../constants';
+import { BASE_API, ExerciseType } from '../../constants';
 import { AbstractExerciseAssessmentPage } from './AbstractExerciseAssessmentPage';
 
 /**
@@ -14,7 +14,18 @@ export class FileUploadExerciseAssessmentPage extends AbstractExerciseAssessment
     }
 
     async submitFeedback() {
-        await this.page.locator('#submit').click();
+        // Wait for the assessment PUT to complete and verify the server accepted it.
+        // Without this the next test (student view) races the cache and may see "No graded result".
+        // Retry once on multi-node 5xx flakes (Hazelcast Result.feedbacks invalidation lag).
+        for (let attempt = 0; attempt < 2; attempt++) {
+            const responsePromise = this.page.waitForResponse(`${BASE_API}/fileupload/file-upload-submissions/*/feedback*`);
+            await this.page.locator('#submit').click();
+            const response = await responsePromise;
+            if (response.status() < 400 || attempt === 1) {
+                return;
+            }
+            await this.page.waitForTimeout(1500);
+        }
     }
 
     async rejectComplaint(response: string, examMode: boolean) {

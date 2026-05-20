@@ -2,19 +2,27 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LLMSelectionModalComponent } from './llm-selection-popup.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { AccountService } from 'app/core/auth/account.service';
+import { signal } from '@angular/core';
+import { User } from 'app/core/user/user.model';
 
 describe('LLMSelectionModalComponent', () => {
     let component: LLMSelectionModalComponent;
     let fixture: ComponentFixture<LLMSelectionModalComponent>;
     let modalService: LLMSelectionModalService;
     let router: Router;
-    let openModalSubject: Subject<void>;
+    let accountService: AccountService;
+    let openModalSubject: Subject<LLMSelectionDecision | undefined>;
+    let userIdentitySignal: ReturnType<typeof signal<User | undefined>>;
 
     beforeEach(async () => {
-        openModalSubject = new Subject<void>();
+        openModalSubject = new Subject<LLMSelectionDecision | undefined>();
+        userIdentitySignal = signal<User | undefined>(undefined);
 
         const modalServiceMock = {
             openModal$: openModalSubject.asObservable(),
@@ -29,12 +37,23 @@ describe('LLMSelectionModalComponent', () => {
             navigate: jest.fn(),
         };
 
+        const profileServiceMock = {
+            isLLMDeploymentEnabled: jest.fn().mockReturnValue(false),
+        };
+
+        const accountServiceMock = {
+            userIdentity: userIdentitySignal,
+            setUserEnabledMemiris: jest.fn(),
+        };
+
         await TestBed.configureTestingModule({
             imports: [LLMSelectionModalComponent, TranslateDirective],
             providers: [
                 { provide: LLMSelectionModalService, useValue: modalServiceMock },
                 { provide: ThemeService, useValue: themeServiceMock },
                 { provide: Router, useValue: routerMock },
+                { provide: ProfileService, useValue: profileServiceMock },
+                { provide: AccountService, useValue: accountServiceMock },
             ],
         }).compileComponents();
 
@@ -42,6 +61,7 @@ describe('LLMSelectionModalComponent', () => {
         component = fixture.componentInstance;
         modalService = TestBed.inject(LLMSelectionModalService);
         router = TestBed.inject(Router);
+        accountService = TestBed.inject(AccountService);
     });
 
     afterEach(() => {
@@ -78,13 +98,13 @@ describe('LLMSelectionModalComponent', () => {
 
             component.selectCloud();
 
-            expect(choiceSpy).toHaveBeenCalledWith('cloud');
+            expect(choiceSpy).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
         });
 
-        it('should call modalService.emitChoice with cloud', () => {
+        it('should call modalService.emitChoice with CLOUD_AI', () => {
             component.selectCloud();
 
-            expect(modalService.emitChoice).toHaveBeenCalledWith('cloud');
+            expect(modalService.emitChoice).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
         });
 
         it('should close the modal', () => {
@@ -110,13 +130,13 @@ describe('LLMSelectionModalComponent', () => {
 
             component.selectLocal();
 
-            expect(choiceSpy).toHaveBeenCalledWith('local');
+            expect(choiceSpy).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
         });
 
-        it('should call modalService.emitChoice with local', () => {
+        it('should call modalService.emitChoice with LOCAL_AI', () => {
             component.selectLocal();
 
-            expect(modalService.emitChoice).toHaveBeenCalledWith('local');
+            expect(modalService.emitChoice).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
         });
 
         it('should close the modal', () => {
@@ -137,18 +157,18 @@ describe('LLMSelectionModalComponent', () => {
     });
 
     describe('selectNone', () => {
-        it('should emit no_ai choice', () => {
+        it('should emit NO_AI choice', () => {
             const choiceSpy = jest.spyOn(component.choice, 'emit');
 
             component.selectNone();
 
-            expect(choiceSpy).toHaveBeenCalledWith('no_ai');
+            expect(choiceSpy).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
         });
 
-        it('should call modalService.emitChoice with no_ai', () => {
+        it('should call modalService.emitChoice with NO_AI', () => {
             component.selectNone();
 
-            expect(modalService.emitChoice).toHaveBeenCalledWith('no_ai');
+            expect(modalService.emitChoice).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
         });
 
         it('should close the modal', () => {
@@ -169,23 +189,23 @@ describe('LLMSelectionModalComponent', () => {
     });
 
     describe('onBackdropClick', () => {
-        it('should emit none choice when backdrop is clicked', () => {
+        it('should emit NONE choice when backdrop is clicked', () => {
             const choiceSpy = jest.spyOn(component.choice, 'emit');
             const event = { target: document.createElement('div'), currentTarget: document.createElement('div') } as any;
             event.target = event.currentTarget;
 
             component.onBackdropClick(event);
 
-            expect(choiceSpy).toHaveBeenCalledWith('none');
+            expect(choiceSpy).toHaveBeenCalledWith(LLM_MODAL_DISMISSED);
         });
 
-        it('should call modalService.emitChoice with none', () => {
+        it('should call modalService.emitChoice with NONE', () => {
             const event = { target: document.createElement('div'), currentTarget: document.createElement('div') } as any;
             event.target = event.currentTarget;
 
             component.onBackdropClick(event);
 
-            expect(modalService.emitChoice).toHaveBeenCalledWith('none');
+            expect(modalService.emitChoice).toHaveBeenCalledWith(LLM_MODAL_DISMISSED);
         });
 
         it('should close modal when target equals currentTarget', () => {
@@ -235,8 +255,8 @@ describe('LLMSelectionModalComponent', () => {
 
             component.onBackdropClick(event);
 
-            expect(choiceSpy).toHaveBeenCalledWith('none');
-            expect(emitChoiceSpy).toHaveBeenCalledWith('none');
+            expect(choiceSpy).toHaveBeenCalledWith(LLM_MODAL_DISMISSED);
+            expect(emitChoiceSpy).toHaveBeenCalledWith(LLM_MODAL_DISMISSED);
             expect(closeSpy).toHaveBeenCalled();
         });
     });
@@ -250,12 +270,12 @@ describe('LLMSelectionModalComponent', () => {
             expect(event.preventDefault).toHaveBeenCalled();
         });
 
-        it('should navigate to /llm-selection', () => {
+        it('should navigate to /ai-experience-info', () => {
             const event = { preventDefault: jest.fn() } as any;
 
             component.onLearnMoreClick(event);
 
-            expect(router.navigate).toHaveBeenCalledWith(['/llm-selection']);
+            expect(router.navigate).toHaveBeenCalledWith(['/ai-experience-info']);
         });
 
         it('should close the modal after navigation', () => {
@@ -280,6 +300,97 @@ describe('LLMSelectionModalComponent', () => {
     describe('Theme constant', () => {
         it('should expose Theme enum', () => {
             expect(component['Theme']).toBe(Theme);
+        });
+    });
+
+    describe('currentSelection', () => {
+        it('should set currentSelection when modal is opened with a selection', () => {
+            fixture.detectChanges();
+            openModalSubject.next(LLMSelectionDecision.CLOUD_AI);
+
+            expect(component.currentSelection).toBe(LLMSelectionDecision.CLOUD_AI);
+        });
+
+        it('should set currentSelection to LOCAL_AI when modal is opened with LOCAL_AI', () => {
+            fixture.detectChanges();
+            openModalSubject.next(LLMSelectionDecision.LOCAL_AI);
+
+            expect(component.currentSelection).toBe(LLMSelectionDecision.LOCAL_AI);
+        });
+
+        it('should set currentSelection to NO_AI when modal is opened with NO_AI', () => {
+            fixture.detectChanges();
+            openModalSubject.next(LLMSelectionDecision.NO_AI);
+
+            expect(component.currentSelection).toBe(LLMSelectionDecision.NO_AI);
+        });
+
+        it('should set currentSelection to undefined when modal is opened without selection', () => {
+            fixture.detectChanges();
+            openModalSubject.next(undefined);
+
+            expect(component.currentSelection).toBeUndefined();
+        });
+    });
+
+    describe('memirisEnabled', () => {
+        it('should default to true when userIdentity is undefined', () => {
+            userIdentitySignal.set(undefined);
+            fixture.detectChanges();
+            openModalSubject.next(undefined);
+
+            expect(component.memirisEnabled).toBeTrue();
+        });
+
+        it('should read memirisEnabled=true from userIdentity when modal opens', () => {
+            userIdentitySignal.set({ memirisEnabled: true } as User);
+            fixture.detectChanges();
+            openModalSubject.next(undefined);
+
+            expect(component.memirisEnabled).toBeTrue();
+        });
+
+        it('should read memirisEnabled=false from userIdentity when modal opens', () => {
+            userIdentitySignal.set({ memirisEnabled: false } as User);
+            fixture.detectChanges();
+            openModalSubject.next(undefined);
+
+            expect(component.memirisEnabled).toBeFalse();
+        });
+
+        it('should update memirisEnabled each time the modal is opened', () => {
+            fixture.detectChanges();
+
+            userIdentitySignal.set({ memirisEnabled: false } as User);
+            openModalSubject.next(undefined);
+            expect(component.memirisEnabled).toBeFalse();
+
+            userIdentitySignal.set({ memirisEnabled: true } as User);
+            openModalSubject.next(undefined);
+            expect(component.memirisEnabled).toBeTrue();
+        });
+    });
+
+    describe('onMemirisToggle', () => {
+        it('should call setUserEnabledMemiris with true when memirisEnabled is true', () => {
+            component.memirisEnabled = true;
+            component.onMemirisToggle();
+
+            expect(accountService.setUserEnabledMemiris).toHaveBeenCalledWith(true);
+        });
+
+        it('should call setUserEnabledMemiris with false when memirisEnabled is false', () => {
+            component.memirisEnabled = false;
+            component.onMemirisToggle();
+
+            expect(accountService.setUserEnabledMemiris).toHaveBeenCalledWith(false);
+        });
+
+        it('should call setUserEnabledMemiris exactly once per toggle', () => {
+            component.memirisEnabled = true;
+            component.onMemirisToggle();
+
+            expect(accountService.setUserEnabledMemiris).toHaveBeenCalledOnce();
         });
     });
 });

@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
@@ -29,6 +31,7 @@ import { SubmissionVersionService } from 'app/exercise/submission-version/submis
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { MatSlider } from '@angular/material/slider';
+import { FormsModule } from '@angular/forms';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -38,6 +41,8 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 
 describe('Student Exam Timeline Component', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<StudentExamTimelineComponent>;
     let component: StudentExamTimelineComponent;
     let submissionService: SubmissionService;
@@ -107,18 +112,7 @@ describe('Student Exam Timeline Component', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            declarations: [
-                StudentExamTimelineComponent,
-                MockComponent(ProgrammingExerciseExamDiffComponent),
-                MockComponent(ModelingExamSubmissionComponent),
-                MockComponent(TextExamSubmissionComponent),
-                MockComponent(QuizExamSubmissionComponent),
-                MockComponent(FileUploadExamSubmissionComponent),
-                MockPipe(ArtemisTranslatePipe),
-                MockTranslateValuesDirective,
-                MockComponent(ExamNavigationBarComponent),
-                MockComponent(MatSlider),
-            ],
+            imports: [StudentExamTimelineComponent, MockTranslateValuesDirective, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -132,6 +126,22 @@ describe('Student Exam Timeline Component', () => {
                 provideHttpClientTesting(),
             ],
         })
+            .overrideComponent(StudentExamTimelineComponent, {
+                set: {
+                    imports: [
+                        FormsModule,
+                        MockTranslateValuesDirective,
+                        MockPipe(ArtemisTranslatePipe),
+                        MockComponent(ProgrammingExerciseExamDiffComponent),
+                        MockComponent(ModelingExamSubmissionComponent),
+                        MockComponent(TextExamSubmissionComponent),
+                        MockComponent(QuizExamSubmissionComponent),
+                        MockComponent(FileUploadExamSubmissionComponent),
+                        MockComponent(ExamNavigationBarComponent),
+                        MockComponent(MatSlider),
+                    ],
+                },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(StudentExamTimelineComponent);
@@ -139,40 +149,39 @@ describe('Student Exam Timeline Component', () => {
                 submissionService = TestBed.inject(SubmissionService);
                 submissionVersionService = TestBed.inject(SubmissionVersionService);
                 fixture.detectChanges();
-                jest.spyOn(component.examNavigationBarComponent(), 'changePage').mockImplementation(() => {});
+                vi.spyOn(component.examNavigationBarComponent(), 'changePage').mockImplementation(() => {});
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should fetch submission versions and submissions in retrieveSubmissionData', fakeAsync(() => {
-        const submissionServiceSpy = jest
+    it('should fetch submission versions and submissions in retrieveSubmissionData', () => {
+        const submissionServiceSpy = vi
             .spyOn(submissionService, 'findAllSubmissionsOfParticipation')
             .mockReturnValueOnce(of({ body: [programmingSubmission1] }) as unknown as Observable<EntityArrayResponseType>)
             .mockReturnValueOnce(of({ body: [fileUploadSubmission1] }) as unknown as Observable<EntityArrayResponseType>);
-        const submissionVersionServiceSpy = jest
+        const submissionVersionServiceSpy = vi
             .spyOn(submissionVersionService, 'findAllSubmissionVersionsOfSubmission')
             .mockReturnValueOnce(of([submissionVersion]) as unknown as Observable<SubmissionVersion[]>);
         component.studentExam = studentExamValue;
         component.retrieveSubmissionDataAndTimeStamps().subscribe((results) => {
             expect(results).toEqual([[submissionVersion], [programmingSubmission1], [fileUploadSubmission1]]);
         });
-        tick();
         expect(submissionServiceSpy).toHaveBeenCalledTimes(2);
         expect(submissionVersionServiceSpy).toHaveBeenCalledOnce();
         expect(submissionVersionServiceSpy).toHaveBeenCalledWith(2);
-    }));
+    });
 
     it('should fetch submission versions and submissions on init using retrieveSubmissionData', () => {
-        const retrieveDataSpy = jest
+        const retrieveDataSpy = vi
             .spyOn(component, 'retrieveSubmissionDataAndTimeStamps')
             .mockReturnValue(of([[submissionVersion], [programmingSubmission1], [fileUploadSubmission1]]) as unknown as Observable<(SubmissionVersion[] | Submission[])[]>);
         component.ngOnInit();
         expect(retrieveDataSpy).toHaveBeenCalledOnce();
         expect(component.currentSubmission).toEqual(submissionVersion);
-        expect(component.selectedTimestamp).toEqual(dayjs('2023-01-07').valueOf());
+        expect(component.selectedTimestamp()).toEqual(dayjs('2023-01-07').valueOf());
         expect(component.submissionTimeStamps).toEqual([dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-05-07')]);
         expect(component.submissionVersions).toEqual([submissionVersion]);
         expect(component.fileUploadSubmissions).toEqual([fileUploadSubmission1]);
@@ -196,21 +205,21 @@ describe('Student Exam Timeline Component', () => {
         // Create a mock model signal that supports update()
         const createMockSignal = <T>(initial: T) => ({
             value: initial,
-            update: jest.fn(function (fn: (prev: T) => T) {
+            update: vi.fn(function (this: { value: T }, fn: (prev: T) => T) {
                 this.value = fn(this.value);
                 return this.value;
             }),
         });
 
         // Use spyOn to override activePageComponent and provide the necessary update() methods.
-        jest.spyOn(component, 'activePageComponent', 'get').mockReturnValue({
+        vi.spyOn(component, 'activePageComponent', 'get').mockReturnValue({
             studentParticipation: createMockSignal({ submissions: [] }),
             exercise: createMockSignal({} as ProgrammingExercise),
             currentSubmission: createMockSignal({} as ProgrammingSubmission),
             previousSubmission: createMockSignal({}),
             submissions: createMockSignal([]),
             exerciseIdSubject: createMockSignal(new Subject<number>()),
-            studentSubmission: { update: jest.fn() },
+            studentSubmission: { update: vi.fn() },
             onDeactivate() {},
             onActivate() {},
             updateViewFromSubmission() {},
@@ -220,7 +229,7 @@ describe('Student Exam Timeline Component', () => {
         let expectedSubmission = submission;
         // Set the current timestamp needed to find the closest submission if no submission is set
         if (!submission) {
-            component.selectedTimestamp = dayjs('2023-01-07').valueOf();
+            component.selectedTimestamp.set(dayjs('2023-01-07').valueOf());
             if (exercise === programmingExercise) {
                 expectedSubmission = programmingSubmission1;
                 component.currentExercise = fileUploadExercise;
@@ -250,44 +259,41 @@ describe('Student Exam Timeline Component', () => {
         // For text exercise, the submission version is used to set the timestamp.
         if (exercise === textExercise) {
             const submissionVersionObj = component.currentSubmission as SubmissionVersion;
-            expect(component.selectedTimestamp).toEqual(submissionVersionObj.createdDate.valueOf());
+            expect(component.selectedTimestamp()).toEqual(submissionVersionObj.createdDate.valueOf());
         } else if (exercise === programmingExercise) {
             const programmingSubmission = component.currentSubmission as ProgrammingSubmission;
-            expect(component.selectedTimestamp).toEqual(programmingSubmission.submissionDate?.valueOf());
+            expect(component.selectedTimestamp()).toEqual(programmingSubmission.submissionDate?.valueOf());
         } else {
-            expect(component.selectedTimestamp).toEqual(fileUploadSubmission1.submissionDate?.valueOf());
+            expect(component.selectedTimestamp()).toEqual(fileUploadSubmission1.submissionDate?.valueOf());
         }
     });
 
-    it.each([0, 1, 2])(
-        'should correctly set the values onInputChange',
-        fakeAsync((index: number) => {
-            component.submissionVersions = [submissionVersion];
-            component.fileUploadSubmissions = [fileUploadSubmission1];
-            component.programmingSubmissions = [programmingSubmission1];
-            component.submissionTimeStamps = [dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-05-07')];
-            component.timestampIndex = index;
+    it.each([0, 1, 2])('should correctly set the values onInputChange', (index: number) => {
+        component.submissionVersions = [submissionVersion];
+        component.fileUploadSubmissions = [fileUploadSubmission1];
+        component.programmingSubmissions = [programmingSubmission1];
+        component.submissionTimeStamps = [dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-05-07')];
+        component.timestampIndex = index;
 
-            //when
-            component.onSliderInputChange();
-            fixture.changeDetectorRef.detectChanges();
-            //then
-            if (dayjs(component.submissionTimeStamps[component.timestampIndex]).isSame(dayjs('2023-01-07'))) {
-                expect(component.currentSubmission).toEqual(submissionVersion);
-                expect(component.exerciseIndex).toBe(0);
-                expect(component.currentExercise).toEqual(textExercise);
-            } else if (dayjs(component.submissionTimeStamps[component.timestampIndex]).isSame(dayjs('2023-02-07'))) {
-                expect(component.currentSubmission).toEqual(programmingSubmission1);
-                expect(component.exerciseIndex).toBe(1);
-                expect(component.currentExercise).toEqual(programmingExercise);
-            } else {
-                expect(component.currentSubmission).toEqual(fileUploadSubmission1);
-                expect(component.exerciseIndex).toBe(2);
-                expect(component.currentExercise).toEqual(fileUploadExercise);
-            }
-            expect(component.selectedTimestamp).toEqual(component.submissionTimeStamps[component.timestampIndex].valueOf());
-        }),
-    );
+        //when
+        component.onSliderInputChange();
+        fixture.changeDetectorRef.detectChanges();
+        //then
+        if (dayjs(component.submissionTimeStamps[component.timestampIndex]).isSame(dayjs('2023-01-07'))) {
+            expect(component.currentSubmission).toEqual(submissionVersion);
+            expect(component.exerciseIndex()).toBe(0);
+            expect(component.currentExercise).toEqual(textExercise);
+        } else if (dayjs(component.submissionTimeStamps[component.timestampIndex]).isSame(dayjs('2023-02-07'))) {
+            expect(component.currentSubmission).toEqual(programmingSubmission1);
+            expect(component.exerciseIndex()).toBe(1);
+            expect(component.currentExercise).toEqual(programmingExercise);
+        } else {
+            expect(component.currentSubmission).toEqual(fileUploadSubmission1);
+            expect(component.exerciseIndex()).toBe(2);
+            expect(component.currentExercise).toEqual(fileUploadExercise);
+        }
+        expect(component.selectedTimestamp()).toEqual(component.submissionTimeStamps[component.timestampIndex].valueOf());
+    });
     it.each([programmingSubmission1, programmingSubmission2, programmingSubmission3])(
         'should correctly determine the previous submission',
         (currentSubmission: ProgrammingSubmission) => {

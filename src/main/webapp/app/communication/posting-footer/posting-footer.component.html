@@ -37,7 +37,7 @@
     <jhi-answer-post-create-edit-modal
         #createAnswerPostModal
         [posting]="createdAnswerPost"
-        [createEditAnswerPostContainerRef]="containerRef"
+        [createEditAnswerPostContainerRef]="containerRef()"
         (onCreate)="createdAnswerPost = createEmptyAnswerPost(); showAnswers()"
     />
 </div>

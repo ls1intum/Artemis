@@ -28,9 +28,11 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.web.ExamResource;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionInfoDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeStudentGroupDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseWithExerciseGroupIdDTO;
 
 /**
  * Spring Data JPA repository for the Exercise entity.
@@ -44,6 +46,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             SELECT e
             FROM Exercise e
                 LEFT JOIN FETCH e.categories
+                LEFT JOIN FETCH e.course
             WHERE e.course.id = :courseId
             """)
     Set<Exercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
@@ -51,6 +54,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Query("""
             SELECT e
             FROM Exercise e
+                LEFT JOIN FETCH e.course
             WHERE e.course.id IN :courseIds
             """)
     Set<Exercise> findByCourseIds(@Param("courseIds") Set<Long> courseIds);
@@ -785,4 +789,49 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             WHERE e.course.id = :courseId
             """)
     Set<ExerciseDeletionInfoDTO> findDeletionInfoByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Fetches all deletion summary statistics for an exercise in a single query.
+     * This includes participation count, build count (for programming exercises),
+     * assessment count (for non-quiz exercises), and post/answer counts from the exercise channel.
+     *
+     * @param exerciseId the id of the exercise
+     * @return an Optional containing the ExerciseDeletionSummaryDTO, or empty if exercise not found
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO(
+                (SELECT COUNT(p) FROM StudentParticipation p WHERE p.exercise.id = :exerciseId),
+                (SELECT COUNT(b) FROM BuildJob b WHERE b.exerciseId = :exerciseId),
+                (
+                    SELECT COUNT(DISTINCT sp)
+                    FROM StudentParticipation sp
+                        JOIN sp.submissions s
+                        JOIN s.results r
+                        JOIN sp.exercise ex
+                    WHERE ex.id = :exerciseId
+                        AND sp.testRun = FALSE
+                        AND r.assessor IS NOT NULL
+                        AND r.rated = TRUE
+                        AND s.submitted = TRUE
+                        AND r.completionDate IS NOT NULL
+                        AND (ex.dueDate IS NULL OR s.submissionDate <= ex.dueDate)
+                ),
+                (SELECT COUNT(post) FROM Post post WHERE post.conversation.id = c.id),
+                (SELECT COUNT(a) FROM AnswerPost a JOIN a.post p WHERE p.conversation.id = c.id)
+            )
+            FROM Exercise e
+                LEFT JOIN Channel c ON c.exercise.id = e.id
+            WHERE e.id = :exerciseId
+            """)
+    Optional<ExerciseDeletionSummaryDTO> findDeletionSummaryByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Returns pairs of (exerciseId, exerciseGroupId) for exam exercises matching the given IDs.
+     * Used by global search to build the course-management routing URL for exam exercise results.
+     *
+     * @param ids the exercise IDs to look up
+     * @return a list of DTOs containing exerciseId and exerciseGroupId
+     */
+    @Query("SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseWithExerciseGroupIdDTO(e.id, e.exerciseGroup.id) FROM Exercise e WHERE e.id IN :ids AND e.exerciseGroup IS NOT NULL")
+    List<ExerciseWithExerciseGroupIdDTO> findExerciseAndGroupIdsByExerciseIds(@Param("ids") Collection<Long> ids);
 }

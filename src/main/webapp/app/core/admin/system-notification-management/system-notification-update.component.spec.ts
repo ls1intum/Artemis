@@ -9,12 +9,17 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { SelectModule } from 'primeng/select';
+import { CheckboxModule } from 'primeng/checkbox';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
 
 import { SystemNotificationManagementUpdateComponent } from 'app/core/admin/system-notification-management/system-notification-management-update.component';
 import { SystemNotification, SystemNotificationType } from 'app/core/shared/entities/system-notification.model';
@@ -62,7 +67,18 @@ describe('SystemNotificationManagementUpdateComponent', () => {
         })
             .overrideComponent(SystemNotificationManagementUpdateComponent, {
                 set: {
-                    imports: [ReactiveFormsModule, FaIconComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FormDateTimePickerComponent)],
+                    imports: [
+                        ReactiveFormsModule,
+                        FormsModule,
+                        FaIconComponent,
+                        MockPipe(ArtemisTranslatePipe),
+                        MockComponent(FormDateTimePickerComponent),
+                        SelectModule,
+                        CheckboxModule,
+                        InputTextModule,
+                        ButtonModule,
+                        MessageModule,
+                    ],
                 },
             })
             .compileComponents();

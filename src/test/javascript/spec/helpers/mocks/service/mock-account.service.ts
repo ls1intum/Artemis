@@ -1,9 +1,10 @@
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { IAccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { signal } from '@angular/core';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 export class MockAccountService implements IAccountService {
     userIdentity = signal<User | undefined>(undefined);
@@ -13,7 +14,7 @@ export class MockAccountService implements IAccountService {
     setPrefilledUsername = (username: string) => ({});
     hasAnyAuthority = (authorities: any[]) => Promise.resolve(true);
     hasAnyAuthorityDirect = (authorities: any[]) => authorities.length !== 0;
-    getAuthenticationState = () => of({ id: 99 } as User);
+    getAuthenticationState: () => Observable<User | undefined> = () => of({ id: 99 } as User);
     authenticate = (identity: User | undefined) => {};
     fetch = () => of({ body: { id: 99 } as User } as any);
     updateLanguage = (languageKey: string) => of({});
@@ -21,8 +22,8 @@ export class MockAccountService implements IAccountService {
     hasAuthority = (authority: string) => Promise.resolve(true);
     isAtLeastTutor = () => this.hasAnyAuthorityDirect(['ROLE_TUTOR']);
     isAtLeastTutorInCourse = (course: Course) => true;
-    isAtLeastEditorInCourse = (course: Course) => course.isAtLeastEditor!;
-    isAtLeastInstructorInCourse = (course: Course) => course.isAtLeastInstructor!;
+    isAtLeastEditorInCourse = (course?: Course) => course?.isAtLeastEditor ?? false;
+    isAtLeastInstructorInCourse = (course?: Course) => course?.isAtLeastInstructor ?? false;
     isAtLeastTutorForExercise = (exercise?: Exercise) => true;
     isAtLeastEditorForExercise = (exercise?: Exercise) => true;
     isAtLeastInstructorForExercise = (exercise?: Exercise) => true;
@@ -39,6 +40,7 @@ export class MockAccountService implements IAccountService {
     getToolToken = () => of();
     setUserEnabledMemiris = (enabled: boolean) => of();
     setUserAcceptedExternalLLMUsage = (accepted: boolean) => of();
+    setUserLLMSelectionDecision = (accepted: LLMSelectionDecision) => {};
 
     askToSetupPasskey = () => false;
     isLoggedInWithPasskey = () => true;

@@ -1,0 +1,52 @@
+<div class="version-history-page">
+    <jhi-exercise-version-history-layout>
+        <div version-history-left class="timeline-pane">
+            @if (timelineError(); as timelineErrorKey) {
+                <p-message severity="error">
+                    <ng-template pTemplate>
+                        <span [jhiTranslate]="timelineErrorKey"></span>
+                    </ng-template>
+                </p-message>
+            }
+
+            <jhi-exercise-version-history-timeline
+                [versions]="versions()"
+                [selectedVersionId]="selectedVersionId()"
+                [hasMore]="hasMore()"
+                [loading]="isLoadingVersions()"
+                [loadingMore]="isLoadingMoreVersions()"
+                [totalItems]="totalItems()"
+                (selectVersion)="onSelectVersion($event)"
+                (loadMore)="onLoadMoreVersions()"
+            />
+        </div>
+
+        <div version-history-right class="snapshot-pane">
+            @if (snapshotError(); as snapshotErrorKey) {
+                <p-message severity="error" styleClass="mb-3">
+                    <ng-template pTemplate>
+                        <span [jhiTranslate]="snapshotErrorKey"></span>
+                    </ng-template>
+                </p-message>
+            }
+
+            @if (isLoadingSnapshot()) {
+                <div class="snapshot-skeleton">
+                    <p-skeleton width="100%" height="10rem" styleClass="mb-3" />
+                    <p-skeleton width="100%" height="12rem" />
+                </div>
+            } @else if (selectedSnapshot(); as snapshot) {
+                <div class="snapshot-panels">
+                    <jhi-exercise-version-shared-snapshot-metadata [snapshot]="snapshot" />
+                    <jhi-programming-exercise-version-programming-metadata [programmingData]="snapshot.programmingData" />
+                </div>
+            } @else if (!timelineError() && !snapshotError()) {
+                <p-message severity="info">
+                    <ng-template pTemplate>
+                        <span jhiTranslate="artemisApp.exercise.versionHistory.snapshot.empty"></span>
+                    </ng-template>
+                </p-message>
+            }
+        </div>
+    </jhi-exercise-version-history-layout>
+</div>

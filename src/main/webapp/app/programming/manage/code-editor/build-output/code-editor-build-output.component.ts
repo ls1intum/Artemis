@@ -38,6 +38,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
     private changeDetectorRef = inject(ChangeDetectorRef);
 
     participation = input.required<Participation>();
+    secondaryHeader = input<boolean>(false);
 
     onAnnotations = output<Array<Annotation>>();
     onToggleCollapse = output<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth?: number; resizableMinHeight: number }>();

@@ -1,4 +1,3 @@
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 
 import { admin, studentOne } from '../../../support/users';
@@ -6,26 +5,25 @@ import { test } from '../../../support/fixtures';
 import { Fixtures } from '../../../fixtures/fixtures';
 import { expect } from '@playwright/test';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { SEED_COURSES } from '../../../support/seedData';
+
+const course = { id: SEED_COURSES.exerciseParticipation.id } as any;
 
 test.describe('Text exercise participation', { tag: '@fast' }, () => {
-    let course: Course;
     let exercise: TextExercise;
 
-    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests, exerciseAPIRequests }) => {
+    test.beforeEach('Create text exercise', async ({ login, exerciseAPIRequests }) => {
         await login(admin);
-        course = await courseManagementAPIRequests.createCourse();
-        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
         exercise = await exerciseAPIRequests.createTextExercise({ course });
     });
 
     test('Makes a text exercise submission as student', async ({ login, courseOverview, textExerciseEditor }) => {
-        await login(studentOne, `/courses/${course.id}/exercises`);
+        await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
         await courseOverview.startExercise(exercise.id!);
-        await courseOverview.openRunningExercise(exercise.id!);
 
         // Verify the initial state of the text editor
-        await textExerciseEditor.shouldShowExerciseTitleInHeader(exercise.title!);
-        await textExerciseEditor.shouldShowProblemStatement();
+        await courseOverview.shouldShowExerciseTitleInHeader(exercise.title!);
+        await courseOverview.shouldShowProblemStatement();
 
         // Make a submission
         const submission = await Fixtures.get('loremIpsum.txt');
@@ -34,14 +32,12 @@ test.describe('Text exercise participation', { tag: '@fast' }, () => {
         await textExerciseEditor.typeSubmission(exercise.id!, submission!);
         await textExerciseEditor.shouldShowNumberOfWords(74);
         await textExerciseEditor.shouldShowNumberOfCharacters(451);
-        const response = await textExerciseEditor.submit();
+        const response = await courseOverview.submitExercise('api/text/exercises/*/text-submissions');
         const textSubmission: TextSubmission = await response.json();
         expect(textSubmission.text).toBe(submission);
         expect(textSubmission.submitted).toBe(true);
         expect(response.status()).toBe(200);
     });
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 });

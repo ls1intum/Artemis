@@ -33,6 +33,9 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
 @Profile(PROFILE_CORE)
@@ -54,13 +57,30 @@ public class ChannelService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
+
     public ChannelService(ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository, ConversationService conversationService,
-            UserRepository userRepository, StudentParticipationRepository studentParticipationRepository) {
+            UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.channelRepository = channelRepository;
         this.conversationService = conversationService;
         this.userRepository = userRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
+    }
+
+    private void syncChannelWithWeaviate(Channel channel) {
+        if (channel != null && channel.getId() != null) {
+            searchableEntityWeaviateService.ifPresent(service -> {
+                if (ChannelSearchableEntityDTO.isIndexable(channel)) {
+                    service.upsertChannelAsync(ChannelSearchableEntityDTO.fromChannel(channel));
+                }
+                else {
+                    service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
+                }
+            });
+        }
     }
 
     /**
@@ -129,6 +149,7 @@ public class ChannelService {
 
         var updatedChannel = channelRepository.save(channel);
         conversationService.notifyAllConversationMembersAboutUpdate(updatedChannel);
+        syncChannelWithWeaviate(updatedChannel);
         return updatedChannel;
     }
 
@@ -162,6 +183,7 @@ public class ChannelService {
             savedChannel = channelRepository.save(savedChannel);
             conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, savedChannel, Set.of(creator.get()));
         }
+        syncChannelWithWeaviate(savedChannel);
         return savedChannel;
     }
 
@@ -197,6 +219,7 @@ public class ChannelService {
     public void deleteChannel(@Nullable Channel channel) {
         if (channel != null) {
             conversationService.deleteConversation(channel.getId());
+            searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId()));
         }
     }
 
@@ -241,6 +264,7 @@ public class ChannelService {
         channel.setIsArchived(true);
         var updatedChannel = channelRepository.save(channel);
         conversationService.notifyAllConversationMembersAboutUpdate(updatedChannel);
+        syncChannelWithWeaviate(updatedChannel);
     }
 
     /**
@@ -256,6 +280,7 @@ public class ChannelService {
         channel.setIsArchived(false);
         var updatedChannel = channelRepository.save(channel);
         conversationService.notifyAllConversationMembersAboutUpdate(updatedChannel);
+        syncChannelWithWeaviate(updatedChannel);
     }
 
     /**
@@ -292,7 +317,10 @@ public class ChannelService {
         }
         channelRepository.saveAll(channelsToCreate);
         conversationParticipantRepository.saveAll(conversationParticipants);
-        channelsToCreate.forEach(channel -> conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, channel, Set.of(creator)));
+        channelsToCreate.forEach(channel -> {
+            conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, channel, Set.of(creator));
+            syncChannelWithWeaviate(channel);
+        });
     }
 
     /**
@@ -378,21 +406,22 @@ public class ChannelService {
     }
 
     /**
-     * Update the channel of an exam
+     * Update the channel of an exam.
+     * Looks up the existing channel by exam ID and updates its name to match
+     * the exam's current channel name.
      *
-     * @param originalExam the original exam
-     * @param updatedExam  the updated exam
-     * @return the updated channel
+     * @param exam the exam whose channel should be updated (must have its new channel name already set)
+     * @return the updated channel, or null if the exam has no channel name or no channel exists
      */
-    public Channel updateExamChannel(Exam originalExam, Exam updatedExam) {
-        if (updatedExam.getChannelName() == null) {
+    public Channel updateExamChannel(Exam exam) {
+        if (exam.getChannelName() == null) {
             return null;
         }
-        Channel channel = channelRepository.findChannelByExamId(originalExam.getId());
+        Channel channel = channelRepository.findChannelByExamId(exam.getId());
         if (channel == null) {
             return null;
         }
-        return updateChannelName(channel, updatedExam.getChannelName());
+        return updateChannelName(channel, exam.getChannelName());
     }
 
     private Channel updateChannelName(Channel channel, String newChannelName) {
@@ -400,7 +429,9 @@ public class ChannelService {
         if (!newChannelName.equals(channel.getName())) {
             channel.setName(newChannelName);
             this.channelIsValidOrThrow(channel.getCourse().getId(), channel);
-            return channelRepository.save(channel);
+            var updatedChannel = channelRepository.save(channel);
+            syncChannelWithWeaviate(updatedChannel);
+            return updatedChannel;
         }
         else {
             return channel;
@@ -501,10 +532,16 @@ public class ChannelService {
         return createdChannel;
     }
 
+    /**
+     * Deletes the channel associated with the given exercise ID, including its Weaviate search index entry.
+     *
+     * @param exerciseId the ID of the exercise whose channel should be deleted
+     */
     public void deleteChannelForExerciseId(long exerciseId) {
         Long exerciseChannelId = channelRepository.findChannelIdByExerciseId(exerciseId);
         if (exerciseChannelId != null) {
             conversationService.deleteConversation(exerciseChannelId);
+            searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, exerciseChannelId));
         }
     }
 

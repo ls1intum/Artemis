@@ -98,7 +98,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     }
 
     /**
-     * POST /exercises/{exerciseId}/modeling-submissions : Create a new modeling submission. This is called when a student saves his model the first time after
+     * POST /exercises/{exerciseId}/modeling-submissions : Create a new modeling submission. This is called when a student saves their model the first time after
      * starting the exercise or starting a retry.
      *
      * @param exerciseId         the id of the exercise for which to init a participation
@@ -394,7 +394,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         // do not send the result to the client if the assessment is not finished
         Result latestResult = modelingSubmission.getLatestResult();
-        if (latestResult != null && (latestResult.getCompletionDate() == null || latestResult.getAssessor() == null)) {
+        if (latestResult != null && latestResult.getAssessmentType() != AssessmentType.AUTOMATIC_ATHENA
+                && (latestResult.getCompletionDate() == null || latestResult.getAssessor() == null)) {
             modelingSubmission.setResults(List.of());
         }
 

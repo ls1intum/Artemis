@@ -68,8 +68,6 @@ import de.tum.cit.aet.artemis.exercise.dto.StudentDTO;
 @Repository
 public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
-    String USERS_CACHE = "users";
-
     String FILTER_INTERNAL = "INTERNAL";
 
     String FILTER_EXTERNAL = "EXTERNAL";
@@ -1071,6 +1069,73 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return countByDeletedIsFalseAndGroupsContains(groupName);
     }
 
+    /**
+     * Counts non-deleted users in multiple groups with a single query.
+     * This avoids the N+1 query problem when counting users for multiple groups.
+     *
+     * @param groupNames the set of group names to count users for
+     * @return a list of StudentGroupCountDTO with group name and count of users
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.core.dto.StudentGroupCountDTO(
+                g,
+                COUNT(DISTINCT user.id)
+            )
+            FROM User user
+                JOIN user.groups g
+            WHERE user.deleted = FALSE
+                AND g IN :groupNames
+            GROUP BY g
+            """)
+    List<StudentGroupCountDTO> countUsersInGroups(@Param("groupNames") Set<String> groupNames);
+
+    /**
+     * Counts non-deleted users for all role groups of a course and sets the counts on the course object.
+     *
+     * @param course the course to set user counts for
+     */
+    default void setUserCountsForCourse(Course course) {
+        Set<String> groupNames = new HashSet<>();
+        groupNames.add(course.getStudentGroupName());
+        groupNames.add(course.getTeachingAssistantGroupName());
+        groupNames.add(course.getEditorGroupName());
+        groupNames.add(course.getInstructorGroupName());
+
+        var counts = countUsersInGroups(groupNames);
+        var countMap = counts.stream().collect(Collectors.toMap(StudentGroupCountDTO::studentGroupName, StudentGroupCountDTO::count, Long::sum));
+
+        course.setNumberOfInstructors(countMap.getOrDefault(course.getInstructorGroupName(), 0L));
+        course.setNumberOfTeachingAssistants(countMap.getOrDefault(course.getTeachingAssistantGroupName(), 0L));
+        course.setNumberOfEditors(countMap.getOrDefault(course.getEditorGroupName(), 0L));
+        course.setNumberOfStudents(countMap.getOrDefault(course.getStudentGroupName(), 0L));
+    }
+
+    /**
+     * Counts non-deleted users for all role groups of multiple courses and sets the counts on each course object.
+     * Uses a single query for all courses combined.
+     *
+     * @param courses the courses to set user counts for
+     */
+    default void setUserCountsForCourses(List<Course> courses) {
+        Set<String> allGroupNames = new HashSet<>();
+        for (Course course : courses) {
+            allGroupNames.add(course.getStudentGroupName());
+            allGroupNames.add(course.getTeachingAssistantGroupName());
+            allGroupNames.add(course.getEditorGroupName());
+            allGroupNames.add(course.getInstructorGroupName());
+        }
+
+        var counts = countUsersInGroups(allGroupNames);
+        var countMap = counts.stream().collect(Collectors.toMap(StudentGroupCountDTO::studentGroupName, StudentGroupCountDTO::count, Long::sum));
+
+        for (Course course : courses) {
+            course.setNumberOfInstructors(countMap.getOrDefault(course.getInstructorGroupName(), 0L));
+            course.setNumberOfTeachingAssistants(countMap.getOrDefault(course.getTeachingAssistantGroupName(), 0L));
+            course.setNumberOfEditors(countMap.getOrDefault(course.getEditorGroupName(), 0L));
+            course.setNumberOfStudents(countMap.getOrDefault(course.getStudentGroupName(), 0L));
+        }
+    }
+
     @Query(value = """
             SELECT *
             FROM jhi_user u
@@ -1433,25 +1498,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     Optional<User> findOneWithGroupsAndAuthoritiesByCalendarSubscriptionToken(@Param("token") String token);
 
     /**
-     * Finds logins of all non-deleted users who belong to the specified group.
-     * This is useful for cache eviction when performing bulk group removal.
-     *
-     * @param groupName the name of the group
-     * @return set of user logins in the group
-     */
-    @Query("""
-            SELECT u.login
-            FROM User u
-            WHERE u.deleted = FALSE
-                AND :groupName MEMBER OF u.groups
-            """)
-    Set<String> findLoginsByGroupName(@Param("groupName") String groupName);
-
-    /**
      * Removes the specified group from all users in a single database operation.
      * This is more efficient than loading each user, modifying, and saving individually.
-     * <p>
-     * Note: This bypasses JPA entity management, so cache eviction must be handled separately.
      *
      * @param groupName the name of the group to remove from all users
      * @return the number of rows deleted

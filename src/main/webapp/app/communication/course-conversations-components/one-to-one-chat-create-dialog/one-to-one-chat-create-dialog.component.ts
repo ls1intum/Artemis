@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { AbstractDialogComponent } from 'app/communication/course-conversations-components/abstract-dialog.component';
@@ -13,7 +13,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [TranslateDirective, CourseUsersSelectorComponent, FormsModule, ArtemisTranslatePipe],
 })
 export class OneToOneChatCreateDialogComponent extends AbstractDialogComponent {
-    @Input() course: Course;
+    course = signal<Course | undefined>(undefined);
 
     isInitialized = false;
     selectedUsers: UserPublicInfoDTO[] = [];

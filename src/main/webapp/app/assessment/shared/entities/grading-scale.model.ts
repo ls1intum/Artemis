@@ -1,7 +1,9 @@
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
+import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Bonus } from 'app/assessment/shared/entities/bonus.model';
 
 export class GradingScale implements BaseEntity {
     public static readonly DEFAULT_PLAGIARISM_GRADE = 'U'; // This should be the same as the corresponding constant in GradingScale.java
@@ -9,6 +11,7 @@ export class GradingScale implements BaseEntity {
 
     public id?: number;
     public gradeType: GradeType = GradeType.NONE;
+    public bonusStrategy?: BonusStrategy;
     public gradeSteps: GradeStep[];
     public plagiarismGrade?: string;
     public noParticipationGrade?: string;
@@ -17,6 +20,7 @@ export class GradingScale implements BaseEntity {
     public exam?: Exam;
     public presentationsNumber?: number;
     public presentationsWeight?: number;
+    public bonusFrom?: Bonus[];
 
     constructor(gradeType: GradeType = GradeType.GRADE, gradeSteps: GradeStep[] = []) {
         this.gradeType = gradeType;

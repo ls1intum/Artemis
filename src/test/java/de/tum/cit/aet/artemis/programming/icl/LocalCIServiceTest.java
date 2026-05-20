@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
-import java.util.Optional;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.junit.jupiter.api.AfterEach;
@@ -14,8 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
@@ -30,8 +28,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
-import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService.BuildStatus;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
@@ -49,14 +48,15 @@ class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
     private RepositoryCheckoutService repositoryCheckoutService;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws InterruptedException {
         queuedJobs = distributedDataAccessService.getDistributedBuildJobQueue();
         processingJobs = distributedDataAccessService.getDistributedProcessingJobs();
 
         // remove listener to avoid triggering build job processing
         sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
-        // Reset pause state to ensure clean state for each test
-        sharedQueueProcessingService.resetPauseState();
+        // Set pause state to true so that any in-flight scheduled task (cancelled with cancel(false))
+        // that is still executing will return early and not consume queue items
+        sharedQueueProcessingService.setPauseState(true);
     }
 
     @AfterEach
@@ -65,7 +65,7 @@ class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
         processingJobs.clear();
 
         // Reset pause state and init to activate queue listener again
-        sharedQueueProcessingService.resetPauseState();
+        sharedQueueProcessingService.setPauseState(false);
         sharedQueueProcessingService.init();
     }
 
@@ -111,34 +111,34 @@ class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
 
     @Test
     void testRecreateBuildPlanForExercise() throws IOException {
-        String script = "echo 'Hello, World!'";
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise.getBuildConfig().setBuildScript(script);
         exercise.getBuildConfig().setBuildPlanConfiguration(null);
         continuousIntegrationService.recreateBuildPlansForExercise(exercise);
-        script = buildScriptProviderService.getScriptFor(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
-                exercise.getBuildConfig().hasSequentialTestRuns());
-        Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
+
         String actualBuildConfig = exercise.getBuildConfig().getBuildPlanConfiguration();
-        String expectedBuildConfig = new ObjectMapper().writeValueAsString(windfile);
+
+        List<BuildPhaseDTO> phases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(exercise);
+        String image = buildPhasesTemplateService.getDefaultDockerImageFor(exercise);
+        String expectedBuildConfig = new BuildPlanPhasesDTO(phases, image).toBuildPlanConfiguration();
+
         assertThat(actualBuildConfig).isEqualTo(expectedBuildConfig);
-        assertThat(exercise.getBuildConfig().getBuildScript()).isEqualTo(script);
+        assertThat(exercise.getBuildConfig().getBuildScript()).isNull();
         // test that the method does not throw an exception when the exercise is null
         continuousIntegrationService.recreateBuildPlansForExercise(null);
     }
 
     @Test
-    void testGetScriptForWithoutCache() {
-        ReflectionTestUtils.setField(buildScriptProviderService, "scriptCache", new ConcurrentHashMap<>());
+    void testGetBuildPlanPhasesForWithoutCache() {
+        ReflectionTestUtils.setField(buildPhasesTemplateService, "templateCache", new ConcurrentHashMap<>());
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
-        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.HASKELL);
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setProjectType(null);
         programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.getBuildConfig().setSequentialTestRuns(false);
-        String script = buildScriptProviderService.getScriptFor(programmingExercise);
-        assertThat(script).isNotNull();
+        List<BuildPhaseDTO> phases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise);
+        assertThat(phases).isNotNull();
     }
 
     @Test

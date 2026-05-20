@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.fileupload;
 
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseNotInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertFileUploadExerciseExistsInWeaviate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -28,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
@@ -41,6 +44,8 @@ import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
@@ -53,6 +58,7 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.dto.UpdateFileUploadExerciseDTO;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
+import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 
 class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTest {
@@ -61,7 +67,13 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     private ConversationUtilService conversationUtilService;
 
     @Autowired
-    private AtlasMLRequestMockProvider atlasMLRequestMockProvider;
+    private Optional<AtlasMLRequestMockProvider> atlasMLRequestMockProvider;
+
+    @Autowired
+    private FeatureToggleService featureToggleService;
+
+    @Autowired(required = false)
+    private WeaviateService weaviateService;
 
     private static final String TEST_PREFIX = "fileuploaderxercise";
 
@@ -157,6 +169,8 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo("exercise-new-fileupload-exerci");
+
+        assertFileUploadExerciseExistsInWeaviate(weaviateService, receivedFileUploadExercise);
     }
 
     @Test
@@ -291,10 +305,14 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteFileUploadExercise_asInstructor() throws Exception {
         Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        var exerciseIds = course.getExercises().stream().map(Exercise::getId).toList();
         for (var exercise : course.getExercises()) {
             request.delete("/api/fileupload/file-upload-exercises/" + exercise.getId(), HttpStatus.OK);
         }
         assertThat(exerciseRepository.findByCourseIdWithCategories(course.getId())).isEmpty();
+        for (var exerciseId : exerciseIds) {
+            assertExerciseNotInWeaviate(weaviateService, exerciseId);
+        }
     }
 
     @Test
@@ -379,7 +397,8 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         assertThat(receivedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("courseId was not updated").isEqualTo(course.getId());
         verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(any(), any(), any());
         verify(groupNotificationScheduleService, times(1)).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any(), any());
-        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(fileUploadExercise), eq(Optional.of(fileUploadExercise)));
+        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(eq(Set.of()), any());
+        assertFileUploadExerciseExistsInWeaviate(weaviateService, receivedFileUploadExercise);
     }
 
     @Test
@@ -577,7 +596,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         assertThat(GradingCriterionUtil.findAnyInstructionWhere(gradingCriteria, instruction -> instruction.getId().equals(usedInstruction.getId())).orElseThrow().getCredits())
                 .isEqualTo(3);
         assertThat(updatedResults.getFirst().getScore()).isEqualTo(60);
-        assertThat(updatedResults.getFirst().getFeedbacks().getFirst().getCredits()).isEqualTo(3);
+        assertThat(updatedResults.getFirst().getFeedbacks().iterator().next().getCredits()).isEqualTo(3);
     }
 
     @Test
@@ -710,28 +729,35 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void atlasML_isCalledOnCreateUpdateAndDelete() throws Exception {
-        atlasMLRequestMockProvider.reset();
-        atlasMLRequestMockProvider.enableMockingOfRequests();
-        atlasMLRequestMockProvider.mockSaveCompetenciesAny();
+        var provider = atlasMLRequestMockProvider.orElseThrow(() -> new IllegalStateException("AtlasMLRequestMockProvider must be available for AtlasML tests"));
+        featureToggleService.enableFeature(Feature.AtlasML);
+        try {
+            provider.reset();
+            provider.enableMockingOfRequests();
+            provider.mockSaveCompetenciesAny();
 
-        // Create
-        courseUtilService.enableMessagingForCourse(course);
-        var create = new FileUploadExercise();
-        create.setCourse(course);
-        create.setTitle("AtlasML FileUpload Create");
-        create.setFilePattern("pdf, png");
-        create.setMaxPoints(10.0);
-        create.setChannelName("atlasml-fileupload-create");
-        request.postWithResponseBody("/api/fileupload/file-upload-exercises", create, FileUploadExercise.class, HttpStatus.CREATED);
+            // Create
+            courseUtilService.enableMessagingForCourse(course);
+            var create = new FileUploadExercise();
+            create.setCourse(course);
+            create.setTitle("AtlasML FileUpload Create");
+            create.setFilePattern("pdf, png");
+            create.setMaxPoints(10.0);
+            create.setChannelName("atlasml-fileupload-create");
+            request.postWithResponseBody("/api/fileupload/file-upload-exercises", create, FileUploadExercise.class, HttpStatus.CREATED);
 
-        // Update
-        FileUploadExercise persisted = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
-        persisted.setTitle("AtlasML FileUpload Update");
-        request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + persisted.getId() + "?notificationText=x", UpdateFileUploadExerciseDTO.of(persisted),
-                FileUploadExercise.class, HttpStatus.OK);
+            // Update
+            FileUploadExercise persisted = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
+            persisted.setTitle("AtlasML FileUpload Update");
+            request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + persisted.getId() + "?notificationText=x", UpdateFileUploadExerciseDTO.of(persisted),
+                    FileUploadExercise.class, HttpStatus.OK);
 
-        // Delete
-        request.delete("/api/fileupload/file-upload-exercises/" + persisted.getId(), HttpStatus.OK);
+            // Delete
+            request.delete("/api/fileupload/file-upload-exercises/" + persisted.getId(), HttpStatus.OK);
+        }
+        finally {
+            featureToggleService.disableFeature(Feature.AtlasML);
+        }
     }
 
     @Test
@@ -831,12 +857,15 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         var sourceExerciseId = expectedFileUploadExercise.getId();
         var importedFileUploadExercise = request.postWithResponseBody("/api/fileupload/file-upload-exercises/import/" + sourceExerciseId, expectedFileUploadExercise,
                 FileUploadExercise.class, HttpStatus.CREATED);
+        // File upload exercises are always assessed manually
+        assertThat(importedFileUploadExercise.getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
         assertThat(importedFileUploadExercise).usingRecursiveComparison().ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate",
-                "exampleSolutionPublicationDate", "channelNameTransient", "competencyLinks").isEqualTo(expectedFileUploadExercise);
+                "exampleSolutionPublicationDate", "channelNameTransient", "competencyLinks", "assessmentType").isEqualTo(expectedFileUploadExercise);
         Channel channelFromDB = channelRepository.findChannelByExerciseId(importedFileUploadExercise.getId());
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(importedFileUploadExercise));
+        assertFileUploadExerciseExistsInWeaviate(weaviateService, importedFileUploadExercise);
     }
 
     @Test

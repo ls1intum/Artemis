@@ -1,0 +1,62 @@
+<div class="inline-refinement-container d-flex align-items-center" [style.top.px]="top()" [style.left.px]="left()">
+    @if (!isExpanded()) {
+        <!-- Collapsed: Trigger button with text label -->
+        <button
+            pButton
+            type="button"
+            severity="primary"
+            size="small"
+            rounded
+            class="d-flex align-items-center gap-1 shadow-sm fw-medium"
+            (click)="expand()"
+            [attr.aria-label]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.triggerButton' | artemisTranslate"
+        >
+            <fa-icon [icon]="facArtemisIntelligence" class="fs-x-small" />
+            <span class="text-nowrap">{{ 'artemisApp.programmingExercise.problemStatement.inlineRefinement.triggerButton' | artemisTranslate }}</span>
+        </button>
+    } @else {
+        <!-- Expanded: Input field with submit -->
+        <div class="d-flex align-items-center gap-1 bg-body border rounded-pill shadow py-1 px-2">
+            <input
+                #instructionInput
+                type="text"
+                class="refinement-input fs-small py-1 px-2 w-100"
+                [placeholder]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.placeholder' | artemisTranslate"
+                [ngModel]="instruction()"
+                (ngModelChange)="instruction.set($event)"
+                (keydown)="onKeydown($event)"
+                [disabled]="isLoading()"
+                [attr.maxlength]="MAX_INSTRUCTION_LENGTH"
+            />
+            <span class="text-nowrap px-1 fs-x-small" [class.text-danger]="isNearLimit()" [class.text-muted]="!isNearLimit()">
+                {{ instruction().length }}/{{ MAX_INSTRUCTION_LENGTH }}
+            </span>
+            <button
+                pButton
+                type="button"
+                severity="primary"
+                size="small"
+                rounded
+                class="refinement-submit-btn flex-shrink-0 d-flex align-items-center justify-content-center"
+                (click)="submit()"
+                [disabled]="!instruction() || isLoading()"
+                [attr.title]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.submitTooltip' | artemisTranslate"
+            >
+                <fa-icon [icon]="faPaperPlane" />
+            </button>
+            <button
+                pButton
+                type="button"
+                severity="secondary"
+                text
+                size="small"
+                rounded
+                class="refinement-close-btn flex-shrink-0 d-flex align-items-center justify-content-center p-0"
+                [attr.aria-label]="'artemisApp.programmingExercise.problemStatement.inlineRefinement.close' | artemisTranslate"
+                (click)="handleClose()"
+            >
+                <fa-icon [icon]="faTimes" />
+            </button>
+        </div>
+    }
+</div>

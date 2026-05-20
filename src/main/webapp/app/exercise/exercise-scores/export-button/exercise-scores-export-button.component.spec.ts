@@ -1,16 +1,14 @@
-import { expect, vi } from 'vitest';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseScoresExportButtonComponent } from 'app/exercise/exercise-scores/export-button/exercise-scores-export-button.component';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockProvider } from 'ng-mocks';
 import { ResultService } from 'app/exercise/result/result.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -22,15 +20,14 @@ import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { User } from 'app/core/user/user.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 
 describe('ExerciseScoresExportButtonComponent', () => {
     setupTestBed({ zoneless: true });
+
     let component: ExerciseScoresExportButtonComponent;
     let fixture: ComponentFixture<ExerciseScoresExportButtonComponent>;
     let resultService: ResultService;
@@ -168,7 +165,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockDirective(NgbTooltip), FaIconComponent],
+            imports: [ExerciseScoresExportButtonComponent],
             providers: [MockProvider(AlertService), { provide: ResultService, useClass: MockResultService }, { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 

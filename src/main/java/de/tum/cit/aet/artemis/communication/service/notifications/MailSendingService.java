@@ -28,8 +28,8 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
+import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.domain.User;
-import tech.jhipster.config.JHipsterProperties;
 
 /**
  * Service for sending emails asynchronously.
@@ -48,7 +48,7 @@ public class MailSendingService {
      */
     private static final String DEFAULT_MAIL_FROM = "artemis@localhost";
 
-    private final JHipsterProperties jHipsterProperties;
+    private final ArtemisProperties jHipsterProperties;
 
     private final JavaMailSender javaMailSender;
 
@@ -61,7 +61,7 @@ public class MailSendingService {
 
     private final SpringTemplateEngine templateEngine;
 
-    public MailSendingService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender, MessageSource messageSource, SpringTemplateEngine templateEngine) {
+    public MailSendingService(ArtemisProperties jHipsterProperties, JavaMailSender javaMailSender, MessageSource messageSource, SpringTemplateEngine templateEngine) {
         this.jHipsterProperties = jHipsterProperties;
         this.javaMailSender = javaMailSender;
         this.messageSource = messageSource;
@@ -69,7 +69,7 @@ public class MailSendingService {
 
         // Check if mail is properly configured (not using the default placeholder)
         String mailFrom = jHipsterProperties.getMail().getFrom();
-        this.mailConfigured = mailFrom != null && !mailFrom.isBlank() && !mailFrom.equals(DEFAULT_MAIL_FROM);
+        this.mailConfigured = mailFrom != null && !mailFrom.isBlank() && !mailFrom.equalsIgnoreCase(DEFAULT_MAIL_FROM);
 
         if (!this.mailConfigured) {
             log.warn("Email sending is disabled. To enable, configure 'jhipster.mail.from' in application.yml");
@@ -173,6 +173,7 @@ public class MailSendingService {
             content = templateEngine.process(contentTemplate, context);
         }
         catch (NoSuchMessageException | TemplateProcessingException ex) {
+            log.error("Failed to build email with subject key '{}' and template '{}': {}", subjectKey, contentTemplate, ex.getMessage(), ex);
             return;
         }
 

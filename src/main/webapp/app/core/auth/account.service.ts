@@ -290,7 +290,7 @@ export class AccountService implements IAccountService {
     }
 
     /**
-     * Checks whether current user is owner of the participation or whether he is part of the team
+     * Checks whether current user is owner of the participation or whether they are part of the team
      *
      * @param participation - Participation that is checked
      */

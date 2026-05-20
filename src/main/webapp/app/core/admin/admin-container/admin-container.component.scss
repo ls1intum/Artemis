@@ -21,7 +21,7 @@ $spacing: 0.5rem;
 
 .mat-drawer-container {
     // Fixed height based on viewport minus navbar and footer
-    height: calc(100vh - var(--sidebar-header-footer-combined-height, 105px) - 15px);
+    height: calc(100vh - var(--sidebar-header-footer-combined-height, 105px) - 15px - var(--system-notification-height, 0px));
 
     .mat-drawer {
         box-sizing: content-box;

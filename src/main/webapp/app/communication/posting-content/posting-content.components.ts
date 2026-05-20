@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnChanges, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { Params } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -21,7 +21,7 @@ import { LinkPreviewContainerComponent } from 'app/communication/link-preview/co
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TranslateDirective, FaIconComponent, NgStyle, PostingContentPartComponent, LinkPreviewContainerComponent],
 })
-export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
+export class PostingContentComponent implements OnInit, OnDestroy {
     private metisService = inject(MetisService);
 
     content = input<string | undefined>();
@@ -53,6 +53,26 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
 
+    private initialized = false;
+
+    constructor() {
+        effect(() => {
+            // Track signal inputs that were monitored in ngOnChanges
+            this.content();
+            this.posting();
+            this.isSubscribeToMetis();
+            this.isEdited();
+            this.isDeleted();
+            this.deleteTimerInSeconds();
+            untracked(() => {
+                if (this.initialized) {
+                    const patternMatches: PatternMatch[] = this.getPatternMatches();
+                    this.computePostingContentParts(patternMatches);
+                }
+            });
+        });
+    }
+
     /**
      * on initialization: calculate posting parts to be displayed
      */
@@ -63,18 +83,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
         } else {
             this.computeContentPartsOfPosts();
         }
-    }
-
-    /**
-     * on changes: update posting parts to be displayed
-     */
-    ngOnChanges() {
-        if (!this.isSubscribeToMetis()) {
-            this.computeContentPartsOfPosts();
-        }
-
-        const patternMatches: PatternMatch[] = this.getPatternMatches();
-        this.computePostingContentParts(patternMatches);
+        this.initialized = true;
     }
 
     /**

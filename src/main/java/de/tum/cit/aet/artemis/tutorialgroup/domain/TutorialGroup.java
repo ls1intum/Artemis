@@ -17,8 +17,6 @@ import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -35,7 +33,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 
 @Entity
 @Table(name = "tutorial_group")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TutorialGroup extends DomainObject {
 
@@ -146,9 +143,9 @@ public class TutorialGroup extends DomainObject {
     @JsonIgnoreProperties(value = "tutorialGroup", allowSetters = true)
     private TutorialGroupSchedule tutorialGroupSchedule;
 
+    // No @Cache here on purpose: mutated when sessions are generated / adjusted for the schedule. See #12574 / #12584.
     @OneToMany(mappedBy = "tutorialGroup", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "tutorialGroup, tutorialGroupSchedule", allowSetters = true)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<TutorialGroupSession> tutorialGroupSessions = new HashSet<>();
 
     @OneToOne(fetch = FetchType.EAGER)

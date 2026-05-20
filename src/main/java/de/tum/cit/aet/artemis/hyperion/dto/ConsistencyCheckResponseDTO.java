@@ -11,6 +11,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO for consistency check responses.
+ * The {@code issues} field uses a bare {@code @JsonInclude} (no explicit value = ALWAYS) to ensure an empty list
+ * is always serialized as {@code "issues": []}, allowing evaluation scripts to correctly count false negatives.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Response containing consistency check results")
@@ -18,7 +20,7 @@ public record ConsistencyCheckResponseDTO(
 
         @NotNull @Schema(description = "Timestamp of the response generation") Instant timestamp,
 
-        @NotNull @Schema(description = "List of consistency issues found") List<ConsistencyIssueDTO> issues,
+        @JsonInclude @NotNull @Schema(description = "List of consistency issues found") List<ConsistencyIssueDTO> issues,
 
         @Schema(description = "Execution timing details") TimingDTO timing,
 

@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
 import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { WindFile } from 'app/programming/shared/entities/wind.file';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Subject, of, throwError } from 'rxjs';
@@ -28,8 +27,9 @@ import * as Utils from 'app/exercise/course-exercises/course-utils';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_THEIA } from 'app/app.constants';
-import { APP_NAME_PATTERN_FOR_SWIFT, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from 'app/shared/constants/input.constants';
+import { MODULE_FEATURE_THEIA } from 'app/app.constants';
+import { APP_NAME_PATTERN_FOR_SWIFT, MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from 'app/shared/constants/input.constants';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
@@ -47,6 +47,18 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
+import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
+import { ProblemStatementSyncService } from 'app/exercise/synchronization/services/problem-statement-sync.service';
+import { DialogService } from 'primeng/dynamicdialog';
+
+jest.mock('y-monaco', () => ({
+    MonacoBinding: jest.fn().mockImplementation(() => ({
+        destroy: jest.fn(),
+    })),
+}));
+
+const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -85,6 +97,18 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(CalendarService),
+                MockProvider(ExerciseEditorSyncService),
+                MockProvider(ExerciseMetadataSyncService),
+                {
+                    provide: ProblemStatementSyncService,
+                    useValue: {
+                        init: jest.fn().mockReturnValue({ doc: {}, text: { toString: () => '' }, awareness: {} }),
+                        reset: jest.fn(),
+                        stateReplaced$: of(),
+                        initialSyncFinalized$: of({ contentChangedDuringFinalize: false, contentDivergedFromFallback: false, finalContent: '' }),
+                    },
+                },
+                MockProvider(DialogService),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
@@ -321,6 +345,159 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         });
     });
 
+    describe('save with AI', () => {
+        it('should call automatic setup with empty repositories and navigate to template editor', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.releaseDate = dayjs();
+            entity.course = course;
+
+            const savedEntity = new ProgrammingExercise(course, undefined);
+            savedEntity.id = 7;
+            savedEntity.course = course;
+            savedEntity.templateParticipation = { id: 11 } as any;
+
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.hyperionEnabled = true;
+
+            const response$ = new Subject<HttpResponse<ProgrammingExercise>>();
+            const setupSpy = jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(response$);
+            const router = TestBed.inject(Router) as unknown as MockRouter;
+
+            comp.saveExerciseWithAi();
+
+            expect(comp.isGeneratingWithAi()).toBeTrue();
+            expect(setupSpy).toHaveBeenCalledWith(entity, true);
+
+            response$.next(new HttpResponse({ body: savedEntity }));
+
+            expect(router.navigate).toHaveBeenCalledWith(
+                ['course-management', courseId, 'programming-exercises', savedEntity.id, 'code-editor', RepositoryType.TEMPLATE, savedEntity.templateParticipation!.id],
+                { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } },
+            );
+            expect(comp.isGeneratingWithAi()).toBeFalse();
+        });
+
+        it('should navigate to the exam template editor with auto-start state after AI exercise creation in exam mode', () => {
+            const entity = new ProgrammingExercise(undefined, undefined);
+            entity.releaseDate = dayjs();
+            const exerciseGroup = new ExerciseGroup();
+            exerciseGroup.id = 3;
+            exerciseGroup.exam = { id: 9, course } as any;
+            entity.exerciseGroup = exerciseGroup;
+
+            const savedEntity = new ProgrammingExercise(undefined, exerciseGroup);
+            savedEntity.id = 7;
+            savedEntity.templateParticipation = { id: 11 } as any;
+
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.hyperionEnabled = true;
+
+            const response$ = new Subject<HttpResponse<ProgrammingExercise>>();
+            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(response$);
+            const router = TestBed.inject(Router) as unknown as MockRouter;
+
+            comp.saveExerciseWithAi();
+
+            response$.next(new HttpResponse({ body: savedEntity }));
+
+            expect(router.navigate).toHaveBeenCalledWith(
+                ['course-management', courseId, 'exams', 9, 'exercise-groups', 3, 'programming-exercises', savedEntity.id, 'code-editor', RepositoryType.TEMPLATE, 11],
+                { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } },
+            );
+        });
+
+        it('should fall back to regular save when hyperion is disabled', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.releaseDate = dayjs();
+            entity.course = course;
+
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.hyperionEnabled = false;
+
+            const setupSpy = jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: entity })));
+
+            comp.saveExerciseWithAi();
+
+            expect(setupSpy).toHaveBeenCalledWith(entity);
+        });
+
+        it('should reset generating flag on save error', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.releaseDate = dayjs();
+            entity.course = course;
+
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.hyperionEnabled = true;
+
+            const response$ = new Subject<HttpResponse<ProgrammingExercise>>();
+            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(response$);
+
+            comp.saveExerciseWithAi();
+            expect(comp.isGeneratingWithAi()).toBeTrue();
+
+            response$.error(new HttpErrorResponse({ headers: new HttpHeaders({ 'X-artemisApp-alert': 'error-message' }) }));
+
+            expect(comp.isGeneratingWithAi()).toBeFalse();
+            expect(comp.isSaving).toBeFalse();
+        });
+
+        it('should treat null id as a new exercise and use empty repositories setup', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.releaseDate = dayjs();
+            entity.course = course;
+            entity.id = null as unknown as number;
+
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.hyperionEnabled = true;
+
+            const setupSpy = jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: entity })));
+
+            comp.saveExerciseWithAi();
+
+            expect(setupSpy).toHaveBeenCalledWith(entity, true);
+        });
+    });
+
+    describe('generate with AI visibility', () => {
+        it('should only show for java when hyperion is enabled', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.programmingLanguage = ProgrammingLanguage.JAVA;
+
+            comp.programmingExercise = entity;
+            comp.hyperionEnabled = true;
+            comp.isImportFromExistingExercise = false;
+            comp.isImportFromFile = false;
+            comp.isImportFromSharing = false;
+
+            expect(comp.showGenerateWithAi()).toBeTrue();
+
+            const kotlinExercise = new ProgrammingExercise(course, undefined);
+            kotlinExercise.programmingLanguage = ProgrammingLanguage.KOTLIN;
+            comp.programmingExercise = kotlinExercise;
+
+            expect(comp.showGenerateWithAi()).toBeFalse();
+        });
+
+        it('should still show when id is null', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.programmingLanguage = ProgrammingLanguage.JAVA;
+            entity.id = null as unknown as number;
+
+            comp.programmingExercise = entity;
+            comp.hyperionEnabled = true;
+            comp.isImportFromExistingExercise = false;
+            comp.isImportFromFile = false;
+            comp.isImportFromSharing = false;
+
+            expect(comp.showGenerateWithAi()).toBeTrue();
+        });
+    });
+
     describe('exam mode', () => {
         const examId = 1;
         const exerciseGroupId = 1;
@@ -513,14 +690,12 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             // WHEN
             fixture.detectChanges();
             comp.programmingExercise.buildConfig!.buildPlanConfiguration = 'some custom build definition';
-            comp.programmingExercise.buildConfig!.windfile = new WindFile();
             tick();
             comp.onProgrammingLanguageChange(ProgrammingLanguage.C);
             comp.onProjectTypeChange(ProjectType.FACT);
 
             // THEN
             expect(comp.programmingExercise.buildConfig?.buildPlanConfiguration).toBeUndefined();
-            expect(comp.programmingExercise.buildConfig?.windfile).toBeUndefined();
         }));
     });
 
@@ -1095,7 +1270,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             [
                 'find validation errors for invalid ide selection',
                 {
-                    activeProfiles: [PROFILE_THEIA],
+                    activeModuleFeatures: [MODULE_FEATURE_THEIA],
                 },
                 {
                     translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alert',
@@ -1103,19 +1278,23 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 },
             ],
             [
-                'find validation errors for invalid ide selection without theia profile',
+                'find validation errors for invalid ide selection without theia module feature',
                 {
-                    activeProfiles: [],
+                    activeModuleFeatures: [],
                 },
                 {
                     translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alertNoTheia',
                     translateValues: {},
                 },
             ],
-        ])('%s', (description: string, profileInfo: ProfileInfo, expectedException: ValidationReason) => {
+        ])('%s', (description: string, profileInfo: Partial<ProfileInfo>, expectedException: ValidationReason) => {
             const newProfileInfo = new ProfileInfo();
-            newProfileInfo.activeProfiles = profileInfo.activeProfiles;
+            newProfileInfo.activeProfiles = profileInfo.activeProfiles ?? [];
+            newProfileInfo.activeModuleFeatures = profileInfo.activeModuleFeatures ?? [];
             jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(newProfileInfo);
+            jest.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => {
+                return newProfileInfo.activeModuleFeatures?.includes(feature) ?? false;
+            });
 
             const route = TestBed.inject(ActivatedRoute);
             route.params = of({ courseId });
@@ -1266,6 +1445,28 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 translateValues: {},
             });
         });
+
+        it('should add validation error when problem statement exceeds max length', () => {
+            comp.programmingExercise.problemStatement = 'a'.repeat(MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH + 1);
+
+            const reasons = comp.getInvalidReasons();
+
+            expect(reasons).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.problemStatement.tooLong',
+                translateValues: { max: MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH },
+            });
+        });
+
+        it('should not add validation error when problem statement is within max length', () => {
+            comp.programmingExercise.problemStatement = 'a'.repeat(MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH);
+
+            const reasons = comp.getInvalidReasons();
+
+            expect(reasons).not.toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.problemStatement.tooLong',
+                translateValues: { max: MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH },
+            });
+        });
     });
 
     describe('disable features based on selected language and project type', () => {
@@ -1384,6 +1585,39 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         comp.updateCategories(categories);
         expect(comp.exerciseCategories).toBe(categories);
     }));
+
+    it('keeps exerciseCategories and programmingExercise.categories in sync when initially empty', fakeAsync(() => {
+        const route = TestBed.inject(ActivatedRoute);
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.id = 42;
+        programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        programmingExercise.categories = undefined;
+
+        route.params = of({ courseId });
+        route.url = of([{ path: 'edit' } as UrlSegment]);
+        route.data = of({ programmingExercise });
+
+        jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(Utils, 'loadCourseExerciseCategories').mockReturnValue(of([]));
+        jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+
+        comp.ngOnInit();
+        tick();
+
+        expect(comp.exerciseCategories).toEqual([]);
+        expect(comp.programmingExercise.categories).toBe(comp.exerciseCategories);
+    }));
+
+    it('should mark the problem section as invalid when problem statement exceeds max length', () => {
+        comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
+        comp.programmingExercise.problemStatement = 'a'.repeat(MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH + 1);
+
+        comp.calculateFormStatusSections();
+
+        const problemSection = comp.formStatusSections().find((section) => section.title === 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle');
+
+        expect(problemSection?.valid).toBeFalse();
+    });
 
     it('should validate form sections', () => {
         const calculateFormValidSectionsSpy = jest.spyOn(comp, 'calculateFormStatusSections');

@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -39,38 +41,51 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { PostContextFilter, SortDirection } from 'app/communication/metis.util';
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
+import { User } from 'app/core/user/user.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { Directive, EventEmitter, Input, Output } from '@angular/core';
+import { Directive, input, output } from '@angular/core';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockMetisConversationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-conversation.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
+import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { DialogService } from 'primeng/dynamicdialog';
 
 @Directive({
     selector: '[infinite-scroll]',
 })
 class InfiniteScrollStubDirective {
-    @Input() scrollWindow = true;
-    @Output() scrolledUp = new EventEmitter<void>();
+    readonly scrollWindow = input(true);
+    readonly scrolledUp = output<void>();
 }
 
 describe('DiscussionSectionComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: DiscussionSectionComponent;
     let fixture: ComponentFixture<DiscussionSectionComponent>;
     let metisService: MetisService;
-    let metisServiceGetFilteredPostsSpy: jest.SpyInstance;
+    let metisServiceGetFilteredPostsSpy: ReturnType<typeof vi.spyOn>;
     let channelService: ChannelService;
-    let getChannelOfLectureSpy: jest.SpyInstance;
-    let getChannelOfExerciseSpy: jest.SpyInstance;
+    let getChannelOfLectureSpy: ReturnType<typeof vi.spyOn>;
+    let getChannelOfExerciseSpy: ReturnType<typeof vi.spyOn>;
     let courseStorageService: CourseStorageService;
 
     beforeEach(async () => {
+        vi.useFakeTimers();
         await TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbTooltipModule), DiscussionSectionComponent, FaIconComponent],
+            imports: [
+                MockModule(FormsModule),
+                MockModule(ReactiveFormsModule),
+                MockModule(NgbTooltipModule),
+                DiscussionSectionComponent,
+                FaIconComponent,
+                InfiniteScrollStubDirective,
+            ],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -90,25 +105,28 @@ describe('DiscussionSectionComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: CourseStorageService, useClass: CourseStorageService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
+                MockProvider(DialogService),
                 {
                     provide: ActivatedRoute,
                     useValue: new MockActivatedRoute({ postId: metisPostTechSupport.id, courseId: metisCourse.id }),
                 },
             ],
-            declarations: [InfiniteScrollStubDirective, MockComponent(ProfilePictureComponent)],
         })
             .overrideComponent(DiscussionSectionComponent, {
                 set: {
                     providers: [{ provide: MetisService, useClass: MetisService }],
                 },
             })
-            .compileComponents();
+            .overrideComponent(DiscussionSectionComponent, {
+                remove: { imports: [PostingThreadComponent, MessageInlineInputComponent] },
+                add: { imports: [MockComponent(PostingThreadComponent), MockComponent(MessageInlineInputComponent)] },
+            });
 
         fixture = TestBed.createComponent(DiscussionSectionComponent);
         component = fixture.componentInstance;
         metisService = fixture.debugElement.injector.get(MetisService);
         channelService = TestBed.inject(ChannelService);
-        getChannelOfLectureSpy = jest.spyOn(channelService, 'getChannelOfLecture').mockReturnValue(
+        getChannelOfLectureSpy = vi.spyOn(channelService, 'getChannelOfLecture').mockReturnValue(
             of(
                 new HttpResponse({
                     body: metisLectureChannelDTO,
@@ -116,7 +134,7 @@ describe('DiscussionSectionComponent', () => {
                 }),
             ),
         );
-        getChannelOfExerciseSpy = jest.spyOn(channelService, 'getChannelOfExercise').mockReturnValue(
+        getChannelOfExerciseSpy = vi.spyOn(channelService, 'getChannelOfExercise').mockReturnValue(
             of(
                 new HttpResponse({
                     body: metisExerciseChannelDTO,
@@ -124,68 +142,69 @@ describe('DiscussionSectionComponent', () => {
                 }),
             ),
         );
-        metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
+        metisServiceGetFilteredPostsSpy = vi.spyOn(metisService, 'getFilteredPosts');
 
         courseStorageService = TestBed.inject(CourseStorageService);
         courseStorageService.setCourses([metisCourse]);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.useRealTimers();
+        vi.restoreAllMocks();
     });
 
-    it('should set course and messages for lecture with lecture channel on initialization', fakeAsync(() => {
+    it('should set course and messages for lecture with lecture channel on initialization', () => {
         fixture.componentRef.setInput('lecture', { ...metisLecture, course: metisCourse });
         fixture.detectChanges();
-        tick();
+        vi.advanceTimersByTime(0);
         expect(component.course).toEqual(metisCourse);
         expect(component.createdPost).toBeDefined();
         expect(component.channel).toEqual(metisLectureChannelDTO);
         expect(getChannelOfLectureSpy).toHaveBeenCalled();
         // Use spread operator to avoid mutating the shared test data array
         expect(component.posts).toEqual([...messagesBetweenUser1User2].reverse());
-    }));
+    });
 
-    it('should set course and messages for exercise with exercise channel on initialization', fakeAsync(() => {
+    it('should set course and messages for exercise with exercise channel on initialization', () => {
         fixture.componentRef.setInput('exercise', { ...metisExercise, course: metisCourse });
         fixture.detectChanges();
-        tick();
+        vi.advanceTimersByTime(0);
         expect(component.course).toEqual(metisCourse);
         expect(component.createdPost).toBeDefined();
         expect(component.channel).toEqual(metisExerciseChannelDTO);
         expect(getChannelOfExerciseSpy).toHaveBeenCalled();
         // Use spread operator to avoid mutating the shared test data array
         expect(component.posts).toEqual([...messagesBetweenUser1User2].reverse());
-    }));
+    });
 
-    it('should reset current post', fakeAsync(() => {
+    it('should reset current post', () => {
         fixture.componentRef.setInput('lecture', { ...metisLecture, course: metisCourse });
         fixture.detectChanges();
         component.resetCurrentPost();
-        tick();
+        vi.advanceTimersByTime(0);
         expect(component.currentPost).toBeUndefined();
         expect(component.currentPostId).toBeUndefined();
-    }));
+    });
 
-    it('should initialize correctly for exercise posts with default settings', fakeAsync(() => {
+    it('should initialize correctly for exercise posts with default settings', () => {
         fixture.componentRef.setInput('exercise', { ...metisExercise, course: metisCourse });
         fixture.detectChanges();
-        tick();
-        expect(component.formGroup.get('filterToUnresolved')?.value).toBeFalse();
-        expect(component.formGroup.get('filterToOwn')?.value).toBeFalse();
-        expect(component.formGroup.get('filterToAnsweredOrReacted')?.value).toBeFalse();
+        vi.advanceTimersByTime(0);
+        expect(component.formGroup.get('filterToUnresolved')?.value).toBe(false);
+        expect(component.formGroup.get('filterToOwn')?.value).toBe(false);
+        expect(component.formGroup.get('filterToAnsweredOrReacted')?.value).toBe(false);
         fixture.changeDetectorRef.detectChanges();
-        const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
-        expect(searchInput.textContent).toBe('');
-        tick();
-    }));
+        const searchInput = getElement(fixture.debugElement, 'input#search');
+        expect((searchInput as HTMLInputElement).value).toBe('');
+        vi.advanceTimersByTime(0);
+    });
 
-    it('should display one new message button for more then 3 messages in channel', fakeAsync(() => {
+    it('should display one new message button for more then 3 messages in channel', () => {
         fixture.componentRef.setInput('exercise', { ...metisExercise, course: metisCourse });
         fixture.detectChanges();
-        tick();
+        vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
-        tick();
+        vi.advanceTimersByTime(0);
         // Create posts with unique IDs to avoid duplicate key errors with track by post.id
         component.posts = [
             { ...metisExercisePosts[0], id: 101 },
@@ -194,28 +213,28 @@ describe('DiscussionSectionComponent', () => {
             { ...metisExercisePosts[1], id: 104 },
         ];
         fixture.changeDetectorRef.detectChanges();
-        tick();
+        vi.advanceTimersByTime(0);
         const newPostButtons = getElements(fixture.debugElement, '#new-post');
         expect(newPostButtons).not.toBeNull();
         expect(newPostButtons).toHaveLength(1);
-    }));
+    });
 
-    it('should display one new message button', fakeAsync(() => {
+    it('should display one new message button', () => {
         fixture.componentRef.setInput('exercise', { ...metisExercise, course: metisCourse });
         fixture.detectChanges();
-        tick();
+        vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
         const newPostButtons = getElements(fixture.debugElement, '#new-post');
         expect(newPostButtons).not.toBeNull();
         expect(newPostButtons).toHaveLength(1);
-    }));
+    });
 
-    it('should show search-bar and filters if not focused to a post', fakeAsync(() => {
+    it('should show search-bar and filters if not focused to a post', () => {
         fixture.componentRef.setInput('exercise', { ...metisExercise, course: metisCourse });
         fixture.detectChanges();
-        tick();
+        vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
-        const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
+        const searchInput = getElement(fixture.debugElement, 'input#search');
         const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
         const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
         const filterToAnsweredOrReacted = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');
@@ -224,13 +243,13 @@ describe('DiscussionSectionComponent', () => {
         expect(filterResolvedCheckbox).not.toBeNull();
         expect(filterOwnCheckbox).not.toBeNull();
         expect(filterToAnsweredOrReacted).not.toBeNull();
-    }));
+    });
 
-    it('should hide search-bar and filters if focused to a post', fakeAsync(() => {
+    it('should hide search-bar and filters if focused to a post', () => {
         fixture.detectChanges();
-        tick();
+        vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
-        const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
+        const searchInput = getElement(fixture.debugElement, 'input#search');
         const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
         const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
         const filterToAnsweredOrReacted = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');
@@ -239,14 +258,15 @@ describe('DiscussionSectionComponent', () => {
         expect(filterResolvedCheckbox).toBeNull();
         expect(filterOwnCheckbox).toBeNull();
         expect(filterToAnsweredOrReacted).toBeNull();
-    }));
+    });
 
-    it('triggering filters should invoke the metis service', fakeAsync(() => {
+    it('triggering filters should invoke the metis service', () => {
         fixture.componentRef.setInput('exercise', { ...metisExercise, course: metisCourse });
         metisServiceGetFilteredPostsSpy.mockReset();
         fixture.detectChanges();
-        tick();
+        vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
+        component.currentUser = { id: 99, login: 'admin' } as User;
         component.formGroup.patchValue({
             filterToUnresolved: true,
             filterToOwn: true,
@@ -261,16 +281,16 @@ describe('DiscussionSectionComponent', () => {
         filterOwnCheckbox.dispatchEvent(new Event('change'));
         filterToAnsweredOrReacted.dispatchEvent(new Event('change'));
 
-        tick();
+        vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(component.currentPostContextFilter.filterToUnresolved).toBeTrue();
-        expect(component.currentPostContextFilter.authorIds!.length > 0).toBeTrue();
-        expect(component.currentPostContextFilter.filterToAnsweredOrReacted).toBeTrue();
+        expect(component.currentPostContextFilter.filterToUnresolved).toBe(true);
+        expect(component.currentPostContextFilter.authorIds!.length > 0).toBe(true);
+        expect(component.currentPostContextFilter.filterToAnsweredOrReacted).toBe(true);
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(4);
-    }));
+    });
 
-    it('loads exercise messages if communication only', fakeAsync(() => {
+    it('loads exercise messages if communication only', () => {
         component.course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
         fixture.componentRef.setInput('exercise', { id: 2 } as Exercise);
         fixture.changeDetectorRef.detectChanges();
@@ -283,9 +303,9 @@ describe('DiscussionSectionComponent', () => {
             metisExerciseChannelDTO,
         );
         expect(component.channel).toBe(metisExerciseChannelDTO);
-    }));
+    });
 
-    it('loads lecture messages if communication only', fakeAsync(() => {
+    it('loads lecture messages if communication only', () => {
         component.course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
         fixture.componentRef.setInput('lecture', { id: 2 } as Lecture);
         fixture.changeDetectorRef.detectChanges();
@@ -298,13 +318,13 @@ describe('DiscussionSectionComponent', () => {
             metisLectureChannelDTO,
         );
         expect(component.channel).toBe(metisLectureChannelDTO);
-    }));
+    });
 
-    it('collapses sidebar if no channel exists', fakeAsync(() => {
+    it('collapses sidebar if no channel exists', () => {
         component.course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
         fixture.componentRef.setInput('lecture', { id: 2 } as Lecture);
         fixture.changeDetectorRef.detectChanges();
-        getChannelOfLectureSpy = jest.spyOn(channelService, 'getChannelOfLecture').mockReturnValue(
+        getChannelOfLectureSpy = vi.spyOn(channelService, 'getChannelOfLecture').mockReturnValue(
             of(
                 new HttpResponse({
                     body: undefined as any,
@@ -316,28 +336,28 @@ describe('DiscussionSectionComponent', () => {
         component.setChannel(1);
 
         expect(component.channel).toBeUndefined();
-        expect(component.noChannelAvailable).toBeTrue();
-        expect(component.collapsed).toBeTrue();
-    }));
+        expect(component.noChannelAvailable).toBe(true);
+        expect(component.collapsed).toBe(true);
+    });
 
-    it('should react to scroll up event', fakeAsync(() => {
+    it('should react to scroll up event', () => {
         const course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
         fixture.componentRef.setInput('lecture', { id: 2, course: course } as Lecture);
         fixture.detectChanges();
-        const fetchNextPageSpy = jest.spyOn(component, 'fetchNextPage');
+        const fetchNextPageSpy = vi.spyOn(component, 'fetchNextPage');
 
         const scrolledUp = new CustomEvent('scrolledUp');
         component.content()!.nativeElement.dispatchEvent(scrolledUp);
 
         expect(fetchNextPageSpy).toHaveBeenCalledOnce();
-    }));
+    });
 
     it('should toggle send message', () => {
         component.shouldSendMessage = true;
         component.toggleSendMessage();
-        expect(component.shouldSendMessage).toBeFalse();
+        expect(component.shouldSendMessage).toBe(false);
         component.toggleSendMessage();
-        expect(component.shouldSendMessage).toBeTrue();
+        expect(component.shouldSendMessage).toBe(true);
     });
 
     it('should change sort direction', () => {
@@ -350,7 +370,7 @@ describe('DiscussionSectionComponent', () => {
         expect(component.currentSortDirection).toBe(SortDirection.ASCENDING);
     });
 
-    it('fetches new messages on scroll up if more messages are available', fakeAsync(() => {
+    it('fetches new messages on scroll up if more messages are available', () => {
         // Use unique post IDs to avoid duplicate key warnings from Angular's @for track
         metisServiceGetFilteredPostsSpy.mockImplementation(() => {
             component.posts = [{ id: 1001 } as any, { id: 1002 } as any];
@@ -359,11 +379,11 @@ describe('DiscussionSectionComponent', () => {
         fixture.componentRef.setInput('lecture', { id: 2, course: course } as Lecture);
         fixture.detectChanges();
         component.posts = [];
-        const commandMetisToFetchPostsSpy = jest.spyOn(component, 'fetchNextPage');
+        const commandMetisToFetchPostsSpy = vi.spyOn(component, 'fetchNextPage');
 
         const scrolledUp = new CustomEvent('scrolledUp');
         component.content()!.nativeElement.dispatchEvent(scrolledUp);
 
         expect(commandMetisToFetchPostsSpy).toHaveBeenCalledOnce();
-    }));
+    });
 });

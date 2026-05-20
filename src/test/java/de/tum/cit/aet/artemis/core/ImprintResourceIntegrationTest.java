@@ -22,10 +22,9 @@ import org.mockito.MockedStatic;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.dto.ImprintDTO;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -220,7 +219,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         Map<String, String> requestBody = new HashMap<>();
         requestBody.put("text", "test");
         requestBody.put("language", "FRENCH");
-        request.put("/api/core/admin/imprint", new ObjectMapper().writeValueAsString(requestBody), HttpStatus.BAD_REQUEST);
+        request.put("/api/core/admin/imprint", JsonObjectMapper.get().writeValueAsString(requestBody), HttpStatus.BAD_REQUEST);
     }
 
     @Test

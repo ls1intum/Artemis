@@ -343,4 +343,536 @@ describe('AdminSbomComponent', () => {
             expect(sendEmailSpy).toHaveBeenCalled();
         });
     });
+
+    describe('loadVersionInfo', () => {
+        it('should load version info successfully', () => {
+            const getVersionSpy = vi.spyOn(sbomService, 'getVersionInfo').mockReturnValue(of(mockVersionInfo));
+
+            component.loadVersionInfo();
+
+            expect(getVersionSpy).toHaveBeenCalled();
+            expect(component.versionInfo()).toEqual(mockVersionInfo);
+        });
+
+        it('should silently fail when version info load fails', () => {
+            vi.spyOn(sbomService, 'getVersionInfo').mockReturnValue(throwError(() => new Error('Load failed')));
+            const errorSpy = vi.spyOn(alertService, 'error');
+
+            component.loadVersionInfo();
+
+            // Should not show error - silently fails
+            expect(errorSpy).not.toHaveBeenCalled();
+            expect(component.versionInfo()).toBeUndefined();
+        });
+    });
+
+    describe('refreshVulnerabilities error handling', () => {
+        it('should show error alert when refresh fails', () => {
+            vi.spyOn(sbomService, 'refreshVulnerabilities').mockReturnValue(throwError(() => new Error('Refresh failed')));
+            const errorSpy = vi.spyOn(alertService, 'error');
+
+            component.refreshVulnerabilities();
+
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.dependencies.vulnerabilityLoadError');
+            expect(component.loadingVulnerabilities()).toBe(false);
+        });
+    });
+
+    describe('upgradeUrgency computed', () => {
+        it('should return none when no update available', () => {
+            vi.spyOn(sbomService, 'getCombinedSbom').mockReturnValue(of(mockCombinedSbom));
+            vi.spyOn(sbomService, 'getVulnerabilities').mockReturnValue(of(mockVulnerabilities));
+            vi.spyOn(sbomService, 'getVersionInfo').mockReturnValue(
+                of({
+                    ...mockVersionInfo,
+                    updateAvailable: false,
+                }),
+            );
+            component.ngOnInit();
+
+            expect(component.upgradeUrgency()).toBe('none');
+        });
+
+        it('should return critical when critical vulnerabilities exist', () => {
+            vi.spyOn(sbomService, 'getCombinedSbom').mockReturnValue(of(mockCombinedSbom));
+            vi.spyOn(sbomService, 'getVulnerabilities').mockReturnValue(
+                of({
+                    ...mockVulnerabilities,
+                    criticalCount: 1,
+                    highCount: 0,
+                }),
+            );
+            vi.spyOn(sbomService, 'getVersionInfo').mockReturnValue(of(mockVersionInfo));
+            component.ngOnInit();
+
+            expect(component.upgradeUrgency()).toBe('critical');
+        });
+
+        it('should return high when high vulnerabilities exist but no critical', () => {
+            vi.spyOn(sbomService, 'getCombinedSbom').mockReturnValue(of(mockCombinedSbom));
+            vi.spyOn(sbomService, 'getVulnerabilities').mockReturnValue(
+                of({
+                    ...mockVulnerabilities,
+                    criticalCount: 0,
+                    highCount: 1,
+                }),
+            );
+            vi.spyOn(sbomService, 'getVersionInfo').mockReturnValue(of(mockVersionInfo));
+            component.ngOnInit();
+
+            expect(component.upgradeUrgency()).toBe('high');
+        });
+
+        it('should return normal when update available but no urgent vulnerabilities', () => {
+            vi.spyOn(sbomService, 'getCombinedSbom').mockReturnValue(of(mockCombinedSbom));
+            vi.spyOn(sbomService, 'getVulnerabilities').mockReturnValue(
+                of({
+                    ...mockVulnerabilities,
+                    criticalCount: 0,
+                    highCount: 0,
+                }),
+            );
+            vi.spyOn(sbomService, 'getVersionInfo').mockReturnValue(of(mockVersionInfo));
+            component.ngOnInit();
+
+            expect(component.upgradeUrgency()).toBe('normal');
+        });
+    });
+
+    describe('hasUrgentVulnerabilities computed', () => {
+        it('should return false when no vulnerabilities', () => {
+            expect(component.hasUrgentVulnerabilities()).toBe(false);
+        });
+
+        it('should return true when critical vulnerabilities exist', () => {
+            vi.spyOn(sbomService, 'getCombinedSbom').mockReturnValue(of(mockCombinedSbom));
+            vi.spyOn(sbomService, 'getVulnerabilities').mockReturnValue(
+                of({
+                    ...mockVulnerabilities,
+                    criticalCount: 1,
+                    highCount: 0,
+                }),
+            );
+            vi.spyOn(sbomService, 'getVersionInfo').mockReturnValue(of(mockVersionInfo));
+            component.ngOnInit();
+
+            expect(component.hasUrgentVulnerabilities()).toBe(true);
+        });
+
+        it('should return true when high vulnerabilities exist', () => {
+            vi.spyOn(sbomService, 'getCombinedSbom').mockReturnValue(of(mockCombinedSbom));
+            vi.spyOn(sbomService, 'getVulnerabilities').mockReturnValue(
+                of({
+                    ...mockVulnerabilities,
+                    criticalCount: 0,
+                    highCount: 1,
+                }),
+            );
+            vi.spyOn(sbomService, 'getVersionInfo').mockReturnValue(of(mockVersionInfo));
+            component.ngOnInit();
+
+            expect(component.hasUrgentVulnerabilities()).toBe(true);
+        });
+
+        it('should return false when only medium or low vulnerabilities exist', () => {
+            vi.spyOn(sbomService, 'getCombinedSbom').mockReturnValue(of(mockCombinedSbom));
+            vi.spyOn(sbomService, 'getVulnerabilities').mockReturnValue(
+                of({
+                    ...mockVulnerabilities,
+                    criticalCount: 0,
+                    highCount: 0,
+                    mediumCount: 5,
+                    lowCount: 3,
+                }),
+            );
+            vi.spyOn(sbomService, 'getVersionInfo').mockReturnValue(of(mockVersionInfo));
+            component.ngOnInit();
+
+            expect(component.hasUrgentVulnerabilities()).toBe(false);
+        });
+    });
+
+    describe('downloadSbom', () => {
+        it('should download server SBOM as JSON', () => {
+            vi.spyOn(sbomService, 'getCombinedSbom').mockReturnValue(of(mockCombinedSbom));
+            vi.spyOn(sbomService, 'getVulnerabilities').mockReturnValue(of(mockVulnerabilities));
+            vi.spyOn(sbomService, 'getVersionInfo').mockReturnValue(of(mockVersionInfo));
+            component.ngOnInit();
+
+            const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test-url');
+            const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+            const createElementSpy = vi.spyOn(document, 'createElement').mockReturnValue({
+                href: '',
+                download: '',
+                click: vi.fn(),
+            } as unknown as HTMLAnchorElement);
+
+            component.downloadSbom('server');
+
+            expect(createObjectURLSpy).toHaveBeenCalled();
+            expect(createElementSpy).toHaveBeenCalledWith('a');
+            expect(revokeObjectURLSpy).toHaveBeenCalledWith('blob:test-url');
+        });
+
+        it('should download client SBOM as JSON', () => {
+            vi.spyOn(sbomService, 'getCombinedSbom').mockReturnValue(of(mockCombinedSbom));
+            vi.spyOn(sbomService, 'getVulnerabilities').mockReturnValue(of(mockVulnerabilities));
+            vi.spyOn(sbomService, 'getVersionInfo').mockReturnValue(of(mockVersionInfo));
+            component.ngOnInit();
+
+            const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test-url');
+            const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+            const createElementSpy = vi.spyOn(document, 'createElement').mockReturnValue({
+                href: '',
+                download: '',
+                click: vi.fn(),
+            } as unknown as HTMLAnchorElement);
+
+            component.downloadSbom('client');
+
+            expect(createObjectURLSpy).toHaveBeenCalled();
+            expect(createElementSpy).toHaveBeenCalledWith('a');
+            expect(revokeObjectURLSpy).toHaveBeenCalledWith('blob:test-url');
+        });
+
+        it('should not download when SBOM source is undefined', () => {
+            // Set up sbom without server component
+            const sbomWithoutServer: CombinedSbom = { client: mockCombinedSbom.client, server: undefined };
+            vi.spyOn(sbomService, 'getCombinedSbom').mockReturnValue(of(sbomWithoutServer));
+            vi.spyOn(sbomService, 'getVulnerabilities').mockReturnValue(of(mockVulnerabilities));
+            vi.spyOn(sbomService, 'getVersionInfo').mockReturnValue(of(mockVersionInfo));
+            component.ngOnInit();
+
+            // Track call count before downloadSbom
+            const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test-url');
+            const callCountBefore = createObjectURLSpy.mock.calls.length;
+
+            component.downloadSbom('server');
+
+            // Should not have been called for 'server' download when server sbom is undefined
+            const callCountAfter = createObjectURLSpy.mock.calls.length;
+            expect(callCountAfter).toBe(callCountBefore);
+        });
+    });
+
+    describe('trackByName', () => {
+        it('should return unique key for component', () => {
+            const mockComponent: SbomComponent = {
+                name: 'test-lib',
+                version: '1.0.0',
+                group: 'com.example',
+            };
+
+            const result = component.trackByName(0, mockComponent);
+
+            expect(result).toBe('com.example:test-lib:1.0.0');
+        });
+
+        it('should handle component without group', () => {
+            const mockComponent: SbomComponent = {
+                name: 'test-lib',
+                version: '1.0.0',
+            };
+
+            const result = component.trackByName(0, mockComponent);
+
+            expect(result).toBe(':test-lib:1.0.0');
+        });
+    });
+
+    describe('getHighestSeverity additional cases', () => {
+        it('should return MEDIUM when no CRITICAL or HIGH', () => {
+            const vulns: Vulnerability[] = [{ severity: 'MEDIUM' } as Vulnerability, { severity: 'LOW' } as Vulnerability];
+            expect(component.getHighestSeverity(vulns)).toBe('MEDIUM');
+        });
+
+        it('should return LOW when only LOW severity', () => {
+            const vulns: Vulnerability[] = [{ severity: 'LOW' } as Vulnerability];
+            expect(component.getHighestSeverity(vulns)).toBe('LOW');
+        });
+
+        it('should return UNKNOWN when only UNKNOWN severity', () => {
+            const vulns: Vulnerability[] = [{ severity: 'UNKNOWN' } as Vulnerability];
+            expect(component.getHighestSeverity(vulns)).toBe('UNKNOWN');
+        });
+
+        it('should return UNKNOWN for unrecognized severity', () => {
+            const vulns: Vulnerability[] = [{ severity: 'OTHER' } as unknown as Vulnerability];
+            expect(component.getHighestSeverity(vulns)).toBe('UNKNOWN');
+        });
+    });
+
+    describe('getSeverityClass additional cases', () => {
+        it('should return bg-warning for MEDIUM', () => {
+            expect(component.getSeverityClass('MEDIUM')).toBe('bg-warning text-dark');
+        });
+    });
+
+    describe('filteredComponents with licenses filter', () => {
+        it('should filter by license text', () => {
+            const sbomWithLicenses: CombinedSbom = {
+                server: {
+                    ...mockCombinedSbom.server,
+                    components: [
+                        {
+                            name: 'lib-with-apache',
+                            version: '1.0.0',
+                            licenses: ['Apache-2.0'],
+                        },
+                        {
+                            name: 'lib-with-mit',
+                            version: '1.0.0',
+                            licenses: ['MIT'],
+                        },
+                    ],
+                },
+            };
+            vi.spyOn(sbomService, 'getCombinedSbom').mockReturnValue(of(sbomWithLicenses));
+            vi.spyOn(sbomService, 'getVulnerabilities').mockReturnValue(of({ ...mockVulnerabilities, vulnerabilities: [] }));
+            component.ngOnInit();
+
+            component.updateFilter('apache');
+            const components = component.filteredComponents();
+
+            expect(components).toHaveLength(1);
+            expect(components[0].name).toBe('lib-with-apache');
+        });
+    });
+
+    describe('filteredComponents with sorting', () => {
+        beforeEach(() => {
+            vi.spyOn(sbomService, 'getCombinedSbom').mockReturnValue(of(mockCombinedSbom));
+            vi.spyOn(sbomService, 'getVulnerabilities').mockReturnValue(of(mockVulnerabilities));
+            component.ngOnInit();
+        });
+
+        it('should sort descending when sortAscending is false', () => {
+            component.updateSortAscending(false);
+            const components = component.filteredComponents();
+
+            expect(components[0].name).toBe('spring-core');
+            expect(components[1].name).toBe('spring-boot');
+            expect(components[2].name).toBe('core');
+        });
+
+        it('should sort by group field', () => {
+            component.updateSortField('group');
+            const components = component.filteredComponents();
+
+            expect(components[0].group).toBe('@angular');
+            expect(components[1].group).toBe('org.springframework');
+            expect(components[2].group).toBe('org.springframework.boot');
+        });
+    });
+
+    describe('component counts when undefined', () => {
+        it('should return 0 for server count when sbom is undefined', () => {
+            expect(component.serverComponentCount()).toBe(0);
+        });
+
+        it('should return 0 for client count when sbom is undefined', () => {
+            expect(component.clientComponentCount()).toBe(0);
+        });
+
+        it('should return 0 for total count when sbom is undefined', () => {
+            expect(component.totalComponentCount()).toBe(0);
+        });
+    });
+
+    describe('filteredComponents returns empty when sbom undefined', () => {
+        it('should return empty array when sbom is not loaded', () => {
+            expect(component.filteredComponents()).toEqual([]);
+        });
+    });
+
+    describe('vulnerability matching', () => {
+        it('should match vulnerabilities by synthetic key when purl not found', () => {
+            const sbomWithoutPurl: CombinedSbom = {
+                server: {
+                    ...mockCombinedSbom.server,
+                    components: [
+                        {
+                            name: 'test-lib',
+                            version: '1.0.0',
+                            group: 'org.example',
+                            // No purl
+                        },
+                    ],
+                },
+            };
+            const vulnsWithSyntheticKey: ComponentVulnerabilities = {
+                ...mockVulnerabilities,
+                vulnerabilities: [
+                    {
+                        componentKey: 'Maven:org.example/test-lib@1.0.0',
+                        vulnerabilities: [
+                            {
+                                id: 'CVE-2024-5678',
+                                severity: 'HIGH',
+                            } as Vulnerability,
+                        ],
+                    },
+                ],
+            };
+
+            vi.spyOn(sbomService, 'getCombinedSbom').mockReturnValue(of(sbomWithoutPurl));
+            vi.spyOn(sbomService, 'getVulnerabilities').mockReturnValue(of(vulnsWithSyntheticKey));
+            component.ngOnInit();
+
+            component.toggleVulnerableOnly();
+            const components = component.filteredComponents();
+
+            expect(components).toHaveLength(1);
+            expect(components[0].componentVulnerabilities).toHaveLength(1);
+        });
+
+        it('should detect npm ecosystem from purl', () => {
+            const sbomWithNpm: CombinedSbom = {
+                client: {
+                    ...mockCombinedSbom.client,
+                    components: [
+                        {
+                            name: 'lodash',
+                            version: '4.0.0',
+                            group: '@types',
+                            purl: 'pkg:npm/@types/lodash@4.0.0',
+                        },
+                    ],
+                },
+            };
+            const vulnsWithNpmKey: ComponentVulnerabilities = {
+                ...mockVulnerabilities,
+                vulnerabilities: [
+                    {
+                        componentKey: 'npm:@types/lodash@4.0.0',
+                        vulnerabilities: [
+                            {
+                                id: 'CVE-2024-NPM',
+                                severity: 'MEDIUM',
+                            } as Vulnerability,
+                        ],
+                    },
+                ],
+            };
+
+            vi.spyOn(sbomService, 'getCombinedSbom').mockReturnValue(of(sbomWithNpm));
+            vi.spyOn(sbomService, 'getVulnerabilities').mockReturnValue(of(vulnsWithNpmKey));
+            component.ngOnInit();
+
+            const components = component.filteredComponents();
+            expect(components).toHaveLength(1);
+        });
+
+        it('should detect npm ecosystem from scoped group without purl', () => {
+            const sbomWithScopedGroup: CombinedSbom = {
+                client: {
+                    components: [
+                        {
+                            name: 'core',
+                            version: '17.0.0',
+                            group: '@angular',
+                            // No purl
+                        },
+                    ],
+                },
+            };
+            const vulnsWithNpmSyntheticKey: ComponentVulnerabilities = {
+                ...mockVulnerabilities,
+                vulnerabilities: [
+                    {
+                        componentKey: 'npm:@angular/core@17.0.0',
+                        vulnerabilities: [
+                            {
+                                id: 'CVE-2024-ANGULAR',
+                                severity: 'LOW',
+                            } as Vulnerability,
+                        ],
+                    },
+                ],
+            };
+
+            vi.spyOn(sbomService, 'getCombinedSbom').mockReturnValue(of(sbomWithScopedGroup));
+            vi.spyOn(sbomService, 'getVulnerabilities').mockReturnValue(of(vulnsWithNpmSyntheticKey));
+            component.ngOnInit();
+
+            component.toggleVulnerableOnly();
+            const components = component.filteredComponents();
+
+            expect(components).toHaveLength(1);
+        });
+
+        it('should return undefined for component without ecosystem', () => {
+            const sbomWithoutEcosystem: CombinedSbom = {
+                server: {
+                    components: [
+                        {
+                            name: 'unknown-lib',
+                            version: '1.0.0',
+                            // No purl, no recognizable group
+                        },
+                    ],
+                },
+            };
+            const vulnsWithKey: ComponentVulnerabilities = {
+                ...mockVulnerabilities,
+                vulnerabilities: [
+                    {
+                        componentKey: 'unknown-key',
+                        vulnerabilities: [
+                            {
+                                id: 'CVE-2024-UNKNOWN',
+                                severity: 'LOW',
+                            } as Vulnerability,
+                        ],
+                    },
+                ],
+            };
+
+            vi.spyOn(sbomService, 'getCombinedSbom').mockReturnValue(of(sbomWithoutEcosystem));
+            vi.spyOn(sbomService, 'getVulnerabilities').mockReturnValue(of(vulnsWithKey));
+            component.ngOnInit();
+
+            const components = component.filteredComponents();
+            expect(components).toHaveLength(1);
+            expect(components[0].componentVulnerabilities).toBeUndefined();
+        });
+    });
+
+    describe('metadata computed properties', () => {
+        it('should return server metadata', () => {
+            const sbomWithMetadata: CombinedSbom = {
+                server: {
+                    ...mockCombinedSbom.server,
+                    metadata: {
+                        timestamp: '2024-01-01T00:00:00Z',
+                        componentName: 'Artemis Server',
+                        version: '7.8.0',
+                    },
+                },
+            };
+            vi.spyOn(sbomService, 'getCombinedSbom').mockReturnValue(of(sbomWithMetadata));
+            vi.spyOn(sbomService, 'getVulnerabilities').mockReturnValue(of(mockVulnerabilities));
+            component.ngOnInit();
+
+            expect(component.serverMetadata()?.componentName).toBe('Artemis Server');
+        });
+
+        it('should return client metadata', () => {
+            const sbomWithMetadata: CombinedSbom = {
+                client: {
+                    ...mockCombinedSbom.client,
+                    metadata: {
+                        timestamp: '2024-01-01T00:00:00Z',
+                        componentName: 'Artemis Client',
+                        version: '7.8.0',
+                    },
+                },
+            };
+            vi.spyOn(sbomService, 'getCombinedSbom').mockReturnValue(of(sbomWithMetadata));
+            vi.spyOn(sbomService, 'getVulnerabilities').mockReturnValue(of(mockVulnerabilities));
+            component.ngOnInit();
+
+            expect(component.clientMetadata()?.componentName).toBe('Artemis Client');
+        });
+    });
 });

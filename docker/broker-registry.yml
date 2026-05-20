@@ -5,7 +5,7 @@
 services:
     jhipster-registry:
         container_name: artemis-jhipster-registry
-        image: docker.io/jhipster/jhipster-registry:v7.5.0
+        image: docker.io/jhipster/jhipster-registry:${JHIPSTER_REGISTRY_VERSION}
         pull_policy: missing
         volumes:
             - ./registry:/central-config
@@ -32,7 +32,7 @@ services:
 
     activemq-broker:
         container_name: artemis-activemq-broker
-        image: docker.io/apache/activemq-artemis:2.44.0-alpine
+        image: docker.io/apache/activemq-artemis:${ACTIVEMQ_VERSION}${ACTIVEMQ_IMAGE_VARIANT}
         pull_policy: missing
         environment:
             ARTEMIS_USER: ${BROKER_USER:-guest}

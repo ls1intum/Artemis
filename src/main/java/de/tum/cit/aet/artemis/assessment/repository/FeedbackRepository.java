@@ -9,9 +9,11 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
@@ -28,6 +30,10 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 public interface FeedbackRepository extends ArtemisJpaRepository<Feedback, Long> {
 
     List<Feedback> findByResult(Result result);
+
+    @Modifying
+    @Transactional // ok because of delete
+    void deleteByResult_Id(long resultId);
 
     @Query("""
             SELECT feedback

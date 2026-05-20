@@ -31,11 +31,13 @@ public class NewPostNotification extends CourseNotification {
 
     protected Long authorId;
 
+    protected boolean authorIsBot;
+
     /**
      * Default constructor used when creating a new post notification.
      */
     public NewPostNotification(Long courseId, String courseTitle, String courseImageUrl, Long postId, String postMarkdownContent, Long channelId, String channelName,
-            String channelType, String authorName, String authorImageUrl, Long authorId) {
+            String channelType, String authorName, String authorImageUrl, Long authorId, boolean authorIsBot) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
         this.postId = postId;
         this.postMarkdownContent = postMarkdownContent;
@@ -45,6 +47,7 @@ public class NewPostNotification extends CourseNotification {
         this.authorImageUrl = authorImageUrl;
         this.authorId = authorId;
         this.channelId = channelId;
+        this.authorIsBot = authorIsBot;
     }
 
     /**

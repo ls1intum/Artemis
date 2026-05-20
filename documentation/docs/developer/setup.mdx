@@ -37,8 +37,37 @@ Before installing Artemis, install and configure the following dependencies:
    Download from [Node.js](https://nodejs.org/en/download).
    Required for compiling and running the Angular client.
 
-4. **npm (≥ 11.5.1)**
-   Installed automatically with Node.js but can be updated separately.
+4. **[pnpm](https://pnpm.io) (≥ 11.1.0) — the package manager Artemis uses for the Angular client**
+
+   The official pnpm website is [pnpm.io](https://pnpm.io/); the CLI reference for `pnpm install` is at [pnpm.io/cli/install](https://pnpm.io/cli/install) and the installation guide at [pnpm.io/installation](https://pnpm.io/installation).
+   Artemis uses pnpm instead of npm. We do **not** use `npm` / `npx` anywhere; please don't run `npm install` in this repo — it will create a `package-lock.json` that conflicts with the committed `pnpm-lock.yaml`. The exact pnpm version is pinned in `package.json` via the `packageManager` field, so every developer and every CI job uses the same version.
+
+   You don't need to follow the official pnpm install steps manually — Node.js 24 ships with [Corepack](https://nodejs.org/api/corepack.html), a small shim that downloads and runs the pinned package manager on demand. This is also the [installation method recommended by the pnpm team](https://pnpm.io/installation#using-corepack). Activate it **once** per machine:
+
+   ```bash
+   corepack enable
+   ```
+
+   After that, any `pnpm` command run inside the Artemis repository automatically uses the pinned version. Verify the setup with:
+
+   ```bash
+   pnpm --version          # should print 11.1.1 (matches packageManager in package.json)
+   which pnpm              # should point at the Corepack shim, e.g. ~/.nvm/.../bin/pnpm
+   ```
+
+   **First-time install of dependencies** (after cloning the repo):
+
+   ```bash
+   pnpm install            # installs everything declared in package.json + pnpm-lock.yaml
+   ```
+
+   **Troubleshooting `corepack enable`:**
+   - **Permission denied / EACCES on macOS or Linux:** Corepack writes shim symlinks next to the Node.js binary. If Node.js was installed system-wide (e.g. via `apt`/`brew install node`), run `sudo corepack enable` once. With [nvm](https://github.com/nvm-sh/nvm), [fnm](https://github.com/Schniz/fnm), or [Volta](https://volta.sh), no `sudo` is needed.
+   - **`corepack: command not found`:** Your Node.js install is too old or was built without Corepack. Reinstall Node.js 24+ from [nodejs.org](https://nodejs.org/en/download); Corepack is included by default.
+   - **`pnpm: command not found` after `corepack enable`:** Restart your shell so the new shim is picked up on `PATH`.
+   - **Behind a corporate proxy:** Corepack fetches the pinned pnpm tarball from npmjs.org on first use. Set `HTTPS_PROXY` / `HTTP_PROXY` env vars if your network requires it.
+
+   We migrated from npm to pnpm to get deterministic, content-addressable installs (faster cold installs locally and in CI, byte-identical `node_modules` across machines, stricter override semantics, and patch application via `pnpm.patchedDependencies` instead of a `postinstall` `patch-package` step).
 
 5. **Graphviz (Optional, but Recommended for Production Setups)**
    Install from [Graphviz](https://www.graphviz.org/download/) to enable graph generation in exercise descriptions.
@@ -207,6 +236,8 @@ artemis:
 
     user-management:
         use-external: true # enables ldap authentication
+        passkey:
+          enabled: true
         password-reset:
             links:
                 en: '<link>'
@@ -221,6 +252,30 @@ artemis:
     git:
         name: Artemis
         email: artemis@in.tum.de
+
+    # Required module feature toggles
+    atlas:
+      enabled: true
+    exam:
+      enabled: true
+    fileupload:
+      enabled: true
+    lecture:
+      enabled: true
+    lti:
+      enabled: true
+    modeling:
+      enabled: true
+    plagiarism:
+      enabled: true
+    text:
+      enabled: true
+    tutorialgroup:
+      enabled: true
+    sharing:
+      enabled: true
+    hyperion:
+      enabled: true
 
     athena:
         # If you want to use Athena, refer to the dedicated configuration section. Under Administration Guide, Setup of Extension Services.
@@ -245,12 +300,11 @@ When you import the project into IntelliJ the run configurations will also be im
 
 The recommended way is to run the server and the client separately. This provides fast rebuilds of the server and hot module replacement in the client.
 
-- **Artemis (Client):** Will execute `npm install` and `npm run start`. The client will be available at [http://localhost:9000/](http://localhost:9000/) with hot module replacement enabled (also see [Client Setup](#client-setup)).
+- **Artemis (Client):** Will execute `pnpm install` and `pnpm start`. The client will be available at [http://localhost:9000/](http://localhost:9000/) with hot module replacement enabled (also see [Client Setup](#client-setup)).
 - **Artemis (Server, LocalVC & LocalCI):** The server will be started separated from the client with the profiles `dev,artemis,localci,localvc,scheduling,buildagent,core,ldap,local`.
 - **Artemis (Server, LocalVC & Jenkins):** The server will be started separated from the client with the profiles `dev,jenkins,localvc,artemis,scheduling,core,local`.
 - **Artemis (Server, LocalVC & LocalCI, Athena):** The server will be started separated from the client with the profiles `dev,localci,localvc,artemis,scheduling,athena,buildagent,core,local`.
-- **Artemis (Server, LocalVC & LocalCI, Iris):** The server will be started separated from the client with the profiles `dev,localci,localvc,artemis,scheduling,buildagent,core,local`. To enable Iris, add the VM option `-Dartemis.iris.enabled=true` or the program argument `--artemis.iris.enabled=true`.
-- **Artemis (Server, LocalVC & LocalCI, Theia):** The server will be started separated from the client with the profiles `theia,dev,localci,localvc,artemis,scheduling,buildagent,core,ldap,local`.
+- **Artemis (Server, LocalVC & LocalCI, Iris):** The server will be started separated from the client with the profiles `dev,localci,localvc,artemis,scheduling,iris,buildagent,core,local`.
 - **Artemis (BuildAgent):** The server will be started separated from the client with the profiles `buildagent,local`. This configuration is used to run the build agent for the local CI. This configuration is rarely needed for development.
 - **Artemis (Server, Prod, LocalCI):** The server will be started separated from the client with the profiles `prod,core,ldap,localvc,localci,scheduling,local`. This configuration is used for production-like testing.
 
@@ -312,6 +366,50 @@ You can find the latest Artemis Dockerfile at `docker/artemis/Dockerfile`.
     **ARM64 Image builds** might run out of memory if not provided with enough memory and/or swap space.
     On an *Apple M1* we had to set the **Docker Desktop** memory limit to 12GB or more.
 </Callout>
+
+#### Required Configuration
+
+<Callout variant={CalloutVariant.info}>
+  The Docker image requires several module properties to be explicitly configured. Without them, the server will fail to start with an error such as:
+  *Property artemis.atlas.enabled not found in Artemis configuration.
+  Make sure to add it to your application.yml-file.*
+</Callout>
+
+To provide the required configuration, one option is to create an `application-local.yml` and mount it into `/opt/artemis/config/`. Use the properties from [Common Configuration Options](#common-configuration-options) as a base, and add a `spring.datasource` block:
+
+```yaml
+# application-local.yml
+# ... all other properties from Common Configuration Options
+spring:
+    datasource:
+        # If your database is running in another Docker container locally on your machine, replace `<db-host>` with `host.docker.internal` (macOS/Windows) or the host's IP address (Linux).
+        url: "jdbc:mysql://<db-host>:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC"
+        # Depending on your database setup, the following may be required:
+        username: root
+        password: ""
+```
+
+Then run the container using the following command and replace `<TAG/VERSION>` as described above:
+
+```bash
+docker run \
+  -v "$PWD/application-local.yml:/opt/artemis/config/application-local.yml:ro" \
+  -e SPRING_CONFIG_ADDITIONAL_LOCATION=file:/opt/artemis/config/ \
+  -e SPRING_PROFILES_ACTIVE=dev,artemis,localci,localvc,scheduling,buildagent,core,ldap,local,apollon \
+  -p 8080:8080 \
+  ghcr.io/ls1intum/artemis:<TAG/VERSION>
+```
+
+Alternatively, you can pass properties directly as Docker environment variables using [Spring's relaxed binding](https://github.com/spring-projects/spring-boot/wiki/Relaxed-Binding-2.0#environment-variables) (e.g. `artemis.atlas.enabled` → `ARTEMIS_ATLAS_ENABLED`). You can adapt the following to your needs:
+
+```bash
+docker run \
+  -e ARTEMIS_ATLAS_ENABLED=true \
+  -e SPRING_DATASOURCE_URL="jdbc:mysql://<db-host>:3306/Artemis?..." \
+  ...
+  -p 8080:8080 \
+  ghcr.io/ls1intum/artemis:<TAG/VERSION>
+```
 
 #### Debugging with Docker
 
@@ -377,35 +475,47 @@ For production setup, see [Hyperion Service](/admin/hyperion) in the Administrat
 
 ## Client Setup
 
-You need to install Node and npm on your local machine.
+You need Node.js on your local machine, plus pnpm activated via Corepack (`corepack enable`). The pnpm version is pinned in `package.json` via the `packageManager` field. If you haven't activated pnpm yet, see [step 4 of Required Dependencies](#required-dependencies) above for the full first-time setup and troubleshooting tips.
 
 ### Using IntelliJ
 
 If you are using [IntelliJ](https://www.jetbrains.com/idea/download/) you can use the pre-configured `Artemis (Client)` run configuration that will be delivered with this repository:
 
 - Choose `Run | Edit Configurations...`
-- Select the `Artemis (Client)` configuration from the `npm section`
+- Select the `Artemis (Client)` configuration from the `npm section` (IntelliJ groups `package.json` scripts under "npm" even though we run pnpm)
 - Now you can run the configuration in the upper right corner of IntelliJ
 
 ### Using the command line
 
-You should be able to run the following command to install development tools and dependencies. You will only need to run this command when dependencies change in `package.json`.
+If this is your first time setting up the client, activate the pinned pnpm version once:
 
 ```bash
-npm install
+corepack enable
+```
+
+You should then be able to run the following command to install development tools and dependencies. You will only need to run this command when dependencies change in `package.json`.
+
+```bash
+pnpm install
+```
+
+In CI (and whenever you want the install to fail rather than silently update the lockfile), use:
+
+```bash
+pnpm install --frozen-lockfile
 ```
 
 To start the client application in the browser, use the following command:
 
 ```bash
-npm run start
+pnpm start
 ```
 
 This compiles TypeScript code to JavaScript code, starts the live reloading feature (i.e. whenever you change a TypeScript file and save, the client is automatically reloaded with the new code) and will start the client application in your browser on http://localhost:9000.
 If you have configured `application-artemis.yml` correctly, then you should be able to login with your TUM Online account.
 
 <Callout variant={CalloutVariant.info}>
-    In case you encounter any problems regarding JavaScript heap memory leaks when executing `npm run start` or any other scripts from `package.json`, you can adjust a [memory limit parameter](https://nodejs.org/docs/latest-v24.x/api/cli.html#--max-old-space-sizesize-in-megabytes) (`node-options=--max-old-space-size=6144`) which is set by default in the project-wide `.npmrc` file. If you still face the issue, you can try to set a lower/higher value than 6144 MB. Recommended values are 3072 (3GB), 4096 (4GB), 5120 (5GB), 6144 (6GB), 7168 (7GB), and 8192 (8GB). You can override the project-wide `.npmrc` file by [using a per-user config file (~/.npmrc)](https://docs.npmjs.com/cli/v8/configuring-npm/npmrc). Make sure to **not commit changes** in the project-wide `.npmrc` unless the Github build also needs these settings.
+    In case you encounter any problems regarding JavaScript heap memory leaks when executing `pnpm start` or any other scripts from `package.json`, you can adjust the [memory limit parameter](https://nodejs.org/docs/latest-v24.x/api/cli.html#--max-old-space-sizesize-in-megabytes) (`node-options=--max-old-space-size=6144`) which is set by default in the project-wide `.npmrc` file. pnpm 11 honours `node-options` from `.npmrc` for Node settings; pnpm's own install/resolution configuration lives in `pnpm-workspace.yaml` (e.g. `autoInstallPeers`, `allowBuilds`, `patchedDependencies`). If you still face the issue, you can try to set a lower/higher value than 6144 MB. Recommended values are 3072 (3GB), 4096 (4GB), 5120 (5GB), 6144 (6GB), 7168 (7GB), and 8192 (8GB). You can override the project-wide `.npmrc` file by [using a per-user `~/.npmrc`](https://pnpm.io/npmrc). Make sure to **not commit changes** in the project-wide `.npmrc` unless the GitHub build also needs these settings.
 </Callout>
 
 For more information, review [Working with Angular](https://angular.dev/tutorials).
@@ -418,7 +528,7 @@ For further instructions on how to develop with JHipster, have a look at [Using 
 ### General Setup Problems
 
 - Restarting IntelliJ with invalidated caches *(File > Invalidate Caches...)* might resolve the current issue.
-- When facing issues with deep dependencies and changes were made to the `package.json` file, executing `npm install --force` might resolve the issue.
+- When facing issues with deep dependencies and changes were made to the `package.json` file, deleting `node_modules` and running `pnpm install` again resolves most issues. To bypass the lockfile (e.g. after manually editing dependency ranges), use `pnpm install --no-frozen-lockfile`.
 - When encountering a compilation error due to `invalid source release` make sure that you have set the Java version properly at 3 places:
   - File > Project Structure > Project Settings > Project > Project SDK
   - File > Project Structure > Project Settings > Project > Project Language Level
@@ -435,6 +545,9 @@ For further instructions on how to develop with JHipster, have a look at [Using 
 ### Client
 
 - If you are using a machine with limited RAM *(e.g. ~8 GB RAM)* you might have issues starting the Artemis Client. You can resolve this by following the description in [Using the command line](#using-the-command-line).
+- **`pnpm: command not found`** after cloning the repo: run `corepack enable` once (see [step 4 of Required Dependencies](#required-dependencies)). If `corepack` itself is missing, your Node.js install is too old; reinstall Node.js 24+ from [nodejs.org](https://nodejs.org/en/download).
+- **Accidentally ran `npm install` and got a `package-lock.json`:** delete `package-lock.json` and `node_modules`, then run `pnpm install`. The repository's `.gitignore` blocks `package-lock.json` from being committed, but a stray copy still confuses tooling.
+- **`pnpm install` complains the lockfile is out of date:** the lockfile is authoritative; running `pnpm install` locally without `--frozen-lockfile` updates it. If your edit was intentional (e.g. you bumped a dependency in `package.json`), commit the updated `pnpm-lock.yaml`. If not, run `git checkout pnpm-lock.yaml` and rerun `pnpm install --frozen-lockfile`.
 
 ---
 

@@ -8,21 +8,16 @@
                             <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(internalTextExercises())" [ngModel]="allChecked" />
                         </th>
                     }
-                    <th jhiSortBy="id"><span jhiTranslate="global.field.id"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.release"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.due"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                    <th jhiSortBy="assessmentDueDate"><span jhiTranslate="artemisApp.exercise.assessmentDue"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dates"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                    <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonus"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                    <th jhiSortBy="includedInOverallScore"><span jhiTranslate="artemisApp.exercise.includedCompletely"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     @if (course.presentationScore) {
                         <th jhiSortBy="presentationScoreEnabled">
                             <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title"></span>&nbsp;<fa-icon [icon]="faSort" />
                         </th>
                     }
                     <th class="d-md-table-cell"><span jhiTranslate="artemisApp.exercise.categories"></span></th>
-                    <th></th>
+                    <th style="width: 1%"></th>
                 </tr>
             </thead>
             <tbody class="markdown-preview">
@@ -35,30 +30,60 @@
                         }
                         <td>
                             @if (textExercise.isAtLeastTutor) {
-                                <a [routerLink]="['/course-management', course.id, 'text-exercises', textExercise.id]">{{ textExercise.id }}</a>
-                            } @else {
-                                {{ textExercise.id }}
-                            }
-                        </td>
-                        <td>
-                            @if (textExercise.isAtLeastTutor) {
                                 <a [routerLink]="['/course-management', course.id, 'text-exercises', textExercise.id]">{{ textExercise.title }}</a>
                             } @else {
                                 {{ textExercise.title }}
                             }
                         </td>
-                        <td>{{ textExercise.releaseDate | artemisDate }}</td>
-                        <td>{{ textExercise.dueDate | artemisDate }}</td>
-                        <td>{{ textExercise.assessmentDueDate | artemisDate }}</td>
-                        <td>{{ textExercise.maxPoints }}</td>
-                        <td>{{ textExercise.bonusPoints }}</td>
-                        <td>{{ exerciseService.isIncludedInScore(textExercise) }}</td>
+                        <td style="white-space: nowrap">
+                            <div class="d-flex flex-column small">
+                                @if (textExercise.releaseDate) {
+                                    <div>
+                                        <span class="text-secondary" jhiTranslate="artemisApp.exercise.release"></span>:
+                                        {{ textExercise.releaseDate | artemisDate }}
+                                    </div>
+                                }
+                                @if (textExercise.dueDate) {
+                                    <div>
+                                        <span class="text-secondary" jhiTranslate="artemisApp.exercise.due"></span>:
+                                        {{ textExercise.dueDate | artemisDate }}
+                                    </div>
+                                }
+                                @if (textExercise.assessmentDueDate) {
+                                    <div>
+                                        <span class="text-secondary" jhiTranslate="artemisApp.exercise.assessmentDue"></span>:
+                                        {{ textExercise.assessmentDueDate | artemisDate }}
+                                    </div>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                {{ textExercise.maxPoints }}
+                                @if (textExercise.bonusPoints && textExercise.bonusPoints > 0) {
+                                    <span class="text-muted">(+{{ textExercise.bonusPoints }})</span>
+                                }
+                            </div>
+                            <div class="small">
+                                @switch (textExercise.includedInOverallScore) {
+                                    @case ('INCLUDED_COMPLETELY') {
+                                        <span class="badge bg-success" jhiTranslate="artemisApp.exercise.includedCompletely"></span>
+                                    }
+                                    @case ('INCLUDED_AS_BONUS') {
+                                        <span class="badge bg-warning" jhiTranslate="artemisApp.exercise.includedAsBonus"></span>
+                                    }
+                                    @case ('NOT_INCLUDED') {
+                                        <span class="badge bg-secondary" jhiTranslate="artemisApp.exercise.notIncluded"></span>
+                                    }
+                                }
+                            </div>
+                        </td>
                         @if (course.presentationScore) {
                             <td>{{ textExercise.presentationScoreEnabled }}</td>
                         }
                         <td class="d-md-table-cell"><jhi-exercise-categories [exercise]="textExercise" /></td>
-                        <td class="text-end">
-                            <jhi-text-exercise-row-buttons [courseId]="courseId" [exercise]="textExercise" />
+                        <td class="text-end" style="white-space: nowrap">
+                            <jhi-text-exercise-row-buttons [courseId]="courseId" [course]="course" [exercise]="textExercise" />
                         </td>
                     </tr>
                 }
@@ -71,9 +96,15 @@
                         jhiDeleteButton
                         [entityTitle]="'Delete All Text Exercises'"
                         deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
+                        [translateValues]="{
+                            courseTitle: course.title,
+                            courseType: course.testCourse
+                                ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
+                                : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
+                        }"
                         (delete)="deleteMultipleExercises(selectedExercises, textExerciseService)"
                         [dialogError]="dialogError$"
-                        id="delete-all-quiz"
+                        id="delete-all-text"
                         class="mb-1"
                     >
                         <fa-icon [icon]="faTrash" />

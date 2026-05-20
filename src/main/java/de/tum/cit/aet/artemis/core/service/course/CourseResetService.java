@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSet
 import de.tum.cit.aet.artemis.core.domain.CourseOperationType;
 import de.tum.cit.aet.artemis.core.dto.CourseSummaryDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
@@ -135,6 +136,8 @@ public class CourseResetService {
 
     private final UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository;
 
+    private final LLMTokenUsageRequestRepository llmTokenUsageRequestRepository;
+
     private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
 
     private final CourseRepository courseRepository;
@@ -156,9 +159,10 @@ public class CourseResetService {
             Optional<IrisSettingsApi> irisSettingsApi, Optional<TutorialGroupApi> tutorialGroupApi, ReactionRepository reactionRepository,
             AnswerPostRepository answerPostRepository, PostRepository postRepository, CourseNotificationRepository courseNotificationRepository,
             UserCourseNotificationSettingPresetRepository userCourseNotificationSettingPresetRepository,
-            UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository, LLMTokenUsageTraceRepository llmTokenUsageTraceRepository,
-            CourseRepository courseRepository, UserRepository userRepository, UserService userService, CourseOperationProgressService progressService,
-            CourseAdminService courseAdminService, ParticipationRepository participationRepository, SubmissionRepository submissionRepository) {
+            UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository,
+            LLMTokenUsageRequestRepository llmTokenUsageRequestRepository, LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, CourseRepository courseRepository,
+            UserRepository userRepository, UserService userService, CourseOperationProgressService progressService, CourseAdminService courseAdminService,
+            ParticipationRepository participationRepository, SubmissionRepository submissionRepository) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.exerciseRepository = exerciseRepository;
         this.examDeletionApi = examDeletionApi;
@@ -173,6 +177,7 @@ public class CourseResetService {
         this.courseNotificationRepository = courseNotificationRepository;
         this.userCourseNotificationSettingPresetRepository = userCourseNotificationSettingPresetRepository;
         this.userCourseNotificationSettingSpecificationRepository = userCourseNotificationSettingSpecificationRepository;
+        this.llmTokenUsageRequestRepository = llmTokenUsageRequestRepository;
         this.llmTokenUsageTraceRepository = llmTokenUsageTraceRepository;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
@@ -464,6 +469,8 @@ public class CourseResetService {
      * @param courseId the ID of the course whose LLM traces should be deleted
      */
     private void deleteLLMTokenUsageTraces(long courseId) {
+        // Delete requests first to avoid foreign key constraint violations
+        llmTokenUsageRequestRepository.deleteAllByTraceCourseId(courseId);
         llmTokenUsageTraceRepository.deleteAllByCourseId(courseId);
     }
 

@@ -1,26 +1,22 @@
 <div class="chat-status-bar" [class.open]="open()">
-    <div class="display" [class.active]="activeStage()" [class.has-message]="displayedSubText()" [class.error]="activeStage()?.state === IrisStageStateDTO.ERROR">
-        @if (displayedText()) {
-            @switch (activeStage()?.state) {
-                @case (IrisStageStateDTO.ERROR) {
-                    <fa-icon [icon]="faCircleXmark" />
-                }
-                @default {
-                    <fa-icon [icon]="faArrowsRotate" animation="spin" />
-                }
-            }
+    @if (isError()) {
+        <div class="display error" role="alert">
+            <fa-icon [icon]="faCircleXmark" />
+            <div>{{ stageMessage() }}</div>
+        </div>
+    } @else {
+        <div class="thinking-state">
+            <span class="visually-hidden" role="status" aria-live="polite">{{ displayName() }}</span>
 
-            <div>
-                {{ displayedText() }}
-                @if (displayedSubText()) {
-                    <div class="message">{{ displayedSubText() }}</div>
-                }
+            <jhi-iris-logo [size]="20" [spinning]="true" aria-hidden="true" />
+
+            <span class="status-text" aria-hidden="true" [class.anim-a]="animToggle()" [class.anim-b]="!animToggle()">{{ displayName() }}</span>
+
+            <div class="typing-dots" aria-hidden="true">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
             </div>
-        }
-    </div>
-    <div class="progress-bar">
-        @for (stage of processedStages(); track $index) {
-            <div class="part" [style.flex-grow]="stage.weight" [style]="stage.state === IrisStageStateDTO.IN_PROGRESS ? style() : undefined" [ngClass]="stage.lowerCaseState"></div>
-        }
-    </div>
+        </div>
+    }
 </div>

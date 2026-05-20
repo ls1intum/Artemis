@@ -24,6 +24,10 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from 'app/shared/service/file-uploader.service';
+import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { MetisService } from 'app/communication/service/metis.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('MarkdownEditorMonacoComponent', () => {
     let fixture: ComponentFixture<MarkdownEditorMonacoComponent>;
@@ -35,6 +39,9 @@ describe('MarkdownEditorMonacoComponent', () => {
             providers: [
                 MockProvider(FileUploaderService),
                 MockProvider(AlertService),
+                MockProvider(MetisConversationService),
+                MockProvider(MetisService),
+                MockProvider(ProfileService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -68,7 +75,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         comp.resizableMaxHeight = MarkdownEditorHeight.LARGE;
         comp.enableResize = true;
         fixture.detectChanges();
-        const wrapperTop = comp.wrapper.nativeElement.getBoundingClientRect().top;
+        const wrapperTop = comp.wrapper().nativeElement.getBoundingClientRect().top;
         const minPoint = comp.constrainDragPosition({ x: 0, y: wrapperTop - 10000 });
         expect(minPoint.y).toBe(wrapperTop + comp.resizableMinHeight);
         const maxPoint = comp.constrainDragPosition({ x: 0, y: wrapperTop + 10000 });
@@ -91,17 +98,32 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
-    it('should layout and focus the editor when switching to editor mode', () => {
+    it('should layout and focus the editor when the edit tab is shown', () => {
         fixture.detectChanges();
         const adjustEditorDimensionsSpy = jest.spyOn(comp, 'adjustEditorDimensions');
-        const focusSpy = jest.spyOn(comp.monacoEditor, 'focus');
+        const focusSpy = jest.spyOn(comp.monacoEditor()!, 'focus');
         comp.onNavChanged({
             nextId: MarkdownEditorMonacoComponent.TAB_EDIT,
             activeId: MarkdownEditorMonacoComponent.TAB_PREVIEW,
             preventDefault: jest.fn(),
         });
+        comp.onTabShown();
         expect(adjustEditorDimensionsSpy).toHaveBeenCalledOnce();
         expect(focusSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not layout or focus the editor when a non-edit tab is shown', () => {
+        fixture.detectChanges();
+        const adjustEditorDimensionsSpy = jest.spyOn(comp, 'adjustEditorDimensions');
+        const focusSpy = jest.spyOn(comp.monacoEditor()!, 'focus');
+        comp.onNavChanged({
+            nextId: MarkdownEditorMonacoComponent.TAB_PREVIEW,
+            activeId: MarkdownEditorMonacoComponent.TAB_EDIT,
+            preventDefault: jest.fn(),
+        });
+        comp.onTabShown();
+        expect(adjustEditorDimensionsSpy).not.toHaveBeenCalled();
+        expect(focusSpy).not.toHaveBeenCalled();
     });
 
     it('should emit when leaving the visual tab', () => {
@@ -113,6 +135,87 @@ describe('MarkdownEditorMonacoComponent', () => {
             preventDefault: jest.fn(),
         });
         expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not create a review comment manager when review comments are disabled', () => {
+        fixture.detectChanges();
+        const getReviewCommentManagerSpy = jest.spyOn(comp as any, 'getReviewCommentManager');
+        (comp as any).reviewCommentManager = undefined;
+        fixture.componentRef.setInput('enableExerciseReviewComments', false);
+
+        (comp as any).updateReviewCommentButton();
+
+        expect(getReviewCommentManagerSpy).not.toHaveBeenCalled();
+    });
+
+    it('should use initial line number as fallback for problem statement threads', () => {
+        const thread = { initialLineNumber: 8 } as any;
+        expect((comp as any).getProblemStatementThreadLine(thread)).toBe(7);
+    });
+
+    it('should prefer current line number over initial line number for problem statement threads', () => {
+        const thread = { lineNumber: 5, initialLineNumber: 8 } as any;
+        expect((comp as any).getProblemStatementThreadLine(thread)).toBe(4);
+    });
+
+    it('should expose review comment manager callbacks for problem statement context', () => {
+        fixture.detectChanges();
+        (comp.monacoEditor()! as any).getEditor = jest.fn().mockReturnValue({
+            onDidScrollChange: jest.fn().mockReturnValue({ dispose: jest.fn() }),
+        });
+
+        fixture.componentRef.setInput('enableExerciseReviewComments', true);
+        fixture.componentRef.setInput('showLocationWarning', false);
+        fixture.changeDetectorRef.detectChanges();
+
+        const manager = (comp as any).getReviewCommentManager();
+        const config = (manager as any).config;
+
+        expect(config.shouldShowHoverButton()).toBeTrue();
+        expect(config.canSubmit()).toBeTrue();
+        expect(config.getDraftFileName()).toBe('problem_statement.md');
+        expect(config.getDraftContext({ lineNumber: 3, fileName: 'ignored.md' })).toEqual({
+            targetType: CommentThreadLocationType.PROBLEM_STATEMENT,
+        });
+
+        const thread = { id: 1, targetType: CommentThreadLocationType.PROBLEM_STATEMENT, initialLineNumber: 2, lineNumber: 6 } as any;
+        (comp as any).exerciseReviewCommentService.threads.set([thread]);
+
+        expect(config.getThreads()).toEqual([thread]);
+        expect(config.filterThread(thread)).toBeTrue();
+        expect(config.filterThread({ ...thread, targetType: CommentThreadLocationType.TEMPLATE_REPO })).toBeFalse();
+        expect(config.getThreadLine(thread)).toBe(5);
+
+        const onAddSpy = jest.spyOn(comp.onAddReviewComment, 'emit');
+        config.onAdd({ lineNumber: 7, fileName: 'problem_statement.md' });
+        expect(onAddSpy).toHaveBeenCalledExactlyOnceWith({ lineNumber: 7, fileName: 'problem_statement.md' });
+
+        expect(config.showLocationWarning()).toBeFalse();
+        fixture.componentRef.setInput('showLocationWarning', true);
+        fixture.changeDetectorRef.detectChanges();
+        expect(config.showLocationWarning()).toBeTrue();
+        expect(config.canSubmit()).toBeFalse();
+
+        comp.inEditMode = false;
+        expect(config.shouldShowHoverButton()).toBeFalse();
+    });
+
+    it('should still update review comment button when a manager already exists', () => {
+        const updateHoverButton = jest.fn();
+        (comp as any).reviewCommentManager = {
+            updateHoverButton,
+            updateDraftInputs: jest.fn(),
+            tryUpdateThreadInputs: jest.fn(),
+            clearDrafts: jest.fn(),
+            disposeAll: jest.fn(),
+            renderWidgets: jest.fn(),
+        };
+        fixture.componentRef.setInput('enableExerciseReviewComments', false);
+        fixture.changeDetectorRef.detectChanges();
+
+        (comp as any).updateReviewCommentButton();
+
+        expect(updateHoverButton).toHaveBeenCalled();
     });
 
     it.each([
@@ -242,7 +345,7 @@ describe('MarkdownEditorMonacoComponent', () => {
 
     it('should open the color selector', () => {
         fixture.detectChanges();
-        const openColorSelectorSpy = jest.spyOn(comp.colorSelector, 'openColorSelector');
+        const openColorSelectorSpy = jest.spyOn(comp.colorSelector()!, 'openColorSelector');
         const event = new MouseEvent('click');
         comp.openColorSelector(event);
         expect(openColorSelectorSpy).toHaveBeenCalledExactlyOnceWith(event, comp.colorPickerMarginTop, comp.colorPickerHeight);
@@ -265,7 +368,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         const fullscreenAction = new FullscreenAction();
         comp.metaActions = [fullscreenAction];
         fixture.detectChanges();
-        expect(fullscreenAction.element).toBe(comp.fullElement.nativeElement);
+        expect(fullscreenAction.element).toBe(comp.fullElement().nativeElement);
     });
 
     it('should pass the wrapper element to the fullscreen action when height is managed internally', () => {
@@ -274,7 +377,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         const fullscreenAction = new FullscreenAction();
         comp.metaActions = [fullscreenAction];
         fixture.detectChanges();
-        expect(fullscreenAction.element).toBe(comp.wrapper.nativeElement);
+        expect(fullscreenAction.element).toBe(comp.wrapper().nativeElement);
     });
 
     it('should compute height 0 for a missing element', () => {
@@ -326,21 +429,21 @@ describe('MarkdownEditorMonacoComponent', () => {
         const dragElemHeight = 20;
         fixture.detectChanges();
         jest.spyOn(comp, 'getElementClientHeight').mockReturnValue(dragElemHeight);
-        jest.spyOn(comp.wrapper.nativeElement, 'getBoundingClientRect').mockReturnValue({ top: wrapperTop } as DOMRect);
+        jest.spyOn(comp.wrapper().nativeElement, 'getBoundingClientRect').mockReturnValue({ top: wrapperTop } as DOMRect);
         comp.onResizeMoved(cdkDragMove);
         expect(comp.targetWrapperHeight).toBe(300 - wrapperTop - dragElemHeight / 2);
     });
 
     it('should use the correct options to enable text field mode', () => {
         fixture.detectChanges();
-        const applySpy = jest.spyOn(comp.monacoEditor, 'applyOptionPreset');
+        const applySpy = jest.spyOn(comp.monacoEditor()!, 'applyOptionPreset');
         comp.enableTextFieldMode();
         expect(applySpy).toHaveBeenCalledExactlyOnceWith(COMMUNICATION_MARKDOWN_EDITOR_OPTIONS);
     });
 
     it('should apply option presets to the editor', () => {
         fixture.detectChanges();
-        const applySpy = jest.spyOn(comp.monacoEditor, 'applyOptionPreset');
+        const applySpy = jest.spyOn(comp.monacoEditor()!, 'applyOptionPreset');
         const preset = new MonacoEditorOptionPreset({ lineNumbers: 'off' });
         comp.applyOptionPreset(preset);
         expect(applySpy).toHaveBeenCalledExactlyOnceWith(preset);
@@ -408,5 +511,94 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(renderedHtml).toContain('<h1>Heading</h1>');
         expect(renderedHtml).toContain('<ul>');
         expect(renderedHtml).toContain('<blockquote>');
+    });
+
+    it('should always show all text actions if not in communication mode', () => {
+        jest.spyOn(comp, 'isInCommunication').mockReturnValue(false);
+        fixture.detectChanges();
+
+        expect(comp.showTextStyleActions()).toBeTrue();
+        expect(comp.showNonTextStyleActions()).toBeTrue();
+    });
+
+    it('should hide text style actions in communication mode by default', () => {
+        jest.spyOn(comp, 'isInCommunication').mockReturnValue(true);
+        fixture.detectChanges();
+
+        expect(comp.showTextStyleActions()).toBeFalse();
+        expect(comp.showNonTextStyleActions()).toBeTrue();
+    });
+
+    it('should show text style actions in communication mode when text is selected', () => {
+        jest.spyOn(comp, 'isInCommunication').mockReturnValue(true);
+        fixture.detectChanges();
+
+        comp.updateEditorActionsVisibility({ startLineNumber: 1, endLineNumber: 1, startColumn: 10, endColumn: 20 });
+
+        expect(comp.showTextStyleActions()).toBeTrue();
+        expect(comp.showNonTextStyleActions()).toBeFalse();
+    });
+
+    it('should emit closeEditor on close button click', () => {
+        fixture.detectChanges();
+        const emitSpy = jest.spyOn(comp.closeEditor, 'emit');
+
+        comp.onCloseButtonClick();
+
+        expect(emitSpy).toHaveBeenCalled();
+    });
+
+    it('should dispose selection change listener on destroy', () => {
+        fixture.detectChanges();
+
+        // Mock the disposable
+        const mockDisposable = { dispose: jest.fn() };
+        (comp as any).selectionChangeDisposable = mockDisposable;
+
+        comp.ngOnDestroy();
+
+        expect(mockDisposable.dispose).toHaveBeenCalled();
+    });
+
+    it('should return selection from getSelection', () => {
+        fixture.detectChanges();
+
+        const mockSelection = {
+            startLineNumber: 1,
+            endLineNumber: 3,
+            startColumn: 1,
+            endColumn: 10,
+        };
+
+        jest.spyOn(comp.monacoEditor()!, 'getSelection').mockReturnValue(mockSelection as any);
+
+        const result = comp.getSelection();
+
+        expect(result).toEqual({
+            startLine: 1,
+            endLine: 3,
+            startColumn: 1,
+            endColumn: 10,
+        });
+    });
+
+    it('should return undefined from getSelection when no selection', () => {
+        fixture.detectChanges();
+
+        jest.spyOn(comp.monacoEditor()!, 'getSelection').mockReturnValue(undefined);
+
+        const result = comp.getSelection();
+
+        expect(result).toBeUndefined();
+    });
+
+    it('should return undefined from getSelection when monacoEditor is undefined', () => {
+        fixture.detectChanges();
+
+        (comp as any).monacoEditor = () => undefined;
+
+        const result = comp.getSelection();
+
+        expect(result).toBeUndefined();
     });
 });

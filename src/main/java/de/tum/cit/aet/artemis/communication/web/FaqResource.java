@@ -44,6 +44,9 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.FaqSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 
 /**
  * REST controller for managing Faqs.
@@ -69,11 +72,15 @@ public class FaqResource {
 
     private final FaqService faqService;
 
-    public FaqResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, FaqRepository faqRepository, FaqService faqService) {
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
+
+    public FaqResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, FaqRepository faqRepository, FaqService faqService,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
         this.faqRepository = faqRepository;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
         this.faqService = faqService;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
     }
 
     /**
@@ -101,6 +108,7 @@ public class FaqResource {
         Faq savedFaq = faqRepository.save(faqToSave);
         FaqDTO dto = new FaqDTO(savedFaq);
         faqService.autoIngestFaqIntoPyris(savedFaq);
+        searchableEntityWeaviateService.ifPresent(service -> service.upsertFaqAsync(FaqSearchableEntityDTO.fromFaq(savedFaq)));
         return ResponseEntity.created(new URI("/api/communication/courses/" + courseId + "/faqs/" + savedFaq.getId())).body(dto);
     }
 
@@ -132,6 +140,7 @@ public class FaqResource {
         existingFaq.setCategories(updateFaqDTO.categories());
         Faq updatedFaq = faqRepository.save(existingFaq);
         faqService.autoIngestFaqIntoPyris(updatedFaq);
+        searchableEntityWeaviateService.ifPresent(service -> service.upsertFaqAsync(FaqSearchableEntityDTO.fromFaq(updatedFaq)));
         FaqDTO dto = new FaqDTO(updatedFaq);
         return ResponseEntity.ok().body(dto);
     }
@@ -174,6 +183,7 @@ public class FaqResource {
         }
         faqService.deleteFaqInPyris(existingFaq);
         faqRepository.deleteById(faqId);
+        searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.FAQ, faqId));
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, faqId.toString())).build();
     }
 
@@ -247,22 +257,6 @@ public class FaqResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> ingestFaqInIris(@PathVariable long courseId, @RequestParam(required = false) Optional<Long> faqId) {
         faqService.ingestFaqsIntoPyris(courseId, faqId);
-        return ResponseEntity.ok().build();
-    }
-
-    /**
-     * PUT courses/:courseId/faqs/enable : Enables faqs for a course.
-     *
-     * @param courseId the id of the course for which the faq should be enabled
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @PutMapping("courses/{courseId}/faqs/enable")
-    @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Void> enableFaqForCourse(@PathVariable long courseId) {
-        log.debug("REST request to enable faq for course with id: {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        course.setFaqEnabled(true);
-        courseRepository.save(course);
         return ResponseEntity.ok().build();
     }
 

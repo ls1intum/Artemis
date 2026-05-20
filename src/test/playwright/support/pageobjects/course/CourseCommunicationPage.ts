@@ -25,7 +25,7 @@ export class CourseCommunicationPage {
      * @returns The locator for the context selector.
      */
     getContextSelectorInModal() {
-        return this.page.locator('.modal-content #context');
+        return this.page.locator('.p-dialog-content #context');
     }
 
     /**
@@ -33,8 +33,8 @@ export class CourseCommunicationPage {
      * @param title - The title to be set.
      */
     async setTitleInModal(title: string) {
-        await this.page.locator('.modal-content').locator('#title').fill('');
-        await this.page.locator('.modal-content').locator('#title').fill(title);
+        await this.page.locator('.p-dialog-content').locator('#title').fill('');
+        await this.page.locator('.p-dialog-content').locator('#title').fill(title);
     }
 
     /**
@@ -42,7 +42,7 @@ export class CourseCommunicationPage {
      * @param content - The content to be set.
      */
     async setContentInModal(content: string) {
-        const contentField = this.page.locator('.modal-content .markdown-editor .monaco-editor');
+        const contentField = this.page.locator('.p-dialog-content .markdown-editor .monaco-editor');
         await setMonacoEditorContentByLocator(this.page, contentField, content);
     }
 

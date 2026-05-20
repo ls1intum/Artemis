@@ -127,7 +127,6 @@ export class LectureService {
         const copy: Lecture = Object.assign({}, lecture, {
             startDate: convertDateFromClient(lecture.startDate),
             endDate: convertDateFromClient(lecture.endDate),
-            visibleDate: convertDateFromClient(lecture.visibleDate),
         });
         if (copy.lectureUnits) {
             copy.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromClient(copy.lectureUnits);
@@ -143,7 +142,6 @@ export class LectureService {
         if (res.body) {
             res.body.startDate = convertDateFromServer(res.body.startDate);
             res.body.endDate = convertDateFromServer(res.body.endDate);
-            res.body.visibleDate = convertDateFromServer(res.body.visibleDate);
             if (res.body.lectureUnits) {
                 res.body.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromServer(res.body.lectureUnits);
             }
@@ -191,7 +189,6 @@ export class LectureService {
         if (lecture) {
             lecture.startDate = convertDateFromServer(lecture.startDate);
             lecture.endDate = convertDateFromServer(lecture.endDate);
-            lecture.visibleDate = convertDateFromServer(lecture.visibleDate);
             if (lecture.lectureUnits) {
                 lecture.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromServer(lecture.lectureUnits);
             }

@@ -94,6 +94,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
             onDidBlurEditorText: vi.fn().mockReturnValue(mockDisposable),
             onDidPaste: vi.fn().mockReturnValue(mockDisposable),
             onDidChangeCursorPosition: vi.fn().mockReturnValue(mockDisposable),
+            onDidChangeCursorSelection: vi.fn().mockReturnValue(mockDisposable),
             onKeyDown: vi.fn().mockReturnValue(mockDisposable),
             onKeyUp: vi.fn().mockReturnValue(mockDisposable),
             getOption: vi.fn().mockReturnValue(16),
@@ -329,9 +330,14 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     it('should update markdown from the visual component when preparing for save in visual mode', () => {
         component.markdownEditor()!.inVisualMode = true;
         // if we don't mock this, we get heap out of memory, probably due to some infinite recursion
-        component.markdownEditor()!['monacoEditor'] = {
+        const mockEditor = {
             setText: vi.fn(),
+            clearLineDecorationsHoverButton: vi.fn(),
         } as Partial<MonacoEditorComponent> as MonacoEditorComponent;
+        Object.defineProperty(component.markdownEditor()!, 'monacoEditor', {
+            value: () => mockEditor,
+            configurable: true,
+        });
 
         const parseQuestionStub = vi.spyOn(component.visualChild(), 'parseQuestion').mockReturnValue('parsed-question');
         component.prepareForSave();

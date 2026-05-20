@@ -93,6 +93,7 @@ describe('CourseTrainingQuizComponent', () => {
                 );
                 vi.spyOn(TestBed.inject(CourseManagementService), 'find').mockReturnValue(of(new HttpResponse({ body: course })));
 
+                vi.spyOn(TestBed.inject(Router), 'navigate').mockReturnValue(Promise.resolve(true));
                 fixture = TestBed.createComponent(CourseTrainingQuizComponent);
                 component = fixture.componentInstance;
                 fixture.detectChanges();

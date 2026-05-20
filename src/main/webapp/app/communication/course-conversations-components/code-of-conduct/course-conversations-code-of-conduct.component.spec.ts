@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations-components/code-of-conduct/course-conversations-code-of-conduct.component';
@@ -8,32 +10,32 @@ import { ConversationService } from 'app/communication/conversations/service/con
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
+import { of } from 'rxjs';
 
 describe('Course Conversations Code Of Conduct Component', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CourseConversationsCodeOfConductComponent>;
     let conversationService: ConversationService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [CourseConversationsCodeOfConductComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe)],
+            imports: [CourseConversationsCodeOfConductComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe)],
             providers: [MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CourseConversationsCodeOfConductComponent);
-                conversationService = TestBed.inject(ConversationService);
-                fixture.componentRef.setInput('course', { id: 1 });
-            });
+        });
+        fixture = TestBed.createComponent(CourseConversationsCodeOfConductComponent);
+        conversationService = TestBed.inject(ConversationService);
+        fixture.componentRef.setInput('course', { id: 1 });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
-        const getResponsibleUsersSpy = jest.spyOn(conversationService, 'getResponsibleUsersForCodeOfConduct');
+        const getResponsibleUsersSpy = vi.spyOn(conversationService, 'getResponsibleUsersForCodeOfConduct').mockReturnValue(of(new HttpResponse({ body: [] })));
         fixture.detectChanges();
         expect(getResponsibleUsersSpy).toHaveBeenCalled();
-        expect(CourseConversationsCodeOfConductComponent).not.toBeNull();
     });
 });

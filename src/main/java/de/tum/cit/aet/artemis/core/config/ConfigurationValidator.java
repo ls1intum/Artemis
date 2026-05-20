@@ -4,6 +4,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MIN_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
+import static de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer.TEXT2VEC_OPENAI;
+
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import jakarta.annotation.PostConstruct;
 
@@ -18,12 +24,21 @@ import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.core.exception.ConflictingPasskeyConfigurationException;
 import de.tum.cit.aet.artemis.core.exception.InvalidAdminConfigurationException;
+import de.tum.cit.aet.artemis.core.exception.WeaviateConfigurationException;
+import de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 
 /**
- * Validates the passkey configuration at application startup.
+ * Validates application configuration at startup.
  * This ensures that invalid configuration combinations are caught early.
  * This bean is marked as non-lazy to ensure validation happens during normal
  * Spring Boot startup, allowing the FailureAnalyzer to provide helpful error messages.
+ * <p>
+ * Currently validates:
+ * <ul>
+ * <li>Passkey configuration (conflicting settings)</li>
+ * <li>Weaviate configuration (required properties when enabled)</li>
+ * </ul>
  */
 @Component
 @Profile(PROFILE_CORE)
@@ -31,6 +46,14 @@ import de.tum.cit.aet.artemis.core.exception.InvalidAdminConfigurationException;
 public class ConfigurationValidator {
 
     private static final Logger log = LoggerFactory.getLogger(ConfigurationValidator.class);
+
+    public static final int MIN_PORT = 1;
+
+    public static final int MAX_PORT = 65535;
+
+    public static final String HTTP_SCHEME = "http";
+
+    public static final String HTTPS_SCHEME = "https";
 
     private final Environment environment;
 
@@ -42,15 +65,53 @@ public class ConfigurationValidator {
 
     private final String internalAdminPassword;
 
+    private final boolean weaviateEnabled;
+
+    private final String weaviateHost;
+
+    private final int weaviatePort;
+
+    private final int weaviateGrpcPort;
+
+    private final String weaviateScheme;
+
+    private final String weaviateVectorizerModule;
+
+    private final String weaviateOpenAiBaseUrl;
+
+    private final String weaviateGpuApiKey;
+
+    private final String serverUrl;
+
+    private final boolean isOpenApiDocsGeneration;
+
     public ConfigurationValidator(Environment environment,
             @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures,
             @Value("${artemis.user-management.internal-admin.username:#{null}}") String internalAdminUsername,
-            @Value("${artemis.user-management.internal-admin.password:#{null}}") String internalAdminPassword) {
+            @Value("${artemis.user-management.internal-admin.password:#{null}}") String internalAdminPassword, @Value("${artemis.weaviate.enabled:false}") boolean weaviateEnabled,
+            @Value("${artemis.weaviate.http-host:#{null}}") String weaviateHost,
+            @Value("${artemis.weaviate.http-port:" + WeaviateConfigurationProperties.DEFAULT_HTTP_PORT + "}") int weaviatePort,
+            @Value("${artemis.weaviate.grpc-port:" + WeaviateConfigurationProperties.DEFAULT_GRPC_PORT + "}") int weaviateGrpcPort,
+            @Value("${artemis.weaviate.scheme:#{null}}") String weaviateScheme, @Value("${artemis.weaviate.vectorizer-module:#{null}}") String weaviateVectorizerModule,
+            @Value("${artemis.weaviate.open-ai-base-url:#{null}}") String weaviateOpenAiBaseUrl, @Value("${artemis.weaviate.gpu-api-key:#{null}}") String weaviateGpuApiKey,
+            @Value("${artemis.openapi-docs-generation:false}") boolean isOpenApiDocsGeneration, @Value("${server.url:}") String serverUrl) {
         this.environment = environment;
         this.artemisConfigHelper = new ArtemisConfigHelper();
         this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
+
         this.internalAdminUsername = internalAdminUsername;
         this.internalAdminPassword = internalAdminPassword;
+
+        this.weaviateEnabled = weaviateEnabled;
+        this.weaviateHost = weaviateHost;
+        this.weaviatePort = weaviatePort;
+        this.weaviateGrpcPort = weaviateGrpcPort;
+        this.weaviateScheme = weaviateScheme;
+        this.weaviateVectorizerModule = weaviateVectorizerModule;
+        this.weaviateOpenAiBaseUrl = weaviateOpenAiBaseUrl;
+        this.weaviateGpuApiKey = weaviateGpuApiKey;
+        this.isOpenApiDocsGeneration = isOpenApiDocsGeneration;
+        this.serverUrl = serverUrl;
     }
 
     /**
@@ -59,8 +120,36 @@ public class ConfigurationValidator {
      */
     @PostConstruct
     public void validateConfigurations() {
+        validateServerUrl();
         validatePasskeyConfiguration();
         validateAdminConfiguration();
+        validateWeaviateConfiguration();
+    }
+
+    /**
+     * Best-effort validation for present-but-invalid server.url values.
+     * Ensures the URL is a valid absolute HTTP/HTTPS URL with a host component.
+     * Note: if server.url is completely missing, other beans that inject it without a default will fail first.
+     */
+    private void validateServerUrl() {
+        if (serverUrl == null || serverUrl.isBlank()) {
+            log.warn("server.url is not configured. Other components may fail to start.");
+            return;
+        }
+        try {
+            URI uri = URI.create(serverUrl);
+            String scheme = uri.getScheme();
+            if (uri.isOpaque() || !uri.isAbsolute() || (!HTTP_SCHEME.equals(scheme) && !HTTPS_SCHEME.equals(scheme)) || uri.getHost() == null) {
+                String errorMessage = "server.url '%s' is not a valid absolute HTTP/HTTPS URL with a host. It is used in rendered links and asset URLs.".formatted(serverUrl);
+                log.error(errorMessage);
+                throw new IllegalStateException(errorMessage);
+            }
+        }
+        catch (IllegalArgumentException e) {
+            String errorMessage = "server.url '%s' is not a valid URL: %s".formatted(serverUrl, e.getMessage());
+            log.error(errorMessage);
+            throw new IllegalStateException(errorMessage, e);
+        }
     }
 
     /**
@@ -139,5 +228,92 @@ public class ConfigurationValidator {
 
             log.info("Internal admin configuration validated successfully");
         }
+    }
+
+    /**
+     * Validates the Weaviate configuration when Weaviate is enabled.
+     * Throws a {@link WeaviateConfigurationException} if required properties are missing or invalid.
+     */
+    private void validateWeaviateConfiguration() {
+        if (!weaviateEnabled) {
+            return;
+        }
+        if (isOpenApiDocsGeneration) {
+            log.info("Skipping Weaviate configuration validation during OpenAPI docs generation");
+            return;
+        }
+
+        List<String> invalidProperties = new ArrayList<>();
+
+        if (weaviateHost == null || weaviateHost.isBlank()) {
+            invalidProperties.add("artemis.weaviate.http-host (must not be empty)");
+        }
+
+        if (!isValidPort(weaviatePort)) {
+            invalidProperties.add("artemis.weaviate.http-port (must be between " + MIN_PORT + " and " + MAX_PORT + ")");
+        }
+
+        if (!isValidPort(weaviateGrpcPort)) {
+            invalidProperties.add("artemis.weaviate.grpc-port (must be between " + MIN_PORT + " and " + MAX_PORT + ")");
+        }
+
+        String effectiveScheme = null;
+        if (weaviateScheme == null || weaviateScheme.isBlank()) {
+            invalidProperties.add("artemis.weaviate.scheme (must be configured when Weaviate is enabled)");
+        }
+        else if (!HTTP_SCHEME.equals(weaviateScheme) && !HTTPS_SCHEME.equals(weaviateScheme)) {
+            invalidProperties.add("artemis.weaviate.scheme (must be '" + HTTP_SCHEME + "' or '" + HTTPS_SCHEME + "')");
+        }
+        else {
+            effectiveScheme = weaviateScheme;
+        }
+
+        if (weaviateVectorizerModule == null || weaviateVectorizerModule.isBlank()) {
+            invalidProperties.add("artemis.weaviate.vectorizer-module (must be configured when Weaviate is enabled)");
+        }
+        else if (!SupportedVectorizer.isSupported(weaviateVectorizerModule)) {
+            invalidProperties.add("artemis.weaviate.vectorizer-module (must be one of " + Arrays.toString(SupportedVectorizer.values()) + ")");
+        }
+
+        boolean shouldValidateOpenAiSpecificProperties = TEXT2VEC_OPENAI.configValue().equals(weaviateVectorizerModule);
+        if (shouldValidateOpenAiSpecificProperties) {
+            if (!StringUtils.hasText(weaviateOpenAiBaseUrl)) {
+                invalidProperties.add("artemis.weaviate.open-ai-base-url (must be configured when using " + TEXT2VEC_OPENAI.configValue() + " vectorizer)");
+            }
+            else {
+                try {
+                    URI uri = URI.create(weaviateOpenAiBaseUrl);
+                    String scheme = uri.getScheme();
+                    boolean isInvalidUrl = !uri.isAbsolute() || (!"http".equals(scheme) && !"https".equals(scheme));
+                    if (isInvalidUrl) {
+                        invalidProperties.add("artemis.weaviate.open-ai-base-url (must be a valid absolute URL with http or https scheme when using "
+                                + TEXT2VEC_OPENAI.configValue() + " vectorizer)");
+                    }
+                }
+                catch (IllegalArgumentException e) {
+                    invalidProperties.add("artemis.weaviate.open-ai-base-url (must be a valid absolute URL with http or https scheme when using " + TEXT2VEC_OPENAI.configValue()
+                            + " vectorizer)");
+                }
+            }
+            if (!StringUtils.hasText(weaviateGpuApiKey)) {
+                invalidProperties
+                        .add("artemis.weaviate.gpu-api-key (must be configured when using " + TEXT2VEC_OPENAI.configValue() + " vectorizer, use a dummy value for Ollama)");
+            }
+        }
+
+        if (!invalidProperties.isEmpty()) {
+            String errorMessage = "Invalid Weaviate configuration: Weaviate is enabled but the following properties are missing or invalid: "
+                    + String.join(", ", invalidProperties);
+            log.error(errorMessage);
+            throw new WeaviateConfigurationException(errorMessage, invalidProperties);
+        }
+
+        boolean secure = HTTPS_SCHEME.equals(effectiveScheme);
+        log.info("Weaviate is enabled and configured with host: {}:{} (gRPC port: {}, secure: {}, scheme: {}, vectorizer: {})", weaviateHost, weaviatePort, weaviateGrpcPort,
+                secure, effectiveScheme, weaviateVectorizerModule);
+    }
+
+    public static boolean isValidPort(int port) {
+        return port >= MIN_PORT && port <= MAX_PORT;
     }
 }

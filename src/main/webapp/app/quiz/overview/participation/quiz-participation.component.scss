@@ -168,3 +168,14 @@
     bottom: -1rem; // Removes margin from 'course-body' class to improve layout alignment
     z-index: 18;
 }
+
+.join-batch-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+
+    input {
+        flex: 1;
+        min-width: 0;
+    }
+}

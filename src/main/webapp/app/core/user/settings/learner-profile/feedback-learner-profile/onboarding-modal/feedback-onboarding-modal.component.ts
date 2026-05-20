@@ -1,8 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, model, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
 import { FEEDBACK_EXAMPLES } from 'app/core/user/settings/learner-profile/feedback-learner-profile/onboarding-modal/feedback-examples';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { LearnerProfileApiService } from 'app/core/user/settings/learner-profile/learner-profile-api.service';
 import { LearnerProfileDTO } from 'app/core/user/settings/learner-profile/dto/learner-profile-dto.model';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
@@ -11,22 +10,24 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { DialogModule } from 'primeng/dialog';
 
 @Component({
     selector: 'jhi-feedback-onboarding-modal',
     standalone: true,
     templateUrl: './feedback-onboarding-modal.component.html',
     styleUrls: ['./feedback-onboarding-modal.component.scss'],
-    imports: [CommonModule, TextResultComponent, TranslateDirective, ButtonComponent],
+    imports: [CommonModule, TextResultComponent, TranslateDirective, ButtonComponent, DialogModule],
 })
 export class FeedbackOnboardingModalComponent {
-    onboardingCompleted = signal<undefined>(undefined);
+    readonly visible = model<boolean>(false);
+    readonly completed = output<void>();
+
     step = 0;
     readonly totalSteps = 2;
     selected: (number | undefined)[] = [undefined, undefined];
     feedbackExamples = FEEDBACK_EXAMPLES;
 
-    private activeModal = inject(NgbActiveModal);
     private learnerProfileApiService = inject(LearnerProfileApiService);
     private alertService = inject(AlertService);
     protected translateService = inject(TranslateService);
@@ -71,7 +72,7 @@ export class FeedbackOnboardingModalComponent {
      * Closes the modal.
      */
     close() {
-        this.activeModal.close();
+        this.visible.set(false);
     }
 
     /**
@@ -103,11 +104,11 @@ export class FeedbackOnboardingModalComponent {
                 type: AlertType.SUCCESS,
                 message: 'artemisApp.learnerProfile.feedbackLearnerProfile.profileSaved',
             });
-            this.onboardingCompleted.set(undefined);
-            this.activeModal.close();
+            this.completed.emit();
+            this.visible.set(false);
         } catch (error) {
             this.handleError(error);
-            this.activeModal.close();
+            this.visible.set(false);
         }
     }
 

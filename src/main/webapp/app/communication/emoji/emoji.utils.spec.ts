@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { EmojiUtils } from 'app/communication/emoji/emoji.utils';
 

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, Output, input } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, Output, input } from '@angular/core';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { Interactable } from '@interactjs/core/Interactable';
@@ -13,7 +13,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     templateUrl: './code-editor-instructions.component.html',
     imports: [NgStyle, FaIconComponent, TranslateDirective],
 })
-export class CodeEditorInstructionsComponent implements AfterViewInit {
+export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy {
     @Output()
     onToggleCollapse = new EventEmitter<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth?: number; resizableMinHeight?: number }>();
 
@@ -34,6 +34,10 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
     farListAlt = faListAlt;
+
+    ngOnDestroy(): void {
+        this.interactResizable?.unset();
+    }
 
     /**
      * After the view was initialized, we create an interact.js resizable object,

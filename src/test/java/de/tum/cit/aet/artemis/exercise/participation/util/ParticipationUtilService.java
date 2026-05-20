@@ -1,11 +1,11 @@
 package de.tum.cit.aet.artemis.exercise.participation.util;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -883,7 +883,7 @@ public class ParticipationUtilService {
      * @param storedFeedback The List of Feedback stored in the database
      * @param feedbackType   The FeedbackType of the Feedback
      */
-    public void checkFeedbackCorrectlyStored(List<Feedback> sentFeedback, List<Feedback> storedFeedback, FeedbackType feedbackType) {
+    public void checkFeedbackCorrectlyStored(Collection<Feedback> sentFeedback, Collection<Feedback> storedFeedback, FeedbackType feedbackType) {
         assertThat(sentFeedback).as("contains the same amount of feedback").hasSize(storedFeedback.size());
         Result storedFeedbackResult = new Result();
         Result sentFeedbackResult = new Result();

@@ -105,7 +105,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
     }
 
     /**
-     * POST /exercises/{exerciseId}/text-submissions : Create a new textSubmission. This is called when a student saves his/her answer
+     * POST /exercises/{exerciseId}/text-submissions : Create a new textSubmission. This is called when a student saves their answer
      *
      * @param exerciseId     the id of the exercise for which to init a participation
      * @param textSubmission the textSubmission to create

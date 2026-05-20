@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.modeling.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 import org.slf4j.Logger;
@@ -45,16 +46,14 @@ public class ApollonConversionResource {
      */
     @PostMapping("apollon/convert-to-pdf")
     @EnforceAtLeastStudent
-    public ResponseEntity<InputStreamResource> convertApollonModel(@RequestBody ApollonModelDTO request) {
+    public ResponseEntity<InputStreamResource> convertApollonModel(@RequestBody ApollonModelDTO request) throws IOException {
         log.debug("REST call to convert apollon model to pdf");
 
-        // The apollonConversionService will manage the processing and database saving
         InputStream inputStream = apollonConversionService.convertModel(request.model());
 
         InputStreamResource inputStreamResource = new InputStreamResource(inputStream);
         log.debug("REST call for apollon model conversion to pdf finished");
 
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).body(inputStreamResource);
-
     }
 }

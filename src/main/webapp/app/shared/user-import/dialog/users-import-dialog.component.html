@@ -3,6 +3,7 @@
     [modal]="true"
     [visible]="dialogVisible()"
     [closable]="true"
+    [dismissableMask]="true"
     (visibleChange)="dialogVisible.set($event)"
     (onHide)="clear()"
     [style]="{ width: '70rem' }"

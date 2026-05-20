@@ -65,6 +65,30 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
             """)
     void updateLastReadAsync(@Param("userId") Long userId, @Param("conversationId") Long conversationId, @Param("now") ZonedDateTime now);
 
+    /**
+     * Mark a message and all subsequent messages as unread.
+     *
+     * @param conversationId the id of the conversation
+     * @param userId         the id of the user
+     * @param messageDate    the creation date of the target message
+     * @param lastRead       the lastRead timestamp to set (just before messageDate)
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+                UPDATE ConversationParticipant cp
+                SET cp.unreadMessagesCount = (
+                    SELECT COUNT(p) FROM Post p
+                    WHERE p.conversation.id = :conversationId
+                    AND p.creationDate >= :messageDate
+                    AND p.author.id <> :userId
+                ), cp.lastRead = :lastRead
+                WHERE cp.conversation.id = :conversationId
+                AND cp.user.id = :userId
+            """)
+    void markFromMessageAsUnread(@Param("conversationId") Long conversationId, @Param("userId") Long userId, @Param("messageDate") ZonedDateTime messageDate,
+            @Param("lastRead") ZonedDateTime lastRead);
+
     @Async
     @Transactional // ok because of modifying query
     @Modifying

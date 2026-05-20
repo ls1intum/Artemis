@@ -23,8 +23,8 @@ export const addPublicFilePrefix = (filePath?: string): string | undefined => {
     if (!filePath) {
         return undefined;
     }
-    if (filePath.startsWith('blob')) {
-        // We don't need to add the prefix, it's locally stored
+    if (filePath.startsWith('blob') || filePath.startsWith('/public/') || filePath.startsWith('http')) {
+        // Already an absolute URL, a static resource, or locally stored — no prefix needed
         return filePath;
     } else {
         return filePath ? `${FILES_PATH_PREFIX}${filePath}` : undefined;
@@ -57,11 +57,11 @@ export const MODULE_FEATURE_LECTURE = 'lecture';
 
 export const MODULE_FEATURE_TUTORIALGROUP = 'tutorialgroup';
 
-export const MODULE_FEATURE_NEBULA = 'nebula';
-
 export const MODULE_FEATURE_SHARING = 'sharing';
 
 export const MODULE_FEATURE_LTI = 'lti';
+
+export const MODULE_FEATURE_THEIA = 'theia';
 
 export type ModuleFeature =
     | typeof MODULE_FEATURE_PASSKEY
@@ -76,15 +76,13 @@ export type ModuleFeature =
     | typeof MODULE_FEATURE_FILEUPLOAD
     | typeof MODULE_FEATURE_LECTURE
     | typeof MODULE_FEATURE_TUTORIALGROUP
-    | typeof MODULE_FEATURE_NEBULA
     | typeof MODULE_FEATURE_SHARING
-    | typeof MODULE_FEATURE_LTI;
+    | typeof MODULE_FEATURE_LTI
+    | typeof MODULE_FEATURE_THEIA;
 
 export const PROFILE_LOCALCI = 'localci';
 
 export const PROFILE_BUILDAGENT = 'buildagent';
-
-export const PROFILE_AEOLUS = 'aeolus';
 
 export const PROFILE_LTI = 'lti';
 
@@ -100,8 +98,6 @@ export const PROFILE_APOLLON = 'apollon';
 
 export const PROFILE_ATHENA = 'athena';
 
-export const PROFILE_THEIA = 'theia';
-
 export const PROFILE_LDAP = 'ldap';
 
 export const PROFILE_SAML2 = 'saml2';
@@ -109,7 +105,6 @@ export const PROFILE_SAML2 = 'saml2';
 export type ProfileFeature =
     | typeof PROFILE_LOCALCI
     | typeof PROFILE_BUILDAGENT
-    | typeof PROFILE_AEOLUS
     | typeof PROFILE_LTI
     | typeof PROFILE_PROD
     | typeof PROFILE_DEV
@@ -117,6 +112,5 @@ export type ProfileFeature =
     | typeof PROFILE_JENKINS
     | typeof PROFILE_APOLLON
     | typeof PROFILE_ATHENA
-    | typeof PROFILE_THEIA
     | typeof PROFILE_LDAP
     | typeof PROFILE_SAML2;

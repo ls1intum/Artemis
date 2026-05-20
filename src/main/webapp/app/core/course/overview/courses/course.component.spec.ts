@@ -1,6 +1,8 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,19 +14,14 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseCardComponent } from 'app/core/course/overview/course-card/course-card.component';
 import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
-import { CourseExercisesComponent } from 'app/core/course/overview/course-exercises/course-exercises.component';
-import { CourseRegistrationComponent } from 'app/core/course/overview/course-registration/course-registration.component';
 import { CoursesComponent } from 'app/core/course/overview/courses/courses.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Component } from '@angular/core';
 import { of } from 'rxjs';
@@ -33,7 +30,6 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { CourseAccessStorageService } from 'app/core/course/shared/services/course-access-storage.service';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -80,6 +76,8 @@ const coursesDashboard = { courses: coursesInDashboard } as CoursesForDashboardD
 class DummyComponent {}
 
 describe('CoursesComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CoursesComponent;
     let fixture: ComponentFixture<CoursesComponent>;
     let courseService: CourseManagementService;
@@ -91,22 +89,14 @@ describe('CoursesComponent', () => {
 
     const route = { data: of({ courseId: course1.id }), children: [] } as any as ActivatedRoute;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([{ path: 'courses/:courseId/exams/:examId', component: DummyComponent }]), FaIconComponent],
-            declarations: [
+            imports: [
+                RouterModule.forRoot([{ path: 'courses/:courseId/exams/:examId', component: DummyComponent }]),
                 CoursesComponent,
-                MockDirective(MockHasAnyAuthorityDirective),
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(SortDirective),
-                MockDirective(SortByDirective),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(SearchFilterPipe),
-                MockComponent(CourseExerciseRowComponent),
-                MockComponent(CourseExercisesComponent),
-                MockComponent(CourseRegistrationComponent),
-                MockComponent(CourseCardComponent),
-                MockComponent(SearchFilterComponent),
             ],
             providers: [
                 LocalStorageService,
@@ -119,29 +109,30 @@ describe('CoursesComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CoursesComponent);
-                component = fixture.componentInstance;
-                courseService = TestBed.inject(CourseManagementService);
-                courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
-                location = TestBed.inject(Location);
-                serverDateService = TestBed.inject(ArtemisServerDateService);
-                TestBed.inject(AlertService);
-                httpMock = TestBed.inject(HttpTestingController);
-                fixture.detectChanges();
-            });
+        }).overrideComponent(CoursesComponent, {
+            remove: { imports: [CourseCardComponent, SearchFilterComponent] },
+            add: { imports: [MockComponent(CourseCardComponent), MockComponent(SearchFilterComponent)] },
+        });
+        await TestBed.compileComponents();
+        fixture = TestBed.createComponent(CoursesComponent);
+        component = fixture.componentInstance;
+        courseService = TestBed.inject(CourseManagementService);
+        courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
+        location = TestBed.inject(Location);
+        serverDateService = TestBed.inject(ArtemisServerDateService);
+        TestBed.inject(AlertService);
+        httpMock = TestBed.inject(HttpTestingController);
         router = TestBed.inject(Router);
+        fixture.detectChanges();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('onInit', () => {
         it('should call loadAndFilterCourses on init', () => {
-            const loadAndFilterCoursesSpy = jest.spyOn(component, 'loadAndFilterCourses');
+            const loadAndFilterCoursesSpy = vi.spyOn(component, 'loadAndFilterCourses');
 
             component.ngOnInit();
 
@@ -149,8 +140,8 @@ describe('CoursesComponent', () => {
         });
 
         it('should load courses on init', () => {
-            const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
-            const serverDateServiceSpy = jest.spyOn(serverDateService, 'now');
+            const findAllForDashboardSpy = vi.spyOn(courseService, 'findAllForDashboard');
+            const serverDateServiceSpy = vi.spyOn(serverDateService, 'now');
             findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: coursesDashboard, headers: new HttpHeaders() })));
             serverDateServiceSpy.mockReturnValue(dayjs());
 
@@ -162,7 +153,7 @@ describe('CoursesComponent', () => {
         });
 
         it('should handle an empty response body correctly when fetching all courses for dashboard', () => {
-            const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
+            const findAllForDashboardSpy = vi.spyOn(courseService, 'findAllForDashboard');
 
             const req = httpMock.expectOne({ method: 'GET', url: `api/core/courses/for-dashboard` });
             component.ngOnInit();
@@ -173,8 +164,8 @@ describe('CoursesComponent', () => {
         });
 
         it('should load exercises on init', () => {
-            const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
-            const serverDateServiceSpy = jest.spyOn(serverDateService, 'now');
+            const findAllForDashboardSpy = vi.spyOn(courseService, 'findAllForDashboard');
+            const serverDateServiceSpy = vi.spyOn(serverDateService, 'now');
 
             findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: coursesDashboard, headers: new HttpHeaders() })));
             serverDateServiceSpy.mockReturnValue(dayjs());
@@ -185,8 +176,8 @@ describe('CoursesComponent', () => {
         });
 
         it('should sort courses into regular and recently accessed after loading', () => {
-            const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
-            const sortCoursesInRecentlyAccessedAndRegularCoursesSpy = jest.spyOn(component, 'sortCoursesInRecentlyAccessedAndRegularCourses');
+            const findAllForDashboardSpy = vi.spyOn(courseService, 'findAllForDashboard');
+            const sortCoursesInRecentlyAccessedAndRegularCoursesSpy = vi.spyOn(component, 'sortCoursesInRecentlyAccessedAndRegularCourses');
             findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: coursesDashboard, headers: new HttpHeaders() })));
 
             component.ngOnInit();
@@ -195,7 +186,7 @@ describe('CoursesComponent', () => {
             expect(sortCoursesInRecentlyAccessedAndRegularCoursesSpy).toHaveBeenCalledOnce();
 
             const lastAccessedCourses = [1, 2];
-            const recentCoursesSpy = jest.spyOn(courseAccessStorageService, 'getLastAccessedCourses').mockReturnValue(lastAccessedCourses);
+            const recentCoursesSpy = vi.spyOn(courseAccessStorageService, 'getLastAccessedCourses').mockReturnValue(lastAccessedCourses);
 
             // Test for less than 5 courses
             const courses = [];
@@ -223,18 +214,18 @@ describe('CoursesComponent', () => {
         });
     });
 
-    it('should load next relevant exam', fakeAsync(() => {
-        const navigateSpy = jest.spyOn(router, 'navigate');
+    it('should load next relevant exam', async () => {
+        const navigateSpy = vi.spyOn(router, 'navigate');
         component.nextRelevantCourseForExam = course1;
         component.nextRelevantExams = [exam1];
         component.openExam();
-        tick();
+        await fixture.whenStable();
 
         expect(navigateSpy).toHaveBeenCalledWith(['courses', 1, 'exams', 3]);
         expect(location.path()).toBe('/courses/1/exams/3');
-    }));
+    });
 
-    it('should load next relevant exam ignoring test exams', fakeAsync(() => {
+    it('should load next relevant exam ignoring test exams', async () => {
         const testExam1 = {
             id: 5,
             startDate: dayjs().add(1, 'hour'),
@@ -254,8 +245,8 @@ describe('CoursesComponent', () => {
         courseForDashboard6.course = course6;
         coursesForDashboard.courses = [courseForDashboard1, courseForDashboard2, courseForDashboard6];
 
-        const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
-        const serverDateServiceSpy = jest.spyOn(serverDateService, 'now');
+        const findAllForDashboardSpy = vi.spyOn(courseService, 'findAllForDashboard');
+        const serverDateServiceSpy = vi.spyOn(serverDateService, 'now');
         findAllForDashboardSpy.mockReturnValue(
             of(
                 new HttpResponse({
@@ -267,12 +258,12 @@ describe('CoursesComponent', () => {
         serverDateServiceSpy.mockReturnValue(dayjs());
 
         component.ngOnInit();
-        tick(1000);
+        await fixture.whenStable();
 
         expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
         expect(component.courses).toEqual([course1, course2, course6]);
         expect(component.nextRelevantExams).toEqual([]);
-    }));
+    });
 
     it('should initialize search course text correctly', () => {
         const searchedCourse = 'Test Course';
@@ -281,18 +272,18 @@ describe('CoursesComponent', () => {
     });
 
     it('should adjust sort direction by clicking on sort icon', () => {
-        const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
+        const findAllForDashboardSpy = vi.spyOn(courseService, 'findAllForDashboard');
         findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: coursesDashboard, headers: new HttpHeaders() })));
         component.ngOnInit();
 
         expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
         expect(component.courses).toEqual(courses);
-        expect(component.isSortAscending).toBeTrue();
+        expect(component.isSortAscending).toBe(true);
 
-        const onSortSpy = jest.spyOn(component, 'onSort');
+        const onSortSpy = vi.spyOn(component, 'onSort');
         const button = fixture.debugElement.nativeElement.querySelector('#test-sort');
         button.click();
         expect(onSortSpy).toHaveBeenCalledOnce();
-        expect(component.isSortAscending).toBeFalse();
+        expect(component.isSortAscending).toBe(false);
     });
 });

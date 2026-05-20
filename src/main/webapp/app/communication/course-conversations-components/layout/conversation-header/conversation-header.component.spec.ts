@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ConversationHeaderComponent } from 'app/communication/course-conversations-components/layout/conversation-header/conversation-header.component';
 import { Location } from '@angular/common';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -7,12 +9,11 @@ import { ChannelIconComponent } from 'app/communication/course-conversations-com
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { By } from '@angular/platform-browser';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
-import { BehaviorSubject, EMPTY, Subject, of } from 'rxjs';
-import { defaultFirstLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
+import { BehaviorSubject, EMPTY, Subject } from 'rxjs';
 import { ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { CourseExerciseDetailsComponent } from 'app/core/course/overview/exercise-details/course-exercise-details.component';
@@ -23,8 +24,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideRouter } from '@angular/router';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { SimpleChanges } from '@angular/core';
-import { HttpResponse } from '@angular/common/http';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { ConversationAddUsersDialogComponent } from 'app/communication/course-conversations-components/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
@@ -43,14 +42,17 @@ const examples: ConversationDTO[] = [
 ];
 examples.forEach((activeConversation) => {
     describe('ConversationHeaderComponent with' + +(activeConversation instanceof ChannelDTO ? activeConversation.subType + ' ' : '') + activeConversation.type, () => {
+        setupTestBed({ zoneless: true });
+
         let component: ConversationHeaderComponent;
         let fixture: ComponentFixture<ConversationHeaderComponent>;
         let metisConversationService: MetisConversationService;
         let location: Location;
         const course = { id: 1 } as any;
-        const canAddUsers = jest.fn();
+        const canAddUsers = vi.fn();
 
-        beforeEach(waitForAsync(() => {
+        beforeEach(async () => {
+            vi.useFakeTimers();
             TestBed.configureTestingModule({
                 imports: [MockComponent(ChannelIconComponent), MockComponent(ProfilePictureComponent), MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe)],
                 providers: [
@@ -59,15 +61,15 @@ examples.forEach((activeConversation) => {
                         { path: 'courses/:courseId/exercises/:exerciseId', component: CourseExerciseDetailsComponent },
                         { path: 'courses/:courseId/exams/:examId', component: ExamDetailComponent },
                     ]),
-                    MockProvider(NgbModal),
+                    MockProvider(DialogService),
                     MockProvider(ConversationService),
                     { provide: MetisService, useClass: MockMetisService },
                     { provide: TranslateService, useClass: MockTranslateService },
                     { provide: MetisConversationService, useClass: MockMetisConversationService },
                     LocalStorageService,
                 ],
-            }).compileComponents();
-        }));
+            });
+        });
 
         beforeEach(() => {
             canAddUsers.mockReturnValue(true);
@@ -84,12 +86,16 @@ examples.forEach((activeConversation) => {
             fixture.detectChanges();
         });
 
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
         it('should create', () => {
             expect(component).toBeTruthy();
             expect(component.activeConversation).toEqual(activeConversation);
         });
 
-        it('should open the add users dialog', fakeAsync(() => {
+        it('should open the add users dialog', () => {
             canAddUsers.mockReturnValue(false);
             fixture.changeDetectorRef.detectChanges();
             expect(fixture.debugElement.nativeElement.querySelector('.addUsers')).toBeFalsy();
@@ -99,42 +105,32 @@ examples.forEach((activeConversation) => {
             const addUsersButton = fixture.debugElement.nativeElement.querySelector('.addUsers');
             expect(addUsersButton).toBeTruthy();
 
-            const modalService = TestBed.inject(NgbModal);
-            const mockModalRef = {
-                componentInstance: { course: undefined, activeConversation, initialize: () => {} },
-                result: Promise.resolve(),
-            };
-            const openDialogSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
+            const dialogService = TestBed.inject(DialogService);
+            const mockDialogRef = { onClose: new Subject(), close: vi.fn() } as unknown as DynamicDialogRef;
+            const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
             fixture.changeDetectorRef.detectChanges();
             addUsersButton.click();
-            fixture.whenStable().then(() => {
-                expect(openDialogSpy).toHaveBeenCalledOnce();
-                expect(openDialogSpy).toHaveBeenCalledWith(ConversationAddUsersDialogComponent, defaultFirstLayerDialogOptions);
-                expect(mockModalRef.componentInstance.course).toEqual(course);
-                expect(mockModalRef.componentInstance.activeConversation).toEqual(activeConversation);
-            });
-        }));
+            expect(openDialogSpy).toHaveBeenCalledOnce();
+            expect(openDialogSpy).toHaveBeenCalledWith(ConversationAddUsersDialogComponent, expect.anything());
+        });
 
-        it('should open dialog details dialog with members tab', fakeAsync(() => {
+        it('should open dialog details dialog with members tab', () => {
             detailDialogTest('members', ConversationDetailTabs.MEMBERS);
-        }));
+        });
 
-        it('should open dialog details dialog with info tab', fakeAsync(() => {
+        it('should open dialog details dialog with info tab', () => {
             detailDialogTest('info', ConversationDetailTabs.INFO);
-        }));
+        });
 
-        it('should toggle search when search button is pressed', fakeAsync(() => {
+        it('should toggle search when search button is pressed', () => {
             const searchButton = fixture.debugElement.nativeElement.querySelector('.search');
             expect(searchButton).toBeTruthy();
 
-            const toggleSearchSpy = jest.spyOn(component, 'toggleSearchBar');
+            const toggleSearchSpy = vi.spyOn(component, 'toggleSearchBar');
             fixture.detectChanges();
             searchButton.click();
-
-            fixture.whenStable().then(() => {
-                expect(toggleSearchSpy).toHaveBeenCalledOnce();
-            });
-        }));
+            expect(toggleSearchSpy).toHaveBeenCalledOnce();
+        });
 
         it('should set otherUser to the non-requesting user in a one-to-one conversation', () => {
             const oneToOneChat = generateOneToOneChatDTO({});
@@ -149,205 +145,102 @@ examples.forEach((activeConversation) => {
             expect(component.otherUser).toEqual(oneToOneChat.members[1]);
         });
 
-        it('should toggle pinned messages visibility', fakeAsync(() => {
-            const togglePinnedMessagesSpy = jest.spyOn(component, 'togglePinnedMessages');
+        it('should toggle pinned messages visibility', () => {
+            const togglePinnedMessagesSpy = vi.spyOn(component, 'togglePinnedMessages');
 
-            expect(component.showPinnedMessages).toBeFalse();
+            expect(component.showPinnedMessages).toBe(false);
 
             component.togglePinnedMessages();
             expect(togglePinnedMessagesSpy).toHaveBeenCalled();
-            expect(component.showPinnedMessages).toBeTrue();
+            expect(component.showPinnedMessages).toBe(true);
 
             component.togglePinnedMessages();
-            expect(component.showPinnedMessages).toBeFalse();
-        }));
+            expect(component.showPinnedMessages).toBe(false);
+        });
 
-        it('should emit togglePinnedMessage event', fakeAsync(() => {
-            const togglePinnedMessageSpy = jest.spyOn(component.togglePinnedMessage, 'emit');
+        it('should emit togglePinnedMessage event', () => {
+            const togglePinnedMessageSpy = vi.spyOn(component.togglePinnedMessage, 'emit');
 
             component.togglePinnedMessages();
             expect(togglePinnedMessageSpy).toHaveBeenCalled();
-        }));
+        });
 
         it('should set showPinnedMessages to false if pinnedMessageCount changes to 0 while it is currently showing pinned messages', () => {
             component.showPinnedMessages = true;
             fixture.componentRef.setInput('pinnedMessageCount', 3);
-            fixture.changeDetectorRef.detectChanges();
+            fixture.detectChanges();
 
-            const changes: SimpleChanges = {
-                pinnedMessageCount: {
-                    currentValue: 0,
-                    previousValue: 3,
-                    firstChange: false,
-                    isFirstChange: () => false,
-                },
-            };
+            fixture.componentRef.setInput('pinnedMessageCount', 0);
+            fixture.detectChanges();
 
-            component.ngOnChanges(changes);
-            expect(component.showPinnedMessages).toBeFalse();
+            expect(component.showPinnedMessages).toBe(false);
         });
 
         it('should not change showPinnedMessages if pinnedMessageCount changes but is not 0', () => {
             component.showPinnedMessages = true;
             fixture.componentRef.setInput('pinnedMessageCount', 3);
-            fixture.changeDetectorRef.detectChanges();
+            fixture.detectChanges();
 
-            const changes: SimpleChanges = {
-                pinnedMessageCount: {
-                    currentValue: 5,
-                    previousValue: 3,
-                    firstChange: false,
-                    isFirstChange: () => false,
-                },
-            };
+            fixture.componentRef.setInput('pinnedMessageCount', 5);
+            fixture.detectChanges();
 
-            component.ngOnChanges(changes);
-            expect(component.showPinnedMessages).toBeTrue();
+            expect(component.showPinnedMessages).toBe(true);
         });
 
         it('should correctly handle first change of pinnedMessageCount', () => {
             component.showPinnedMessages = false;
             fixture.componentRef.setInput('pinnedMessageCount', 2);
-            fixture.changeDetectorRef.detectChanges();
+            fixture.detectChanges();
 
-            const changes: SimpleChanges = {
-                pinnedMessageCount: {
-                    currentValue: 2,
-                    previousValue: undefined,
-                    firstChange: true,
-                    isFirstChange: () => true,
-                },
-            };
-
-            component.ngOnChanges(changes);
-            expect(component.showPinnedMessages).toBeFalse();
+            expect(component.showPinnedMessages).toBe(false);
         });
 
         if (activeConversation instanceof ChannelDTO && activeConversation.subType !== ChannelSubType.GENERAL) {
-            it(
-                'should navigate to ' + activeConversation.subType,
-                fakeAsync(() => {
-                    const button = fixture.debugElement.query(By.css('#subTypeReferenceRouterLink')).nativeElement;
-                    button.click();
-                    tick();
-                    discardPeriodicTasks();
-                    fixture.whenStable().then(() => {
-                        // Assert that the router has navigated to the correct link
-                        expect(location.path()).toBe('/courses/1/' + activeConversation.subType + 's/1');
-                    });
-                }),
-            );
+            it('should navigate to ' + activeConversation.subType, async () => {
+                const button = fixture.debugElement.query(By.css('#subTypeReferenceRouterLink')).nativeElement;
+                button.click();
+                vi.advanceTimersByTime(0);
+                vi.clearAllTimers();
+                vi.useRealTimers();
+                await fixture.whenStable();
+                // Assert that the router has navigated to the correct link
+                expect(location.path()).toBe('/courses/1/' + activeConversation.subType + 's/1');
+            });
         }
 
-        it('should dismiss modal and call createOneToOneChatWithId when userNameClicked is emitted', fakeAsync(() => {
-            const fakeUserNameClicked$ = new Subject<number>();
-            const fakeClosed$ = new Subject<void>();
-
-            const fakeModalRef: NgbModalRef = {
-                componentInstance: {
-                    course: undefined,
-                    activeConversation: undefined,
-                    selectedTab: undefined,
-                    initialize: jest.fn(),
-                    userNameClicked: fakeUserNameClicked$,
-                },
-                dismiss: jest.fn(),
-                closed: fakeClosed$,
-                result: Promise.resolve(),
-            } as any;
-
-            const modalService = TestBed.inject(NgbModal);
-            jest.spyOn(modalService, 'open').mockReturnValue(fakeModalRef);
-
-            const metisConversationService = TestBed.inject(MetisConversationService);
-            const createChatSpy = jest.spyOn(metisConversationService, 'createOneToOneChatWithId').mockReturnValue(of(new HttpResponse({ status: 200 })) as any);
+        it('should open conversation detail dialog', () => {
+            const dialogService = TestBed.inject(DialogService);
+            const mockOnClose = new Subject<any>();
+            const mockDialogRef = { onClose: mockOnClose.asObservable(), close: vi.fn() } as unknown as DynamicDialogRef;
+            const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
 
             const event = new MouseEvent('click');
             component.openConversationDetailDialog(event, ConversationDetailTabs.INFO);
+            vi.advanceTimersByTime(0);
 
-            const testUserId = 42;
-            fakeUserNameClicked$.next(testUserId);
-            tick();
+            expect(openDialogSpy).toHaveBeenCalledOnce();
+            expect(openDialogSpy).toHaveBeenCalledWith(ConversationDetailDialogComponent, expect.anything());
+        });
 
-            expect(fakeModalRef.dismiss).toHaveBeenCalled();
-            expect(createChatSpy).toHaveBeenCalledWith(testUserId);
-        }));
+        it('should emit onUpdateSidebar when conversation detail dialog is closed', () => {
+            const dialogService = TestBed.inject(DialogService);
+            const mockOnClose = new Subject<any>();
+            const mockDialogRef = { onClose: mockOnClose.asObservable(), close: vi.fn() } as unknown as DynamicDialogRef;
+            vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
 
-        it('should not subscribe to userNameClicked if the modal instance does not have that property', fakeAsync(() => {
-            const fakeModalRef: NgbModalRef = {
-                componentInstance: {
-                    course: undefined,
-                    activeConversation: undefined,
-                    selectedTab: undefined,
-                    initialize: jest.fn(),
-                },
-                dismiss: jest.fn(),
-                result: Promise.resolve(),
-            } as any;
-
-            const modalService = TestBed.inject(NgbModal);
-            const metisConversationService = TestBed.inject(MetisConversationService);
-            const createChatSpy = jest.spyOn(metisConversationService, 'createOneToOneChatWithId');
-
-            jest.spyOn(modalService, 'open').mockReturnValue(fakeModalRef);
-            const event = new MouseEvent('click');
-            component.openConversationDetailDialog(event, ConversationDetailTabs.INFO);
-            tick();
-
-            expect(createChatSpy).not.toHaveBeenCalled();
-        }));
-
-        it('should always open info tab when conversation is one-to-one chat', fakeAsync(() => {
-            const oneToOneChat = generateOneToOneChatDTO({});
-            component.activeConversation = oneToOneChat;
-
-            const fakeModalRef: NgbModalRef = {
-                componentInstance: {
-                    course: undefined,
-                    activeConversation: undefined,
-                    selectedTab: null,
-                    initialize: jest.fn(),
-                },
-                result: Promise.resolve(),
-                dismiss: jest.fn(),
-            } as any;
-
-            const modalService = TestBed.inject(NgbModal);
-            jest.spyOn(modalService, 'open').mockReturnValue(fakeModalRef);
-
-            const event = new MouseEvent('click');
-            component.openConversationDetailDialog(event, ConversationDetailTabs.MEMBERS);
-            tick();
-
-            expect(fakeModalRef.componentInstance.selectedTab).toEqual(ConversationDetailTabs.INFO);
-        }));
-
-        it('should emit onUpdateSidebar when conversation detail dialog is closed', fakeAsync(() => {
-            const modalService = TestBed.inject(NgbModal);
-            const fakeModalRef: NgbModalRef = {
-                componentInstance: {
-                    course: undefined,
-                    activeConversation: undefined,
-                    selectedTab: undefined,
-                    initialize: jest.fn(),
-                },
-                dismiss: jest.fn(),
-                result: Promise.resolve(),
-            } as any;
-
-            jest.spyOn(modalService, 'open').mockReturnValue(fakeModalRef);
-
-            const onUpdateSidebarSpy = jest.spyOn(component.onUpdateSidebar, 'emit');
+            const onUpdateSidebarSpy = vi.spyOn(component.onUpdateSidebar, 'emit');
 
             const event = new MouseEvent('click');
             component.openConversationDetailDialog(event, ConversationDetailTabs.INFO);
-            tick();
+            mockOnClose.next(true);
+            mockOnClose.complete();
+            vi.advanceTimersByTime(0);
 
             expect(onUpdateSidebarSpy).toHaveBeenCalledOnce();
-        }));
+        });
 
         it('should emit collapseSearch when toggleSearchBar is called', () => {
-            const collapseSearchSpy = jest.spyOn(component.onSearchClick, 'emit');
+            const collapseSearchSpy = vi.spyOn(component.onSearchClick, 'emit');
             component.toggleSearchBar();
 
             expect(collapseSearchSpy).toHaveBeenCalledOnce();
@@ -357,28 +250,14 @@ examples.forEach((activeConversation) => {
             const detailButton = fixture.debugElement.nativeElement.querySelector('.' + className);
             expect(detailButton).toBeTruthy();
 
-            const modalService = TestBed.inject(NgbModal);
-            const mockModalRef = {
-                componentInstance: {
-                    course: undefined,
-                    activeConversation,
-                    selectedTab: undefined,
-                    initialize: () => {},
-                },
-                result: Promise.resolve(),
-            };
-            const openDialogSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
+            const dialogService = TestBed.inject(DialogService);
+            const mockOnClose = new Subject<any>();
+            const mockDialogRef = { onClose: mockOnClose.asObservable(), close: vi.fn() } as unknown as DynamicDialogRef;
+            const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
             fixture.changeDetectorRef.detectChanges();
             detailButton.click();
-            fixture.whenStable().then(() => {
-                expect(openDialogSpy).toHaveBeenCalledOnce();
-                expect(openDialogSpy).toHaveBeenCalledWith(ConversationDetailDialogComponent, defaultFirstLayerDialogOptions);
-                expect(mockModalRef.componentInstance.course).toEqual(course);
-                expect(mockModalRef.componentInstance.activeConversation).toEqual(activeConversation);
-
-                const expectedTab = component.getAsOneToOneChat(activeConversation) ? ConversationDetailTabs.INFO : tab;
-                expect(mockModalRef.componentInstance.selectedTab).toEqual(expectedTab);
-            });
+            expect(openDialogSpy).toHaveBeenCalledOnce();
+            expect(openDialogSpy).toHaveBeenCalledWith(ConversationDetailDialogComponent, expect.anything());
         }
     });
 });

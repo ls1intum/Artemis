@@ -1,5 +1,3 @@
-# Sorting with the Strategy Pattern
-
 In this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables.
 
 **Note:** This project is using `Maven`! You have to import the project as Maven project (not as Eclipse project) as otherwise, errors will occur and you won't be able to work on this exercise.

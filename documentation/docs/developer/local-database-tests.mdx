@@ -9,15 +9,15 @@ import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../src/components/Image/Image";
 import postgresTestsConfig from './assets/intellij-postgres-tests-run-configuration.png';
 
-# Running Database Tests Locally
+# Running Server Tests Locally
 
-Database tests are the standard server integration tests executed against a real database (MySQL or Postgres) started as Docker containers. The Gradle test task will automatically pull the necessary images and start the containers.
+Server integration tests run against PostgreSQL by default using Docker containers managed by Testcontainers. No additional flags are needed — `./gradlew test -x webapp` uses PostgreSQL automatically. The Gradle test task pulls the necessary Docker images and starts the containers.
 
 ---
 
 ## Prerequisites
 
-Before running those tests, make sure you have got a working Docker setup:
+Before running server tests, make sure you have a working Docker setup:
 
 1. Install [Docker Desktop](https://docs.docker.com/desktop/) or [Docker Engine and Docker CLI](https://docs.docker.com/engine/install/).
 2. Enable [remote access for the Docker daemon](https://docs.docker.com/config/daemon/remote-access/).
@@ -28,8 +28,8 @@ Before running those tests, make sure you have got a working Docker setup:
 
 You can execute the database tests by running the run configurations provided in the repository:
 
+- **For PostgreSQL tests (recommended):** `Artemis Server Tests Postgres`
 - **For MySQL tests:** `Artemis Server Tests MySQL`
-- **For Postgres tests:** `Artemis Server Tests Postgres`
 
 ### Creating a Custom Configuration
 
@@ -46,16 +46,22 @@ Alternatively, you can create a custom configuration.
 
 ## Executing Tests from the Console
 
-You can execute the database tests by running the dedicated Gradle command:
+### PostgreSQL Tests (default)
+
+```bash
+./gradlew test -x webapp
+```
 
 ### MySQL Tests
 
 ```bash
-SPRING_PROFILES_INCLUDE=mysql ./gradlew cleanTest test -x webapp
+./gradlew testMysql -x webapp
 ```
 
-### Postgres Tests
+### H2 Tests (in-memory, no Docker needed)
+
+For quick local iteration without Docker, you can run tests against H2. Note that H2 may not catch all Postgres-specific issues.
 
 ```bash
-SPRING_PROFILES_INCLUDE=postgres ./gradlew cleanTest test -x webapp
+./gradlew test -x webapp -Dzonky.test.database.type=H2
 ```

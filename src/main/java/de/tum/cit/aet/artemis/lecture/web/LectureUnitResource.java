@@ -37,6 +37,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastInstructorInLectureUnit;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -82,9 +84,12 @@ public class LectureUnitResource {
 
     private final LectureTranscriptionRepository transcriptionRepository;
 
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
+
     public LectureUnitResource(UserRepository userRepository, LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository,
             LectureUnitService lectureUnitService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<LectureContentProcessingService> lectureContentProcessingService,
-            LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository) {
+            LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
         this.userRepository = userRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
@@ -93,6 +98,7 @@ public class LectureUnitResource {
         this.lectureContentProcessingService = lectureContentProcessingService;
         this.processingStateRepository = processingStateRepository;
         this.transcriptionRepository = transcriptionRepository;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
     }
 
     /**
@@ -187,7 +193,10 @@ public class LectureUnitResource {
         if (lectureUnitName == null) {
             lectureUnitName = "lectureUnitWithoutName";
         }
+        long unitId = lectureUnitId;
         lectureUnitService.removeLectureUnit(lectureUnit);
+
+        searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, unitId));
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureUnitName)).build();
     }
@@ -234,7 +243,7 @@ public class LectureUnitResource {
     public ResponseEntity<List<LectureUnitCombinedStatusDTO>> getUnitStatuses(@PathVariable Long lectureId) {
         log.debug("REST request to get combined statuses for all lecture units in lecture: {}", lectureId);
 
-        // If processing is not enabled (Iris/Nebula disabled), return empty list
+        // If processing is not enabled (Iris disabled), return empty list
         // This prevents the UI from showing "Awaiting Processing" when processing will never happen
         if (lectureContentProcessingService.isEmpty()) {
             return ResponseEntity.ok(List.of());

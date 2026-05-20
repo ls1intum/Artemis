@@ -1,0 +1,11 @@
+{
+    "deleteFiles": ["helloWorld.c"],
+    "createFilesInRootFolder": true,
+    "files": [
+        {
+            "name": "helloWorld.c",
+            "path": "exercise/programming/c/partially_successful/exercise.txt"
+        }
+    ],
+    "expectedResult": "50%"
+}

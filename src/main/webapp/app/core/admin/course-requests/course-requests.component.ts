@@ -1,6 +1,7 @@
 import { NgClass } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { NgbModal, NgbModalRef, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { DialogModule } from 'primeng/dialog';
 import { faCheck, faEdit, faExternalLinkAlt, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
@@ -43,12 +44,12 @@ import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title
         AdminTitleBarActionsDirective,
         NgbPagination,
         CourseRequestFormComponent,
+        DialogModule,
     ],
 })
 export class CourseRequestsComponent implements OnInit {
     private readonly courseRequestService = inject(CourseRequestService);
     private readonly alertService = inject(AlertService);
-    private readonly modalService = inject(NgbModal);
     private readonly fb = inject(FormBuilder);
 
     protected readonly ButtonType = ButtonType;
@@ -81,8 +82,10 @@ export class CourseRequestsComponent implements OnInit {
     readonly decisionReason = signal('');
     /** Whether reason is invalid */
     readonly reasonInvalid = signal(false);
-    /** Modal reference */
-    readonly modalRef = signal<NgbModalRef | undefined>(undefined);
+    /** Whether the reject modal dialog is visible */
+    readonly rejectModalVisible = signal(false);
+    /** Whether the edit modal dialog is visible */
+    readonly editModalVisible = signal(false);
 
     // Edit form
     editForm = this.fb.group({
@@ -153,11 +156,11 @@ export class CourseRequestsComponent implements OnInit {
         onError(this.alertService, error);
     }
 
-    openRejectModal(content: any, request: CourseRequest) {
+    openRejectModal(request: CourseRequest) {
         this.selectedRequest.set(request);
         this.decisionReason.set('');
         this.reasonInvalid.set(false);
-        this.modalRef.set(this.modalService.open(content, { size: 'lg' }));
+        this.rejectModalVisible.set(true);
     }
 
     reject() {
@@ -176,7 +179,7 @@ export class CourseRequestsComponent implements OnInit {
                 this.decidedRequests.update((reqs) => [updated, ...reqs]);
                 this.totalDecidedCount.update((count) => count + 1);
                 this.alertService.success('artemisApp.courseRequest.admin.rejectSuccess', { title: updated.title });
-                this.modalRef()?.close();
+                this.rejectModalVisible.set(false);
                 this.reasonInvalid.set(false);
                 this.selectedRequest.set(undefined);
             },
@@ -210,7 +213,7 @@ export class CourseRequestsComponent implements OnInit {
         return `Yes (${count})`;
     }
 
-    openEditModal(content: any, request: CourseRequest) {
+    openEditModal(request: CourseRequest) {
         this.selectedRequest.set(request);
         this.editDateRangeInvalid.set(false);
         this.isSubmittingEdit.set(false);
@@ -223,7 +226,7 @@ export class CourseRequestsComponent implements OnInit {
             testCourse: request.testCourse ?? false,
             reason: request.reason,
         });
-        this.modalRef.set(this.modalService.open(content, { size: 'lg' }));
+        this.editModalVisible.set(true);
     }
 
     saveEdit() {
@@ -265,7 +268,7 @@ export class CourseRequestsComponent implements OnInit {
                     return reqs;
                 });
                 this.alertService.success('artemisApp.courseRequest.admin.editSuccess');
-                this.modalRef()?.close();
+                this.editModalVisible.set(false);
                 this.isSubmittingEdit.set(false);
                 this.selectedRequest.set(undefined);
             },

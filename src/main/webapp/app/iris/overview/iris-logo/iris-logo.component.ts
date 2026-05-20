@@ -22,12 +22,18 @@ export enum IrisLogoLookDirection {
 export class IrisLogoComponent {
     size = input<IrisLogoSize | number>(IrisLogoSize.BIG);
     look = input<IrisLogoLookDirection>(IrisLogoLookDirection.RIGHT);
+    spinning = input<boolean>(false);
 
     logoUrl = computed(() => {
         if (this.size() === IrisLogoSize.SMALL) {
             return 'public/images/iris/iris-logo-small.png';
         }
         return `public/images/iris/iris-logo-big-${this.look()}.png`;
+    });
+
+    numericHeight = computed(() => {
+        const s = this.size();
+        return typeof s === 'number' ? s : undefined;
     });
 
     classList = computed(() => {

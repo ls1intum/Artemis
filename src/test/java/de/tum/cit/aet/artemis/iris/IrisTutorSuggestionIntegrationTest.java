@@ -33,14 +33,12 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisTutorSuggestionSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
@@ -119,8 +117,8 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void createSession() throws Exception {
         var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
-        var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisTutorSuggestionSession.class, HttpStatus.CREATED);
-        var actualIrisSession = irisTutorSuggestionSessionRepository.findByIdElseThrow(irisSession.getId());
+        var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
+        var actualIrisSession = irisTutorSuggestionSessionRepository.findByIdElseThrow(irisSession.id());
         assertThat(actualIrisSession.getUserId()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1").getId());
         assertThat(post.getId()).isEqualTo(actualIrisSession.getPostId());
     }
@@ -129,8 +127,8 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testCreateTutorSuggestionSessionShouldReturnDifferentResponsesForSamePost() throws Exception {
         var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
-        var firstResponse = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.CREATED);
-        var secondResponse = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.CREATED);
+        var firstResponse = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
+        var secondResponse = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
         assertThat(firstResponse).isNotEqualTo(secondResponse);
     }
 
@@ -138,22 +136,23 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getCurrentSession() throws Exception {
         var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
-        var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.CREATED);
-        var currentIrisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()) + "/current", null, IrisSession.class, HttpStatus.OK);
-        assertThat(irisSession).isEqualTo(currentIrisSession);
+        var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
+        var currentIrisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()) + "/current", null, IrisChatSessionResponseDTO.class, HttpStatus.OK);
+        assertThat(currentIrisSession.id()).isEqualTo(irisSession.id());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getCurrentMessagesForSession() throws Exception {
         var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
-        var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.CREATED);
+        var irisSessionDTO = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
+        var irisSession = irisTutorSuggestionSessionRepository.findByIdElseThrow(irisSessionDTO.id());
         var message = new IrisMessage();
         message.addContent(new IrisTextMessageContent("Test tutor suggestion request"));
         message.setSender(IrisMessageSender.LLM);
         message.setSession(irisSession);
         irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
-        var messages = irisMessageRepository.findAllBySessionId(irisSession.getId());
+        var messages = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(irisSessionDTO.id());
         assertThat(messages).hasSize(1);
         assertThat(messages.getFirst().getContent().getFirst().toString()).contains("Test tutor suggestion request");
         assertThat(messages.getFirst().getSender()).isEqualTo(IrisMessageSender.LLM);
@@ -163,14 +162,14 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testCreateTutorSuggestionShouldProcessRequestAndReturnResponse() throws Exception {
         var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
-        var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.CREATED);
+        var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
         irisRequestMockProvider.mockTutorSuggestionResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
 
             pipelineDone.set(true);
         });
 
-        request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/tutor-suggestion", null, Void.class, HttpStatus.CREATED);
+        request.postWithResponseBody(irisSessionUrl(irisSession.id()) + "/tutor-suggestion", null, Void.class, HttpStatus.CREATED);
         await().atMost(java.time.Duration.ofSeconds(5)).until(pipelineDone::get);
     }
 
@@ -178,7 +177,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetTutorSuggestionSessionAsStudent() throws Exception {
         var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
-        request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -189,11 +188,9 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         conversation.setCourse(course);
         post = postRepository.save(post);
 
-        var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisTutorSuggestionSession.class, HttpStatus.CREATED);
-        irisSession.setPostId(post.getId());
+        var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
 
-        var dummyTextExerciseDTO = new PyrisTextExerciseDTO(textExercise.getId(), textExercise.getTitle(), new PyrisCourseDTO(course), textExercise.getProblemStatement(),
-                Optional.empty(), null, null);
+        var dummyTextExerciseDTO = new PyrisTextExerciseDTO(textExercise.getId(), textExercise.getTitle(), textExercise.getProblemStatement(), Optional.empty(), null, null);
 
         pipelineDone.set(false);
         irisRequestMockProvider.mockTutorSuggestionResponse(dto -> {
@@ -201,7 +198,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
             pipelineDone.set(true);
         });
 
-        request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/tutor-suggestion", null, Void.class, HttpStatus.CREATED);
+        request.postWithResponseBody(irisSessionUrl(irisSession.id()) + "/tutor-suggestion", null, Void.class, HttpStatus.CREATED);
         await().atMost(java.time.Duration.ofSeconds(5)).until(pipelineDone::get);
     }
 
@@ -213,8 +210,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         conversation.setCourse(course);
         post = postRepository.save(post);
 
-        var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisTutorSuggestionSession.class, HttpStatus.CREATED);
-        irisSession.setPostId(post.getId());
+        var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
 
         var dummyExerciseDTO = new PyrisProgrammingExerciseDTO(programmingExercise.getId(), programmingExercise.getTitle(), programmingExercise.getProgrammingLanguage(), null,
                 null, null, programmingExercise.getProblemStatement(), toInstant(programmingExercise.getReleaseDate()), toInstant(programmingExercise.getDueDate()));
@@ -225,7 +221,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
             pipelineDone.set(true);
         });
 
-        request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/tutor-suggestion", null, Void.class, HttpStatus.CREATED);
+        request.postWithResponseBody(irisSessionUrl(irisSession.id()) + "/tutor-suggestion", null, Void.class, HttpStatus.CREATED);
         await().atMost(java.time.Duration.ofSeconds(5)).until(pipelineDone::get);
     }
 
@@ -236,8 +232,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         var conversation = post.getConversation();
         conversation.setCourse(course);
         post = postRepository.saveAndFlush(post);
-        var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisTutorSuggestionSession.class, HttpStatus.CREATED);
-        irisSession.setPostId(post.getId());
+        var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
 
         pipelineDone.set(false);
         Post finalPost = post;
@@ -249,7 +244,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
             pipelineDone.set(true);
         });
 
-        request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/tutor-suggestion", null, Void.class, HttpStatus.CREATED);
+        request.postWithResponseBody(irisSessionUrl(irisSession.id()) + "/tutor-suggestion", null, Void.class, HttpStatus.CREATED);
         await().atMost(java.time.Duration.ofSeconds(5)).until(pipelineDone::get);
 
     }
@@ -271,8 +266,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         post.addAnswerPost(answerPost);
         post = postRepository.save(post);
 
-        var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisTutorSuggestionSession.class, HttpStatus.CREATED);
-        irisSession.setPostId(post.getId());
+        var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
 
         pipelineDone.set(false);
         irisRequestMockProvider.mockTutorSuggestionResponse(dto -> {
@@ -281,7 +275,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
             pipelineDone.set(true);
         });
 
-        request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/tutor-suggestion", null, Void.class, HttpStatus.CREATED);
+        request.postWithResponseBody(irisSessionUrl(irisSession.id()) + "/tutor-suggestion", null, Void.class, HttpStatus.CREATED);
         await().atMost(java.time.Duration.ofSeconds(5)).until(pipelineDone::get);
     }
 
@@ -293,10 +287,9 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         conversation.setCourse(course);
         post = postRepository.save(post);
 
-        var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisTutorSuggestionSession.class, HttpStatus.CREATED);
-        irisSession.setPostId(post.getId());
+        var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
 
-        String token = pyrisJobService.addTutorSuggestionJob(post.getId(), course.getId(), irisSession.getId());
+        String token = pyrisJobService.addTutorSuggestionJob(post.getId(), course.getId(), irisSession.id());
 
         // Manually authenticate the job to verify token registration
         var mockRequest = new org.springframework.mock.web.MockHttpServletRequest();
@@ -304,7 +297,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(mockRequest, de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob.class);
         assertThat(job).isNotNull();
         assertThat(job.jobId()).isEqualTo(token);
-        List<PyrisStageDTO> stages = List.of(new PyrisStageDTO("Test stage", 0, PyrisStageState.DONE, "Done", false));
+        List<PyrisStageDTO> stages = List.of(new PyrisStageDTO("Test stage", 0, PyrisStageState.DONE, "Done", false, null));
         var statusUpdate = new TutorSuggestionStatusUpdateDTO("Test suggestion", "Test result", stages, null);
         var mockRequestForStatusUpdate = new org.springframework.mock.web.MockHttpServletRequest();
         mockRequestForStatusUpdate.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + token);
@@ -318,7 +311,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
                 .isInstanceOf(de.tum.cit.aet.artemis.core.exception.AccessForbiddenException.class).hasMessageContaining("No valid token provided");
 
         // Check if the messages where saved
-        var messages = irisMessageRepository.findAllBySessionId(irisSession.getId());
+        var messages = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(irisSession.id());
         assertThat(messages).hasSize(2);
         assertThat(messages.getFirst().getContent().getFirst().toString()).contains("Test suggestion");
         assertThat(messages.getFirst().getSender()).isEqualTo(IrisMessageSender.ARTIFACT);

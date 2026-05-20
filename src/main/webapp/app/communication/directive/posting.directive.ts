@@ -1,5 +1,5 @@
 import { Posting } from 'app/communication/shared/entities/posting.model';
-import { ChangeDetectorRef, Directive, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Directive, OnDestroy, OnInit, inject, input, model } from '@angular/core';
 import { MetisService } from 'app/communication/service/metis.service';
 import { DisplayPriority } from 'app/communication/metis.util';
 import { faBookmark } from '@fortawesome/free-solid-svg-icons';
@@ -8,15 +8,16 @@ import { isMessagingEnabled } from 'app/core/course/shared/entities/course.model
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { Router } from '@angular/router';
+import { deepClone } from 'app/shared/util/deep-clone.util';
 
 @Directive()
 export abstract class PostingDirective<T extends Posting> implements OnInit, OnDestroy {
-    @Input() posting: T;
-    @Input() isCommunicationPage: boolean;
-    @Input() showChannelReference?: boolean;
+    readonly posting = model<T>();
+    readonly isCommunicationPage = input<boolean | undefined>();
+    readonly showChannelReference = input<boolean>();
 
-    @Input() hasChannelModerationRights = false;
-    @Input() isThreadSidebar: boolean;
+    readonly hasChannelModerationRights = input(false);
+    readonly isThreadSidebar = input<boolean | undefined>();
     abstract get reactionsBar(): any;
     showDropdown = false;
     dropdownPosition = { x: 0, y: 0 };
@@ -43,7 +44,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
     faBookmark = faBookmark;
 
     ngOnInit(): void {
-        this.content = this.posting.content;
+        this.content = this.posting()?.content;
     }
 
     ngOnDestroy(): void {
@@ -154,21 +155,41 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
         this.showReactionSelector = !this.showReactionSelector;
     }
 
+    markMessageAsUnread() {
+        const posting = this.posting();
+        if (posting) {
+            this.metisService.markMessageAsUnread(posting);
+        }
+    }
+
     protected toggleSavePost() {
-        if (this.posting.isSaved) {
-            this.metisService.removeSavedPost(this.posting);
-            this.posting.isSaved = false;
+        const posting = this.posting();
+        if (!posting) {
+            return;
+        }
+
+        if (posting.isSaved) {
+            this.metisService.removeSavedPost(posting);
+            const updated = deepClone(posting);
+            updated.isSaved = false;
+            this.posting.set(updated);
         } else {
-            this.metisService.savePost(this.posting);
-            this.posting.isSaved = true;
+            this.metisService.savePost(posting);
+            const updated = deepClone(posting);
+            updated.isSaved = true;
+            this.posting.set(updated);
         }
     }
 
     private deletePostingWithoutTimeout() {
+        const posting = this.posting();
+        if (!posting) {
+            return;
+        }
         if (this.isAnswerPost) {
-            this.metisService.deleteAnswerPost(this.posting);
+            this.metisService.deleteAnswerPost(posting);
         } else {
-            this.metisService.deletePost(this.posting);
+            this.metisService.deletePost(posting);
         }
     }
 
@@ -180,7 +201,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
     onUserReferenceClicked(referencedUserLogin: string) {
         const course = this.metisService.getCourse();
         if (isMessagingEnabled(course)) {
-            if (this.isCommunicationPage) {
+            if (this.isCommunicationPage()) {
                 this.metisConversationService.createOneToOneChat(referencedUserLogin).subscribe();
             } else {
                 this.oneToOneChatService.create(course.id!, referencedUserLogin).subscribe((res) => {
@@ -198,15 +219,15 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
      * Create a or navigate to one-to-one chat with the referenced user
      */
     onUserNameClicked() {
-        if (!this.posting.author?.id) {
+        if (!this.posting()?.author?.id) {
             return;
         }
 
-        const referencedUserId = this.posting.author?.id;
+        const referencedUserId = this.posting()!.author!.id!;
 
         const course = this.metisService.getCourse();
         if (isMessagingEnabled(course)) {
-            if (this.isCommunicationPage) {
+            if (this.isCommunicationPage()) {
                 this.metisConversationService.createOneToOneChatWithId(referencedUserId).subscribe();
             } else {
                 this.oneToOneChatService.createWithId(course.id!, referencedUserId).subscribe((res) => {

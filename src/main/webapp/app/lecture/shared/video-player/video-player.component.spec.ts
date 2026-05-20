@@ -133,6 +133,7 @@ describe('VideoPlayerComponent', () => {
                             <video #videoRef></video>
                         </div>
                         <div #resizerHandle class="resizer-handle"></div>
+                        <div class="transcript-column"></div>
                     </div>
                 `,
             },
@@ -149,9 +150,10 @@ describe('VideoPlayerComponent', () => {
         vi.restoreAllMocks();
     });
 
-    function setInputs(url?: string, segments: TranscriptSegment[] = []): void {
+    function setInputs(url?: string, segments: TranscriptSegment[] = [], initialTimestamp?: number): void {
         fixture.componentRef.setInput('videoUrl', url);
         fixture.componentRef.setInput('transcriptSegments', segments);
+        fixture.componentRef.setInput('initialTimestamp', initialTimestamp);
     }
 
     async function render(): Promise<void> {
@@ -243,6 +245,16 @@ describe('VideoPlayerComponent', () => {
         expect(playSpy).toHaveBeenCalled();
     });
 
+    it('applies initial timestamp after metadata is available', async () => {
+        setInputs('https://cdn.example.com/m.m3u8', [], 12.5);
+        await render();
+
+        videoElement.dispatchEvent(new Event('loadedmetadata'));
+
+        expect(videoElement.currentTime).toBe(12.5);
+        expect(component.currentSegmentIndex()).toBe(-1);
+    });
+
     it('ngOnDestroy destroys hls instance', async () => {
         setInputs('https://cdn.example.com/m.m3u8', []);
         await render();
@@ -306,9 +318,9 @@ describe('VideoPlayerComponent', () => {
             // Simulate drag to position 600px from left
             moveListener({ clientX: 600 });
 
-            // Browser normalizes 'none' to '0 0 auto'
-            expect(videoColumnEl.style.flex).toBe('0 0 auto');
-            expect(videoColumnEl.style.width).toBe('600px');
+            // Uses percentage-based flex (600/1000 = 60%)
+            expect(videoColumnEl.style.flex).toBe('0 0 60%');
+            expect(videoColumnEl.style.width).toBe('');
         });
 
         it('clamps video column width to minimum', async () => {
@@ -336,7 +348,9 @@ describe('VideoPlayerComponent', () => {
             // Try to drag below minimum (300px)
             moveListener({ clientX: 100 });
 
-            expect(videoColumnEl.style.width).toBe('300px');
+            // Clamped to 300px, which is 30% of 1000px wrapper
+            expect(videoColumnEl.style.flex).toBe('0 0 30%');
+            expect(videoColumnEl.style.width).toBe('');
         });
 
         it('clamps video column width to maximum', async () => {
@@ -364,7 +378,9 @@ describe('VideoPlayerComponent', () => {
             // Try to drag beyond maximum (1000 - 250 = 750px)
             moveListener({ clientX: 900 });
 
-            expect(videoColumnEl.style.width).toBe('750px');
+            // Clamped to 750px, which is 75% of 1000px wrapper
+            expect(videoColumnEl.style.flex).toBe('0 0 75%');
+            expect(videoColumnEl.style.width).toBe('');
         });
 
         it('resets video column styles on window resize', async () => {
@@ -390,16 +406,69 @@ describe('VideoPlayerComponent', () => {
             const draggableConfig = getMockInteractInstance().draggable.mock.calls[0][0];
             draggableConfig.listeners.move({ clientX: 500 });
 
-            // Browser normalizes 'none' to '0 0 auto'
-            expect(videoColumnEl.style.flex).toBe('0 0 auto');
-            expect(videoColumnEl.style.width).toBe('500px');
+            // Uses percentage-based flex (500/1000 = 50%)
+            expect(videoColumnEl.style.flex).toBe('0 0 50%');
+            expect(videoColumnEl.style.width).toBe('');
 
             // Trigger window resize
             window.dispatchEvent(new Event('resize'));
 
-            // Styles should be reset to empty
+            // Percentage-based flex is maintained (allows proportional scaling)
+            expect(videoColumnEl.style.flex).toBe('0 0 50%');
+            expect(videoColumnEl.style.width).toBe('');
+        });
+
+        it('skips resizing when the wrapper is too narrow for both columns', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', []);
+            await render();
+
+            const videoColumnEl = component.videoColumn()!.nativeElement;
+            const wrapperEl = component.videoWrapper()!.nativeElement;
+
+            vi.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue({
+                left: 0,
+                width: 540,
+                top: 0,
+                right: 540,
+                bottom: 500,
+                height: 500,
+                x: 0,
+                y: 0,
+                toJSON: () => ({}),
+            } as DOMRect);
+
+            const draggableConfig = getMockInteractInstance().draggable.mock.calls[0][0];
+            draggableConfig.listeners.move({ clientX: 400 });
+
             expect(videoColumnEl.style.flex).toBe('');
             expect(videoColumnEl.style.width).toBe('');
+        });
+
+        it('resetSplitRatio clears custom sizing on the video column', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', []);
+            await render();
+
+            const videoColumnEl = component.videoColumn()!.nativeElement;
+            videoColumnEl.style.flex = '0 0 65%';
+            videoColumnEl.style.width = '650px';
+
+            component.resetSplitRatio();
+
+            expect(videoColumnEl.style.flex).toBe('');
+            expect(videoColumnEl.style.width).toBe('');
+        });
+
+        it('syncTranscriptHeight enforces the minimum transcript height', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', []);
+            await render();
+
+            const videoColumnEl = component.videoColumn()!.nativeElement;
+            const transcriptColumnEl = fixture.nativeElement.querySelector('.transcript-column') as HTMLElement;
+            Object.defineProperty(videoColumnEl, 'offsetHeight', { configurable: true, value: 320 });
+
+            component['syncTranscriptHeight']();
+
+            expect(transcriptColumnEl.style.maxHeight).toBe('500px');
         });
 
         it('cleans up interact instance on destroy', async () => {

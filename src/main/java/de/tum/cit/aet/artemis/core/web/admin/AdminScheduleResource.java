@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.core.web.admin;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
-import static tech.jhipster.web.util.PaginationUtil.generatePaginationHttpHeaders;
+import static de.tum.cit.aet.artemis.core.web.util.PaginationUtil.generatePaginationHttpHeaders;
 
 import java.util.List;
 

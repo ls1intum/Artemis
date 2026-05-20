@@ -7,7 +7,7 @@ import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { programmingExerciseCreationConfigMock } from 'test/helpers/mocks/programming-exercise-creation-config-mock';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { PROFILE_THEIA } from 'app/app.constants';
+import { MODULE_FEATURE_THEIA } from 'app/app.constants';
 import { ProgrammingExerciseDifficultyComponent } from 'app/programming/manage/update/update-components/difficulty/programming-exercise-difficulty.component';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -66,7 +66,7 @@ describe('ProgrammingExerciseModeComponent', () => {
 
     it('should initialize theiaEnabled', () => {
         getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoSub.mockReturnValue({ activeProfiles: [PROFILE_THEIA] } as ProfileInfo);
+        getProfileInfoSub.mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_THEIA] } as ProfileInfo);
 
         fixture.detectChanges();
         expect(comp.theiaEnabled).toBeTrue();

@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LearningPathsAnalyticsComponent } from 'app/atlas/manage/learning-paths-analytics/learning-paths-analytics.component';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
@@ -8,13 +9,15 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CompetencyGraphDTO, CompetencyGraphEdgeDTO, CompetencyGraphNodeDTO, CompetencyGraphNodeValueType } from 'app/atlas/shared/entities/learning-path.model';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('LearningPathsAnalyticsComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: LearningPathsAnalyticsComponent;
     let fixture: ComponentFixture<LearningPathsAnalyticsComponent>;
     let learningPathApiService: LearningPathApiService;
     let alertService: AlertService;
-    let getInstructorCompetencyGraphSpy: jest.SpyInstance;
+    let getInstructorCompetencyGraphSpy: ReturnType<typeof vi.spyOn>;
 
     const courseId = 1;
 
@@ -58,7 +61,7 @@ describe('LearningPathsAnalyticsComponent', () => {
         learningPathApiService = TestBed.inject(LearningPathApiService);
         alertService = TestBed.inject(AlertService);
 
-        getInstructorCompetencyGraphSpy = jest.spyOn(learningPathApiService, 'getLearningPathInstructorCompetencyGraph').mockResolvedValue(competencyGraph);
+        getInstructorCompetencyGraphSpy = vi.spyOn(learningPathApiService, 'getLearningPathInstructorCompetencyGraph').mockResolvedValue(competencyGraph);
 
         fixture = TestBed.createComponent(LearningPathsAnalyticsComponent);
         component = fixture.componentInstance;
@@ -74,7 +77,7 @@ describe('LearningPathsAnalyticsComponent', () => {
     });
 
     it('should set isLoading correctly', async () => {
-        const isLoadingSpy = jest.spyOn(component.isLoading, 'set');
+        const isLoadingSpy = vi.spyOn(component.isLoading, 'set');
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -84,7 +87,7 @@ describe('LearningPathsAnalyticsComponent', () => {
     });
 
     it('should show error on load instructor competency graph', async () => {
-        const alertServiceErrorSpy = jest.spyOn(alertService, 'addAlert');
+        const alertServiceErrorSpy = vi.spyOn(alertService, 'addAlert');
         getInstructorCompetencyGraphSpy.mockRejectedValue(new Error('Error'));
 
         fixture.detectChanges();

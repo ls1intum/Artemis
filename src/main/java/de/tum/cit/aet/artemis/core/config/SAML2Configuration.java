@@ -72,7 +72,7 @@ public class SAML2Configuration {
         http
             // This filter chain is only applied if the URL matches
             // Else the request is filtered by {@link SecurityConfiguration}.
-            .securityMatcher("/api/core/public/saml2", "/saml2/**", "/login/**")
+            .securityMatcher("/api/core/public/saml2", "/saml2/**", "/login/saml2/**")
             // Needed for SAML to work properly
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth

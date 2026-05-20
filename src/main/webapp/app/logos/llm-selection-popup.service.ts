@@ -1,23 +1,23 @@
 import { Injectable } from '@angular/core';
 import { Observable, Subject, firstValueFrom } from 'rxjs';
-import { LLMSelectionChoice } from './llm-selection-popup.component';
+import { LLMModalResult, LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 @Injectable({
     providedIn: 'root',
 })
 export class LLMSelectionModalService {
-    private openModalSubject = new Subject<void>();
-    private choiceSubject = new Subject<LLMSelectionChoice>();
+    private openModalSubject = new Subject<LLMSelectionDecision | undefined>();
+    private choiceSubject = new Subject<LLMModalResult>();
 
-    openModal$: Observable<void> = this.openModalSubject.asObservable();
-    choice$: Observable<LLMSelectionChoice> = this.choiceSubject.asObservable();
+    openModal$: Observable<LLMSelectionDecision | undefined> = this.openModalSubject.asObservable();
+    choice$: Observable<LLMModalResult> = this.choiceSubject.asObservable();
 
-    open(): Promise<LLMSelectionChoice> {
-        this.openModalSubject.next();
+    open(currentSelection?: LLMSelectionDecision): Promise<LLMModalResult> {
+        this.openModalSubject.next(currentSelection);
         return firstValueFrom(this.choice$);
     }
 
-    emitChoice(choice: LLMSelectionChoice): void {
+    emitChoice(choice: LLMModalResult): void {
         this.choiceSubject.next(choice);
     }
 }

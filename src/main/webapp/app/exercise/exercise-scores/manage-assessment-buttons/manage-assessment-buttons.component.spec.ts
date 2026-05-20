@@ -1,6 +1,6 @@
-import { expect, vi } from 'vitest';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ManageAssessmentButtonsComponent } from 'app/exercise/exercise-scores/manage-assessment-buttons/manage-assessment-buttons.component';
 import { MockProvider } from 'ng-mocks';
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
@@ -21,6 +21,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 
 describe('ManageAssessmentButtonsComponent', () => {
     setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ManageAssessmentButtonsComponent>;
     let comp: ManageAssessmentButtonsComponent;
     let programmingAssessmentService: ProgrammingAssessmentManualResultService;

@@ -11,7 +11,12 @@ export class StudentAssessmentPage {
     }
 
     async startComplaint() {
-        await this.page.locator('#complain').click({ timeout: 30000 });
+        // Wait for the page to fully load before looking for the complaint button.
+        // The button depends on async accountService.identity() resolving to set
+        // isCorrectUserToFileAction, and the exam review period must be active.
+        const complainButton = this.page.locator('#complain');
+        await complainButton.waitFor({ state: 'visible', timeout: 30000 });
+        await complainButton.click();
     }
 
     async enterComplaint(text: string) {
@@ -31,7 +36,10 @@ export class StudentAssessmentPage {
     }
 
     async checkComplaintStatusText(text: string) {
-        await expect(this.getComplaintBadge().filter({ hasText: text })).toBeAttached();
+        // Default expect timeout is 10s; the student-side complaint badge appears only after the
+        // tutor's response propagates through the assessment async flow, which under parallel CI
+        // load can take longer than 10s. Wait up to 30s for the specific status text to render.
+        await expect(this.getComplaintBadge().filter({ hasText: text })).toBeAttached({ timeout: 30_000 });
     }
 
     async checkComplaintResponseText(text: string) {

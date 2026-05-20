@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PostingContentPartComponent } from 'app/communication/posting-content/posting-content-part/posting-content-part.components';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
@@ -14,36 +16,43 @@ import { metisCourse, metisCoursePosts, metisExercisePosts, metisGeneralCourseWi
 import { Params } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('PostingContentComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: PostingContentComponent;
     let fixture: ComponentFixture<PostingContentComponent>;
     let metisService: MetisService;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MetisService, useClass: MockMetisService }],
-            declarations: [
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
                 PostingContentComponent,
                 MockComponent(PostingContentPartComponent),
                 MockComponent(FaIconComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(TranslateDirective),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(PostingContentComponent);
-                component = fixture.componentInstance;
-                metisService = TestBed.inject(MetisService);
-            });
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: MetisService, useClass: MockMetisService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        });
+
+        fixture = TestBed.createComponent(PostingContentComponent);
+        component = fixture.componentInstance;
+        metisService = TestBed.inject(MetisService);
     });
 
-    it('should set course and posts for course on initialization', fakeAsync(() => {
+    it('should set course and posts for course on initialization', async () => {
         component.ngOnInit();
-        tick();
+        await fixture.whenStable();
         expect(component.currentlyLoadedPosts).toEqual(metisCoursePosts);
-    }));
+    });
 
     it('should calculate correct pattern matches for content without reference', () => {
         fixture.componentRef.setInput('content', 'I do not want to reference a Post.');
@@ -219,11 +228,11 @@ describe('PostingContentComponent', () => {
             ]);
         });
 
-        it('should include content before and reference as well as a linked reference within an exercise context', fakeAsync(() => {
+        it('should include content before and reference as well as a linked reference within an exercise context', async () => {
             // currently loaded posts will be set to a list of posts having an exercise context -> simulating being at an exercise page
-            jest.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisExercisePosts) as Observable<Post[]>);
+            vi.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisExercisePosts) as Observable<Post[]>);
             component.ngOnInit();
-            tick();
+            await fixture.whenStable();
             expect(component.currentlyLoadedPosts).toEqual(metisExercisePosts);
             // in the posting content, use the reference to an id that is included in the lists of currently loaded posts and can therefore be referenced directly,
             // i.e. being shown in the detail view of the discussion section on the current exercise page
@@ -241,13 +250,13 @@ describe('PostingContentComponent', () => {
                     contentAfterReference: ' in the same exercise context.',
                 } as unknown as PostingContentPart,
             ]);
-        }));
+        });
 
-        it('should include content before and reference as well as a linked reference within a lecture context', fakeAsync(() => {
+        it('should include content before and reference as well as a linked reference within a lecture context', async () => {
             // currently loaded posts will be set to a list of posts having a lecture context -> simulating being at a lecture page
-            jest.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisLecturePosts) as Observable<Post[]>);
+            vi.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisLecturePosts) as Observable<Post[]>);
             component.ngOnInit();
-            tick();
+            await fixture.whenStable();
             expect(component.currentlyLoadedPosts).toEqual(metisLecturePosts);
             // in the posting content, use the reference to an id that is included in the lists of currently loaded posts and can therefore be referenced directly,
             // i.e. being shown in the detail view of the discussion section on the current lecture page
@@ -265,13 +274,13 @@ describe('PostingContentComponent', () => {
                     contentAfterReference: ' in the same lecture context.',
                 } as PostingContentPart,
             ]);
-        }));
+        });
 
-        it('should include content before and reference as well as a linked reference within the course discussion overview', fakeAsync(() => {
+        it('should include content before and reference as well as a linked reference within the course discussion overview', async () => {
             // currently loaded posts will be set to a list of posts having a course-wide context  -> simulating being at course discussion overview
-            jest.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisGeneralCourseWidePosts) as Observable<Post[]>);
+            vi.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisGeneralCourseWidePosts) as Observable<Post[]>);
             component.ngOnInit();
-            tick();
+            await fixture.whenStable();
             expect(component.currentlyLoadedPosts).toEqual(metisGeneralCourseWidePosts);
             // in the posting content, use the reference to an id that is included in the lists of currently loaded posts and can therefore be referenced directly,
             // i.e. being shown in the detail view of the course overview
@@ -292,13 +301,13 @@ describe('PostingContentComponent', () => {
                     contentAfterReference: ' with course-wide context while currently being at course discussion overview.',
                 } as PostingContentPart,
             ]);
-        }));
+        });
 
-        it('should compute parts when referencing a post from a lecture context while being at the course discussion overview.', fakeAsync(() => {
+        it('should compute parts when referencing a post from a lecture context while being at the course discussion overview.', async () => {
             // currently loaded posts will be set to a list of posts having a course-wide context -> simulating being at course discussion overview
-            jest.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisGeneralCourseWidePosts) as Observable<Post[]>);
+            vi.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisGeneralCourseWidePosts) as Observable<Post[]>);
             component.ngOnInit();
-            tick();
+            await fixture.whenStable();
             // in the posting content, use the reference to an id that is _not_ included in the lists of currently loaded posts and can therefore _not_ be referenced directly,
             // and rather being queried for in the course overview
             const idOfLecturePostToReference = metisLecturePosts[0].id!;
@@ -318,13 +327,13 @@ describe('PostingContentComponent', () => {
                     contentAfterReference: ' with lecture context while currently being at the course discussion overview.',
                 } as PostingContentPart,
             ]);
-        }));
+        });
 
-        it('should compute parts when referencing a post from an exercise context while being at the course discussion overview', fakeAsync(() => {
+        it('should compute parts when referencing a post from an exercise context while being at the course discussion overview', async () => {
             // currently loaded posts will be set to a list of posts having a course-wide context -> simulating being at course discussion overview
-            jest.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisGeneralCourseWidePosts) as Observable<Post[]>);
+            vi.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisGeneralCourseWidePosts) as Observable<Post[]>);
             component.ngOnInit();
-            tick();
+            await fixture.whenStable();
             // in the posting content, use the reference to an id that is _not_ included in the lists of currently loaded posts and can therefore _not_ be referenced directly,
             // and rather being queried for in the course overview
             const idOfExercisePostToReference = metisExercisePosts[0].id!;
@@ -344,13 +353,13 @@ describe('PostingContentComponent', () => {
                     contentAfterReference: ' with exercise context while currently being at the course discussion overview.',
                 } as PostingContentPart,
             ]);
-        }));
+        });
 
-        it('should compute parts when referencing a post with course-wide context while being at a lecture page', fakeAsync(() => {
+        it('should compute parts when referencing a post with course-wide context while being at a lecture page', async () => {
             // currently loaded posts will be set to a list of posts having a course-wide context -> simulating being at lecture page
-            jest.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisLecturePosts) as Observable<Post[]>);
+            vi.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisLecturePosts) as Observable<Post[]>);
             component.ngOnInit();
-            tick();
+            await fixture.whenStable();
             // in the posting content, use the reference to an id that is _not_ included in the lists of currently loaded posts and can therefore _not_ be referenced directly,
             // and rather being queried for in the course overview
             const idOfCourseWidePostToReference = metisGeneralCourseWidePosts[0].id!;
@@ -367,13 +376,13 @@ describe('PostingContentComponent', () => {
                     contentAfterReference: ' with course-wide context while currently being at a lecture page.',
                 } as PostingContentPart,
             ]);
-        }));
+        });
 
-        it('should compute parts when referencing a post with lecture context while being at a lecture page', fakeAsync(() => {
+        it('should compute parts when referencing a post with lecture context while being at a lecture page', async () => {
             // currently loaded posts will be set to a list of posts having a course-wide context -> simulating being at lecture page
-            jest.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisLecturePosts) as Observable<Post[]>);
+            vi.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisLecturePosts) as Observable<Post[]>);
             component.ngOnInit();
-            tick();
+            await fixture.whenStable();
             // in the posting content, use the reference to an id that is _not_ included in the lists of currently loaded posts and can therefore _not_ be referenced directly,
             // and rather being queried for in the course overview
             const idOfExercisePostToReference = metisExercisePosts[0].id!;
@@ -390,9 +399,9 @@ describe('PostingContentComponent', () => {
                     contentAfterReference: ' with exercise context while currently being at a lecture page.',
                 } as PostingContentPart,
             ]);
-        }));
+        });
 
-        it('should compute parts when referencing a file upload exercise', fakeAsync(() => {
+        it('should compute parts when referencing a file upload exercise', () => {
             fixture.componentRef.setInput('content', `I want to reference [file-upload]File Upload Exercise(courses/1/exercises/1)[/file-upload].`);
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
@@ -405,9 +414,9 @@ describe('PostingContentComponent', () => {
                     contentAfterReference: '.',
                 } as PostingContentPart,
             ]);
-        }));
+        });
 
-        it('should compute parts when referencing a modeling exercise', fakeAsync(() => {
+        it('should compute parts when referencing a modeling exercise', () => {
             fixture.componentRef.setInput('content', `I want to reference [modeling]Modeling Exercise(courses/1/exercises/1)[/modeling].`);
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
@@ -420,9 +429,9 @@ describe('PostingContentComponent', () => {
                     contentAfterReference: '.',
                 } as PostingContentPart,
             ]);
-        }));
+        });
 
-        it('should compute parts when referencing a quiz exercise', fakeAsync(() => {
+        it('should compute parts when referencing a quiz exercise', () => {
             fixture.componentRef.setInput('content', `I want to reference [quiz]Quiz Exercise(courses/1/exercises/1)[/quiz].`);
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
@@ -435,9 +444,9 @@ describe('PostingContentComponent', () => {
                     contentAfterReference: '.',
                 } as PostingContentPart,
             ]);
-        }));
+        });
 
-        it('should compute parts when referencing a programming exercise', fakeAsync(() => {
+        it('should compute parts when referencing a programming exercise', () => {
             fixture.componentRef.setInput('content', `I want to reference [programming]Programming Exercise(courses/1/exercises/1)[/programming].`);
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
@@ -450,9 +459,9 @@ describe('PostingContentComponent', () => {
                     contentAfterReference: '.',
                 } as PostingContentPart,
             ]);
-        }));
+        });
 
-        it('should compute parts when referencing a text exercise', fakeAsync(() => {
+        it('should compute parts when referencing a text exercise', () => {
             fixture.componentRef.setInput('content', `I want to reference [text]Text Exercise(courses/1/exercises/1)[/text].`);
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
@@ -465,9 +474,9 @@ describe('PostingContentComponent', () => {
                     contentAfterReference: '.',
                 } as PostingContentPart,
             ]);
-        }));
+        });
 
-        it('should compute parts when referencing a lecture', fakeAsync(() => {
+        it('should compute parts when referencing a lecture', () => {
             fixture.componentRef.setInput('content', `I want to reference [lecture]Lecture 1(courses/1/lectures/1)[/lecture].`);
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
@@ -480,9 +489,9 @@ describe('PostingContentComponent', () => {
                     contentAfterReference: '.',
                 } as PostingContentPart,
             ]);
-        }));
+        });
 
-        it('should compute parts when referencing an attachment', fakeAsync(() => {
+        it('should compute parts when referencing an attachment', () => {
             fixture.componentRef.setInput('content', `I want to reference [attachment]PDF File(attachmentPath/attachment.pdf)[/attachment].`);
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
@@ -497,9 +506,9 @@ describe('PostingContentComponent', () => {
                     contentAfterReference: '.',
                 } as PostingContentPart,
             ]);
-        }));
+        });
 
-        it('should compute parts when referencing an lecture unit', fakeAsync(() => {
+        it('should compute parts when referencing an lecture unit', () => {
             fixture.componentRef.setInput('content', `I want to reference [lecture-unit]PDF File lecture unit(attachmentPath/attachmentUnit.pdf)[/lecture-unit].`);
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
@@ -514,9 +523,9 @@ describe('PostingContentComponent', () => {
                     contentAfterReference: '.',
                 } as PostingContentPart,
             ]);
-        }));
+        });
 
-        it('should compute parts when referencing a single slide', fakeAsync(() => {
+        it('should compute parts when referencing a single slide', () => {
             fixture.componentRef.setInput('content', `I want to reference [slide]PDF File Slide 7(slides/attachment-unit/123/slide/9)[/slide].`);
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
@@ -531,9 +540,9 @@ describe('PostingContentComponent', () => {
                     contentAfterReference: '.',
                 } as PostingContentPart,
             ]);
-        }));
+        });
 
-        it('should compute parts when referencing a user', fakeAsync(() => {
+        it('should compute parts when referencing a user', () => {
             fixture.componentRef.setInput('content', `This message is important for [user]Test(test_login)[/user].`);
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
@@ -546,7 +555,7 @@ describe('PostingContentComponent', () => {
                     contentAfterReference: '.',
                 } as PostingContentPart,
             ]);
-        }));
+        });
 
         it('should compute parts when referencing a faq', () => {
             fixture.componentRef.setInput('content', `I want to reference [faq]faq(/courses/1/faq?faqId=45)[/faq].`);
@@ -564,7 +573,7 @@ describe('PostingContentComponent', () => {
             ]);
         });
 
-        it('should compute parts when referencing a channel', fakeAsync(() => {
+        it('should compute parts when referencing a channel', () => {
             fixture.componentRef.setInput('content', `This topic belongs to [channel]test(1)[/channel].`);
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
@@ -577,9 +586,9 @@ describe('PostingContentComponent', () => {
                     contentAfterReference: '.',
                 } as PostingContentPart,
             ]);
-        }));
+        });
 
-        it('should set channelID undefined if referenced a channel id is not a number', fakeAsync(() => {
+        it('should set channelID undefined if referenced a channel id is not a number', () => {
             fixture.componentRef.setInput('content', `This topic belongs to [channel]test(abc)[/channel].`);
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
@@ -592,6 +601,6 @@ describe('PostingContentComponent', () => {
                     contentAfterReference: '.',
                 } as PostingContentPart,
             ]);
-        }));
+        });
     });
 });

@@ -19,14 +19,13 @@ import {
     MODULE_FEATURE_LECTURE,
     MODULE_FEATURE_LTI,
     MODULE_FEATURE_MODELING,
-    MODULE_FEATURE_NEBULA,
     MODULE_FEATURE_PASSKEY,
     MODULE_FEATURE_PLAGIARISM,
     MODULE_FEATURE_SHARING,
     MODULE_FEATURE_TEXT,
+    MODULE_FEATURE_THEIA,
     MODULE_FEATURE_TUTORIALGROUP,
     ModuleFeature,
-    PROFILE_AEOLUS,
     PROFILE_APOLLON,
     PROFILE_ATHENA,
     PROFILE_BUILDAGENT,
@@ -34,7 +33,6 @@ import {
     PROFILE_LDAP,
     PROFILE_LOCALCI,
     PROFILE_SAML2,
-    PROFILE_THEIA,
     ProfileFeature,
 } from 'app/app.constants';
 
@@ -87,17 +85,7 @@ export class AdminFeatureToggleComponent implements OnInit {
     protected readonly faQuestionCircle = faQuestionCircle;
 
     /** Profiles to display (excluding internal profiles like dev, prod, test) */
-    private readonly displayedProfiles: ProfileFeature[] = [
-        PROFILE_ATHENA,
-        PROFILE_APOLLON,
-        PROFILE_THEIA,
-        PROFILE_LDAP,
-        PROFILE_SAML2,
-        PROFILE_LOCALCI,
-        PROFILE_BUILDAGENT,
-        PROFILE_AEOLUS,
-        PROFILE_JENKINS,
-    ];
+    private readonly displayedProfiles: ProfileFeature[] = [PROFILE_ATHENA, PROFILE_APOLLON, PROFILE_LDAP, PROFILE_SAML2, PROFILE_LOCALCI, PROFILE_BUILDAGENT, PROFILE_JENKINS];
 
     /** Module features to display */
     private readonly displayedModuleFeatures: ModuleFeature[] = [
@@ -111,10 +99,10 @@ export class AdminFeatureToggleComponent implements OnInit {
         MODULE_FEATURE_FILEUPLOAD,
         MODULE_FEATURE_LECTURE,
         MODULE_FEATURE_TUTORIALGROUP,
-        MODULE_FEATURE_NEBULA,
         MODULE_FEATURE_SHARING,
         MODULE_FEATURE_LTI,
         MODULE_FEATURE_PASSKEY,
+        MODULE_FEATURE_THEIA,
     ];
 
     /** Documentation links for runtime feature toggles */
@@ -124,12 +112,11 @@ export class AdminFeatureToggleComponent implements OnInit {
         [FeatureToggle.Exports]: 'https://docs.artemis.tum.de/instructor/exports',
         [FeatureToggle.LearningPaths]: 'https://docs.artemis.tum.de/instructor/adaptive-learning',
         [FeatureToggle.StandardizedCompetencies]: 'https://docs.artemis.tum.de/admin/adaptive-learning',
-        [FeatureToggle.StudentCourseAnalyticsDashboard]: 'https://docs.artemis.tum.de/instructor/learning-analytics',
+        [FeatureToggle.StudentCourseAnalyticsDashboard]: 'https://docs.artemis.tum.de/instructor/analytics/learning-analytics',
         [FeatureToggle.TutorSuggestions]: 'https://docs.artemis.tum.de/instructor/communication#tutor-suggestions',
         [FeatureToggle.AtlasML]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
         [FeatureToggle.AtlasAgent]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
         [FeatureToggle.Memiris]: 'https://docs.artemis.tum.de/admin/extensions-setup#iris--pyris-setup-guide',
-        [FeatureToggle.LectureContentProcessing]: 'https://docs.artemis.tum.de/admin/extensions-setup#nebula-setup-guide',
         [FeatureToggle.RateLimit]: 'https://docs.artemis.tum.de/admin/production-setup/security/#rate-limiting',
     };
 
@@ -137,12 +124,10 @@ export class AdminFeatureToggleComponent implements OnInit {
     private readonly profileDocumentationLinks: Partial<Record<ProfileFeature, string>> = {
         [PROFILE_ATHENA]: 'https://docs.artemis.tum.de/admin/extensions-setup#athena-service',
         [PROFILE_APOLLON]: 'https://docs.artemis.tum.de/instructor/exercises/modeling-exercise',
-        [PROFILE_THEIA]: 'https://docs.artemis.tum.de/developer/setup#run-the-server-via-a-run-configuration-in-intellij',
         [PROFILE_LDAP]: 'https://docs.artemis.tum.de/admin/production-setup/security#ldap-authentication',
         [PROFILE_SAML2]: 'https://docs.artemis.tum.de/admin/saml2-login-registration',
         [PROFILE_LOCALCI]: 'https://docs.artemis.tum.de/developer/setup#integrated-code-lifecycle-setup',
         [PROFILE_BUILDAGENT]: 'https://docs.artemis.tum.de/developer/setup#integrated-code-lifecycle-setup',
-        [PROFILE_AEOLUS]: 'https://docs.artemis.tum.de/developer/aeolus',
         [PROFILE_JENKINS]: 'https://docs.artemis.tum.de/developer/jenkins-localvc',
     };
 
@@ -158,10 +143,10 @@ export class AdminFeatureToggleComponent implements OnInit {
         [MODULE_FEATURE_FILEUPLOAD]: 'https://docs.artemis.tum.de/instructor/exercises/file-upload-exercise',
         [MODULE_FEATURE_LECTURE]: 'https://docs.artemis.tum.de/instructor/lectures',
         [MODULE_FEATURE_TUTORIALGROUP]: 'https://docs.artemis.tum.de/instructor/tutorial-groups',
-        [MODULE_FEATURE_NEBULA]: 'https://docs.artemis.tum.de/admin/extensions-setup#nebula-setup-guide',
         [MODULE_FEATURE_SHARING]: 'https://docs.artemis.tum.de/admin/extensions-setup#setup-guide-for-exchange-with-the-sharing-platform',
         [MODULE_FEATURE_LTI]: 'https://docs.artemis.tum.de/instructor/lti-configuration',
         [MODULE_FEATURE_PASSKEY]: 'https://docs.artemis.tum.de/admin/production-setup/security#passkey-authentication',
+        [MODULE_FEATURE_THEIA]: 'https://docs.artemis.tum.de',
     };
 
     ngOnInit(): void {

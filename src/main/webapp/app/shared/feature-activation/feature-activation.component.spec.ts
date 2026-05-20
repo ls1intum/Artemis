@@ -58,10 +58,10 @@ describe('FeatureActivationComponent', () => {
         fixture.componentRef.setInput('isLoading', true);
         fixture.detectChanges();
         const button = fixture.debugElement.query(By.directive(ButtonComponent));
-        expect(button.componentInstance.isLoading).toBeTrue();
+        expect(button.componentInstance.isLoading()).toBeTrue();
 
         fixture.componentRef.setInput('isLoading', false);
         fixture.detectChanges();
-        expect(button.componentInstance.isLoading).toBeFalse();
+        expect(button.componentInstance.isLoading()).toBeFalse();
     });
 });

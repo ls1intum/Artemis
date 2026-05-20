@@ -4,7 +4,7 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
-import { NgbCollapse, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LTI, PROFILE_LOCALCI, VERSION } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
@@ -37,6 +37,7 @@ import { LoadingNotificationComponent } from 'app/core/loading-notification/load
 import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ServerAdministrationComponent } from 'app/core/navbar/server-administration/server-administration.component';
+import { GlobalSearchNavbarComponent } from 'app/core/navbar/global-search/components/global-search-navbar.component';
 
 @Component({
     selector: 'jhi-navbar',
@@ -64,6 +65,7 @@ import { ServerAdministrationComponent } from 'app/core/navbar/server-administra
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
         ServerAdministrationComponent,
+        GlobalSearchNavbarComponent,
     ],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
@@ -105,7 +107,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     gitUsername: string;
     isBuildAgentDetails = false;
     languages = LANGUAGES;
-    modalRef: NgbModalRef;
     version: string;
     currAccount?: User;
     isRegistrationEnabled = false;
@@ -122,6 +123,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     localCIActive = false;
     ltiEnabled: boolean;
     standardizedCompetenciesEnabled = false;
+    globalSearchEnabled = false;
     agentName?: string;
     isExamStarted = false;
 
@@ -131,6 +133,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     examTitle?: string;
 
     private standardizedCompetencySubscription: Subscription;
+    private globalSearchSubscription: Subscription;
     private authStateSubscription: Subscription;
     private routerEventSubscription: Subscription;
     private queryParamsSubscription: Subscription;
@@ -187,13 +190,17 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.gitBranchName = profileInfo.git.branch;
         this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
         this.gitUsername = profileInfo.git.commit.user.name;
-        this.atlasEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS);
+        this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
         this.examEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_EXAM);
-        this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
-        this.ltiEnabled = profileInfo?.activeModuleFeatures.includes(MODULE_FEATURE_LTI);
+        this.localCIActive = this.profileService.isProfileActive(PROFILE_LOCALCI);
+        this.ltiEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI);
 
         this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
             this.standardizedCompetenciesEnabled = isActive;
+        });
+
+        this.globalSearchSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.GlobalSearch).subscribe((isActive) => {
+            this.globalSearchEnabled = isActive;
         });
 
         // The current user is needed to hide menu items for not logged-in users.
@@ -233,6 +240,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         if (this.standardizedCompetencySubscription) {
             this.standardizedCompetencySubscription.unsubscribe();
         }
+        this.globalSearchSubscription?.unsubscribe();
         this.queryParamsSubscription?.unsubscribe();
         this.examStartedSubscription?.unsubscribe();
     }
@@ -333,7 +341,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         plagiarism_cases: 'artemisApp.plagiarism.cases.pageTitle',
         tutorial_groups_management: 'artemisApp.pages.tutorialGroupsManagement.title',
         tutorial_groups: 'artemisApp.breadcrumb.title',
-        registered_students: 'artemisApp.pages.registeredStudents.title',
+        registrations: 'artemisApp.pages.tutorialGroupRegistrations.title',
         sessions: 'artemisApp.pages.tutorialGroupSessionManagement.title',
         tutorial_free_days: 'artemisApp.pages.tutorialFreePeriodsManagement.title',
         tutorial_groups_checklist: 'artemisApp.pages.checklist.title',
@@ -341,6 +349,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         privacy_statement: 'global.menu.admin.sidebar.privacy',
         imprint: 'global.menu.admin.sidebar.imprint',
         edit_build_plan: 'artemisApp.programmingExercise.buildPlanEditor',
+        version_history: 'artemisApp.exercise.versionHistory.title',
         suspicious_behavior: 'artemisApp.examManagement.suspiciousBehavior.title',
         suspicious_sessions: 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title',
         exam_timeline: 'artemisApp.examTimeline.breadcrumb',
@@ -784,7 +793,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     logout() {
         this.collapseNavbar();
-        this.router.navigate(['/']).then((res) => {
+        this.router.navigate(['/sign-in']).then((res) => {
             if (res) {
                 this.participationWebsocketService.resetLocalCache();
                 this.loginService.logout(true);

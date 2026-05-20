@@ -16,7 +16,7 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { UMLDiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@tumaet/apollon';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -141,7 +141,7 @@ describe('ExerciseImportFromFileComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         const uploadButton = fixture.debugElement.query(By.css('#upload-exercise-btn'));
-        expect(uploadButton.componentInstance.disabled).toBe(true);
+        expect(uploadButton.componentInstance.disabled()).toBe(true);
     });
 
     it('should enable upload button once file is selected', () => {
@@ -149,7 +149,7 @@ describe('ExerciseImportFromFileComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         const uploadButton = fixture.debugElement.query(By.css('#upload-exercise-btn'));
-        expect(uploadButton.componentInstance.disabled).toBe(false);
+        expect(uploadButton.componentInstance.disabled()).toBe(false);
     });
 
     async function assertErrorAlertIsRaisedWithoutOneValidJsonFile() {

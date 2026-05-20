@@ -1,4 +1,4 @@
-import { expect } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
@@ -8,18 +8,17 @@ import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/ex
 
 describe('IncludedInScoreBadge', () => {
     setupTestBed({ zoneless: true });
+
     let component: IncludedInScoreBadgeComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [IncludedInScoreBadgeComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                const fixture = TestBed.createComponent(IncludedInScoreBadgeComponent);
-                component = fixture.componentInstance;
-            });
+        }).compileComponents();
+
+        const fixture = TestBed.createComponent(IncludedInScoreBadgeComponent);
+        component = fixture.componentInstance;
     });
 
     it('should show no badge if no information about score inclusion is known', () => {

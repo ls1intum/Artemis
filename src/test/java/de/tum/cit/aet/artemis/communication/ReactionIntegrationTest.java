@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import jakarta.validation.Validation;
-import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 
 import org.junit.jupiter.api.AfterEach;
@@ -58,13 +57,9 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private List<Long> existingCourseWideChannelIds;
 
-    private List<Long> existingConversationIds;
-
     private Long courseId;
 
     private Course course;
-
-    private Validator validator;
 
     private ValidatorFactory validatorFactory;
 
@@ -75,7 +70,6 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         // used to test hibernate validation using custom ReactionConstraintValidator
         validatorFactory = Validation.buildDefaultValidatorFactory();
-        validator = validatorFactory.getValidator();
 
         userUtilService.addUsers(TEST_PREFIX, 5, 5, 4, 4);
 
@@ -95,7 +89,6 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 .map(post -> post.getConversation().getId()).distinct().toList();
 
         // filters conversation ids
-        existingConversationIds = existingPostsWithAnswers.stream().filter(post -> post.getConversation() != null).map(post -> post.getConversation().getId()).distinct().toList();
 
         course = existingPostsWithAnswers.stream().filter(post -> post.getPlagiarismCase() != null).findFirst().orElseThrow().getPlagiarismCase().getExercise()
                 .getCourseViaExerciseGroupOrCourseMember();
@@ -265,7 +258,6 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testCreateAnswerPostReactions() throws Exception {
         // student 1 is the author of the answer post and student 2 reacts on this answer post
         AnswerPost answerPostReactedOn = existingAnswerPosts.getFirst();
-        long answerPostId = answerPostReactedOn.getId();
         // First reaction
         ReactionDTO reactionToSave = createReactionDTOOnAnswerPost(answerPostReactedOn);
         ReactionDTO createdFirstReaction = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSave, ReactionDTO.class,
@@ -452,7 +444,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testDeletePostReactionOfOthers_forbidden() throws Exception {
         // student 1 is the author of the post and student 2 reacts on this post
         Post postReactedOn = existingPostsWithAnswers.getFirst();
-        Reaction reactionSaveOnPost = saveReactionOfOtherUserOnPost(postReactedOn, TEST_PREFIX);
+        Reaction reactionSaveOnPost = saveReactionOfOtherUserOnPost(postReactedOn);
 
         // student 1 wants to delete the reaction of student 2
         request.delete("/api/communication/courses/" + courseId + "/postings/reactions/" + reactionSaveOnPost.getId(), HttpStatus.FORBIDDEN);
@@ -511,12 +503,12 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         return new ReactionDTO(reaction);
     }
 
-    private Reaction saveReactionOfOtherUserOnPost(Post postReactedOn, String userPrefix) {
+    private Reaction saveReactionOfOtherUserOnPost(Post postReactedOn) {
         Reaction reaction = new Reaction();
         reaction.setEmojiId("smiley");
         reaction.setPost(postReactedOn);
         Reaction savedReaction = reactionRepository.save(reaction);
-        User user = userTestRepository.getUserWithGroupsAndAuthorities(userPrefix + "student2");
+        User user = userTestRepository.getUserWithGroupsAndAuthorities(ReactionIntegrationTest.TEST_PREFIX + "student2");
         savedReaction.setUser(user);
         reactionRepository.save(savedReaction);
         return savedReaction;

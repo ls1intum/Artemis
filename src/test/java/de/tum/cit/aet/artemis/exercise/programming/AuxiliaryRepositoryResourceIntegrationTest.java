@@ -228,15 +228,6 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         request.postWithoutLocation(testRepoBaseUrl + auxiliaryRepository.getId() + "/rename-file", fileMove, HttpStatus.BAD_REQUEST, null);
     }
 
-    private FileMove createRenameFileMove() {
-        String newLocalFileName = "newFileName";
-
-        assertThat(Path.of(localAuxiliaryRepo.workingCopyGitRepoFile + "/" + currentLocalFileName)).exists();
-        assertThat(Path.of(localAuxiliaryRepo.workingCopyGitRepoFile + "/" + newLocalFileName)).doesNotExist();
-
-        return new FileMove(currentLocalFileName, newLocalFileName);
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRenameFolder() throws Exception {

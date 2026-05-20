@@ -33,6 +33,19 @@ describe('CodeEditorFileBrowserBadgeComponent', () => {
         expect(component.icon!.iconName).toBe('lightbulb');
     });
 
+    it('should correctly display the tooltip for a REVIEW_COMMENT badge', () => {
+        fixture.componentRef.setInput('badge', new FileBadge(FileBadgeType.REVIEW_COMMENT, 2));
+        jest.spyOn(translateService, 'instant').mockReturnValue('Mocked Review Tooltip');
+
+        expect(component.tooltip).toBe('Mocked Review Tooltip');
+    });
+
+    it('should return faComments icon for a REVIEW_COMMENT badge', () => {
+        fixture.componentRef.setInput('badge', new FileBadge(FileBadgeType.REVIEW_COMMENT, 2));
+
+        expect(component.icon!.iconName).toBe('comments');
+    });
+
     it('should not have an icon for an unknown badge type', () => {
         fixture.componentRef.setInput('badge', new FileBadge('unknown' as FileBadgeType, 3));
         fixture.detectChanges();

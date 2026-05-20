@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.hyperion.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -19,7 +21,11 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
+import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationResponseDTO;
 
 class HyperionProblemStatementGenerationServiceTest {
@@ -27,28 +33,48 @@ class HyperionProblemStatementGenerationServiceTest {
     @Mock
     private ChatModel chatModel;
 
+    @Mock
+    private LLMTokenUsageService llmTokenUsageService;
+
+    @Mock
+    private UserTestRepository userRepository;
+
     private HyperionProblemStatementGenerationService hyperionProblemStatementGenerationService;
+
+    private AutoCloseable mocks;
 
     @BeforeEach
     void setup() {
-        MockitoAnnotations.openMocks(this);
+        mocks = MockitoAnnotations.openMocks(this);
         ChatClient chatClient = ChatClient.create(chatModel);
         var templateService = new HyperionPromptTemplateService();
-        this.hyperionProblemStatementGenerationService = new HyperionProblemStatementGenerationService(chatClient, templateService);
+        this.hyperionProblemStatementGenerationService = new HyperionProblemStatementGenerationService(chatClient, templateService, llmTokenUsageService, userRepository);
     }
 
     @Test
     void generateProblemStatement_returnsGeneratedDraft() {
         String generatedDraft = "Generated draft problem statement";
-        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(generatedDraft)))));
+        ChatResponse chatResponse = org.mockito.Mockito.mock(ChatResponse.class);
+        var generation = new Generation(new AssistantMessage(generatedDraft));
+        when(chatResponse.getResult()).thenReturn(generation);
+
+        var metadata = org.mockito.Mockito.mock(org.springframework.ai.chat.metadata.ChatResponseMetadata.class);
+        var usage = org.mockito.Mockito.mock(org.springframework.ai.chat.metadata.Usage.class);
+        when(usage.getPromptTokens()).thenReturn(10);
+        when(usage.getCompletionTokens()).thenReturn(20);
+        when(metadata.getUsage()).thenReturn(usage);
+        when(chatResponse.getMetadata()).thenReturn(metadata);
+
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> chatResponse);
 
         var course = new Course();
+        course.setId(123L);
         course.setTitle("Test Course");
         course.setDescription("Test Description");
         ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt");
         assertThat(resp).isNotNull();
         assertThat(resp.draftProblemStatement()).isEqualTo(generatedDraft);
-        assertThat(resp.error()).isNull();
+        verify(llmTokenUsageService).trackChatResponseTokenUsage(eq(chatResponse), eq(LLMServiceType.HYPERION), eq("HYPERION_PROBLEM_GENERATION"), any());
     }
 
     @Test
@@ -61,12 +87,13 @@ class HyperionProblemStatementGenerationServiceTest {
         course.setDescription("Test Description");
 
         assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt")).isInstanceOf(InternalServerErrorAlertException.class)
-                .hasMessageContaining("Failed to generate problem statement").hasMessageContaining("AI service unavailable");
+                .hasMessageContaining("Failed to generate problem statement");
     }
 
     @Test
     void generateProblemStatement_throwsExceptionOnExcessivelyLongResponse() {
-        // Generate a string longer than MAX_PROBLEM_STATEMENT_LENGTH (50,000 characters)
+        // Generate a string longer than MAX_PROBLEM_STATEMENT_LENGTH (50,000
+        // characters)
         String excessivelyLongDraft = "a".repeat(50_001);
         when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(excessivelyLongDraft)))));
 
@@ -76,23 +103,29 @@ class HyperionProblemStatementGenerationServiceTest {
         course.setDescription("Test Description");
 
         assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt")).isInstanceOf(InternalServerErrorAlertException.class)
-                .hasMessageContaining("too long").hasMessageContaining("50001 characters").hasMessageContaining("Maximum allowed: 50000");
+                .hasMessageContaining("exceeds the maximum allowed length");
     }
 
     @Test
-    void generateProblemStatement_handlesNullUserPrompt() {
-        String generatedDraft = "Generated draft with default prompt";
-        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(generatedDraft)))));
-
+    void generateProblemStatement_throwsExceptionWhenUserPromptIsNull() {
         var course = new Course();
         course.setTitle("Test Course");
         course.setDescription("Test Description");
 
-        // Should use default prompt when userPrompt is null
-        ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, null);
-        assertThat(resp).isNotNull();
-        assertThat(resp.draftProblemStatement()).isEqualTo(generatedDraft);
-        assertThat(resp.error()).isNull();
+        // Should throw exception when userPrompt is null (sanitized to empty string)
+        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, null)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("User prompt cannot be empty");
+    }
+
+    @Test
+    void generateProblemStatement_throwsExceptionWhenUserPromptIsBlank() {
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        // Should throw exception when userPrompt is whitespace-only (sanitized to empty string)
+        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "   ")).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("User prompt cannot be empty");
     }
 
     @Test
@@ -107,7 +140,6 @@ class HyperionProblemStatementGenerationServiceTest {
         ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt");
         assertThat(resp).isNotNull();
         assertThat(resp.draftProblemStatement()).isEqualTo(generatedDraft);
-        assertThat(resp.error()).isNull();
     }
 
     @Test
@@ -124,6 +156,54 @@ class HyperionProblemStatementGenerationServiceTest {
         ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt");
         assertThat(resp).isNotNull();
         assertThat(resp.draftProblemStatement()).hasSize(50_000);
-        assertThat(resp.error()).isNull();
+    }
+
+    @Test
+    void generateProblemStatement_throwsExceptionWhenChatClientIsNull() {
+        var serviceWithNullClient = new HyperionProblemStatementGenerationService(null, new HyperionPromptTemplateService(), llmTokenUsageService, userRepository);
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> serviceWithNullClient.generateProblemStatement(course, "Prompt")).isInstanceOf(InternalServerErrorAlertException.class)
+                .hasMessageContaining("AI chat client is not configured");
+    }
+
+    @Test
+    void generateProblemStatement_throwsExceptionWhenResponseIsNull() {
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(null)))));
+
+        var course = new Course();
+        course.setId(999L);
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt")).isInstanceOf(InternalServerErrorAlertException.class)
+                .hasMessageContaining("Generated problem statement is null or empty");
+    }
+
+    @Test
+    void generateProblemStatement_throwsExceptionWhenResponseIsBlank() {
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage("   ")))));
+
+        var course = new Course();
+        course.setId(999L);
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt")).isInstanceOf(InternalServerErrorAlertException.class)
+                .hasMessageContaining("Generated problem statement is null or empty");
+    }
+
+    @Test
+    void generateProblemStatement_throwsExceptionWhenUserPromptTooLong() {
+        // 1001 characters exceeds MAX_USER_PROMPT_LENGTH (1000)
+        String tooLongPrompt = "a".repeat(1001);
+        var course = new Course();
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+
+        assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, tooLongPrompt)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("exceeds maximum length");
     }
 }

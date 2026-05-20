@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { MockComponent } from 'ng-mocks';
@@ -9,6 +11,8 @@ import { StudentExamSummaryComponent } from 'app/exam/manage/student-exams/stude
 import { ExamResultSummaryComponent } from 'app/exam/overview/summary/exam-result-summary.component';
 
 describe('StudentExamSummaryComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<StudentExamSummaryComponent>;
     let component: StudentExamSummaryComponent;
 
@@ -18,7 +22,7 @@ describe('StudentExamSummaryComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            declarations: [StudentExamSummaryComponent, MockComponent(ExamResultSummaryComponent)],
+            imports: [StudentExamSummaryComponent],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -26,6 +30,11 @@ describe('StudentExamSummaryComponent', () => {
                 },
             ],
         })
+            .overrideComponent(StudentExamSummaryComponent, {
+                set: {
+                    imports: [MockComponent(ExamResultSummaryComponent)],
+                },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(StudentExamSummaryComponent);
@@ -34,7 +43,7 @@ describe('StudentExamSummaryComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {

@@ -1,12 +1,13 @@
 import { Component, inject, model } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseComponent } from 'app/exercise/exercise.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { SortService } from 'app/shared/service/sort.service';
-import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { isQuizEditable } from 'app/quiz/shared/service/quiz-manage-util.service';
@@ -20,6 +21,7 @@ import { QuizExerciseLifecycleButtonsComponent } from '../lifecyle-buttons/quiz-
 import { QuizExerciseManageButtonsComponent } from '../manage-buttons/quiz-exercise-manage-buttons.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 
 @Component({
@@ -37,17 +39,16 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
         QuizExerciseManageButtonsComponent,
         DeleteButtonDirective,
         ArtemisDatePipe,
+        ArtemisTranslatePipe,
     ],
 })
 export class QuizExerciseComponent extends ExerciseComponent {
-    protected exerciseService = inject(ExerciseService); // needed in html code
     protected quizExerciseService = inject(QuizExerciseService); // needed in html code
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
     private sortService = inject(SortService);
 
     readonly ActionType = ActionType;
-    readonly QuizStatus = QuizStatus;
     readonly QuizMode = QuizMode;
 
     readonly quizExercises = model<QuizExercise[]>([]);
@@ -67,6 +68,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                 const quizExercises = res.body!;
                 // reconnect exercise with course
                 quizExercises.forEach((exercise) => {
+                    exercise.type = ExerciseType.QUIZ;
                     exercise.course = this.course;
                     exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
                     exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(exercise.course);
@@ -135,6 +137,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
 
     handleNewQuizExercise(newQuizExercise: QuizExercise) {
         const index = this.quizExercises().findIndex((quizExercise) => quizExercise.id === newQuizExercise.id);
+        newQuizExercise.type = ExerciseType.QUIZ;
         newQuizExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(newQuizExercise.course);
         newQuizExercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(newQuizExercise.course);
         newQuizExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(newQuizExercise.course);

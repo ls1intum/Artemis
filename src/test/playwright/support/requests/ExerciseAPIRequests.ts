@@ -17,9 +17,7 @@ import shortAnswerSubmissionTemplate from '../../fixtures/exercise/quiz/short_an
 import quizTemplate from '../../fixtures/exercise/quiz/template.json';
 import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
 import {
-    Exercise,
     ExerciseMode,
-    ExerciseType,
     MODELING_EXERCISE_BASE,
     PROGRAMMING_EXERCISE_BASE,
     ProgrammingExerciseAssessmentType,
@@ -30,13 +28,13 @@ import {
     UPLOAD_EXERCISE_BASE,
 } from '../constants';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
+import { BUILD_FINISH_TIMEOUT } from '../timeouts';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { ProgrammingExerciseSubmission } from '../pageobjects/exercises/programming/OnlineEditorPage';
 import { Fixtures } from '../../fixtures/fixtures';
@@ -51,8 +49,9 @@ type PatchProgrammingExerciseTestVisibilityDto = {
     visibility: Visibility;
 }[];
 
-const MAX_RETRIES: number = 20;
 const RETRY_DELAY: number = 3000;
+// Align with BUILD_FINISH_TIMEOUT so solution builds have enough time to complete even under CI load
+const MAX_RETRIES: number = Math.ceil(BUILD_FINISH_TIMEOUT / RETRY_DELAY);
 
 export class ExerciseAPIRequests {
     private readonly page: Page;
@@ -92,6 +91,7 @@ export class ExerciseAPIRequests {
         assessmentType?: ProgrammingExerciseAssessmentType;
         mode?: ExerciseMode;
         teamAssignmentConfig?: TeamAssignmentConfig;
+        problemStatement?: string;
     }): Promise<ProgrammingExercise> {
         const {
             course,
@@ -107,6 +107,7 @@ export class ExerciseAPIRequests {
             assessmentType = ProgrammingExerciseAssessmentType.AUTOMATIC,
             mode = ExerciseMode.INDIVIDUAL,
             teamAssignmentConfig,
+            problemStatement,
         } = options;
 
         let programmingExerciseTemplate = {};
@@ -128,6 +129,7 @@ export class ExerciseAPIRequests {
             assessmentType: ProgrammingExerciseAssessmentType[assessmentType],
             ...(course ? { course } : {}),
             ...(exerciseGroup ? { exerciseGroup } : {}),
+            ...(problemStatement ? { problemStatement } : {}),
         } as ProgrammingExercise;
 
         if (!exerciseGroup) {
@@ -149,6 +151,12 @@ export class ExerciseAPIRequests {
         return response.json();
     }
 
+    async deleteProgrammingExercise(exerciseId: number) {
+        await this.page.request.delete(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}`, {
+            params: { deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: true },
+        });
+    }
+
     /**
      * Retrieves the test cases for passed exercise and adjusts their visibility according.
      * <br>
@@ -167,15 +175,11 @@ export class ExerciseAPIRequests {
         const response = await this.page.request.get(`${PROGRAMMING_EXERCISE_BASE}/${programmingExercise.id}/test-cases`);
         const testCases = (await response.json()) as unknown as ProgrammingExerciseTestCase[];
 
-        if (retryNumber > 0) {
-            console.log(`Could not find test cases yet, retrying... (${retryNumber} / ${MAX_RETRIES})`);
-        }
-
-        await this.page.waitForTimeout(RETRY_DELAY);
-
         if (testCases.length > 0) {
             await this.updateProgrammingExerciseTestCaseVisibility(programmingExercise.id!, testCases, newVisibility);
         } else {
+            console.log(`Could not find test cases yet, retrying... (${retryNumber} / ${MAX_RETRIES})`);
+            await this.page.waitForTimeout(RETRY_DELAY);
             await this.changeProgrammingExerciseTestVisibility(programmingExercise, newVisibility, retryNumber + 1);
         }
     }
@@ -313,6 +317,24 @@ export class ExerciseAPIRequests {
     }
 
     /**
+     * Updates the assessment due date of a file upload exercise to be in the past,
+     * enabling complaints to be filed.
+     */
+    async updateFileUploadExerciseAssessmentDueDate(exercise: FileUploadExercise, due = dayjs()) {
+        const newAssessmentDueDate = dayjsToString(due.subtract(1, 'minute'));
+        const newDueDate = dayjsToString(due.subtract(2, 'minutes'));
+        const newReleaseDate = dayjsToString(due.subtract(2, 'hours'));
+
+        const updateDto = {
+            ...exercise,
+            releaseDate: newReleaseDate,
+            dueDate: newDueDate,
+            assessmentDueDate: newAssessmentDueDate,
+        };
+        return this.page.request.put(UPLOAD_EXERCISE_BASE, { data: updateDto });
+    }
+
+    /**
      * Makes a file upload exercise submission for the specified exercise ID with the given file.
      *
      * @param exerciseId - The ID of the file upload exercise for which the submission is made.
@@ -352,7 +374,7 @@ export class ExerciseAPIRequests {
             assessmentDueDate: dayjsToString(assessmentDueDate),
         };
         let newModelingExercise;
-        if (body.hasOwnProperty('course')) {
+        if (Object.hasOwn(body, 'course')) {
             newModelingExercise = Object.assign({}, templateCopy, dates, body);
         } else {
             newModelingExercise = Object.assign({}, templateCopy, body);
@@ -488,18 +510,22 @@ export class ExerciseAPIRequests {
         quizQuestions: any[];
         title?: string;
         releaseDate?: dayjs.Dayjs;
+        dueDate?: dayjs.Dayjs;
         startOfWorkingTime?: dayjs.Dayjs;
         duration?: number;
         quizMode?: QuizMode;
+        competencyLinks?: { competency: { id: number }; weight: number }[];
     }): Promise<QuizExercise> {
         const {
             body,
             quizQuestions,
             title = 'Quiz ' + generateUUID(),
             releaseDate = dayjs().add(1, 'year'),
+            dueDate,
             startOfWorkingTime,
             duration = 600,
             quizMode = QuizMode.SYNCHRONIZED,
+            competencyLinks,
         } = options;
 
         const quizExercise: any = {
@@ -514,11 +540,16 @@ export class ExerciseAPIRequests {
         let url: string;
         let newQuizExercise: any;
         let quizBatches: any[] = [];
-        if (body.hasOwnProperty('course')) {
+        if ('course' in body) {
             url = `api/quiz/courses/${body.course.id}/quiz-exercises`;
-            const dates = {
+            const dates: { releaseDate: string; dueDate?: string } = {
                 releaseDate: dayjsToString(releaseDate),
             };
+            if (dueDate) {
+                // Allow tests to mark a quiz as already-ended (dueDate in the past) so the practice / training
+                // submission paths become reachable without driving the instructor-end-quiz UI flow.
+                dates.dueDate = dayjsToString(dueDate);
+            }
             if (startOfWorkingTime) {
                 quizBatches = [{ startTime: dayjsToString(startOfWorkingTime) }];
             }
@@ -528,6 +559,9 @@ export class ExerciseAPIRequests {
             newQuizExercise = { ...quizExercise, ...body };
         }
 
+        if (competencyLinks) {
+            newQuizExercise.competencyLinks = competencyLinks;
+        }
         const quizExerciseDTO = convertQuizExerciseToCreationDTO(newQuizExercise);
         const multipartData = {
             exercise: {
@@ -633,21 +667,26 @@ export class ExerciseAPIRequests {
     }
 
     /**
-     * Gets the participation data for an programming exercise with the specified exercise ID.
+     * Gets the participation data for a programming exercise with the specified exercise ID.
+     * Uses the paginated endpoint to fetch the first participation's ID, then fetches full
+     * participation data (with latest result) via the per-participation endpoint.
      *
      * @param exerciseId - The ID of the exercise for which to retrieve the participation data.
-     * @returns A Promise<StudentParticipation> representing the student participation.
+     * @returns A Promise<StudentParticipation> representing the student participation with latest result.
      * @throws Error if no participations are found for the exercise.
      */
     async getProgrammingExerciseParticipation(exerciseId: number): Promise<StudentParticipation> {
-        // Use the endpoint that returns all participations for the exercise with latest results
-        // NOTE: This endpoint requires at least tutor permissions
-        const response = await this.page.request.get(`api/exercise/exercises/${exerciseId}/participations?withLatestResults=true`);
-        const participations = (await response.json()) as StudentParticipation[];
+        const pageResponse = await this.page.request.get(
+            `api/exercise/exercises/${exerciseId}/participations/page?page=0&pageSize=1&sortingOrder=ASCENDING&sortedColumn=participantName&searchTerm=&filterProp=`,
+        );
+        if (!pageResponse.ok()) {
+            throw new Error(`Failed to get participations page for exercise ${exerciseId}: ${pageResponse.status()}`);
+        }
+        const participations = (await pageResponse.json()) as Array<{ participationId: number }>;
         if (!Array.isArray(participations) || participations.length === 0) {
             throw new Error(`No participations found for exercise ${exerciseId}`);
         }
-        return participations[0];
+        return this.getParticipationWithLatestResult(participations[0].participationId);
     }
 
     /**
@@ -695,23 +734,65 @@ export class ExerciseAPIRequests {
         return await this.page.request.patch(`${PROGRAMMING_EXERCISE_BASE}/${programmingExerciseId}/update-test-cases`, { data: updatedTestCaseSettings });
     }
 
-    private async updateExercise(exercise: Exercise, type: ExerciseType) {
-        let url: string;
-        switch (type) {
-            case ExerciseType.PROGRAMMING:
-                url = PROGRAMMING_EXERCISE_BASE;
-                break;
-            case ExerciseType.TEXT:
-                url = TEXT_EXERCISE_BASE;
-                break;
-            case ExerciseType.MODELING:
-                url = MODELING_EXERCISE_BASE;
-                break;
-            case ExerciseType.QUIZ:
-            default:
-                throw new Error(`Exercise type '${type}' is not supported yet!`);
+    /**
+     * Configures all SCA categories for a programming exercise to be GRADED via API.
+     * This is faster than configuring through the UI.
+     */
+    async configureScaCategoriesViaApi(exerciseId: number) {
+        const MAX_SCA_RETRIES = 20;
+        const SCA_RETRY_DELAY = 3000;
+
+        for (let attempt = 0; attempt < MAX_SCA_RETRIES; attempt++) {
+            const response = await this.page.request.get(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}/static-code-analysis-categories`);
+            const categories = await response.json();
+
+            if (categories.length > 0) {
+                const updatedCategories = categories.map((cat: any) => ({
+                    ...cat,
+                    state: 'GRADED',
+                }));
+                await this.page.request.patch(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}/static-code-analysis-categories`, { data: updatedCategories });
+                return;
+            }
+
+            await this.page.waitForTimeout(SCA_RETRY_DELAY);
         }
-        return await this.page.request.put(url, { data: exercise });
+        throw new Error(`SCA categories not found after ${MAX_SCA_RETRIES} retries`);
+    }
+
+    /**
+     * Waits for the solution build to complete by polling test cases.
+     * Test cases are populated after the solution build finishes.
+     * This is necessary to avoid a race condition where the student build
+     * completes before the solution build, resulting in score=0.
+     */
+    async waitForSolutionBuild(exerciseId: number) {
+        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+            const response = await this.page.request.get(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}/test-cases`);
+            const testCases = await response.json();
+
+            if (Array.isArray(testCases) && testCases.length > 0) {
+                return;
+            }
+
+            await this.page.waitForTimeout(RETRY_DELAY);
+        }
+        throw new Error(`Test cases not found after ${MAX_RETRIES} retries — solution build may not have completed`);
+    }
+
+    /**
+     * Sets the weight of specific test cases to 0 so they don't affect scoring.
+     * Useful for tests that fail on certain architectures (e.g., LeakSanitizer on ARM64).
+     */
+    async deactivateTestCases(exerciseId: number, testCaseNames: string[]) {
+        const response = await this.page.request.get(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}/test-cases`);
+        const testCases = await response.json();
+        const updates = testCases
+            .filter((tc: any) => testCaseNames.includes(tc.testName))
+            .map((tc: any) => ({ id: tc.id, weight: 0, bonusMultiplier: tc.bonusMultiplier, bonusPoints: tc.bonusPoints, visibility: tc.visibility }));
+        if (updates.length > 0) {
+            await this.page.request.patch(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}/update-test-cases`, { data: updates });
+        }
     }
 
     /**
@@ -724,12 +805,13 @@ export class ExerciseAPIRequests {
      */
     async createTeam(exerciseId: number, students: any[], tutor: any) {
         const teamId = generateUUID();
-        const team: Team = {
+        // The server expects TeamInputDTO with user IDs, not full User objects
+        const teamDTO = {
             name: `Team ${teamId}`,
             shortName: `team${teamId}`,
-            students,
-            owner: tutor,
+            students: students.map((s: any) => s.id),
+            ownerId: tutor.id,
         };
-        return await this.page.request.post(`api/exercise/exercises/${exerciseId}/teams`, { data: team });
+        return await this.page.request.post(`api/exercise/exercises/${exerciseId}/teams`, { data: teamDTO });
     }
 }

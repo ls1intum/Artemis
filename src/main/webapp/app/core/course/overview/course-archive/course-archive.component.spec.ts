@@ -1,6 +1,8 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -22,6 +24,7 @@ import { CourseForArchiveDTO } from 'app/core/course/shared/entities/course-for-
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/shared/service/alert.service';
+import { ActivatedRoute } from '@angular/router';
 
 const course1 = { id: 1, semester: 'WS21/22', title: 'iPraktikum' } as CourseForArchiveDTO;
 const course2 = { id: 2, semester: 'WS21/22' } as CourseForArchiveDTO;
@@ -33,14 +36,16 @@ const course7 = { id: 7, semester: 'WS22/23' } as CourseForArchiveDTO;
 const courses: CourseForArchiveDTO[] = [course1, course2, course3, course4, course5, course6, course7];
 
 describe('CourseArchiveComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CourseArchiveComponent;
     let fixture: ComponentFixture<CourseArchiveComponent>;
     let courseService: CourseManagementService;
     let httpMock: HttpTestingController;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
-            declarations: [
+            imports: [
                 CourseArchiveComponent,
                 SearchFilterPipe,
                 SearchFilterComponent,
@@ -57,28 +62,27 @@ describe('CourseArchiveComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(AlertService),
+                { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => null } } } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CourseArchiveComponent);
-                component = fixture.componentInstance;
-                courseService = TestBed.inject(CourseManagementService);
-                httpMock = TestBed.inject(HttpTestingController);
-                fixture.detectChanges();
-            });
+        });
+        await TestBed.compileComponents();
+        fixture = TestBed.createComponent(CourseArchiveComponent);
+        component = fixture.componentInstance;
+        courseService = TestBed.inject(CourseManagementService);
+        httpMock = TestBed.inject(HttpTestingController);
+        fixture.detectChanges();
     });
 
     afterEach(() => {
         component.ngOnDestroy();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('onInit', () => {
         it('should call loadArchivedCourses on init', () => {
-            const loadArchivedCoursesSpy = jest.spyOn(component, 'loadArchivedCourses');
+            const loadArchivedCoursesSpy = vi.spyOn(component, 'loadArchivedCourses');
 
             component.ngOnInit();
 
@@ -86,7 +90,7 @@ describe('CourseArchiveComponent', () => {
         });
 
         it('should load archived courses on init', () => {
-            const getCoursesForArchiveSpy = jest.spyOn(courseService, 'getCoursesForArchive');
+            const getCoursesForArchiveSpy = vi.spyOn(courseService, 'getCoursesForArchive');
             getCoursesForArchiveSpy.mockReturnValue(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
 
             component.ngOnInit();
@@ -97,7 +101,7 @@ describe('CourseArchiveComponent', () => {
 
         it('should handle an empty response body correctly when fetching all courses for archive', () => {
             const emptyCourses: CourseForArchiveDTO[] = [];
-            const getCoursesForArchiveSpy = jest.spyOn(courseService, 'getCoursesForArchive');
+            const getCoursesForArchiveSpy = vi.spyOn(courseService, 'getCoursesForArchive');
 
             const req = httpMock.expectOne({ method: 'GET', url: `api/core/courses/for-archive` });
             component.ngOnInit();
@@ -108,7 +112,7 @@ describe('CourseArchiveComponent', () => {
         });
 
         it('should sort the name of the semesters uniquely', () => {
-            const getCoursesForArchiveSpy = jest.spyOn(courseService, 'getCoursesForArchive');
+            const getCoursesForArchiveSpy = vi.spyOn(courseService, 'getCoursesForArchive');
             getCoursesForArchiveSpy.mockReturnValue(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
             component.ngOnInit();
 
@@ -123,9 +127,9 @@ describe('CourseArchiveComponent', () => {
         });
 
         it('should map courses into semesters', () => {
-            const getCoursesForArchiveSpy = jest.spyOn(courseService, 'getCoursesForArchive');
+            const getCoursesForArchiveSpy = vi.spyOn(courseService, 'getCoursesForArchive');
             getCoursesForArchiveSpy.mockReturnValue(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
-            const mapCoursesIntoSemestersSpy = jest.spyOn(component, 'mapCoursesIntoSemesters');
+            const mapCoursesIntoSemestersSpy = vi.spyOn(component, 'mapCoursesIntoSemesters');
             component.ngOnInit();
 
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
@@ -141,9 +145,9 @@ describe('CourseArchiveComponent', () => {
         });
 
         it('should initialize collapse state of semesters correctly', () => {
-            const getCoursesForArchiveSpy = jest.spyOn(courseService, 'getCoursesForArchive');
+            const getCoursesForArchiveSpy = vi.spyOn(courseService, 'getCoursesForArchive');
             getCoursesForArchiveSpy.mockReturnValue(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
-            const mapCoursesIntoSemestersSpy = jest.spyOn(component, 'mapCoursesIntoSemesters');
+            const mapCoursesIntoSemestersSpy = vi.spyOn(component, 'mapCoursesIntoSemesters');
             component.ngOnInit();
 
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
@@ -160,9 +164,9 @@ describe('CourseArchiveComponent', () => {
         });
 
         it('should initialize translate of semesters correctly', () => {
-            const getCoursesForArchiveSpy = jest.spyOn(courseService, 'getCoursesForArchive');
+            const getCoursesForArchiveSpy = vi.spyOn(courseService, 'getCoursesForArchive');
             getCoursesForArchiveSpy.mockReturnValue(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
-            const mapCoursesIntoSemestersSpy = jest.spyOn(component, 'mapCoursesIntoSemesters');
+            const mapCoursesIntoSemestersSpy = vi.spyOn(component, 'mapCoursesIntoSemesters');
             component.ngOnInit();
 
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
@@ -178,15 +182,15 @@ describe('CourseArchiveComponent', () => {
         });
 
         it('should collapse semester groups based on the search value correctly', () => {
-            const getCoursesForArchiveSpy = jest.spyOn(courseService, 'getCoursesForArchive');
+            const getCoursesForArchiveSpy = vi.spyOn(courseService, 'getCoursesForArchive');
             getCoursesForArchiveSpy.mockReturnValue(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
-            const mapCoursesIntoSemestersSpy = jest.spyOn(component, 'mapCoursesIntoSemesters');
+            const mapCoursesIntoSemestersSpy = vi.spyOn(component, 'mapCoursesIntoSemesters');
             component.ngOnInit();
 
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
             expect(mapCoursesIntoSemestersSpy).toHaveBeenCalledOnce();
 
-            const expandOrCollapseBasedOnSearchValueSpy = jest.spyOn(component, 'expandOrCollapseBasedOnSearchValue');
+            const expandOrCollapseBasedOnSearchValueSpy = vi.spyOn(component, 'expandOrCollapseBasedOnSearchValue');
             component.setSearchValue('iPraktikum');
 
             expect(expandOrCollapseBasedOnSearchValueSpy).toHaveBeenCalledOnce();
@@ -200,20 +204,20 @@ describe('CourseArchiveComponent', () => {
             });
         });
 
-        it('should toggle sort order and update the icon accordingly', fakeAsync(() => {
-            const getCoursesForArchiveSpy = jest.spyOn(courseService, 'getCoursesForArchive');
+        it('should toggle sort order and update the icon accordingly', async () => {
+            const getCoursesForArchiveSpy = vi.spyOn(courseService, 'getCoursesForArchive');
             getCoursesForArchiveSpy.mockReturnValue(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
-            const mapCoursesIntoSemestersSpy = jest.spyOn(component, 'mapCoursesIntoSemesters');
+            const mapCoursesIntoSemestersSpy = vi.spyOn(component, 'mapCoursesIntoSemesters');
             component.ngOnInit();
             fixture.changeDetectorRef.detectChanges();
-            tick();
+            await fixture.whenStable();
 
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
             expect(mapCoursesIntoSemestersSpy).toHaveBeenCalledOnce();
             expect(component.courses).toBeDefined();
             expect(component.courses).toHaveLength(7);
 
-            const onSortSpy = jest.spyOn(component, 'onSort');
+            const onSortSpy = vi.spyOn(component, 'onSort');
             const button = fixture.debugElement.nativeElement.querySelector('#sort-test');
 
             expect(button).not.toBeNull();
@@ -221,7 +225,7 @@ describe('CourseArchiveComponent', () => {
             fixture.changeDetectorRef.detectChanges();
 
             expect(onSortSpy).toHaveBeenCalled();
-            expect(component.isSortAscending).toBeFalse();
+            expect(component.isSortAscending).toBe(false);
             expect(component.semesters[4]).toBe('WS23/24');
             expect(component.semesters[3]).toBe('WS22/23');
             expect(component.semesters[2]).toBe('SS22');
@@ -232,15 +236,15 @@ describe('CourseArchiveComponent', () => {
 
             expect(iconComponent).not.toBeNull();
             expect(iconComponent.icon()).toBe(component.faArrowUp19);
-        }));
+        });
 
-        it('should find the correct course and call toggle', fakeAsync(() => {
-            const getCoursesForArchiveSpy = jest.spyOn(courseService, 'getCoursesForArchive');
+        it('should find the correct course and call toggle', async () => {
+            const getCoursesForArchiveSpy = vi.spyOn(courseService, 'getCoursesForArchive');
             getCoursesForArchiveSpy.mockReturnValue(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
-            const mapCoursesIntoSemestersSpy = jest.spyOn(component, 'mapCoursesIntoSemesters');
+            const mapCoursesIntoSemestersSpy = vi.spyOn(component, 'mapCoursesIntoSemesters');
 
             component.ngOnInit();
-            tick();
+            await fixture.whenStable();
             fixture.changeDetectorRef.detectChanges();
             expect(component.courses).toHaveLength(7);
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
@@ -248,25 +252,25 @@ describe('CourseArchiveComponent', () => {
 
             // iPraktikum is in semester-group-3 : WS21/22
             const button = fixture.debugElement.nativeElement.querySelector('#semester-group-3');
-            const toggleCollapseStateSpy = jest.spyOn(component, 'toggleCollapseState');
+            const toggleCollapseStateSpy = vi.spyOn(component, 'toggleCollapseState');
             component.setSearchValue('iPraktikum');
             const courseFound = component.isCourseFoundInSemester('WS21/22');
-            expect(courseFound).toBeTrue();
+            expect(courseFound).toBe(true);
             expect(button).not.toBeNull();
             button.click();
             expect(toggleCollapseStateSpy).toHaveBeenCalledOnce();
-        }));
+        });
 
         it('should initialize collapse state correctly', () => {
-            const getCoursesForArchiveSpy = jest.spyOn(courseService, 'getCoursesForArchive');
+            const getCoursesForArchiveSpy = vi.spyOn(courseService, 'getCoursesForArchive');
             getCoursesForArchiveSpy.mockReturnValue(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
-            const mapCoursesIntoSemestersSpy = jest.spyOn(component, 'mapCoursesIntoSemesters');
+            const mapCoursesIntoSemestersSpy = vi.spyOn(component, 'mapCoursesIntoSemesters');
 
             component.ngOnInit();
             expect(component.courses).toHaveLength(7);
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
             expect(mapCoursesIntoSemestersSpy).toHaveBeenCalledOnce();
-            const getCollapseStateForSemestersSpy = jest.spyOn(component, 'getCollapseStateForSemesters');
+            const getCollapseStateForSemestersSpy = vi.spyOn(component, 'getCollapseStateForSemesters');
             component.setSearchValue('');
             expect(getCollapseStateForSemestersSpy).toHaveBeenCalledOnce();
 
