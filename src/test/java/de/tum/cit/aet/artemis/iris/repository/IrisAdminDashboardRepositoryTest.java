@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -62,12 +63,12 @@ class IrisAdminDashboardRepositoryTest extends AbstractIrisChatSessionTest {
         IrisChatSession savedSession = (IrisChatSession) irisSessionRepository.saveAndFlush(session);
 
         var results = irisAdminDashboardRepository.findUserMessageResults(timestamp.minusHours(1), timestamp.plusHours(1), null).stream()
-                .filter(result -> result.sessionId() == savedSession.getId()).toList();
+                .filter(result -> Objects.equals(result.sessionId(), savedSession.getId())).toList();
 
         assertThat(results).hasSize(2);
         assertThat(results.getFirst().nextSender()).isEqualTo(IrisMessageSender.USER.name());
         assertThat(results.get(1).nextSender()).isEqualTo(IrisMessageSender.LLM.name());
-        assertThat(results.get(1).nextSentAt()).isEqualTo(timestamp.plusSeconds(4));
+        assertThat(results.get(1).nextSentAt().toInstant()).isEqualTo(timestamp.plusSeconds(4).toInstant());
     }
 
     @Test

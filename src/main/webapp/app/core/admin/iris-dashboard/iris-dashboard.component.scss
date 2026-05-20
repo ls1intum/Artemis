@@ -1,4 +1,4 @@
-:host {
+.iris-dashboard {
     display: block;
 }
 
@@ -45,7 +45,7 @@
     margin-bottom: 1rem;
 }
 
-:host ::ng-deep .kpi-card {
+.iris-dashboard .kpi-card {
     height: 100%;
     border-radius: 0.5rem;
 
@@ -112,20 +112,20 @@
     }
 }
 
-:host ::ng-deep .chart-panel .tooltip-area {
+.iris-dashboard .chart-panel .tooltip-area {
     pointer-events: none;
 }
 
-:host ::ng-deep .chart-panel .ngx-charts-outer {
+.iris-dashboard .chart-panel .ngx-charts-outer {
     height: 20rem !important;
     max-height: 20rem;
     overflow: hidden;
     pointer-events: none;
 }
 
-:host ::ng-deep .chart-panel .chart-legend,
-:host ::ng-deep .chart-panel .legend-title,
-:host ::ng-deep .chart-panel .legend-labels {
+.iris-dashboard .chart-panel .chart-legend,
+.iris-dashboard .chart-panel .legend-title,
+.iris-dashboard .chart-panel .legend-labels {
     pointer-events: none;
 }
 

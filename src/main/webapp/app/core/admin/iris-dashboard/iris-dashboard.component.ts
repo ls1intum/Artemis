@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, ViewEncapsulation, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
@@ -53,6 +53,8 @@ interface KpiCard {
     templateUrl: './iris-dashboard.component.html',
     styleUrl: './iris-dashboard.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    encapsulation: ViewEncapsulation.None,
+    host: { class: 'iris-dashboard' },
     imports: [
         AdminTitleBarActionsDirective,
         AdminTitleBarTitleDirective,

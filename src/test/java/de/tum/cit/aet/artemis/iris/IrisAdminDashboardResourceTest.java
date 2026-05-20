@@ -32,6 +32,10 @@ class IrisAdminDashboardResourceTest extends AbstractIrisChatSessionTest {
 
     private static final String BASE_URL = "/api/iris/admin/dashboard";
 
+    private static final ZonedDateTime DASHBOARD_WINDOW_START = ZonedDateTime.of(2026, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+
+    private static final Instant REQUEST_NOW = Instant.parse("2026-01-01T12:00:00Z");
+
     @Autowired
     private IrisSessionRepository irisSessionRepository;
 
@@ -43,7 +47,7 @@ class IrisAdminDashboardResourceTest extends AbstractIrisChatSessionTest {
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void overviewReturnsAggregatedDashboardData() throws Exception {
-        ZonedDateTime from = ZonedDateTime.now(ZoneOffset.UTC).plusHours(1);
+        ZonedDateTime from = DASHBOARD_WINDOW_START;
         ZonedDateTime to = from.plusMinutes(10);
         saveSessionWithUserAndLlmMessage(from.plusMinutes(1));
 
@@ -60,7 +64,7 @@ class IrisAdminDashboardResourceTest extends AbstractIrisChatSessionTest {
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void exposesTimeSeriesBreakdownAndConfig() throws Exception {
-        ZonedDateTime from = ZonedDateTime.now(ZoneOffset.UTC).plusHours(2);
+        ZonedDateTime from = DASHBOARD_WINDOW_START.plusHours(1);
         ZonedDateTime to = from.plusMinutes(10);
         saveSessionWithUserAndLlmMessage(from.plusMinutes(1));
 
@@ -87,15 +91,13 @@ class IrisAdminDashboardResourceTest extends AbstractIrisChatSessionTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void rejectsNonAdminUsers() throws Exception {
-        Instant now = Instant.now();
-        request.get(BASE_URL + "/overview", HttpStatus.FORBIDDEN, IrisDashboardOverviewDTO.class, queryParams(now.minus(Duration.ofDays(1)), now));
+        request.get(BASE_URL + "/overview", HttpStatus.FORBIDDEN, IrisDashboardOverviewDTO.class, queryParams(REQUEST_NOW.minus(Duration.ofDays(1)), REQUEST_NOW));
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void rejectsInvalidQueryWindow() throws Exception {
-        Instant now = Instant.now();
-        request.get(BASE_URL + "/overview", HttpStatus.BAD_REQUEST, IrisDashboardOverviewDTO.class, queryParams(now.minus(Duration.ofDays(400)), now));
+        request.get(BASE_URL + "/overview", HttpStatus.BAD_REQUEST, IrisDashboardOverviewDTO.class, queryParams(REQUEST_NOW.minus(Duration.ofDays(400)), REQUEST_NOW));
     }
 
     private void saveSessionWithUserAndLlmMessage(ZonedDateTime userMessageTime) {
