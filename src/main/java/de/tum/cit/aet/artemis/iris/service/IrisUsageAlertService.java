@@ -66,7 +66,7 @@ public class IrisUsageAlertService {
     @Value("${info.testServer:false}")
     private boolean isTestServer;
 
-    public IrisUsageAlertService(IrisAdminDashboardService dashboardService, IrisDashboardProperties properties, ProfileService profileService,
+    public IrisUsageAlertService(@Lazy IrisAdminDashboardService dashboardService, IrisDashboardProperties properties, ProfileService profileService,
             MailSendingService mailSendingService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.dashboardService = dashboardService;
         this.properties = properties;

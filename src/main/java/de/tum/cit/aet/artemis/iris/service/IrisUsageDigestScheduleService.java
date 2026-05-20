@@ -68,7 +68,7 @@ public class IrisUsageDigestScheduleService {
     @Value("${info.testServer:false}")
     private boolean isTestServer;
 
-    public IrisUsageDigestScheduleService(IrisAdminDashboardService dashboardService, IrisDashboardProperties properties, ProfileService profileService,
+    public IrisUsageDigestScheduleService(@Lazy IrisAdminDashboardService dashboardService, IrisDashboardProperties properties, ProfileService profileService,
             MailSendingService mailSendingService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.dashboardService = dashboardService;
         this.properties = properties;
