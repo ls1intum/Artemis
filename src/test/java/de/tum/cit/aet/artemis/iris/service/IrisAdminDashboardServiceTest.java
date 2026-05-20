@@ -23,9 +23,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardProperties;
-import de.tum.cit.aet.artemis.iris.dto.IrisDashboardMetric;
+import de.tum.cit.aet.artemis.iris.domain.dashboard.IrisDashboardMetric;
+import de.tum.cit.aet.artemis.iris.domain.dashboard.IrisDashboardSpan;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardOverviewDTO;
-import de.tum.cit.aet.artemis.iris.dto.IrisDashboardSpan;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardUserMessageResultDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisAdminDashboardRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisAdminDashboardRepository.MessageRow;

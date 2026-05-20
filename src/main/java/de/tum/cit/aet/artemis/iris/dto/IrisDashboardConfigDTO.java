@@ -2,12 +2,17 @@ package de.tum.cit.aet.artemis.iris.dto;
 
 import java.util.List;
 
-public record IrisDashboardConfigDTO(int maxQueryWindowDays, int staleThresholdMinutes, Digest digest, Alert alert) {
+import com.fasterxml.jackson.annotation.JsonInclude;
 
-    public record Digest(boolean enabled, String cron, List<String> recipients) {
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record IrisDashboardConfigDTO(int maxQueryWindowDays, int staleThresholdMinutes, DigestDTO digest, AlertDTO alert) {
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record DigestDTO(boolean enabled, String cron, List<String> recipients) {
     }
 
-    public record Alert(boolean enabled, double noResponseRateThreshold, int checkIntervalMinutes, int cooldownMinutes, int lookbackMinutes, int minimumActiveSessions,
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record AlertDTO(boolean enabled, double noResponseRateThreshold, int checkIntervalMinutes, int cooldownMinutes, int lookbackMinutes, int minimumActiveSessions,
             int minimumUserMessages, List<String> recipients) {
     }
 }

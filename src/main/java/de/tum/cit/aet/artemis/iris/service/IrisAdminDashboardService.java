@@ -27,21 +27,20 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardProperties;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.domain.dashboard.IrisDashboardBreakdownDimension;
+import de.tum.cit.aet.artemis.iris.domain.dashboard.IrisDashboardMetric;
+import de.tum.cit.aet.artemis.iris.domain.dashboard.IrisDashboardSessionType;
+import de.tum.cit.aet.artemis.iris.domain.dashboard.IrisDashboardSpan;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
-import de.tum.cit.aet.artemis.iris.dto.IrisDashboardBreakdownDimension;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardBreakdownEntryDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardConfigDTO;
-import de.tum.cit.aet.artemis.iris.dto.IrisDashboardMetric;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardOverviewDTO;
-import de.tum.cit.aet.artemis.iris.dto.IrisDashboardSessionType;
-import de.tum.cit.aet.artemis.iris.dto.IrisDashboardSpan;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardTimeSeriesDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardTimeSeriesEntryDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardUserMessageResultDTO;
@@ -88,7 +87,6 @@ public class IrisAdminDashboardService {
      * @param chatMode optional chat mode filter
      * @return aggregated overview KPIs
      */
-    @Transactional(readOnly = true)
     public IrisDashboardOverviewDTO getOverview(Instant from, Instant to, @Nullable String chatMode) {
         QueryWindow window = validateWindow(from, to);
         return buildOverview(loadData(window, resolveSessionType(chatMode)));
@@ -104,7 +102,6 @@ public class IrisAdminDashboardService {
      * @param chatMode optional chat mode filter
      * @return time-series entries for the requested metric
      */
-    @Transactional(readOnly = true)
     public IrisDashboardTimeSeriesDTO getTimeSeries(Instant from, Instant to, IrisDashboardSpan span, IrisDashboardMetric metric, @Nullable String chatMode) {
         QueryWindow window = validateWindow(from, to);
         DashboardData data = loadData(window, resolveSessionType(chatMode));
@@ -146,7 +143,6 @@ public class IrisAdminDashboardService {
      * @param chatMode  optional chat mode filter
      * @return breakdown entries for the requested dimension
      */
-    @Transactional(readOnly = true)
     public List<IrisDashboardBreakdownEntryDTO> getBreakdown(Instant from, Instant to, IrisDashboardBreakdownDimension dimension, @Nullable String chatMode) {
         QueryWindow window = validateWindow(from, to);
         DashboardData data = loadData(window, resolveSessionType(chatMode));
@@ -166,8 +162,8 @@ public class IrisAdminDashboardService {
         var digest = properties.getDigest();
         var alert = properties.getAlert();
         return new IrisDashboardConfigDTO(properties.getMaxQueryWindowDays(), properties.getStaleThresholdMinutes(),
-                new IrisDashboardConfigDTO.Digest(digest.isEnabled(), digest.getCron(), List.copyOf(digest.getRecipients())),
-                new IrisDashboardConfigDTO.Alert(alert.isEnabled(), alert.getNoResponseRateThreshold(), alert.getCheckIntervalMinutes(), alert.getCooldownMinutes(),
+                new IrisDashboardConfigDTO.DigestDTO(digest.isEnabled(), digest.getCron(), List.copyOf(digest.getRecipients())),
+                new IrisDashboardConfigDTO.AlertDTO(alert.isEnabled(), alert.getNoResponseRateThreshold(), alert.getCheckIntervalMinutes(), alert.getCooldownMinutes(),
                         alert.getLookbackMinutes(), alert.getMinimumActiveSessions(), alert.getMinimumUserMessages(), List.copyOf(alert.getRecipients())));
     }
 
@@ -227,7 +223,8 @@ public class IrisAdminDashboardService {
     }
 
     private List<IrisDashboardBreakdownEntryDTO> modelBreakdown(DashboardData data) {
-        return data.tokenUsage().stream().collect(Collectors.groupingBy(row -> StringUtils.hasText(row.model()) ? row.model() : "UNKNOWN", LinkedHashMap::new, Collectors.toList()))
+        return data.tokenUsage().stream()
+                .collect(Collectors.groupingBy(row -> StringUtils.hasText(row.model()) ? row.model() : "UNKNOWN", LinkedHashMap::new, Collectors.toCollection(ArrayList::new)))
                 .entrySet().stream().map(entry -> {
                     double inputTokens = entry.getValue().stream().mapToDouble(TokenUsageRow::inputTokens).sum();
                     double outputTokens = entry.getValue().stream().mapToDouble(TokenUsageRow::outputTokens).sum();

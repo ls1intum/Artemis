@@ -16,12 +16,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
-import de.tum.cit.aet.artemis.iris.dto.IrisDashboardBreakdownDimension;
+import de.tum.cit.aet.artemis.iris.domain.dashboard.IrisDashboardBreakdownDimension;
+import de.tum.cit.aet.artemis.iris.domain.dashboard.IrisDashboardMetric;
+import de.tum.cit.aet.artemis.iris.domain.dashboard.IrisDashboardSpan;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardBreakdownEntryDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardConfigDTO;
-import de.tum.cit.aet.artemis.iris.dto.IrisDashboardMetric;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardOverviewDTO;
-import de.tum.cit.aet.artemis.iris.dto.IrisDashboardSpan;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardTimeSeriesDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisAdminDashboardService;
 
@@ -29,14 +29,14 @@ import de.tum.cit.aet.artemis.iris.service.IrisAdminDashboardService;
 @EnforceAdmin
 @Lazy
 @RestController
-@RequestMapping("api/iris/admin/dashboard")
-public class IrisAdminDashboardResource {
+@RequestMapping("api/iris/admin/dashboard/")
+public class AdminIrisDashboardResource {
 
-    private static final Logger log = LoggerFactory.getLogger(IrisAdminDashboardResource.class);
+    private static final Logger log = LoggerFactory.getLogger(AdminIrisDashboardResource.class);
 
     private final IrisAdminDashboardService irisAdminDashboardService;
 
-    public IrisAdminDashboardResource(IrisAdminDashboardService irisAdminDashboardService) {
+    public AdminIrisDashboardResource(IrisAdminDashboardService irisAdminDashboardService) {
         this.irisAdminDashboardService = irisAdminDashboardService;
     }
 

@@ -16,12 +16,12 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.iris.domain.dashboard.IrisDashboardMetric;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardBreakdownEntryDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardConfigDTO;
-import de.tum.cit.aet.artemis.iris.dto.IrisDashboardMetric;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardOverviewDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardTimeSeriesDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;

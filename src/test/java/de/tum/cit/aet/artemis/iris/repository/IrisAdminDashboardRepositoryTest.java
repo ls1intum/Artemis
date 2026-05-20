@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.LLMTokenUsageRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMTokenUsageTrace;
-import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
+import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.iris.AbstractIrisChatSessionTest;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
@@ -38,7 +38,7 @@ class IrisAdminDashboardRepositoryTest extends AbstractIrisChatSessionTest {
     private IrisSessionRepository irisSessionRepository;
 
     @Autowired
-    private LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
+    private LLMTokenUsageTraceTestRepository llmTokenUsageTraceRepository;
 
     @Autowired
     private PostTestRepository postRepository;

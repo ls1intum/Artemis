@@ -18,7 +18,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
-import de.tum.cit.aet.artemis.iris.dto.IrisDashboardSessionType;
+import de.tum.cit.aet.artemis.iris.domain.dashboard.IrisDashboardSessionType;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardUserMessageResultDTO;
 
 @Lazy
