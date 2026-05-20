@@ -133,12 +133,25 @@ jobs:
         # run_id makes the primary key unique so every save captures the latest
         # incremental state; restore-keys pick the most recent matching snapshot.
         uses: actions/cache/restore@v5
+        id: angular_build_cache
         with:
           path: build/angular
           key: angular-build-cache-${{ runner.os }}-node${{ env.node }}-${{ hashFiles('pnpm-lock.yaml', 'angular.json', 'tsconfig.json', 'tsconfig.app.json') }}-${{ github.run_id }}
           restore-keys: |
             angular-build-cache-${{ runner.os }}-node${{ env.node }}-${{ hashFiles('pnpm-lock.yaml', 'angular.json', 'tsconfig.json', 'tsconfig.app.json') }}-
             angular-build-cache-${{ runner.os }}-node${{ env.node }}-
+      - name: Debug Angular build cache contents
+        run: |
+          echo "cache-hit=${{ steps.angular_build_cache.outputs.cache-hit }}"
+          echo "cache-primary-key=${{ steps.angular_build_cache.outputs.cache-primary-key }}"
+          echo "cache-matched-key=${{ steps.angular_build_cache.outputs.cache-matched-key }}"
+          if [ -d build/angular ]; then
+            echo "build/angular exists"
+            du -sh build/angular
+            find build/angular -maxdepth 4 -type f | head -n 200
+          else
+            echo "build/angular is missing"
+          fi
       - name: Install pnpm dependencies
         run: pnpm install --frozen-lockfile
       - name: Build Angular Client
