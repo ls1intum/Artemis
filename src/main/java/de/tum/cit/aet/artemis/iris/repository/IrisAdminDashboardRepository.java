@@ -37,8 +37,8 @@ public class IrisAdminDashboardRepository {
     /**
      * Finds Iris sessions created in the requested window or active through messages in the requested window.
      *
-     * @param from the inclusive UTC start
-     * @param to the exclusive UTC end
+     * @param from        the inclusive UTC start
+     * @param to          the exclusive UTC end
      * @param sessionType optional session type filter
      * @return matching session rows
      */
@@ -60,16 +60,15 @@ public class IrisAdminDashboardRepository {
                 ORDER BY s.creation_date, s.id
                 """.formatted(SESSION_TYPE_EXPRESSION, sessionFilterSql(sessionType));
 
-        return jdbcTemplate.query(sql, parameters(from, to, sessionType),
-                (resultSet, rowNumber) -> new SessionRow(resultSet.getLong(1), toStringValue(resultSet.getObject(2)), nullableLong(resultSet, 3), resultSet.getString(4),
-                        toZonedDateTime(resultSet.getObject(5))));
+        return jdbcTemplate.query(sql, parameters(from, to, sessionType), (resultSet, rowNumber) -> new SessionRow(resultSet.getLong(1), toStringValue(resultSet.getObject(2)),
+                nullableLong(resultSet, 3), resultSet.getString(4), toZonedDateTime(resultSet.getObject(5))));
     }
 
     /**
      * Finds Iris messages sent in the requested window.
      *
-     * @param from the inclusive UTC start
-     * @param to the exclusive UTC end
+     * @param from        the inclusive UTC start
+     * @param to          the exclusive UTC end
      * @param sessionType optional session type filter
      * @return matching message rows
      */
@@ -94,8 +93,8 @@ public class IrisAdminDashboardRepository {
     /**
      * Finds USER messages and their deterministic next message for no-response and response-time metrics.
      *
-     * @param from the inclusive UTC start
-     * @param to the exclusive UTC end
+     * @param from        the inclusive UTC start
+     * @param to          the exclusive UTC end
      * @param sessionType optional session type filter
      * @return matching USER message result rows
      */
@@ -135,13 +134,14 @@ public class IrisAdminDashboardRepository {
     /**
      * Finds Iris token traces and request costs in the requested window.
      *
-     * @param from the inclusive UTC start
-     * @param to the exclusive UTC end
+     * @param from        the inclusive UTC start
+     * @param to          the exclusive UTC end
      * @param sessionType optional session type filter
      * @return matching token usage rows
      */
     public List<TokenUsageRow> findTokenUsage(ZonedDateTime from, ZonedDateTime to, @Nullable IrisDashboardSessionType sessionType) {
-        String filter = sessionType == null ? "(t.iris_message_id IS NULL OR " + sessionFilterSql(null) + ")" : "t.iris_message_id IS NOT NULL AND " + sessionFilterSql(sessionType);
+        String filter = sessionType == null ? "(t.iris_message_id IS NULL OR " + sessionFilterSql(null) + ")"
+                : "t.iris_message_id IS NOT NULL AND " + sessionFilterSql(sessionType);
         String sql = """
                 SELECT t.id, t.time, COALESCE(s.course_id, t.course_id) AS course_id, c.title,
                     %s AS session_type, r.model, COALESCE(r.num_input_tokens, 0), COALESCE(r.num_output_tokens, 0),

@@ -83,8 +83,8 @@ public class IrisAdminDashboardService {
     /**
      * Computes KPI cards for the requested dashboard window.
      *
-     * @param from the inclusive UTC start
-     * @param to the exclusive UTC end
+     * @param from     the inclusive UTC start
+     * @param to       the exclusive UTC end
      * @param chatMode optional chat mode filter
      * @return aggregated overview KPIs
      */
@@ -97,10 +97,10 @@ public class IrisAdminDashboardService {
     /**
      * Computes one time-series chart for the requested metric and bucket span.
      *
-     * @param from the inclusive UTC start
-     * @param to the exclusive UTC end
-     * @param span bucket span
-     * @param metric metric to compute
+     * @param from     the inclusive UTC start
+     * @param to       the exclusive UTC end
+     * @param span     bucket span
+     * @param metric   metric to compute
      * @param chatMode optional chat mode filter
      * @return time-series entries for the requested metric
      */
@@ -140,10 +140,10 @@ public class IrisAdminDashboardService {
     /**
      * Computes one dashboard breakdown table for the requested dimension.
      *
-     * @param from the inclusive UTC start
-     * @param to the exclusive UTC end
+     * @param from      the inclusive UTC start
+     * @param to        the exclusive UTC end
      * @param dimension breakdown dimension
-     * @param chatMode optional chat mode filter
+     * @param chatMode  optional chat mode filter
      * @return breakdown entries for the requested dimension
      */
     @Transactional(readOnly = true)
@@ -196,8 +196,9 @@ public class IrisAdminDashboardService {
             List<Double> responseTimes = responseTimes(data.userMessageResults().stream().filter(row -> sessionType.equals(row.sessionType())).toList());
             double cost = data.tokenUsage().stream().filter(row -> row.chatAttributed() && sessionType.equals(row.sessionType())).mapToDouble(TokenUsageRow::costEur).sum();
             return new IrisDashboardBreakdownEntryDTO(sessionType,
-                    metrics(Map.of("sessions", (double) totalSessionIds(sessions, messages).size(), "messages", (double) messages.size(), "noResponseRate", noResponseStats.rate(), "thumbsUpRatio",
-                            ratingStats.thumbsUpRatio(), "thumbsDownRatio", ratingStats.thumbsDownRatio(), "averageResponseTimeSeconds", average(responseTimes), "costEur", cost)));
+                    metrics(Map.of("sessions", (double) totalSessionIds(sessions, messages).size(), "messages", (double) messages.size(), "noResponseRate", noResponseStats.rate(),
+                            "thumbsUpRatio", ratingStats.thumbsUpRatio(), "thumbsDownRatio", ratingStats.thumbsDownRatio(), "averageResponseTimeSeconds", average(responseTimes),
+                            "costEur", cost)));
         }).toList();
     }
 
@@ -218,8 +219,8 @@ public class IrisAdminDashboardService {
             NoResponseStats noResponseStats = noResponseStats(data.noResponseCandidates().stream().filter(row -> Objects.equals(courseId, row.courseId())).toList());
             double cost = data.tokenUsage().stream().filter(row -> Objects.equals(courseId, row.courseId())).mapToDouble(TokenUsageRow::costEur).sum();
             String name = courseNames.getOrDefault(courseId, "Course " + courseId) + " (" + courseId + ")";
-            return new IrisDashboardBreakdownEntryDTO(name,
-                    metrics(Map.of("sessions", (double) totalSessionIds(sessions, messages).size(), "messages", (double) messages.size(), "noResponseRate", noResponseStats.rate(), "costEur", cost)));
+            return new IrisDashboardBreakdownEntryDTO(name, metrics(Map.of("sessions", (double) totalSessionIds(sessions, messages).size(), "messages", (double) messages.size(),
+                    "noResponseRate", noResponseStats.rate(), "costEur", cost)));
         }).sorted(Comparator.comparingDouble((IrisDashboardBreakdownEntryDTO entry) -> entry.metrics().getOrDefault("sessions", 0.0)).reversed()
                 .thenComparing(Comparator.comparingDouble((IrisDashboardBreakdownEntryDTO entry) -> entry.metrics().getOrDefault("messages", 0.0)).reversed())
                 .thenComparing(Comparator.comparingDouble((IrisDashboardBreakdownEntryDTO entry) -> entry.metrics().getOrDefault("costEur", 0.0)).reversed())).limit(10).toList();

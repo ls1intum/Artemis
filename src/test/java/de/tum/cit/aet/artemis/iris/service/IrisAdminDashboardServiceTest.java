@@ -128,8 +128,8 @@ class IrisAdminDashboardServiceTest {
 
     @Test
     void includesContinuingSessionsInEngagementDenominator() {
-        mockDashboardRows(FROM, TO, List.of(session(7L, "COURSE_CHAT", "2025-12-31T23:00:00Z")),
-                List.of(message(1L, 7L, "COURSE_CHAT", "USER", "2026-01-01T00:10:00Z", null, 10L)), List.of(), List.of());
+        mockDashboardRows(FROM, TO, List.of(session(7L, "COURSE_CHAT", "2025-12-31T23:00:00Z")), List.of(message(1L, 7L, "COURSE_CHAT", "USER", "2026-01-01T00:10:00Z", null, 10L)),
+                List.of(), List.of());
 
         IrisDashboardOverviewDTO overview = service.getOverview(FROM, TO, null);
         var series = service.getTimeSeries(FROM, TO, IrisDashboardSpan.DAY, IrisDashboardMetric.ENGAGEMENT, null);
