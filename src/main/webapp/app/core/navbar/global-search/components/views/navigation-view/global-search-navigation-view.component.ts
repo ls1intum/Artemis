@@ -337,7 +337,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         const channelId = result.metadata?.['channelId'];
         const postId = result.metadata?.['postId'];
         if (channelId && postId) {
-            this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId, messageId: postId } });
+            this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId, messageId: postId, focusReplyId: result.id } });
         }
     }
 

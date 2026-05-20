@@ -189,6 +189,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     sidebarConversations: SidebarCardElement[] = [];
     isCollapsed = false;
     focusPostId: number | undefined = undefined;
+    focusReplyId: number | undefined = undefined;
     openThreadOnFocus = false;
     selectedSavedPostStatus: undefined | SavedPostStatus = undefined;
     showOnlyPinned = false;
@@ -366,7 +367,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             }
             if (queryParams.messageId) {
                 this.postInThread = { id: Number(queryParams.messageId) } as Post;
-
+                if (queryParams.focusReplyId) {
+                    this.focusReplyId = Number(queryParams.focusReplyId);
+                    this.scrollToAndHighlightReply(this.focusReplyId);
+                }
                 this.closeSidebarOnMobile();
             } else {
                 this.postInThread = undefined;
@@ -386,11 +390,15 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     updateQueryParameters() {
+        const queryParams: Record<string, string | number | undefined> = {
+            conversationId: this.activeConversation?.id ?? this.selectedSavedPostStatus?.toLowerCase(),
+        };
+        if (this.postInThread?.id) {
+            queryParams.messageId = this.postInThread.id;
+        }
         this.router.navigate([], {
             relativeTo: this.activatedRoute,
-            queryParams: {
-                conversationId: this.activeConversation?.id ?? this.selectedSavedPostStatus?.toLowerCase(),
-            },
+            queryParams,
             replaceUrl: true,
         });
     }
@@ -704,6 +712,23 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     openThread(postToOpen: Post | undefined) {
         this.selectionState.setOpenPostId(postToOpen?.id);
         this.postInThread = postToOpen;
+    }
+
+    private scrollToAndHighlightReply(replyId: number, attempt = 0): void {
+        const maxAttempts = 10;
+        const delay = attempt === 0 ? 500 : 300;
+
+        setTimeout(() => {
+            const element = document.getElementById('item-' + replyId);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                element.classList.add('highlight-reply');
+                setTimeout(() => element.classList.remove('highlight-reply'), 2000);
+                this.focusReplyId = undefined;
+            } else if (attempt < maxAttempts) {
+                this.scrollToAndHighlightReply(replyId, attempt + 1);
+            }
+        }, delay);
     }
 
     /**
