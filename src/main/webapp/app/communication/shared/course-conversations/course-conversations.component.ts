@@ -740,21 +740,39 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.updateQueryParameters();
     }
 
-    private scrollToAndHighlightReply(replyId: number, attempt = 0): void {
-        const maxAttempts = 10;
-        const delay = attempt === 0 ? 500 : 300;
+    private scrollToAndHighlightReply(replyId: number): void {
+        const elementId = 'item-' + replyId;
 
-        setTimeout(() => {
-            const element = document.getElementById('item-' + replyId);
+        // Check if element already exists
+        const existing = document.getElementById(elementId);
+        if (existing) {
+            this.highlightElement(existing);
+            return;
+        }
+
+        // Watch for the element to appear in the DOM
+        const observer = new MutationObserver(() => {
+            const element = document.getElementById(elementId);
             if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                element.classList.add('highlight-reply');
-                setTimeout(() => element.classList.remove('highlight-reply'), 2000);
-                this.focusReplyId = undefined;
-            } else if (attempt < maxAttempts) {
-                this.scrollToAndHighlightReply(replyId, attempt + 1);
+                observer.disconnect();
+                this.highlightElement(element);
             }
-        }, delay);
+        });
+
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        // Clean up after 5 seconds if element never appears
+        setTimeout(() => {
+            observer.disconnect();
+            this.focusReplyId = undefined;
+        }, 5000);
+    }
+
+    private highlightElement(element: HTMLElement): void {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        element.classList.add('highlight-reply');
+        setTimeout(() => element.classList.remove('highlight-reply'), 2000);
+        this.focusReplyId = undefined;
     }
 
     /**
