@@ -136,9 +136,8 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         post.setConversation(createdChannel);
         post = postRepository.save(post);
         searchableEntityWeaviateService.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, createdChannel));
-        assertPostExistsInWeaviate(weaviateService, post.getId());
-
         long postId = post.getId();
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertPostExistsInWeaviate(weaviateService, postId));
 
         // Toggle privacy via REST: public -> private
         request.postWithoutResponseBody("/api/communication/courses/" + course.getId() + "/channels/" + createdChannel.getId() + "/toggle-privacy", HttpStatus.OK,
@@ -148,8 +147,10 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         assertThat(updatedChannel.getIsPublic()).isFalse();
 
         // Both the channel and its posts should be removed from Weaviate
-        assertChannelNotInWeaviate(weaviateService, createdChannel.getId());
-        assertPostNotInWeaviate(weaviateService, postId);
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            assertChannelNotInWeaviate(weaviateService, createdChannel.getId());
+            assertPostNotInWeaviate(weaviateService, postId);
+        });
     }
 
     @Nested
