@@ -1,0 +1,6 @@
+---
+engines:
+    metric:
+        exclude_paths:
+            - 'src/test/**'
+            - 'src/main/webapp/**/*.spec.ts'
