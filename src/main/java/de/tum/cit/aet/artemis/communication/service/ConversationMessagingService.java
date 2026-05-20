@@ -99,7 +99,7 @@ public class ConversationMessagingService extends PostingService {
         this.postRepository = postRepository;
         this.singleUserNotificationService = singleUserNotificationService;
         this.autonomousTutorApi = autonomousTutorApi;
-        this.searchableEntityWeaviateService = searchableEntityWeaviateService.orElse(null);
+        this.searchableEntityWeaviateService = searchableEntityWeaviateService != null ? searchableEntityWeaviateService.orElse(null) : null;
     }
 
     /**

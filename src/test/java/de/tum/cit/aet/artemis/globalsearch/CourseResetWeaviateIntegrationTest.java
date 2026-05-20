@@ -101,7 +101,7 @@ class CourseResetWeaviateIntegrationTest extends AbstractProgrammingIntegrationL
 
         long post1Id = post1.getId();
         long post2Id = post2.getId();
-        request.post("/api/core/admin/courses/" + course.getId() + "/reset", null, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/core/admin/courses/" + course.getId() + "/reset", null, HttpStatus.OK);
 
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             assertPostNotInWeaviate(weaviateService, post1Id);
@@ -120,7 +120,7 @@ class CourseResetWeaviateIntegrationTest extends AbstractProgrammingIntegrationL
         assertChannelExistsInWeaviate(weaviateService, channel);
 
         long postId = post.getId();
-        request.post("/api/core/admin/courses/" + course.getId() + "/reset", null, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/core/admin/courses/" + course.getId() + "/reset", null, HttpStatus.OK);
 
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             assertPostNotInWeaviate(weaviateService, postId);
@@ -151,7 +151,7 @@ class CourseResetWeaviateIntegrationTest extends AbstractProgrammingIntegrationL
 
         long postId = post.getId();
         long otherPostId = otherPost.getId();
-        request.post("/api/core/admin/courses/" + course.getId() + "/reset", null, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/core/admin/courses/" + course.getId() + "/reset", null, HttpStatus.OK);
 
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             assertPostNotInWeaviate(weaviateService, postId);
