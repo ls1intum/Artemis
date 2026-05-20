@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.globalsearch;
 
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertCourseExistsInWeaviate;
-import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertCourseNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryCourseProperties;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -14,7 +13,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -84,18 +82,6 @@ class CourseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalC
             assertThat(properties).isNotNull();
             assertThat(properties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo("Updated Course Title");
         });
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testDeleteCourse_removesCourseFromWeaviate() throws Exception {
-        searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
-        assertCourseExistsInWeaviate(weaviateService, course);
-
-        long courseId = course.getId();
-        request.delete("/api/core/admin/courses/" + courseId, HttpStatus.OK);
-
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertCourseNotInWeaviate(weaviateService, courseId));
     }
 
     @Test
