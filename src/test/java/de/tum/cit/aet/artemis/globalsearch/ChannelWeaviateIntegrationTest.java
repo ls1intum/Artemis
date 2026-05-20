@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.globalsearch;
 
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertChannelExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertChannelNotInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostExistsInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryChannelProperties;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -18,14 +20,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
+import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
@@ -57,6 +64,12 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
 
     @Autowired
     private RequestUtilService request;
+
+    @Autowired
+    private SearchableEntityWeaviateService searchableEntityWeaviateService;
+
+    @Autowired
+    private PostTestRepository postRepository;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
@@ -103,6 +116,40 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
             assertThat(properties).isNotNull();
             assertThat(properties.get(SearchableEntitySchema.Properties.CHANNEL_IS_PUBLIC)).isEqualTo(false);
         });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testToggleChannelPrivacy_removesPostsFromWeaviate() throws Exception {
+        // Create a non-course-wide public channel (toggling to private makes it non-indexable)
+        Channel channel = new Channel();
+        channel.setName("privacy-posts-test");
+        channel.setIsPublic(true);
+        channel.setIsCourseWide(false);
+        channel.setIsAnnouncementChannel(false);
+
+        Channel createdChannel = channelService.createChannel(course, channel, Optional.of(instructor));
+        assertChannelExistsInWeaviate(weaviateService, createdChannel);
+
+        // Create and index a post in the channel
+        Post post = ConversationFactory.createBasicPost(0, instructor);
+        post.setConversation(createdChannel);
+        post = postRepository.save(post);
+        searchableEntityWeaviateService.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, createdChannel));
+        assertPostExistsInWeaviate(weaviateService, post.getId());
+
+        long postId = post.getId();
+
+        // Toggle privacy via REST: public -> private
+        request.postWithoutResponseBody("/api/communication/courses/" + course.getId() + "/channels/" + createdChannel.getId() + "/toggle-privacy", HttpStatus.OK,
+                new org.springframework.util.LinkedMultiValueMap<>());
+
+        Channel updatedChannel = channelRepository.findByIdElseThrow(createdChannel.getId());
+        assertThat(updatedChannel.getIsPublic()).isFalse();
+
+        // Both the channel and its posts should be removed from Weaviate
+        assertChannelNotInWeaviate(weaviateService, createdChannel.getId());
+        assertPostNotInWeaviate(weaviateService, postId);
     }
 
     @Nested

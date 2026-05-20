@@ -579,6 +579,7 @@ public class ChannelResource extends ConversationManagementResource {
             }
             else {
                 service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, updatedChannel.getId());
+                service.deleteAllPostsForChannelAsync(updatedChannel.getId());
             }
         });
         return ResponseEntity.ok(conversationDTOService.convertChannelToDTO(requestingUser, updatedChannel));
