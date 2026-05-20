@@ -70,7 +70,7 @@
                 "loadingMessages": "Nachrichten laden..."
             },
             "globalSearch": {
-                "searchBarDefault": "Suche nach einer Nachrichten in allen Kanälen, Direktnachrichten und Gruppen (Strg/Cmd + S)",
+                "searchBarDefault": "Suche nach einer Nachricht in allen Kanälen, Direktnachrichten und Gruppen (Strg/Cmd + S)",
                 "searchBarWithConversationSelected": "Suche nach einer Nachricht in den ausgewählten Unterhaltungen",
                 "noConversationFound": "Keine Unterhaltung für '{{ search }}' gefunden",
                 "noUserFound": "Kein Benutzer für '{{ search }}' gefunden",
