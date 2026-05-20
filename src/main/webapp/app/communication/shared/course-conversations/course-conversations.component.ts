@@ -178,7 +178,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     isServiceSetUp = false;
     messagingEnabled = false;
     postInThread?: Post;
-    private preservePostInThread = false;
     private pendingThreadPostId: number | undefined;
     activeConversation?: ConversationDTO = undefined;
     conversationsOfUser: ConversationDTO[] = [];
@@ -377,7 +376,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 const messageId = Number(queryParams.messageId);
                 this.pendingThreadPostId = messageId;
                 this.postInThread = { id: messageId } as Post;
-                this.preservePostInThread = true;
                 // Immediately try to resolve the full post from already-loaded posts
                 this.metisService.posts.pipe(take(1)).subscribe((posts) => {
                     if (posts) {
@@ -393,8 +391,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                     this.scrollToAndHighlightReply(this.focusReplyId);
                 }
                 this.closeSidebarOnMobile();
-            } else if (this.preservePostInThread) {
-                this.preservePostInThread = false;
             } else {
                 this.postInThread = undefined;
             }
@@ -413,11 +409,15 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     updateQueryParameters() {
+        const queryParams: Record<string, string | number | undefined> = {
+            conversationId: this.activeConversation?.id ?? this.selectedSavedPostStatus?.toLowerCase(),
+        };
+        if (this.postInThread?.id) {
+            queryParams.messageId = this.postInThread.id;
+        }
         this.router.navigate([], {
             relativeTo: this.activatedRoute,
-            queryParams: {
-                conversationId: this.activeConversation?.id ?? this.selectedSavedPostStatus?.toLowerCase(),
-            },
+            queryParams,
             replaceUrl: true,
         });
     }
@@ -732,6 +732,12 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.selectionState.setOpenPostId(postToOpen?.id);
         this.postInThread = postToOpen;
         this.pendingThreadPostId = undefined;
+    }
+
+    closeThread() {
+        this.postInThread = undefined;
+        this.pendingThreadPostId = undefined;
+        this.updateQueryParameters();
     }
 
     private scrollToAndHighlightReply(replyId: number, attempt = 0): void {
