@@ -31,7 +31,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     isImport = this.getIsImportSignal();
 
     isExamMode = input.required<boolean>();
-    complaintsInCourseDisabled = input(false);
+    complaintsInCourseEnabled = input(false);
     exampleSolutionPublicationDateSet = input(true);
     isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
     exercise = input.required<ProgrammingExercise>();

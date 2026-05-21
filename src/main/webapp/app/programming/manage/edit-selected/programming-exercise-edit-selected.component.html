@@ -42,12 +42,13 @@
                     </div>
                     <form name="editForm" role="form" novalidate (ngSubmit)="saveAll()">
                         <div class="form-group-narrow mt-2">
+                            @let exampleSolutionPublicationDateSet =
+                                !!newProgrammingExercise.exampleSolutionPublicationDate || !!newProgrammingExercise.exerciseGroup?.exam?.exampleSolutionPublicationDate;
                             <jhi-programming-exercise-update-timeline
                                 id="timeline"
                                 [isExamMode]="false"
-                                [exampleSolutionPublicationDateSet]="
-                                    !!newProgrammingExercise.exampleSolutionPublicationDate || !!newProgrammingExercise.exerciseGroup?.exam?.exampleSolutionPublicationDate
-                                "
+                                [exampleSolutionPublicationDateSet]="exampleSolutionPublicationDateSet"
+                                [exercise]="newProgrammingExercise"
                                 [(releaseDate)]="newProgrammingExercise.releaseDate"
                                 [(startDate)]="newProgrammingExercise.startDate"
                                 [(dueDate)]="newProgrammingExercise.dueDate"
@@ -60,7 +61,6 @@
                                 [(releaseTestsWithExampleSolution)]="newProgrammingExercise.releaseTestsWithExampleSolution"
                                 [(feedbackSuggestionModule)]="newProgrammingExercise.feedbackSuggestionModule"
                                 [(showTestNamesToStudents)]="newProgrammingExercise.showTestNamesToStudents"
-                                [exercise]="newProgrammingExercise"
                             />
                             <jhi-button class="text-center" id="save-entity" [icon]="faSave" [title]="'entity.action.save'" [isLoading]="isSaving">
                                 <fa-icon [icon]="faSave" />
