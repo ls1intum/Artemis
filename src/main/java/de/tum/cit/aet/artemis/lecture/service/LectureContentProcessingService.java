@@ -154,7 +154,8 @@ public class LectureContentProcessingService {
         boolean shouldReprocess = contentChanged || forceReprocessing;
         if (shouldReprocess) {
             if (forceReprocessing && !contentChanged) {
-                log.info("Forcing reprocessing for unit {} due metadata change in ingestion payload", unit.getId());
+                // Metadata-only re-ingest (e.g., name change). Pyris deletes existing vectors by lectureUnitId before inserting new ones.
+                log.info("Forcing reprocessing for unit {} due to a metadata change in the ingestion payload", unit.getId());
             }
             state.resetRetryCount();
             state.setPhase(ProcessingPhase.IDLE);
