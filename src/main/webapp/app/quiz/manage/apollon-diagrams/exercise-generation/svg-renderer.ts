@@ -102,6 +102,64 @@ export function trimRenderedSVGToContent(renderedSVG: SVG): SVG {
     }
 }
 
+export function cropRenderedSVGToElement(renderedSVG: SVG, elementId: string): SVG | undefined {
+    const parser = new DOMParser();
+    const documentFragment = parser.parseFromString(renderedSVG.svg, 'image/svg+xml');
+    const svg = documentFragment.documentElement;
+    if (!(svg instanceof SVGSVGElement)) {
+        return undefined;
+    }
+
+    const target = Array.from(svg.querySelectorAll('[data-apollon-element-id]')).find((element) => element.getAttribute('data-apollon-element-id') === elementId);
+    if (!(target instanceof Element)) {
+        return undefined;
+    }
+
+    const host = document.createElement('div');
+    host.style.position = 'absolute';
+    host.style.left = '-9999px';
+    host.style.top = '-9999px';
+    host.style.visibility = 'hidden';
+    host.appendChild(svg);
+    document.body.appendChild(host);
+
+    try {
+        const svgRect = svg.getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
+        const viewBox = svg.viewBox.baseVal;
+        if (
+            svgRect.width === 0 ||
+            svgRect.height === 0 ||
+            targetRect.width === 0 ||
+            targetRect.height === 0 ||
+            !Number.isFinite(viewBox.width) ||
+            !Number.isFinite(viewBox.height)
+        ) {
+            return undefined;
+        }
+
+        const clip = {
+            x: viewBox.x + ((targetRect.left - svgRect.left) / svgRect.width) * viewBox.width,
+            y: viewBox.y + ((targetRect.top - svgRect.top) / svgRect.height) * viewBox.height,
+            width: (targetRect.width / svgRect.width) * viewBox.width,
+            height: (targetRect.height / svgRect.height) * viewBox.height,
+        };
+
+        svg.setAttribute('viewBox', `${clip.x} ${clip.y} ${clip.width} ${clip.height}`);
+        svg.setAttribute('width', `${clip.width}`);
+        svg.setAttribute('height', `${clip.height}`);
+
+        return {
+            svg: new XMLSerializer().serializeToString(svg),
+            clip,
+        };
+    } catch {
+        return undefined;
+    } finally {
+        document.body.removeChild(host);
+    }
+}
+
 /**
  * Fallback for HTMLCanvasElement.toBlob().
  */
