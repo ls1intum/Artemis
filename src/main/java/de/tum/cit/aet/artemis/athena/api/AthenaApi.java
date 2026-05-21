@@ -48,7 +48,7 @@ public class AthenaApi extends AbstractAthenaApi {
     }
 
     public void checkHasAccessToAthenaModule(Exercise exercise, Course course, String entityName) throws BadRequestAlertException {
-        // Check both preliminary and graded modules for backward compatibility
+        // Validate access for both module configurations (preliminary and graded)
         athenaModuleService.checkHasAccessToAthenaModule(exercise, course, AthenaModuleMode.PRELIMINARY, entityName);
         athenaModuleService.checkHasAccessToAthenaModule(exercise, course, AthenaModuleMode.GRADED, entityName);
     }
@@ -57,7 +57,7 @@ public class AthenaApi extends AbstractAthenaApi {
         athenaModuleService.checkValidAthenaModuleChange(originalExercise, updatedExercise, entityName);
     }
 
-    public void revokeAccessToRestrictedFeedbackSuggestionModules(Course course) {
+    public void revokeAccessToRestrictedFeedbackModules(Course course) {
         athenaModuleService.revokeAccessToRestrictedFeedbackModules(course);
     }
 }

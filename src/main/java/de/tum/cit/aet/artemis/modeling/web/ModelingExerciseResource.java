@@ -335,15 +335,17 @@ public class ModelingExerciseResource {
 
         ModelingExercise persistedExercise = modelingExerciseRepository.save(updatedExercise);
 
-        // Handle athenaConfig from the request DTO
-        if (updateModelingExerciseDTO.athenaConfig() != null) {
-            ExerciseAthenaConfig athenaConfig = exerciseAthenaConfigService.createOrUpdateConfig(persistedExercise,
-                    updateModelingExerciseDTO.athenaConfig().preliminaryFeedbackModule(), updateModelingExerciseDTO.athenaConfig().gradedFeedbackModule());
-            persistedExercise.setAthenaConfig(athenaConfig);
-        }
-        else {
-            exerciseAthenaConfigService.deleteByExerciseId(persistedExercise.getId());
-            persistedExercise.setAthenaConfig(null);
+        // Handle athenaConfig from the request DTO; skip entirely when Athena is unavailable to avoid stale config writes
+        if (athenaApi.isPresent()) {
+            if (updateModelingExerciseDTO.athenaConfig() != null) {
+                ExerciseAthenaConfig athenaConfig = exerciseAthenaConfigService.createOrUpdateConfig(persistedExercise,
+                        updateModelingExerciseDTO.athenaConfig().preliminaryFeedbackModule(), updateModelingExerciseDTO.athenaConfig().gradedFeedbackModule());
+                persistedExercise.setAthenaConfig(athenaConfig);
+            }
+            else {
+                exerciseAthenaConfigService.deleteByExerciseId(persistedExercise.getId());
+                persistedExercise.setAthenaConfig(null);
+            }
         }
 
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);

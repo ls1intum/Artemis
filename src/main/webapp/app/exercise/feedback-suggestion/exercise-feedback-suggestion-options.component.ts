@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PROFILE_ATHENA } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { Exercise, ExerciseAthenaConfig, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
@@ -96,7 +96,7 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
 
     private ensureAthenaConfig(): void {
         if (!this.exercise.athenaConfig) {
-            this.exercise.athenaConfig = {} as ExerciseAthenaConfig;
+            this.exercise.athenaConfig = {};
         }
     }
 

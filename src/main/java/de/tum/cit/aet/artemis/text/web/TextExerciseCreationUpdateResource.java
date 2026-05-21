@@ -283,15 +283,17 @@ public class TextExerciseCreationUpdateResource {
 
         TextExercise persistedExercise = textExerciseRepository.save(updatedExercise);
 
-        // Create, update, or clear Athena config based on the DTO
-        if (updateTextExerciseDTO.athenaConfig() != null) {
-            ExerciseAthenaConfig updatedConfig = exerciseAthenaConfigService.createOrUpdateConfig(persistedExercise,
-                    updateTextExerciseDTO.athenaConfig().preliminaryFeedbackModule(), updateTextExerciseDTO.athenaConfig().gradedFeedbackModule());
-            persistedExercise.setAthenaConfig(updatedConfig);
-        }
-        else {
-            exerciseAthenaConfigService.deleteByExerciseId(persistedExercise.getId());
-            persistedExercise.setAthenaConfig(null);
+        // Create, update, or clear Athena config based on the DTO; skip entirely when Athena is unavailable to avoid stale config writes
+        if (athenaApi.isPresent()) {
+            if (updateTextExerciseDTO.athenaConfig() != null) {
+                ExerciseAthenaConfig updatedConfig = exerciseAthenaConfigService.createOrUpdateConfig(persistedExercise,
+                        updateTextExerciseDTO.athenaConfig().preliminaryFeedbackModule(), updateTextExerciseDTO.athenaConfig().gradedFeedbackModule());
+                persistedExercise.setAthenaConfig(updatedConfig);
+            }
+            else {
+                exerciseAthenaConfigService.deleteByExerciseId(persistedExercise.getId());
+                persistedExercise.setAthenaConfig(null);
+            }
         }
 
         exerciseService.logUpdate(persistedExercise, persistedExercise.getCourseViaExerciseGroupOrCourseMember(), user);

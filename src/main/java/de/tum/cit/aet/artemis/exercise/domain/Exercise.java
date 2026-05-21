@@ -707,10 +707,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Transient
     @JsonIgnore
     public String getPreliminaryFeedbackModule() {
-        if (athenaConfig != null) {
-            return athenaConfig.getPreliminaryFeedbackModule();
-        }
-        return null;
+        return athenaConfig != null ? athenaConfig.getPreliminaryFeedbackModule() : null;
     }
 
     /**
@@ -722,10 +719,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Transient
     @JsonIgnore
     public String getGradedFeedbackModule() {
-        if (athenaConfig != null) {
-            return athenaConfig.getGradedFeedbackModule();
-        }
-        return null;
+        return athenaConfig != null ? athenaConfig.getGradedFeedbackModule() : null;
     }
 
     public boolean areFeedbackSuggestionsEnabled() {

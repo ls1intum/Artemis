@@ -54,7 +54,7 @@ public interface ExerciseAthenaConfigRepository extends ArtemisJpaRepository<Exe
             UPDATE ExerciseAthenaConfig c
             SET c.preliminaryFeedbackModule = CASE WHEN c.preliminaryFeedbackModule IN :restrictedModules THEN NULL ELSE c.preliminaryFeedbackModule END,
                 c.gradedFeedbackModule = CASE WHEN c.gradedFeedbackModule IN :restrictedModules THEN NULL ELSE c.gradedFeedbackModule END
-            WHERE c.exercise.id IN (SELECT e.id FROM Exercise e WHERE e.course.id = :courseId)
+            WHERE c.exercise.course.id = :courseId
                   AND (c.preliminaryFeedbackModule IN :restrictedModules OR c.gradedFeedbackModule IN :restrictedModules)
             """)
     void revokeRestrictedModulesByCourseId(@Param("courseId") Long courseId, @Param("restrictedModules") Collection<String> restrictedModules);

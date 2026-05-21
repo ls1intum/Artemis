@@ -278,9 +278,11 @@ public class ProgrammingExerciseUpdateResource {
         else {
             updatedProgrammingExercise.setAthenaConfig(null);
         }
-        // Check that only allowed Athena modules are used
-        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ENTITY_NAME),
-                () -> updatedProgrammingExercise.setFeedbackSuggestionModule(null));
+        // Check that only allowed Athena modules are used; clear both athena fields when Athena is unavailable
+        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ENTITY_NAME), () -> {
+            updatedProgrammingExercise.setFeedbackSuggestionModule(null);
+            updatedProgrammingExercise.setAthenaConfig(null);
+        });
         // Changing Athena module after the due date has passed is not allowed
         // Use a proxy exercise with the old module for comparison since update() mutates the original
         ProgrammingExercise exerciseWithOldModule = new ProgrammingExercise();
@@ -318,15 +320,17 @@ public class ProgrammingExerciseUpdateResource {
         ProgrammingExercise savedProgrammingExercise = programmingExerciseCreationUpdateService.updateProgrammingExercise(updatedProgrammingExercise, notificationText,
                 originalCompetencyIds, originalBuildPlanConfiguration, originalReleaseDate, originalAssessmentDueDate, originalProblemStatement);
 
-        // Update Athena config if provided
-        if (updateDTO.athenaConfig() != null) {
-            ExerciseAthenaConfig updatedConfig = exerciseAthenaConfigService.createOrUpdateConfig(savedProgrammingExercise, updateDTO.athenaConfig().preliminaryFeedbackModule(),
-                    updateDTO.athenaConfig().gradedFeedbackModule());
-            savedProgrammingExercise.setAthenaConfig(updatedConfig);
-        }
-        else {
-            exerciseAthenaConfigService.deleteByExerciseId(savedProgrammingExercise.getId());
-            savedProgrammingExercise.setAthenaConfig(null);
+        // Update Athena config only when Athena is available; skip entirely when absent to avoid stale config writes
+        if (athenaApi.isPresent()) {
+            if (updateDTO.athenaConfig() != null) {
+                ExerciseAthenaConfig updatedConfig = exerciseAthenaConfigService.createOrUpdateConfig(savedProgrammingExercise,
+                        updateDTO.athenaConfig().preliminaryFeedbackModule(), updateDTO.athenaConfig().gradedFeedbackModule());
+                savedProgrammingExercise.setAthenaConfig(updatedConfig);
+            }
+            else {
+                exerciseAthenaConfigService.deleteByExerciseId(savedProgrammingExercise.getId());
+                savedProgrammingExercise.setAthenaConfig(null);
+            }
         }
 
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);

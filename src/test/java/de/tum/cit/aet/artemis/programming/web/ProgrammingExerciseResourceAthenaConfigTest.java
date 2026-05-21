@@ -60,8 +60,8 @@ class ProgrammingExerciseResourceAthenaConfigTest extends AbstractSpringIntegrat
         programmingExercise.setPackageName("de.tum.cit.aet.artemis.test");
 
         var athenaConfig = new ExerciseAthenaConfig();
-        athenaConfig.setPreliminaryFeedbackModule("module_programming_test");
-        athenaConfig.setGradedFeedbackModule("module_text_test");
+        athenaConfig.setPreliminaryFeedbackModule("module_programming_preliminary");
+        athenaConfig.setGradedFeedbackModule("module_programming_graded");
         programmingExercise.setAthenaConfig(athenaConfig);
 
         var response = request.postWithResponseBody("/api/programming/programming-exercises/setup", programmingExercise, ProgrammingExercise.class, HttpStatus.CREATED);
@@ -69,13 +69,13 @@ class ProgrammingExerciseResourceAthenaConfigTest extends AbstractSpringIntegrat
         assertThat(response).isNotNull();
         assertThat(response.getId()).isNotNull();
         assertThat(response.getAthenaConfig()).isNotNull();
-        assertThat(response.getAthenaConfig().getPreliminaryFeedbackModule()).isEqualTo("module_programming_test");
-        assertThat(response.getAthenaConfig().getGradedFeedbackModule()).isEqualTo("module_text_test");
+        assertThat(response.getAthenaConfig().getPreliminaryFeedbackModule()).isEqualTo("module_programming_preliminary");
+        assertThat(response.getAthenaConfig().getGradedFeedbackModule()).isEqualTo("module_programming_graded");
 
         var savedConfig = exerciseAthenaConfigRepository.findByExerciseId(response.getId());
         assertThat(savedConfig).isPresent();
-        assertThat(savedConfig.get().getPreliminaryFeedbackModule()).isEqualTo("module_programming_test");
-        assertThat(savedConfig.get().getGradedFeedbackModule()).isEqualTo("module_text_test");
+        assertThat(savedConfig.get().getPreliminaryFeedbackModule()).isEqualTo("module_programming_preliminary");
+        assertThat(savedConfig.get().getGradedFeedbackModule()).isEqualTo("module_programming_graded");
     }
 
     @Test
@@ -103,8 +103,8 @@ class ProgrammingExerciseResourceAthenaConfigTest extends AbstractSpringIntegrat
         var createdExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", programmingExercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         var athenaConfig = new ExerciseAthenaConfig();
-        athenaConfig.setPreliminaryFeedbackModule("module_programming_test");
-        athenaConfig.setGradedFeedbackModule("module_text_test");
+        athenaConfig.setPreliminaryFeedbackModule("module_programming_preliminary");
+        athenaConfig.setGradedFeedbackModule("module_programming_graded");
         createdExercise.setAthenaConfig(athenaConfig);
 
         var updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises/" + createdExercise.getId(), createdExercise, ProgrammingExercise.class,
@@ -112,13 +112,13 @@ class ProgrammingExerciseResourceAthenaConfigTest extends AbstractSpringIntegrat
 
         assertThat(updatedExercise).isNotNull();
         assertThat(updatedExercise.getAthenaConfig()).isNotNull();
-        assertThat(updatedExercise.getAthenaConfig().getPreliminaryFeedbackModule()).isEqualTo("module_programming_test");
-        assertThat(updatedExercise.getAthenaConfig().getGradedFeedbackModule()).isEqualTo("module_text_test");
+        assertThat(updatedExercise.getAthenaConfig().getPreliminaryFeedbackModule()).isEqualTo("module_programming_preliminary");
+        assertThat(updatedExercise.getAthenaConfig().getGradedFeedbackModule()).isEqualTo("module_programming_graded");
 
         var savedConfig = exerciseAthenaConfigRepository.findByExerciseId(updatedExercise.getId());
         assertThat(savedConfig).isPresent();
-        assertThat(savedConfig.get().getPreliminaryFeedbackModule()).isEqualTo("module_programming_test");
-        assertThat(savedConfig.get().getGradedFeedbackModule()).isEqualTo("module_text_test");
+        assertThat(savedConfig.get().getPreliminaryFeedbackModule()).isEqualTo("module_programming_preliminary");
+        assertThat(savedConfig.get().getGradedFeedbackModule()).isEqualTo("module_programming_graded");
     }
 
     @Test
@@ -128,15 +128,15 @@ class ProgrammingExerciseResourceAthenaConfigTest extends AbstractSpringIntegrat
         programmingExercise.setPackageName("de.tum.cit.aet.artemis.test");
 
         var athenaConfig = new ExerciseAthenaConfig();
-        athenaConfig.setPreliminaryFeedbackModule("module_programming_test");
-        athenaConfig.setGradedFeedbackModule("module_text_test");
+        athenaConfig.setPreliminaryFeedbackModule("module_programming_preliminary");
+        athenaConfig.setGradedFeedbackModule("module_programming_graded");
         programmingExercise.setAthenaConfig(athenaConfig);
 
         var createdExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", programmingExercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         var updatedAthenaConfig = new ExerciseAthenaConfig();
-        updatedAthenaConfig.setPreliminaryFeedbackModule("module_text_test");
-        updatedAthenaConfig.setGradedFeedbackModule("module_programming_test");
+        updatedAthenaConfig.setPreliminaryFeedbackModule("module_programming_graded");
+        updatedAthenaConfig.setGradedFeedbackModule("module_programming_preliminary");
         createdExercise.setAthenaConfig(updatedAthenaConfig);
 
         var updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises/" + createdExercise.getId(), createdExercise, ProgrammingExercise.class,
@@ -144,12 +144,12 @@ class ProgrammingExerciseResourceAthenaConfigTest extends AbstractSpringIntegrat
 
         assertThat(updatedExercise).isNotNull();
         assertThat(updatedExercise.getAthenaConfig()).isNotNull();
-        assertThat(updatedExercise.getAthenaConfig().getPreliminaryFeedbackModule()).isEqualTo("module_text_test");
-        assertThat(updatedExercise.getAthenaConfig().getGradedFeedbackModule()).isEqualTo("module_programming_test");
+        assertThat(updatedExercise.getAthenaConfig().getPreliminaryFeedbackModule()).isEqualTo("module_programming_graded");
+        assertThat(updatedExercise.getAthenaConfig().getGradedFeedbackModule()).isEqualTo("module_programming_preliminary");
 
         var savedConfig = exerciseAthenaConfigRepository.findByExerciseId(updatedExercise.getId());
         assertThat(savedConfig).isPresent();
-        assertThat(savedConfig.get().getPreliminaryFeedbackModule()).isEqualTo("module_text_test");
-        assertThat(savedConfig.get().getGradedFeedbackModule()).isEqualTo("module_programming_test");
+        assertThat(savedConfig.get().getPreliminaryFeedbackModule()).isEqualTo("module_programming_graded");
+        assertThat(savedConfig.get().getGradedFeedbackModule()).isEqualTo("module_programming_preliminary");
     }
 }
