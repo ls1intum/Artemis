@@ -412,8 +412,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         const queryParams: Record<string, string | number | undefined> = {
             conversationId: this.activeConversation?.id ?? this.selectedSavedPostStatus?.toLowerCase(),
         };
-        if (this.postInThread?.id) {
-            queryParams.messageId = this.postInThread.id;
+        const threadBelongsToActiveConversation = this.postInThread?.id && this.postInThread.conversation?.id === this.activeConversation?.id;
+        if (threadBelongsToActiveConversation) {
+            queryParams.messageId = this.postInThread!.id;
         }
         this.router.navigate([], {
             relativeTo: this.activatedRoute,
