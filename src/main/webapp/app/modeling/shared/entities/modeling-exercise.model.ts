@@ -15,10 +15,6 @@ export class ModelingExercise extends Exercise {
         this.exerciseGroup = exerciseGroup;
         this.diagramType = diagramType;
         // default value
-
         this.assessmentType = AssessmentType.MANUAL;
-        if (this.diagramType === UMLDiagramType.ClassDiagram || this.diagramType === UMLDiagramType.ActivityDiagram) {
-            this.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-        }
     }
 }

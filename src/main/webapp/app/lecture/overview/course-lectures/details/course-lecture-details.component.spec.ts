@@ -404,6 +404,56 @@ describe('CourseLectureDetailsComponent', () => {
 
             expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(45.5);
         });
+
+        it('should preserve timestamp for unit with only YouTube video', () => {
+            const youtubeUnit = new AttachmentVideoUnit();
+            youtubeUnit.id = 103;
+            youtubeUnit.youtubeVideoId = 'dQw4w9WgXcQ';
+            youtubeUnit.lecture = lecture;
+
+            courseLecturesDetailsComponent.lectureUnits = [youtubeUnit];
+            courseLecturesDetailsComponent.targetUnitId.set(103);
+            courseLecturesDetailsComponent.targetVideoTimestamp.set(30);
+
+            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
+
+            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(30);
+        });
+
+        it('should preserve timestamp and page for unit with both YouTube video and PDF', () => {
+            const youtubeUnitWithPdf = new AttachmentVideoUnit();
+            youtubeUnitWithPdf.id = 104;
+            youtubeUnitWithPdf.youtubeVideoId = 'dQw4w9WgXcQ';
+            youtubeUnitWithPdf.attachment = new Attachment();
+            youtubeUnitWithPdf.attachment.link = '/path/to/slides.pdf';
+            youtubeUnitWithPdf.lecture = lecture;
+
+            courseLecturesDetailsComponent.lectureUnits = [youtubeUnitWithPdf];
+            courseLecturesDetailsComponent.targetUnitId.set(104);
+            courseLecturesDetailsComponent.targetVideoTimestamp.set(60);
+            courseLecturesDetailsComponent.targetPdfPage.set(7);
+
+            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
+
+            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(60);
+            expect(courseLecturesDetailsComponent.targetPdfPage()).toBe(7);
+        });
+
+        it('should clear timestamp for unit with neither video source nor YouTube video ID', () => {
+            const unitWithoutVideo = new AttachmentVideoUnit();
+            unitWithoutVideo.id = 105;
+            unitWithoutVideo.attachment = new Attachment();
+            unitWithoutVideo.attachment.link = '/path/to/document.pdf';
+            unitWithoutVideo.lecture = lecture;
+
+            courseLecturesDetailsComponent.lectureUnits = [unitWithoutVideo];
+            courseLecturesDetailsComponent.targetUnitId.set(105);
+            courseLecturesDetailsComponent.targetVideoTimestamp.set(45);
+
+            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
+
+            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBeUndefined();
+        });
     });
 });
 
