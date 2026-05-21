@@ -65,9 +65,10 @@ export class ExerciseSplitPanelComponent {
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     private readonly childrenOutletContexts = inject(ChildrenOutletContexts);
-    // Tracks whether a quiz batch is started from the server-provided exercise data.
+    // Tracks whether a quiz batch is started / the quiz has ended, from the server-provided exercise data.
     // Updated via effect (safe for required inputs) rather than computed (would throw NG0950 during early init).
     private readonly _quizBatchStarted = signal(false);
+    private readonly _quizEnded = signal(false);
     private readonly _quizHasStarted = signal(false);
     private readonly _quizComponent = signal<QuizParticipationComponent | undefined>(undefined);
     private quizStartedSubscription: { unsubscribe(): void } | undefined;
@@ -176,13 +177,14 @@ export class ExerciseSplitPanelComponent {
     });
 
     constructor() {
-        // Keep _quizBatchStarted in sync with the exercise input.
+        // Keep _quizBatchStarted / _quizEnded in sync with the exercise input.
         // Effects (unlike computed signals) do not throw NG0950 when reading required inputs,
         // so this is safe even during the initial evaluation before inputs are fully bound.
         effect(() => {
             const exercise = this.exercise();
-            const started = exercise.type === ExerciseType.QUIZ ? ((exercise as QuizExercise).quizBatches?.some((b) => b.started) ?? false) : false;
-            this._quizBatchStarted.set(started);
+            const isQuiz = exercise.type === ExerciseType.QUIZ;
+            this._quizBatchStarted.set(isQuiz ? ((exercise as QuizExercise).quizBatches?.some((b) => b.started) ?? false) : false);
+            this._quizEnded.set(isQuiz ? ((exercise as QuizExercise).quizEnded ?? false) : false);
         });
         effect(() => {
             const exercise = this.exercise();
@@ -226,6 +228,12 @@ export class ExerciseSplitPanelComponent {
         const quizBatchStarted = this._quizBatchStarted();
         const quizHasStarted = this._quizHasStarted();
 
+        // Practice mode on an ended quiz: submittable even before a participation exists.
+        // Checked before the guard below, which would short-circuit to false without one.
+        if (this.participationMode() === 'practice' && this._quizEnded()) {
+            return true;
+        }
+
         // Guard: prevents accessing exercise() before inputs are bound (NG0950).
         // During early init all three are falsy; the effect will update _quizBatchStarted
         // once exercise is set, causing this computed to re-evaluate.
@@ -236,7 +244,7 @@ export class ExerciseSplitPanelComponent {
         const type = this.exercise().type;
         if (type === ExerciseType.QUIZ) {
             // Quiz manages participation internally; check if a batch is started or the student triggered start
-            return quizBatchStarted || quizHasStarted || (this.participationMode() === 'practice' && ((this.exercise() as QuizExercise).quizEnded ?? false));
+            return quizBatchStarted || quizHasStarted;
         }
         if (!studentParticipation) return false;
         if (type === ExerciseType.PROGRAMMING) {
