@@ -192,8 +192,8 @@
                 },
                 "Deimos": {
                     "name": "Deimos Analysis",
-                    "description": "Enables manual and scheduled malicious participation analysis runs for programming exercises.",
-                    "disableWarning": "Instructors will not be able to trigger Deimos analysis runs and scheduled Deimos runs are skipped."
+                    "description": "Enables manual malicious participation analysis runs for programming exercises.",
+                    "disableWarning": "Instructors will not be able to trigger Deimos analysis runs."
                 }
             }
         }
