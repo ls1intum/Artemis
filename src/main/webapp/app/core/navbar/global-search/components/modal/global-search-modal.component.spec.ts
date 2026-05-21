@@ -47,7 +47,7 @@ describe('GlobalSearchModalComponent', () => {
     };
 
     const mockCourseStorageService = {
-        getCourse: vi.fn(() => undefined),
+        getCourse: vi.fn<(courseId: number) => { id: number; title: string } | undefined>().mockReturnValue(undefined),
     };
 
     beforeEach(() => {
