@@ -352,6 +352,46 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     subscribeToQueryParameter() {
         this.activatedRoute.queryParams.pipe(takeUntil(this.ngUnsubscribe)).subscribe((queryParams) => {
+            if (queryParams.focusPostId) {
+                this.focusPostId = Number(queryParams.focusPostId);
+            }
+            if (queryParams.openThreadOnFocus) {
+                this.openThreadOnFocus = queryParams.openThreadOnFocus;
+            }
+
+            // Process messageId BEFORE setting the active conversation.
+            // setActiveConversation synchronously triggers updateQueryParameters (via subscribeToActiveConversation).
+            // postInThread must already be set at that point so that messageId is preserved in the URL;
+            // otherwise updateQueryParameters strips it, causing a cascading navigation loop.
+            if (queryParams.messageId) {
+                const messageId = Number(queryParams.messageId);
+                // Only create a bare post skeleton if we don't already have this post loaded.
+                // Re-setting postInThread to a bare object discards the full post data and
+                // causes updateQueryParameters to strip messageId from the URL.
+                if (this.postInThread?.id !== messageId) {
+                    const conversationId = queryParams.conversationId && !isNaN(Number(queryParams.conversationId)) ? Number(queryParams.conversationId) : undefined;
+                    this.pendingThreadPostId = messageId;
+                    this.postInThread = { id: messageId, conversation: { id: conversationId } } as Post;
+                    // Immediately try to resolve the full post from already-loaded posts
+                    this.metisService.posts.pipe(take(1)).subscribe((posts) => {
+                        if (posts) {
+                            const found = posts.find((post) => post.id === messageId);
+                            if (found) {
+                                this.postInThread = found;
+                                this.pendingThreadPostId = undefined;
+                            }
+                        }
+                    });
+                }
+                if (queryParams.focusReplyId) {
+                    this.focusReplyId = Number(queryParams.focusReplyId);
+                    this.scrollToAndHighlightReply(this.focusReplyId);
+                }
+                this.closeSidebarOnMobile();
+            } else {
+                this.postInThread = undefined;
+            }
+
             // NOTE: queryParams.conversationId can either be a number or a string according to SavedPostStatus
             if (queryParams.conversationId) {
                 if (
@@ -365,34 +405,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                     this.metisConversationService.setActiveConversation(Number(queryParams.conversationId));
                     this.closeSidebarOnMobile();
                 }
-            }
-            if (queryParams.focusPostId) {
-                this.focusPostId = Number(queryParams.focusPostId);
-            }
-            if (queryParams.openThreadOnFocus) {
-                this.openThreadOnFocus = queryParams.openThreadOnFocus;
-            }
-            if (queryParams.messageId) {
-                const messageId = Number(queryParams.messageId);
-                this.pendingThreadPostId = messageId;
-                this.postInThread = { id: messageId } as Post;
-                // Immediately try to resolve the full post from already-loaded posts
-                this.metisService.posts.pipe(take(1)).subscribe((posts) => {
-                    if (posts) {
-                        const found = posts.find((post) => post.id === messageId);
-                        if (found) {
-                            this.postInThread = found;
-                            this.pendingThreadPostId = undefined;
-                        }
-                    }
-                });
-                if (queryParams.focusReplyId) {
-                    this.focusReplyId = Number(queryParams.focusReplyId);
-                    this.scrollToAndHighlightReply(this.focusReplyId);
-                }
-                this.closeSidebarOnMobile();
-            } else {
-                this.postInThread = undefined;
             }
         });
     }
