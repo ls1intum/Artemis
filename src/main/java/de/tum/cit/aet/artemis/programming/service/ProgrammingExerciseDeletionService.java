@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
-import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
@@ -38,21 +37,18 @@ public class ProgrammingExerciseDeletionService {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
-    private final Optional<IrisSettingsApi> irisSettingsApi;
-
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
 
     public ProgrammingExerciseDeletionService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseRepository programmingExerciseRepository, ParticipationDeletionService participationDeletionService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<IrisSettingsApi> irisSettingsApi, InstanceMessageSendService instanceMessageSendService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, InstanceMessageSendService instanceMessageSendService,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository) {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationDeletionService = participationDeletionService;
         this.continuousIntegrationService = continuousIntegrationService;
-        this.irisSettingsApi = irisSettingsApi;
         this.instanceMessageSendService = instanceMessageSendService;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
     }
@@ -79,8 +75,6 @@ public class ProgrammingExerciseDeletionService {
             programmingExerciseRepositoryService.deleteRepositories(programmingExercise);
         }
         programmingExerciseRepositoryService.deleteLocalRepoCopies(programmingExercise);
-
-        irisSettingsApi.ifPresent(api -> api.deleteSettingsForExercise(programmingExerciseId));
 
         SolutionProgrammingExerciseParticipation solutionProgrammingExerciseParticipation = programmingExercise.getSolutionParticipation();
         TemplateProgrammingExerciseParticipation templateProgrammingExerciseParticipation = programmingExercise.getTemplateParticipation();

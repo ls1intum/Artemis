@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
@@ -57,6 +58,39 @@ public class AdminBuildJobQueueResource {
         this.localCIBuildJobQueueService = localCIBuildJobQueueService;
         this.buildJobRepository = buildJobRepository;
         this.distributedDataAccessService = distributedDataAccessService;
+    }
+
+    /**
+     * Returns a single build job by its ID.
+     * Checks running jobs, queued jobs, and finished jobs in that order.
+     *
+     * @param buildJobId the id of the build job
+     * @return the build job, or 404 if not found
+     */
+    @GetMapping("build-job/{buildJobId}")
+    public ResponseEntity<BuildJobDTO> getBuildJobById(@PathVariable String buildJobId) {
+        if (buildJobId == null || buildJobId.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        buildJobId = buildJobId.trim();
+        log.debug("REST request to get build job by id {}", buildJobId);
+
+        // Check running jobs first
+        BuildJobQueueItem processingJob = distributedDataAccessService.getDistributedProcessingJobs().get(buildJobId);
+        if (processingJob != null) {
+            return ResponseEntity.ok(processingJob);
+        }
+
+        // Check queued jobs
+        for (BuildJobQueueItem queuedJob : distributedDataAccessService.getQueuedJobs()) {
+            if (buildJobId.equals(queuedJob.id())) {
+                return ResponseEntity.ok(queuedJob);
+            }
+        }
+
+        // Check finished jobs in database (use findWithData to eagerly fetch result, submission, and participation)
+        return buildJobRepository.findWithDataByBuildJobId(buildJobId).<BuildJobDTO>map(FinishedBuildJobDTO::of).map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     /**
@@ -114,15 +148,48 @@ public class AdminBuildJobQueueResource {
     /**
      * Returns detailed information on a specific build agent
      *
-     * @param agentName the name of the agent
+     * @param agentName the name or memberAddress of the agent
      * @return the build agent information
      */
     @GetMapping("build-agent")
     public ResponseEntity<BuildAgentInformation> getBuildAgentDetails(@RequestParam String agentName) {
         log.debug("REST request to get information on build agent {}", agentName);
-        Optional<BuildAgentInformation> buildAgentDetails = distributedDataAccessService.getBuildAgentInformation().stream()
-                .filter(agent -> agent.buildAgent().name().equals(agentName)).findFirst();
+        List<BuildAgentInformation> agents = distributedDataAccessService.getBuildAgentInformation();
+
+        // First try to match by name (primary identifier)
+        Optional<BuildAgentInformation> buildAgentDetails = agents.stream().filter(agent -> agent.buildAgent().name().equals(agentName)).findFirst();
+
+        // If not found by name, try to match by memberAddress using host-only comparison
+        // to handle Hazelcast addresses like "[192.168.1.1]:5701" where the port may differ
+        if (buildAgentDetails.isEmpty()) {
+            String lookupHost = extractHostFromAddress(agentName);
+            buildAgentDetails = agents.stream().filter(agent -> {
+                String agentHost = extractHostFromAddress(agent.buildAgent().memberAddress());
+                return agentHost.equals(lookupHost);
+            }).findFirst();
+        }
+
         return buildAgentDetails.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Extracts the host portion from a Hazelcast member address.
+     * Handles formats like "[192.168.1.1]:5701" (returns "192.168.1.1"),
+     * "[2001:db8::1]:5702" (returns "2001:db8::1"), or plain host strings.
+     *
+     * @param address the address string to parse
+     * @return the host portion without brackets or port, or the original string if not in expected format
+     */
+    private String extractHostFromAddress(String address) {
+        if (address == null) {
+            return "";
+        }
+        // Match Hazelcast address format: [host]:port
+        var matcher = java.util.regex.Pattern.compile("^\\[(.+)]:\\d+$").matcher(address);
+        if (matcher.matches()) {
+            return matcher.group(1);
+        }
+        return address;
     }
 
     /**

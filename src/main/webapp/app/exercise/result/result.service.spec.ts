@@ -272,6 +272,26 @@ describe('ResultService', () => {
             }
         });
 
+        it.each([true, false])('should return correct string for manual programming exercise result with no tests', (short: boolean) => {
+            const manualResult: Result = { id: 10, submission: submission2, completionDate: dayjs().add(2, 'hours'), score: 96, assessmentType: AssessmentType.MANUAL };
+            const expectedProgrammingString = short ? 'artemisApp.result.resultString.programmingShort' : 'artemisApp.result.resultString.programming';
+            expect(resultService.getResultString(manualResult, programmingExercise, participation2, short)).toBe(expectedProgrammingString);
+            expect(translateServiceSpy).toHaveBeenCalledTimes(2);
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.manualResult');
+            if (short) {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 96,
+                    buildAndTestMessage: 'artemisApp.result.manualResult',
+                });
+            } else {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 96,
+                    buildAndTestMessage: 'artemisApp.result.manualResult',
+                    points: 192,
+                });
+            }
+        });
+
         it.each([true, false])('should return correct string for programming exercise with tests', (short: boolean) => {
             const expectedProgrammingString = short ? 'artemisApp.result.resultString.short' : 'artemisApp.result.resultString.programming';
             expect(resultService.getResultString(result3, programmingExercise, participation1, short)).toBe(expectedProgrammingString);

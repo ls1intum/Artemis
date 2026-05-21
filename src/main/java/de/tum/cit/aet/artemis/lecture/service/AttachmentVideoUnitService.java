@@ -1,37 +1,34 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.net.URI;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
-import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.dto.AttachmentVideoUnitDTO;
 import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Service
 @Lazy
 public class AttachmentVideoUnitService {
@@ -44,22 +41,22 @@ public class AttachmentVideoUnitService {
 
     private final SlideSplitterService slideSplitterService;
 
-    private final Optional<IrisLectureApi> irisLectureApi;
-
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final LectureUnitService lectureUnitService;
 
+    private final Optional<LectureContentProcessingService> contentProcessingService;
+
     public AttachmentVideoUnitService(SlideSplitterService slideSplitterService, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
-            AttachmentRepository attachmentRepository, FileService fileService, Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            LectureUnitService lectureUnitService) {
+            AttachmentRepository attachmentRepository, FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService,
+            Optional<LectureContentProcessingService> contentProcessingService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
         this.slideSplitterService = slideSplitterService;
-        this.irisLectureApi = irisLectureApi;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
+        this.contentProcessingService = contentProcessingService;
     }
 
     /**
@@ -73,57 +70,68 @@ public class AttachmentVideoUnitService {
      */
     public AttachmentVideoUnit saveAttachmentVideoUnit(AttachmentVideoUnit attachmentVideoUnit, Attachment attachment, MultipartFile file, boolean keepFilename) {
         // TODO: switch to the new mechanism of lectureUnitService.updateCompetencyLinks
-        AttachmentVideoUnit savedAttachmentVideoUnit = lectureUnitService.saveWithCompetencyLinks(attachmentVideoUnit, attachmentVideoUnitRepository::saveAndFlush);
+        AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitRepository.save(attachmentVideoUnit);
 
         if (attachment != null && file != null) {
             createAttachment(attachment, savedAttachmentVideoUnit, file, keepFilename);
-            irisLectureApi.ifPresent(api -> api.autoUpdateAttachmentVideoUnitsInPyris(List.of(savedAttachmentVideoUnit)));
         }
+
+        // Trigger automated content processing (transcription and ingestion)
+        contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
 
         return savedAttachmentVideoUnit;
     }
 
     /**
      * Updates the provided attachment video unit with an optional file.
+     * Note: Competency links must be updated by the caller before invoking this method.
      *
      * @param existingAttachmentVideoUnit The attachment video unit to update.
-     * @param updateUnit                  The new attachment video unit data.
+     * @param updateUnitDTO               The DTO with the new attachment video unit data.
      * @param updateAttachment            The new attachment data.
      * @param updateFile                  The optional file.
      * @param keepFilename                Whether to keep the original filename or not.
      * @param hiddenPages                 The hidden pages of attachment video unit.
      * @param pageOrder                   The new order of the edited attachment video unit
+     * @param originalCompetencyIds       The competency IDs before the update (for progress tracking)
      * @return The updated attachment video unit.
      */
-    public AttachmentVideoUnit updateAttachmentVideoUnit(AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentVideoUnit updateUnit, Attachment updateAttachment,
-            MultipartFile updateFile, boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder) {
-        Set<CompetencyLectureUnitLink> existingCompetencyLinks = new HashSet<>(existingAttachmentVideoUnit.getCompetencyLinks());
-
-        existingAttachmentVideoUnit.setDescription(updateUnit.getDescription());
-        existingAttachmentVideoUnit.setName(updateUnit.getName());
-        existingAttachmentVideoUnit.setReleaseDate(updateUnit.getReleaseDate());
-        existingAttachmentVideoUnit.setCompetencyLinks(updateUnit.getCompetencyLinks());
-        existingAttachmentVideoUnit.setVideoSource(updateUnit.getVideoSource());
+    public AttachmentVideoUnit updateAttachmentVideoUnit(AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentVideoUnitDTO updateUnitDTO, Attachment updateAttachment,
+            MultipartFile updateFile, boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder, Set<Long> originalCompetencyIds) {
+        existingAttachmentVideoUnit.setDescription(updateUnitDTO.description());
+        existingAttachmentVideoUnit.setName(updateUnitDTO.name());
+        existingAttachmentVideoUnit.setReleaseDate(updateUnitDTO.releaseDate());
+        existingAttachmentVideoUnit.setVideoSource(updateUnitDTO.videoSource());
+        // Note: competency links are updated by the resource layer using lectureUnitService.updateCompetencyLinks
 
         Attachment existingAttachment = existingAttachmentVideoUnit.getAttachment();
+        boolean createdNewAttachment = false;
 
         if (existingAttachment == null && updateAttachment != null) {
             createAttachment(updateAttachment, existingAttachmentVideoUnit, updateFile, keepFilename);
+            createdNewAttachment = true;
         }
 
-        // TODO: switch to the new mechanism of lectureUnitService.updateCompetencyLinks
-        AttachmentVideoUnit savedAttachmentVideoUnit = lectureUnitService.saveWithCompetencyLinks(existingAttachmentVideoUnit, attachmentVideoUnitRepository::saveAndFlush);
+        AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitRepository.save(existingAttachmentVideoUnit);
 
-        // Set the original competencies back to the attachment video unit so that the competencyProgressService can determine which competencies changed
-        existingAttachmentVideoUnit.setCompetencyLinks(existingCompetencyLinks);
-        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(existingAttachmentVideoUnit, Optional.of(updateUnit)));
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, savedAttachmentVideoUnit));
 
         if (updateAttachment == null) {
+            // Trigger processing for video-only updates (video source change detection is done inside the service)
+            contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
             prepareAttachmentVideoUnitForClient(existingAttachmentVideoUnit);
             return existingAttachmentVideoUnit;
         }
 
-        if (existingAttachment != null) {
+        if (createdNewAttachment) {
+            // Split the new file into single slides if it is a PDF
+            if (updateFile != null && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
+                slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
+            }
+            // Trigger processing for newly added attachment
+            contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
+        }
+        else if (existingAttachment != null) {
             updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages);
             handleFile(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
             final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
@@ -144,7 +152,8 @@ public class AttachmentVideoUnitService {
                 }
             }
 
-            irisLectureApi.ifPresent(api -> api.autoUpdateAttachmentVideoUnitsInPyris(List.of(savedAttachmentVideoUnit)));
+            // Trigger automated content processing (transcription and ingestion)
+            contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
         }
 
         prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);

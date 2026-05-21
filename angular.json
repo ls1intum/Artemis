@@ -34,7 +34,6 @@
                   "hoist-non-react-statics",
                   "interactjs",
                   "is-mobile",
-                  "js-video-url-parser",
                   "jszip",
                   "localforage",
                   "markdown-it-highlightjs",
@@ -52,7 +51,8 @@
                   "use-sync-external-store/shim",
                   "use-sync-external-store/shim/with-selector",
                   "webcola",
-                  "webstomp-client"
+                  "@stomp/rx-stomp",
+                  "@stomp/stompjs"
             ],
             "outputPath": {
                 "base": "build/resources/main/static/",
@@ -74,7 +74,7 @@
                 "."
               ],
               "sass": {
-                "silenceDeprecations": ["mixed-decls", "color-functions", "global-builtin", "import"]
+                "silenceDeprecations": ["color-functions", "global-builtin", "import", "if-function"]
               }
             },
             "assets": [
@@ -97,19 +97,6 @@
               "src/main/webapp/logo/safari-pinned-tab.svg",
               "src/main/webapp/i18n",
               {
-                "glob": "*.{js,css,html,png}",
-                "input": "./node_modules/swagger-ui-dist",
-                "output": "swagger-ui",
-                "ignore": [
-                  "**/index.html"
-                ]
-              },
-              {
-                "glob": "axios.min.js",
-                "input": "./node_modules/axios/dist",
-                "output": "swagger-ui"
-              },
-              {
                 "glob": "**/*",
                 "input": "src/main/webapp/swagger-ui/",
                 "output": "swagger-ui"
@@ -118,6 +105,11 @@
                 "glob": "**/*",
                 "input": "./node_modules/monaco-editor/bundles/vs",
                 "output": "vs"
+              },
+              {
+                "glob": "**/*",
+                "input": "./node_modules/ngx-extended-pdf-viewer/assets/",
+                "output": "assets/ngx-extended-pdf-viewer"
               }
             ],
             "styles": [
@@ -127,7 +119,8 @@
                 "input": "src/main/webapp/content/scss/themes/theme-dark.scss",
                 "inject": false
               },
-              "node_modules/monaco-editor/min/vs/editor/editor.main.css"
+              "node_modules/monaco-editor/min/vs/editor/editor.main.css",
+              "node_modules/@tumaet/apollon/dist/assets/style.css"
             ],
             "scripts": []
           },
@@ -144,7 +137,7 @@
               "outputHashing": "all",
               "sourceMap": {
                 "scripts": true,
-                "styles": false,
+                "styles": true,
                 "hidden": false,
                 "vendor": false
               },
@@ -156,8 +149,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2.5mb",
-                  "maximumError": "4.8mb"
+                  "maximumWarning": "4.5mb",
+                  "maximumError": "10mb"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -207,7 +200,7 @@
         "test": {
           "builder": "@angular-builders/jest:run",
           "options": {
-            "configPath": "jest.config.js"
+            "zoneless": false
           }
         },
         "lint": {
@@ -224,7 +217,7 @@
   },
   "cli": {
     "analytics": false,
-    "packageManager": "npm",
+    "packageManager": "pnpm",
     "cache": {
       "enabled": true,
       "path": "./build/angular/",

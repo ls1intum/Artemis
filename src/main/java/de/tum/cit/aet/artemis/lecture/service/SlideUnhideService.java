@@ -1,23 +1,22 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.time.ZonedDateTime;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 
 /**
  * Service for managing slide unhiding operations in a multi-node environment.
  * This service handles both the messaging aspects and the integration with ScheduleService.
  */
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Lazy
 @Service
 public class SlideUnhideService {

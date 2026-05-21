@@ -12,41 +12,52 @@ import localRulesPlugin from './rules/index.mjs';
 
 export default tseslint.config(
     {
+        // Only src/main/webapp/ and src/test/javascript/ contain lintable client code.
+        // The lint command targets src/main/webapp explicitly, but these ignores also
+        // protect against scanning irrelevant directories when ESLint is invoked
+        // without explicit paths (e.g. by IDEs or lint-staged).
         ignores: [
+            // Top-level directories
             '.cache/',
             '.git/',
             '.github/',
             '.gradle/',
             '.idea/',
-            '.venv/',
             '.jhipster/',
+            '.venv/',
             'build/',
-            'documentation/build',
-            'documentation/.docusaurus',
-            'local/',
             'coverage/',
             'docker/',
             'docs/',
+            'documentation/',
             'gradle/',
             'local/',
             'node/',
             'node_modules/',
+            'openapi/',
             'out/',
+            'patches/',
             'repos/',
             'repos-download/',
-            'src/main/generated/',
-            'src/main/resources/',
-            'target/',
-            'uploads/',
-            'local/',
             'supporting_scripts/',
-            'src/test/javascript/spec/stub.js',
-            '.lintstagedrc.js',
-            'jest.config.js',
-            'prebuild.mjs',
-            'rules/**/*.js',
-            'src/main/webapp/content/scripts/pdf.worker.min.mjs',
+            'target/',
+            'templates/',
+            'uploads/',
+            // Source directories not containing Angular client code
+            'src/main/generated/',
+            'src/main/java/',
+            'src/main/resources/',
+            'src/test/java/',
+            'src/test/playwright/',
+            'src/test/resources/',
+            'src/test/vitest/',
+            // Specific file exclusions within linted directories
             'src/main/webapp/app/openapi/**',
+            'src/main/webapp/content/scripts/pdf.worker.min.mjs',
+            'src/test/javascript/spec/stub.js',
+            // Root-level config files (not part of the Angular client)
+            '*.js',
+            '*.mjs',
         ],
     },
     eslint.configs.recommended,
@@ -55,7 +66,7 @@ export default tseslint.config(
         languageOptions: {
             parser: typescriptParser,
             parserOptions: {
-                project: ['./tsconfig.json', './tsconfig.app.json', './tsconfig.spec.json', 'src/test/playwright/tsconfig.json'],
+                project: ['./tsconfig.json', './tsconfig.app.json', './tsconfig.spec.json'],
             },
             globals: {
                 NodeJS: 'readonly',
@@ -143,6 +154,8 @@ export default tseslint.config(
                 }
             ],
             'localRules/require-signal-reference-ngb-modal-input': 'error',
+            'localRules/enforce-signal-apis-in-migrated-modules': 'error',
+            'localRules/enforce-cleanup-on-destroy': 'warn',
         },
     },
     {
@@ -160,7 +173,7 @@ export default tseslint.config(
             '@typescript-eslint/no-deprecated': 'warn',
             '@typescript-eslint/no-empty-function': 'off',
             '@typescript-eslint/ban-ts-comment': 'off',
-            '@typescript-eslint/no-var-requires': 'off',
+            '@typescript-eslint/no-require-imports': 'off',
             '@typescript-eslint/no-unused-vars': ['warn', {
                 vars: 'all',
                 varsIgnorePattern: '^_',

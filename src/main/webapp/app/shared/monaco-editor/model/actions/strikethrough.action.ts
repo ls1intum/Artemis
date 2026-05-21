@@ -1,5 +1,5 @@
 import { faStrikethrough } from '@fortawesome/free-solid-svg-icons';
-import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
+import { TextStyleTextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
 const STRIKETHROUGH_DELIMITER = '~~';
@@ -7,7 +7,7 @@ const STRIKETHROUGH_DELIMITER = '~~';
 /**
  * Action to toggle strikethrough text in the editor.
  */
-export class StrikethroughAction extends TextEditorAction {
+export class StrikethroughAction extends TextStyleTextEditorAction {
     static readonly ID = 'strikethrough.action';
 
     constructor() {

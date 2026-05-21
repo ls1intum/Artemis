@@ -1,34 +1,33 @@
-import { Directive, HostBinding, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Directive, computed, effect, inject, input, signal } from '@angular/core';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { Subscription } from 'rxjs/internal/Subscription';
 
-@Directive({ selector: '[jhiFeatureToggleHide]' })
-export class FeatureToggleHideDirective implements OnInit, OnDestroy {
+@Directive({
+    selector: '[jhiFeatureToggleHide]',
+    host: {
+        '[class.d-none]': 'hidden()',
+    },
+})
+export class FeatureToggleHideDirective {
     private featureToggleService = inject(FeatureToggleService);
 
-    @Input('jhiFeatureToggleHide') feature?: FeatureToggle;
+    feature = input<FeatureToggle | undefined>(undefined, { alias: 'jhiFeatureToggleHide' });
 
-    private featureActive = true;
+    private featureActive = signal(true);
+    hidden = computed(() => !this.featureActive());
 
-    private featureToggleActiveSubscription: Subscription;
+    constructor() {
+        effect((onCleanup) => {
+            const featureInput = this.feature();
 
-    ngOnInit() {
-        if (this.feature) {
-            this.featureToggleActiveSubscription = this.featureToggleService.getFeatureToggleActive(this.feature).subscribe((active) => {
-                this.featureActive = active;
-            });
-        }
-    }
+            // if no feature, default to "visible"
+            if (!featureInput) {
+                this.featureActive.set(true);
+                return;
+            }
 
-    ngOnDestroy(): void {
-        this.featureToggleActiveSubscription?.unsubscribe();
-    }
+            const sub = this.featureToggleService.getFeatureToggleActive(featureInput).subscribe((active) => this.featureActive.set(active));
 
-    /**
-     * This will hide the element if the feature is inactive.
-     */
-    @HostBinding('class.d-none')
-    get hidden(): boolean {
-        return !this.featureActive;
+            onCleanup(() => sub.unsubscribe());
+        });
     }
 }

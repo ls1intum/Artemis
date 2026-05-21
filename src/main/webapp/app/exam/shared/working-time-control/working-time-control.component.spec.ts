@@ -1,23 +1,30 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import dayjs from 'dayjs/esm';
 import { FormsModule } from '@angular/forms';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { WorkingTimeControlComponent } from 'app/exam/shared/working-time-control/working-time-control.component';
-import { input } from '@angular/core';
 
 const createTestExam = (duration: number) => ({ workingTime: duration, startDate: dayjs.unix(0), endDate: dayjs.unix(duration) }) as Exam;
 
 describe('WorkingTimeControlComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: WorkingTimeControlComponent;
     let fixture: ComponentFixture<WorkingTimeControlComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FormsModule],
+            imports: [FormsModule, WorkingTimeControlComponent],
         }).compileComponents();
         fixture = TestBed.createComponent(WorkingTimeControlComponent);
         component = fixture.componentInstance;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     const expectDuration = (hours: number, minutes: number, seconds: number) => {
@@ -29,7 +36,7 @@ describe('WorkingTimeControlComponent', () => {
     it('should parse working time seconds to duration', () => {
         // act
         component.workingTimeSeconds = 3600;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // assert
         expectDuration(1, 0, 0);
@@ -38,7 +45,7 @@ describe('WorkingTimeControlComponent', () => {
     it('should ignore relative working time extension when exam is not present', () => {
         // act
         component.workingTimeSeconds = 3600;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // assert
         expect(component.workingTime.percent).toBe(0);
@@ -48,10 +55,7 @@ describe('WorkingTimeControlComponent', () => {
         // act
         component.workingTimeSeconds = 7200;
         const exam = createTestExam(3600);
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-        });
-
+        fixture.componentRef.setInput('exam', exam);
         fixture.detectChanges();
 
         // assert
@@ -70,10 +74,8 @@ describe('WorkingTimeControlComponent', () => {
     it('should not show relative working time if `relative` is false', async () => {
         // act
         const exam = {} as Exam;
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-            component.relative = input(false);
-        });
+        fixture.componentRef.setInput('exam', exam);
+        fixture.componentRef.setInput('relative', false);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -85,10 +87,8 @@ describe('WorkingTimeControlComponent', () => {
         // act
 
         const exam = {} as Exam;
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-            component.relative = input(true);
-        });
+        fixture.componentRef.setInput('exam', exam);
+        fixture.componentRef.setInput('relative', true);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -99,11 +99,9 @@ describe('WorkingTimeControlComponent', () => {
     it('should disable inputs when `disabled` is true', async () => {
         // act
         const exam = {} as Exam;
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-            component.relative = input(true);
-            component.disabled = input(true);
-        });
+        fixture.componentRef.setInput('exam', exam);
+        fixture.componentRef.setInput('relative', true);
+        fixture.componentRef.setInput('disabled', true);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -117,50 +115,42 @@ describe('WorkingTimeControlComponent', () => {
     it('should update the percent difference when the absolute working time changes', () => {
         // arrange
         const exam = createTestExam(7200);
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-        });
+        fixture.componentRef.setInput('exam', exam);
+        fixture.detectChanges();
 
         // act & assert
         component.workingTime.hours = 4;
         component.onDurationChanged();
-        fixture.detectChanges();
         expect(component.workingTime.percent).toBe(100);
 
         component.workingTime.hours = 3;
         component.onDurationChanged();
-        fixture.detectChanges();
         expect(component.workingTime.percent).toBe(50);
 
         component.workingTime.hours = 0;
         component.onDurationChanged();
-        fixture.detectChanges();
         expect(component.workingTime.percent).toBe(-100);
 
         // small change, not a full percent
         component.workingTime.hours = 2;
         component.workingTime.seconds = 12;
         component.onDurationChanged();
-        fixture.detectChanges();
         expect(component.workingTime.percent).toBe(0.17);
     });
 
     it('should update the absolute working time when changing the percent difference', () => {
         // arrange
         const exam = createTestExam(7200);
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-        });
+        fixture.componentRef.setInput('exam', exam);
+        fixture.detectChanges();
 
         // act & assert
         component.workingTime.percent = 26;
         component.onPercentChanged();
-        fixture.detectChanges();
         expectDuration(2, 31, 12);
 
         component.workingTime.percent = -100;
         component.onPercentChanged();
-        fixture.detectChanges();
         expectDuration(0, 0, 0);
     });
 });

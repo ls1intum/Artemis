@@ -105,7 +105,7 @@ public final class HttpRequestUtils {
             return Browser.DUCKDUCKGO;
         }
 
-        log.warn("Could not detect browser name from user agent: {}, secure user agent: {}", userAgent, secureClientHintsUserAgent);
+        log.debug("Could not detect browser name from user agent: {}, secure user agent: {}", userAgent, secureClientHintsUserAgent);
         return null;
     }
 

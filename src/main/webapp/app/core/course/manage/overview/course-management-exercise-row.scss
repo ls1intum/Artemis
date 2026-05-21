@@ -33,15 +33,16 @@
         flex-direction: column;
         justify-content: space-around;
 
-        h4 {
+        .h4 {
             margin-bottom: 0;
-            font-size: 1rem;
+            font-size: 0.8rem;
 
             .badge {
                 max-width: 130px;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
+                padding: 0.2rem 0.4rem;
             }
         }
     }

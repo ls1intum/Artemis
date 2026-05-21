@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input, input, output } from '@angular/core';
+import { Component, HostBinding, effect, input, model, output } from '@angular/core';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -46,24 +46,7 @@ export class AssessmentLayoutComponent {
     readonly submission = input<Submission>();
     readonly hasAssessmentDueDatePassed = input.required<boolean>();
     readonly isProgrammingExercise = input<boolean>(false); // remove once diff view activated for programming exercises
-
-    private _highlightDifferences: boolean;
-
-    @Input() set highlightDifferences(highlightDifferences: boolean) {
-        this._highlightDifferences = highlightDifferences;
-        this.highlightDifferencesChange.emit(this.highlightDifferences);
-    }
-
-    get highlightDifferences() {
-        return this._highlightDifferences;
-    }
-
-    setAssessmentNoteForResult(assessmentNote: AssessmentNote) {
-        const result = this.result();
-        if (result) {
-            result.assessmentNote = assessmentNote;
-        }
-    }
+    readonly highlightDifferences = model(false);
 
     readonly navigateBack = output();
     readonly save = output();
@@ -73,4 +56,25 @@ export class AssessmentLayoutComponent {
     readonly updateAssessmentAfterComplaint = output<AssessmentAfterComplaint>();
     readonly highlightDifferencesChange = output<boolean>();
     readonly useAsExampleSubmission = output();
+
+    private highlightDifferencesEffectInitialized = false;
+
+    constructor() {
+        // Emit highlightDifferencesChange when the model changes (skip initial emission)
+        effect(() => {
+            const value = this.highlightDifferences();
+            if (!this.highlightDifferencesEffectInitialized) {
+                this.highlightDifferencesEffectInitialized = true;
+                return;
+            }
+            this.highlightDifferencesChange.emit(value);
+        });
+    }
+
+    setAssessmentNoteForResult(assessmentNote: AssessmentNote) {
+        const result = this.result();
+        if (result) {
+            result.assessmentNote = assessmentNote;
+        }
+    }
 }

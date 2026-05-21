@@ -28,8 +28,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.ConcreteProxy;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -57,7 +56,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "S")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@ConcreteProxy
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "submissionExerciseType")
 // Annotation necessary to distinguish between concrete implementations of Submission when deserializing from JSON
 // @formatter:off
@@ -85,9 +84,9 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @ManyToOne
     private Participation participation;
 
+    // No @Cache: appended on every save; NONSTRICT produced stale version lists for concurrent readers, same class of bug as #12574.
     @JsonIgnore
     @OneToMany(mappedBy = "submission", cascade = CascadeType.REMOVE)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<SubmissionVersion> versions = new HashSet<>();
 
     /**
@@ -380,7 +379,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     /**
      * In case user calls for correctionRound 0, but more manual results already exists
-     * and he has not requested a specific result, remove any other results
+     * and they have not requested a specific result, remove any other results
      *
      * @param correctionRound for which not to remove results
      * @param resultId        specific resultId

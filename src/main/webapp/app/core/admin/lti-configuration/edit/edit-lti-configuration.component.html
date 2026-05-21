@@ -1,55 +1,97 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <form class="ms-4" [formGroup]="platformConfigurationForm" (ngSubmit)="save()" #editForm="ngForm">
-            <div class="d-flex">
-                <div class="flex-grow-1">
-                    <div class="d-flex align-items-center">
-                        <h2 id="jhi-lecture-heading" jhiTranslate="{{ !platform?.id ? 'artemisApp.lti.addLtiPlatform' : 'artemisApp.lti.editLtiPlatform' }}"></h2>
+        <h5 *adminTitleBarTitle id="jhi-lecture-heading" class="mb-0" jhiTranslate="{{ !platform?.id ? 'artemisApp.lti.addLtiPlatform' : 'artemisApp.lti.editLtiPlatform' }}"></h5>
+        @if (loadFailed()) {
+            <div class="alert alert-danger mt-3" jhiTranslate="artemisApp.lti.editConfiguration.loadError"></div>
+        } @else {
+            <div class="alert alert-info mt-3">
+                <span jhiTranslate="artemisApp.lti.edit.documentationLink"></span>
+                <a
+                    href="https://docs.artemis.tum.de/instructor/lti-configuration/"
+                    target="_blank"
+                    rel="external noopener noreferrer"
+                    jhiTranslate="artemisApp.lti.edit.documentationLinkText"
+                ></a
+                >.
+            </div>
+            <form class="ms-4" [formGroup]="platformConfigurationForm" (ngSubmit)="save()" #editForm="ngForm">
+                <div>
+                    <div class="form-group mt-2" [hidden]="!platform?.registrationId">
+                        <label class="form-control-label" jhiTranslate="artemisApp.lti.registrationId" for="field_registrationId"></label>
+                        <jhi-help-icon text="artemisApp.lti.edit.registrationIdTooltip" />
+                        <input type="text" class="form-control" name="registrationId" id="field_registrationId" formControlName="registrationId" />
+                    </div>
+                    <div class="form-group mt-2">
+                        <label class="form-control-label" jhiTranslate="artemisApp.lti.customName" for="field_customName"></label>
+                        <jhi-help-icon text="artemisApp.lti.edit.customNameIdTooltip" />
+                        <input type="text" class="form-control" name="customName" id="field_customName" formControlName="customName" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label" jhiTranslate="artemisApp.lti.toolUrl" for="field_toolUrl"></label>
+                        <jhi-help-icon text="artemisApp.lti.edit.originalUrlTooltip" />
+                        <input type="text" class="form-control" name="originalUrl" id="field_toolUrl" formControlName="originalUrl" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label" jhiTranslate="artemisApp.lti.clientId" for="field_clientId"></label>
+                        <span class="text-danger">*</span>
+                        <jhi-help-icon text="artemisApp.lti.edit.clientIdTooltip" />
+                        <input type="text" class="form-control" name="clientId" id="field_clientId" formControlName="clientId" [class.is-invalid]="isFieldInvalid('clientId')" />
+                        @if (isFieldInvalid('clientId')) {
+                            <div class="invalid-feedback" jhiTranslate="artemisApp.lti.validation.clientIdRequired"></div>
+                        }
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label" jhiTranslate="artemisApp.lti.authorizationUri" for="field_authorizationUri"></label>
+                        <span class="text-danger">*</span>
+                        <jhi-help-icon text="artemisApp.lti.edit.authorizationUriTooltip" />
+                        <input
+                            type="text"
+                            class="form-control"
+                            name="authorizationUri"
+                            id="field_authorizationUri"
+                            formControlName="authorizationUri"
+                            [class.is-invalid]="isFieldInvalid('authorizationUri')"
+                        />
+                        @if (isFieldInvalid('authorizationUri')) {
+                            <div class="invalid-feedback" jhiTranslate="artemisApp.lti.validation.authorizationUriRequired"></div>
+                        }
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label" jhiTranslate="artemisApp.lti.tokenUri" for="field_tokenUri"></label>
+                        <span class="text-danger">*</span>
+                        <jhi-help-icon text="artemisApp.lti.edit.tokenUriTooltip" />
+                        <input type="text" class="form-control" name="tokenUri" id="field_tokenUri" formControlName="tokenUri" [class.is-invalid]="isFieldInvalid('tokenUri')" />
+                        @if (isFieldInvalid('tokenUri')) {
+                            <div class="invalid-feedback" jhiTranslate="artemisApp.lti.validation.tokenUriRequired"></div>
+                        }
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label" jhiTranslate="artemisApp.lti.jwkSetUri" for="field_jwkSetUri"></label>
+                        <span class="text-danger">*</span>
+                        <jhi-help-icon text="artemisApp.lti.edit.jwkSetUriTooltip" />
+                        <input
+                            type="text"
+                            class="form-control"
+                            name="jwkSetUri"
+                            id="field_jwkSetUri"
+                            formControlName="jwkSetUri"
+                            [class.is-invalid]="isFieldInvalid('jwkSetUri')"
+                        />
+                        @if (isFieldInvalid('jwkSetUri')) {
+                            <div class="invalid-feedback" jhiTranslate="artemisApp.lti.validation.jwkSetUriRequired"></div>
+                        }
                     </div>
                 </div>
-            </div>
-            <div>
-                <div class="form-group mt-2" [hidden]="!platform?.registrationId">
-                    <label class="form-control-label" jhiTranslate="artemisApp.lti.registrationId" for="field_registrationId"></label>
-                    <jhi-help-icon text="artemisApp.lti.edit.registrationIdTooltip" />
-                    <input type="text" class="form-control" name="registrationId" id="field_registrationId" formControlName="registrationId" />
-                </div>
-                <div class="form-group mt-2">
-                    <label class="form-control-label" jhiTranslate="artemisApp.lti.customName" for="field_customName"></label>
-                    <jhi-help-icon text="artemisApp.lti.edit.customNameIdTooltip" />
-                    <input type="text" class="form-control" name="customName" id="field_customName" formControlName="customName" />
-                </div>
-                <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.lti.toolUrl" for="field_toolUrl"></label>
-                    <input type="text" class="form-control" name="clientId" id="field_toolUrl" formControlName="originalUrl" />
-                </div>
-                <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.lti.clientId" for="field_clientId"></label>
-                    <jhi-help-icon text="artemisApp.lti.edit.clientIdTooltip" />
-                    <input type="text" class="form-control" name="clientId" id="field_clientId" formControlName="clientId" />
-                </div>
-                <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.lti.authorizationUri" for="field_authorizationUri"></label>
-                    <input type="text" class="form-control" name="authorizationUri" id="field_authorizationUri" formControlName="authorizationUri" />
-                </div>
-                <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.lti.tokenUri" for="field_tokenUri"></label>
-                    <input type="text" class="form-control" name="tokenUri" id="field_tokenUri" formControlName="tokenUri" />
-                </div>
-                <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.lti.jwkSetUri" for="field_jwkSetUri"></label>
-                    <input type="text" class="form-control" name="jwkSetUri" id="field_jwkSetUri" formControlName="jwkSetUri" />
-                </div>
-            </div>
 
-            <div class="mt-3 d-flex">
-                <button type="submit" id="save-entity" [disabled]="isSaving" class="btn btn-primary ms-2">
-                    <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
-                </button>
-                <button type="button" id="cancel-save" class="btn btn-secondary ms-2" (click)="navigateToLtiConfigurationPage()">
-                    <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
-                </button>
-            </div>
-        </form>
+                <div class="mt-3 d-flex">
+                    <button type="submit" id="save-entity" [disabled]="isSaving() || platformConfigurationForm.invalid" class="btn btn-primary ms-2">
+                        <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
+                    </button>
+                    <button type="button" id="cancel-save" class="btn btn-secondary ms-2" (click)="navigateToLtiConfigurationPage()">
+                        <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+                    </button>
+                </div>
+            </form>
+        }
     </div>
 </div>

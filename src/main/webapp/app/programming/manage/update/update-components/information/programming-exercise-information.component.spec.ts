@@ -3,7 +3,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProvider } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, of } from 'rxjs';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { NgModel } from '@angular/forms';
@@ -28,7 +27,6 @@ describe('ProgrammingExerciseInformationComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [BrowserAnimationsModule],
             providers: [
                 MockProvider(AlertService),
                 { provide: ActivatedRoute, useValue: { queryParams: of({}) } },
@@ -102,7 +100,7 @@ describe('ProgrammingExerciseInformationComponent', () => {
             fixture.componentRef.setInput('isImport', true);
 
             comp.programmingExercise().title = 'Test Exercise';
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(comp.programmingExercise().shortName).toBe('l01e01');
         });
@@ -111,7 +109,7 @@ describe('ProgrammingExerciseInformationComponent', () => {
             fixture.componentRef.setInput('isSimpleMode', true);
 
             comp.programmingExercise().title = 'Test Exercise';
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(comp.programmingExercise().shortName).toMatch('TestExercise');
         });
@@ -121,9 +119,32 @@ describe('ProgrammingExerciseInformationComponent', () => {
             comp.alreadyUsedShortNames.set(new Set(['TestExercise']));
 
             comp.programmingExercise().title = 'Test Exercise';
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(comp.programmingExercise().shortName).toMatch('TestExercise1');
+        });
+
+        it('should truncate auto-generated short names to PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH', () => {
+            fixture.componentRef.setInput('isSimpleMode', true);
+
+            // 50-char title sanitises to 50 chars, must be truncated to 36.
+            comp.programmingExercise().title = 'A'.repeat(50);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(comp.programmingExercise().shortName!).toHaveLength(36);
+            expect(comp.programmingExercise().shortName).toBe('A'.repeat(36));
+        });
+
+        it('should truncate the base when adding a uniqueness suffix would exceed the max length', () => {
+            fixture.componentRef.setInput('isSimpleMode', true);
+            // Pre-load the truncated 36-char base so the generator must add a numeric suffix while keeping length <= 36.
+            comp.alreadyUsedShortNames.set(new Set(['A'.repeat(36)]));
+
+            comp.programmingExercise().title = 'A'.repeat(50);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(comp.programmingExercise().shortName!).toHaveLength(36);
+            expect(comp.programmingExercise().shortName).toBe('A'.repeat(35) + '1');
         });
     });
 });

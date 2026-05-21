@@ -39,7 +39,6 @@ import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.ObjectId;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -108,6 +107,8 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
     private final GitRepositoryExportService gitRepositoryExportService;
 
+    private final RepositoryExportGitService repositoryExportGitService;
+
     private final ZipFileService zipFileService;
 
     private final BuildPlanRepository buildPlanRepository;
@@ -120,8 +121,8 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
     public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             StudentParticipationRepository studentParticipationRepository, FileService fileService, GitService gitService, GitRepositoryExportService gitRepositoryExportService,
-            ZipFileService zipFileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            BuildPlanRepository buildPlanRepository) {
+            RepositoryExportGitService repositoryExportGitService, ZipFileService zipFileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, BuildPlanRepository buildPlanRepository) {
         // Programming exercises do not have a submission export service
         super(fileService, springMvcJacksonConverter, null);
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -130,6 +131,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         this.fileService = fileService;
         this.gitService = gitService;
         this.gitRepositoryExportService = gitRepositoryExportService;
+        this.repositoryExportGitService = repositoryExportGitService;
         this.zipFileService = zipFileService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.buildPlanRepository = buildPlanRepository;
@@ -614,10 +616,10 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                 return null;
             }
 
-            ObjectId latestSetupCommit = null;
+            String latestSetupCommitHash = null;
             if (repositoryExportOptions.combineStudentCommits() || repositoryExportOptions.anonymizeRepository()) {
                 // only retrieve the setup commit once, even if it is needed for both operations
-                latestSetupCommit = gitService.getFirstCommitWithMessage(repository, de.tum.cit.aet.artemis.core.config.Constants.SET_UP_TEMPLATE_FOR_EXERCISE);
+                latestSetupCommitHash = gitService.getFirstCommitWithMessage(repository, de.tum.cit.aet.artemis.core.config.Constants.SET_UP_TEMPLATE_FOR_EXERCISE);
             }
 
             if (repositoryExportOptions.filterLateSubmissions()) {
@@ -631,14 +633,14 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
             if (repositoryExportOptions.combineStudentCommits()) {
                 log.debug("Combining commits for participation {}", participation);
-                gitService.combineAllStudentCommits(repository, repositoryExportOptions.anonymizeRepository(), latestSetupCommit);
+                repositoryExportGitService.combineAllStudentCommits(repository, repositoryExportOptions.anonymizeRepository(), latestSetupCommitHash);
             }
 
             if (repositoryExportOptions.anonymizeRepository()) {
                 log.debug("Anonymizing commits for participation {}", participation);
-                gitService.anonymizeStudentCommits(repository, latestSetupCommit);
+                repositoryExportGitService.anonymizeStudentCommits(repository, latestSetupCommitHash);
                 // Verify anonymization succeeded before proceeding
-                gitService.verifyAnonymizationOrThrow(repository, repositoryExportOptions.combineStudentCommits(), latestSetupCommit);
+                repositoryExportGitService.verifyAnonymizationOrThrow(repository, repositoryExportOptions.combineStudentCommits(), latestSetupCommitHash);
             }
             else {
                 gitService.removeRemotesFromRepository(repository);
@@ -703,7 +705,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
 
         if (latestAllowedDate.isPresent()) {
-            gitService.filterLateSubmissions(repo, relevantCommitHash, latestAllowedDate.get());
+            repositoryExportGitService.filterLateSubmissions(repo, relevantCommitHash, latestAllowedDate.get());
         }
     }
 

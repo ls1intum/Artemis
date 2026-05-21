@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -32,6 +33,9 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationIndependentTest
 
     @Autowired
     private ResourceLoaderService resourceLoaderService;
+
+    @Autowired
+    private TempFileUtilService tempFileUtilService;
 
     private final Path publicPath = Path.of("public", "public_file.txt");
 
@@ -163,6 +167,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationIndependentTest
     void testGetResourceFilePathFromJar() throws IOException, URISyntaxException {
         ResourceLoader resourceLoader = mock(ResourceLoader.class);
         Resource resource = mock(Resource.class);
+        TempFileUtilService mockTempFileUtilService = mock(TempFileUtilService.class);
         URL resourceUrl = new URI("jar:file:/example.jar!/path/to/resource.txt").toURL();
 
         // Mock the getResource() method.
@@ -172,10 +177,14 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationIndependentTest
 
         doReturn(resource).when(resourceLoader).getResource(anyString());
 
+        // Mock the TempFileUtilService to create temp file in the configured temp path
+        Path tempFilePath = tempFileUtilService.createTempFile("test", "");
+        doReturn(tempFilePath).when(mockTempFileUtilService).createTempFile(any(String.class), any(String.class));
+
         // Instantiate the class under test and invoke the method.
-        ResourceLoaderService resourceLoaderService = new ResourceLoaderService(resourceLoader, tempPath);
+        ResourceLoaderService testResourceLoaderService = new ResourceLoaderService(resourceLoader, mockTempFileUtilService);
         Path path = Path.of("path", "to", "resource.txt");
-        Path resourceFilePath = resourceLoaderService.getResourceFilePath(path);
+        Path resourceFilePath = testResourceLoaderService.getResourceFilePath(path);
 
         // Verify the temporary file was created.
         assertThat(resourceFilePath).exists();

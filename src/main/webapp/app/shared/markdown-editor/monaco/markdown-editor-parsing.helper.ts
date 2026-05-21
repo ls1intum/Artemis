@@ -1,5 +1,5 @@
 import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
-import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
+import { escapeStringForUseInRegex } from 'app/shared/util/string-pure.utils';
 import { TextWithDomainAction } from './markdown-editor-monaco.component';
 
 /**

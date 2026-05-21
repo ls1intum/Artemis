@@ -45,6 +45,17 @@ public interface PostRepository extends ArtemisJpaRepository<Post, Long>, JpaSpe
     void deleteAllByConversationId(Long conversationId);
 
     /**
+     * Deletes all posts associated with the given course ID via conversations.
+     * This keeps the conversation/channel structure but removes all posts.
+     *
+     * @param courseId ID of the course
+     */
+    @Transactional // ok because of delete
+    @Modifying
+    @Query("DELETE FROM Post p WHERE p.conversation.course.id = :courseId")
+    void deleteAllByCourseId(@Param("courseId") long courseId);
+
+    /**
      * Finds all posts related to a given plagiarism case.
      *
      * @param plagiarismCaseId ID of the plagiarism case
@@ -106,6 +117,21 @@ public interface PostRepository extends ArtemisJpaRepository<Post, Long>, JpaSpe
             WHERE p.conversation.course.id = :courseId
             """)
     long countPostsByCourseId(@Param("courseId") Long courseId);
+
+    /**
+     * Finds all posts related to a specific course via conversations.
+     *
+     * @param courseId ID of the course
+     * @return list of posts associated with the course
+     */
+    @Query("""
+            SELECT p
+            FROM Post p
+            LEFT JOIN FETCH p.author
+            LEFT JOIN FETCH p.conversation
+            WHERE p.conversation.course.id = :courseId
+            """)
+    List<Post> findAllByCourseId(@Param("courseId") long courseId);
 
     /**
      * Finds all posts whose IDs are in the given list.

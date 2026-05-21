@@ -5,25 +5,27 @@ import 'app/shared/util/string.extension';
 import 'app/core/config/dayjs';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DatePipe } from '@angular/common';
-import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { ApplicationConfig, ErrorHandler, LOCALE_ID, importProvidersFrom, inject, provideAppInitializer } from '@angular/core';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { ApplicationConfig, ErrorHandler, LOCALE_ID, importProvidersFrom, inject, provideAppInitializer, provideZoneChangeDetection } from '@angular/core';
 import { BrowserModule, Title } from '@angular/platform-browser';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { Router, RouterModule, provideRouter, withRouterConfig } from '@angular/router';
+import { Router, provideRouter, withRouterConfig } from '@angular/router';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { NgbDateAdapter } from '@ng-bootstrap/ng-bootstrap';
-import { MissingTranslationHandler, TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { MissingTranslationHandler, provideTranslateService } from '@ngx-translate/core';
 import * as Sentry from '@sentry/angular';
 import { TraceService } from '@sentry/angular';
 import routes from 'app/app.routes';
 import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
-import { missingTranslationHandler, translatePartialLoader } from 'app/core/config/translation.config';
+import { missingTranslationHandler, translateHttpLoaderProviders } from 'app/core/config/translation.config';
 import { ArtemisVersionInterceptor, WINDOW_INJECTOR_TOKEN } from 'app/core/interceptor/artemis-version.interceptor';
 import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interceptor';
 import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fingerprint.interceptor.service';
 import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.interceptor';
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
+import { lastValueFrom } from 'rxjs';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -31,30 +33,27 @@ import { LoadingNotificationInterceptor } from 'app/core/loading-notification/lo
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { Configuration } from 'app/openapi/configuration';
 import { providePrimeNG } from 'primeng/config';
+import { DialogService } from 'primeng/dynamicdialog';
 import { AuraArtemis } from './primeng-artemis-theme';
 
 export const appConfig: ApplicationConfig = {
     providers: [
         ArtemisTranslatePipe,
+        DialogService,
         importProvidersFrom(
             // TODO: we should exclude modules here in the future
-            BrowserAnimationsModule,
             BrowserModule,
-            RouterModule,
             ScrollingModule,
             OwlNativeDateTimeModule,
-            TranslateModule.forRoot({
-                loader: {
-                    provide: TranslateLoader,
-                    useFactory: translatePartialLoader,
-                    deps: [HttpClient],
-                },
-                missingTranslationHandler: {
-                    provide: MissingTranslationHandler,
-                    useFactory: missingTranslationHandler,
-                },
-            }),
         ),
+        provideTranslateService({
+            loader: translateHttpLoaderProviders,
+            missingTranslationHandler: {
+                provide: MissingTranslationHandler,
+                useFactory: missingTranslationHandler,
+            },
+        }),
+        provideZoneChangeDetection(),
 
         // TODO: we should add withComponentInputBinding here
         //  this would set non-route inputs to undefined, which not all components can handle, currently
@@ -73,12 +72,37 @@ export const appConfig: ApplicationConfig = {
         DatePipe,
         provideAppInitializer(() => {
             const profileService = inject(ProfileService);
+            const accountService = inject(AccountService);
+            const authServerProvider = inject(AuthServerProvider);
             inject(TraceService);
             // Ensure the service is initialized before any routing happens
             inject(ArtemisNavigationUtilService);
-            // we load this as early as possible to ensure that all config options are loaded before any routing or rendering happens
-            // this is important so that all components can access the profile info, by returning it here, this blocks the app initialization until profile info was loaded
-            return profileService.loadProfileInfo();
+            // If the IdP just redirected the user back to Artemis, complete the SAML2 second-step
+            // exchange (turn the SAML2 HttpSession into an Artemis JWT cookie) before resolving the
+            // user identity. This way the regular route guards see an authenticated user and route
+            // them to /courses, instead of the public landing page rendered for unauthenticated visitors.
+            // Match the cookie name exactly so a name that merely ends with 'SAML2flow' cannot trigger this branch.
+            const hasSaml2FlowCookie = /(?:^|;\s*)SAML2flow=/.test(document.cookie);
+            const completeSaml2 = hasSaml2FlowCookie
+                ? lastValueFrom(authServerProvider.loginSAML2(true))
+                      // The .catch is load-bearing: Promise.all below short-circuits on the first
+                      // rejection, so any error here would abort APP_INITIALIZER and prevent the SPA
+                      // from booting. We log so the failure is observable but recover by rendering
+                      // the landing page (or sign-in if the user navigates there manually).
+                      .catch((error) => {
+                          // eslint-disable-next-line no-undef
+                          console.warn('SAML2 second-step exchange failed during app initialization', error);
+                          return undefined;
+                      })
+                      .finally(() => {
+                          // Path=/ must match the path the cookie was set with in Saml2LoginComponent so the
+                          // deletion reliably removes it regardless of the document path the SPA boots from.
+                          document.cookie = 'SAML2flow=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax;';
+                      })
+                : Promise.resolve();
+            // Load profile info and resolve user identity in parallel to minimize startup time.
+            // Profile info is required for all components; identity resolution avoids a sequential HTTP call in route guards.
+            return Promise.all([profileService.loadProfileInfo(), completeSaml2.then(() => accountService.identity().catch(() => undefined))]).then(() => undefined);
         }),
         /**
          * @description Interceptor declarations:

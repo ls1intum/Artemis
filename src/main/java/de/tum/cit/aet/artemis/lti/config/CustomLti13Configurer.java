@@ -1,10 +1,8 @@
 package de.tum.cit.aet.artemis.lti.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
-
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
@@ -16,13 +14,15 @@ import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
 import uk.ac.ox.ctl.lti13.Lti13Configurer;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcLaunchFlowAuthenticationProvider;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.HttpSessionOAuth2AuthorizationRequestRepository;
+import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2AuthorizationRequestRedirectFilter;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticationFilter;
+import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OIDCInitiatingLoginRequestResolver;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OptimisticAuthorizationRequestRepository;
 
 /**
  * Configures and registers Security Filters to handle LTI 1.3 Resource Link Launches
  */
-@Profile(PROFILE_LTI)
+@Conditional(LtiEnabled.class)
 @Component
 @Lazy
 public class CustomLti13Configurer extends Lti13Configurer {
@@ -87,6 +87,22 @@ public class CustomLti13Configurer extends Lti13Configurer {
         OAuth2LoginAuthenticationFilter defaultLoginFilter = configureLoginFilter(clientRegistrationRepository(http), oidcLaunchFlowAuthenticationProvider,
                 authorizationRequestRepository);
         http.addFilterAfter(new Lti13LaunchFilter(defaultLoginFilter, LTI13_LOGIN_PATH, lti13Service(http)), JWTFilter.class);
+    }
+
+    /**
+     * Override the library's initiation filter configuration to use {@link Lti13PathRegistrationResolver}
+     * instead of the library's {@code PathOIDCInitiationRegistrationResolver} which depends on
+     * {@code AntPathRequestMatcher} (removed in Spring Security 7).
+     */
+    @Override
+    protected OAuth2AuthorizationRequestRedirectFilter configureInitiationFilter(ClientRegistrationRepository clientRegistrationRepository,
+            OptimisticAuthorizationRequestRepository authorizationRequestRepository) {
+        // Use our Spring Security 7 compatible resolver instead of the library's PathOIDCInitiationRegistrationResolver
+        var registrationResolver = new Lti13PathRegistrationResolver(ltiPath + loginInitiationPath);
+        var resolver = new OIDCInitiatingLoginRequestResolver(clientRegistrationRepository, registrationResolver);
+        var filter = new OAuth2AuthorizationRequestRedirectFilter(resolver);
+        filter.setAuthorizationRequestRepository(authorizationRequestRepository);
+        return filter;
     }
 
     protected Lti13Service lti13Service(HttpSecurity http) {

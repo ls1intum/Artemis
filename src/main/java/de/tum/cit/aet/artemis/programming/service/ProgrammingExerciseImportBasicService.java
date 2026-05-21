@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -85,7 +86,7 @@ public class ProgrammingExerciseImportBasicService {
 
     private final ChannelService channelService;
 
-    private final ExerciseService exerciseService;
+    private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
     public ProgrammingExerciseImportBasicService(Optional<VersionControlService> versionControlService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
@@ -94,7 +95,7 @@ public class ProgrammingExerciseImportBasicService {
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyRepository submissionPolicyRepository,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
             ProgrammingExerciseTaskService programmingExerciseTaskService, UriService uriService, ChannelService channelService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ExerciseService exerciseService) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, CompetencyExerciseLinkService competencyExerciseLinkService) {
         this.versionControlService = versionControlService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -110,7 +111,7 @@ public class ProgrammingExerciseImportBasicService {
         this.uriService = uriService;
         this.channelService = channelService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
-        this.exerciseService = exerciseService;
+        this.competencyExerciseLinkService = competencyExerciseLinkService;
     }
 
     /**
@@ -154,6 +155,10 @@ public class ProgrammingExerciseImportBasicService {
             // exercise and want to reuse it from the existing exercise
             newProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(originalProgrammingExercise.getBuildConfig().getBuildPlanConfiguration());
         }
+        if (!BuildPlanPhasesDTO.isInPhasesFormatOrNull(originalProgrammingExercise.getBuildConfig().getBuildPlanConfiguration())
+                && newProgrammingExercise.getBuildConfig().getBuildScript() == null) {
+            newProgrammingExercise.getBuildConfig().setBuildScript(originalProgrammingExercise.getBuildConfig().getBuildScript());
+        }
 
         // Hints, tasks, test cases and static code analysis categories
         newProgrammingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(newProgrammingExercise.getBuildConfig()));
@@ -187,7 +192,12 @@ public class ProgrammingExerciseImportBasicService {
             }
         }
 
-        final ProgrammingExercise importedExercise = exerciseService.saveWithCompetencyLinks(newProgrammingExercise, programmingExerciseRepository::save);
+        var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newProgrammingExercise);
+        ProgrammingExercise importedExercise = programmingExerciseRepository.save(newProgrammingExercise);
+        if (!competencyLinks.isEmpty()) {
+            competencyExerciseLinkService.addCompetencyLinksForCreation(importedExercise, competencyLinks);
+            importedExercise = programmingExerciseRepository.save(importedExercise);
+        }
 
         final Map<Long, Long> newTestCaseIdByOldId = importTestCases(originalProgrammingExercise, importedExercise);
         importTasks(originalProgrammingExercise, importedExercise, newTestCaseIdByOldId);
@@ -204,7 +214,7 @@ public class ProgrammingExerciseImportBasicService {
         programmingExerciseTaskService.updateTestIds(importedExercise, newTestCaseIdByOldId);
 
         // Copy or create SCA categories
-        if (Boolean.TRUE.equals(importedExercise.isStaticCodeAnalysisEnabled() && Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled()))) {
+        if (Boolean.TRUE.equals(importedExercise.isStaticCodeAnalysisEnabled()) && Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled())) {
             importStaticCodeAnalysisCategories(originalProgrammingExercise, importedExercise);
         }
         else if (Boolean.TRUE.equals(importedExercise.isStaticCodeAnalysisEnabled()) && !Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled())) {

@@ -38,7 +38,7 @@ describe('ProgressBarComponent', () => {
         { percentage: 100, clazz: 'bg-success' },
     ])('uses correct background', ({ percentage, clazz }) => {
         component.percentage = percentage;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.ngOnChanges({ percentage: {} as SimpleChange });
         expect(component.backgroundColorClass).toBe(clazz);
     });
@@ -57,7 +57,7 @@ describe('ProgressBarComponent', () => {
 
         themeService.applyThemePreference(Theme.DARK);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.foregroundColorClass).toBe('text-white');
     });

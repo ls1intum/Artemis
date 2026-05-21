@@ -118,7 +118,7 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
         result.setFeedbacks(new ArrayList<>(List.of(feedback1, feedback2, feedback3)));
 
         result.filterSensitiveFeedbacks(false);
-        assertThat(result.getFeedbacks()).isEqualTo(List.of(feedback1, feedback2));
+        assertThat(result.getFeedbacks()).containsExactlyInAnyOrder(feedback1, feedback2);
     }
 
     @Test
@@ -129,7 +129,7 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
         result.setFeedbacks(new ArrayList<>(List.of(feedback1, feedback2, feedback3)));
 
         result.filterSensitiveFeedbacks(true);
-        assertThat(result.getFeedbacks()).isEqualTo(List.of(feedback1));
+        assertThat(result.getFeedbacks()).containsExactly(feedback1);
     }
 
     @Test
@@ -167,6 +167,40 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
         result.filterSensitiveFeedbacks(true);
 
         assertThat(result.getFeedbacks()).hasSize(2).allMatch(feedback -> feedback.getTestCase().getTestName() != null);
+    }
+
+    @Test
+    void createFilteredFeedbacks_shouldHandleNullFeedbackEntries() {
+        Feedback feedback1 = new Feedback().visibility(Visibility.ALWAYS);
+        feedback1.setCredits(1.0);
+        Feedback feedback2 = new Feedback().visibility(Visibility.ALWAYS);
+        feedback2.setCredits(2.0);
+        // Simulate null gaps from Hibernate @OrderColumn when feedback entries are deleted
+        List<Feedback> feedbacksWithNulls = new ArrayList<>();
+        feedbacksWithNulls.add(feedback1);
+        feedbacksWithNulls.add(null);
+        feedbacksWithNulls.add(feedback2);
+        feedbacksWithNulls.add(null);
+        result.setFeedbacks(feedbacksWithNulls);
+
+        var filtered = result.createFilteredFeedbacks(false, new TextExercise().course(course));
+        assertThat(filtered).containsExactly(feedback1, feedback2);
+    }
+
+    @Test
+    void filterSensitiveFeedbacks_shouldHandleNullFeedbackEntries() {
+        Feedback feedback1 = new Feedback().visibility(Visibility.ALWAYS);
+        feedback1.setCredits(1.0);
+        Feedback feedback2 = new Feedback().visibility(Visibility.AFTER_DUE_DATE);
+        feedback2.setCredits(2.0);
+        List<Feedback> feedbacksWithNulls = new ArrayList<>();
+        feedbacksWithNulls.add(feedback1);
+        feedbacksWithNulls.add(null);
+        feedbacksWithNulls.add(feedback2);
+        result.setFeedbacks(feedbacksWithNulls);
+
+        result.filterSensitiveFeedbacks(true);
+        assertThat(result.getFeedbacks()).containsExactly(feedback1);
     }
 
     @Test

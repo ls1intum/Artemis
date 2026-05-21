@@ -118,19 +118,28 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
         // Increment diff run sequence; used to ignore stale results from previous runs
         const runId = ++this.diffRunId;
 
-        const leftCommitObservable = this.isTemplate
-            ? of(new Map())
-            : this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
-                  this.exerciseId,
-                  this.repositoryId!,
-                  this.previousCommit.hash!,
-                  this.repositoryType,
-              );
+        const previousCommitHash = this.previousCommit?.hash;
+        const currentCommitHash = this.currentCommit?.hash;
+
+        if (!currentCommitHash) {
+            this.errorWhileFetching = true;
+            return;
+        }
+
+        const leftCommitObservable =
+            this.isTemplate || !previousCommitHash
+                ? of(new Map())
+                : this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
+                      this.exerciseId,
+                      this.repositoryId!,
+                      previousCommitHash,
+                      this.repositoryType,
+                  );
 
         const rightCommitObservable = this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
             this.exerciseId,
             this.repositoryId!,
-            this.currentCommit.hash!,
+            currentCommitHash,
             this.repositoryType,
         );
 

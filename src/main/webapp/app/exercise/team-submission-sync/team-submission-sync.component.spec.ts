@@ -20,6 +20,7 @@ import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { SubmissionPatchPayload } from 'app/exercise/shared/entities/submission/submission-patch-payload.model';
 import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 describe('Team Submission Sync Component', () => {
     let fixture: ComponentFixture<TeamSubmissionSyncComponent>;
@@ -35,7 +36,7 @@ describe('Team Submission Sync Component', () => {
             providers: [
                 MockProvider(AlertService),
                 MockProvider(SessionStorageService),
-                MockProvider(WebsocketService),
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: HttpClient, useClass: MockHttpService },
@@ -77,8 +78,7 @@ describe('Team Submission Sync Component', () => {
         const submissionSyncObservable = of(submissionSyncPayload);
 
         const receiveSubmissionEventEmitter = jest.spyOn(component.receiveSubmission, 'emit');
-        const websocketSubscribeSpy = jest.spyOn(websocketService, 'subscribe');
-        const websocketReceiveMock = jest.spyOn(websocketService, 'receive').mockReturnValue(submissionSyncObservable);
+        const websocketSubscribeSpy = jest.spyOn(websocketService, 'subscribe').mockReturnValue(submissionSyncObservable);
         const websocketSendSpy = jest.spyOn(websocketService, 'send');
 
         component.ngOnInit();
@@ -88,8 +88,6 @@ describe('Team Submission Sync Component', () => {
         expect(websocketSubscribeSpy).toHaveBeenCalledWith(expectedWebsocketTopic);
 
         // checks for setupReceiver
-        expect(websocketReceiveMock).toHaveBeenCalledOnce();
-        expect(websocketReceiveMock).toHaveBeenCalledWith(expectedWebsocketTopic);
         expect(receiveSubmissionEventEmitter).toHaveBeenCalledOnce();
         expect(receiveSubmissionEventEmitter).toHaveBeenCalledWith(submissionSyncPayload?.submission);
 
@@ -97,36 +95,39 @@ describe('Team Submission Sync Component', () => {
         expect(textSubmissionWithParticipation).toBeDefined();
         expect(textSubmissionWithParticipation?.participation?.exercise).toBeUndefined();
         expect(textSubmissionWithParticipation?.participation?.submissions).toBeEmpty();
-        expect(websocketSendSpy).toHaveBeenCalledOnce();
-        expect(websocketSendSpy).toHaveBeenCalledWith(expectedWebsocketTopic + '/update', textSubmissionWithParticipation);
+        expect(websocketSendSpy).toHaveBeenCalledTimes(2);
+        expect(websocketSendSpy).toHaveBeenNthCalledWith(1, expectedWebsocketTopic + '/update', textSubmissionWithParticipation);
+        expect(websocketSendSpy.mock.calls[1][0]).toBe(expectedWebsocketTopic + '/patch');
+        expect(websocketSendSpy.mock.calls[1][1]).toBeInstanceOf(SubmissionPatch);
     });
 
     it('should handle submission patch payloads.', () => {
         const mockEmitter = new Subject<SubmissionPatchPayload>();
         const receiver = jest.fn();
-        jest.spyOn(websocketService, 'receive').mockReturnValue(mockEmitter);
+        jest.spyOn(websocketService, 'subscribe').mockReturnValue(mockEmitter.asObservable());
 
         component.ngOnInit();
         component.receiveSubmissionPatch.subscribe(receiver);
 
+        const patchString = JSON.stringify([{ op: 'replace', path: '/text', value: 'new text' }]);
         mockEmitter.next({
-            submissionPatch: { patch: [{ op: 'replace', path: '/text', value: 'new text' }] },
+            submissionPatch: { patch: patchString },
             sender: currentUser.login!,
         });
 
-        expect(receiver).toHaveBeenCalledWith({ patch: [{ op: 'replace', path: '/text', value: 'new text' }] });
+        expect(receiver).toHaveBeenCalledWith({ patch: patchString });
     });
 
     it('should properly send submission patches.', () => {
         const sendSpy = jest.spyOn(websocketService, 'send');
-        jest.spyOn(websocketService, 'receive').mockReturnValue(of());
+        jest.spyOn(websocketService, 'subscribe').mockReturnValue(of());
         const mockEmitter = new Subject<SubmissionPatch>();
 
         component.submissionPatchObservable = mockEmitter;
         component.ngOnInit();
 
         const expectedTopic = '/topic/participations/3/team/text-submissions/patch';
-        const patch: SubmissionPatch = { patch: [{ op: 'replace', path: '/text', value: 'new text' }] };
+        const patch: SubmissionPatch = { patch: JSON.stringify([{ op: 'replace', path: '/text', value: 'new text' }]) };
         mockEmitter.next(patch);
         expect(sendSpy).toHaveBeenCalledWith(expectedTopic, patch);
     });

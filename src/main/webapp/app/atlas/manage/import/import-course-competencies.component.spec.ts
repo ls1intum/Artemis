@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ImportCourseCompetenciesComponent } from 'app/atlas/manage/import/import-course-competencies.component';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
@@ -12,6 +13,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 @Component({ template: '' })
 class DummyImportComponent extends ImportCourseCompetenciesComponent {
@@ -21,11 +23,12 @@ class DummyImportComponent extends ImportCourseCompetenciesComponent {
 }
 
 describe('ImportCourseCompetenciesComponent', () => {
+    setupTestBed({ zoneless: true });
     let componentFixture: ComponentFixture<DummyImportComponent>;
     let component: DummyImportComponent;
     let courseCompetencyService: CourseCompetencyService;
-    let getCourseCompetenciesSpy: jest.SpyInstance;
-    let getForImportSpy: jest.SpyInstance;
+    let getCourseCompetenciesSpy: ReturnType<typeof vi.spyOn>;
+    let getForImportSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -48,13 +51,13 @@ describe('ImportCourseCompetenciesComponent', () => {
 
                 courseCompetencyService = TestBed.inject(CourseCompetencyService);
 
-                getForImportSpy = jest.spyOn(courseCompetencyService, 'getForImport');
-                getCourseCompetenciesSpy = jest.spyOn(courseCompetencyService, 'getAllForCourse');
+                getForImportSpy = vi.spyOn(courseCompetencyService, 'getForImport');
+                getCourseCompetenciesSpy = vi.spyOn(courseCompetencyService, 'getAllForCourse');
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -86,14 +89,14 @@ describe('ImportCourseCompetenciesComponent', () => {
         componentFixture.detectChanges();
 
         expect(component.disabledIds).toHaveLength(6);
-        expect(component.disabledIds).toIncludeAllMembers([1, 2, 3, 4, 11, 12]);
+        expect(component.disabledIds).toEqual(expect.arrayContaining([1, 2, 3, 4, 11, 12]));
         expect(component.searchedCourseCompetencies.resultsOnPage).toHaveLength(3);
     });
 
     it('should cancel', () => {
         componentFixture.detectChanges();
         const router: Router = TestBed.inject(Router);
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const navigateSpy = vi.spyOn(router, 'navigate');
 
         component.onCancel();
 
@@ -102,13 +105,13 @@ describe('ImportCourseCompetenciesComponent', () => {
 
     it('should deactivate correctly', () => {
         component.isLoading = false;
-        expect(component.canDeactivate()).toBeTrue();
+        expect(component.canDeactivate()).toBeTruthy();
 
         component.isLoading = true;
-        expect(component.canDeactivate()).toBeFalse();
+        expect(component.canDeactivate()).toBeFalsy();
 
         component.isSubmitted = true;
-        expect(component.canDeactivate()).toBeTrue();
+        expect(component.canDeactivate()).toBeTruthy();
     });
 
     it('should perform search on search change', () => {
@@ -141,7 +144,7 @@ describe('ImportCourseCompetenciesComponent', () => {
 
     it('should sort selected', () => {
         const sortService = TestBed.inject(SortService);
-        const sortSpy = jest.spyOn(sortService, 'sortByProperty');
+        const sortSpy = vi.spyOn(sortService, 'sortByProperty');
 
         component.sortSelected({} as PageableSearch);
 
@@ -182,10 +185,10 @@ describe('ImportCourseCompetenciesComponent', () => {
         component['isSubmitted'] = true;
         component.selectedCourseCompetencies = { resultsOnPage: [{ id: 1 }], numberOfPages: 0 };
         canDeactivate = component.canDeactivate();
-        expect(canDeactivate).toBeTrue();
+        expect(canDeactivate).toBeTruthy();
 
         component['isSubmitted'] = false;
         canDeactivate = component.canDeactivate();
-        expect(canDeactivate).toBeFalse();
+        expect(canDeactivate).toBeFalsy();
     });
 });

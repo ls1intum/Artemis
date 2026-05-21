@@ -1,14 +1,13 @@
 package de.tum.cit.aet.artemis.lecture.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
@@ -17,7 +16,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 /**
  * API for managing lecture transcriptions.
  */
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Lazy
 @Controller
 public class LectureTranscriptionsRepositoryApi extends AbstractLectureApi {

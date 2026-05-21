@@ -127,6 +127,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     @ResponseStatus(HttpStatus.OK)
     @PutMapping("participations/{participationId}/manual-results")
     @EnforceAtLeastTutor
+    // TODO: use a DTO for input and output
     public ResponseEntity<Result> saveProgrammingAssessment(@PathVariable Long participationId, @RequestParam(value = "submit", defaultValue = "false") boolean submit,
             @RequestBody Result newManualResult) {
         log.debug("REST request to save a new result : {}", newManualResult);
@@ -182,7 +183,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         if (!isAtLeastInstructor) {
             newManualResult.getSubmission().getParticipation().filterSensitiveInformation();
         }
-
+        // Not needed in the client
+        newManualResult.getSubmission().getParticipation().setExercise(null);
         return ResponseEntity.ok(newManualResult);
     }
 

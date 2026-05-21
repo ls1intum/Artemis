@@ -22,14 +22,14 @@ describe('InformationBoxComponent', () => {
     });
 
     it('should display the title', () => {
-        component.informationBoxData = {
+        fixture.componentRef.setInput('informationBoxData', {
             title: 'Test Title',
             tooltip: 'Test Tooltip',
             tooltipParams: {},
             isContentComponent: false,
             content: { type: 'string', value: 'Test Content' },
             contentColor: 'primary',
-        };
+        });
         fixture.detectChanges();
 
         const compiled = fixture.nativeElement as HTMLElement;
@@ -38,14 +38,14 @@ describe('InformationBoxComponent', () => {
     });
 
     it('should display the content', () => {
-        component.informationBoxData = {
+        fixture.componentRef.setInput('informationBoxData', {
             title: 'Test Title',
             tooltip: 'Test Tooltip',
             tooltipParams: {},
             isContentComponent: false,
             content: { type: 'string', value: 'Test Content' },
             contentColor: 'primary',
-        };
+        });
         fixture.detectChanges();
 
         const compiled = fixture.nativeElement as HTMLElement;

@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.sql.SQLException;
 import java.util.Optional;
@@ -11,11 +11,11 @@ import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
-import org.springframework.boot.autoconfigure.liquibase.LiquibaseDataSource;
-import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.info.BuildProperties;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties;
+import org.springframework.boot.liquibase.autoconfigure.LiquibaseDataSource;
+import org.springframework.boot.liquibase.autoconfigure.LiquibaseProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -24,13 +24,12 @@ import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
+import de.tum.cit.aet.artemis.core.config.liquibase.AsyncSpringLiquibase;
 import de.tum.cit.aet.artemis.core.config.migration.DatabaseMigration;
 import de.tum.cit.aet.helios.HeliosClient;
 import liquibase.Scope;
 import liquibase.SingletonScopeManager;
 import liquibase.integration.spring.SpringLiquibase;
-import tech.jhipster.config.JHipsterConstants;
-import tech.jhipster.config.liquibase.SpringLiquibaseUtil;
 
 /**
  * Configuration class to control liquibase behavior
@@ -82,10 +81,10 @@ public class LiquibaseConfiguration {
             databaseMigration.checkMigrationPath();
         }
 
-        SpringLiquibase liquibase = SpringLiquibaseUtil.createSpringLiquibase(liquibaseDataSource.getIfAvailable(), liquibaseProperties, dataSource, dataSourceProperties);
+        SpringLiquibase liquibase = AsyncSpringLiquibase.createSpringLiquibase(liquibaseDataSource.getIfAvailable(), liquibaseProperties, dataSource, dataSourceProperties);
         Scope.setScopeManager(new SingletonScopeManager());
         liquibase.setChangeLog("classpath:config/liquibase/master.xml");
-        liquibase.setContexts(liquibaseProperties.getContexts() != null ? liquibaseProperties.getContexts().getFirst() : null);
+        liquibase.setContexts(liquibaseProperties.getContexts() != null ? String.join(",", liquibaseProperties.getContexts()) : null);
         liquibase.setDefaultSchema(liquibaseProperties.getDefaultSchema());
         liquibase.setLiquibaseSchema(liquibaseProperties.getLiquibaseSchema());
         liquibase.setLiquibaseTablespace(liquibaseProperties.getLiquibaseTablespace());
@@ -96,7 +95,7 @@ public class LiquibaseConfiguration {
         liquibase.setChangeLogParameters(liquibaseProperties.getParameters());
         liquibase.setRollbackFile(liquibaseProperties.getRollbackFile());
         liquibase.setTestRollbackOnUpdate(liquibaseProperties.isTestRollbackOnUpdate());
-        if (env.acceptsProfiles(Profiles.of(JHipsterConstants.SPRING_PROFILE_NO_LIQUIBASE))) {
+        if (env.acceptsProfiles(Profiles.of(ArtemisConstants.SPRING_PROFILE_NO_LIQUIBASE))) {
             liquibase.setShouldRun(false);
             log.info("Liquibase is disabled");
         }

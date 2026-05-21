@@ -34,10 +34,10 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
-import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyWithTailRelation;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
@@ -52,9 +52,9 @@ import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.modeling.api.ModelingExerciseImportApi;
+import de.tum.cit.aet.artemis.modeling.config.ModelingApiNotPresentException;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
-import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseImportService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -85,9 +85,7 @@ public class LearningObjectImportService {
 
     private final Optional<FileUploadImportApi> fileUploadImportApi;
 
-    private final ModelingExerciseRepository modelingExerciseRepository;
-
-    private final ModelingExerciseImportService modelingExerciseImportService;
+    private final Optional<ModelingExerciseImportApi> modelingExerciseImportApi;
 
     private final Optional<TextExerciseImportApi> textExerciseImportApi;
 
@@ -115,18 +113,16 @@ public class LearningObjectImportService {
 
     public LearningObjectImportService(ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseImportService programmingExerciseImportService, Optional<FileUploadImportApi> fileUploadImportApi,
-            ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseImportService modelingExerciseImportService,
-            Optional<TextExerciseImportApi> textExerciseImportApi, QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService quizExerciseImportService,
-            Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, Optional<LectureUnitApi> lectureUnitApi,
-            Optional<LectureImportApi> lectureImportApi, CourseCompetencyRepository courseCompetencyRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
-            GradingCriterionRepository gradingCriterionRepository, CompetencyExerciseLinkRepository competencyExerciseLinkRepository,
-            CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository) {
+            Optional<ModelingExerciseImportApi> modelingExerciseImportApi, Optional<TextExerciseImportApi> textExerciseImportApi, QuizExerciseRepository quizExerciseRepository,
+            QuizExerciseImportService quizExerciseImportService, Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
+            Optional<LectureUnitApi> lectureUnitApi, Optional<LectureImportApi> lectureImportApi, CourseCompetencyRepository courseCompetencyRepository,
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, GradingCriterionRepository gradingCriterionRepository,
+            CompetencyExerciseLinkRepository competencyExerciseLinkRepository, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository) {
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseImportService = programmingExerciseImportService;
         this.fileUploadImportApi = fileUploadImportApi;
-        this.modelingExerciseRepository = modelingExerciseRepository;
-        this.modelingExerciseImportService = modelingExerciseImportService;
+        this.modelingExerciseImportApi = modelingExerciseImportApi;
         this.textExerciseImportApi = textExerciseImportApi;
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizExerciseImportService = quizExerciseImportService;
@@ -149,9 +145,9 @@ public class LearningObjectImportService {
      * @param courseToImportInto       The course to import the learning objects into.
      * @param importOptions            The import options.
      */
-    public void importRelatedLearningObjects(Collection<? extends CourseCompetency> sourceCourseCompetencies, Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency,
+    public void importRelatedLearningObjects(Collection<? extends CourseCompetency> sourceCourseCompetencies, Map<Long, CompetencyWithTailRelation> idToImportedCompetency,
             Course courseToImportInto, CompetencyImportOptionsDTO importOptions) {
-        Set<CourseCompetency> importedCourseCompetencies = idToImportedCompetency.values().stream().map(CompetencyWithTailRelationDTO::competency).collect(Collectors.toSet());
+        Set<CourseCompetency> importedCourseCompetencies = idToImportedCompetency.values().stream().map(CompetencyWithTailRelation::competency).collect(Collectors.toSet());
 
         Set<Exercise> importedExercises = new HashSet<>();
         if (importOptions.importExercises()) {
@@ -174,7 +170,7 @@ public class LearningObjectImportService {
         api.saveAll(importedLectures);
     }
 
-    private void importOrLoadExercises(Collection<? extends CourseCompetency> sourceCourseCompetencies, Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency,
+    private void importOrLoadExercises(Collection<? extends CourseCompetency> sourceCourseCompetencies, Map<Long, CompetencyWithTailRelation> idToImportedCompetency,
             Course courseToImportInto, Set<Exercise> importedExercises) {
         for (CourseCompetency sourceCourseCompetency : sourceCourseCompetencies) {
             sourceCourseCompetency.getExerciseLinks().forEach(sourceExerciseLink -> {
@@ -205,8 +201,11 @@ public class LearningObjectImportService {
                 yield importOrLoadExercise(fileUploadExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId, api::findWithGradingCriteriaByIdElseThrow,
                         api::importFileUploadExercise);
             }
-            case ModelingExercise modelingExercise -> importOrLoadExercise(modelingExercise, course, modelingExerciseRepository::findUniqueWithCompetenciesByTitleAndCourseId,
-                    modelingExerciseRepository::findByIdWithExampleSubmissionsAndResultsElseThrow, modelingExerciseImportService::importModelingExercise);
+            case ModelingExercise modelingExercise -> {
+                var api = modelingExerciseImportApi.orElseThrow(() -> new ModelingApiNotPresentException(ModelingExerciseImportApi.class));
+                yield importOrLoadExercise(modelingExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId, api::findByIdWithExampleSubmissionsAndResultsElseThrow,
+                        api::importModelingExercise);
+            }
             case TextExercise textExercise -> {
                 var api = textExerciseImportApi.orElseThrow(() -> new TextApiNotPresentException(TextExerciseImportApi.class));
                 yield importOrLoadExercise(textExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId,
@@ -311,7 +310,7 @@ public class LearningObjectImportService {
      * @param titleToImportedLectures  A map from the source lecture titles to the imported lectures
      * @param importedLectureUnits     The set of imported lecture units
      */
-    private void importOrLoadLectureUnits(Collection<? extends CourseCompetency> sourceCourseCompetencies, Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency,
+    private void importOrLoadLectureUnits(Collection<? extends CourseCompetency> sourceCourseCompetencies, Map<Long, CompetencyWithTailRelation> idToImportedCompetency,
             Course courseToImportInto, Map<String, Lecture> titleToImportedLectures, Set<LectureUnit> importedLectureUnits) {
         for (CourseCompetency sourceCourseCompetency : sourceCourseCompetencies) {
             for (CompetencyLectureUnitLink sourceLectureUnitLink : sourceCourseCompetency.getLectureUnitLinks()) {
@@ -328,7 +327,7 @@ public class LearningObjectImportService {
     }
 
     private void importOrLoadLectureUnit(CompetencyLectureUnitLink sourceLectureUnitLink, CourseCompetency sourceCourseCompetency,
-            Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency, Course courseToImportInto, Map<String, Lecture> titleToImportedLectures,
+            Map<Long, CompetencyWithTailRelation> idToImportedCompetency, Course courseToImportInto, Map<String, Lecture> titleToImportedLectures,
             Set<LectureUnit> importedLectureUnits) throws NoUniqueQueryException {
         if (lectureUnitApi.isEmpty() || lectureUnitRepositoryApi.isEmpty()) {
             return;
@@ -405,11 +404,8 @@ public class LearningObjectImportService {
 
         if (isReleaseDate) {
             Stream<ZonedDateTime> exerciseDates = importedExercises.stream().map(Exercise::getReleaseDate);
-            /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-            /* TODO: #11479 - remove the following line (not the one after that that concerns lecture units) or exchange the empty stream with the commented out one */
-            Stream<ZonedDateTime> lectureDates = Stream.empty(); // importedLectures.stream().map(Lecture::getVisibleDate);
             Stream<ZonedDateTime> lectureUnitDates = importedLectureUnits.stream().map(LectureUnit::getReleaseDate);
-            earliestTime = Stream.concat(exerciseDates, Stream.concat(lectureDates, lectureUnitDates)).filter(Objects::nonNull).min(Comparator.naturalOrder());
+            earliestTime = Stream.concat(exerciseDates, lectureUnitDates).filter(Objects::nonNull).min(Comparator.naturalOrder());
         }
         else {
             Stream<ZonedDateTime> exerciseDates = importedExercises.stream().map(Exercise::getDueDate);
@@ -452,11 +448,6 @@ public class LearningObjectImportService {
     }
 
     private void setAllLectureDates(Lecture lecture, long timeOffset) {
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code OR comment back in */
-        // if (lecture.getVisibleDate() != null) {
-        // lecture.setVisibleDate(lecture.getVisibleDate().plusSeconds(timeOffset));
-        // }
         if (lecture.getStartDate() != null) {
             lecture.setStartDate(lecture.getStartDate().plusSeconds(timeOffset));
         }

@@ -32,21 +32,39 @@
                 "attendanceCheckPassed": "Attendance check passed",
                 "didNotAttend": "Did not attend",
                 "roomDistribute": "Distribute",
+                "notFound": "Student could not be found",
                 "rooms": {
                     "dialogTitle": "Distribute Students",
-                    "introText": "This dialog can be used to distribute students who are registered for an exam to a selection of rooms. Artemis distributes students in order of the selected rooms.",
+                    "introText": "This dialog can be used to distribute students who are registered for an exam to a selection of rooms. Artemis distributes students in order of the selected rooms. If the system cannot find a specified room, you can upload it using the Exam Room Management.",
                     "reserveFactor": "Reserved Seats %",
                     "reserveFactorTooltip": "The percentage of seats that should be reserved, i.e. not distributed to; applied to each room individually",
                     "allowNarrowLayouts": "Allow narrower layouts?",
                     "allowNarrowLayoutsTooltip": "If enabled, allows Artemis to seat students directly next to each other, if it is otherwise unable to seat all students",
                     "searchPlaceholder": "Search by room number, name, and/or building",
-                    "number": "Number",
+                    "number": "Room Number",
                     "name": "Name",
                     "building": "Building",
                     "enoughSeatsForStudents": "You can seat all {{ totalStudents }} students.",
                     "notEnoughSeatsForStudents": "You can only seat {{ usableCapacity }} of the {{ totalStudents }} students ({{ percentage }}%).",
                     "distribute": "Distribute",
-                    "distributeWarning": "You do not have enough capacities"
+                    "noRoomSelected": "No room is selected",
+                    "cantFindRoom": "Can't find your room? Upload it here: "
+                },
+                "export": {
+                    "buttonTitle": "Export Users",
+                    "dialogTitle": "Export Users",
+                    "introText": "This dialog can be used to export the information of all students registered for this exam.",
+                    "finalize": "Export",
+                    "header": {
+                        "matriculationNumber": "Matriculation Number",
+                        "login": "Login",
+                        "name": "Name",
+                        "email": "E-Mail",
+                        "room": "Room",
+                        "seat": "Seat",
+                        "fullLocation": "<exam title>: <full room name>: <seat>"
+                    },
+                    "exportFailed": "Export failed"
                 }
             },
             "overview": {
@@ -200,6 +218,7 @@
                 "relative": "Change relative to regular working time"
             },
             "events": {
+                "title": "Exam Notifications",
                 "button": "Notifications",
                 "type": {
                     "examWideAnnouncement": "Exam-Wide Announcement",
@@ -381,8 +400,11 @@
         "studentExams": {
             "title": "Student exams",
             "generateStudentExams": "Generate individual exams",
+            "generateStudentExamsTooltip": "Generate individual exams for all currently registered students and overwrite existing individual exams",
             "generateMissingStudentExams": "Generate missing individual exams",
+            "generateMissingStudentExamsTooltip": "Generate individual exams only for registered students who do not have one yet",
             "startExercises": "Prepare exercise start",
+            "startExercisesTooltip": "Prepare exam exercises for all generated individual exams",
             "evaluateQuizExercises": "Evaluate quizzes",
             "assessUnsubmittedStudentExams": "Assess unsubmitted exams",
             "searchForStudents": "Search for students by login or name (comma separated)",
@@ -417,6 +439,9 @@
             "studentExamStatusWarning": "Not all registered students have an individual exam",
             "studentExamStatusWarningTooltip": "Click on the button 'Generate missing individual exams' to create the missing student exams. Alternatively, click the button 'Generate individual exams' to delete and re-create exams for all students",
             "studentExamStatusTestExam": "Student exams are automatically created once a student requests to start a test exam",
+            "individualExamsStatus": "Individual exams status",
+            "allExercisesPrepared": "All exercises are prepared for all individual exams",
+            "notAllExercisesPrepared": "Not all exercises are prepared for all individual exams",
             "evaluateQuizExerciseSuccess": "{{number}} quiz exercises successfully evaluated!",
             "evaluateQuizExerciseFailure": "There was an error during the evaluation of the quiz exercises:\n {{message}}",
             "assessUnsubmittedStudentExamsSuccess": "Reviewed all student exams and assessed the unsubmitted or empty modeling and text exercises with 0 points.",
@@ -441,7 +466,7 @@
                 "unsubmit": "Unsubmit"
             },
             "exercisePreparationProgress": {
-                "label": "Exercise preparation progress:",
+                "label": "Exercise preparation progress",
                 "failed": "failed",
                 "remaining": "remaining",
                 "finished": "Finished",
@@ -502,7 +527,6 @@
             "confirmationStartText": "Exam start confirmation text",
             "confirmationEndText": "Exam end confirmation text",
             "assessmentDashboard": "Assessment",
-            "examChecklist": "Exam Checklist",
             "studentExams": "Student Exams",
             "students": "Students",
             "gradingSystem": "Grading Key",
@@ -571,6 +595,53 @@
                 "verifyAttendanceBtn": "Verify Attendance",
                 "examNotStarted": "The exam has not started yet",
                 "verifyChecks": "Verify Attendance",
+                "table": {
+                    "currentPageReport": "Showing {first} to {last} of {totalRecords} students",
+                    "searchPlaceholder": "Search for registered students",
+                    "studentDetails": "Student details",
+                    "matriculationNumber": "Matriculation number",
+                    "room": "Room",
+                    "seat": "Seat",
+                    "status": "Status",
+                    "progress": "Progress",
+                    "sessions": "Sessions",
+                    "actions": "Actions",
+                    "progressSubmittedOn": "Submitted on",
+                    "progressInconsistent": "Inconsistent",
+                    "progressInconsistentTooltip": "has Exam: {{hasExam}}, started: {{started}}, submitted: {{submitted}}",
+                    "progressSubmitted": "Submitted",
+                    "progressStarted": "Started",
+                    "progressNotStarted": "Not started",
+                    "progressExamMissing": "Exam missing",
+                    "viewExam": "View exam",
+                    "remove": "Deregister"
+                },
+                "menu": {
+                    "manageStudents": "Register students",
+                    "examLogistics": "Exam logistics",
+                    "manageStudentExams": "Manage individual exams",
+                    "addStudents": "Add",
+                    "importUsers": "Import from CSV",
+                    "exportUsers": "Export to CSV",
+                    "registerCourseStudents": "Register course students",
+                    "removeAllStudents": "Deregister all students",
+                    "uploadImages": "Upload images",
+                    "distribute": "Distribute students",
+                    "verifyAttendance": "Verify attendance"
+                },
+                "addDialog": {
+                    "title": "Add students",
+                    "description": "Search for course students by name, matriculation number, login, or email. Already registered students are marked and cannot be registered again.",
+                    "searchPlaceholder": "Search students",
+                    "loadingStudents": "Loading students...",
+                    "noUnregisteredStudents": "No students found.",
+                    "registering": "Registering",
+                    "registered": "Registered",
+                    "register": "Register",
+                    "close": "Close",
+                    "errorRegisterStudent": "Failed to register student to exam",
+                    "errorSearchStudents": "Failed to search students."
+                },
                 "removeFromExam": {
                     "modalQuestion": "Are you sure you want to unregister the student with login <strong>{{ title }}</strong> from this exam?",
                     "deleteParticipationsAndSubmission": "Additionally delete this student's participation and submissions in the associated exam? This action can NOT be undone!",
@@ -746,7 +817,7 @@
             "announcementCreate": {
                 "button": "Create Announcement",
                 "title": "Make Live Exam Announcement",
-                "task": "Enter your announcement below. You can use Markdown text formatting.",
+                "task": "Enter your announcement below.",
                 "preview": "Preview",
                 "sendButton": "Send Announcement",
                 "sending": "Sending announcement...",

@@ -46,10 +46,11 @@
                 <hr class="mb-5" />
             }
             <jhi-programming-exercise-problem
-                [(exercise)]="programmingExercise"
+                [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
                 (problemStatementChange)="calculateFormStatusSections()"
+                (programmingExerciseChange)="programmingExercise = $event"
             />
             <hr class="mb-5" />
             <jhi-programming-exercise-grading
@@ -68,12 +69,15 @@
                 [isCreation]="!programmingExercise.id"
                 [isImport]="isImportFromExistingExercise || isImportFromFile || isImportFromSharing"
                 [isSaving]="isSaving"
+                [isGeneratingWithAi]="isGeneratingWithAi()"
+                [showGenerateWithAi]="showGenerateWithAi()"
                 [(notificationText)]="notificationText"
                 [isSimpleMode]="isSimpleMode()"
                 [switchEditMode]="switchEditMode"
                 [areAuxiliaryRepositoriesValid]="isAuxiliaryRepositoryInputValid()"
                 [invalidReasons]="getInvalidReasons()"
                 (save)="save()"
+                (generateWithAi)="saveWithAi()"
                 (onCancel)="previousState()"
             />
         </div>

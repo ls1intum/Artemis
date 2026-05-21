@@ -1,11 +1,9 @@
 package de.tum.cit.aet.artemis.fileupload.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -34,6 +32,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.fileupload.config.FileUploadEnabled;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.dto.FileUploadAssessmentDTO;
@@ -43,7 +42,7 @@ import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionReposito
 /**
  * REST controller for managing FileUploadAssessment.
  */
-@Profile(PROFILE_CORE)
+@Conditional(FileUploadEnabled.class)
 @Lazy
 @RestController
 @RequestMapping("api/fileupload/")

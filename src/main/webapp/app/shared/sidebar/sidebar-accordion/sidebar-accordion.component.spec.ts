@@ -91,13 +91,13 @@ describe('SidebarAccordionComponent', () => {
         const initialCollapseState = component.collapseState[groupKey];
 
         component.searchValue = '';
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const headerElement: DebugElement = fixture.debugElement.query(By.css('#test-accordion-item-header-' + groupKey));
         expect(headerElement).toBeTruthy();
 
         headerElement.triggerEventHandler('click', null);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.collapseState[groupKey]).toBe(!initialCollapseState);
     });
@@ -117,7 +117,7 @@ describe('SidebarAccordionComponent', () => {
         component.isFilterActive = true;
         component.ngOnChanges();
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.expandAll).toHaveBeenCalledOnce();
     });
@@ -125,7 +125,7 @@ describe('SidebarAccordionComponent', () => {
     it('should correctly call setStoredCollapseState when searchValue is cleared', () => {
         const expectedStateAfterClear = component.collapseState;
         component.searchValue = 'initial value';
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         jest.spyOn(component, 'setStoredCollapseState');
 
@@ -133,7 +133,7 @@ describe('SidebarAccordionComponent', () => {
         component.searchValue = '';
         component.ngOnChanges();
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.setStoredCollapseState).toHaveBeenCalledOnce();
         expect(component.collapseState).toEqual(expectedStateAfterClear);
@@ -142,7 +142,7 @@ describe('SidebarAccordionComponent', () => {
     it('should correctly add the d-none class when searchValue is set', () => {
         component.searchValue = '3';
         component.ngOnChanges();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const displayedDivIndex = 2;
         const elementIdDisplayedDiv = `#test-accordion-item-container-${displayedDivIndex}`;

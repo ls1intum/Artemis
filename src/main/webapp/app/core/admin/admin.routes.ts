@@ -1,19 +1,25 @@
 import { Routes } from '@angular/router';
-import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { userManagementRoute } from 'app/core/admin/user-management/user-management.route';
 import { systemNotificationManagementRoute } from 'app/core/admin/system-notification-management/system-notification-management.route';
-import { IrisGuard } from 'app/iris/shared/iris-guard.service';
 
 import { organizationMgmtRoute } from 'app/core/admin/organization-management/organization-management.route';
+import { adminDataExportsRoute } from 'app/core/admin/admin-data-exports/admin-data-exports.route';
+import { adminSbomRoute } from 'app/core/admin/admin-sbom/admin-sbom.route';
 
 import { LocalCIGuard } from 'app/buildagent/shared/localci-guard.service';
 import { ltiConfigurationRoute } from 'app/core/admin/lti-configuration/lti-configuration.route';
 
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { UpcomingExamsAndExercisesComponent } from 'app/core/admin/upcoming-exams-and-exercises/upcoming-exams-and-exercises.component';
-import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_SUPER_ADMIN } from 'app/shared/constants/authority.constants';
+import { AdminContainerComponent } from 'app/core/admin/admin-container/admin-container.component';
 
-const routes: Routes = [
+const childRoutes: Routes = [
+    {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'user-management',
+    },
     {
         path: 'audits',
         loadComponent: () => import('app/core/admin/audits/audits.component').then((m) => m.AuditsComponent),
@@ -30,10 +36,10 @@ const routes: Routes = [
         },
     },
     {
-        path: 'feature-toggles',
+        path: 'features',
         loadComponent: () => import('app/core/admin/features/admin-feature-toggle.component').then((m) => m.AdminFeatureToggleComponent),
         data: {
-            pageTitle: 'featureToggles.title',
+            pageTitle: 'features.title',
         },
     },
     {
@@ -72,10 +78,18 @@ const routes: Routes = [
         },
     },
     {
-        path: 'build-queue',
+        path: 'build-overview',
         loadComponent: () => import('app/buildagent/build-queue/build-overview.component').then((m) => m.BuildOverviewComponent),
         data: {
             pageTitle: 'artemisApp.buildQueue.title',
+        },
+        canActivate: [LocalCIGuard],
+    },
+    {
+        path: 'build-overview/:jobId/job-details',
+        loadComponent: () => import('app/buildagent/build-queue/build-job-detail/build-job-detail.component').then((m) => m.BuildJobDetailComponent),
+        data: {
+            pageTitle: 'artemisApp.buildQueue.detail.title',
         },
         canActivate: [LocalCIGuard],
     },
@@ -138,16 +152,6 @@ const routes: Routes = [
         },
     },
     {
-        path: 'iris',
-        loadComponent: () => import('app/iris/manage/settings/iris-global-settings-update/iris-global-settings-update.component').then((m) => m.IrisGlobalSettingsUpdateComponent),
-        data: {
-            authorities: IS_AT_LEAST_ADMIN,
-            pageTitle: 'artemisApp.iris.settings.title.global',
-        },
-        canActivate: [UserRouteAccessService, IrisGuard],
-        canDeactivate: [PendingChangesGuard],
-    },
-    {
         path: 'cleanup-service',
         loadComponent: () => import('app/core/admin/cleanup-service/cleanup-service.component').then((m) => m.CleanupServiceComponent),
         data: {
@@ -162,17 +166,34 @@ const routes: Routes = [
         },
     },
     {
-        path: 'exam-rooms',
-        loadComponent: () => import('app/core/admin/exam-rooms/exam-rooms.component').then((m) => m.ExamRoomsComponent),
+        path: 'course-requests',
+        loadComponent: () => import('app/core/admin/course-requests/course-requests.component').then((m) => m.CourseRequestsComponent),
         data: {
-            authorities: IS_AT_LEAST_ADMIN,
-            pageTitle: 'global.menu.admin.examRooms',
+            pageTitle: 'artemisApp.courseRequest.admin.title',
+        },
+    },
+    {
+        path: 'passkey-management',
+        loadComponent: () => import('app/core/admin/passkey-management/admin-passkey-management.component').then((m) => m.AdminPasskeyManagementComponent),
+        data: {
+            authorities: IS_AT_LEAST_SUPER_ADMIN,
+            pageTitle: 'artemisApp.adminPasskeyManagement.title',
         },
     },
     ...organizationMgmtRoute,
     ...userManagementRoute,
     ...systemNotificationManagementRoute,
     ...ltiConfigurationRoute,
+    ...adminDataExportsRoute,
+    ...adminSbomRoute,
+];
+
+const routes: Routes = [
+    {
+        path: '',
+        component: AdminContainerComponent,
+        children: childRoutes,
+    },
 ];
 
 export default routes;

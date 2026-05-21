@@ -33,6 +33,7 @@ export class CompetencyFormComponent extends CourseCompetencyFormComponent imple
                 this.initializeForm();
             }
             const fd = this.formData();
+            this.updateTitleUniqueValidator();
             if (this.isEditMode() && fd) {
                 this.setFormValues(fd);
             }
@@ -41,6 +42,7 @@ export class CompetencyFormComponent extends CourseCompetencyFormComponent imple
 
     ngOnChanges(changes: SimpleChanges) {
         this.initializeForm();
+        this.updateTitleUniqueValidator();
         const fd = this.formData();
         if (this.isEditMode() && fd) {
             this.setFormValues(fd);

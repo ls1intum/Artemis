@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.lti.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
-
 import java.net.URI;
 import java.security.KeyPair;
 import java.time.Instant;
@@ -13,8 +11,8 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -28,7 +26,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -38,6 +35,7 @@ import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 
 /**
@@ -45,7 +43,7 @@ import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
  */
 @Component
 @Lazy
-@Profile(PROFILE_LTI)
+@Conditional(LtiEnabled.class)
 public class Lti13TokenRetriever {
 
     private final OAuth2JWKSService oAuth2JWKSService;
@@ -92,7 +90,7 @@ public class Lti13TokenRetriever {
             if (exchange.getBody() == null) {
                 return null;
             }
-            return new ObjectMapper().readTree(exchange.getBody()).get("access_token").asText();
+            return JsonObjectMapper.get().readTree(exchange.getBody()).get("access_token").asText();
         }
         catch (HttpClientErrorException | JsonProcessingException e) {
             log.error("Could not retrieve access token for client {}: {}", clientRegistration.getClientId(), e.getMessage());

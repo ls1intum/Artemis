@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed, inject } from '@angular/core/testing';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
@@ -11,6 +13,8 @@ import { MockProvider } from 'ng-mocks';
 import { Renderer2, RendererFactory2 } from '@angular/core';
 
 describe('Language Helper', () => {
+    setupTestBed({ zoneless: true });
+
     const renderer2: Renderer2 = {
         setAttribute: () => {},
     } as unknown as Renderer2;
@@ -31,12 +35,16 @@ describe('Language Helper', () => {
         });
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('determinePreferredLanguages should respect user preference', inject([JhiLanguageHelper], (service: JhiLanguageHelper) => {
         const navigator = {
             languages: ['de', 'en'],
         } as unknown as Navigator;
 
-        const languageChangeSpy = jest.spyOn(service, 'getNavigatorReference').mockReturnValue(navigator);
+        const languageChangeSpy = vi.spyOn(service, 'getNavigatorReference').mockReturnValue(navigator);
         expect(service.determinePreferredLanguage()).toBe('de');
         expect(languageChangeSpy).toHaveBeenCalledOnce();
     }));
@@ -46,7 +54,7 @@ describe('Language Helper', () => {
             languages: ['elvish', 'orcish'],
         } as unknown as Navigator;
 
-        const languageChangeSpy = jest.spyOn(service, 'getNavigatorReference').mockReturnValue(navigator);
+        const languageChangeSpy = vi.spyOn(service, 'getNavigatorReference').mockReturnValue(navigator);
         expect(service.determinePreferredLanguage()).toBe('en');
         expect(languageChangeSpy).toHaveBeenCalledOnce();
     }));

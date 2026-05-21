@@ -55,3 +55,10 @@
         </div>
     }
 </jhi-loading-indicator-container>
+
+<jhi-create-tutorial-group-free-day
+    #createFreePeriodDialog
+    [course]="course"
+    [tutorialGroupConfigurationId]="tutorialGroupsConfiguration?.id!"
+    (freePeriodCreated)="onFreePeriodCreated()"
+/>

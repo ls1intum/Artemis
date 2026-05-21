@@ -137,14 +137,14 @@ describe('Submission Policy Update Form Component', () => {
     it('should not be invalid when no policy is undefined', () => {
         component.programmingExercise.submissionPolicy = undefined;
         component.ngOnInit();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.invalid).toBeFalse();
     });
 
     it('should not be invalid when no policy is of type none', () => {
         component.programmingExercise.submissionPolicy = { type: SubmissionPolicyType.NONE };
         component.ngOnInit();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.invalid).toBeFalse();
     });
 });

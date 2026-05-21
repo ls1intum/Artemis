@@ -1,56 +1,168 @@
 package de.tum.cit.aet.artemis.iris.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dao.IrisChatSessionDAO;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 
 @Lazy
 @Repository
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChatSession, Long> {
 
+    // -------------------------------------------------------------------------
+    // Sidebar overview query (course-scoped, all modes)
+    // -------------------------------------------------------------------------
+
     /**
-     * Finds a list of {@link IrisChatSession} based on the course and user ID. Filters sessions without messages and sorts them by creation date in descending order.
+     * Finds a list of {@link IrisChatSession} based on the course and user ID. Filters sessions without messages and sorts them by last activity in descending order.
      *
      * @param courseId The ID of the course.
      * @param userId   The ID of the user.
-     * @param types    A collection of chat session types to filter by.
-     * @return A list of chat sessions sorted by creation date in descending order.
+     * @return A list of chat sessions sorted by last activity (most recent message) in descending order.
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.iris.dao.IrisChatSessionDAO(
                       s,
-                      COALESCE(ccs.courseId, e1.id, e2.id, l.id, -1),
-                      COALESCE(e1.shortName, e2.shortName, l.title)
+                      s.entityId,
+                      CASE s.chatMode
+                          WHEN de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.LECTURE_CHAT THEN l.title
+                          WHEN de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.PROGRAMMING_EXERCISE_CHAT THEN e.shortName
+                          WHEN de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.TEXT_EXERCISE_CHAT THEN e.shortName
+                          ELSE NULL END,
+                      MAX(m.sentAt)
                   )
                 FROM IrisChatSession s
-                    LEFT JOIN IrisCourseChatSession ccs ON s.id = ccs.id
-                    LEFT JOIN IrisLectureChatSession lcs ON s.id = lcs.id
-                    LEFT JOIN IrisTextExerciseChatSession tecs ON s.id = tecs.id
-                    LEFT JOIN IrisProgrammingExerciseChatSession pecs ON s.id = pecs.id
-                    LEFT JOIN Lecture l ON l.id = lcs.lectureId
-                    LEFT JOIN Exercise e1 ON e1.id = tecs.exerciseId
-                    LEFT JOIN Exercise e2 ON e2.id = pecs.exerciseId
+                    LEFT JOIN Exercise e ON e.id = s.entityId AND s.chatMode IN (
+                        de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.PROGRAMMING_EXERCISE_CHAT,
+                        de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.TEXT_EXERCISE_CHAT)
+                    LEFT JOIN Lecture l ON l.id = s.entityId AND s.chatMode = de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode.LECTURE_CHAT
                     LEFT JOIN s.messages m
-                    LEFT JOIN m.content c
-                WHERE s.userId = :userId AND TYPE(s) IN (:types)
-                    AND (ccs.courseId = :courseId OR l.course.id = :courseId OR e1.course.id = :courseId OR e2.course.id = :courseId)
+                WHERE s.userId = :userId
+                    AND s.courseId = :courseId
                     AND m.sender = de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender.USER
-                GROUP BY s, ccs.courseId, e1.id, e2.id, l.id
+                GROUP BY s, s.entityId, s.chatMode, e.shortName, l.title
                 HAVING COUNT(m) > 0
-                ORDER BY s.creationDate DESC
+                ORDER BY MAX(m.sentAt) DESC
             """)
-    List<IrisChatSessionDAO> findByCourseIdAndUserId(@Param("courseId") long courseId, @Param("userId") long userId,
-            @Param("types") Collection<Class<? extends IrisChatSession>> types);
+    List<IrisChatSessionDAO> findByCourseIdAndUserId(@Param("courseId") long courseId, @Param("userId") long userId);
+
+    // -------------------------------------------------------------------------
+    // Session lookup by entity (exercise, lecture, or course)
+    // -------------------------------------------------------------------------
+
+    List<IrisChatSession> findByEntityIdAndChatModeAndUserIdOrderByCreationDateDesc(Long entityId, IrisChatMode chatMode, Long userId, Pageable pageable);
+
+    /**
+     * Finds the latest chat sessions for the given entity and chat mode, with messages eagerly loaded.
+     * Works uniformly for all chat modes: for COURSE_CHAT the entityId equals the courseId.
+     *
+     * @param entityId the entity ID (exerciseId, lectureId, or courseId depending on chatMode)
+     * @param chatMode the chat mode to filter by
+     * @param userId   the user ID
+     * @param pageable pagination info
+     * @return list of sessions with messages
+     */
+    default List<IrisChatSession> findLatestByEntityIdAndChatModeAndUserIdWithMessages(Long entityId, IrisChatMode chatMode, Long userId, Pageable pageable) {
+        List<Long> ids = findByEntityIdAndChatModeAndUserIdOrderByCreationDateDesc(entityId, chatMode, userId, pageable).stream().map(DomainObject::getId).toList();
+        if (ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return findSessionsWithMessagesByIdIn(ids);
+    }
+
+    // -------------------------------------------------------------------------
+    // Shared helper: eager message loading by IDs
+    // -------------------------------------------------------------------------
+
+    @EntityGraph(type = LOAD, attributePaths = "messages")
+    List<IrisChatSession> findSessionsWithMessagesByIdIn(List<Long> ids);
+
+    // -------------------------------------------------------------------------
+    // Course-level admin queries (used by IrisSettingsApi)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Count the number of chat sessions for a given course.
+     *
+     * @param courseId the id of the course
+     * @return the number of chat sessions in the course
+     */
+    long countByCourseId(long courseId);
+
+    /**
+     * Find all chat sessions with messages for a given course.
+     * <p>
+     * Note: This query intentionally does not use DISTINCT because IrisMessage contains json columns
+     * (accessed_memories, created_memories) and PostgreSQL's json type does not support equality operators.
+     * The return type is {@code Set} to deduplicate results from the LEFT JOIN FETCH.
+     * Use {@link #findAllWithMessagesByCourseIdSortedByCreationDate(long)} for sorted results.
+     *
+     * @param courseId the id of the course
+     * @return set of chat sessions with their messages
+     */
+    @Query("""
+            SELECT s
+            FROM IrisChatSession s
+                LEFT JOIN FETCH s.messages
+            WHERE s.courseId = :courseId
+            """)
+    Set<IrisChatSession> findAllWithMessagesByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Find all chat sessions with messages for a given course, sorted by creation date ascending.
+     * Sorting is done in Java because the query returns a {@code Set} to avoid issues with
+     * DISTINCT and PostgreSQL's json columns.
+     *
+     * @param courseId the id of the course
+     * @return list of chat sessions with their messages, sorted by creation date ascending
+     */
+    default List<IrisChatSession> findAllWithMessagesByCourseIdSortedByCreationDate(long courseId) {
+        return findAllWithMessagesByCourseId(courseId).stream().sorted(Comparator.comparing(IrisChatSession::getCreationDate, Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+    }
+
+    /**
+     * Deletes all chat sessions for a given course.
+     *
+     * @param courseId The ID of the course.
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    void deleteAllByCourseId(long courseId);
+
+    /**
+     * Deletes all chat sessions for a given entity (exercise or lecture) in a specific chat mode.
+     * <p>
+     * Scoping by {@code chatMode} is mandatory because {@code entityId} is not unique across modes:
+     * the same numeric id may point to an exercise for {@code *_EXERCISE_CHAT} and to an unrelated
+     * lecture for {@code LECTURE_CHAT}. Messages and their content are removed via cascade
+     * (CascadeType.ALL + orphanRemoval on {@code IrisSession.messages}).
+     *
+     * @param chatMode the chat mode (exercise or lecture)
+     * @param entityId the id of the underlying entity (exerciseId or lectureId)
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    void deleteAllByChatModeAndEntityId(IrisChatMode chatMode, long entityId);
+
 }

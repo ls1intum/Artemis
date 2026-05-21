@@ -69,10 +69,6 @@ export const textExerciseRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'text-exercises/:exerciseId/iris-settings',
-        loadChildren: () => import('app/iris/manage/settings/iris-exercise-settings-update/iris-exercise-settings-update-route').then((m) => m.routes),
-    },
-    {
         path: 'text-exercises/:exerciseId/exercise-statistics',
         loadComponent: () => import('app/exercise/statistics/exercise-statistics.component').then((m) => m.ExerciseStatisticsComponent),
         resolve: {

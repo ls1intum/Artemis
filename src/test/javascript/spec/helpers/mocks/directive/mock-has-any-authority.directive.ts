@@ -1,4 +1,5 @@
 import { Directive, Input, TemplateRef, ViewContainerRef } from '@angular/core';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 @Directive({
     selector: '[jhiHasAnyAuthority]',
@@ -11,7 +12,7 @@ export class MockHasAnyAuthorityDirective {
     ) {}
 
     @Input()
-    set jhiHasAnyAuthority(_value: string | string[]) {
+    set jhiHasAnyAuthority(_value: string | string[] | readonly Authority[]) {
         this.updateView();
     }
 

@@ -8,9 +8,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE;
 import static de.tum.cit.aet.artemis.core.config.Constants.USER_FIRST_NAME_AFTER_SOFT_DELETE;
 import static de.tum.cit.aet.artemis.core.config.Constants.USER_LAST_NAME_AFTER_SOFT_DELETE;
-import static de.tum.cit.aet.artemis.core.domain.Authority.ADMIN_AUTHORITY;
-import static de.tum.cit.aet.artemis.core.security.Role.ADMIN;
+import static de.tum.cit.aet.artemis.core.domain.Authority.SUPER_ADMIN_AUTHORITY;
+import static de.tum.cit.aet.artemis.core.domain.User.IRIS_BOT_LOGIN;
 import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
+import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 import static org.apache.commons.lang3.StringUtils.lowerCase;
 
 import java.net.URI;
@@ -30,7 +31,6 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsExcepti
 import de.tum.cit.aet.artemis.core.exception.UsernameAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.RandomUtil;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
@@ -65,7 +66,6 @@ import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.service.sshuserkeys.UserSshPublicKeyService;
-import tech.jhipster.security.RandomUtil;
 
 /**
  * Service class for managing users.
@@ -96,8 +96,6 @@ public class UserService {
 
     private final Optional<LdapUserService> ldapUserService;
 
-    private final CacheManager cacheManager;
-
     private final AuthorityRepository authorityRepository;
 
     private final InstanceMessageSendService instanceMessageSendService;
@@ -121,16 +119,14 @@ public class UserService {
     private final GlobalNotificationSettingService globalNotificationSettingService;
 
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
-            CacheManager cacheManager, Optional<LdapUserService> ldapUserService, PasswordService passwordService, InstanceMessageSendService instanceMessageSendService,
-            FileService fileService, Optional<ScienceEventApi> scienceEventApi, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
-            Optional<LearnerProfileApi> learnerProfileApi, SavedPostRepository savedPostRepository, UserSshPublicKeyService userSshPublicKeyService,
-            CourseNotificationSettingService courseNotificationSettingService, UserCourseNotificationStatusService userCourseNotificationStatusService,
-            GlobalNotificationSettingService globalNotificationSettingService) {
+            Optional<LdapUserService> ldapUserService, PasswordService passwordService, InstanceMessageSendService instanceMessageSendService, FileService fileService,
+            Optional<ScienceEventApi> scienceEventApi, ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi,
+            SavedPostRepository savedPostRepository, UserSshPublicKeyService userSshPublicKeyService, CourseNotificationSettingService courseNotificationSettingService,
+            UserCourseNotificationStatusService userCourseNotificationStatusService, GlobalNotificationSettingService globalNotificationSettingService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
         this.authorityRepository = authorityRepository;
-        this.cacheManager = cacheManager;
         this.ldapUserService = ldapUserService;
         this.passwordService = passwordService;
         this.instanceMessageSendService = instanceMessageSendService;
@@ -152,28 +148,42 @@ public class UserService {
      */
     @PostConstruct
     public void applicationReady() {
-
         try {
             if (artemisInternalAdminUsername.isPresent() && artemisInternalAdminPassword.isPresent()) {
                 // authenticate so that db queries are possible
                 SecurityUtils.setAuthorizationObject();
-                Optional<User> existingInternalAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(artemisInternalAdminUsername.get());
-                if (existingInternalAdmin.isPresent()) {
-                    log.info("Update internal admin user {}", artemisInternalAdminUsername.get());
-                    existingInternalAdmin.get().setPassword(passwordService.hashPassword(artemisInternalAdminPassword.get()));
-                    // needs to be mutable --> new HashSet<>(Set.of(...))
-                    existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
-                    saveUser(existingInternalAdmin.get());
-                }
-                else {
-                    log.info("Create internal admin user {}", artemisInternalAdminUsername.get());
-                    final var managedUserVM = createManagedUserVm(artemisInternalAdminUsername.get(), artemisInternalAdminPassword.get());
-                    userCreationService.createUser(managedUserVM);
-                }
+                ensureInternalAdminExists(artemisInternalAdminUsername.get(), artemisInternalAdminPassword.get());
             }
         }
-        catch (Exception ex) {
-            log.error("An error occurred after application startup when creating or updating the admin user or in the LDAP search", ex);
+        catch (Exception exception) {
+            log.error("An error occurred after application startup when creating or updating the admin user or in the LDAP search", exception);
+        }
+    }
+
+    /**
+     * Ensures that an internal admin user exists with the specified credentials.
+     * Creates the user if it doesn't exist, or updates its password and authorities if it does.
+     * This method assumes credentials have already been validated by ConfigurationValidator.
+     *
+     * @param internalAdminUsername the username for the admin user
+     * @param internalAdminPassword the password for the admin user
+     */
+    public void ensureInternalAdminExists(String internalAdminUsername, String internalAdminPassword) {
+        log.debug("Ensuring internal admin user exists: {}", internalAdminUsername);
+
+        Optional<User> existingInternalAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(internalAdminUsername);
+        if (existingInternalAdmin.isPresent()) {
+            log.info("Update internal admin user {}", internalAdminUsername);
+            existingInternalAdmin.get().setActivated(true);
+            existingInternalAdmin.get().setPassword(passwordService.hashPassword(internalAdminPassword));
+            // needs to be mutable --> new HashSet<>(Set.of(...))
+            existingInternalAdmin.get().setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
+            saveUser(existingInternalAdmin.get());
+        }
+        else {
+            log.info("Create internal admin user {}", internalAdminUsername);
+            final var managedUserVM = createManagedUserVm(internalAdminUsername, internalAdminPassword);
+            userCreationService.createUser(managedUserVM);
         }
     }
 
@@ -189,7 +199,7 @@ public class UserService {
         userDto.setCreatedBy("system");
         userDto.setLastModifiedBy("system");
         // needs to be mutable --> new HashSet<>(Set.of(...))
-        userDto.setAuthorities(new HashSet<>(Set.of(ADMIN.getAuthority(), STUDENT.getAuthority())));
+        userDto.setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN.getAuthority(), STUDENT.getAuthority())));
         userDto.setGroups(new HashSet<>());
         return userDto;
     }
@@ -239,13 +249,12 @@ public class UserService {
     }
 
     /**
-     * saves the user and clears the cache
+     * Saves the user.
      *
      * @param user the user object that will be saved into the database
      * @return the saved and potentially updated user object
      */
     public User saveUser(User user) {
-        clearUserCaches(user);
         log.debug("Save user {}", user);
         return userRepository.save(user);
     }
@@ -278,6 +287,9 @@ public class UserService {
         final var newUser = new User();
         String passwordHash = passwordService.hashPassword(password);
         newUser.setLogin(userDTO.getLogin().toLowerCase());
+        if (IRIS_BOT_LOGIN.equals(newUser.getLogin())) {
+            throw new UsernameAlreadyUsedException();
+        }
         // new user gets initially a generated password
         newUser.setPassword(passwordHash);
         newUser.setFirstName(userDTO.getFirstName());
@@ -482,7 +494,6 @@ public class UserService {
         courseNotificationSettingService.deleteAllForUser(user.getId());
 
         userRepository.save(user);
-        clearUserCaches(user);
         userRepository.flush();
 
         scienceEventApi.ifPresent(api -> api.renameIdentity(originalLogin, anonymizedLogin));
@@ -565,35 +576,16 @@ public class UserService {
         }
     }
 
-    private void clearUserCaches(User user) {
-        var userCache = cacheManager.getCache(User.class.getName());
-        if (userCache != null) {
-            userCache.evict(user.getLogin());
-        }
-    }
-
     /**
-     * delete the group with the given name
-     *
-     * @param groupName the name of the group which should be deleted
-     */
-    public void deleteGroup(String groupName) {
-        removeGroupFromUsers(groupName);
-    }
-
-    /**
-     * removes the passed group from all users in the Artemis database, e.g. when the group was deleted
+     * Removes the passed group from all users in the Artemis database using a single bulk delete query.
+     * This is more efficient than loading, modifying, and saving each user individually.
      *
      * @param groupName the group that should be removed from all existing users
      */
-    public void removeGroupFromUsers(String groupName) {
-        log.info("Remove group {} from users", groupName);
-        Set<User> users = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(groupName);
-        log.info("Found {} users with group {}", users.size(), groupName);
-        for (User user : users) {
-            user.getGroups().remove(groupName);
-            saveUser(user);
-        }
+    public void removeGroupFromAllUsers(String groupName) {
+        log.info("Remove group {} from all users", groupName);
+        int deletedCount = userRepository.removeGroupFromAllUsers(groupName);
+        log.info("Removed group {} from {} user-group associations", groupName, deletedCount);
     }
 
     /**

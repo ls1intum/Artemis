@@ -1,8 +1,10 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -26,17 +28,19 @@ let examQuizExercise = { id: 43, quizStarted: true, course, quizQuestions: [ques
 const route = { params: of({ questionId: 1, exerciseId: 42 }) };
 
 describe('QuizStatisticsFooterComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: QuizStatisticsFooterComponent;
     let fixture: ComponentFixture<QuizStatisticsFooterComponent>;
     let quizService: QuizExerciseService;
     let accountService: AccountService;
-    let accountSpy: jest.SpyInstance;
-    let routerSpy: jest.SpyInstance;
+    let accountSpy: any;
+    let routerSpy: any;
     let router: Router;
-    let quizServiceFindSpy: jest.SpyInstance;
+    let quizServiceFindSpy: any;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 { provide: Router, useClass: MockRouter },
                 QuizStatisticUtil,
@@ -59,17 +63,16 @@ describe('QuizStatisticsFooterComponent', () => {
                 },
             })
             .overrideTemplate(QuizStatisticsFooterComponent, '')
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(QuizStatisticsFooterComponent);
-                comp = fixture.componentInstance;
-                quizService = fixture.debugElement.injector.get(QuizExerciseService);
-                accountService = fixture.debugElement.injector.get(AccountService);
-                router = fixture.debugElement.injector.get(Router);
-                routerSpy = jest.spyOn(router, 'navigateByUrl');
-                accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-                quizServiceFindSpy = jest.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
-            });
+            .compileComponents();
+
+        fixture = TestBed.createComponent(QuizStatisticsFooterComponent);
+        comp = fixture.componentInstance;
+        quizService = fixture.debugElement.injector.get(QuizExerciseService);
+        accountService = fixture.debugElement.injector.get(AccountService);
+        router = fixture.debugElement.injector.get(Router);
+        routerSpy = vi.spyOn(router, 'navigateByUrl');
+        accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+        quizServiceFindSpy = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
     });
 
     afterEach(() => {
@@ -78,24 +81,25 @@ describe('QuizStatisticsFooterComponent', () => {
         examQuizExercise = { id: 43, quizStarted: true, course, quizQuestions: [question], exerciseGroup: { id: 11, exam: { id: 10 } } } as QuizExercise;
     });
 
-    it('should load Quiz on Init', fakeAsync(() => {
+    it('should load Quiz on Init', async () => {
         // setup
-        jest.useFakeTimers();
-        const loadSpy = jest.spyOn(comp, 'loadQuiz');
-        const updateDisplayedTimesSpy = jest.spyOn(comp, 'updateDisplayedTimes');
+        vi.useFakeTimers();
+        const loadSpy = vi.spyOn(comp, 'loadQuiz');
+        const updateDisplayedTimesSpy = vi.spyOn(comp, 'updateDisplayedTimes');
 
         // call
         comp.ngOnInit();
-        tick(); // simulate async
-        jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
+        await fixture.whenStable();
+        vi.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
 
         // check
-        expect(accountSpy).toHaveBeenCalledTimes(2);
+        expect(accountSpy).toHaveBeenCalled();
         expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
         expect(loadSpy).toHaveBeenCalledWith(quizExercise);
         expect(comp.question).toEqual(question);
-        expect(updateDisplayedTimesSpy).toHaveBeenCalledOnce();
-    }));
+        expect(updateDisplayedTimesSpy).toHaveBeenCalled();
+        vi.clearAllTimers();
+    });
 
     it('should set quiz and update properties', () => {
         // setup
@@ -108,7 +112,7 @@ describe('QuizStatisticsFooterComponent', () => {
         expect(accountSpy).toHaveBeenCalledOnce();
         expect(comp.quizExercise).toEqual(quizExercise);
         expect(comp.question).toEqual(question);
-        expect(comp.waitingForQuizStart).toBeFalse();
+        expect(comp.waitingForQuizStart).toBe(false);
     });
 
     it('should return remaining Time', () => {

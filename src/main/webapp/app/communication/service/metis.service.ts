@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { Params } from '@angular/router';
 import { AnswerPostService } from 'app/communication/service/answer-post.service';
@@ -14,6 +14,7 @@ import {
     PostSortCriterion,
     RouteComponents,
     SortDirection,
+    getUnreadPostsByLastReadDate,
 } from 'app/communication/metis.util';
 import { PostService } from 'app/communication/service/post.service';
 import { ReactionService } from 'app/communication/service/reaction.service';
@@ -36,8 +37,10 @@ import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
-import { BehaviorSubject, Observable, ReplaySubject, Subscription, catchError, forkJoin, map, of, switchMap, tap, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, ReplaySubject, Subscription, catchError, forkJoin, map, of, switchMap, take, tap, throwError } from 'rxjs';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { onError } from 'app/shared/util/global.utils';
+import { AlertService } from 'app/shared/service/alert.service';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -50,6 +53,7 @@ export class MetisService implements OnDestroy {
     private forwardedMessageService = inject(ForwardedMessageService);
     private savedPostService = inject(SavedPostService);
     private metisConversationService = inject(MetisConversationService);
+    private alertService = inject(AlertService);
     private http = inject(HttpClient);
     private posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
     private totalNumberOfPosts$: ReplaySubject<number> = new ReplaySubject<number>(1);
@@ -65,6 +69,7 @@ export class MetisService implements OnDestroy {
     private subscriptionChannel?: string;
     private courseWideTopicSubscription: Subscription;
     private activeConversationSubscription: Subscription;
+    private subscriptionChannelSubscription?: Subscription;
 
     private course: Course;
     // Expose FAQs as observable so consumers react once async loading finishes (setupMetis fetches from REST)
@@ -75,8 +80,7 @@ export class MetisService implements OnDestroy {
             this.user = user!;
 
             const conversationTopic = `/topic/user/${this.user.id}/notifications/conversations`;
-            this.websocketService.subscribe(conversationTopic);
-            this.activeConversationSubscription = this.websocketService.receive(conversationTopic).subscribe((postDTO: MetisPostDTO) => {
+            this.activeConversationSubscription = this.websocketService.subscribe<MetisPostDTO>(conversationTopic).subscribe((postDTO: MetisPostDTO) => {
                 this.handleNewOrUpdatedMessage(postDTO);
             });
         });
@@ -127,9 +131,7 @@ export class MetisService implements OnDestroy {
     }
 
     ngOnDestroy(): void {
-        if (this.subscriptionChannel) {
-            this.websocketService.unsubscribe(this.subscriptionChannel);
-        }
+        this.subscriptionChannelSubscription?.unsubscribe();
         if (this.courseWideTopicSubscription) {
             this.courseWideTopicSubscription.unsubscribe();
         }
@@ -176,8 +178,7 @@ export class MetisService implements OnDestroy {
             }
 
             const coursewideTopic = `/topic/metis/courses/${this.courseId}`;
-            this.websocketService.subscribe(coursewideTopic);
-            this.courseWideTopicSubscription = this.websocketService.receive(coursewideTopic).subscribe((postDTO: MetisPostDTO) => {
+            this.courseWideTopicSubscription = this.websocketService.subscribe<MetisPostDTO>(coursewideTopic).subscribe((postDTO: MetisPostDTO) => {
                 this.handleNewOrUpdatedMessage(postDTO);
             });
         }
@@ -265,11 +266,10 @@ export class MetisService implements OnDestroy {
                     // Update the answers of the cached post, if the answer is not already included in the list of answers
                     const indexOfAnswer = this.cachedPosts[indexOfCachedPost].answers?.findIndex((answer) => answer.id === createdAnswerPost.id) ?? -1;
                     if (indexOfAnswer === -1) {
-                        if (!this.cachedPosts[indexOfCachedPost].answers) {
-                            // Need to create a new message object since Angular doesn't detect changes otherwise
-                            this.cachedPosts[indexOfCachedPost] = { ...this.cachedPosts[indexOfCachedPost], answers: [], reactions: [] };
-                        }
-                        this.cachedPosts[indexOfCachedPost].answers!.push(createdAnswerPost);
+                        const post = this.cachedPosts[indexOfCachedPost];
+                        // Always create new array+post to make sure Angular detects changes
+                        const answers = [...(post.answers ?? []), createdAnswerPost];
+                        this.cachedPosts[indexOfCachedPost] = { ...post, answers: answers };
                         this.posts$.next(this.cachedPosts);
                         this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
@@ -500,7 +500,7 @@ export class MetisService implements OnDestroy {
         }
     }
     /**
-     * creates empty default post that is needed on initialization of a newly opened modal to edit or create a post
+     * creates empty default post needed on initialization of a newly opened modal to edit or create a post
      * @param conversation optional conversation as default context
      * @param plagiarismCase optional plagiarism case as default context
      * @return {Post} created default object
@@ -642,14 +642,14 @@ export class MetisService implements OnDestroy {
         }
         // unsubscribe from existing channel subscription
         if (this.subscriptionChannel) {
-            this.websocketService.unsubscribe(this.subscriptionChannel);
+            this.subscriptionChannelSubscription?.unsubscribe();
             this.subscriptionChannel = undefined;
+            this.subscriptionChannelSubscription = undefined;
         }
 
         // create new subscription
         this.subscriptionChannel = channel;
-        this.websocketService.subscribe(this.subscriptionChannel);
-        this.websocketService.receive(this.subscriptionChannel).subscribe(this.handleNewOrUpdatedMessage);
+        this.subscriptionChannelSubscription = this.websocketService.subscribe<MetisPostDTO>(this.subscriptionChannel).subscribe(this.handleNewOrUpdatedMessage);
     }
 
     public savePost(post: Posting) {
@@ -674,6 +674,23 @@ export class MetisService implements OnDestroy {
             next: () => {},
         });
         this.posts$.next(this.cachedPosts);
+    }
+
+    public markMessageAsUnread(post: Post) {
+        this.conversationService
+            .markMessageAsUnread(this.courseId, post.conversation!.id!, post.id!)
+            .pipe(take(1))
+            .subscribe({
+                next: () => {
+                    const lastReadDate = post.creationDate!.subtract(1, 'millisecond');
+                    const unreadMessagesCount = getUnreadPostsByLastReadDate(this.user, this.cachedPosts, lastReadDate).length;
+                    this.metisConversationService.updateConversationUnreadState(post.conversation!.id, lastReadDate, unreadMessagesCount);
+                    this.posts$.next(this.cachedPosts);
+                },
+                error: (errorResponse: HttpErrorResponse) => {
+                    onError(this.alertService, errorResponse);
+                },
+            });
     }
 
     public resetCachedPosts() {
@@ -833,8 +850,9 @@ export class MetisService implements OnDestroy {
         } else {
             // No need for extra subscription since messaging topics are covered by other services
             if (this.subscriptionChannel) {
-                this.websocketService.unsubscribe(this.subscriptionChannel);
+                this.subscriptionChannelSubscription?.unsubscribe();
                 this.subscriptionChannel = undefined;
+                this.subscriptionChannelSubscription = undefined;
             }
             return;
         }

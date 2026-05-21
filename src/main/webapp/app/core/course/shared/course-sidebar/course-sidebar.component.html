@@ -109,7 +109,7 @@
                         >
                             <div class="d-flex align-items-center">
                                 @if (bottomItem.icon) {
-                                    <fa-icon [fixedWidth]="true" [icon]="bottomItem.icon" class="ms-2 me-3" />
+                                    <fa-icon [fixedWidth]="true" [icon]="bottomItem.icon" class="ms-2 me-3" [style.color]="bottomItem.iconColor" />
                                 }
                                 @if (!isNavbarCollapsed()) {
                                     <span class="auto-collapse text-truncate" [jhiTranslate]="bottomItem.translation"></span>
@@ -125,7 +125,7 @@
                                 [container]="'body'"
                                 (click)="toggleCollapseState.emit()"
                             >
-                                <div class="double-arrow-icon" [attr.aria-expanded]="!isNavbarCollapsed()" aria-controls="collapseBasic">
+                                <div class="double-arrow-icon" [attr.aria-expanded]="!isNavbarCollapsed()">
                                     <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
                                     <fa-icon class="fa-xs" [icon]="faChevronRight" />
                                 </div>
@@ -143,7 +143,7 @@
                     [ngbTooltip]="(isNavbarCollapsed() ? 'Expand' : 'Collapse') + ' Menu (Ctrl + M)'"
                     (click)="toggleCollapseState.emit()"
                 >
-                    <div class="double-arrow-icon" [attr.aria-expanded]="!isNavbarCollapsed()" aria-controls="collapseBasic">
+                    <div class="double-arrow-icon" [attr.aria-expanded]="!isNavbarCollapsed()">
                         <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
                         <fa-icon class="fa-xs" [icon]="faChevronRight" />
                     </div>
@@ -167,7 +167,7 @@
 
     <ng-template #navIconAndText let-sidebarItem>
         @if (sidebarItem.icon) {
-            <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" class="ms-2 me-3" />
+            <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" class="ms-2 me-3" [style.color]="sidebarItem.iconColor" />
         }
         @if (!isNavbarCollapsed()) {
             <span class="auto-collapse" [jhiTranslate]="sidebarItem.translation"></span>
@@ -176,7 +176,7 @@
 
     <ng-template #navIconAndTextHidden let-sidebarItem>
         @if (sidebarItem.icon) {
-            <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" class="ms-2 me-3" />
+            <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" class="ms-2 me-3" [style.color]="sidebarItem.iconColor" />
             <span [jhiTranslate]="sidebarItem.translation"></span>
         }
     </ng-template>
@@ -194,7 +194,7 @@
             [routerLinkActiveOptions]="sidebarItem?.isPrefix ? { exact: true } : { exact: false }"
             [jhiFeatureToggleHide]="sidebarItem.featureToggle"
             [title]="sidebarItem.title"
-            (click)="itemsDrop?.close()"
+            (click)="onSidebarItemClick(sidebarItem); itemsDrop?.close()"
         >
             <ng-template *ngTemplateOutlet="iconTextTemplate; context: { $implicit: sidebarItem }" />
         </a>

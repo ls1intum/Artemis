@@ -20,15 +20,20 @@ import org.springframework.util.MultiValueMap;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseCreateDTO;
-import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithStatisticsDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.UpdateQuizExerciseDTO;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
@@ -53,6 +58,9 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
     protected ExamUtilService examUtilService;
 
     @Autowired
+    protected ExamTestRepository examRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     protected Course createEmptyCourse() {
@@ -61,17 +69,27 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
         return quizExerciseUtilService.createAndSaveCourse(1L, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, Set.of());
     }
 
-    protected QuizExercise importQuizExerciseWithFiles(QuizExercise quizExercise, Long id, List<MockMultipartFile> files, HttpStatus expectedStatus) throws Exception {
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/quiz/quiz-exercises/import/" + id);
-        builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(quizExercise)))
-                .contentType(MediaType.MULTIPART_FORM_DATA);
+    protected QuizExercise importQuizExerciseWithFiles(QuizExercise quizExercise, List<MockMultipartFile> files, HttpStatus expectedStatus) throws Exception {
+        String url;
+        if (quizExercise.isExamExercise()) {
+            url = "/api/quiz/exercise-groups/" + quizExercise.getExerciseGroup().getId() + "/quiz-exercises";
+        }
+        else {
+            url = "/api/quiz/courses/" + quizExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/quiz-exercises";
+        }
+        prepareQuizForImport(quizExercise);
+        QuizExerciseCreateDTO dto = QuizExerciseCreateDTO.of(quizExercise);
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, url);
+        builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(dto))).contentType(MediaType.MULTIPART_FORM_DATA);
         for (MockMultipartFile file : files) {
             builder.file(file);
         }
         MvcResult result = request.performMvcRequest(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         request.restoreSecurityContext();
         if (expectedStatus == HttpStatus.CREATED) {
-            return objectMapper.readValue(result.getResponse().getContentAsString(), QuizExercise.class);
+            // The POST endpoint returns QuizExerciseWithStatisticsDTO, so extract the ID and load the full entity from DB
+            var responseDTO = objectMapper.readValue(result.getResponse().getContentAsString(), QuizExerciseWithStatisticsDTO.class);
+            return quizExerciseTestRepository.findOneWithQuestionsAndStatistics(responseDTO.quizExercise().id());
         }
         return null;
     }
@@ -142,6 +160,28 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
         return quizExerciseDatabase;
     }
 
+    protected QuizExercise createQuizOnServerForExamWithStartedExam() throws Exception {
+        ZonedDateTime now = ZonedDateTime.now();
+        return createQuizOnServerForExamWithDates(now.minusHours(2), now.minusHours(1), now.plusHours(1));
+    }
+
+    protected QuizExercise createQuizOnServerForExamWithEndedExam() throws Exception {
+        ZonedDateTime now = ZonedDateTime.now();
+        return createQuizOnServerForExamWithDates(now.minusHours(3), now.minusHours(2), now.minusHours(1));
+    }
+
+    private QuizExercise createQuizOnServerForExamWithDates(ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) throws Exception {
+        Course course = createEmptyCourse();
+        Exam exam = ExamFactory.generateExam(course, visibleDate, startDate, endDate, false);
+        ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(true, exam);
+        examRepository.save(exam);
+
+        QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exerciseGroup);
+        quizExercise.setDuration(3600);
+        QuizExercise quizExerciseServer = createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, true);
+        return quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
+    }
+
     /**
      * Sends a create request for a quiz exercise. It automatically adds the files to the request and modifies the exercise to be sent.
      *
@@ -166,7 +206,9 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
         request.restoreSecurityContext();
         if (HttpStatus.valueOf(result.getResponse().getStatus()).is2xxSuccessful()) {
             assertThat(result.getResponse().getContentAsString()).isNotBlank();
-            return objectMapper.readValue(result.getResponse().getContentAsString(), QuizExercise.class);
+            // The POST endpoint returns QuizExerciseWithStatisticsDTO, so extract the ID and load the full entity from DB
+            var responseDTO = objectMapper.readValue(result.getResponse().getContentAsString(), QuizExerciseWithStatisticsDTO.class);
+            return quizExerciseTestRepository.findOneWithQuestionsAndStatistics(responseDTO.quizExercise().id());
         }
         return null;
     }
@@ -220,12 +262,9 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
      */
     protected QuizExercise updateQuizExerciseWithFiles(QuizExercise quizExercise, List<String> fileNames, HttpStatus expectedStatus, MultiValueMap<String, String> params)
             throws Exception {
-        QuizExerciseFromEditorDTO dto = new QuizExerciseFromEditorDTO(quizExercise.getTitle(), quizExercise.getChannelName(), quizExercise.getCategories(),
-                quizExercise.getCompetencyLinks(), quizExercise.getDifficulty(), quizExercise.getDuration(), quizExercise.isRandomizeQuestionOrder(), quizExercise.getQuizMode(),
-                quizExercise.getQuizBatches(), quizExercise.getReleaseDate(), quizExercise.getStartDate(), quizExercise.getDueDate(), quizExercise.getIncludedInOverallScore(),
-                quizExercise.getQuizQuestions());
+        UpdateQuizExerciseDTO dto = UpdateQuizExerciseDTO.of(quizExercise);
 
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PATCH, "/api/quiz/quiz-exercises/" + quizExercise.getId());
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/quiz/quiz-exercises/" + quizExercise.getId());
         if (params != null) {
             builder.params(params);
         }
@@ -238,7 +277,8 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
         MvcResult result = request.performMvcRequest(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         request.restoreSecurityContext();
         if (HttpStatus.valueOf(result.getResponse().getStatus()).is2xxSuccessful()) {
-            return objectMapper.readValue(result.getResponse().getContentAsString(), QuizExercise.class);
+            // Reload from database to get full entity with all associations
+            return quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         }
         return null;
     }
@@ -261,5 +301,37 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
 
         request.performMvcRequest(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         request.restoreSecurityContext();
+    }
+
+    /**
+     * Prepares a QuizExercise for import into another course or exam.
+     * <p>
+     * This method removes all persistent identifiers and associations that would
+     * otherwise mark the contained entities as already existing in the database.
+     *
+     * @param quizExercise the quiz exercise that should be sanitized and
+     *                         detached from existing database identifiers before import
+     */
+    protected void prepareQuizForImport(QuizExercise quizExercise) {
+        quizExercise.setQuizBatches(Set.of());
+        quizExercise.setCompetencyLinks(Set.of());
+        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
+            if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
+                for (var dragItem : dragAndDropQuestion.getDragItems()) {
+                    dragItem.setId(null);
+                }
+                for (var dropLocation : dragAndDropQuestion.getDropLocations()) {
+                    dropLocation.setId(null);
+                }
+            }
+            if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
+                for (var spot : shortAnswerQuestion.getSpots()) {
+                    spot.setId(null);
+                }
+                for (var solution : shortAnswerQuestion.getSolutions()) {
+                    solution.setId(null);
+                }
+            }
+        }
     }
 }

@@ -63,7 +63,7 @@ export class AttachmentService {
      * @param attachmentId the id of the attachment to delete
      */
     delete(attachmentId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${attachmentId}`, { observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/${attachmentId}`, { observe: 'response' });
     }
 
     convertAttachmentDatesFromClient(attachment: Attachment): Attachment {

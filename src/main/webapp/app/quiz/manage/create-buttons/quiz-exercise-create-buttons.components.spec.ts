@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -5,8 +7,12 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { QuizExerciseCreateButtonsComponent } from 'app/quiz/manage/create-buttons/quiz-exercise-create-buttons.component';
 import { provideHttpClient } from '@angular/common/http';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('QuizExercise Create Buttons Component', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: QuizExerciseCreateButtonsComponent;
     let fixture: ComponentFixture<QuizExerciseCreateButtonsComponent>;
     const course = { id: 123 } as Course;
@@ -16,7 +22,7 @@ describe('QuizExercise Create Buttons Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: DialogService, useClass: MockDialogService }, provideHttpClient()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(QuizExerciseCreateButtonsComponent);
@@ -25,7 +31,7 @@ describe('QuizExercise Create Buttons Component', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {

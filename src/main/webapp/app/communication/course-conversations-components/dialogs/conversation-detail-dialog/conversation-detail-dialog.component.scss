@@ -1,0 +1,29 @@
+.conversation-detail-dialog {
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+
+        .modal-title {
+            text-align: left;
+        }
+
+        .btn-close {
+            margin: 0;
+        }
+    }
+
+    .modal-body {
+        height: 60vh;
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+
+        > * {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+    }
+}

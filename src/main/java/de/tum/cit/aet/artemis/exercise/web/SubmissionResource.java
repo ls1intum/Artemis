@@ -96,6 +96,7 @@ public class SubmissionResource {
 
     /**
      * DELETE /submissions/:submissionId : delete the "id" submission.
+     * <p>
      *
      * @param submissionId the id of the submission to delete
      * @return the ResponseEntity with status 200 (OK)

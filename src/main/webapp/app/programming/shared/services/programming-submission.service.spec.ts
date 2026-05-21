@@ -1,5 +1,6 @@
 import dayjs from 'dayjs/esm';
-import { BehaviorSubject, Subject, lastValueFrom, of } from 'rxjs';
+import { BehaviorSubject, Subject, distinctUntilChanged, lastValueFrom, of } from 'rxjs';
+import { User } from 'app/core/user/user.model';
 import { range as _range } from 'lodash-es';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import {
@@ -24,6 +25,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { SubmissionProcessingDTO } from 'app/programming/shared/entities/submission-processing-dto';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('ProgrammingSubmissionService', () => {
     let websocketService: WebsocketService;
@@ -35,8 +38,6 @@ describe('ProgrammingSubmissionService', () => {
     let httpMock: HttpTestingController;
     let httpGetStub: jest.SpyInstance;
     let wsSubscribeStub: jest.SpyInstance;
-    let wsUnsubscribeStub: jest.SpyInstance;
-    let wsReceiveStub: jest.SpyInstance;
     let participationWsLatestResultStub: jest.SpyInstance;
     let getLatestResultStub: jest.SpyInstance;
     let notifyAllResultSubscribersStub: jest.SpyInstance;
@@ -91,6 +92,7 @@ describe('ProgrammingSubmissionService', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: AccountService, useClass: MockAccountService },
             ],
         })
             .compileComponents()
@@ -103,15 +105,13 @@ describe('ProgrammingSubmissionService', () => {
 
                 httpMock = TestBed.inject(HttpTestingController);
                 httpGetStub = jest.spyOn(httpService, 'get');
-                wsSubscribeStub = jest.spyOn(websocketService, 'subscribe');
-                wsUnsubscribeStub = jest.spyOn(websocketService, 'unsubscribe');
                 wsSubmissionSubject = new Subject<Submission | undefined>();
                 wsSubmissionProcessingSubject = new Subject<SubmissionProcessingDTO | undefined>();
-                wsReceiveStub = jest.spyOn(websocketService, 'receive').mockImplementation((topic: string) => {
+                wsSubscribeStub = jest.spyOn(websocketService, 'subscribe').mockImplementation((topic: string) => {
                     if (topic === submissionTopic) {
-                        return wsSubmissionSubject;
+                        return wsSubmissionSubject.asObservable();
                     } else if (topic === submissionProcessingTopic) {
-                        return wsSubmissionProcessingSubject;
+                        return wsSubmissionProcessingSubject.asObservable();
                     }
                     return new Subject();
                 });
@@ -158,8 +158,6 @@ describe('ProgrammingSubmissionService', () => {
         });
         expect(wsSubscribeStub).toHaveBeenCalledOnce();
         expect(wsSubscribeStub).toHaveBeenCalledWith(submissionTopic);
-        expect(wsReceiveStub).toHaveBeenCalledOnce();
-        expect(wsReceiveStub).toHaveBeenCalledWith(submissionTopic);
         expect(participationWsLatestResultStub).toHaveBeenCalledOnce();
         expect(participationWsLatestResultStub).toHaveBeenCalledWith(participationId, true, 10);
     });
@@ -178,9 +176,6 @@ describe('ProgrammingSubmissionService', () => {
         expect(wsSubscribeStub).toHaveBeenCalledTimes(2);
         expect(wsSubscribeStub).toHaveBeenNthCalledWith(1, submissionTopic);
         expect(wsSubscribeStub).toHaveBeenNthCalledWith(2, submissionProcessingTopic);
-        expect(wsReceiveStub).toHaveBeenCalledTimes(2);
-        expect(wsReceiveStub).toHaveBeenNthCalledWith(1, submissionTopic);
-        expect(wsReceiveStub).toHaveBeenNthCalledWith(2, submissionProcessingTopic);
         expect(participationWsLatestResultStub).toHaveBeenCalledOnce();
         expect(participationWsLatestResultStub).toHaveBeenCalledWith(participationId, true, 10);
     });
@@ -436,11 +431,12 @@ describe('ProgrammingSubmissionService', () => {
 
         // Should not unsubscribe as participation 2 still uses the same topic
         submissionService.unsubscribeForLatestSubmissionOfParticipation(participationId);
-        expect(wsUnsubscribeStub).not.toHaveBeenCalled();
+        const submissionTopicSubscriptions = (submissionService as any).submissionTopicSubscriptions as Map<string, any>;
+        expect(submissionTopicSubscriptions.has(submissionTopic)).toBeTrue();
 
         // Should now unsubscribe as last participation for topic was unsubscribed
         submissionService.unsubscribeForLatestSubmissionOfParticipation(2);
-        expect(wsUnsubscribeStub).toHaveBeenCalledOnce();
+        expect(submissionTopicSubscriptions.has(submissionTopic)).toBeFalse();
     });
 
     it('should only unsubscribe if no other participations use the topic with localci', () => {
@@ -451,11 +447,15 @@ describe('ProgrammingSubmissionService', () => {
 
         // Should not unsubscribe as participation 2 still uses the same topic
         submissionService.unsubscribeForLatestSubmissionOfParticipation(participationId);
-        expect(wsUnsubscribeStub).not.toHaveBeenCalled();
+        const submissionTopicSubscriptions = (submissionService as any).submissionTopicSubscriptions as Map<string, any>;
+        const processingTopicSubscriptions = (submissionService as any).submissionProcessingTopicSubscriptions as Map<string, any>;
+        expect(submissionTopicSubscriptions.has(submissionTopic)).toBeTrue();
+        expect(processingTopicSubscriptions.has(submissionProcessingTopic)).toBeTrue();
 
         // Should now unsubscribe as last participation for topic was unsubscribed
         submissionService.unsubscribeForLatestSubmissionOfParticipation(2);
-        expect(wsUnsubscribeStub).toHaveBeenCalledTimes(2);
+        expect(submissionTopicSubscriptions.has(submissionTopic)).toBeFalse();
+        expect(processingTopicSubscriptions.has(submissionProcessingTopic)).toBeFalse();
     });
 
     it('should emit the newest submission when it was received through the websocket connection with localci', () => {
@@ -586,4 +586,102 @@ describe('ProgrammingSubmissionService', () => {
 
         discardPeriodicTasks();
     }));
+
+    describe('authentication state changes', () => {
+        let authState: BehaviorSubject<User | undefined>;
+        let scoped: ProgrammingSubmissionService;
+
+        beforeEach(() => {
+            authState = new BehaviorSubject<User | undefined>({ id: 99 } as User);
+            const customAccountService = new MockAccountService();
+            customAccountService.userIdentity.set({ id: 99 } as User);
+            customAccountService.getAuthenticationState = () => authState.asObservable().pipe(distinctUntilChanged());
+
+            TestBed.resetTestingModule();
+            TestBed.configureTestingModule({
+                providers: [
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
+                    { provide: WebsocketService, useClass: MockWebsocketService },
+                    { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                    { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
+                    { provide: ProfileService, useClass: MockProfileService },
+                    { provide: AccountService, useValue: customAccountService },
+                ],
+            });
+            scoped = TestBed.inject(ProgrammingSubmissionService);
+        });
+
+        it('should clear cached submission state and tear down subscriptions on logout', () => {
+            const subject = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
+            const exerciseBuildSubject = new BehaviorSubject<ExerciseSubmissionState | undefined>(undefined);
+            const resultTimerSubject = new Subject<undefined>();
+            // @ts-ignore - access private cache
+            scoped.submissionSubjects = { 1: subject };
+            // @ts-ignore
+            scoped.exerciseBuildStateValue = { 10: { 1: {} as ProgrammingSubmissionStateObj } };
+            // @ts-ignore
+            scoped.exerciseBuildStateSubjects.set(10, exerciseBuildSubject);
+            // @ts-ignore
+            scoped.resultTimerSubjects.set(1, resultTimerSubject);
+            // @ts-ignore
+            scoped.startedProcessingCache.set('hash', { buildStartDate: undefined, estimatedCompletionDate: undefined });
+            // @ts-ignore
+            scoped.participationIdToExerciseId.set(1, 10);
+            // @ts-ignore
+            scoped.submissionTopicsSubscribed.set(1, '/topic/foo');
+
+            let completed = false;
+            subject.subscribe({ complete: () => (completed = true) });
+            let exerciseBuildCompleted = false;
+            exerciseBuildSubject.subscribe({ complete: () => (exerciseBuildCompleted = true) });
+            let resultTimerCompleted = false;
+            resultTimerSubject.subscribe({ complete: () => (resultTimerCompleted = true) });
+
+            authState.next(undefined);
+
+            // @ts-ignore
+            expect(scoped.submissionSubjects).toEqual({});
+            // @ts-ignore
+            expect(scoped.exerciseBuildStateValue).toEqual({});
+            // @ts-ignore
+            expect(scoped.exerciseBuildStateSubjects.size).toBe(0);
+            // @ts-ignore
+            expect(scoped.resultTimerSubjects.size).toBe(0);
+            // @ts-ignore
+            expect(scoped.startedProcessingCache.size).toBe(0);
+            // @ts-ignore
+            expect(scoped.participationIdToExerciseId.size).toBe(0);
+            // @ts-ignore
+            expect(scoped.submissionTopicsSubscribed.size).toBe(0);
+            expect(completed).toBeTrue();
+            expect(exerciseBuildCompleted).toBeTrue();
+            expect(resultTimerCompleted).toBeTrue();
+        });
+
+        it('should clear cached submission state when a different user logs in', () => {
+            // @ts-ignore
+            scoped.submissionSubjects = { 1: new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined) };
+            // @ts-ignore
+            scoped.exerciseBuildStateValue = { 10: { 1: {} as ProgrammingSubmissionStateObj } };
+
+            authState.next({ id: 42 } as User);
+
+            // @ts-ignore
+            expect(scoped.submissionSubjects).toEqual({});
+            // @ts-ignore
+            expect(scoped.exerciseBuildStateValue).toEqual({});
+        });
+
+        it('should not clear submission state when the same user re-emits', () => {
+            const subject = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
+            // @ts-ignore
+            scoped.submissionSubjects = { 1: subject };
+
+            authState.next({ id: 99 } as User);
+
+            // @ts-ignore
+            expect(scoped.submissionSubjects).toEqual({ 1: subject });
+        });
+    });
 });

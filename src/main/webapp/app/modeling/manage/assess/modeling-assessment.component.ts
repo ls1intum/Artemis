@@ -1,5 +1,6 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, inject } from '@angular/core';
-import { ApollonEditor, ApollonMode, Assessment, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType, addOrUpdateAssessment } from '@ls1intum/apollon';
+import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, output } from '@angular/core';
+import { ApollonEditor, ApollonMode, Assessment, UMLDiagramType, UMLModel } from '@tumaet/apollon';
+import { captureException } from '@sentry/angular';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ModelElementCount } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -24,84 +25,122 @@ export interface DropInfo {
     styleUrls: ['./modeling-assessment.component.scss'],
     imports: [ScoreDisplayComponent, FaIconComponent, ModelingExplanationEditorComponent],
 })
-export class ModelingAssessmentComponent extends ModelingComponent implements AfterViewInit, OnDestroy, OnChanges {
+export class ModelingAssessmentComponent extends ModelingComponent implements AfterViewInit, OnDestroy {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+    private readonly elementRef = inject(ElementRef);
 
-    @Input() maxScore: number;
-    @Input() maxBonusPoints = 0;
-    @Input() totalScore: number;
-    @Input() title: string;
-    @Input() enablePopups = true;
-    @Input() displayPoints = true;
-    @Input() highlightDifferences: boolean;
+    maxScore = input<number>(0);
+    maxBonusPoints = input(0);
+    totalScore = input<number>(0);
+    title = input<string>();
+    enablePopups = input(true);
+    displayPoints = input(true);
+    highlightDifferences = input<boolean>();
+    resultFeedbacks = input<Feedback[]>();
 
-    @Output() feedbackChanged = new EventEmitter<Feedback[]>();
-    @Output() selectionChanged = new EventEmitter<Selection>();
+    feedbackChanged = output<Feedback[]>();
+    selectedElementIdsChanged = output<string[]>();
 
-    @Input() highlightedElements: Map<string, string>; // map elementId -> highlight color
-    @Input() elementCounts?: ModelElementCount[];
-    @Input() course?: Course;
+    highlightedElements = input<Map<string, string> | undefined>(undefined); // map elementId -> highlight color
+    elementCounts = input<ModelElementCount[]>();
+    course = input<Course>();
 
-    @Input() set resultFeedbacks(feedback: Feedback[]) {
-        this.feedbacks = feedback;
-        this.referencedFeedbacks = this.feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined);
-        this.updateApollonAssessments(this.referencedFeedbacks);
-    }
-
-    feedbacks: Feedback[];
-    elementFeedback: Map<string, Feedback>; // map element.id --> Feedback
+    elementFeedback: Map<string, Feedback> = new Map<string, Feedback>(); // map element.id --> Feedback
     referencedFeedbacks: Feedback[] = [];
     unreferencedFeedbacks: Feedback[] = [];
     firstCorrectionRoundColor = '#3e8acc';
     secondCorrectionRoundColor = '#ffa561';
 
+    private modelChangeSubscription?: number;
+    private assessmentSelectionSubscription?: number;
+
     constructor() {
         super();
+        effect(() => {
+            // we register signals for effect by calling the getters
+            // anytime the signal changes value, effect is triggered to run this.runHighlightUpdate()
+            this.highlightedElements();
+            this.highlightDifferences();
+
+            if (!this.apollonEditor) {
+                return;
+            }
+
+            this.runHighlightUpdate();
+        });
+        effect(() => {
+            const incoming = this.resultFeedbacks();
+
+            if (!incoming || !this.apollonEditor) {
+                return;
+            }
+
+            this.referencedFeedbacks = incoming.filter((feedbackElement) => feedbackElement.reference != undefined);
+            this.updateElementFeedbackMapping(this.referencedFeedbacks);
+            this.updateApollonAssessments(this.referencedFeedbacks);
+        });
+
+        effect(() => {
+            const model = this.umlModel();
+
+            if (!model || !this.apollonEditor) {
+                return;
+            }
+
+            try {
+                this.apollonEditor.model = model;
+                this.handleFeedback();
+            } catch (err) {
+                // Editor may not be fully initialized yet or already destroyed
+                captureException(err);
+            }
+        });
     }
 
     async ngAfterViewInit(): Promise<void> {
-        if (this.feedbacks) {
-            this.referencedFeedbacks = this.feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined);
-            this.unreferencedFeedbacks = this.feedbacks.filter(
+        const resultFeedbacks = this.resultFeedbacks();
+        if (resultFeedbacks !== undefined) {
+            this.referencedFeedbacks = resultFeedbacks.filter((feedbackElement) => feedbackElement.reference != undefined);
+            this.unreferencedFeedbacks = resultFeedbacks.filter(
                 (feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED,
             );
         }
         this.initializeApollonEditor();
-        if (this.highlightedElements) {
-            await this.updateHighlightedElements(this.highlightedElements);
+        const highlightedElements = this.highlightedElements();
+        if (highlightedElements) {
+            await this.updateHighlightedElements(highlightedElements);
         }
-        if (this.elementCounts) {
-            await this.updateElementCounts(this.elementCounts);
+        const elementCounts = this.elementCounts();
+        if (elementCounts) {
+            await this.updateElementCounts(elementCounts);
         }
+        // Ensure assessments are added after editor initialization
+        await this.updateApollonAssessments(this.referencedFeedbacks);
         await this.applyStateConfiguration();
         this.setupInteract();
     }
 
     ngOnDestroy() {
+        super.ngOnDestroy();
         if (this.apollonEditor) {
+            if (this.modelChangeSubscription !== undefined) {
+                this.apollonEditor.unsubscribe(this.modelChangeSubscription);
+            }
+            if (this.assessmentSelectionSubscription !== undefined) {
+                this.apollonEditor.unsubscribe(this.assessmentSelectionSubscription);
+            }
             this.apollonEditor.destroy();
+            (this.elementRef.nativeElement as any).__apollonEditor = undefined;
         }
     }
 
-    async ngOnChanges(changes: SimpleChanges): Promise<void> {
-        if (changes.umlModel && changes.umlModel.currentValue && this.apollonEditor) {
-            this.apollonEditor!.model = changes.umlModel.currentValue;
-            this.handleFeedback();
-        }
-
-        if (changes.feedbacks && changes.feedbacks.currentValue && this.umlModel) {
-            this.feedbacks = changes.feedbacks.currentValue;
-            this.handleFeedback();
-        }
-
-        if (changes.highlightedElements) {
-            this.highlightedElements = changes.highlightedElements.currentValue;
-        }
-
-        if ((changes.highlightedElements || changes.highlightDifferences) && this.apollonEditor) {
-            await this.updateApollonAssessments(this.referencedFeedbacks);
-            await this.applyStateConfiguration();
-        }
+    /**
+     * update if highlighted stuff has been changed
+     * @private
+     */
+    private async runHighlightUpdate() {
+        await this.updateApollonAssessments(this.referencedFeedbacks);
+        await this.applyStateConfiguration();
     }
 
     /**
@@ -109,35 +148,38 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
      * events of Apollon and passes them on to parent components.
      */
     private initializeApollonEditor() {
-        if (this.apollonEditor) {
-            this.apollonEditor.destroy();
-        }
-
         this.handleFeedback();
 
-        this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
+        this.apollonEditor = new ApollonEditor(this.editorContainer()!.nativeElement, {
             mode: ApollonMode.Assessment,
-            readonly: this.readOnly,
-            model: this.umlModel,
-            type: this.diagramType || UMLDiagramType.ClassDiagram,
-            enablePopups: this.enablePopups,
+            readonly: this.readOnly(),
+            model: this.umlModel(),
+            type: this.diagramType() || UMLDiagramType.ClassDiagram,
+            enablePopups: this.enablePopups(),
         });
-        this.apollonEditor!.subscribeToSelectionChange((selection: Selection) => {
-            if (this.readOnly) {
-                this.selectionChanged.emit(selection);
+
+        // Expose the ApollonEditor instance on the host DOM element for E2E test access.
+        // Mirrors the pattern in ModelingEditorComponent so Playwright can interact with the
+        // assessment editor without dblclick races on multi-node setups.
+        (this.elementRef.nativeElement as any).__apollonEditor = this.apollonEditor;
+
+        this.modelChangeSubscription = this.apollonEditor.subscribeToModelChange((state) => {
+            if (!this.readOnly()) {
+                const assessmentsArray = Object.values(state.assessments);
+                this.referencedFeedbacks = this.generateFeedbackFromAssessment(assessmentsArray);
+                this.feedbackChanged.emit(this.referencedFeedbacks);
             }
         });
-        if (!this.readOnly) {
-            this.apollonEditor!.subscribeToAssessmentChange((assessments: Assessment[]) => {
-                this.referencedFeedbacks = this.generateFeedbackFromAssessment(assessments);
-                this.feedbackChanged.emit(this.referencedFeedbacks);
-            });
+
+        if (this.readOnly()) {
+            this.assessmentSelectionSubscription = this.apollonEditor.subscribeToAssessmentSelection((selections) => this.selectedElementIdsChanged.emit(selections));
         }
     }
 
     private async applyStateConfiguration() {
-        if (this.highlightedElements) {
-            await this.updateHighlightedElements(this.highlightedElements);
+        const highlightedElements = this.highlightedElements();
+        if (highlightedElements) {
+            await this.updateHighlightedElements(highlightedElements);
         }
     }
 
@@ -149,6 +191,10 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     generateFeedbackFromAssessment(assessments: Assessment[]): Feedback[] {
         const newElementFeedback = new Map();
         for (const assessment of assessments) {
+            // Apollon stores the GradingInstruction flat on dropInfo (not nested under dropInfo.instruction)
+            // Support both: dropInfo.instruction (expected shape) and dropInfo directly (actual Apollon shape)
+            const dropInfo = assessment.dropInfo as any;
+            const instruction = dropInfo?.instruction ?? (dropInfo?.id ? dropInfo : undefined);
             let feedback = this.elementFeedback.get(assessment.modelElementId);
             if (feedback) {
                 if (feedback.credits !== assessment.score && feedback.gradingInstruction) {
@@ -156,14 +202,14 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 }
                 feedback.credits = assessment.score;
                 feedback.text = assessment.feedback;
-                if (assessment.dropInfo && assessment.dropInfo.instruction?.id) {
-                    feedback.gradingInstruction = assessment.dropInfo.instruction;
+                if (instruction?.id) {
+                    feedback.gradingInstruction = instruction;
                 }
                 if (feedback.gradingInstruction && assessment.dropInfo == undefined) {
                     feedback.gradingInstruction = undefined;
                 }
             } else {
-                feedback = Feedback.forModeling(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType, assessment.dropInfo);
+                feedback = Feedback.forModeling(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType, assessment.dropInfo as DropInfo);
             }
             newElementFeedback.set(assessment.modelElementId, feedback);
         }
@@ -178,9 +224,12 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
      * This method is called before initializing Apollon and when the feedback or model is updated.
      */
     private handleFeedback(): void {
-        this.referencedFeedbacks = filterInvalidFeedback(this.feedbacks, this.umlModel);
-        this.updateElementFeedbackMapping(this.referencedFeedbacks);
-        this.updateApollonAssessments(this.referencedFeedbacks);
+        const feedbacks = this.resultFeedbacks();
+        if (feedbacks !== undefined) {
+            this.referencedFeedbacks = filterInvalidFeedback(feedbacks, this.umlModel());
+            this.updateElementFeedbackMapping(this.referencedFeedbacks);
+            this.updateApollonAssessments(this.referencedFeedbacks);
+        }
     }
 
     /**
@@ -212,15 +261,22 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         }
 
         if (this.apollonEditor != undefined) {
-            await this.apollonEditor.nextRender;
-            const model: UMLModel = this.apollonEditor!.model;
-            for (const element of Object.values(model!.elements)) {
-                element.highlight = newElements.get(element.id);
+            const model: UMLModel = this.apollonEditor.model;
+            for (const node of model.nodes) {
+                const highlight = newElements.get(node.id);
+                (node as any).highlight = highlight;
+                if (node.data) {
+                    (node.data as Record<string, unknown>).highlight = highlight;
+                }
             }
-            for (const relationship of Object.values(model!.relationships)) {
-                relationship.highlight = newElements.get(relationship.id);
+            for (const edge of model.edges) {
+                const highlight = newElements.get(edge.id);
+                (edge as any).highlight = highlight;
+                if (edge.data) {
+                    (edge.data as Record<string, unknown>).highlight = highlight;
+                }
             }
-            this.apollonEditor!.model = model!;
+            this.apollonEditor.model = model;
         }
     }
 
@@ -239,13 +295,12 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         newElementCounts.forEach((elementCount) => elementCountMap.set(elementCount.elementId, elementCount.numberOfOtherElements));
 
         if (this.apollonEditor != undefined) {
-            await this.apollonEditor.nextRender;
             const model: UMLModel = this.apollonEditor.model;
-            for (const element of Object.values(model.elements)) {
-                element.assessmentNote = this.calculateNote(elementCountMap.get(element.id));
+            for (const node of model.nodes) {
+                node.data.assessmentNote = this.calculateNote(elementCountMap.get(node.id));
             }
-            for (const relationship of Object.values(model.relationships)) {
-                relationship.assessmentNote = this.calculateNote(elementCountMap.get(relationship.id));
+            for (const edge of model.edges) {
+                edge.data.assessmentNote = this.calculateNote(elementCountMap.get(edge.id));
             }
             this.apollonEditor.model = model;
         }
@@ -256,40 +311,56 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
      * @param feedbacks the feedback list to convert and pass on to Apollon
      */
     private async updateApollonAssessments(feedbacks: Feedback[]) {
-        if (!feedbacks || !this.umlModel) {
+        const umlModel = this.umlModel();
+        if (!feedbacks || !umlModel) {
             return;
         }
 
         feedbacks.forEach((feedback) => {
-            addOrUpdateAssessment(this.umlModel, {
+            const newAssessment: Assessment = {
                 modelElementId: feedback.referenceId!,
-                elementType: feedback.referenceType! as UMLElementType | UMLRelationshipType,
-                score: feedback.credits!,
-                feedback: feedback.text || undefined,
+                elementType: feedback.referenceType!,
+                score: feedback.credits ?? 0,
+                feedback: feedback.text ?? '',
                 label: this.calculateLabel(feedback),
                 labelColor: this.calculateLabelColor(feedback),
                 correctionStatus: this.calculateCorrectionStatusForFeedback(feedback),
                 dropInfo: this.calculateDropInfo(feedback),
-            });
+            };
+            if (!umlModel.assessments) {
+                umlModel.assessments = {} as any;
+            }
+            umlModel.assessments[feedback.referenceId!] = newAssessment;
+            if (this.apollonEditor) {
+                try {
+                    this.apollonEditor.addOrUpdateAssessment(newAssessment);
+                } catch (error) {
+                    captureException(error);
+                    // Fall back to reassigning the model so assessments are still reflected in degraded environments (e.g., tests).
+                    this.apollonEditor.model = umlModel;
+                }
+            }
         });
 
+        // Refresh Apollon rendering to display assessment status icons (check/cross) immediately.
+        // Reassigning the model forces internal store sync and visual refresh without waiting for user interaction.
         if (this.apollonEditor) {
-            await this.apollonEditor.nextRender;
-            this.apollonEditor.model = this.umlModel;
+            const currentModel = this.apollonEditor.model;
+            this.apollonEditor.model = { ...currentModel };
         }
     }
 
     private calculateLabel(feedback: any) {
         const firstCorrectionRoundText = this.artemisTranslatePipe.transform('artemisApp.assessment.diffView.correctionRoundDiffFirst');
         const secondCorrectionRoundText = this.artemisTranslatePipe.transform('artemisApp.assessment.diffView.correctionRoundDiffSecond');
-        if (this.highlightDifferences) {
+        if (this.highlightDifferences()) {
             return feedback.copiedFeedbackId ? firstCorrectionRoundText : secondCorrectionRoundText;
         }
         return undefined;
     }
 
     private calculateLabelColor(feedback: any) {
-        if (this.highlightDifferences) {
+        if (this.highlightDifferences()) {
             return feedback.copiedFeedbackId ? this.firstCorrectionRoundColor : this.secondCorrectionRoundColor;
         }
         return '';
@@ -331,12 +402,9 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
     private calculateDropInfo(feedback: Feedback) {
         if (feedback.gradingInstruction) {
-            const dropInfo = <DropInfo>{};
-            dropInfo.instruction = feedback.gradingInstruction;
-            dropInfo.removeMessage = this.artemisTranslatePipe.transform('artemisApp.assessment.messages.removeAssessmentInstructionLink');
-            dropInfo.tooltipMessage = this.artemisTranslatePipe.transform('artemisApp.exercise.assessmentInstruction') + feedback!.gradingInstruction!.instructionDescription;
-            dropInfo.feedbackHint = this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackHint');
-            return dropInfo;
+            // Apollon stores and emits dropInfo as a flat object (the GradingInstruction itself),
+            // not nested under dropInfo.instruction — so we pass the instruction directly as dropInfo.
+            return feedback.gradingInstruction;
         }
 
         return undefined;

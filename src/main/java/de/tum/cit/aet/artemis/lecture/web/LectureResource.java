@@ -1,14 +1,10 @@
 package de.tum.cit.aet.artemis.lecture.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -23,8 +19,8 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -56,11 +52,15 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastStudentInLecture;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -72,11 +72,13 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureImportService;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
+import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
+import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
 
 /**
  * REST controller for managing Lecture.
  */
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Lazy
 @RestController
 @RequestMapping("api/lecture/")
@@ -107,9 +109,13 @@ public class LectureResource {
 
     private final ChannelRepository channelRepository;
 
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
+
+    private final YouTubeUrlService youTubeUrlService;
+
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, ChannelService channelService, ChannelRepository channelRepository,
-            SlideRepository slideRepository) {
+            SlideRepository slideRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -119,6 +125,8 @@ public class LectureResource {
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.slideRepository = slideRepository;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
+        this.youTubeUrlService = youTubeUrlService;
     }
 
     /**
@@ -144,6 +152,7 @@ public class LectureResource {
 
         Lecture savedLecture = lectureRepository.save(newLecture);
         String channelName = channelService.createLectureChannel(savedLecture, Optional.ofNullable(newLectureDto.channelName()));
+        indexLectureInWeaviate(savedLecture);
         SimpleLectureDTO savedLectureDTO = SimpleLectureDTO.from(savedLecture, course, channelName);
         return ResponseEntity.created(new URI("/api/lecture/lectures/" + savedLecture.getId())).body(savedLectureDTO);
     }
@@ -193,6 +202,9 @@ public class LectureResource {
 
         lectureService.correctDefaultLectureAndChannelNames(courseId);
 
+        List<Long> savedLectureIds = savedLectures.stream().map(Lecture::getId).toList();
+        lectureRepository.findAllById(savedLectureIds).forEach(this::indexLectureInWeaviate);
+
         return ResponseEntity.noContent().build();
     }
 
@@ -219,15 +231,21 @@ public class LectureResource {
         if (updatedLectureDto.id() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idNull");
         }
-        Course course = courseRepository.findByIdElseThrow(updatedLectureDto.course.id());
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-
         // This explicitly does NOT change any relationships such as attachments or lecture units
         Lecture originalLecture = lectureRepository.findByIdElseThrow(updatedLectureDto.id());
+        Course course = originalLecture.getCourse();
+        if (course == null) {
+            throw new BadRequestAlertException("Lecture is not part of a course", ENTITY_NAME, "courseMissing");
+        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+        if (updatedLectureDto.course == null || !course.getId().equals(updatedLectureDto.course.id())) {
+            throw new BadRequestAlertException("Lecture does not belong to the specified course", ENTITY_NAME, "courseMismatch");
+        }
         updateLectureAttributesFromDTO(originalLecture, updatedLectureDto);
 
         channelService.updateLectureChannel(originalLecture, updatedLectureDto.channelName());
         Lecture result = lectureRepository.save(originalLecture);
+        indexLectureInWeaviate(result);
 
         SimpleLectureDTO resultDTO = SimpleLectureDTO.from(result, course, updatedLectureDto.channelName());
         return ResponseEntity.ok().body(resultDTO);
@@ -304,9 +322,7 @@ public class LectureResource {
         log.info("Getting all lectures with slides for course {}", courseId);
         long start = System.currentTimeMillis();
 
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code OR add back in such that the result of the query is filtered for visible lectures again */
-        var lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId); // .stream().filter(Lecture::isVisibleToStudents).collect(Collectors.toSet());
+        var lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId);
         Set<Long> attachmentVideoUnitIds = lectures.stream().flatMap(lecture -> lecture.getLectureUnits().stream())
                 .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(DomainObject::getId).collect(Collectors.toSet());
 
@@ -316,7 +332,7 @@ public class LectureResource {
         // Group slides by attachment video unit id to combine them into the DTOs
         Map<Long, List<SlideDTO>> slidesByAttachmentVideoUnitId = slides.stream().collect(Collectors.groupingBy(SlideDTO::attachmentVideoUnitId));
         // Convert visible lectures to DTOs (filtering active attachments) and add non hidden slides to the DTOs
-        List<GetLecturesDTO> lectureDTOs = lectures.stream().map(GetLecturesDTO::from).sorted(Comparator.comparingLong(GetLecturesDTO::id)).toList();
+        List<GetLecturesDTO> lectureDTOs = lectures.stream().map(l -> GetLecturesDTO.from(l, youTubeUrlService)).sorted(Comparator.comparingLong(GetLecturesDTO::id)).toList();
 
         lectureDTOs.forEach(lectureDTO -> {
             for (AttachmentVideoUnitDTO attachmentVideoUnitDTO : lectureDTO.lectureUnits) {
@@ -343,17 +359,17 @@ public class LectureResource {
         /**
          * Converts a lecture to a DTO. Only the attachments and attachment video units that are visible to students are included.
          *
-         * @param lecture The lecture to convert
+         * @param lecture           The lecture to convert
+         * @param youTubeUrlService pure URL parser used to classify YouTube sources without any network calls
          * @return The converted lecture DTO
          */
-        public static GetLecturesDTO from(Lecture lecture) {
+        public static GetLecturesDTO from(Lecture lecture, YouTubeUrlService youTubeUrlService) {
             // only attachments visible to students are included
             List<AttachmentDTO> attachmentDTOs = lecture.getAttachments().stream().filter(Attachment::isVisibleToStudents).map(AttachmentDTO::from).toList();
             // only attachment video units visible to students are included
             List<AttachmentVideoUnitDTO> attachmentVideoUnitDTOs = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit)
-                    .map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).filter(AttachmentVideoUnit::isVisibleToStudents).map(AttachmentVideoUnitDTO::from).toList();
-            /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-            /* TODO: #11479 - remove the visibleDate property from the LectureDTO OR leave as is */
+                    .map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).filter(AttachmentVideoUnit::isVisibleToStudents)
+                    .map(unit -> AttachmentVideoUnitDTO.from(unit, youTubeUrlService)).toList();
             return new GetLecturesDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lecture.isTutorialLecture(),
                     attachmentDTOs, attachmentVideoUnitDTOs);
         }
@@ -368,12 +384,33 @@ public class LectureResource {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record AttachmentVideoUnitDTO(Long id, String name, List<SlideDTO> slides, @Nullable AttachmentDTO attachment, ZonedDateTime releaseDate, String type) {
+    public record AttachmentVideoUnitDTO(Long id, String name, List<SlideDTO> slides, @Nullable AttachmentDTO attachment, ZonedDateTime releaseDate, String type,
+            @Nullable String videoSource, @Nullable VideoSourceType videoSourceType, @Nullable String youtubeVideoId) {
 
-        public static AttachmentVideoUnitDTO from(AttachmentVideoUnit attachmentVideoUnit) {
-            var attachment = attachmentVideoUnit.getAttachment();
-            return new AttachmentVideoUnitDTO(attachmentVideoUnit.getId(), attachmentVideoUnit.getName(), new ArrayList<>(),
-                    attachment != null ? AttachmentDTO.from(attachment) : null, attachmentVideoUnit.getReleaseDate(), "attachment");
+        public AttachmentVideoUnitDTO {
+            if (videoSourceType == VideoSourceType.YOUTUBE && (youtubeVideoId == null || youtubeVideoId.isBlank())) {
+                throw new IllegalArgumentException("YOUTUBE videoSourceType requires non-blank youtubeVideoId");
+            }
+            if (videoSourceType != VideoSourceType.YOUTUBE && youtubeVideoId != null) {
+                throw new IllegalArgumentException("youtubeVideoId must be null when videoSourceType != YOUTUBE");
+            }
+        }
+
+        /**
+         * Converts an {@link AttachmentVideoUnit} to a DTO. YouTube video IDs are extracted via pure URL parsing (no network calls). TUM Live units will have
+         * {@code videoSourceType = null} from this endpoint, which is acceptable — the client resolves TUM Live playlist URLs on-demand via a separate endpoint.
+         *
+         * @param unit              the attachment video unit to convert
+         * @param youTubeUrlService pure URL parser for YouTube ID extraction; no network calls are made
+         * @return the populated DTO
+         */
+        public static AttachmentVideoUnitDTO from(AttachmentVideoUnit unit, YouTubeUrlService youTubeUrlService) {
+            var attachment = unit.getAttachment();
+            Optional<String> ytId = youTubeUrlService.extractYouTubeVideoId(unit.getVideoSource());
+            VideoSourceType type = ytId.isPresent() ? VideoSourceType.YOUTUBE : null;
+            String youtubeVideoId = ytId.orElse(null);
+            return new AttachmentVideoUnitDTO(unit.getId(), unit.getName(), new ArrayList<>(), attachment != null ? AttachmentDTO.from(attachment) : null, unit.getReleaseDate(),
+                    "attachment", unit.getVideoSource(), type, youtubeVideoId);
         }
     }
 
@@ -421,37 +458,10 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, destinationCourse, user);
 
         final var savedLecture = lectureImportService.importLecture(sourceLecture, destinationCourse, true);
+        indexLectureInWeaviate(savedLecture);
 
         final var lectureDTO = SimpleLectureDTO.from(savedLecture, destinationCourse, null /* channel name not needed in client */);
         return ResponseEntity.created(new URI("/api/lecture/lectures/" + savedLecture.getId())).body(lectureDTO);
-    }
-
-    /**
-     * POST /courses/{courseId}/ingest
-     * This endpoint is for starting the ingestion of all lectures or only one lecture when triggered in Artemis.
-     *
-     * @param courseId  the ID of the course for which all lectures should be ingested in pyris
-     * @param lectureId If this id is present then only ingest this one lecture of the respective course
-     * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
-     */
-    @Profile(PROFILE_IRIS)
-    @PostMapping("courses/{courseId}/ingest")
-    @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Void> ingestLectures(@PathVariable Long courseId, @RequestParam(required = false) Optional<Long> lectureId) {
-        Course course = courseRepository.findWithLecturesAndLectureUnitsAndAttachmentsByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        if (lectureId.isPresent()) {
-            Optional<Lecture> lectureToIngest = course.getLectures().stream().filter(lecture -> lecture.getId().equals(lectureId.get())).findFirst();
-            if (lectureToIngest.isPresent()) {
-                Set<Lecture> lecturesToIngest = new HashSet<>();
-                lecturesToIngest.add(lectureToIngest.get());
-                lectureService.ingestLecturesInPyris(lecturesToIngest);
-                return ResponseEntity.ok().build();
-            }
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.allLecturesError", "idExists")).body(null);
-        }
-        lectureService.ingestLecturesInPyris(course.getLectures());
-        return ResponseEntity.ok().build();
     }
 
     /**
@@ -502,4 +512,19 @@ public class LectureResource {
         lectureService.delete(lecture, true);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureId.toString())).build();
     }
+
+    private void indexLectureInWeaviate(Lecture lecture) {
+        searchableEntityWeaviateService.ifPresent(service -> {
+            service.upsertLectureAsync(LectureSearchableEntityDTO.fromLecture(lecture));
+            lecture.getLectureUnits().forEach(unit -> {
+                if (LectureUnitSearchableEntityDTO.isIndexable(unit)) {
+                    service.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(unit));
+                }
+                else {
+                    service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, unit.getId());
+                }
+            });
+        });
+    }
+
 }

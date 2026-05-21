@@ -2,7 +2,7 @@
     <div class="channels-overview">
         <div class="modal-header">
             <h4 class="modal-title">
-                {{ translationKeys.titleKey | artemisTranslate }}
+                {{ translationKeys()?.titleKey | artemisTranslate }}
             </h4>
             <button type="button" class="btn-close dismiss" (click)="clear()"></button>
         </div>
@@ -12,24 +12,24 @@
                     @if (form) {
                         <form [formGroup]="form" (ngSubmit)="submitForm()">
                             <div class="form-group">
-                                <label [for]="propertyName">{{ translationKeys.labelKey | artemisTranslate }}</label>
-                                <input type="text" class="form-control" [id]="propertyName" [formControlName]="propertyName" />
-                                <small [id]="propertyName + '-help'" class="form-text text-body-secondary">{{ translationKeys.helpKey | artemisTranslate }}</small>
+                                <label [for]="propertyName()!">{{ translationKeys()?.labelKey | artemisTranslate }}</label>
+                                <input type="text" class="form-control" [id]="propertyName()!" [formControlName]="propertyName()!" />
+                                <small [id]="propertyName()! + '-help'" class="form-text text-body-secondary">{{ translationKeys()?.helpKey | artemisTranslate }}</small>
                                 @if (control?.invalid && (control?.dirty || control?.touched)) {
                                     <div class="alert alert-danger">
                                         @if (control?.errors?.required) {
                                             <div>
-                                                {{ translationKeys.requiredErrorKey | artemisTranslate }}
+                                                {{ translationKeys()?.requiredErrorKey | artemisTranslate }}
                                             </div>
                                         }
                                         @if (control?.errors?.maxlength) {
                                             <div>
-                                                {{ translationKeys.maxLengthErrorKey | artemisTranslate: { max: this.maxPropertyLength } }}
+                                                {{ translationKeys()?.maxLengthErrorKey | artemisTranslate: { max: this.maxPropertyLength() } }}
                                             </div>
                                         }
                                         @if (!control?.errors?.required && !control?.errors?.maxlength && control?.errors?.pattern) {
                                             <div>
-                                                {{ translationKeys.regexErrorKey | artemisTranslate }}
+                                                {{ translationKeys()?.regexErrorKey | artemisTranslate }}
                                             </div>
                                         }
                                     </div>

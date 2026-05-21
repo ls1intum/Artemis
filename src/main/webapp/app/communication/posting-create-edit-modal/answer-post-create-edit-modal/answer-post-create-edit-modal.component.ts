@@ -5,6 +5,7 @@ import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PostContentValidationPattern } from 'app/communication/metis.util';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
+import { deepClone } from 'app/shared/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-answer-post-create-edit-modal',
@@ -23,7 +24,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
      */
     open(): void {
         this.close();
-        this.createEditAnswerPostContainerRef()?.createEmbeddedView(this.postingEditor);
+        this.createEditAnswerPostContainerRef()?.createEmbeddedView(this.postingEditor()!);
         this.isInputOpen = true;
     }
 
@@ -40,10 +41,12 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
      * resets the answer post content
      */
     resetFormGroup(): void {
-        this.posting = this.posting || { content: '' };
+        if (!this.posting()) {
+            this.posting.set({ content: '' } as AnswerPost);
+        }
         this.formGroup = this.formBuilder.group({
             // the pattern ensures that the content must include at least one non-whitespace character
-            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
+            content: [this.posting()!.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
         });
     }
 
@@ -52,8 +55,14 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     createPosting(): void {
-        this.posting.content = this.formGroup.get('content')?.value;
-        this.metisService.createAnswerPost(this.posting).subscribe({
+        const posting = this.posting();
+        if (!posting) {
+            this.isLoading = false;
+            return;
+        }
+        const payload = deepClone(posting);
+        payload.content = this.formGroup.get('content')?.value;
+        this.metisService.createAnswerPost(payload).subscribe({
             next: (answerPost: AnswerPost) => {
                 this.resetFormGroup();
                 this.isLoading = false;
@@ -71,8 +80,14 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     updatePosting(): void {
-        this.posting.content = this.formGroup.get('content')?.value;
-        this.metisService.updateAnswerPost(this.posting).subscribe({
+        const posting = this.posting();
+        if (!posting) {
+            this.isLoading = false;
+            return;
+        }
+        const payload = deepClone(posting);
+        payload.content = this.formGroup.get('content')?.value;
+        this.metisService.updateAnswerPost(payload).subscribe({
             next: (updatedPost: AnswerPost) => {
                 this.postingUpdated.emit(updatedPost);
                 this.isLoading = false;

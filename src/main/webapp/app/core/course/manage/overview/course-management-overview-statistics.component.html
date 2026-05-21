@@ -1,6 +1,6 @@
 <div class="row justify-content-center chart-title-line">
     <div class="d-inline-flex flex-nowrap justify-content-center align-items-center">
-        <a [routerLink]="['/course-management', course.id, 'course-statistics']" class="text-center">
+        <a [routerLink]="['/course-management', course().id, 'course-statistics']" class="text-center">
             <h4 jhiTranslate="artemisApp.courseStatistics.activeStudents"></h4>
         </a>
         <jhi-help-icon class="chart-explanation-tooltip headline-margin" placement="right auto" text="artemisApp.courseStatistics.activeStudentsExplanation" />
@@ -10,7 +10,7 @@
     <div #containerRef class="col-md-12 text-center">
         <ngx-charts-line-chart
             [view]="[containerRef.offsetWidth, 250]"
-            [results]="ngxData"
+            [results]="ngxData()"
             [scheme]="chartColor"
             [xAxis]="true"
             [yAxis]="true"
@@ -35,6 +35,6 @@
 } @else {
     <div class="col-md-12 mt-2 text-center">
         <h4 jhiTranslate="artemisApp.course.notStartedYet"></h4>
-        <h3>{{ course.startDate | artemisDate }}</h3>
+        <h3>{{ course().startDate | artemisDate }}</h3>
     </div>
 }

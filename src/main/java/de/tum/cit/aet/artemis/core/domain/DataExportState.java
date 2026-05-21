@@ -6,19 +6,20 @@ package de.tum.cit.aet.artemis.core.domain;
  */
 public enum DataExportState {
 
-    REQUESTED, IN_CREATION, EMAIL_SENT, DOWNLOADED, DOWNLOADED_DELETED, DELETED, FAILED;
+    REQUESTED, IN_CREATION, EMAIL_SENT, DOWNLOADED, DOWNLOADED_DELETED, DELETED, FAILED, EMAIL_FAILED;
 
     /**
      * Checks if the data export can be downloaded.
      * <p>
-     * The data export can be downloaded if its state is either EMAIL_SENT or DOWNLOADED.
+     * The data export can be downloaded if its state is either EMAIL_SENT, EMAIL_FAILED, or DOWNLOADED.
      * The state is EMAIL_SENT if the data export has been created and the user has been notified via email.
+     * The state is EMAIL_FAILED if the data export has been created but the notification email could not be sent.
      * The state is DOWNLOADED if the user has downloaded the data export at least once.
      *
      * @return true if the data export can be downloaded, false otherwise
      */
     public boolean isDownloadable() {
-        return this == DOWNLOADED || this == EMAIL_SENT;
+        return this == DOWNLOADED || this == EMAIL_SENT || this == EMAIL_FAILED;
     }
 
     /**

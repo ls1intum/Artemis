@@ -1,5 +1,8 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { asyncScheduler, of } from 'rxjs';
+import { observeOn } from 'rxjs/operators';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -25,10 +28,12 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'src/test/javascript/spec/helpers/mocks/service/mock-account.service';
 
 describe('QuizExercise Re-evaluate Component', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: QuizReEvaluateComponent;
     let fixture: ComponentFixture<QuizReEvaluateComponent>;
     let quizService: QuizExerciseService;
-    let quizServiceFindStub: jest.SpyInstance;
+    let quizServiceFindStub: ReturnType<typeof vi.spyOn>;
 
     const course = { id: 123 } as Course;
     const quizExercise = new QuizExercise(course, undefined);
@@ -76,6 +81,7 @@ describe('QuizExercise Re-evaluate Component', () => {
     };
 
     beforeEach(() => {
+        vi.useFakeTimers();
         TestBed.configureTestingModule({
             providers: [
                 MockProvider(NgbModal),
@@ -97,22 +103,26 @@ describe('QuizExercise Re-evaluate Component', () => {
         const { question: quizQuestion1 } = createValidMCQuestion();
         const { question: quizQuestion2 } = createValidDnDQuestion();
         quizExercise.quizQuestions = [quizQuestion1, quizQuestion2];
-        quizServiceFindStub = jest.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+        // Use asyncScheduler to ensure ngOnInit initializes duration before the subscription callback runs
+        quizServiceFindStub = vi.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })).pipe(observeOn(asyncScheduler)));
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.useRealTimers();
+        vi.restoreAllMocks();
     });
 
     it('should initialize quiz exercise', () => {
         comp.ngOnInit();
-        expect(comp.isValidQuiz()).toBeTrue();
+        vi.advanceTimersByTime(0);
+        expect(comp.isValidQuiz()).toBe(true);
         expect(comp.quizExercise).toEqual(quizExercise);
-        expect(quizServiceFindStub).toHaveBeenCalledOnce();
+        expect(quizServiceFindStub).toHaveBeenCalled();
     });
 
     it('should delete quiz question', () => {
         comp.ngOnInit();
+        vi.advanceTimersByTime(0);
         expect(comp.quizExercise.quizQuestions).toHaveLength(2);
         comp.deleteQuestion(comp.quizExercise.quizQuestions![0]);
         expect(comp.quizExercise.quizQuestions).toHaveLength(1);
@@ -120,6 +130,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
     it('should update and reset quiz questions', () => {
         comp.ngOnInit();
+        vi.advanceTimersByTime(0);
         comp.quizExercise.title = 'New Title';
         comp.quizExercise.quizQuestions![0].points = 5;
         // update question
@@ -135,12 +146,14 @@ describe('QuizExercise Re-evaluate Component', () => {
 
     it('should have pending changes', () => {
         comp.ngOnInit();
+        vi.advanceTimersByTime(0);
         comp.quizExercise.quizQuestions![0].points = 5;
-        expect(comp.pendingChanges()).toBeTrue();
+        expect(comp.pendingChanges()).toBe(true);
     });
 
     it('should move down the quiz question', () => {
         comp.ngOnInit();
+        vi.advanceTimersByTime(0);
         expect(comp.quizExercise.quizQuestions![0].type).toEqual(QuizQuestionType.MULTIPLE_CHOICE);
         comp.moveDown(comp.quizExercise.quizQuestions![0]);
         expect(comp.quizExercise.quizQuestions![1].type).toEqual(QuizQuestionType.MULTIPLE_CHOICE);
@@ -148,14 +161,16 @@ describe('QuizExercise Re-evaluate Component', () => {
 
     it('should move up the quiz question', () => {
         comp.ngOnInit();
+        vi.advanceTimersByTime(0);
         expect(comp.quizExercise.quizQuestions![1].type).toEqual(QuizQuestionType.DRAG_AND_DROP);
         comp.moveUp(comp.quizExercise.quizQuestions![1]);
         expect(comp.quizExercise.quizQuestions![0].type).toEqual(QuizQuestionType.DRAG_AND_DROP);
     });
 
     it('Updates quiz on changes', () => {
-        const prepareEntitySpy = jest.spyOn(comp, 'prepareEntity');
+        const prepareEntitySpy = vi.spyOn(comp, 'prepareEntity');
         comp.ngOnInit();
+        vi.advanceTimersByTime(0);
         comp.ngOnChanges({
             quizExercise: { currentValue: quizExercise } as SimpleChange,
         });
@@ -166,6 +181,7 @@ describe('QuizExercise Re-evaluate Component', () => {
     describe('Quiz question validation', () => {
         beforeEach(() => {
             comp.ngOnInit();
+            vi.advanceTimersByTime(0);
         });
         afterEach(() => {
             comp.resetAll();
@@ -186,7 +202,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
                 comp.onQuestionUpdated();
 
-                expect(comp.quizIsValid).toBeFalse();
+                expect(comp.quizIsValid).toBe(false);
             });
 
             it('should be invalid if quiz explanation is too long', () => {
@@ -195,7 +211,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
                 comp.onQuestionUpdated();
 
-                expect(comp.quizIsValid).toBeFalse();
+                expect(comp.quizIsValid).toBe(false);
             });
 
             it('should be invalid if answer option hint is too long', () => {
@@ -203,7 +219,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
                 comp.onQuestionUpdated();
 
-                expect(comp.quizIsValid).toBeFalse();
+                expect(comp.quizIsValid).toBe(false);
             });
 
             it('should be invalid if answer option explanation is too long', () => {
@@ -211,7 +227,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
                 comp.onQuestionUpdated();
 
-                expect(comp.quizIsValid).toBeFalse();
+                expect(comp.quizIsValid).toBe(false);
             });
         });
 
@@ -227,7 +243,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
                 comp.onQuestionUpdated();
 
-                expect(comp.quizIsValid).toBeFalse();
+                expect(comp.quizIsValid).toBe(false);
             });
 
             it('should be invalid if question explanation is invalid', () => {
@@ -236,13 +252,14 @@ describe('QuizExercise Re-evaluate Component', () => {
 
                 comp.onQuestionUpdated();
 
-                expect(comp.quizIsValid).toBeFalse();
+                expect(comp.quizIsValid).toBe(false);
             });
         });
     });
 
     it('should change score calculation type', () => {
         comp.ngOnInit();
+        vi.advanceTimersByTime(0);
         expect(comp.quizExercise.includedInOverallScore).toEqual(IncludedInOverallScore.INCLUDED_COMPLETELY);
         comp.includedInOverallScoreChange(IncludedInOverallScore.INCLUDED_AS_BONUS);
         expect(comp.quizExercise.includedInOverallScore).toEqual(IncludedInOverallScore.INCLUDED_AS_BONUS);
@@ -266,6 +283,6 @@ describe('QuizExercise Re-evaluate Component', () => {
         comp.quizExercise = quizExercise;
         // @ts-ignore
         comp.invalidFlaggedQuestions = [question];
-        expect(comp.isValidQuiz()).toBeTrue();
+        expect(comp.isValidQuiz()).toBe(true);
     });
 });

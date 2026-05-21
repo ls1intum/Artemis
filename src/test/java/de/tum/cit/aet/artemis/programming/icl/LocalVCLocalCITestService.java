@@ -1,11 +1,11 @@
 package de.tum.cit.aet.artemis.programming.icl;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.user.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Fail.fail;
 import static org.awaitility.Awaitility.await;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.net.URI;
@@ -105,6 +105,10 @@ public class LocalVCLocalCITestService {
         this.port = port;
     }
 
+    public String getDefaultBranch() {
+        return defaultBranch;
+    }
+
     public String getRepositorySlug(String projectKey, String repositoryTypeOrUserName) {
         return (projectKey + "-" + repositoryTypeOrUserName).toLowerCase();
     }
@@ -183,6 +187,12 @@ public class LocalVCLocalCITestService {
         Path localRepositoryFolder = createRepositoryFolder(projectKey, repositorySlug);
         LocalRepository repository = new LocalRepository(defaultBranch);
         repository.configureRepos(localVCBasePath, "localRepo", localRepositoryFolder);
+
+        // Create an initial commit in both the working copy and bare repository
+        // so that copy operations and other Git operations that require a HEAD commit work correctly
+        de.tum.cit.aet.artemis.programming.service.GitService.commit(repository.workingCopyGitRepo).setMessage("Initial commit").setAllowEmpty(true).call();
+        repository.workingCopyGitRepo.push().call();
+
         return repository;
     }
 

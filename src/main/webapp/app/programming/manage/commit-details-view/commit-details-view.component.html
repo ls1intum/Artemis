@@ -25,8 +25,8 @@
         <jhi-git-diff-report
             [repositoryDiffInformation]="repositoryDiffInformation"
             [diffForTemplateAndSolution]="false"
-            [leftCommitHash]="previousCommit.hash"
-            [rightCommitHash]="currentCommit.hash"
+            [leftCommitHash]="previousCommit?.hash"
+            [rightCommitHash]="currentCommit?.hash"
             [participationId]="repositoryId"
             [isRepositoryView]="true"
             [diffForTemplateAndEmptyRepository]="isTemplate"

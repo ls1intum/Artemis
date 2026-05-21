@@ -1,9 +1,8 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CoursesForDashboardDTO } from 'app/core/course/shared/entities/courses-for-dashboard-dto';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { HttpResponse } from '@angular/common/http';
 import { TeamService } from 'app/exercise/team/team.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Router, RouterLink } from '@angular/router';
@@ -38,7 +37,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
         SearchFilterPipe,
     ],
 })
-export class CoursesComponent implements OnInit, OnDestroy {
+export class CoursesComponent implements OnInit {
     protected readonly faPenAlt = faPenAlt;
     protected readonly faArrowDownAZ = faArrowDownAZ;
     protected readonly faArrowUpAZ = faArrowUpAZ;
@@ -46,7 +45,6 @@ export class CoursesComponent implements OnInit, OnDestroy {
 
     private courseService = inject(CourseManagementService);
     private teamService = inject(TeamService);
-    private websocketService = inject(WebsocketService);
     private router = inject(Router);
     private courseAccessStorageService = inject(CourseAccessStorageService);
 
@@ -58,7 +56,6 @@ export class CoursesComponent implements OnInit, OnDestroy {
     public recentlyAccessedCourses: Course[] = [];
     public regularCourses: Course[] = [];
 
-    quizExercisesChannels: string[] = [];
     searchCourseText = '';
 
     coursesLoaded = false;
@@ -67,15 +64,6 @@ export class CoursesComponent implements OnInit, OnDestroy {
     async ngOnInit() {
         this.loadAndFilterCourses();
         (await this.teamService.teamAssignmentUpdates).subscribe();
-    }
-
-    /**
-     * Unsubscribe from all websocket subscriptions.
-     */
-    ngOnDestroy() {
-        if (this.quizExercisesChannels) {
-            this.quizExercisesChannels.forEach((channel) => this.websocketService.unsubscribe(channel));
-        }
     }
 
     loadAndFilterCourses() {
@@ -139,7 +127,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
      * navigate to /courses/:courseid/exams/:examId
      */
     openExam(): void {
-        this.router.navigate(['courses', this.nextRelevantCourseForExam?.id, 'exams', this.nextRelevantExam!.id]);
+        void this.router.navigate(['courses', this.nextRelevantCourseForExam?.id, 'exams', this.nextRelevantExam!.id]);
     }
 
     setSearchValue(searchValue: string): void {

@@ -90,7 +90,7 @@ The `pipeline.groovy` file can be customized further by instructors after creati
 Artemis via the ‘Edit Build Plan’ button on the details page of the exercise.
 
 
-## Caching Maven Dependencies with Sonatype Nexus {#caching-sonatype-nexus}
+## Caching Maven Dependencies with Sonatype Nexus {/* #caching-sonatype-nexus */}
 
 With Sonatype Nexus you can run a caching server in your local network for Maven dependencies.
 An alternative approach for caching is with Docker volumes, see [this section](#caching-docker-volumes).
@@ -190,7 +190,7 @@ repositories {
 ```
 
 
-## Caching with Docker Volumes {#caching-docker-volumes}
+## Caching with Docker Volumes {/* #caching-docker-volumes */}
 
 With Docker volumes you can cache Maven dependencies.
 An alternative approach for caching is with Sonatype Nexus, see [this section](#caching-sonatype-nexus).
@@ -312,9 +312,9 @@ iptables -I DOCKER-USER -i artemis-restr -d $IP_OF_ARTEMIS_EXAMPLE_COM_CACHE -p 
 
 ## Timeout Options
 
-This setting is relevant only when using [Integrated Code Lifecycle Setup](https://docs.artemis.cit.tum.de/dev/setup/integrated-code-lifecycle.html).
+This setting is relevant only when using [Integrated Code Lifecycle Setup](/admin/production-setup/multiple-artemis-instances#integrated-code-lifecycle).
 
-You can adjust possible [timeout options](https://docs.artemis.cit.tum.de/user/exercises/programming.html#edit-maximum-build-duration) for the build process in Integrated Code Lifecycle Setup.
+You can adjust possible [timeout options](/admin/production-setup/programming-exercise-adjustments#timeout-options) for the build process in Integrated Code Lifecycle Setup.
 These values will determine what is the minimum, maximum, and default value for the build timeout in seconds that can be set in the Artemis UI.
 The max value is the upper limit for the timeout, if the value is set higher than the max value, the max value will be used.
 
@@ -336,7 +336,7 @@ artemis:
 
 ## Build Log Configuration
 
-This setting is relevant only when using [Integrated Code Lifecycle Setup](https://docs.artemis.cit.tum.de/dev/setup/integrated-code-lifecycle.html).
+This setting is relevant only when using [Integrated Code Lifecycle Setup](./integrated-code-lifecycle-setup.mdx).
 
 The build log settings control the amount of log data stored per build job.
 These values define the maximum number of lines and the maximum number of characters per line that can be retained in the logs.
@@ -357,7 +357,7 @@ artemis:
 
 ## Container Resource Restrictions
 
-This setting is relevant only when using [Integrated Code Lifecycle Setup](https://docs.artemis.cit.tum.de/dev/setup/integrated-code-lifecycle.html).
+This setting is relevant only when using [Integrated Code Lifecycle Setup](./integrated-code-lifecycle-setup.mdx).
 
 Instructors can edit the resources allocated to containers resulting from a programming exercise.
 These restrictions ensure that assigned values do not exceed predefined limits.
@@ -368,17 +368,52 @@ Default values have already been set, and modifying these values is not required
 
 ```yaml
 artemis:
-  continuous-integration:
-      container-flags-limit:
-          max-cpu-count: <value>
-          max-memory: <value>
-          max-memory-swap: <value>
+    continuous-integration:
+        container-flags-limit:
+            # Optional: restrict which custom Docker networks instructors can select
+            # Comma-separated list. Use 'none' to allow "no network" option
+            # This list must match networks available on the build agent host(s)
+            # Example: none, artemis-restricted
+            allowed-custom-networks: <network1>, <network2>
+            max-cpu-count: <value>
+            max-memory: <value>
+            max-memory-swap: <value>
 ```
 
+## Custom Docker Networks
+
+This setting is relevant only when using [Integrated Code Lifecycle Setup](./integrated-code-lifecycle-setup.mdx).
+
+Artemis allows instructors to select a custom Docker network for build containers per programming exercise. This can be used to
+isolate containers (e.g., disable all outbound traffic) or to place them into a restricted network that only allows access to
+approved services such as artifact caches.
+
+- Configure the list of networks that instructors are allowed to choose from using the `allowed-custom-networks` property.
+- Provide a comma-separated list of Docker network names. Use `none` to offer the "no network" option.
+- Custom network names must exist on the build agent host(s) where containers are created (e.g., create with `docker network create ...`). The special value `none` is a built-in Docker option and does not need to be created.
+- If no network is selected in the UI, Docker’s default network mode is used.
+
+```yaml title="application-buildagent.yml"
+artemis:
+    continuous-integration:
+        container-flags-limit:
+            # Example: offer a fully isolated option and a restricted bridge network
+            allowed-custom-networks: none, artemis-restricted
+```
+
+<Callout variant={CalloutVariant.info}>
+    In distributed deployments, configure the same list on all core nodes. The build agent uses the network that the core node passes to it and expects the network to exist on the
+    Docker host.
+</Callout>
+
+<Callout variant={CalloutVariant.warning}>
+    Selecting `none` disables network access for the container. Ensure all dependencies are available in the image or are cached, and configure builds to run offline where
+    applicable (e.g., Maven `--offline`), otherwise builds may fail.
+</Callout>
 
 ## Pause Grace Period
 
-This setting is relevant only when using [Integrated Code Lifecycle Setup](https://docs.artemis.cit.tum.de/dev/setup/integrated-code-lifecycle.html).
+This setting is relevant only when using [Integrated Code Lifecycle Setup](./integrated-code-lifecycle-setup.mdx).
 
 The pause grace period determines how long the build agent waits after being paused before canceling all currently running jobs on that agent and adding them back to the queue.
 This setting should be adjusted only if the default grace period is unsuitable for the specific environment. The configuration is set in the buildagent configuration file, `application-buildagent.yml`.

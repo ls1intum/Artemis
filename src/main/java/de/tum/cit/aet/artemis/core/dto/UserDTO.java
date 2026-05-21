@@ -19,12 +19,13 @@ import org.hibernate.Hibernate;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
- * A DTO representing a user, with his authorities.
+ * A DTO representing a user, with their authorities.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class UserDTO extends AuditingEntityDTO {
@@ -85,13 +86,15 @@ public class UserDTO extends AuditingEntityDTO {
      */
     private boolean askToSetupPasskey = false;
 
+    private ZonedDateTime selectedLLMUsageTimestamp;
+
+    private AiSelectionDecision selectedLLMUsage;
+
     private boolean isLoggedInWithPasskey = DEFAULT_IS_LOGGED_IN_WITH_PASSKEY;
 
     private boolean isPasskeySuperAdminApproved = DEFAULT_IS_SUPER_ADMIN_APPROVED;
 
-    private ZonedDateTime externalLLMUsageAccepted;
-
-    private boolean memirisEnabled = false;
+    private boolean memirisEnabled = true;
 
     public UserDTO() {
         // Empty constructor needed for Jackson.
@@ -101,14 +104,13 @@ public class UserDTO extends AuditingEntityDTO {
         this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getVisibleRegistrationNumber(), user.getActivated(),
                 user.getImageUrl(), user.getLangKey(), user.isInternal(), DEFAULT_IS_LOGGED_IN_WITH_PASSKEY, DEFAULT_IS_SUPER_ADMIN_APPROVED, user.getCreatedBy(),
                 user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(), user.getAuthorities(), user.getGroups(), user.getOrganizations(),
-                user.getExternalLLMUsageAcceptedTimestamp(), user.isMemirisEnabled());
+                user.getSelectedLLMUsage(), user.getSelectedLLMUsageTimestamp(), user.isMemirisEnabled());
     }
 
     public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
             String langKey, boolean internal, boolean isLoggedInWithPasskey, boolean isPasskeySuperAdminApproved, String createdBy, Instant createdDate, String lastModifiedBy,
-            Instant lastModifiedDate, Set<Authority> authorities, Set<String> groups, Set<Organization> organizations, ZonedDateTime externalLLMUsageAccepted,
-            boolean memirisEnabled) {
-
+            Instant lastModifiedDate, Set<Authority> authorities, Set<String> groups, Set<Organization> organizations, AiSelectionDecision selectedLLMUsage,
+            ZonedDateTime selectedLLMUsageTimestamp, boolean memirisEnabled) {
         this.id = id;
         this.login = login;
         this.name = name;
@@ -127,9 +129,14 @@ public class UserDTO extends AuditingEntityDTO {
         if (authorities != null && Hibernate.isInitialized(authorities)) {
             this.authorities = authorities.stream().map(Authority::getName).collect(Collectors.toSet());
         }
-        this.groups = groups;
-        this.organizations = organizations;
-        this.externalLLMUsageAccepted = externalLLMUsageAccepted;
+        if (groups != null && Hibernate.isInitialized(groups)) {
+            this.groups = groups;
+        }
+        if (organizations != null && Hibernate.isInitialized(organizations)) {
+            this.organizations = organizations;
+        }
+        this.selectedLLMUsage = selectedLLMUsage;
+        this.selectedLLMUsageTimestamp = selectedLLMUsageTimestamp;
         this.memirisEnabled = memirisEnabled;
         this.isLoggedInWithPasskey = isLoggedInWithPasskey;
         this.isPasskeySuperAdminApproved = isPasskeySuperAdminApproved;
@@ -292,12 +299,20 @@ public class UserDTO extends AuditingEntityDTO {
         this.internal = internal;
     }
 
-    public ZonedDateTime getExternalLLMUsageAccepted() {
-        return externalLLMUsageAccepted;
+    public AiSelectionDecision getSelectedLLMUsage() {
+        return selectedLLMUsage;
     }
 
-    public void setExternalLLMUsageAccepted(ZonedDateTime externalLLMUsageAccepted) {
-        this.externalLLMUsageAccepted = externalLLMUsageAccepted;
+    public void setSelectedLLMUsage(AiSelectionDecision selectedLLMUsage) {
+        this.selectedLLMUsage = selectedLLMUsage;
+    }
+
+    public ZonedDateTime getSelectedLLMUsageTimestamp() {
+        return selectedLLMUsageTimestamp;
+    }
+
+    public void setSelectedLLMUsageTimestamp(ZonedDateTime selectedLLMUsageTimestamp) {
+        this.selectedLLMUsageTimestamp = selectedLLMUsageTimestamp;
     }
 
     public boolean isMemirisEnabled() {

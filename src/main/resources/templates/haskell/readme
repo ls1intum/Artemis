@@ -1,5 +1,3 @@
-# Do It Once, Do It Twice, Do It Thrice!
-
 Your task is to implement a function of type `(Int,Int) -> [(Int,Int)] -> [(Int,Int)]` which takes a range `(i,j)` and a list `xs` of pairs `(x,y)` representing points in the euclidean plane as arguments.
 The function should select only those elements in `xs` whose x-component lies in the inclusive range $$[i,j]$$.
 It should then reflect the remaining points along the x-axis and return the resulting list.

@@ -8,7 +8,9 @@ import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -33,7 +35,9 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
+import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -64,24 +68,26 @@ public class CourseArchiveService {
 
     private final Optional<ExamRepositoryApi> examRepositoryApi;
 
+    private final Optional<ExamApi> examApi;
+
     private final ExerciseDeletionService exerciseDeletionService;
 
     public CourseArchiveService(CourseRepository courseRepository, CourseExamExportService courseExamExportService, AuthorizationCheckService authCheckService,
-            UserRepository userRepository, AuditEventRepository auditEventRepository, Optional<ExamRepositoryApi> examRepositoryApi,
+            UserRepository userRepository, AuditEventRepository auditEventRepository, Optional<ExamRepositoryApi> examRepositoryApi, Optional<ExamApi> examApi,
             ExerciseDeletionService exerciseDeletionService) {
         this.courseRepository = courseRepository;
         this.courseExamExportService = courseExamExportService;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.auditEventRepository = auditEventRepository;
-
         this.examRepositoryApi = examRepositoryApi;
+        this.examApi = examApi;
         this.exerciseDeletionService = exerciseDeletionService;
     }
 
     /**
      * Retrieves all inactive courses from non-null semesters that the current user is enrolled in
-     * for the course archive.
+     * for the course archive. This refers to old courses that are not shown in the course overview anymore.
      *
      * @return A list of courses for the course archive.
      */
@@ -115,8 +121,12 @@ public class CourseArchiveService {
             Files.createDirectories(courseArchivesDirPath);
             log.info("Created the course archives directory at {} because it didn't exist.", courseArchivesDirPath);
 
+            // Pre-fetch exam scores data to avoid circular dependencies
+            // (ExamApi -> ExamService -> CourseExamExportService would create a cycle if called from within CourseExamExportService)
+            Map<Long, ExamScoresDTO> examScoresData = fetchExamScoresForCourse(course.getId(), exportErrors);
+
             // Export the course to the archives' directory.
-            var archivedCoursePath = courseExamExportService.exportCourse(course, courseArchivesDirPath, exportErrors);
+            var archivedCoursePath = courseExamExportService.exportCourseForArchive(course, courseArchivesDirPath, exportErrors, examScoresData);
 
             // Attach the path to the archive to the course and save it in the database
             if (archivedCoursePath.isPresent()) {
@@ -162,5 +172,46 @@ public class CourseArchiveService {
         });
 
         log.info("The course {} has been cleaned up!", courseId);
+    }
+
+    /**
+     * Fetches exam scores for all exams in a course.
+     * This is done in CourseArchiveService (rather than CourseExamExportService) to avoid
+     * circular dependencies: ExamApi -> ExamService -> CourseExamExportService.
+     *
+     * @param courseId the ID of the course
+     * @param errors   list to collect any errors
+     * @return map of exam ID to ExamScoresDTO
+     */
+    private Map<Long, ExamScoresDTO> fetchExamScoresForCourse(long courseId, List<String> errors) {
+        Map<Long, ExamScoresDTO> examScoresData = new HashMap<>();
+
+        if (examRepositoryApi.isEmpty() || examApi.isEmpty()) {
+            return examScoresData;
+        }
+
+        try {
+            Set<Long> examIds = examRepositoryApi.get().findExamIdsByCourseId(courseId);
+            for (Long examId : examIds) {
+                try {
+                    ExamScoresDTO examScores = examApi.get().calculateExamScoresForExport(examId);
+                    if (examScores != null && examScores.studentResults() != null && !examScores.studentResults().isEmpty()) {
+                        examScoresData.put(examId, examScores);
+                    }
+                }
+                catch (Exception e) {
+                    String message = "Failed to fetch exam scores for exam " + examId + " in course " + courseId;
+                    log.error(message, e);
+                    errors.add(message);
+                }
+            }
+        }
+        catch (Exception e) {
+            String message = "Failed to find exams for course " + courseId;
+            log.error(message, e);
+            errors.add(message);
+        }
+
+        return examScoresData;
     }
 }

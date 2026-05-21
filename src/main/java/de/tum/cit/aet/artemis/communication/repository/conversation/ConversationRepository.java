@@ -119,4 +119,6 @@ public interface ConversationRepository extends ArtemisJpaRepository<Conversatio
             WHERE c.id = :conversationId
             """)
     void updateLastMessageDateAsync(@Param("conversationId") Long conversationId, @Param("now") ZonedDateTime now);
+
+    long countByCourseId(long courseId);
 }

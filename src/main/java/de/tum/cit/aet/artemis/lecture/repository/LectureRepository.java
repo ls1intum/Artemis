@@ -1,15 +1,12 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
-import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
@@ -19,12 +16,13 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.core.dto.calendar.LectureCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
 /**
  * Spring Data repository for the Lecture entity.
  */
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Lazy
 @Repository
 public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
@@ -37,10 +35,16 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     Set<Lecture> findAllByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
+            SELECT lecture.id
+            FROM Lecture lecture
+            WHERE lecture.course.id = :courseId
+            """)
+    Set<Long> findLectureIdsByCourseId(@Param("courseId") long courseId);
+
+    @Query("""
             SELECT new de.tum.cit.aet.artemis.core.dto.calendar.LectureCalendarEventDTO(
                 lecture.id,
                 lecture.title,
-                lecture.visibleDate,
                 lecture.startDate,
                 lecture.endDate
             )
@@ -48,14 +52,6 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             WHERE lecture.course.id = :courseId AND (lecture.startDate IS NOT NULL OR lecture.endDate IS NOT NULL) AND NOT lecture.isTutorialLecture
             """)
     Set<LectureCalendarEventDTO> getLectureCalendarEventDTOsForCourseId(@Param("courseId") long courseId);
-
-    @Query("""
-            SELECT lecture
-            FROM Lecture lecture
-            LEFT JOIN FETCH lecture.lectureUnits
-            WHERE lecture.course.id = :courseId AND (lecture.visibleDate IS NULL OR lecture.visibleDate <= :now)
-            """)
-    Set<Lecture> findAllVisibleByCourseIdWithEagerLectureUnits(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT lecture

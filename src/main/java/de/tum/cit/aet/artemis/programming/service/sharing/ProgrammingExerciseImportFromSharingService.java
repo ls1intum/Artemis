@@ -8,7 +8,9 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportFromFileService;
@@ -31,11 +33,14 @@ public class ProgrammingExerciseImportFromSharingService {
 
     private final UserRepository userRepository;
 
+    private final CourseRepository courseRepository;
+
     public ProgrammingExerciseImportFromSharingService(ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService,
-            ExerciseSharingService exerciseSharingService, UserRepository userRepository) {
+            ExerciseSharingService exerciseSharingService, UserRepository userRepository, CourseRepository courseRepository) {
         this.programmingExerciseImportFromFileService = programmingExerciseImportFromFileService;
         this.exerciseSharingService = exerciseSharingService;
         this.userRepository = userRepository;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -54,27 +59,28 @@ public class ProgrammingExerciseImportFromSharingService {
      * @param sharingSetupInfo container with the basket reference, the exercise model to import, and (optionally) the target course
      * @return the persisted {@link ProgrammingExercise}
      *
-     * @throws SharingException   if the setup info is inconsistent (e.g., exercise null or missing target course),
-     *                                or if the basket ZIP cannot be obtained
+     * @throws SharingException   if the setup info is inconsistent (e.g., exercise null or missing target course), or if the basket ZIP cannot be obtained
      * @throws IOException        if reading the ZIP or related I/O fails
      * @throws GitAPIException    if VCS operations during import fail
      * @throws URISyntaxException if an internal URI cannot be constructed
      */
-    public ProgrammingExercise importProgrammingExerciseFromSharing(SharingSetupInfo sharingSetupInfo) throws SharingException, IOException, GitAPIException, URISyntaxException {
+    public ProgrammingExercise importProgrammingExerciseFromSharing(SharingSetupInfoDTO sharingSetupInfo)
+            throws SharingException, IOException, GitAPIException, URISyntaxException {
         if (sharingSetupInfo.exercise() == null) {
-            throw new SharingException("Exercise should not be null?");
+            throw new SharingException("Exercise should not be null for import");
+        }
+        if (sharingSetupInfo.courseId() == 0) {
+            throw new SharingException("Target course is missing for import");
         }
         try (SharingMultipartZipFile zip = exerciseSharingService.getCachedBasketItem(sharingSetupInfo.sharingInfo())) {
 
             User user = userRepository.getUserWithGroupsAndAuthorities();
+            Course course = courseRepository.findByIdElseThrow(sharingSetupInfo.courseId());
 
             if (sharingSetupInfo.exercise().getCourseViaExerciseGroupOrCourseMember() == null) {
-                if (sharingSetupInfo.course() == null) {
-                    throw new SharingException("Target course is missing for import");
-                }
-                sharingSetupInfo.exercise().setCourse(sharingSetupInfo.course());
+                sharingSetupInfo.exercise().setCourse(course);
             }
-            return this.programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(sharingSetupInfo.exercise(), zip, sharingSetupInfo.course(), user, true);
+            return this.programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(sharingSetupInfo.exercise(), zip, course, user, true);
         }
     }
 }

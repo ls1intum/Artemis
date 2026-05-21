@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
@@ -11,6 +13,8 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { OrderedPage } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
 
 describe('PdfPreviewDateBoxComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: PdfPreviewDateBoxComponent;
     let fixture: ComponentFixture<PdfPreviewDateBoxComponent>;
     let courseExerciseServiceMock: any;
@@ -31,11 +35,11 @@ describe('PdfPreviewDateBoxComponent', () => {
 
     beforeEach(async () => {
         courseExerciseServiceMock = {
-            findAllExercisesWithDueDatesForCourse: jest.fn().mockReturnValue(of(new HttpResponse({ body: mockExercises }))),
+            findAllExercisesWithDueDatesForCourse: vi.fn().mockReturnValue(of(new HttpResponse({ body: mockExercises }))),
         };
 
         alertServiceMock = {
-            error: jest.fn(),
+            error: vi.fn(),
         };
 
         await TestBed.configureTestingModule({
@@ -56,40 +60,44 @@ describe('PdfPreviewDateBoxComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
     describe('Initialization', () => {
         it('should create', () => {
             expect(component).toBeTruthy();
         });
 
-        it('should load exercises on init', fakeAsync(() => {
+        it('should load exercises on init', async () => {
             component.ngOnInit();
-            tick();
+            await fixture.whenStable();
 
             expect(courseExerciseServiceMock.findAllExercisesWithDueDatesForCourse).toHaveBeenCalledWith(mockCourse.id);
             expect(component.exercises()).toEqual(mockExercises);
-        }));
+        });
 
-        it('should handle error when loading exercises', fakeAsync(() => {
+        it('should handle error when loading exercises', async () => {
             courseExerciseServiceMock.findAllExercisesWithDueDatesForCourse.mockReturnValue(throwError(() => new Error('Failed')));
 
             component.ngOnInit();
-            tick();
+            await fixture.whenStable();
 
             expect(component.exercises()).toEqual([]);
             expect(alertServiceMock.error).toHaveBeenCalled();
-        }));
+        });
 
         it('should set isMultiplePages correctly', () => {
             component.ngOnInit();
-            expect(component.isMultiplePages()).toBeTruthy();
+            expect(component.isMultiplePages()).toBe(true);
 
             fixture.componentRef.setInput('selectedPages', [{ order: 1, id: '1', slideId: '1' }]);
-            expect(component.isMultiplePages()).toBeFalsy();
+            expect(component.isMultiplePages()).toBe(false);
         });
     });
 
     describe('Exercise Processing', () => {
-        it('should correctly categorize and sort exercises', fakeAsync(() => {
+        it('should correctly categorize and sort exercises', async () => {
             const futureDate = new Date();
             futureDate.setFullYear(futureDate.getFullYear() + 1);
 
@@ -103,7 +111,7 @@ describe('PdfPreviewDateBoxComponent', () => {
             courseExerciseServiceMock.findAllExercisesWithDueDatesForCourse.mockReturnValue(of(new HttpResponse({ body: futureMockExercises })));
 
             component.ngOnInit();
-            tick();
+            await fixture.whenStable();
 
             const categorized = component.categorizedExercises();
             expect(categorized).toHaveLength(2);
@@ -112,7 +120,7 @@ describe('PdfPreviewDateBoxComponent', () => {
             expect(categorized[0].exercises[0].id).toBe(1); // Earlier date first
             expect(categorized[1].type).toBe(ExerciseType.PROGRAMMING);
             expect(categorized[1].exercises).toHaveLength(1); // Only one with dueDate
-        }));
+        });
     });
 
     describe('Date Formatting', () => {
@@ -133,15 +141,15 @@ describe('PdfPreviewDateBoxComponent', () => {
         it('should handle calendar selection', () => {
             component.selectCalendar();
 
-            expect(component.calendarSelected()).toBeTruthy();
-            expect(component.exerciseSelected()).toBeFalsy();
+            expect(component.calendarSelected()).toBe(true);
+            expect(component.exerciseSelected()).toBe(false);
         });
 
         it('should handle exercise selection', () => {
             component.selectExercise();
 
-            expect(component.calendarSelected()).toBeFalsy();
-            expect(component.exerciseSelected()).toBeTruthy();
+            expect(component.calendarSelected()).toBe(false);
+            expect(component.exerciseSelected()).toBe(true);
         });
 
         it('should handle hide forever changes', () => {
@@ -151,18 +159,18 @@ describe('PdfPreviewDateBoxComponent', () => {
 
             component.onHideForeverChange(true);
 
-            expect(component.hideForever()).toBeTruthy();
-            expect(component.calendarSelected()).toBeFalsy();
-            expect(component.exerciseSelected()).toBeFalsy();
+            expect(component.hideForever()).toBe(true);
+            expect(component.calendarSelected()).toBe(false);
+            expect(component.exerciseSelected()).toBe(false);
             expect(component.selectedExercise()).toBeUndefined();
         });
     });
 
     describe('Form Submission', () => {
-        let hiddenPagesOutputSpy: jest.SpyInstance;
+        let hiddenPagesOutputSpy: ReturnType<typeof vi.spyOn>;
 
         beforeEach(() => {
-            hiddenPagesOutputSpy = jest.spyOn(component.hiddenPagesOutput, 'emit');
+            hiddenPagesOutputSpy = vi.spyOn(component.hiddenPagesOutput, 'emit');
         });
 
         it('should emit hidden pages with forever date when hide forever is selected', () => {

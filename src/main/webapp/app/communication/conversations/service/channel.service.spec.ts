@@ -1,5 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { map, take } from 'rxjs/operators';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -11,11 +13,14 @@ import { AccountService } from 'app/core/auth/account.service';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ChannelService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ChannelService;
     let httpMock: HttpTestingController;
     let elemDefault: ChannelDTO;
 
     beforeEach(() => {
+        vi.useFakeTimers();
         TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(),
@@ -31,10 +36,12 @@ describe('ChannelService', () => {
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         httpMock.verify();
+        vi.restoreAllMocks();
     });
 
-    it('getChannelsOfCourse', fakeAsync(() => {
+    it('getChannelsOfCourse', () => {
         const returnedFromService = { ...elemDefault, title: 'Test' };
         const expected = { ...returnedFromService };
 
@@ -48,10 +55,10 @@ describe('ChannelService', () => {
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush([returnedFromService]);
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
-    it('getPublicChannelsOfCourse', fakeAsync(() => {
+    it('getPublicChannelsOfCourse', () => {
         const returnedFromService = { ...elemDefault, title: 'Test' };
         const expected = { ...returnedFromService };
 
@@ -65,10 +72,10 @@ describe('ChannelService', () => {
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush([returnedFromService]);
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
-    it('delete', fakeAsync(() => {
+    it('delete', () => {
         service
             .delete(1, 1)
             .pipe(take(1))
@@ -76,10 +83,10 @@ describe('ChannelService', () => {
 
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({});
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
-    it('create', fakeAsync(() => {
+    it('create', () => {
         const returnedFromService = { ...elemDefault, id: 0 };
         const expected = { ...returnedFromService };
         service
@@ -89,10 +96,10 @@ describe('ChannelService', () => {
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
-    it('getChannelOfLecture', fakeAsync(() => {
+    it('getChannelOfLecture', () => {
         const returnedFromService = { ...elemDefault, id: 0 };
         const expected = { ...returnedFromService };
         service
@@ -102,10 +109,10 @@ describe('ChannelService', () => {
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
-    it('getChannelOfExercise', fakeAsync(() => {
+    it('getChannelOfExercise', () => {
         const returnedFromService = { ...elemDefault, id: 0 };
         const expected = { ...returnedFromService };
         service
@@ -115,10 +122,10 @@ describe('ChannelService', () => {
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
-    it('update', fakeAsync(() => {
+    it('update', () => {
         const returnedFromService = { ...elemDefault, name: 'test' };
         const expected = { ...returnedFromService };
 
@@ -129,10 +136,10 @@ describe('ChannelService', () => {
 
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
-    it('archive', fakeAsync(() => {
+    it('archive', () => {
         service
             .archive(1, 1)
             .pipe(take(1))
@@ -140,10 +147,10 @@ describe('ChannelService', () => {
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush({});
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
-    it('unarchive', fakeAsync(() => {
+    it('unarchive', () => {
         service
             .unarchive(1, 1)
             .pipe(take(1))
@@ -151,10 +158,10 @@ describe('ChannelService', () => {
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush({});
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
-    it('deregisterUsersFromChannel', fakeAsync(() => {
+    it('deregisterUsersFromChannel', () => {
         service
             .deregisterUsersFromChannel(1, 1)
             .pipe(take(1))
@@ -162,10 +169,10 @@ describe('ChannelService', () => {
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush({});
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
-    it('registersUsersToChannel', fakeAsync(() => {
+    it('registersUsersToChannel', () => {
         service
             .registerUsersToChannel(1, 1, true, true, true, ['login'])
             .pipe(take(1))
@@ -173,10 +180,10 @@ describe('ChannelService', () => {
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush({});
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
-    it('grantChannelModeratorRole', fakeAsync(() => {
+    it('grantChannelModeratorRole', () => {
         service
             .grantChannelModeratorRole(1, 1, ['login'])
             .pipe(take(1))
@@ -184,10 +191,10 @@ describe('ChannelService', () => {
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush({});
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
-    it('revokeChannelModeratorRole', fakeAsync(() => {
+    it('revokeChannelModeratorRole', () => {
         service
             .revokeChannelModeratorRole(1, 1, ['login'])
             .pipe(take(1))
@@ -195,10 +202,10 @@ describe('ChannelService', () => {
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush({});
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
-    it('toggleChannelPrivacy', fakeAsync(() => {
+    it('toggleChannelPrivacy', () => {
         const returnedFromService = { ...elemDefault, isPublic: false };
         const expected = { ...returnedFromService };
 
@@ -209,6 +216,6 @@ describe('ChannelService', () => {
 
         const req = httpMock.expectOne({ method: 'POST', url: '/api/communication/courses/1/channels/2/toggle-privacy' });
         req.flush(returnedFromService);
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 });

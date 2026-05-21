@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.function.Function;
@@ -28,9 +29,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
+import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
@@ -59,14 +62,18 @@ public class SharedQueueManagementService {
 
     private final ProfileService profileService;
 
+    private final Optional<LocalCIQueueWebsocketService> localCIQueueWebsocketService;
+
     private int buildAgentsCapacity;
 
     private int runningBuildJobCount;
 
-    public SharedQueueManagementService(BuildJobRepository buildJobRepository, ProfileService profileService, DistributedDataAccessService distributedDataAccessService) {
+    public SharedQueueManagementService(BuildJobRepository buildJobRepository, ProfileService profileService, DistributedDataAccessService distributedDataAccessService,
+            Optional<LocalCIQueueWebsocketService> localCIQueueWebsocketService) {
         this.buildJobRepository = buildJobRepository;
         this.profileService = profileService;
         this.distributedDataAccessService = distributedDataAccessService;
+        this.localCIQueueWebsocketService = localCIQueueWebsocketService;
     }
 
     /**
@@ -78,6 +85,37 @@ public class SharedQueueManagementService {
     public void init() {
         this.distributedDataAccessService.getDistributedBuildAgentInformation().addEntryListener(new BuildAgentListener());
         this.updateBuildAgentCapacity();
+
+        // Register a listener for client (build agent) disconnections.
+        // When a build agent disconnects, we remove its entry from the map which triggers
+        // the MapEntryRemovedEvent and subsequently the orphan job handling.
+        // This is only active on core nodes (cluster members), not on build agents (clients).
+        var listenerId = this.distributedDataAccessService.addClientDisconnectionListener(this::handleClientDisconnection);
+        if (listenerId != null) {
+            log.info("Registered client disconnection listener for build agent cleanup");
+        }
+    }
+
+    /**
+     * Handles the disconnection of a client (build agent) from the cluster.
+     * Removes the build agent's entry from the distributed map, which triggers
+     * the MapEntryRemovedEvent and the orphan job handling.
+     *
+     * @param clientName the name of the disconnected client (build agent short name)
+     */
+    private void handleClientDisconnection(String clientName) {
+        if (StringUtils.isBlank(clientName)) {
+            log.warn("Build agent client disconnected with blank name. Skipping map removal.");
+            return;
+        }
+        log.warn("Build agent client disconnected: {}. Removing from build agent information map.", clientName);
+        var removedAgent = this.distributedDataAccessService.getDistributedBuildAgentInformation().remove(clientName);
+        if (removedAgent != null) {
+            log.info("Removed build agent {} from distributed map. MapEntryRemovedEvent will trigger orphan job handling.", clientName);
+        }
+        else {
+            log.debug("Build agent {} was not found in the distributed map (may have already been removed).", clientName);
+        }
     }
 
     /**
@@ -91,7 +129,10 @@ public class SharedQueueManagementService {
             distributedDataAccessService.getDistributedDockerImageCleanupInfo().clear();
             Set<DockerImageBuild> lastBuildDatesForDockerImages = buildJobRepository.findAllLastBuildDatesForDockerImages();
             for (DockerImageBuild dockerImageBuild : lastBuildDatesForDockerImages) {
-                distributedDataAccessService.getDistributedDockerImageCleanupInfo().put(dockerImageBuild.dockerImage(), dockerImageBuild.lastBuildCompletionDate());
+                // Hazelcast maps do not allow null keys or values, so skip entries with null values
+                if (dockerImageBuild.dockerImage() != null && dockerImageBuild.lastBuildCompletionDate() != null) {
+                    distributedDataAccessService.getDistributedDockerImageCleanupInfo().put(dockerImageBuild.dockerImage(), dockerImageBuild.lastBuildCompletionDate());
+                }
             }
             log.debug("pushDockerImageCleanupInfo took {}ms", System.currentTimeMillis() - startDate);
         }
@@ -143,6 +184,11 @@ public class SharedQueueManagementService {
     private void updateCancelledQueuedBuildJobsStatus(List<BuildJobQueueItem> queuedJobs) {
         for (BuildJobQueueItem queuedJob : queuedJobs) {
             buildJobRepository.updateBuildJobStatus(queuedJob.id(), BuildStatus.CANCELLED);
+            // Send WebSocket notification for the cancelled job (only on scheduling node)
+            localCIQueueWebsocketService.ifPresent(websocketService -> buildJobRepository.findByBuildJobId(queuedJob.id()).ifPresent(buildJob -> {
+                FinishedBuildJobDTO finishedBuildJobDTO = FinishedBuildJobDTO.of(buildJob);
+                websocketService.sendFinishedBuildJobOverWebsocket(finishedBuildJobDTO);
+            }));
         }
     }
 
@@ -387,12 +433,90 @@ public class SharedQueueManagementService {
         public void entryRemoved(MapEntryRemovedEvent<String, BuildAgentInformation> event) {
             log.debug("Build agent removed: {}", event.oldValue());
             updateBuildAgentCapacity();
+
+            // When a build agent is removed (e.g., due to crash or disconnection), clean up
+            // any orphaned jobs that were assigned to it. These jobs remain in the processingJobs
+            // map but will never complete since the agent is gone.
+            if (event.oldValue() != null) {
+                handleOrphanedJobsForRemovedAgent(event.oldValue());
+            }
         }
 
         @Override
         public void entryUpdated(MapEntryUpdatedEvent<String, BuildAgentInformation> event) {
             log.debug("Build agent updated: {}", event.value());
             updateBuildAgentCapacity();
+        }
+    }
+
+    /**
+     * Maximum number of retry attempts for orphaned build jobs.
+     * After this many retries, the job will be marked as FAILED instead of being re-queued.
+     */
+    private static final int MAX_ORPHANED_JOB_RETRIES = 5;
+
+    /**
+     * Handles orphaned jobs when a build agent is removed from the cluster.
+     * This can happen when:
+     * <ul>
+     * <li>A build agent crashes</li>
+     * <li>A Hazelcast client (build agent) disconnects from the cluster</li>
+     * <li>Network issues cause the agent to be evicted</li>
+     * </ul>
+     *
+     * <p>
+     * Jobs assigned to the removed agent are immediately re-queued for execution
+     * on another available build agent (up to {@value MAX_ORPHANED_JOB_RETRIES} retries).
+     * This provides faster recovery compared to waiting for the scheduled
+     * {@code LocalCIMissingJobService} check.
+     *
+     * @param removedAgent the build agent information that was removed
+     */
+    private void handleOrphanedJobsForRemovedAgent(BuildAgentInformation removedAgent) {
+        String agentName = removedAgent.buildAgent().name();
+        log.info("Checking for orphaned jobs from removed build agent: {}", agentName);
+
+        // Find all processing jobs assigned to the removed agent
+        List<BuildJobQueueItem> orphanedJobs = distributedDataAccessService.getProcessingJobs().stream()
+                .filter(job -> job.buildAgent() != null && Objects.equals(job.buildAgent().name(), agentName)).toList();
+
+        if (orphanedJobs.isEmpty()) {
+            log.debug("No orphaned jobs found for removed agent {}", agentName);
+            return;
+        }
+
+        log.warn("Found {} orphaned job(s) from removed agent {}. Re-queuing for immediate retry.", orphanedJobs.size(), agentName);
+
+        for (BuildJobQueueItem job : orphanedJobs) {
+            try {
+                // Atomically remove the job from the processing jobs map.
+                // IMPORTANT: Only the node that successfully removes the job should re-queue it.
+                // When multiple core nodes receive the entryRemoved event, all will try to handle
+                // the orphaned jobs. By checking the return value, we ensure only one node re-queues.
+                BuildJobQueueItem removedJob = distributedDataAccessService.getDistributedProcessingJobs().remove(job.id());
+                if (removedJob == null) {
+                    // Job was already removed by another node - skip to avoid duplicate re-queuing
+                    log.debug("Orphaned job {} was already removed from processing jobs (handled by another node). Skipping.", job.id());
+                    continue;
+                }
+
+                if (job.retryCount() >= MAX_ORPHANED_JOB_RETRIES) {
+                    // Max retries exceeded - mark as failed
+                    log.error("Orphaned job {} exceeded max retries ({}). Marking as FAILED.", job.id(), MAX_ORPHANED_JOB_RETRIES);
+                    buildJobRepository.updateBuildJobStatus(job.id(), BuildStatus.FAILED);
+                }
+                else {
+                    // Re-queue with incremented retry count for immediate retry on another agent
+                    // Using empty BuildAgentDTO so any available agent can pick it up
+                    BuildJobQueueItem retryJob = new BuildJobQueueItem(job, new BuildAgentDTO("", "", ""), job.retryCount() + 1);
+                    distributedDataAccessService.getDistributedBuildJobQueue().add(retryJob);
+                    log.info("Re-queued orphaned job {} (participation {}) with retry count {}. Will be processed by next available agent.", job.id(), job.participationId(),
+                            retryJob.retryCount());
+                }
+            }
+            catch (Exception e) {
+                log.error("Failed to handle orphaned job {} from agent {}: {}", job.id(), agentName, e.getMessage(), e);
+            }
         }
     }
 

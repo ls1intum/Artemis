@@ -3,20 +3,20 @@ import {
     ChangeDetectorRef,
     Component,
     HostListener,
-    OnChanges,
     OnDestroy,
     OnInit,
     Renderer2,
     ViewContainerRef,
+    effect,
     inject,
     input,
     output,
+    untracked,
     viewChild,
 } from '@angular/core';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { PostingDirective } from 'app/communication/directive/posting.directive';
 import dayjs from 'dayjs/esm';
-import { animate, style, transition, trigger } from '@angular/animations';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { faBookmark, faPencilAlt, faShare, faSmile, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
@@ -28,6 +28,7 @@ import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { captureException } from '@sentry/angular';
+import { deepClone } from 'app/shared/util/deep-clone.util';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
@@ -38,12 +39,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     templateUrl: './answer-post.component.html',
     styleUrls: ['./answer-post.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    animations: [
-        trigger('fade', [
-            transition(':enter', [style({ opacity: 0 }), animate('300ms ease-in', style({ opacity: 1 }))]),
-            transition(':leave', [animate('300ms ease-out', style({ opacity: 0 }))]),
-        ]),
-    ],
     imports: [
         NgClass,
         FaIconComponent,
@@ -60,7 +55,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
         ArtemisDatePipe,
     ],
 })
-export class AnswerPostComponent extends PostingDirective<AnswerPost> implements OnInit, OnChanges, OnDestroy {
+export class AnswerPostComponent extends PostingDirective<AnswerPost> implements OnInit, OnDestroy {
     changeDetector = inject(ChangeDetectorRef);
     renderer = inject(Renderer2);
     private document = inject<Document>(DOCUMENT);
@@ -94,14 +89,21 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     constructor() {
         super();
         this.course = this.metisService.getCourse();
+        // Track posting signal changes (replaces ngOnChanges)
+        effect(() => {
+            this.posting();
+            untracked(() => {
+                const posting = this.posting();
+                if (!posting) return;
+                if (!(posting instanceof AnswerPost)) {
+                    this.posting.set(Object.assign(new AnswerPost(), posting));
+                }
+            });
+        });
     }
 
     ngOnInit() {
         super.ngOnInit();
-        this.assignPostingToAnswerPost();
-    }
-
-    ngOnChanges() {
         this.assignPostingToAnswerPost();
     }
 
@@ -110,17 +112,23 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     }
 
     onPostingUpdated(updatedPosting: AnswerPost) {
-        this.posting = updatedPosting;
+        this.posting.set(updatedPosting);
     }
 
     onReactionsUpdated(updatedReactions: Reaction[]) {
-        this.posting = { ...this.posting, reactions: updatedReactions };
+        const current = this.posting();
+        if (!current) {
+            return;
+        }
+        const updated = deepClone(current);
+        updated.reactions = updatedReactions;
+        this.posting.set(updated);
     }
 
     /**
      * Closes dropdown if user clicks anywhere outside the component.
      */
-    @HostListener('document:click', ['$event'])
+    @HostListener('document:click')
     onClickOutside() {
         this.showDropdown = false;
         this.enableBodyScroll();
@@ -225,8 +233,9 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
 
     private assignPostingToAnswerPost() {
         // This is needed because otherwise instanceof returns 'object'.
-        if (this.posting && !(this.posting instanceof AnswerPost)) {
-            this.posting = Object.assign(new AnswerPost(), this.posting);
+        const posting = this.posting();
+        if (posting && !(posting instanceof AnswerPost)) {
+            this.posting.set(Object.assign(new AnswerPost(), posting));
         }
     }
 }

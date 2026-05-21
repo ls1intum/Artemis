@@ -14,7 +14,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <argLine>-Dfile.encoding=UTF-8</argLine>
-        <kotlin.version>1.9.23</kotlin.version>
+        <kotlin.version>1.9.25</kotlin.version>
         <teamscale.version>34.2.1</teamscale.version>
 	</properties>
     <dependencies>
@@ -50,7 +50,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.5</version>
+                <version>3.5.5</version>
             </plugin>
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
@@ -104,7 +104,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.4.1</version>
+                <version>3.6.2</version>
                 <executions>
                     <execution>
                         <id>enforce-no-student-code-in-trusted-packages</id>

@@ -101,6 +101,7 @@ public class ProgrammingExerciseDeletionResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
         exerciseService.logDeletion(programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseDeletionService.delete(exerciseId, deleteBaseReposBuildPlans);
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).build();
     }
 
@@ -110,7 +111,7 @@ public class ProgrammingExerciseDeletionResource {
      * <p>
      * The available operations include:
      * 1. deleteParticipationsSubmissionsAndResults: Deleting all participations, submissions, and results (also deletes repositories and build plans).
-     * 2. recreateBuildPlans: Deleting and recreating the BASE and SOLUTION build plans (for LocalCI / Aeolus, this will reset the customized build plans).
+     * 2. recreateBuildPlans: Deleting and recreating the BASE and SOLUTION build plans (for LocalCI, this will reset the customized build plans).
      *
      * @param exerciseId                         - Id of the programming exercise to reset.
      * @param programmingExerciseResetOptionsDTO - Data Transfer Object specifying which operations to perform during the exercise reset.
@@ -132,7 +133,7 @@ public class ProgrammingExerciseDeletionResource {
 
         if (programmingExerciseResetOptionsDTO.deleteParticipationsSubmissionsAndResults()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
-            exerciseDeletionService.reset(programmingExercise);
+            exerciseDeletionService.reset(exerciseId);
             exerciseDeletionService.cleanup(exerciseId);
         }
         exerciseVersionService.createExerciseVersion(programmingExercise, user);

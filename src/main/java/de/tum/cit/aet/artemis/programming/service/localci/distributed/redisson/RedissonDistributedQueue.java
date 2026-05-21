@@ -116,7 +116,7 @@ public class RedissonDistributedQueue<T> implements DistributedQueue<T> {
 
     @Override
     public UUID addItemListener(QueueItemListener<T> listener) {
-        int registrationId = notificationTopic.addListener(QueueItemEvent.class, (channel, event) -> {
+        int registrationId = notificationTopic.addListener(QueueItemEvent.class, (_, event) -> {
             if (event.getType() == QueueItemEvent.EventType.ADD) {
                 listener.itemAdded((T) event.getItem());
             }

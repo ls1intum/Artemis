@@ -3,14 +3,20 @@ import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { Subject, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
+import * as Y from 'yjs';
 import { DebugElement } from '@angular/core';
+
+// Mock y-monaco to avoid needing full Monaco API in tests
+jest.mock('y-monaco', () => ({
+    MonacoBinding: jest.fn().mockImplementation(() => ({
+        destroy: jest.fn(),
+    })),
+}));
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockProgrammingExerciseGradingService } from 'test/helpers/mocks/service/mock-programming-exercise-grading.service';
-import { triggerChanges } from 'test/helpers/utils/general-test.utils';
-import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ResultService } from 'app/exercise/result/result.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
@@ -36,6 +42,12 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
+import { ProblemStatementSyncService } from 'app/exercise/synchronization/services/problem-statement-sync.service';
+import { editor } from 'test/helpers/mocks/mock-monaco-editor';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { signal } from '@angular/core';
+import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
+import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
 
 describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let comp: ProgrammingExerciseEditableInstructionComponent;
@@ -45,6 +57,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let programmingExerciseService: ProgrammingExerciseService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let alertService: AlertService;
+    let exerciseReviewCommentService: ExerciseReviewCommentService;
 
     let subscribeForTestCaseSpy: jest.SpyInstance;
     let getLatestResultWithFeedbacksStub: jest.SpyInstance;
@@ -54,7 +67,6 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     templateParticipation.id = 99;
 
     const exercise = { id: 30, templateParticipation } as ProgrammingExercise;
-    const participation = { id: 1, results: [{ id: 10, feedbacks: [{ id: 20 }, { id: 21 }] }] } as Participation;
     const testCases = [
         { testName: 'test1', active: true },
         { testName: 'test2', active: true },
@@ -72,6 +84,30 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         },
     } as ActivatedRoute;
 
+    const yDoc = new Y.Doc();
+    const yText = yDoc.getText('problem-statement');
+    const yAwareness = {} as any;
+    const stateReplaced$ = new Subject<{ doc: Y.Doc; text: Y.Text; awareness: any }>();
+    const initialSyncFinalized$ = new Subject<{ contentChangedDuringFinalize: boolean; contentDivergedFromFallback: boolean; finalContent: string }>();
+    const problemStatementSyncServiceMock = {
+        init: jest.fn().mockReturnValue({ doc: yDoc, text: yText, awareness: yAwareness }),
+        reset: jest.fn(),
+        stateReplaced$: stateReplaced$.asObservable(),
+        initialSyncFinalized$: initialSyncFinalized$.asObservable(),
+        isAwaitingInitialSync: jest.fn(() => false),
+    };
+
+    const defaultForceRender$ = new Subject<void>();
+    const setRequiredInputs = (
+        fixtureRef: ComponentFixture<ProgrammingExerciseEditableInstructionComponent>,
+        exerciseInput: ProgrammingExercise = exercise,
+        forceRender$: Observable<void> = defaultForceRender$,
+    ) => {
+        fixtureRef.componentRef.setInput('exercise', exerciseInput);
+        fixtureRef.componentRef.setInput('initialEditorHeight', 'external');
+        fixtureRef.componentRef.setInput('forceRender', forceRender$);
+    };
+
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [MockDirective(NgbTooltip), FaIconComponent],
@@ -88,9 +124,16 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
+                { provide: ProblemStatementSyncService, useValue: problemStatementSyncServiceMock },
+                MockProvider(ExerciseReviewCommentService, { threads: signal([]), markInlineFixAppliedInContext: jest.fn() }),
                 { provide: ActivatedRoute, useValue: route },
                 MockProvider(ProfileService, {
                     getProfileInfo: () => mockProfileInfo,
+                    isProfileActive: jest.fn().mockReturnValue(false),
+                    isModuleFeatureActive: jest.fn().mockReturnValue(true),
+                }),
+                MockProvider(ProgrammingExerciseParticipationService, {
+                    getLatestResultWithFeedback: jest.fn(),
                 }),
                 { provide: AccountService, useClass: MockAccountService },
                 provideHttpClient(),
@@ -105,24 +148,185 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 gradingService = TestBed.inject(ProgrammingExerciseGradingService);
                 (gradingService as MockProgrammingExerciseGradingService).initSubject([]);
                 programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
+                exerciseReviewCommentService = TestBed.inject(ExerciseReviewCommentService);
                 subscribeForTestCaseSpy = jest.spyOn(gradingService, 'subscribeForTestCases');
                 getLatestResultWithFeedbacksStub = jest.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
                 generateHtmlSubjectStub = jest.spyOn(comp.generateHtmlSubject, 'next');
                 programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
                 alertService = TestBed.inject(AlertService);
+                setRequiredInputs(fixture, { id: undefined } as ProgrammingExercise);
             });
     });
 
     afterEach(() => {
         (gradingService as MockProgrammingExerciseGradingService).initSubject([]);
+        jest.clearAllMocks();
         jest.restoreAllMocks();
     });
 
-    it('should not have any test cases if the test case service emits an empty array', fakeAsync(() => {
-        comp.exercise = exercise;
-        comp.participation = participation;
+    it('should initialize sync service', fakeAsync(() => {
+        const exercise = { id: 30, templateParticipation, problemStatement: 'test' } as ProgrammingExercise;
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
 
-        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
+        // Set up mock for markdownEditorMonaco using the mock-monaco-editor helper
+        const mockEditor = editor.create();
+        comp.markdownEditorMonaco = {
+            monacoEditor: () => ({
+                getModel: () => mockEditor.getModel(),
+                getEditor: () => mockEditor,
+            }),
+        } as unknown as MarkdownEditorMonacoComponent;
+
+        // Trigger ngAfterViewInit manually since the ViewChild is now set
+        comp.ngAfterViewInit();
+        tick();
+
+        expect(problemStatementSyncServiceMock.init).toHaveBeenCalledWith(exercise.id, exercise.problemStatement);
+
+        fixture.destroy();
+        flush();
+    }));
+
+    it('skips initializing sync when edit mode disabled', fakeAsync(() => {
+        fixture.componentRef.setInput('editMode', false);
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'content' });
+
+        fixture.detectChanges();
+        tick();
+
+        expect(problemStatementSyncServiceMock.init).not.toHaveBeenCalled();
+    }));
+
+    it('emits unsaved flag on user edits', () => {
+        const hasUnsavedSpy = jest.fn();
+        comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'old' });
+        fixture.detectChanges();
+
+        comp.updateProblemStatement('changed');
+
+        expect(hasUnsavedSpy).toHaveBeenCalledWith(true);
+    });
+
+    it('does not emit unsaved flag during initial sync bootstrap', () => {
+        const hasUnsavedSpy = jest.fn();
+        const instructionChangeSpy = jest.fn();
+        comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
+        comp.instructionChange.subscribe(instructionChangeSpy);
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'old' });
+        fixture.detectChanges();
+
+        (comp as any).problemStatementSyncState = { doc: yDoc, text: yText, awareness: yAwareness };
+        (problemStatementSyncServiceMock.isAwaitingInitialSync as jest.Mock).mockReturnValue(true);
+
+        comp.updateProblemStatement('changed-during-sync');
+
+        expect(hasUnsavedSpy).not.toHaveBeenCalled();
+        expect(comp.unsavedChangesValue).toBeFalse();
+        expect(instructionChangeSpy).toHaveBeenCalledWith('changed-during-sync');
+    });
+
+    it('does not emit unsaved flag for finalize hydration when a bootstrap change was suppressed', fakeAsync(() => {
+        const hasUnsavedSpy = jest.fn();
+        const instructionChangeSpy = jest.fn();
+        comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
+        comp.instructionChange.subscribe(instructionChangeSpy);
+
+        const exerciseWithStatement = { ...exercise, problemStatement: 'old' } as ProgrammingExercise;
+        setRequiredInputs(fixture, exerciseWithStatement);
+        fixture.detectChanges();
+
+        const mockEditor = editor.create();
+        comp.markdownEditorMonaco = {
+            monacoEditor: () => ({
+                getModel: () => mockEditor.getModel(),
+                getEditor: () => mockEditor,
+            }),
+        } as unknown as MarkdownEditorMonacoComponent;
+
+        comp.ngAfterViewInit();
+        tick();
+
+        (problemStatementSyncServiceMock.isAwaitingInitialSync as jest.Mock).mockReturnValue(true);
+        comp.updateProblemStatement('changed-during-sync');
+        expect(hasUnsavedSpy).not.toHaveBeenCalled();
+
+        (problemStatementSyncServiceMock.isAwaitingInitialSync as jest.Mock).mockReturnValue(false);
+        initialSyncFinalized$.next({ contentChangedDuringFinalize: true, contentDivergedFromFallback: false, finalContent: 'changed-after-finalize' });
+        comp.updateProblemStatement('changed-after-finalize');
+
+        expect(hasUnsavedSpy).not.toHaveBeenCalled();
+        expect(comp.unsavedChangesValue).toBeFalse();
+        expect(instructionChangeSpy).toHaveBeenCalledWith('changed-after-finalize');
+    }));
+
+    it('does not suppress first user edit after finalize when no bootstrap change was suppressed', fakeAsync(() => {
+        const hasUnsavedSpy = jest.fn();
+        comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
+
+        const exerciseWithStatement = { ...exercise, problemStatement: 'old' } as ProgrammingExercise;
+        setRequiredInputs(fixture, exerciseWithStatement);
+        fixture.detectChanges();
+
+        const mockEditor = editor.create();
+        comp.markdownEditorMonaco = {
+            monacoEditor: () => ({
+                getModel: () => mockEditor.getModel(),
+                getEditor: () => mockEditor,
+            }),
+        } as unknown as MarkdownEditorMonacoComponent;
+
+        comp.ngAfterViewInit();
+        tick();
+
+        initialSyncFinalized$.next({ contentChangedDuringFinalize: true, contentDivergedFromFallback: false, finalContent: 'first-user-edit-after-finalize' });
+        comp.updateProblemStatement('first-user-edit-after-finalize');
+
+        expect(hasUnsavedSpy).toHaveBeenCalledWith(true);
+        expect(comp.unsavedChangesValue).toBeTrue();
+    }));
+
+    it('marks unsaved when finalized sync content diverges from fallback', fakeAsync(() => {
+        const hasUnsavedSpy = jest.fn();
+        comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
+
+        const exerciseWithStatement = { ...exercise, problemStatement: 'saved-server-content' } as ProgrammingExercise;
+        setRequiredInputs(fixture, exerciseWithStatement);
+        fixture.detectChanges();
+
+        const mockEditor = editor.create();
+        comp.markdownEditorMonaco = {
+            monacoEditor: () => ({
+                getModel: () => mockEditor.getModel(),
+                getEditor: () => mockEditor,
+            }),
+        } as unknown as MarkdownEditorMonacoComponent;
+
+        comp.ngAfterViewInit();
+        tick();
+
+        initialSyncFinalized$.next({
+            contentChangedDuringFinalize: true,
+            contentDivergedFromFallback: true,
+            finalContent: 'remote-unsaved-content',
+        });
+
+        expect(hasUnsavedSpy).toHaveBeenCalledWith(true);
+        expect(comp.unsavedChangesValue).toBeTrue();
+    }));
+
+    it('should reset sync service on component destroy', () => {
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
+
+        fixture.destroy();
+
+        expect(problemStatementSyncServiceMock.reset).toHaveBeenCalled();
+    });
+
+    it('should not have any test cases if the test case service emits an empty array', fakeAsync(() => {
+        setRequiredInputs(fixture, exercise);
         fixture.detectChanges();
         tick();
 
@@ -134,14 +338,10 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     }));
 
     it('should have test cases according to the result of the test case service if it does not return an empty array', fakeAsync(() => {
-        comp.exercise = exercise;
-        comp.participation = participation;
-
-        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
 
         (gradingService as MockProgrammingExerciseGradingService).nextTestCases(testCases);
-
-        fixture.detectChanges();
         tick();
 
         expect(subscribeForTestCaseSpy).toHaveBeenNthCalledWith(1, exercise.id);
@@ -159,21 +359,16 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     }));
 
     it('should update test cases if a new test case result comes in', fakeAsync(() => {
-        comp.exercise = exercise;
-        comp.participation = participation;
-
-        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
 
         (gradingService as MockProgrammingExerciseGradingService).nextTestCases(testCases);
-
-        fixture.detectChanges();
         tick();
 
         expect(comp.exerciseTestCases).toHaveLength(2);
         expect(comp.exerciseTestCases).toEqual(['test1', 'test2']);
 
         (gradingService as MockProgrammingExerciseGradingService).nextTestCases([{ testName: 'testX' }]);
-        fixture.detectChanges();
         tick();
 
         expect(comp.exerciseTestCases).toHaveLength(0);
@@ -185,12 +380,11 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     }));
 
     it('should try to retrieve the test case values from the solution repos last build result if there are no testCases (empty result)', fakeAsync(() => {
-        comp.exercise = exercise;
-        comp.participation = participation;
         const subject = new Subject<Result>();
         getLatestResultWithFeedbacksStub.mockReturnValue(subject);
 
-        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
 
         // No test cases available, might be that the solution build never ran to create tests...
         (gradingService as MockProgrammingExerciseGradingService).nextTestCases(undefined);
@@ -211,11 +405,10 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     }));
 
     it('should not try to query test cases or solution participation results if the exercise is being created (there can be no test cases yet)', fakeAsync(() => {
-        comp.exercise = exercise;
-        comp.participation = participation;
-        comp.editMode = false;
+        fixture.componentRef.setInput('editMode', false);
+        const newExercise = { ...exercise, id: undefined };
 
-        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
+        setRequiredInputs(fixture, newExercise as ProgrammingExercise);
 
         fixture.detectChanges();
         tick();
@@ -235,18 +428,18 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     it('should re-render the preview html when forceRender has emitted', fakeAsync(() => {
         const forceRenderSubject = new Subject<void>();
-        comp.exercise = exercise;
-        comp.participation = participation;
-        comp.forceRender = forceRenderSubject.asObservable();
-
-        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
+        setRequiredInputs(fixture, exercise, forceRenderSubject.asObservable());
 
         fixture.detectChanges();
         tick();
 
+        // Initial render is triggered in ngAfterViewInit when showPreview is true
+        const callCountAfterInit = generateHtmlSubjectStub.mock.calls.length;
+
         forceRenderSubject.next();
 
-        expect(generateHtmlSubjectStub).toHaveBeenCalledOnce();
+        // forceRender should trigger an additional call
+        expect(generateHtmlSubjectStub).toHaveBeenCalledTimes(callCountAfterInit + 1);
 
         fixture.destroy();
         flush();
@@ -255,7 +448,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     it('should update the code editor annotations when receiving a new ProblemStatementAnalysis', fakeAsync(() => {
         const setAnnotationsStub = jest.fn();
         // The component is mocked, so we need to set the monacoEditor property to a mock object.
-        comp.markdownEditorMonaco = { monacoEditor: { setAnnotations: setAnnotationsStub } } as unknown as MarkdownEditorMonacoComponent;
+        comp.markdownEditorMonaco = { monacoEditor: () => ({ setAnnotations: setAnnotationsStub }) } as unknown as MarkdownEditorMonacoComponent;
 
         const analysis = new Map();
         analysis.set(0, { lineNumber: 0, invalidTestCases: ['artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase'] });
@@ -278,33 +471,61 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     }));
 
     it('should save the problem statement to the server', () => {
-        comp.exercise = exercise;
-        comp.editMode = true;
+        fixture.componentRef.setInput('editMode', true);
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
 
         const updateProblemStatement = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(of(new HttpResponse({ body: exercise })));
+        const problemStatementSavedSpy = jest.spyOn(comp.onProblemStatementSaved, 'emit');
 
         comp.updateProblemStatement('new problem statement');
+        fixture.componentRef.setInput('exercise', { ...exercise, problemStatement: 'new problem statement' } as ProgrammingExercise);
+        fixture.detectChanges();
         comp.saveInstructions({ stopPropagation: () => {} } as Event);
 
         expect(updateProblemStatement).toHaveBeenCalledExactlyOnceWith(exercise.id, 'new problem statement');
+        expect(problemStatementSavedSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should prefer current editor content when saving the problem statement', () => {
+        fixture.componentRef.setInput('editMode', true);
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'stale input value' } as ProgrammingExercise);
+        fixture.detectChanges();
+
+        comp.markdownEditorMonaco = {
+            monacoEditor: () => ({
+                getText: jest.fn().mockReturnValue('live editor value'),
+            }),
+        } as unknown as MarkdownEditorMonacoComponent;
+
+        const updateProblemStatement = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(of(new HttpResponse({ body: exercise })));
+
+        comp.saveInstructions({ stopPropagation: () => {} } as Event);
+
+        expect(updateProblemStatement).toHaveBeenCalledExactlyOnceWith(exercise.id, 'live editor value');
     });
 
     it('should log an error on save', () => {
         const updateProblemStatementSpy = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(throwError(() => undefined));
         const logErrorSpy = jest.spyOn(alertService, 'error');
+        const problemStatementSavedSpy = jest.spyOn(comp.onProblemStatementSaved, 'emit');
 
-        comp.exercise = exercise;
-        comp.editMode = true;
+        fixture.componentRef.setInput('editMode', true);
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
 
         comp.saveInstructions(new KeyboardEvent('cmd+s'));
         expect(updateProblemStatementSpy).toHaveBeenCalledOnce();
         expect(logErrorSpy).toHaveBeenCalledOnce();
+        expect(problemStatementSavedSpy).not.toHaveBeenCalled();
+        expect(comp.savingInstructions).toBeFalse();
     });
 
     it('should save on key commands', () => {
         const saveInstructionsSpy = jest.spyOn(comp, 'saveInstructions');
-        comp.exercise = exercise;
-        comp.editMode = true;
+        fixture.componentRef.setInput('editMode', true);
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
 
         comp.saveOnControlAndS(new KeyboardEvent('ctrl+s'));
         expect(saveInstructionsSpy).toHaveBeenCalledOnce();
@@ -314,21 +535,391 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     });
 
     it('should have intelligence actions when Hyperion is active', () => {
-        const isModuleFeatureActiveSpy = jest.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockReturnValue(true);
-
-        // Komponente erneut erzeugen, damit computed() neu berechnet wird
-        fixture = TestBed.createComponent(ProgrammingExerciseEditableInstructionComponent);
-        comp = fixture.componentInstance;
-
-        // IDs setzen, die in artemisIntelligenceActions verwendet werden
-        comp.courseId = 1;
-        comp.exerciseId = 42;
-
+        setRequiredInputs(fixture, { ...exercise, course: { id: 1 } as any } as ProgrammingExercise);
+        comp.hyperionEnabled = true;
         fixture.detectChanges();
 
         const actions = comp.artemisIntelligenceActions();
         expect(actions).toHaveLength(1);
         expect(actions[0]).toBeInstanceOf(RewriteAction);
-        expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith(MODULE_FEATURE_HYPERION);
+    });
+
+    it('should cleanup subscriptions on destroy', fakeAsync(() => {
+        setRequiredInputs(fixture, exercise);
+        fixture.componentRef.setInput('participation', templateParticipation);
+        fixture.detectChanges();
+        tick();
+
+        // Get subscription reference before destroy
+        const testCaseSubscription = comp.testCaseSubscription;
+
+        // Destroy the component
+        comp.ngOnDestroy();
+
+        // Verify cleanup occurred
+        if (testCaseSubscription) {
+            expect(testCaseSubscription.closed).toBeTrue();
+        }
+
+        flush();
+    }));
+
+    it('should subscribe for test cases when exercise changes', fakeAsync(() => {
+        const newExercise = { ...exercise, id: 31 } as ProgrammingExercise;
+        setRequiredInputs(fixture, exercise);
+        fixture.componentRef.setInput('participation', templateParticipation);
+        fixture.detectChanges();
+        tick();
+
+        // Reset spy
+        generateHtmlSubjectStub.mockClear();
+
+        // Trigger exercise change
+        fixture.componentRef.setInput('exercise', newExercise);
+        fixture.detectChanges();
+        tick();
+
+        expect(subscribeForTestCaseSpy).toHaveBeenCalledWith(newExercise.id);
+
+        fixture.destroy();
+        flush();
+    }));
+
+    it('should update inline refinement position with signal on selection change', () => {
+        const selection = {
+            startLine: 1,
+            endLine: 2,
+            startColumn: 5,
+            endColumn: 10,
+            selectedText: 'Some selected text',
+            screenPosition: { top: 100, left: 200 },
+        };
+
+        // Enable hyperion
+        jest.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockReturnValue(true);
+        fixture.destroy();
+        fixture = TestBed.createComponent(ProgrammingExerciseEditableInstructionComponent);
+        comp = fixture.componentInstance;
+
+        // Mock container bounding rect to verify viewport-to-container coordinate conversion
+        jest.spyOn(fixture.nativeElement, 'getBoundingClientRect').mockReturnValue({ top: 30, left: 50 } as DOMRect);
+
+        comp.onEditorSelectionChange(selection);
+
+        // Position uses viewport-relative coordinates with clamping
+        expect(comp.inlineRefinementPosition()).toEqual({ top: 100, left: 200 });
+        expect(comp.selectedTextForRefinement()).toBe('Some selected text');
+        expect(comp.selectionPositionInfo()).toEqual({
+            startLine: 1,
+            endLine: 2,
+            startColumn: 5,
+            endColumn: 10,
+        });
+    });
+
+    it('should hide inline refinement button when selection is empty', () => {
+        comp.inlineRefinementPosition.set({ top: 100, left: 200 });
+        comp.selectedTextForRefinement.set('some text');
+        comp.selectionPositionInfo.set({ startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
+
+        comp.onEditorSelectionChange(undefined);
+
+        expect(comp.inlineRefinementPosition()).toBeUndefined();
+        expect(comp.selectedTextForRefinement()).toBe('');
+        expect(comp.selectionPositionInfo()).toBeUndefined();
+    });
+
+    it('should hide inline refinement button when selection has only whitespace', () => {
+        jest.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockReturnValue(true);
+        fixture = TestBed.createComponent(ProgrammingExerciseEditableInstructionComponent);
+        comp = fixture.componentInstance;
+
+        const selection = {
+            startLine: 1,
+            endLine: 1,
+            startColumn: 0,
+            endColumn: 5,
+            selectedText: '   ',
+            screenPosition: { top: 100, left: 200 },
+        };
+
+        comp.onEditorSelectionChange(selection);
+
+        expect(comp.inlineRefinementPosition()).toBeUndefined();
+    });
+
+    it('should emit inline refinement event and hide button on refine', () => {
+        comp.inlineRefinementPosition.set({ top: 100, left: 200 });
+        comp.selectedTextForRefinement.set('some text');
+        comp.selectionPositionInfo.set({ startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
+
+        const emitSpy = jest.spyOn(comp.onInlineRefinement, 'emit');
+
+        const event = {
+            instruction: 'Improve this',
+            startLine: 1,
+            endLine: 2,
+            startColumn: 0,
+            endColumn: 10,
+        };
+
+        comp.onInlineRefine(event);
+
+        expect(emitSpy).toHaveBeenCalledWith(event);
+        expect(comp.inlineRefinementPosition()).toBeUndefined();
+        expect(comp.selectedTextForRefinement()).toBe('');
+        expect(comp.selectionPositionInfo()).toBeUndefined();
+    });
+
+    it('should persist problem statement and mark inline fix as applied', () => {
+        fixture.componentRef.setInput('editMode', true);
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'stale input value' } as ProgrammingExercise);
+        fixture.detectChanges();
+
+        comp.markdownEditorMonaco = {
+            monacoEditor: () => ({
+                getText: jest.fn().mockReturnValue('live editor value'),
+            }),
+        } as unknown as MarkdownEditorMonacoComponent;
+        (exerciseReviewCommentService.threads as any).set([
+            {
+                id: 10,
+                comments: [
+                    {
+                        id: 20,
+                        type: CommentType.CONSISTENCY_CHECK,
+                        createdDate: '2024-01-01T00:00:00Z',
+                        content: {
+                            contentType: CommentContentType.CONSISTENCY_CHECK,
+                            text: 'issue',
+                        },
+                    },
+                ],
+            },
+        ]);
+        const updateProblemStatement = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(of(new HttpResponse({ body: exercise })));
+
+        comp.onApplyInlineFix({ threadId: 10 });
+
+        expect(updateProblemStatement).toHaveBeenCalledExactlyOnceWith(exercise.id, 'live editor value');
+        expect(exerciseReviewCommentService.markInlineFixAppliedInContext).toHaveBeenCalledExactlyOnceWith(20);
+    });
+
+    it('should ignore inline fix application while instructions are already saving', () => {
+        comp.savingInstructions = true;
+
+        comp.onApplyInlineFix({ threadId: 10 });
+
+        expect(exerciseReviewCommentService.markInlineFixAppliedInContext).not.toHaveBeenCalled();
+    });
+
+    it('should delegate diff-mode refinement actions to the markdown editor', () => {
+        const updateProblemStatementSpy = jest.spyOn(comp, 'updateProblemStatement');
+        const applyRefinedContent = jest.fn();
+        const revertAll = jest.fn();
+        comp.markdownEditorMonaco = {
+            applyRefinedContent,
+            revertAll,
+            monacoEditor: () => ({
+                getText: jest.fn().mockReturnValue('reverted content'),
+            }),
+        } as unknown as MarkdownEditorMonacoComponent;
+
+        comp.applyRefinedContent('refined content');
+        comp.revertAll();
+
+        expect(applyRefinedContent).toHaveBeenCalledExactlyOnceWith('refined content');
+        expect(revertAll).toHaveBeenCalledOnce();
+        expect(updateProblemStatementSpy).toHaveBeenCalledExactlyOnceWith('reverted content');
+    });
+
+    it('should get current content from editor', () => {
+        const mockGetText = jest.fn().mockReturnValue('editor content');
+        comp.markdownEditorMonaco = {
+            monacoEditor: () => ({
+                getText: mockGetText,
+            }),
+        } as unknown as MarkdownEditorMonacoComponent;
+
+        const content = comp.getCurrentContent();
+
+        expect(content).toBe('editor content');
+        expect(mockGetText).toHaveBeenCalled();
+    });
+
+    it('should return undefined when editor is not available for getCurrentContent', () => {
+        comp.markdownEditorMonaco = undefined;
+
+        const content = comp.getCurrentContent();
+
+        expect(content).toBeUndefined();
+    });
+
+    it('should return undefined when monacoEditor is not available for getCurrentContent', () => {
+        comp.markdownEditorMonaco = { monacoEditor: () => undefined } as unknown as MarkdownEditorMonacoComponent;
+
+        const content = comp.getCurrentContent();
+
+        expect(content).toBeUndefined();
+    });
+
+    it('should hide inline refinement button explicitly', () => {
+        comp.inlineRefinementPosition.set({ top: 100, left: 200 });
+        comp.selectedTextForRefinement.set('text');
+        comp.selectionPositionInfo.set({ startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
+
+        comp.hideInlineRefinementButton();
+
+        expect(comp.inlineRefinementPosition()).toBeUndefined();
+        expect(comp.selectedTextForRefinement()).toBe('');
+        expect(comp.selectionPositionInfo()).toBeUndefined();
+    });
+
+    /**
+     * CRLF normalization tests for problem statement sync.
+     *
+     * Background: Yjs (CRDT) and Monaco use flat character offsets for insert/delete
+     * operations. If one peer's Monaco model uses CRLF (2 chars per newline) while
+     * another uses LF (1 char), their offsets diverge by 1 per line break, causing
+     * all collaborative edits after the first newline to land at wrong positions.
+     *
+     * The code editor path already normalizes CRLF → LF and enforces LF EOL on the
+     * Monaco model at every binding point. These tests verify the problem statement
+     * path now does the same:
+     *
+     * 1. Initial seed: CRLF in the exercise's problemStatement is stripped before
+     *    passing to ProblemStatementSyncService.init(), preventing CRLF from entering
+     *    the Yjs document.
+     *
+     * 2. Model preparation: The Monaco model is cleared (setValue('')) and its EOL is
+     *    set to LF before creating the MonacoBinding, ensuring the binding starts
+     *    from a known-clean state.
+     *
+     * 3. Late leader replacement (stateReplaced$): When a new leader sends its full
+     *    Yjs state, the replacement text is normalized and EOL is re-enforced after
+     *    setValue(), because Monaco's setValue() resets EOL detection based on the
+     *    content it receives.
+     */
+    describe('CRLF normalization for problem statement sync', () => {
+        const setupSyncTest = () => {
+            const mockModel = editor.create().getModel();
+            const setValueSpy = jest.spyOn(mockModel, 'setValue');
+            const setEOLSpy = jest.spyOn(mockModel, 'setEOL');
+            const mockEditorInstance = editor.create();
+            jest.spyOn(mockEditorInstance, 'getModel').mockReturnValue(mockModel);
+
+            comp.markdownEditorMonaco = {
+                monacoEditor: () => ({
+                    getModel: () => mockModel,
+                    getEditor: () => mockEditorInstance,
+                }),
+            } as unknown as MarkdownEditorMonacoComponent;
+
+            return { mockModel, setValueSpy, setEOLSpy };
+        };
+
+        it('should normalize CRLF to LF in initial problem statement before passing to sync service', fakeAsync(() => {
+            const crlfContent = 'line1\r\nline2\r\nline3';
+            const exerciseWithCrlf = { id: 30, templateParticipation, problemStatement: crlfContent } as ProgrammingExercise;
+            setRequiredInputs(fixture, exerciseWithCrlf);
+            fixture.detectChanges();
+
+            setupSyncTest();
+            comp.ngAfterViewInit();
+            tick();
+
+            // init() must receive LF-only content so the Yjs document is never seeded with CRLF
+            expect(problemStatementSyncServiceMock.init).toHaveBeenCalledWith(exerciseWithCrlf.id, 'line1\nline2\nline3');
+
+            fixture.destroy();
+            flush();
+        }));
+
+        it('should clear model and enforce LF EOL before creating the binding', fakeAsync(() => {
+            const exerciseWithStatement = { id: 30, templateParticipation, problemStatement: 'content' } as ProgrammingExercise;
+            setRequiredInputs(fixture, exerciseWithStatement);
+            fixture.detectChanges();
+
+            const { setValueSpy, setEOLSpy } = setupSyncTest();
+            comp.ngAfterViewInit();
+            tick();
+
+            // Model must be cleared before binding so MonacoBinding starts from empty state
+            expect(setValueSpy).toHaveBeenCalledWith('');
+            // EOL must be enforced to LF so Monaco's offset math matches Yjs
+            expect(setEOLSpy).toHaveBeenCalledWith(editor.EndOfLineSequence.LF);
+
+            fixture.destroy();
+            flush();
+        }));
+
+        it('should normalize CRLF and re-enforce LF EOL on late leader replacement via stateReplaced$', fakeAsync(() => {
+            const exerciseWithStatement = { id: 30, templateParticipation, problemStatement: 'initial' } as ProgrammingExercise;
+            setRequiredInputs(fixture, exerciseWithStatement);
+            fixture.detectChanges();
+
+            const { setValueSpy, setEOLSpy } = setupSyncTest();
+            comp.ngAfterViewInit();
+            tick();
+
+            // Clear spies from initial setup to isolate stateReplaced$ assertions
+            setValueSpy.mockClear();
+            setEOLSpy.mockClear();
+
+            // Simulate a late leader sending state with CRLF content.
+            // This can happen when a Windows peer seeded the Yjs doc with CRLF.
+            const replacementDoc = new Y.Doc();
+            const replacementText = replacementDoc.getText('problem-statement');
+            replacementText.insert(0, 'replaced\r\nwith\r\ncrlf');
+            const replacementAwareness = {} as any;
+
+            stateReplaced$.next({ doc: replacementDoc, text: replacementText, awareness: replacementAwareness });
+
+            // setValue must receive normalized (LF-only) content
+            expect(setValueSpy).toHaveBeenCalledWith('replaced\nwith\ncrlf');
+            // EOL must be re-enforced after setValue because setValue resets Monaco's EOL detection
+            expect(setEOLSpy).toHaveBeenCalledWith(editor.EndOfLineSequence.LF);
+
+            fixture.destroy();
+            flush();
+        }));
+
+        it('should destroy old binding before calling setValue during state replacement', fakeAsync(() => {
+            const exerciseWithStatement = { id: 30, templateParticipation, problemStatement: 'initial' } as ProgrammingExercise;
+            setRequiredInputs(fixture, exerciseWithStatement);
+            fixture.detectChanges();
+
+            const { setValueSpy } = setupSyncTest();
+            comp.ngAfterViewInit();
+            tick();
+
+            setValueSpy.mockClear();
+
+            // Track call order: the binding's destroy wrapper must fire before setValue.
+            // createProblemStatementBinding wraps the mock's destroy with a guard, so we
+            // intercept the wrapper directly on the live binding reference.
+            const callOrder: string[] = [];
+            const currentBinding = (comp as any).problemStatementBinding;
+            const originalWrappedDestroy = currentBinding.destroy;
+            currentBinding.destroy = () => {
+                callOrder.push('destroy');
+                originalWrappedDestroy();
+            };
+            setValueSpy.mockImplementation(() => callOrder.push('setValue'));
+
+            const replacementDoc = new Y.Doc();
+            const replacementText = replacementDoc.getText('problem-statement');
+            replacementText.insert(0, 'new content');
+            const replacementAwareness = {} as any;
+
+            stateReplaced$.next({ doc: replacementDoc, text: replacementText, awareness: replacementAwareness });
+
+            // Old binding must be detached before mutating the model to prevent
+            // spurious delete+insert propagation through the stale Y.Doc to peers.
+            expect(callOrder).toEqual(['destroy', 'setValue']);
+
+            fixture.destroy();
+            flush();
+        }));
     });
 });

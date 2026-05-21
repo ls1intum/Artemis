@@ -19,6 +19,7 @@ import {
 import { FormsModule, NgModel } from '@angular/forms';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH } from 'app/shared/constants/input.constants';
 import { ProgrammingExercise, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/programming/shared/build-details/programming-exercise-repository-and-build-plan-details/programming-exercise-repository-and-build-plan-details.component';
@@ -82,6 +83,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
     protected readonly faPlus = faPlus;
+    protected readonly PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH = PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH;
 
     @Input({ required: true }) programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
     isImport = input.required<boolean>();
@@ -181,7 +183,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         this.inputFieldSubscriptions.push(this.updateTemplateFilesField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.programmingExerciseEditCheckoutDirectories?.formValidChanges.subscribe(() => this.calculateFormValid()));
         this.tableEditableFields?.changes.subscribe((fields: QueryList<TableEditableFieldComponent>) => {
-            fields.toArray().forEach((field) => this.inputFieldSubscriptions.push(field.editingInput.valueChanges?.subscribe(() => this.calculateFormValid())));
+            fields.toArray().forEach((field) => this.inputFieldSubscriptions.push(field.editingInput?.valueChanges?.subscribe(() => this.calculateFormValid())));
         });
 
         this.exerciseTitleChannelComponent()
@@ -222,7 +224,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     areAuxiliaryRepositoriesValid(): boolean {
         const areAuxiliaryRepositoriesValid =
             (every(
-                this.tableEditableFields?.map((field) => field.editingInput.valid),
+                this.tableEditableFields?.map((field) => field.editingInput?.valid),
                 Boolean,
             ) &&
                 !this.programmingExerciseCreationConfig.auxiliaryRepositoryDuplicateDirectories &&
@@ -325,7 +327,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         }
 
         if (newShortName && newShortName.length > 3) {
-            const sanitizedShortName = removeSpecialCharacters(newShortName ?? '');
+            const sanitizedShortName = removeSpecialCharacters(newShortName).slice(0, PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH);
             // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
             const uniqueShortName = this.ensureShortNameIsUnique(sanitizedShortName);
             this.programmingExercise().shortName = uniqueShortName;
@@ -357,7 +359,10 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
                 this.alertService.error('artemisApp.error.shortNameGenerationFailed');
                 break;
             }
-            newShortName = `${shortName}${counter}`;
+            // Truncate the base so that base + counter suffix still fits within the max length.
+            const suffix = `${counter}`;
+            const truncatedBase = shortName.slice(0, PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH - suffix.length);
+            newShortName = `${truncatedBase}${suffix}`;
             counter++;
         }
         return newShortName;

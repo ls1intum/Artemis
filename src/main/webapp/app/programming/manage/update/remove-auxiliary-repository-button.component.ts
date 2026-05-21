@@ -20,7 +20,7 @@ export class RemoveAuxiliaryRepositoryButtonComponent {
 
     @Input() row: AuxiliaryRepository;
 
-    @Output() onRefresh: EventEmitter<any> = new EventEmitter<any>();
+    @Output() onRefresh: EventEmitter<void> = new EventEmitter<void>();
 
     // Icons
     faTrash = faTrash;

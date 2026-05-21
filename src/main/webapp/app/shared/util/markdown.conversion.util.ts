@@ -1,6 +1,7 @@
 import { ArtemisTextReplacementPlugin } from 'app/shared/markdown-editor/extensions/ArtemisTextReplacementPlugin';
 import DOMPurify, { Config } from 'dompurify';
-import type { PluginSimple, Token } from 'markdown-it';
+import type { PluginSimple } from 'markdown-it';
+import type Token from 'markdown-it/lib/token.mjs';
 import MarkdownItKatex from '@vscode/markdown-it-katex';
 import MarkdownItHighlightjs from 'markdown-it-highlightjs';
 import TurndownService from 'turndown';
@@ -31,6 +32,83 @@ const formulaCompatibilityPlugin = new FormulaCompatibilityPlugin();
 const turndownService = new TurndownService();
 
 /**
+ * Cache for MarkdownIt instances to avoid expensive re-initialization on every render.
+ * Only caches the default instance (no custom extensions) since custom extensions
+ * may have different identities across test runs or component instances.
+ */
+let defaultMarkdownItCache: { lineBreaks: boolean; instance: MarkdownIt } | undefined;
+
+/**
+ * Gets or creates a cached MarkdownIt instance with the specified configuration.
+ * This significantly improves performance by reusing instances instead of creating
+ * new ones on every markdown render.
+ *
+ * Note: Only caches when no custom extensions are provided, since custom extensions
+ * may hold state or have different identities in test environments.
+ */
+function getOrCreateMarkdownIt(extensions: PluginSimple[], lineBreaks: boolean): MarkdownIt {
+    // Only use caching when no custom extensions are provided
+    // Custom extensions may have different instance identities (e.g., in tests)
+    if (extensions.length === 0) {
+        if (defaultMarkdownItCache && defaultMarkdownItCache.lineBreaks === lineBreaks) {
+            return defaultMarkdownItCache.instance;
+        }
+
+        const markdownIt = MarkdownIt({
+            html: true,
+            linkify: true,
+            breaks: lineBreaks,
+        });
+
+        // Add default extensions (Code Highlight, Latex, Alerts)
+        markdownIt
+            .use(MarkdownItHighlightjs)
+            .use(formulaCompatibilityPlugin.getExtension())
+            .use(MarkdownItKatex, {
+                enableMathInlineInHtml: true,
+            })
+            .use(MarkdownItGitHubAlerts)
+            .use(MarkdownitTagClass, {
+                table: 'table',
+            });
+
+        defaultMarkdownItCache = { lineBreaks, instance: markdownIt };
+        return markdownIt;
+    }
+
+    // For custom extensions, create a fresh instance each time
+    // This ensures the correct extension instances are used (important for tests)
+    const markdownIt = MarkdownIt({
+        html: true,
+        linkify: true,
+        breaks: lineBreaks,
+    });
+
+    // Register custom extensions
+    for (const extension of extensions) {
+        markdownIt.use(extension);
+    }
+
+    // Add default extensions (Code Highlight, Latex, Alerts)
+    markdownIt
+        // Code Highlight
+        .use(MarkdownItHighlightjs)
+        .use(formulaCompatibilityPlugin.getExtension())
+        // Latex formulas
+        .use(MarkdownItKatex, {
+            enableMathInlineInHtml: true,
+        })
+        // Github like alerts inside Markdown
+        .use(MarkdownItGitHubAlerts)
+        // Add custom html classes to be allowed it markdown
+        .use(MarkdownitTagClass, {
+            table: 'table',
+        });
+
+    return markdownIt;
+}
+
+/**
  * Converts markdown into html (string) and sanitizes it. Does NOT declare it as safe to bypass further security
  * Note: If possible, please use safeHtmlForMarkdown
  *
@@ -52,30 +130,8 @@ export function htmlForMarkdown(
         return '';
     }
 
-    const markdownIt = MarkdownIt({
-        html: true,
-        linkify: true,
-        breaks: lineBreaks, // Avoid line breaks after tasks
-    });
-    for (const extension of extensions) {
-        markdownIt.use(extension);
-    }
-
-    // Add default extensions (Code Highlight, Latex, Alerts)
-    markdownIt
-        // Code Highlight
-        .use(MarkdownItHighlightjs)
-        .use(formulaCompatibilityPlugin.getExtension())
-        // Latex formulas
-        .use(MarkdownItKatex, {
-            enableMathInlineInHtml: true,
-        })
-        // Github like alerts inside Markdown
-        .use(MarkdownItGitHubAlerts)
-        // Add custom html classes to be allowed it markdown
-        .use(MarkdownitTagClass, {
-            table: 'table',
-        });
+    // Use cached MarkdownIt instance for better performance
+    const markdownIt = getOrCreateMarkdownIt(extensions, lineBreaks);
 
     let markdownRender = markdownIt.render(markdownText);
     if (markdownRender.endsWith('\n')) {

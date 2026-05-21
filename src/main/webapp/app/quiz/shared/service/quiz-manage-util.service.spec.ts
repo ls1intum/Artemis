@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { isQuizEditable, isQuizQuestionValid } from 'app/quiz/shared/service/quiz-manage-util.service';
 import { QuizBatch, QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
@@ -6,6 +8,8 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 
 describe('QuizManageUtil', () => {
+    setupTestBed({ zoneless: true });
+
     let quizExercise: QuizExercise;
 
     describe('isQuizEditable', () => {
@@ -22,41 +26,41 @@ describe('QuizManageUtil', () => {
 
         it('should return true if new quiz', () => {
             quizExercise.id = undefined;
-            expect(isQuizEditable(quizExercise)).toBeTrue();
+            expect(isQuizEditable(quizExercise)).toBe(true);
         });
 
         it('should return true if existing quiz is synchronized, not active and not over', () => {
-            expect(isQuizEditable(quizExercise)).toBeTrue();
+            expect(isQuizEditable(quizExercise)).toBe(true);
         });
 
         it('should return true if existing quiz is batched, no batch exists, not active, at least editor and not over', () => {
             quizExercise.quizMode = QuizMode.BATCHED;
             quizExercise.quizBatches = undefined;
-            expect(isQuizEditable(quizExercise)).toBeTrue();
+            expect(isQuizEditable(quizExercise)).toBe(true);
         });
 
         it('should return false if existing quiz is batched, batch exists, not active, at least editor and not over', () => {
             quizExercise.quizMode = QuizMode.BATCHED;
             quizExercise.quizBatches = [new QuizBatch()];
-            expect(isQuizEditable(quizExercise)).toBeFalse();
+            expect(isQuizEditable(quizExercise)).toBe(false);
         });
 
         it('should return false if existing quiz is synchronized, active, at least editor, and not over', () => {
             quizExercise.quizMode = QuizMode.SYNCHRONIZED;
             quizExercise.status = QuizStatus.ACTIVE;
-            expect(isQuizEditable(quizExercise)).toBeFalse();
+            expect(isQuizEditable(quizExercise)).toBe(false);
         });
 
         it('should return false if existing quiz is synchronized, not active, at least editor, and over', () => {
             quizExercise.quizMode = QuizMode.SYNCHRONIZED;
             quizExercise.quizEnded = true;
-            expect(isQuizEditable(quizExercise)).toBeFalse();
+            expect(isQuizEditable(quizExercise)).toBe(false);
         });
 
         it('should return false if existing quiz is synchronized, not active, not editor and not over', () => {
             quizExercise.quizMode = QuizMode.SYNCHRONIZED;
             quizExercise.isAtLeastEditor = false;
-            expect(isQuizEditable(quizExercise)).toBeFalse();
+            expect(isQuizEditable(quizExercise)).toBe(false);
         });
     });
 
@@ -67,17 +71,17 @@ describe('QuizManageUtil', () => {
 
         it('should return false if points is undefined', () => {
             multipleChoiceQuestion.points = undefined;
-            expect(isQuizQuestionValid(multipleChoiceQuestion, dragAndDropQuestionUtil, shortAnswerQuestionUtil)).toBeFalse();
+            expect(isQuizQuestionValid(multipleChoiceQuestion, dragAndDropQuestionUtil, shortAnswerQuestionUtil)).toBe(false);
         });
 
         it('should return false if points < 1', () => {
             multipleChoiceQuestion.points = -1;
-            expect(isQuizQuestionValid(multipleChoiceQuestion, dragAndDropQuestionUtil, shortAnswerQuestionUtil)).toBeFalse();
+            expect(isQuizQuestionValid(multipleChoiceQuestion, dragAndDropQuestionUtil, shortAnswerQuestionUtil)).toBe(false);
         });
 
         it('should return false if points > 9999', () => {
             multipleChoiceQuestion.points = 10000;
-            expect(isQuizQuestionValid(multipleChoiceQuestion, dragAndDropQuestionUtil, shortAnswerQuestionUtil)).toBeFalse();
+            expect(isQuizQuestionValid(multipleChoiceQuestion, dragAndDropQuestionUtil, shortAnswerQuestionUtil)).toBe(false);
         });
 
         it('should return true if question is valid', () => {
@@ -87,7 +91,7 @@ describe('QuizManageUtil', () => {
             const answerOption1 = new AnswerOption();
             answerOption0.isCorrect = true;
             multipleChoiceQuestion.answerOptions = [answerOption0, answerOption1];
-            expect(isQuizQuestionValid(multipleChoiceQuestion, dragAndDropQuestionUtil, shortAnswerQuestionUtil)).toBeTrue();
+            expect(isQuizQuestionValid(multipleChoiceQuestion, dragAndDropQuestionUtil, shortAnswerQuestionUtil)).toBe(true);
         });
     });
 });

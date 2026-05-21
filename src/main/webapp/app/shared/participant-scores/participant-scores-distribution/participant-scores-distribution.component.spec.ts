@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { MockProvider } from 'ng-mocks';
-import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
@@ -78,7 +78,7 @@ describe('ParticipantScoresDistributionComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            providers: [MockProvider(GradingSystemService), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [MockProvider(GradingService), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {

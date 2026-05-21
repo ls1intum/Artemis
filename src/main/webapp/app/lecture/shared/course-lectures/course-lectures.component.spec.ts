@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -12,6 +14,8 @@ import { LtiService } from 'app/shared/service/lti.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 
 describe('CourseLecturesComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CourseLecturesComponent;
     let fixture: ComponentFixture<CourseLecturesComponent>;
     let ltiService: LtiService;
@@ -56,31 +60,35 @@ describe('CourseLecturesComponent', () => {
         lectureService = TestBed.inject(LectureService);
     });
 
-    it('should handle multi-launch subscription', fakeAsync(() => {
-        const processSpy = jest.spyOn(component, 'processLectures');
-        const sortSpy = jest.spyOn(courseOverviewService, 'sortLectures').mockReturnValue([]);
-        const mapSpy = jest.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should handle multi-launch subscription', async () => {
+        const processSpy = vi.spyOn(component, 'processLectures');
+        const sortSpy = vi.spyOn(courseOverviewService, 'sortLectures').mockReturnValue([]);
+        const mapSpy = vi.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
 
         ltiService.setMultiLaunch(true);
         component.ngOnInit();
 
-        expect(component.isMultiLaunch).toBeTrue();
+        expect(component.isMultiLaunch).toBe(true);
 
         ltiService.setMultiLaunch(false);
 
-        expect(component.isMultiLaunch).toBeFalse();
-        expect(processSpy).toHaveBeenCalledOnce();
-        expect(sortSpy).toHaveBeenCalledOnce();
-        expect(mapSpy).toHaveBeenCalledOnce();
-    }));
+        expect(component.isMultiLaunch).toBe(false);
+        expect(processSpy).toHaveBeenCalledTimes(1);
+        expect(sortSpy).toHaveBeenCalledTimes(1);
+        expect(mapSpy).toHaveBeenCalledTimes(1);
+    });
 
-    it('should fetch lectures for multi-launch when lectureIDs are provided', fakeAsync(() => {
+    it('should fetch lectures for multi-launch when lectureIDs are provided', async () => {
         const lecture1 = new Lecture();
         lecture1.id = 1;
         const lecture2 = new Lecture();
         lecture2.id = 2;
 
-        jest.spyOn(lectureService, 'find').mockImplementation((id: number) => of(new HttpResponse({ body: id === 1 ? lecture1 : lecture2 })));
+        vi.spyOn(lectureService, 'find').mockImplementation((id: number) => of(new HttpResponse({ body: id === 1 ? lecture1 : lecture2 })));
 
         (TestBed.inject(ActivatedRoute) as any).queryParams = of({ lectureIDs: '1,2' });
 
@@ -90,5 +98,5 @@ describe('CourseLecturesComponent', () => {
         expect(lectureService.find).toHaveBeenCalledTimes(4);
         expect(lectureService.find).toHaveBeenCalledWith(1);
         expect(lectureService.find).toHaveBeenCalledWith(2);
-    }));
+    });
 });

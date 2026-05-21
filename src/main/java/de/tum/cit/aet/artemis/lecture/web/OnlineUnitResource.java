@@ -1,9 +1,8 @@
 package de.tum.cit.aet.artemis.lecture.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.io.IOException;
 import java.net.IDN;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -19,8 +18,8 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,6 +39,10 @@ import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyDTO;
@@ -50,7 +53,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.OnlineUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Lazy
 @RestController
 @RequestMapping("api/lecture/")
@@ -70,13 +73,16 @@ public class OnlineUnitResource {
 
     private final LectureUnitRepository lectureUnitRepository;
 
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
+
     public OnlineUnitResource(LectureRepository lectureRepository, OnlineUnitRepository onlineUnitRepository, Optional<CompetencyProgressApi> competencyProgressApi,
-            LectureUnitService lectureUnitService, LectureUnitRepository lectureUnitRepository) {
+            LectureUnitService lectureUnitService, LectureUnitRepository lectureUnitRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
         this.lectureRepository = lectureRepository;
         this.onlineUnitRepository = onlineUnitRepository;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
         this.lectureUnitRepository = lectureUnitRepository;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
     }
 
     /**
@@ -114,7 +120,7 @@ public class OnlineUnitResource {
 
         // Validation
         checkOnlineUnitCourseAndLecture(existingOnlineUnit, lectureId);
-        lectureUnitService.validateUrlStringAndReturnUrl(onlineUnitDto.source());
+        validateUrlStringAndReturnUrl(onlineUnitDto.source());
 
         // Precompute original competency IDs for progress update below
         Set<Long> originalCompetencyIds = existingOnlineUnit.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(CourseCompetency::getId)
@@ -131,11 +137,21 @@ public class OnlineUnitResource {
 
         // Note: Competency links are persisted automatically (due to CascadeType.PERSIST)
         existingOnlineUnit = onlineUnitRepository.save(existingOnlineUnit);
+        OnlineUnit savedOnlineUnit = existingOnlineUnit;
 
         if (competencyProgressApi.isPresent()) {
             // NOTE: this can be a very expensive operation, depending on how many users have progress for this learning object
             competencyProgressApi.get().updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, existingOnlineUnit);
         }
+
+        searchableEntityWeaviateService.ifPresent(service -> {
+            if (LectureUnitSearchableEntityDTO.isIndexable(savedOnlineUnit)) {
+                service.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(savedOnlineUnit));
+            }
+            else {
+                service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, savedOnlineUnit.getId());
+            }
+        });
 
         // convert into DTO
         var result = new OnlineUnitDTO(existingOnlineUnit.getId(), existingOnlineUnit.getName(), existingOnlineUnit.getReleaseDate(), existingOnlineUnit.getDescription(),
@@ -161,7 +177,7 @@ public class OnlineUnitResource {
             throw new BadRequestAlertException("A new online unit cannot have an id", ENTITY_NAME, "idExists");
         }
 
-        lectureUnitService.validateUrlStringAndReturnUrl(onlineUnit.getSource());
+        validateUrlStringAndReturnUrl(onlineUnit.getSource());
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         if (lecture.getCourse() == null || (onlineUnit.getLecture() != null && !lecture.getId().equals(onlineUnit.getLecture().getId()))) {
@@ -175,11 +191,20 @@ public class OnlineUnitResource {
 
         OnlineUnit persistedUnit = (OnlineUnit) updatedLecture.getLectureUnits().getLast();
         // From now on, only use persistedUnit
-        lectureUnitService.saveWithCompetencyLinks(persistedUnit, onlineUnitRepository::saveAndFlush);
+        onlineUnitRepository.save(persistedUnit);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
 
         // TODO: return a DTO instead to avoid manipulation of the entity before sending it to the client
         lectureUnitService.disconnectCompetencyLectureUnitLinks(persistedUnit);
+
+        searchableEntityWeaviateService.ifPresent(service -> {
+            if (LectureUnitSearchableEntityDTO.isIndexable(persistedUnit)) {
+                service.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(persistedUnit));
+            }
+            else {
+                service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, persistedUnit.getId());
+            }
+        });
         return ResponseEntity.created(new URI("/api/online-units/" + persistedUnit.getId())).body(persistedUnit);
     }
 
@@ -211,7 +236,7 @@ public class OnlineUnitResource {
     @EnforceAtLeastEditor
     public ResponseEntity<OnlineResourceDTO> getOnlineResource(@RequestParam("link") String link) {
         // Ensure that the link is a correctly formed URL
-        URL url = lectureUnitService.validateUrlStringAndReturnUrl(link);
+        URL url = validateUrlStringAndReturnUrl(link);
 
         if (!"http".equalsIgnoreCase(url.getProtocol()) && !"https".equalsIgnoreCase(url.getProtocol())) {
             throw new BadRequestException("The specified link uses an unsupported protocol");
@@ -262,12 +287,28 @@ public class OnlineUnitResource {
      * @param onlineUnit The online unit to check
      * @param lectureId  The id of the lecture to check against
      */
-    private void checkOnlineUnitCourseAndLecture(OnlineUnit onlineUnit, Long lectureId) {
+    private static void checkOnlineUnitCourseAndLecture(OnlineUnit onlineUnit, Long lectureId) {
         if (onlineUnit.getLecture() == null || onlineUnit.getLecture().getCourse() == null) {
             throw new BadRequestAlertException("Lecture unit must be associated to a lecture of a course", ENTITY_NAME, "lectureOrCourseMissing");
         }
         if (!onlineUnit.getLecture().getId().equals(lectureId)) {
             throw new BadRequestAlertException("Requested lecture unit is not part of the specified lecture", ENTITY_NAME, "lectureIdMismatch");
+        }
+    }
+
+    /**
+     * Validates the given URL string and returns the URL object
+     *
+     * @param urlString The URL string to validate
+     * @return The URL object
+     * @throws BadRequestException If the URL string is invalid
+     */
+    private static URL validateUrlStringAndReturnUrl(String urlString) {
+        try {
+            return new URI(urlString).toURL();
+        }
+        catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
+            throw new BadRequestException();
         }
     }
 }

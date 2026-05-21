@@ -30,6 +30,7 @@ import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.transport.DockerHttpClient;
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
 
+import de.tum.cit.aet.artemis.buildagent.service.DockerUtil;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 
@@ -49,6 +50,8 @@ public class BuildAgentConfiguration {
     private int threadPoolSize = 0;
 
     private DockerClient dockerClient;
+
+    private volatile boolean dockerAvailable = false;
 
     private static final Logger log = LoggerFactory.getLogger(BuildAgentConfiguration.class);
 
@@ -77,6 +80,7 @@ public class BuildAgentConfiguration {
     public void onApplicationReady() {
         buildExecutor = createBuildExecutor();
         dockerClient = createDockerClient();
+        probeDockerAvailability();
     }
 
     public ThreadPoolExecutor getBuildExecutor() {
@@ -93,6 +97,14 @@ public class BuildAgentConfiguration {
 
     public int getPauseAfterConsecutiveFailedJobs() {
         return pauseAfterConsecutiveFailedJobs;
+    }
+
+    public boolean isDockerAvailable() {
+        return dockerAvailable;
+    }
+
+    public void setDockerAvailable(boolean dockerAvailable) {
+        this.dockerAvailable = dockerAvailable;
     }
 
     /**
@@ -182,13 +194,19 @@ public class BuildAgentConfiguration {
 
     /**
      * Creates a Docker client that is used to communicate with the Docker daemon.
+     * Configures connection and response timeouts to prevent hanging on unresponsive Docker daemons.
+     * <p>
+     * The response timeout (45s) applies to each chunk of data received, not the total operation time.
+     * For streaming operations like image pulls, Docker sends progress updates regularly, so this
+     * timeout only fires if the daemon becomes completely unresponsive.
      *
      * @return The DockerClient.
      */
     public DockerClient createDockerClient() {
         log.debug("Create bean dockerClient");
         DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().withDockerHost(dockerConnectionUri).build();
-        DockerHttpClient httpClient = new ZerodepDockerHttpClient.Builder().dockerHost(config.getDockerHost()).sslConfig(config.getSSLConfig()).build();
+        DockerHttpClient httpClient = new ZerodepDockerHttpClient.Builder().dockerHost(config.getDockerHost()).sslConfig(config.getSSLConfig())
+                .connectionTimeout(java.time.Duration.ofSeconds(10)).responseTimeout(java.time.Duration.ofSeconds(45)).build();
         DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
 
         log.debug("Docker client created with connection URI: {}", dockerConnectionUri);
@@ -240,6 +258,7 @@ public class BuildAgentConfiguration {
     }
 
     public void closeBuildAgentServices() {
+        dockerAvailable = false;
         shutdownBuildExecutor();
         closeDockerClient();
     }
@@ -247,5 +266,26 @@ public class BuildAgentConfiguration {
     public void openBuildAgentServices() {
         this.buildExecutor = createBuildExecutor();
         this.dockerClient = createDockerClient();
+        probeDockerAvailability();
+    }
+
+    /**
+     * Synchronously probes Docker availability by executing a lightweight version command.
+     * Sets {@link #dockerAvailable} based on whether Docker responds successfully.
+     */
+    private void probeDockerAvailability() {
+        try {
+            dockerClient.versionCmd().exec();
+            dockerAvailable = true;
+        }
+        catch (Exception e) {
+            dockerAvailable = false;
+            if (DockerUtil.isDockerNotAvailable(e)) {
+                log.warn("Docker is not available: {}", e.getMessage());
+            }
+            else {
+                log.warn("Failed to probe Docker availability", e);
+            }
+        }
     }
 }

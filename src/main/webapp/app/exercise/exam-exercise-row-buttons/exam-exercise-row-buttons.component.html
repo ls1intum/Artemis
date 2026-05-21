@@ -128,6 +128,12 @@
             [entityTitle]="exercise.title || ''"
             deleteQuestion="artemisApp.exercise.delete.question"
             deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+            entitySummaryTitle="artemisApp.exercise.delete.summary.title"
+            [fetchEntitySummary]="fetchExerciseDeletionSummary()"
+            [translateValues]="{
+                courseTitle: course.title,
+                courseType: course.testCourse ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate) : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
+            }"
             (delete)="deleteExercise()"
             [dialogError]="dialogError$"
         >
@@ -138,7 +144,13 @@
         <button
             jhiDeleteButton
             [entityTitle]="exercise.title || ''"
+            entitySummaryTitle="artemisApp.exercise.delete.summary.title"
+            [fetchEntitySummary]="fetchExerciseDeletionSummary()"
             deleteQuestion="artemisApp.programmingExercise.delete.question"
+            [translateValues]="{
+                courseTitle: course.title,
+                courseType: course.testCourse ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate) : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
+            }"
             (delete)="deleteProgrammingExercise($event)"
             [dialogError]="dialogError$"
             deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"

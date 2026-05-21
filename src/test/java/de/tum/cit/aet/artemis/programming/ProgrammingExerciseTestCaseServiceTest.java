@@ -1,8 +1,6 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
 import java.util.ArrayList;
@@ -12,7 +10,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -28,6 +25,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
@@ -36,10 +34,12 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 5, 1, 0, 1);
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
         SecurityUtils.setAuthorizationObject();
         programmingExercise = programmingExerciseRepository
                 .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(programmingExercise.getId())
@@ -60,8 +60,6 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
     }
 
     private void testResetTestCases(ProgrammingExercise programmingExercise, Visibility expectedVisibility) {
-        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(any());
         participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
         new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId())).getFirst().weight(50.0);
 
@@ -88,9 +86,6 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void shouldUpdateTestWeight() {
-        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(any());
-
         participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
 
         ProgrammingExerciseTestCase testCase = testCaseRepository.findByExerciseId(programmingExercise.getId()).iterator().next();
@@ -118,9 +113,6 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
     void shouldAllowTestCaseWeightSumZero(AssessmentType assessmentType) {
         programmingExercise.setAssessmentType(assessmentType);
         programmingExerciseRepository.save(programmingExercise);
-
-        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(any());
 
         var result = ProgrammingExerciseFactory.generateTestResultDTO(null, "SOLUTION", null, programmingExercise.getProgrammingLanguage(), false,
                 List.of("test1", "test2", "test3"), Collections.emptyList(), null, null, null);

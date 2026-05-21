@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.modeling.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.List;
@@ -8,8 +7,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -18,12 +17,13 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 
 /**
  * Spring Data JPA repository for the ModelingExercise entity.
  */
-@Profile(PROFILE_CORE)
+@Conditional(ModelingEnabled.class)
 @Lazy
 @Repository
 public interface ModelingExerciseRepository extends ArtemisJpaRepository<ModelingExercise, Long>, JpaSpecificationExecutor<ModelingExercise> {
@@ -56,6 +56,23 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
             WHERE modelingExercise.id = :exerciseId
             """)
     Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT modelingExercise
+            FROM ModelingExercise modelingExercise
+                LEFT JOIN FETCH modelingExercise.exampleSubmissions exampleSubmissions
+                LEFT JOIN FETCH exampleSubmissions.submission submission
+                LEFT JOIN FETCH submission.results results
+                LEFT JOIN FETCH results.feedbacks
+                LEFT JOIN FETCH results.assessor
+                LEFT JOIN FETCH modelingExercise.teamAssignmentConfig
+                LEFT JOIN FETCH modelingExercise.gradingCriteria
+                LEFT JOIN FETCH modelingExercise.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
+                LEFT JOIN FETCH modelingExercise.plagiarismDetectionConfig
+            WHERE modelingExercise.id = :exerciseId
+            """)
+    Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(@Param("exerciseId") Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
     Optional<ModelingExercise> findWithStudentParticipationsSubmissionsResultsById(Long exerciseId);
@@ -115,5 +132,10 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
     @NonNull
     default ModelingExercise findWithEagerCompetenciesByIdElseThrow(long exerciseId) {
         return getValueElseThrow(findWithEagerCompetenciesById(exerciseId), exerciseId);
+    }
+
+    @NonNull
+    default ModelingExercise findByIdWithExampleSubmissionsResultsCompetenciesAndGradingCriteriaElseThrow(long exerciseId) {
+        return getValueElseThrow(findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(exerciseId), exerciseId);
     }
 }

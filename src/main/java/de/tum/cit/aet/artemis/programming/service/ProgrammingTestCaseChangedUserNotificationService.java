@@ -21,7 +21,7 @@ public class ProgrammingTestCaseChangedUserNotificationService {
 
     // The GroupNotificationService has many dependencies. We cannot refactor it to avoid that. Therefore, we lazily inject it here, so it's only instantiated when needed, or our
     // DeferredEagerInitialization kicks, but not on startup.
-    public ProgrammingTestCaseChangedUserNotificationService(@Lazy GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService) {
+    public ProgrammingTestCaseChangedUserNotificationService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService) {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
     }

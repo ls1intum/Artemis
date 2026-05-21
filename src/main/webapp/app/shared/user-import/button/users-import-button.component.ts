@@ -1,36 +1,47 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { Component, input, output, viewChild } from '@angular/core';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { UsersImportDialogComponent } from 'app/shared/user-import/dialog/users-import-dialog.component';
 import { CourseGroup } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 
 @Component({
     selector: 'jhi-user-import-button',
     template: `
-        <jhi-button [btnType]="buttonType" [btnSize]="buttonSize" [icon]="faFileImport" [title]="'artemisApp.importUsers.buttonLabel'" (onClick)="openUsersImportDialog($event)" />
+        <jhi-button
+            [btnType]="buttonType()"
+            [btnSize]="buttonSize()"
+            [icon]="faFileImport"
+            [title]="'artemisApp.importUsers.buttonLabel'"
+            (onClick)="openUsersImportDialog($event)"
+        />
+        <jhi-users-import-dialog
+            #importDialog
+            [courseId]="courseId()"
+            [courseGroup]="courseGroup()"
+            [exam]="exam()"
+            [tutorialGroup]="tutorialGroup()"
+            [examUserMode]="examUserMode()"
+            [adminUserMode]="adminUserMode()"
+            (importCompleted)="onImportCompleted()"
+        />
     `,
-    imports: [ButtonComponent],
+    imports: [ButtonComponent, UsersImportDialogComponent],
 })
 export class UsersImportButtonComponent {
-    private modalService = inject(NgbModal);
+    readonly importDialog = viewChild<UsersImportDialogComponent>('importDialog');
 
-    ButtonType = ButtonType;
-    ButtonSize = ButtonSize;
+    readonly tutorialGroup = input<TutorialGroup | undefined>(undefined);
+    readonly examUserMode = input<boolean>(false);
+    readonly adminUserMode = input<boolean>(false);
+    readonly courseGroup = input<CourseGroup>();
+    readonly courseId = input<number>();
+    readonly buttonSize = input<ButtonSize>(ButtonSize.MEDIUM);
+    readonly buttonType = input<ButtonType>(ButtonType.PRIMARY);
+    readonly exam = input<Exam>();
 
-    @Input() tutorialGroup: TutorialGroup | undefined = undefined;
-    @Input() examUserMode: boolean;
-    @Input() adminUserMode: boolean;
-    @Input() courseGroup: CourseGroup;
-    @Input() courseId: number;
-    @Input() buttonSize: ButtonSize = ButtonSize.MEDIUM;
-    @Input() buttonType: ButtonType = ButtonType.PRIMARY;
-    @Input() exam: Exam;
-
-    @Output() importDone: EventEmitter<void> = new EventEmitter();
+    readonly importDone = output<void>();
 
     // Icons
     faFileImport = faFileImport;
@@ -41,16 +52,10 @@ export class UsersImportButtonComponent {
      */
     openUsersImportDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(UsersImportDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.courseId = this.courseId;
-        modalRef.componentInstance.courseGroup = this.courseGroup;
-        modalRef.componentInstance.exam = this.exam;
-        modalRef.componentInstance.tutorialGroup = this.tutorialGroup;
-        modalRef.componentInstance.examUserMode = this.examUserMode;
-        modalRef.componentInstance.adminUserMode = this.adminUserMode;
-        modalRef.result.then(
-            () => this.importDone.emit(),
-            () => {},
-        );
+        this.importDialog()?.open();
+    }
+
+    onImportCompleted(): void {
+        this.importDone.emit();
     }
 }

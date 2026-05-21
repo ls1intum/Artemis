@@ -1,0 +1,103 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { take } from 'rxjs/operators';
+import { generateExampleTutorialGroupsConfigurationDTO } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
+import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
+import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
+import { provideHttpClient } from '@angular/common/http';
+import { TutorialGroupConfigurationDTO, tutorialGroupConfigurationDtoFromEntity } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
+
+describe('TutorialGroupsConfigurationService', () => {
+    setupTestBed({ zoneless: true });
+
+    let service: TutorialGroupsConfigurationService;
+    let httpMock: HttpTestingController;
+    let elemDefault: TutorialGroupConfigurationDTO;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [provideHttpClient(), provideHttpClientTesting()],
+        });
+        service = TestBed.inject(TutorialGroupsConfigurationService);
+        httpMock = TestBed.inject(HttpTestingController);
+
+        elemDefault = generateExampleTutorialGroupsConfigurationDTO({});
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+        vi.restoreAllMocks();
+    });
+
+    it('getOneOfCourse', () => {
+        const returnedFromService = { ...elemDefault };
+        let result: any;
+        service
+            .getOneOfCourse(1)
+            .pipe(take(1))
+            .subscribe((resp) => (result = resp));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+        expect(result).toMatchObject({ body: elemDefault });
+    });
+
+    it('create', () => {
+        const returnedFromService = { ...elemDefault, id: 0 };
+        const expected = { ...returnedFromService };
+        let result: any;
+        service
+            .create(tutorialGroupConfigurationDtoFromEntity(new TutorialGroupsConfiguration()), 1, [])
+            .pipe(take(1))
+            .subscribe((resp) => (result = resp));
+
+        const req = httpMock.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+        expect(result).toMatchObject({ body: expected });
+    });
+
+    it('update', () => {
+        const returnedFromService = { ...elemDefault, location: 'Test' };
+        const expected = { ...returnedFromService };
+        let result: any;
+
+        service
+            .update(1, 1, tutorialGroupConfigurationDtoFromEntity(new TutorialGroupsConfiguration()), [])
+            .pipe(take(1))
+            .subscribe((resp) => (result = resp));
+
+        const req = httpMock.expectOne({ method: 'PUT' });
+        req.flush(returnedFromService);
+        expect(result).toMatchObject({ body: expected });
+    });
+
+    it('should convert dates from server in getOneOfCourse response with free periods', () => {
+        const freePeriod = {
+            id: 1,
+            start: '2021-01-10',
+            end: '2021-01-15',
+            reason: 'Holiday',
+        };
+
+        const returnedFromService = {
+            ...elemDefault,
+            tutorialPeriodStartInclusive: '2021-01-01',
+            tutorialPeriodEndInclusive: '2021-02-01',
+            tutorialGroupFreePeriods: [freePeriod],
+        };
+
+        let result: any;
+        service
+            .getOneOfCourse(1)
+            .pipe(take(1))
+            .subscribe((resp) => (result = resp));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+
+        expect(result.body).toBeDefined();
+        expect(result.body.tutorialGroupFreePeriods).toHaveLength(1);
+    });
+});

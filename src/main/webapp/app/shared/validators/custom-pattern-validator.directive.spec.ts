@@ -3,10 +3,12 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { By } from '@angular/platform-browser';
+import { CustomPatternValidatorDirective } from './custom-pattern-validator.directive';
 
 @Component({
+    standalone: true,
     template: '<form name="editForm" #editForm="ngForm">' + '<input type="text" name="pattern" validPattern #patternModel="ngModel" [(ngModel)]="pattern"/>' + '</form>',
-    imports: [FormsModule],
+    imports: [FormsModule, CustomPatternValidatorDirective],
 })
 class CustomPatternComponent {
     pattern: string;

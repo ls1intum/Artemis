@@ -94,6 +94,7 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
      * that are not the latest rated result for a {@link Participation}, within courses conducted between the specified date range.
      * This query removes old feedback entries that are not part of the latest rated results, for courses whose
      * end date is before {@code deleteTo} and start date is after {@code deleteFrom}.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation -> exercise.
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
@@ -108,8 +109,8 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
                 FROM Result r
                     LEFT JOIN r.submission s
                     LEFT JOIN s.participation p
-                    LEFT JOIN p.exercise e
-                    LEFT JOIN e.course c
+                    JOIN Exercise e ON r.exerciseId = e.id
+                    JOIN e.course c
                 WHERE r.id NOT IN (
                     SELECT MAX(r2.id)
                     FROM Result r2
@@ -128,6 +129,7 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
     /**
      * Counts {@link Feedback} entries associated with rated {@link Result} (accessed via its submission)
      * that are not the latest rated result for a {@link Participation}, within courses conducted between the specified date range.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation -> exercise.
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
@@ -141,8 +143,8 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
                 FROM Result r
                     LEFT JOIN r.submission s
                     LEFT JOIN s.participation p
-                    LEFT JOIN p.exercise e
-                    LEFT JOIN e.course c
+                    JOIN Exercise e ON r.exerciseId = e.id
+                    JOIN e.course c
                 WHERE r.id NOT IN (
                     SELECT MAX(r2.id)
                     FROM Result r2
@@ -164,6 +166,7 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
      * are between the specified date range.
      * This query removes old feedback entries that are not part of the latest non-rated result within courses whose end date is before
      * {@code deleteTo} and start date is after {@code deleteFrom}.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation -> exercise.
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
@@ -178,8 +181,8 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
                 FROM Result r
                     LEFT JOIN r.submission s
                     LEFT JOIN s.participation p
-                    LEFT JOIN p.exercise e
-                    LEFT JOIN e.course c
+                    JOIN Exercise e ON r.exerciseId = e.id
+                    JOIN e.course c
                 WHERE r.id NOT IN (
                     SELECT MAX(r2.id)
                     FROM Result r2
@@ -198,6 +201,7 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
      * Counts non-rated {@link Feedback} entries (accessed via its result's submission)
      * that are not the latest non-rated result for a {@link Participation}, where the associated course's start and end dates
      * are between the specified date range.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation -> exercise.
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
@@ -211,8 +215,8 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
                 FROM Result r
                     LEFT JOIN r.submission s
                     LEFT JOIN s.participation p
-                    LEFT JOIN p.exercise e
-                    LEFT JOIN e.course c
+                    JOIN Exercise e ON r.exerciseId = e.id
+                    JOIN e.course c
                 WHERE r.id NOT IN (
                     SELECT MAX(r2.id)
                     FROM Result r2

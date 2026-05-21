@@ -121,16 +121,4 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
         log.info("Sending schedule cancel for slide unhiding {} to broker.", slideId);
         sendMessageDelayed(MessageTopic.SLIDE_UNHIDE_SCHEDULE_CANCEL, slideId);
     }
-
-    @Override
-    public void sendLectureUnitAutoIngestionSchedule(Long lectureUnitId) {
-        log.info("Lecture unit ingestion schedule for lecture unit {}.", lectureUnitId);
-        sendMessageDelayed(MessageTopic.LECTURE_UNIT_AUTO_INGESTION_SCHEDULE, lectureUnitId);
-    }
-
-    @Override
-    public void sendLectureUnitAutoIngestionScheduleCancel(Long lectureUnitId) {
-        log.info("Lecture unit ingestion cancel for lecture unit {}.", lectureUnitId);
-        sendMessageDelayed(MessageTopic.LECTURE_UNIT_AUTO_INGESTION_SCHEDULE_CANCEL, lectureUnitId);
-    }
 }

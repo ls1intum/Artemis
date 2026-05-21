@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { CourseNotificationWebsocketService } from 'app/communication/course-notification/course-notification-websocket.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -12,35 +14,40 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 
 describe('CourseNotificationWebsocketService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: CourseNotificationWebsocketService;
-    let websocketServiceMock: jest.Mocked<WebsocketService>;
-    let courseNotificationServiceMock: jest.Mocked<CourseNotificationService>;
-    let courseManagementServiceMock: jest.Mocked<CourseManagementService>;
-    let accountServiceMock: jest.Mocked<AccountService>;
+    let websocketServiceMock: { subscribe: ReturnType<typeof vi.fn> };
+    let courseNotificationServiceMock: { addNotification: ReturnType<typeof vi.fn> };
+    let courseManagementServiceMock: { getCoursesForNotifications: ReturnType<typeof vi.fn> };
+    let accountServiceMock: { getAuthenticationState: ReturnType<typeof vi.fn> };
     let coursesSubject: BehaviorSubject<Course[] | undefined>;
     let websocketReceiveSubject: Subject<CourseNotification>;
     let userSubject: BehaviorSubject<User | null>;
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     beforeEach(() => {
         websocketReceiveSubject = new Subject<CourseNotification>();
         websocketServiceMock = {
-            subscribe: jest.fn().mockReturnThis(),
-            receive: jest.fn().mockReturnValue(websocketReceiveSubject.asObservable()),
-        } as unknown as jest.Mocked<WebsocketService>;
+            subscribe: vi.fn().mockReturnValue(websocketReceiveSubject.asObservable()),
+        };
 
         courseNotificationServiceMock = {
-            addNotification: jest.fn(),
-        } as unknown as jest.Mocked<CourseNotificationService>;
+            addNotification: vi.fn(),
+        };
 
         coursesSubject = new BehaviorSubject<Course[] | undefined>(undefined);
         courseManagementServiceMock = {
-            getCoursesForNotifications: jest.fn().mockReturnValue(coursesSubject),
-        } as unknown as jest.Mocked<CourseManagementService>;
+            getCoursesForNotifications: vi.fn().mockReturnValue(coursesSubject),
+        };
 
         userSubject = new BehaviorSubject<User | null>(null);
         accountServiceMock = {
-            getAuthenticationState: jest.fn().mockReturnValue(userSubject),
-        } as unknown as jest.Mocked<AccountService>;
+            getAuthenticationState: vi.fn().mockReturnValue(userSubject),
+        };
 
         TestBed.configureTestingModule({
             providers: [
@@ -53,10 +60,6 @@ describe('CourseNotificationWebsocketService', () => {
         });
 
         service = TestBed.inject(CourseNotificationWebsocketService);
-    });
-
-    afterEach(() => {
-        jest.restoreAllMocks();
     });
 
     it('should be created', () => {
@@ -78,15 +81,13 @@ describe('CourseNotificationWebsocketService', () => {
             expect(websocketServiceMock.subscribe).toHaveBeenCalledTimes(2);
             expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/user/topic/communication/notification/1');
             expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/user/topic/communication/notification/2');
-            expect(websocketServiceMock.receive).toHaveBeenCalledTimes(2);
-            expect(websocketServiceMock.receive).toHaveBeenCalledWith('/user/topic/communication/notification/1');
-            expect(websocketServiceMock.receive).toHaveBeenCalledWith('/user/topic/communication/notification/2');
         });
 
         it('should not resubscribe to same course twice', () => {
             const user = { id: 'user1' } as unknown as User;
             userSubject.next(user);
-            jest.clearAllMocks();
+            vi.clearAllMocks();
+            websocketServiceMock.subscribe.mockReturnValue(websocketReceiveSubject.asObservable());
 
             const courses = [{ id: 1, title: 'Course 1' }] as Course[];
 
@@ -94,7 +95,6 @@ describe('CourseNotificationWebsocketService', () => {
             coursesSubject.next(courses);
 
             expect(websocketServiceMock.subscribe).toHaveBeenCalledOnce();
-            expect(websocketServiceMock.receive).toHaveBeenCalledOnce();
         });
 
         it('should handle incoming notifications and pass them to the notification service', () => {
@@ -192,7 +192,8 @@ describe('CourseNotificationWebsocketService', () => {
 
             expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/user/topic/communication/notification/1');
 
-            jest.clearAllMocks();
+            vi.clearAllMocks();
+            websocketServiceMock.subscribe.mockReturnValue(websocketReceiveSubject.asObservable());
 
             const user2 = { id: 'user2' } as unknown as User;
             userSubject.next(user2);
@@ -215,7 +216,8 @@ describe('CourseNotificationWebsocketService', () => {
             expect(courseManagementServiceMock.getCoursesForNotifications).toHaveBeenCalledOnce();
             expect(websocketServiceMock.subscribe).toHaveBeenCalledOnce();
 
-            jest.clearAllMocks();
+            vi.clearAllMocks();
+            websocketServiceMock.subscribe.mockReturnValue(websocketReceiveSubject.asObservable());
 
             userSubject.next(user);
 
@@ -226,7 +228,7 @@ describe('CourseNotificationWebsocketService', () => {
 
     describe('Cleanup', () => {
         it('should properly clean up subscriptions on ngOnDestroy', () => {
-            const cleanupSpy = jest.spyOn(service as any, 'cleanupSubscriptions');
+            const cleanupSpy = vi.spyOn(service as any, 'cleanupSubscriptions');
 
             const user = { id: 'user1' } as unknown as User;
             userSubject.next(user);
@@ -243,7 +245,7 @@ describe('CourseNotificationWebsocketService', () => {
             const user = { id: 'user1' } as unknown as User;
             userSubject.next(user);
 
-            const unsubscribeSpy = jest.fn();
+            const unsubscribeSpy = vi.fn();
 
             (service as any).coursesSubscription = { unsubscribe: unsubscribeSpy };
 

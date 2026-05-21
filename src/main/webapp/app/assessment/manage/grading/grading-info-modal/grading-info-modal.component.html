@@ -1,0 +1,49 @@
+<p-dialog
+    [header]="'artemisApp.gradingSystem.info.title' | artemisTranslate"
+    [modal]="true"
+    [visible]="visible()"
+    (visibleChange)="visible.set($event)"
+    [style]="{ width: '50rem' }"
+    appendTo="body"
+    [draggable]="false"
+    [closable]="true"
+    [closeOnEscape]="true"
+    [dismissableMask]="true"
+    [baseZIndex]="10000"
+>
+    <table class="table">
+        <tr>
+            <th jhiTranslate="artemisApp.gradingSystem.info.general.title"></th>
+            <td jhiTranslate="artemisApp.gradingSystem.info.general.explanation"></td>
+        </tr>
+        <hr />
+        <tr>
+            <th jhiTranslate="artemisApp.gradingSystem.info.maxPoints.title"></th>
+            <td jhiTranslate="artemisApp.gradingSystem.info.maxPoints.explanation"></td>
+        </tr>
+        <hr />
+        <tr>
+            <th jhiTranslate="artemisApp.gradingSystem.info.gradeType.title"></th>
+            <td jhiTranslate="artemisApp.gradingSystem.info.gradeType.explanation"></td>
+        </tr>
+        <hr />
+        <tr>
+            <th jhiTranslate="artemisApp.gradingSystem.info.inclusivity.title"></th>
+            <td jhiTranslate="artemisApp.gradingSystem.info.inclusivity.explanation"></td>
+        </tr>
+        <hr />
+        <tr>
+            <th jhiTranslate="artemisApp.gradingSystem.info.firstPassingGrade.title"></th>
+            <td jhiTranslate="artemisApp.gradingSystem.info.firstPassingGrade.explanation"></td>
+        </tr>
+        <hr />
+        <tr>
+            <th jhiTranslate="artemisApp.gradingSystem.info.importExport.title"></th>
+            <td jhiTranslate="artemisApp.gradingSystem.info.importExport.explanation"></td>
+        </tr>
+    </table>
+    <ng-template pTemplate="footer">
+        <button pButton severity="secondary" [label]="'entity.action.close' | artemisTranslate" (click)="close()"></button>
+    </ng-template>
+</p-dialog>
+<button class="btn btn-link" (click)="open()" type="button"><fa-icon [icon]="farQuestionCircle" /></button>

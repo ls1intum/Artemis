@@ -64,7 +64,9 @@ class LearningObjectServiceTest extends AbstractSpringIntegrationIndependentTest
     @ParameterizedTest(name = "{displayName} [{index}] {arguments}")
     @ValueSource(booleans = { true, false })
     void testIsCompletedByUserExercise(boolean completed) {
-        var programmingExercise = course.getExercises().stream().findFirst().get();
+        var optionalExercise = course.getExercises().stream().findFirst();
+        assertThat(optionalExercise).isPresent();
+        var programmingExercise = optionalExercise.orElseThrow();
         studentScoreUtilService.createStudentScore(programmingExercise, student, completed ? 84.0 : 42.0);
 
         assertThat(learningObjectService.isCompletedByUser(programmingExercise, student)).isEqualTo(completed);
@@ -74,7 +76,9 @@ class LearningObjectServiceTest extends AbstractSpringIntegrationIndependentTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testIsCompletedByUserManuallyAssessedExercise(boolean completed) {
-        var programmingExercise = course.getExercises().stream().findFirst().get();
+        var optionalExercise = course.getExercises().stream().findFirst();
+        assertThat(optionalExercise).isPresent();
+        var programmingExercise = optionalExercise.orElseThrow();
         programmingExercise.setAssessmentType(AssessmentType.MANUAL);
         exerciseRepository.save(programmingExercise);
 

@@ -1,10 +1,12 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, RouterLink, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable, Subject, Subscription, of } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith } from 'rxjs/operators';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 
 import {
     faChartBar,
@@ -18,8 +20,10 @@ import {
     faQuestion,
     faSync,
     faTable,
+    faTableCells,
     faTimes,
     faTrash,
+    faUndo,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -31,8 +35,8 @@ import { BaseCourseContainerComponent } from 'app/core/course/shared/course-base
 import { CourseSidebarItemService } from 'app/core/course/shared/services/sidebar-item.service';
 import { CourseTitleBarComponent } from 'app/core/course/shared/course-title-bar/course-title-bar.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
-import { IrisCourseSettingsUpdateComponent } from 'app/iris/manage/settings/iris-course-settings-update/iris-course-settings-update.component';
+import { ActionType, EntitySummaryCategory } from 'app/shared/delete-dialog/delete-dialog.model';
+import { IrisSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-settings-update.component';
 import { TutorialGroupsChecklistComponent } from 'app/tutorialgroup/manage/tutorial-groups-checklist/tutorial-groups-checklist.component';
 import { CompetencyManagementComponent } from 'app/atlas/manage/competency-management/competency-management.component';
 import { LearningPathInstructorPageComponent } from 'app/atlas/manage/learning-path-instructor-page/learning-path-instructor-page.component';
@@ -43,6 +47,7 @@ import { BuildOverviewComponent } from 'app/buildagent/build-queue/build-overvie
 import { CourseDetailComponent } from 'app/core/course/manage/detail/course-detail.component';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseAdminService } from 'app/core/course/manage/services/course-admin.service';
 import { ExamManagementComponent } from 'app/exam/manage/exam-management/exam-management.component';
 import { CourseManagementExercisesComponent } from 'app/core/course/manage/exercises/course-management-exercises.component';
@@ -51,9 +56,14 @@ import { CourseManagementStatisticsComponent } from 'app/core/course/manage/stat
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
-import { CourseDeletionSummaryDTO } from 'app/core/course/shared/entities/course-deletion-summary.model';
+import { CourseSummaryDTO } from 'app/core/course/shared/entities/course-summary.model';
+import { CourseOperationProgressDTO, CourseOperationType } from 'app/core/course/shared/entities/course-operation-progress.model';
+import { CourseOperationProgressComponent } from 'app/core/course/manage/course-operation-progress/course-operation-progress.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
+import { Subscription } from 'rxjs';
+import { convertDateFromServer } from 'app/shared/util/date.utils';
 
 @Component({
     selector: 'jhi-course-management-container',
@@ -75,13 +85,17 @@ import { toSignal } from '@angular/core/rxjs-interop';
         DeleteButtonDirective,
         HasAnyAuthorityDirective,
         FaIconComponent,
+        CourseOperationProgressComponent,
+        ArtemisTranslatePipe,
     ],
 })
 export class CourseManagementContainerComponent extends BaseCourseContainerComponent implements OnInit, OnDestroy, AfterViewInit {
+    private readonly destroyRef = inject(DestroyRef);
     private readonly eventManager = inject(EventManager);
     private readonly featureToggleService = inject(FeatureToggleService);
     private readonly sidebarItemService = inject(CourseSidebarItemService);
     private readonly courseAdminService = inject(CourseAdminService);
+    private readonly websocketService = inject(WebsocketService);
 
     protected readonly faTimes = faTimes;
     protected readonly faEye = faEye;
@@ -97,14 +111,20 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     protected readonly faChevronLeft = faChevronLeft;
     protected readonly faQuestion = faQuestion;
     protected readonly faTrash = faTrash;
+    protected readonly faUndo = faUndo;
 
     protected readonly ButtonSize = ButtonSize;
+    protected readonly ActionType = ActionType;
+    protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
 
-    private eventSubscriber: Subscription;
-    private featureToggleSub: Subscription;
+    // Keep progressSubscription as it needs manual management due to dynamic re-subscription
+    private progressSubscription?: Subscription;
+    // Keep courseSub as it needs manual management due to dynamic re-subscription on course change
     private courseSub?: Subscription;
-    private urlSubscription?: Subscription;
-    private routeSubscription?: Subscription;
+    // Keep eventSubscriber as EventManager.subscribe() returns Subscription, not Observable
+    private eventSubscriber?: Subscription;
+
+    operationProgress = signal<CourseOperationProgressDTO | undefined>(undefined);
 
     private learningPathsActive = signal(false);
     courseBody = viewChild<ElementRef<HTMLElement>>('courseBodyContainer');
@@ -133,7 +153,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         | CourseManagementExercisesComponent
         | LectureComponent
         | CourseManagementStatisticsComponent
-        | IrisCourseSettingsUpdateComponent
+        | IrisSettingsUpdateComponent
         | CourseConversationsComponent
         | TutorialGroupsChecklistComponent
         | CompetencyManagementComponent
@@ -146,15 +166,18 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     >(undefined);
 
     async ngOnInit() {
-        this.subscription = this.route.firstChild?.params.subscribe((params: { courseId: string }) => {
+        this.route.firstChild?.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params: { courseId: string }) => {
             const id = Number(params.courseId);
             this.handleCourseIdChange(id);
             this.checkIfSettingsPage();
         });
 
-        this.featureToggleSub = this.featureToggleService.getFeatureToggleActive(FeatureToggle.LearningPaths).subscribe((isActive) => {
-            this.learningPathsActive.set(isActive);
-        });
+        this.featureToggleService
+            .getFeatureToggleActive(FeatureToggle.LearningPaths)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((isActive) => {
+                this.learningPathsActive.set(isActive);
+            });
 
         await super.ngOnInit();
 
@@ -179,6 +202,29 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         this.courseId.set(courseId);
         this.determineStudentViewLink();
         this.subscribeToCourseUpdates(courseId);
+        this.subscribeToOperationProgress(courseId);
+    }
+
+    private subscribeToOperationProgress(courseId: number) {
+        // Unsubscribe from previous subscription if any
+        this.progressSubscription?.unsubscribe();
+
+        const topic = `/topic/courses/${courseId}/operation-progress`;
+        this.progressSubscription = this.websocketService.subscribe<CourseOperationProgressDTO>(topic).subscribe((progress) => {
+            if (progress.startedAt) {
+                progress.startedAt = convertDateFromServer(progress.startedAt);
+            }
+            this.operationProgress.set(progress);
+        });
+    }
+
+    closeProgress() {
+        const progress = this.operationProgress();
+        this.operationProgress.set(undefined);
+        // Navigate to course list after closing a completed delete operation
+        if (progress?.operationType === CourseOperationType.DELETE) {
+            this.router.navigate(['/course-management']);
+        }
     }
 
     determineStudentViewLink() {
@@ -210,6 +256,12 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             }
             return routerUrl.includes(route.urlPart);
         });
+
+        // Hide Student View button for routes that have no corresponding student view
+        if (routerUrl.includes('build-overview')) {
+            this.studentViewLink.set([]);
+            return;
+        }
 
         this.studentViewLink.set(matchedRoute ? matchedRoute.targetPath : defaultPath);
     }
@@ -291,85 +343,61 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         if (!currentCourse) {
             return [];
         }
+        const courseId = this.courseId();
         const isInstructor = currentCourse.isAtLeastInstructor;
+        const isEditor = currentCourse.isAtLeastEditor;
 
-        sidebarItems.push(...this.sidebarItemService.getManagementDefaultItems(this.courseId()));
+        // 1. Overview
+        sidebarItems.push({
+            routerLink: courseId ? `${courseId}` : '',
+            icon: faTableCells,
+            title: 'Overview',
+            translation: 'artemisApp.course.overview',
+            hidden: false,
+            isPrefix: true,
+        });
 
-        if (currentCourse.isAtLeastEditor) {
-            sidebarItems.splice(3, 0, this.sidebarItemService.getLecturesItem(this.courseId()));
+        // 2–7. Content items (same order as Explore Artemis cards)
+        sidebarItems.push(this.sidebarItemService.getExercisesItem(courseId));
+        if (this.lectureEnabled && isEditor) {
+            sidebarItems.push(this.sidebarItemService.getLecturesItem(courseId));
         }
-        const nonInstructorItems: SidebarItem[] = [];
+        sidebarItems.push(...this.addTutorialGroupsItem(currentCourse, isInstructor));
+        sidebarItems.push(this.sidebarItemService.getExamsItem(courseId));
+        if (this.atlasEnabled && isEditor) {
+            sidebarItems.push(this.sidebarItemService.getCompetenciesManagementItem(courseId));
+        }
+        sidebarItems.push(this.sidebarItemService.getFaqManagementItem(courseId));
 
-        const communicationItem = this.addCommunicationItem(currentCourse);
-        const tutorialGroupItem = this.addTutorialGroupsItem(currentCourse, isInstructor);
-        this.addAssessmentItem(nonInstructorItems);
-        this.addFaqItem(currentCourse, nonInstructorItems);
-        nonInstructorItems.unshift(...communicationItem, ...tutorialGroupItem);
-        sidebarItems.push(...nonInstructorItems);
-
-        // Atlas items are available for editors and instructors
-        const atlasItems = currentCourse.isAtLeastEditor ? this.getAtlasItems() : [];
-
+        // 8+. Other management items
+        sidebarItems.push(...this.addCommunicationItem(currentCourse));
         if (isInstructor) {
-            const irisItems = this.getIrisSettingsItem();
-            const scoresItem = this.getScoresItem();
-            const buildAndLtiItems: SidebarItem[] = [];
-            this.addBuildQueueItem(buildAndLtiItems);
-            this.addLtiItem(currentCourse, buildAndLtiItems);
-
-            sidebarItems.splice(3, 0, ...irisItems); // After lectures
-            sidebarItems.splice(5 + irisItems.length + tutorialGroupItem.length + communicationItem.length, 0, ...atlasItems); // After tutorial groups
-            sidebarItems.splice(6 + irisItems.length + tutorialGroupItem.length + communicationItem.length + atlasItems.length, 0, ...scoresItem); // After assessment
-            sidebarItems.push(...buildAndLtiItems); // At the end but before settings
-            sidebarItems.push(this.sidebarItemService.getCourseSettingsItem(this.courseId()));
-        } else if (currentCourse.isAtLeastEditor) {
-            // For editors (non-instructors), add Atlas items after tutorial groups
-            sidebarItems.splice(3 + tutorialGroupItem.length + communicationItem.length, 0, ...atlasItems);
+            sidebarItems.push(...this.getIrisSettingsItem());
+        }
+        sidebarItems.push(this.sidebarItemService.getAssessmentDashboardItem(courseId));
+        if (this.atlasEnabled && isEditor && this.learningPathsActive()) {
+            sidebarItems.push(this.sidebarItemService.getLearningPathManagementItem(courseId));
+        }
+        if (isInstructor) {
+            sidebarItems.push(this.sidebarItemService.getScoresItem(courseId));
+        }
+        sidebarItems.push(this.sidebarItemService.getStatisticsItem(courseId));
+        if (isInstructor) {
+            if (this.localCIActive) {
+                sidebarItems.push(this.sidebarItemService.getBuildQueueItem(courseId));
+            }
+            if (this.ltiEnabled && currentCourse.onlineCourse) {
+                sidebarItems.push(this.sidebarItemService.getLtiConfigurationItem(courseId));
+            }
+            sidebarItems.push(this.sidebarItemService.getCourseSettingsItem(courseId));
         }
 
         return sidebarItems;
     }
 
-    private addLtiItem(currentCourse: Course, sidebarItems: SidebarItem[]) {
-        if (this.ltiEnabled && currentCourse.onlineCourse) {
-            sidebarItems.push(this.sidebarItemService.getLtiConfigurationItem(this.courseId()));
-        }
-    }
-
-    private addBuildQueueItem(sidebarItems: SidebarItem[]) {
-        if (this.localCIActive) {
-            sidebarItems.push(this.sidebarItemService.getBuildQueueItem(this.courseId()));
-        }
-    }
-
-    private addFaqItem(currentCourse: Course, sidebarItems: SidebarItem[]) {
-        if (currentCourse.isAtLeastInstructor || currentCourse.faqEnabled) {
-            sidebarItems.push(this.sidebarItemService.getFaqManagementItem(this.courseId()));
-        }
-    }
-
-    private addAssessmentItem(sidebarItems: SidebarItem[]) {
-        sidebarItems.push(this.sidebarItemService.getAssessmentDashboardItem(this.courseId()));
-    }
-
-    private getScoresItem() {
-        return [this.sidebarItemService.getScoresItem(this.courseId())];
-    }
-
-    private getAtlasItems() {
-        const atlasItems: SidebarItem[] = [];
-        if (this.atlasEnabled) {
-            atlasItems.push(this.sidebarItemService.getCompetenciesManagementItem(this.courseId()));
-            if (this.learningPathsActive()) {
-                atlasItems.push(this.sidebarItemService.getLearningPathManagementItem(this.courseId()));
-            }
-        }
-        return atlasItems;
-    }
-
     private addTutorialGroupsItem(currentCourse: Course, isInstructor = false) {
         const tutorialGroupsItem: SidebarItem[] = [];
-        if (currentCourse.tutorialGroupsConfiguration || isInstructor) {
+        if (this.tutorialGroupEnabled && (currentCourse.tutorialGroupsConfiguration || isInstructor)) {
             tutorialGroupsItem.push(this.sidebarItemService.getTutorialGroupsItem(this.courseId()));
         }
         return tutorialGroupsItem;
@@ -393,40 +421,104 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     ngOnDestroy() {
         super.ngOnDestroy();
-        this.eventManager.destroy(this.eventSubscriber);
-        this.featureToggleSub?.unsubscribe();
-        this.urlSubscription?.unsubscribe();
         this.courseSub?.unsubscribe();
-        this.routeSubscription?.unsubscribe();
+        this.progressSubscription?.unsubscribe();
+        this.eventSubscriber?.unsubscribe();
     }
 
-    fetchCourseDeletionSummary(): Observable<EntitySummary> {
+    fetchCourseDeletionSummary(): Observable<EntitySummaryCategory[]> {
         const courseId = this.course()?.id;
         if (!courseId) {
-            return of({});
+            return of([]);
         }
 
-        return this.courseAdminService.getDeletionSummary(courseId).pipe(map((response) => (response.body ? this.combineFetchedSummaryWithPresentValues(response.body) : {})));
+        return this.courseAdminService.getCourseSummary(courseId).pipe(map((response) => (response.body ? this.buildDeletionSummaryCategories(response.body) : [])));
     }
 
-    private combineFetchedSummaryWithPresentValues(summary: CourseDeletionSummaryDTO) {
-        return {
-            'artemisApp.course.delete.summary.isTestCourse': this.course()?.testCourse,
-            'artemisApp.course.delete.summary.numberStudents': summary.numberOfStudents,
-            'artemisApp.course.delete.summary.numberTutors': summary.numberOfTutors,
-            'artemisApp.course.delete.summary.numberEditors': summary.numberOfEditors,
-            'artemisApp.course.delete.summary.numberInstructors': summary.numberOfInstructors,
-            'artemisApp.course.delete.summary.numberExams': summary.numberExams,
-            'artemisApp.course.delete.summary.numberLectures': summary.numberLectures,
-            'artemisApp.course.delete.summary.numberProgrammingExercises': summary.numberProgrammingExercises,
-            'artemisApp.course.delete.summary.numberModelingExercises': summary.numberModelingExercises,
-            'artemisApp.course.delete.summary.numberQuizExercises': summary.numberQuizExercises,
-            'artemisApp.course.delete.summary.numberTextExercises': summary.numberTextExercises,
-            'artemisApp.course.delete.summary.numberFileUploadExercises': summary.numberFileUploadExercises,
-            'artemisApp.course.delete.summary.numberBuilds': summary.numberOfBuilds,
-            'artemisApp.course.delete.summary.numberCommunicationPosts': summary.numberOfCommunicationPosts,
-            'artemisApp.course.delete.summary.numberAnswerPosts': summary.numberOfAnswerPosts,
-        };
+    private buildDeletionSummaryCategories(summary: CourseSummaryDTO): EntitySummaryCategory[] {
+        const categories: EntitySummaryCategory[] = [];
+        const prefix = 'artemisApp.course.delete.summary';
+
+        // Users
+        categories.push({
+            titleKey: `${prefix}.category.users`,
+            items: [
+                { labelKey: `${prefix}.numberOfStudents`, value: summary.numberOfStudents },
+                { labelKey: `${prefix}.numberOfTutors`, value: summary.numberOfTutors },
+                { labelKey: `${prefix}.numberOfEditors`, value: summary.numberOfEditors },
+                { labelKey: `${prefix}.numberOfInstructors`, value: summary.numberOfInstructors },
+            ],
+        });
+
+        // Course Structure (delete-only: these are permanently deleted)
+        categories.push({
+            titleKey: `${prefix}.category.courseStructure`,
+            items: [
+                { labelKey: `${prefix}.numberOfExams`, value: summary.numberOfExams },
+                { labelKey: `${prefix}.numberOfLectures`, value: summary.numberOfLectures },
+                { labelKey: `${prefix}.numberOfCompetencies`, value: summary.numberOfCompetencies },
+                { labelKey: `${prefix}.numberOfFaqs`, value: summary.numberOfFaqs },
+                { labelKey: `${prefix}.numberOfTutorialGroups`, value: summary.numberOfTutorialGroups },
+            ],
+        });
+
+        // Exercises (delete-only: breakdown by type)
+        categories.push({
+            titleKey: `${prefix}.category.exercises`,
+            items: [
+                { labelKey: `${prefix}.numberOfProgrammingExercises`, value: summary.numberOfProgrammingExercises },
+                { labelKey: `${prefix}.numberOfTextExercises`, value: summary.numberOfTextExercises },
+                { labelKey: `${prefix}.numberOfModelingExercises`, value: summary.numberOfModelingExercises },
+                { labelKey: `${prefix}.numberOfQuizExercises`, value: summary.numberOfQuizExercises },
+                { labelKey: `${prefix}.numberOfFileUploadExercises`, value: summary.numberOfFileUploadExercises },
+            ],
+        });
+
+        // Student Work
+        categories.push({
+            titleKey: `${prefix}.category.studentWork`,
+            items: [
+                { labelKey: `${prefix}.numberOfParticipations`, value: summary.numberOfParticipations },
+                { labelKey: `${prefix}.numberOfSubmissions`, value: summary.numberOfSubmissions },
+                { labelKey: `${prefix}.numberOfResults`, value: summary.numberOfResults },
+            ],
+        });
+
+        // Communication
+        categories.push({
+            titleKey: `${prefix}.category.communication`,
+            items: [
+                { labelKey: `${prefix}.numberOfConversations`, value: summary.numberOfConversations },
+                { labelKey: `${prefix}.numberOfPosts`, value: summary.numberOfPosts },
+                { labelKey: `${prefix}.numberOfReplies`, value: summary.numberOfAnswerPosts },
+            ],
+        });
+
+        // Learning Data
+        categories.push({
+            titleKey: `${prefix}.category.learningData`,
+            items: [
+                { labelKey: `${prefix}.numberOfCompetencyProgress`, value: summary.numberOfCompetencyProgress },
+                { labelKey: `${prefix}.numberOfLearnerProfiles`, value: summary.numberOfLearnerProfiles },
+            ],
+        });
+
+        // AI Data
+        categories.push({
+            titleKey: `${prefix}.category.aiData`,
+            items: [
+                { labelKey: `${prefix}.numberOfIrisChatSessions`, value: summary.numberOfIrisChatSessions },
+                { labelKey: `${prefix}.numberOfLLMTraces`, value: summary.numberOfLLMTraces },
+            ],
+        });
+
+        // Infrastructure
+        categories.push({
+            titleKey: `${prefix}.category.infrastructure`,
+            items: [{ labelKey: `${prefix}.numberOfBuilds`, value: summary.numberOfBuilds }],
+        });
+
+        return categories;
     }
 
     /**
@@ -441,7 +533,97 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
                     content: 'artemisApp.course.deleted',
                 });
                 this.dialogErrorSource.next('');
-                this.router.navigate(['/course-management']);
+                // Don't navigate immediately - let the progress overlay show
+                // Navigation will happen when user closes the progress overlay
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
+    fetchCourseResetSummary(): Observable<EntitySummaryCategory[]> {
+        const courseId = this.course()?.id;
+        if (!courseId) {
+            return of([]);
+        }
+
+        return this.courseAdminService.getCourseSummary(courseId).pipe(map((response) => (response.body ? this.buildResetSummaryCategories(response.body) : [])));
+    }
+
+    private buildResetSummaryCategories(summary: CourseSummaryDTO): EntitySummaryCategory[] {
+        const prefix = 'artemisApp.course.reset.summary';
+
+        return [
+            // Users (to be removed - instructors stay)
+            {
+                titleKey: `${prefix}.category.users`,
+                items: [
+                    { labelKey: `${prefix}.numberOfStudents`, value: summary.numberOfStudents },
+                    { labelKey: `${prefix}.numberOfTutors`, value: summary.numberOfTutors },
+                    { labelKey: `${prefix}.numberOfEditors`, value: summary.numberOfEditors },
+                ],
+            },
+            // Student Work (reset-only: participations, submissions, and results)
+            {
+                titleKey: `${prefix}.category.studentWork`,
+                items: [
+                    { labelKey: `${prefix}.numberOfParticipations`, value: summary.numberOfParticipations },
+                    { labelKey: `${prefix}.numberOfSubmissions`, value: summary.numberOfSubmissions },
+                    { labelKey: `${prefix}.numberOfResults`, value: summary.numberOfResults },
+                ],
+            },
+            // Communication
+            {
+                titleKey: `${prefix}.category.communication`,
+                items: [
+                    { labelKey: `${prefix}.numberOfConversations`, value: summary.numberOfConversations },
+                    { labelKey: `${prefix}.numberOfPosts`, value: summary.numberOfPosts },
+                    { labelKey: `${prefix}.numberOfReplies`, value: summary.numberOfAnswerPosts },
+                ],
+            },
+            // Learning Data
+            {
+                titleKey: `${prefix}.category.learningData`,
+                items: [
+                    { labelKey: `${prefix}.numberOfCompetencyProgress`, value: summary.numberOfCompetencyProgress },
+                    { labelKey: `${prefix}.numberOfLearnerProfiles`, value: summary.numberOfLearnerProfiles },
+                ],
+            },
+            // AI Data
+            {
+                titleKey: `${prefix}.category.aiData`,
+                items: [
+                    { labelKey: `${prefix}.numberOfIrisChatSessions`, value: summary.numberOfIrisChatSessions },
+                    { labelKey: `${prefix}.numberOfLLMTraces`, value: summary.numberOfLLMTraces },
+                ],
+            },
+            // Infrastructure
+            {
+                titleKey: `${prefix}.category.infrastructure`,
+                items: [{ labelKey: `${prefix}.numberOfBuilds`, value: summary.numberOfBuilds }],
+            },
+            // Items to Reset (reset-only: structure preserved but data cleared)
+            {
+                titleKey: `${prefix}.category.itemsToReset`,
+                items: [
+                    { labelKey: `${prefix}.numberOfExercises`, value: summary.numberOfExercises },
+                    { labelKey: `${prefix}.numberOfExams`, value: summary.numberOfExams },
+                ],
+            },
+        ];
+    }
+
+    /**
+     * Resets the course by removing all student data while preserving the course structure
+     * @param courseId id of the course that will be reset
+     */
+    resetCourse(courseId: number) {
+        this.courseAdminService.reset(courseId).subscribe({
+            next: () => {
+                this.eventManager.broadcast({
+                    name: 'courseModification',
+                    content: 'artemisApp.course.reset',
+                });
+                this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });

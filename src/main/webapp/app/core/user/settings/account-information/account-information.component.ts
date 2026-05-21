@@ -1,11 +1,11 @@
-import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, DestroyRef, ElementRef, Signal, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { Observable } from 'rxjs';
-import { ImageComponent } from 'app/shared/image/image.component';
+import { ImageComponent, ImageLoadingStatus } from 'app/shared/image/image.component';
 import { faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ImageCropperModalComponent } from 'app/core/course/manage/image-cropper-modal/image-cropper-modal.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { base64StringToBlob } from 'app/shared/util/blob-util';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
@@ -14,101 +14,92 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { UserSettingsService } from 'app/core/user/settings/directive/user-settings.service';
+import { RouterLink } from '@angular/router';
 
 @Component({
     selector: 'jhi-account-information',
     templateUrl: './account-information.component.html',
     styleUrls: ['../user-settings.scss'],
-    imports: [TranslateDirective, ImageComponent, FaIconComponent, ArtemisDatePipe],
+    imports: [TranslateDirective, ImageComponent, FaIconComponent, ArtemisDatePipe, RouterLink],
 })
-export class AccountInformationComponent implements OnInit {
+export class AccountInformationComponent {
     protected readonly faPen = faPencil;
     protected readonly faTrash = faTrash;
     protected readonly faPlus = faPlus;
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
-    private accountService = inject(AccountService);
-    private modalService = inject(NgbModal);
-    private userSettingsService = inject(UserSettingsService);
-    private alertService = inject(AlertService);
+    private readonly accountService = inject(AccountService);
+    private readonly dialogService = inject(DialogService);
+    private readonly userSettingsService = inject(UserSettingsService);
+    private readonly alertService = inject(AlertService);
+    private readonly destroyRef = inject(DestroyRef);
 
-    currentUser?: User;
-    croppedImage?: string;
+    readonly currentUser: Signal<User | undefined> = this.accountService.userIdentity;
+    readonly imageLoadFailed = signal(false);
 
-    @ViewChild('fileInput', { static: false }) fileInput: ElementRef<HTMLInputElement>;
+    private readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
 
-    ngOnInit() {
-        this.accountService.getAuthenticationState().subscribe((user) => {
-            this.currentUser = user;
-        });
+    onImageLoadingStatus(status: ImageLoadingStatus): void {
+        this.imageLoadFailed.set(status === ImageLoadingStatus.ERROR);
     }
 
-    setUserImage(event: Event) {
+    setUserImage(event: Event): void {
         const element = event.currentTarget as HTMLInputElement;
         if (element.files && element.files.length > 0) {
-            const modalRef = this.modalService.open(ImageCropperModalComponent, { size: 'm' });
-            modalRef.componentInstance.roundCropper = false;
-            modalRef.componentInstance.fileFormat = 'jpeg';
-            modalRef.componentInstance.uploadFile = element.files[0];
-            const mimeType = element.files[0].type;
-            modalRef.result.then((result: any) => {
+            const dialogRef = this.dialogService.open(ImageCropperModalComponent, {
+                header: '',
+                width: '500px',
+                data: {
+                    uploadFile: element.files[0],
+                    roundCropper: false,
+                    fileFormat: 'jpeg',
+                },
+            });
+            // Use 'image/jpeg' since the cropper outputs JPEG format regardless of input
+            const mimeType = 'image/jpeg';
+            dialogRef?.onClose.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((result: string | undefined) => {
                 if (result) {
                     const base64Data = result.replace('data:image/jpeg;base64,', '');
                     const fileToUpload = base64StringToBlob(base64Data, mimeType);
-                    this.subscribeToUpdateProfilePictureResponse(this.userSettingsService.updateProfilePicture(fileToUpload));
+                    this.updateProfilePicture(fileToUpload);
                 }
             });
         }
         element.value = '';
     }
 
-    deleteUserImage() {
-        this.subscribeToRemoveProfilePictureResponse(this.userSettingsService.removeProfilePicture());
-    }
-
-    triggerUserImageFileInput() {
-        this.fileInput.nativeElement.click();
-    }
-
-    private subscribeToUpdateProfilePictureResponse(result: Observable<HttpResponse<User>>) {
-        result.subscribe({
-            next: (response: HttpResponse<User>) => this.onProfilePictureUploadSuccess(response.body),
-            error: (res: HttpErrorResponse) => this.onProfilePictureUploadError(res),
-        });
-    }
-
-    private subscribeToRemoveProfilePictureResponse(result: Observable<HttpResponse<User>>) {
-        result.subscribe({
-            next: () => this.onProfilePictureRemoveSuccess(),
-            error: (res: HttpErrorResponse) => this.onProfilePictureRemoveError(res),
-        });
-    }
-
-    private onProfilePictureUploadSuccess(user: User | null) {
-        if (user !== null && user.imageUrl !== undefined) {
-            this.currentUser!.imageUrl = user.imageUrl;
-            this.accountService.setImageUrl(user.imageUrl);
-        }
-    }
-
-    private onProfilePictureUploadError(error: HttpErrorResponse) {
-        const errorMessage = error.error ? error.error.title : error.headers?.get('x-artemisapp-alert');
-        if (errorMessage) {
-            this.alertService.addAlert({
-                type: AlertType.DANGER,
-                message: errorMessage,
-                disableTranslation: true,
+    deleteUserImage(): void {
+        this.userSettingsService
+            .removeProfilePicture()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => this.accountService.setImageUrl(undefined),
+                error: (error: HttpErrorResponse) => this.showErrorAlert(error),
             });
-        }
     }
 
-    private onProfilePictureRemoveSuccess() {
-        this.currentUser!.imageUrl = undefined;
-        this.accountService.setImageUrl(undefined);
+    triggerUserImageFileInput(): void {
+        this.fileInput().nativeElement.click();
     }
 
-    private onProfilePictureRemoveError(error: HttpErrorResponse) {
-        const errorMessage = error.error ? error.error.title : error.headers?.get('x-artemisapp-alert');
+    private updateProfilePicture(file: Blob): void {
+        this.userSettingsService
+            .updateProfilePicture(file)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (response: HttpResponse<User>) => {
+                    const user = response.body;
+                    if (user?.imageUrl !== undefined) {
+                        this.imageLoadFailed.set(false);
+                        this.accountService.setImageUrl(user.imageUrl);
+                    }
+                },
+                error: (error: HttpErrorResponse) => this.showErrorAlert(error),
+            });
+    }
+
+    private showErrorAlert(error: HttpErrorResponse): void {
+        const errorMessage = error.error?.title ?? error.headers?.get('x-artemisapp-alert');
         if (errorMessage) {
             this.alertService.addAlert({
                 type: AlertType.DANGER,

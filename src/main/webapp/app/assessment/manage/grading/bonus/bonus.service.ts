@@ -1,0 +1,255 @@
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
+import { Bonus, BonusExample, BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
+import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+
+export type EntityResponseType = HttpResponse<Bonus>;
+
+@Injectable({ providedIn: 'root' })
+export class BonusService {
+    private http = inject(HttpClient);
+    private gradingService = inject(GradingService);
+
+    public resourceUrl = 'api/assessment';
+
+    /**
+     * Deletes the bonus.
+     *
+     * @param courseId the course to which the exam belongs
+     * @param examId the exam for which the bonus will be deleted
+     * @param bonusId the id of the bonus which will be deleted
+     */
+    deleteBonus(courseId: number, examId: number, bonusId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonus/${bonusId}`, { observe: 'response' });
+    }
+
+    /**
+     * Store a new bonus for exam on the server
+     *
+     * @param courseId the course to which the exam belongs
+     * @param examId the exam for which the bonus will be created
+     * @param bonus the bonus to be created
+     */
+    createBonusForExam(courseId: number, examId: number, bonus: Bonus): Observable<EntityResponseType> {
+        return this.http.post<Bonus>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonus`, this.filterBonusForRequest(bonus), { observe: 'response' });
+    }
+
+    /**
+     * Update a bonus on the server
+     *
+     * @param courseId the course to which the exam belongs
+     * @param examId the exam for which the bonus will be updated
+     * @param bonus the bonus to be updated
+     */
+    updateBonus(courseId: number, examId: number, bonus: Bonus): Observable<EntityResponseType> {
+        return this.http.put<Bonus>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonus/${bonus.id}`, this.filterBonusForRequest(bonus), { observe: 'response' });
+    }
+
+    /**
+     * Retrieves the bonus for exam
+     *
+     * @param courseId the course to which the exam belongs
+     * @param examId the exam for which the bonus will be retrieved
+     * @param includeSourceGradeSteps optional, specifies whether the returned result should include the grade steps of sourceGradingScale. By default, they are excluded
+     */
+    findBonusForExam(courseId: number, examId: number, includeSourceGradeSteps?: boolean): Observable<EntityResponseType> {
+        const params = includeSourceGradeSteps != undefined ? new HttpParams().set('includeSourceGradeSteps', includeSourceGradeSteps.toString()) : undefined;
+        return this.http.get<Bonus>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonus`, { observe: 'response', params });
+    }
+
+    /**
+     * Generates calculation examples to give users an idea how the bonus will contribute to the final grade.
+     * The generated values includes max, min grades and some intermediate grade step boundaries.
+     *
+     * @param bonus bonus.sourceGradingScale.gradeSteps are assumed to be sorted
+     * @param bonusTo gradeSteps are assumed to be sorted
+     */
+    generateBonusExamples(bonus: Bonus, bonusTo: GradeStepsDTO): BonusExample[] {
+        if (!bonus.sourceGradingScale) {
+            throw new Error(`Bonus.sourceGradingScale is empty: ${bonus.sourceGradingScale}`);
+        }
+        const bonusExamples = this.generateExampleExamAndBonusPoints(bonusTo, bonus.sourceGradingScale);
+        bonusExamples.forEach((bonusExample) => this.calculateFinalGrade(bonusExample, bonus, bonusTo));
+        return bonusExamples;
+    }
+
+    /**
+     * Creates a filtered bonus to send in the request body to reduce payload size and make tracking the changes easier for
+     * diagnosis purposes by filtering out irrelevant parts.
+     *
+     * @param bonus to be sent to the server
+     */
+    private filterBonusForRequest(bonus: Bonus) {
+        return {
+            ...bonus,
+            sourceGradingScale: bonus.sourceGradingScale ? { id: bonus.sourceGradingScale.id } : undefined,
+            bonusToGradingScale: undefined,
+        };
+    }
+
+    /**
+     * Determines the example input values for BonusExamples (studentPointsOfBonusTo and studentPointsOfBonusSource).
+     * The generated values includes points corresponding to max, min grades and some intermediate grade step boundaries.
+     *
+     * @param bonusTo gradeSteps are assumed to be sorted
+     * @param source gradeSteps are assumed to be sorted
+     */
+    private generateExampleExamAndBonusPoints(bonusTo: GradeStepsDTO, source: GradingScale): BonusExample[] {
+        const examples: BonusExample[] = [];
+        examples.push(new BonusExample(0, undefined));
+
+        let bonusToGradeStepIndex = bonusTo.gradeSteps.findIndex((gs) => gs.isPassingGrade);
+        if (bonusToGradeStepIndex < 0) {
+            throw Error('No passing grade was found for bonusTo grading scale');
+        }
+
+        let sourceGradeStepIndex = source.gradeSteps.length - 1;
+
+        const sourceMaxPoints = this.gradingService.getGradingScaleMaxPoints(source);
+
+        for (let i = 0; i < 3; i++) {
+            const bonusToGradeStep = bonusTo.gradeSteps[bonusToGradeStepIndex];
+            const studentPointsOfBonusTo = this.getIncludedBoundaryPoints(bonusToGradeStep, bonusTo.maxPoints!) ?? this.findMiddlePoint(bonusToGradeStep);
+
+            const sourceGradeStep = source.gradeSteps[sourceGradeStepIndex];
+            const studentPointsOfBonusSource = this.getIncludedBoundaryPoints(sourceGradeStep, sourceMaxPoints) ?? this.findMiddlePoint(sourceGradeStep);
+
+            examples.push(new BonusExample(studentPointsOfBonusTo!, studentPointsOfBonusSource!));
+
+            // Source grade steps descend and bonusTo grade steps ascend to provide somewhat more balanced examples
+            // although this is not a hard rule.
+
+            if (i === 0 && sourceGradeStep.lowerBoundPoints === sourceMaxPoints && !sourceGradeStep.lowerBoundInclusive) {
+                // Edge case on first iteration: The condition above causes the sourceMaxPoints to be included in the
+                // next source grade step so we should skip it to not have examples with duplicate bonus values.
+                sourceGradeStepIndex = this.modulo(sourceGradeStepIndex - 1, source.gradeSteps.length);
+            }
+
+            sourceGradeStepIndex = this.modulo(sourceGradeStepIndex - 1, source.gradeSteps.length);
+            bonusToGradeStepIndex = this.modulo(bonusToGradeStepIndex + 1, bonusTo.gradeSteps.length);
+        }
+
+        bonusToGradeStepIndex = bonusTo.gradeSteps.length - 1;
+        const lastBonusToGradeStep = bonusTo.gradeSteps[bonusToGradeStepIndex];
+        const lastStudentPointsOfBonusTo = this.getIncludedBoundaryPoints(lastBonusToGradeStep, bonusTo.maxPoints!) ?? this.findMiddlePoint(lastBonusToGradeStep);
+
+        let lastSourceGradeStep = source.gradeSteps[sourceGradeStepIndex];
+        if (this.gradingService.getNumericValueForGradeName(lastSourceGradeStep.gradeName) === 0) {
+            // A non-zero bonus serves better as an example.
+            lastSourceGradeStep = source.gradeSteps[source.gradeSteps.length - 1];
+        }
+        const lastStudentPointsOfBonusSource = this.getIncludedBoundaryPoints(lastSourceGradeStep, sourceMaxPoints) ?? this.findMiddlePoint(lastSourceGradeStep);
+
+        examples.push(new BonusExample(lastStudentPointsOfBonusTo!, lastStudentPointsOfBonusSource!));
+
+        return examples;
+    }
+
+    private findMiddlePoint(gradeStep: GradeStep) {
+        return ((gradeStep.lowerBoundPoints ?? 0) + (gradeStep.upperBoundPoints ?? 0)) / 2;
+    }
+
+    /**
+     * Applies bonus from bonus.sourceGradingScale to bonusToGradingScale grade steps with student points from bonusExample.
+     *
+     * @param bonusExample Modified by this method. studentPointsOfBonusSource and studentPointsOfBonusSource fields are read, others are (over)written
+     * @param bonus Contains calculation instructions and source grading scale
+     * @param bonusTo Grading scale that will have its grades improved by bonus
+     */
+    calculateFinalGrade(bonusExample: BonusExample, bonus: Bonus, bonusTo: GradeStepsDTO) {
+        const examGradeStep = this.gradingService.findMatchingGradeStepByPoints(bonusTo.gradeSteps, bonusExample.studentPointsOfBonusTo, bonusTo.maxPoints!);
+        bonusExample.examGrade = examGradeStep?.gradeName;
+
+        if (!examGradeStep?.isPassingGrade || !bonus.sourceGradingScale) {
+            bonusExample.bonusGrade = 0;
+            bonusExample.finalPoints = bonusExample.studentPointsOfBonusTo;
+            bonusExample.finalGrade = bonusExample.examGrade;
+            return;
+        }
+
+        const bonusGradeStep = this.gradingService.findMatchingGradeStepByPoints(
+            bonus.sourceGradingScale.gradeSteps,
+            bonusExample.studentPointsOfBonusSource ?? 0,
+            this.gradingService.getGradingScaleMaxPoints(bonus.sourceGradingScale),
+        );
+        bonusExample.bonusGrade = this.gradingService.getNumericValueForGradeName(bonusGradeStep?.gradeName);
+
+        this.calculateBonusForStrategy(bonusExample, bonus, bonusTo);
+    }
+
+    /**
+     * {@see calculateFinalGrade}. This method contains the calculation logic for each bonus strategy. Does not perform passing grade check.
+     * @param bonusExample Modified by this method. studentPointsOfBonusSource, studentPointsOfBonusSource and bonusGrade fields are read, others are (over)written
+     * @param bonus Contains calculation instructions and source grading scale
+     * @param bonusTo Grading scale that will have its grades improved by bonus
+     */
+    private calculateBonusForStrategy(bonusExample: BonusExample, bonus: Bonus, bonusTo: GradeStepsDTO) {
+        const course = this.gradingService.getGradingScaleCourse(bonus.bonusToGradingScale);
+        switch (bonus.bonusStrategy) {
+            case BonusStrategy.POINTS: {
+                bonusExample.finalPoints = roundValueSpecifiedByCourseSettings(bonusExample.studentPointsOfBonusTo + (bonus.weight ?? 1) * bonusExample.bonusGrade!, course);
+
+                bonusExample.exceedsMax = this.doesBonusExceedMax(bonusExample.finalPoints, bonusTo.maxPoints!, bonus.weight!);
+                if (bonusExample.exceedsMax) {
+                    bonusExample.finalPoints = bonusTo.maxPoints ?? 0;
+                }
+                const finalGradeStep = this.gradingService.findMatchingGradeStepByPoints(bonusTo.gradeSteps, bonusExample.finalPoints, bonusTo.maxPoints!);
+                bonusExample.finalGrade = finalGradeStep?.gradeName;
+                break;
+            }
+            case BonusStrategy.GRADES_CONTINUOUS: {
+                const examGradeNumericValue = this.gradingService.getNumericValueForGradeName(bonusExample.examGrade as string)!;
+                bonusExample.finalGrade = roundValueSpecifiedByCourseSettings(examGradeNumericValue + (bonus.weight ?? 1) * bonusExample.bonusGrade!, course);
+                const maxGrade = this.gradingService.maxGrade(bonusTo.gradeSteps);
+                const maxGradeNumericValue = this.gradingService.getNumericValueForGradeName(maxGrade)!;
+
+                bonusExample.exceedsMax = this.doesBonusExceedMax(bonusExample.finalGrade, maxGradeNumericValue, bonus.weight!);
+                if (bonusExample.exceedsMax) {
+                    bonusExample.finalGrade = maxGrade;
+                }
+                break;
+            }
+            case BonusStrategy.GRADES_DISCRETE: {
+                throw new Error('GRADES_DISCRETE bonus strategy not yet implemented');
+            }
+        }
+    }
+
+    /**
+     * Returns true if valueWithBonus exceeds the maxValue in the direction given by calculationSign.
+     * @param valueWithBonus achieved points or numeric grade with bonus applied
+     * @param maxValue max points or max grade (numeric)
+     * @param calculationSign a negative or positive number to indicate decreasing or increasing direction, respectively
+     */
+    doesBonusExceedMax(valueWithBonus: number, maxValue: number, calculationSign: number) {
+        return (valueWithBonus - maxValue) * calculationSign! > 0;
+    }
+
+    /**
+     * Get the included points
+     * @param gradeStep
+     * @param maxPoints
+     */
+    getIncludedBoundaryPoints(gradeStep: GradeStep, maxPoints: number) {
+        if (gradeStep.lowerBoundInclusive) {
+            return gradeStep.lowerBoundPoints;
+        }
+        if (gradeStep.upperBoundInclusive) {
+            return Math.min(gradeStep.upperBoundPoints!, maxPoints);
+        }
+        return undefined;
+    }
+
+    /**
+     * As opposed to % operator, this method always returns a non-negative number.
+     * @param n as in n mod m
+     * @param m as in n mod m
+     */
+    private modulo(n: number, m: number) {
+        return ((n % m) + m) % m;
+    }
+}

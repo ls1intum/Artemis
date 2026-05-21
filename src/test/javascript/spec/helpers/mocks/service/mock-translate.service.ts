@@ -9,15 +9,15 @@ export const TRANSLATED_STRING = '';
 export class MockTranslateService {
     onLangChangeSubject: Subject<LangChangeEvent> = new Subject();
     onTranslationChangeSubject: Subject<string> = new Subject();
-    onDefaultLangChangeSubject: Subject<string> = new Subject();
+    onFallbackLangChangeSubject: Subject<string> = new Subject();
     isLoadedSubject: BehaviorSubject<boolean> = new BehaviorSubject(true);
 
     onLangChange: Observable<LangChangeEvent> = this.onLangChangeSubject.asObservable();
     onTranslationChange: Observable<string> = this.onTranslationChangeSubject.asObservable();
-    onDefaultLangChange: Observable<string> = this.onDefaultLangChangeSubject.asObservable();
+    onFallbackLangChange: Observable<string> = this.onFallbackLangChangeSubject.asObservable();
     isLoaded: Observable<boolean> = this.isLoadedSubject.asObservable();
 
-    currentLang: string;
+    private currentLang: string;
 
     languages: string[] = ['de'];
 
@@ -28,6 +28,10 @@ export class MockTranslateService {
     use(lang: string): void {
         this.currentLang = lang;
         this.onLangChangeSubject.next({ lang } as LangChangeEvent);
+    }
+
+    getCurrentLang(): string {
+        return this.currentLang;
     }
 
     addLangs(langs: string[]): void {
@@ -50,8 +54,16 @@ export class MockTranslateService {
         return TRANSLATED_STRING + key.toString();
     }
 
-    setDefaultLang(lang: string): void {
-        this.onDefaultLangChangeSubject.next(lang);
+    stream(key: string | string[], interpolateParams?: object): Observable<string> {
+        return of(TRANSLATED_STRING + key.toString());
+    }
+
+    setFallbackLang(lang: string): void {
+        this.onFallbackLangChangeSubject.next(lang);
+    }
+
+    getFallbackLang(): string | null {
+        return 'en';
     }
 }
 

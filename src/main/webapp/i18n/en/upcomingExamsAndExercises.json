@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "upcomingExamsAndExercises": {
+            "upcoming": "Upcoming",
             "upcomingExamsAndExercises": "Upcoming Exams & Exercises",
             "upcomingExercises": "Upcoming Exercises",
             "exercise": "Exercise",
@@ -10,7 +11,9 @@
             "exam": "Exam",
             "startDate": "Start Date",
             "endDate": "End Date",
-            "releaseDate": "Release Date"
+            "releaseDate": "Release Date",
+            "noUpcomingExams": "No upcoming exams in real courses",
+            "noUpcomingExercises": "No upcoming exercises in real courses"
         }
     }
 }

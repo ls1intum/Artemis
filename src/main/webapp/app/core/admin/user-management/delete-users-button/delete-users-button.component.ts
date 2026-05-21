@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, WritableSignal, inject, signal } from '@angular/core';
+import { Component, EventEmitter, inject, output, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { faEraser } from '@fortawesome/free-solid-svg-icons';
 
@@ -20,19 +20,22 @@ import { Subject } from 'rxjs';
     imports: [ButtonComponent],
 })
 export class DeleteUsersButtonComponent {
-    private adminUserService = inject(AdminUserService);
-    private alertService = inject(AlertService);
-    private deleteDialogService = inject(DeleteDialogService);
+    private readonly adminUserService = inject(AdminUserService);
+    private readonly alertService = inject(AlertService);
+    private readonly deleteDialogService = inject(DeleteDialogService);
 
-    @Output() deletionCompleted = new EventEmitter<{ [key: string]: boolean }>();
+    /** Emitted when deletion is completed */
+    readonly deletionCompleted = output<void>();
 
-    users: WritableSignal<string[] | undefined> = signal(undefined);
+    /** List of users to be deleted */
+    readonly users = signal<string[] | undefined>(undefined);
 
-    private dialogErrorSource = new Subject<string>();
-    dialogError = this.dialogErrorSource.asObservable();
+    /** Subject for dialog error messages */
+    private readonly dialogErrorSource = new Subject<string>();
+    readonly dialogError = this.dialogErrorSource.asObservable();
 
-    // Boilerplate code for use in the template
-    faEraser = faEraser;
+    /** Icons */
+    protected readonly faEraser = faEraser;
     protected readonly ButtonType = ButtonType;
 
     /**

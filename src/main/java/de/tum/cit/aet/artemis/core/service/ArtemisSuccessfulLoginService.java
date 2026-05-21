@@ -74,7 +74,7 @@ public class ArtemisSuccessfulLoginService {
         final String defaultPasswordResetLink = artemisServerUrl + "/account/reset/request";
 
         if (isEmptyOrDefaultLink(resetLink)) {
-            log.info("No password reset link configured, using default link {}", defaultPasswordResetLink);
+            log.warn("No password reset link configured, using default link {}", defaultPasswordResetLink);
             return defaultPasswordResetLink;
         }
         else {

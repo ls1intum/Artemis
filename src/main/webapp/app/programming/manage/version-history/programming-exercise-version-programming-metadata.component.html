@@ -1,0 +1,182 @@
+<p-panel styleClass="version-meta-panel">
+    @if (!hasData()) {
+        <p class="metadata-empty-note" jhiTranslate="artemisApp.programmingExercise.versionHistory.snapshot.noProgrammingData"></p>
+    }
+
+    <section class="metadata-section">
+        <h4 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle"></h4>
+        <div class="metadata-list">
+            @for (field of languageFields(); track field.translatedLabel) {
+                <div class="metadata-row">
+                    <span class="metadata-row__label">{{ field.translatedLabel }}</span>
+                    @if (field.isEmpty) {
+                        <span class="metadata-row__value metadata-row__value--empty" jhiTranslate="global.generic.unset"></span>
+                    } @else {
+                        <span class="metadata-row__value">{{ field.displayValue }}</span>
+                    }
+                </div>
+            }
+        </div>
+    </section>
+
+    <p-divider />
+
+    <section class="metadata-section">
+        <h4 jhiTranslate="artemisApp.programmingExercise.repositories"></h4>
+        <div class="metadata-list">
+            @for (field of repositoryFields(); track field.translatedLabel) {
+                <div class="metadata-row">
+                    <span class="metadata-row__label">{{ field.translatedLabel }}</span>
+                    @if (field.isEmpty) {
+                        <span class="metadata-row__value metadata-row__value--empty" jhiTranslate="global.generic.unset"></span>
+                    } @else if (field.kind === 'repository') {
+                        <span class="metadata-row__value metadata-row__value--mono metadata-row__value--actions">
+                            <span class="metadata-commit__actions">
+                                <button
+                                    pButton
+                                    type="button"
+                                    text
+                                    rounded
+                                    size="small"
+                                    class="metadata-commit__button"
+                                    [attr.aria-label]="'global.generic.copy' | artemisTranslate"
+                                    [pTooltip]="'global.generic.copy' | artemisTranslate"
+                                    tooltipPosition="left"
+                                    [cdkCopyToClipboard]="field.repositoryUri ?? ''"
+                                >
+                                    <fa-icon [icon]="faCopy" aria-hidden="true" />
+                                </button>
+                                @if (field.repositoryViewLink; as viewLink) {
+                                    <button
+                                        pButton
+                                        type="button"
+                                        text
+                                        rounded
+                                        size="small"
+                                        class="metadata-commit__button"
+                                        [attr.aria-label]="'entity.action.view' | artemisTranslate"
+                                        [pTooltip]="'entity.action.view' | artemisTranslate"
+                                        tooltipPosition="left"
+                                        [routerLink]="viewLink"
+                                    >
+                                        <fa-icon [icon]="faEye" aria-hidden="true" />
+                                    </button>
+                                }
+                                @if (field.repositoryEditorLink; as editorLink) {
+                                    <button
+                                        pButton
+                                        type="button"
+                                        text
+                                        rounded
+                                        size="small"
+                                        class="metadata-commit__button"
+                                        [attr.aria-label]="'entity.action.edit' | artemisTranslate"
+                                        [pTooltip]="'entity.action.edit' | artemisTranslate"
+                                        tooltipPosition="left"
+                                        [routerLink]="editorLink"
+                                    >
+                                        <fa-icon [icon]="faPenToSquare" aria-hidden="true" />
+                                    </button>
+                                }
+                            </span>
+                        </span>
+                    } @else if (field.kind === 'commit') {
+                        <span class="metadata-row__value metadata-row__value--mono metadata-row__value--commit">
+                            <span class="metadata-commit__hash" [pTooltip]="field.fullCommitHash" tooltipPosition="left">
+                                {{ field.shortCommitHash }}
+                            </span>
+                            <span class="metadata-commit__actions">
+                                <button
+                                    pButton
+                                    type="button"
+                                    text
+                                    rounded
+                                    size="small"
+                                    class="metadata-commit__button"
+                                    [attr.aria-label]="'global.generic.copy' | artemisTranslate"
+                                    [pTooltip]="'global.generic.copy' | artemisTranslate"
+                                    tooltipPosition="left"
+                                    [cdkCopyToClipboard]="field.fullCommitHash ?? ''"
+                                >
+                                    <fa-icon [icon]="faCopy" aria-hidden="true" />
+                                </button>
+                                @if (field.commitLink; as commitLink) {
+                                    <button
+                                        pButton
+                                        type="button"
+                                        text
+                                        rounded
+                                        size="small"
+                                        class="metadata-commit__button"
+                                        [attr.aria-label]="'entity.action.view' | artemisTranslate"
+                                        [pTooltip]="'entity.action.view' | artemisTranslate"
+                                        tooltipPosition="left"
+                                        [routerLink]="commitLink"
+                                    >
+                                        <fa-icon [icon]="faEye" aria-hidden="true" />
+                                    </button>
+                                }
+                            </span>
+                        </span>
+                    } @else {
+                        <span class="metadata-row__value metadata-row__value--mono">{{ field.displayValue }}</span>
+                    }
+                </div>
+            }
+        </div>
+    </section>
+
+    <p-divider />
+
+    <section class="metadata-section">
+        <h4 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle"></h4>
+        <div class="metadata-list">
+            @for (field of gradingFields(); track field.translatedLabel) {
+                <div class="metadata-row">
+                    <span class="metadata-row__label">{{ field.translatedLabel }}</span>
+                    @if (field.isEmpty) {
+                        <span class="metadata-row__value metadata-row__value--empty" jhiTranslate="global.generic.unset"></span>
+                    } @else {
+                        <span class="metadata-row__value">{{ field.displayValue }}</span>
+                    }
+                </div>
+            }
+        </div>
+    </section>
+
+    <p-divider />
+
+    <section class="metadata-section">
+        <h4 jhiTranslate="artemisApp.programmingExercise.buildConfiguration"></h4>
+        <div class="metadata-list">
+            @for (field of buildConfigurationFields(); track field.translatedLabel) {
+                <div class="metadata-row">
+                    <span class="metadata-row__label">{{ field.translatedLabel }}</span>
+                    @if (field.isEmpty) {
+                        <span class="metadata-row__value metadata-row__value--empty" jhiTranslate="global.generic.unset"></span>
+                    } @else {
+                        <span class="metadata-row__value">{{ field.displayValue }}</span>
+                    }
+                </div>
+            }
+        </div>
+
+        <details class="metadata-subsection metadata-subsection--collapsible">
+            <summary class="metadata-subsection__label">{{ buildPlanConfigurationLabel() }}</summary>
+            @if (formattedBuildPlanConfiguration(); as json) {
+                <pre class="json-block">{{ json }}</pre>
+            } @else {
+                <div class="json-block json-block--empty" jhiTranslate="artemisApp.programmingExercise.versionHistory.snapshot.noBuildPlanConfiguration"></div>
+            }
+        </details>
+
+        <div class="metadata-subsection">
+            <span class="metadata-subsection__label" jhiTranslate="artemisApp.programmingExercise.script"></span>
+            @if (buildScript(); as buildScript) {
+                <div class="markdown-block markdown-preview" [innerHTML]="buildScript"></div>
+            } @else {
+                <div class="markdown-block markdown-block--empty" jhiTranslate="artemisApp.programmingExercise.versionHistory.snapshot.noBuildScript"></div>
+            }
+        </div>
+    </section>
+</p-panel>

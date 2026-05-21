@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.domain;
 import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 import static de.tum.cit.aet.artemis.core.config.Constants.COMPLAINT_RESPONSE_TEXT_LIMIT;
 import static de.tum.cit.aet.artemis.core.config.Constants.COMPLAINT_TEXT_LIMIT;
+import static de.tum.cit.aet.artemis.core.config.Constants.COURSE_SHORT_NAME_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHORT_NAME_PATTERN;
 
 import java.time.ZonedDateTime;
@@ -26,12 +27,11 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
 import org.hibernate.Hibernate;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
@@ -50,7 +50,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
  */
 @Entity
 @Table(name = "course")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Course extends DomainObject {
 
@@ -119,6 +118,7 @@ public class Course extends DomainObject {
     @Column(name = "info_sharing_config", nullable = false)
     private CourseInformationSharingConfiguration courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING; // default value
 
+    // TODO: move this into a separate entity to avoid it is loaded whenever the course is loaded
     @Column(name = "info_sharing_messaging_code_of_conduct")
     private String courseInformationSharingMessagingCodeOfConduct;
 
@@ -155,8 +155,8 @@ public class Course extends DomainObject {
     @Column(name = "unenrollment_enabled")
     private boolean unenrollmentEnabled = false;
 
-    @Column(name = "faq_enabled")
-    private boolean faqEnabled = false;
+    @Column(name = "onboarding_done", nullable = false)
+    private boolean onboardingDone = false;
 
     @Column(name = "presentation_score")
     private Integer presentationScore;
@@ -179,8 +179,9 @@ public class Course extends DomainObject {
     @Column(name = "time_zone")
     private String timeZone;
 
+    // No @Cache: instructors create / archive / edit exercises while every student's course-overview read hits this; NONSTRICT caused the dashboard to "forget"
+    // exercises on other nodes for a short window, same class of bug as #12574.
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
     private Set<Exercise> exercises = new HashSet<>();
 
@@ -208,15 +209,14 @@ public class Course extends DomainObject {
     @OrderBy("title")
     private Set<TutorialGroup> tutorialGroups = new HashSet<>();
 
+    // No @Cache: exams are created / edited / archived by instructors while students see the course overview, same class of bug as #12574.
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
     private Set<Exam> exams = new HashSet<>();
 
     @ManyToMany
     @JoinTable(name = "course_organization", joinColumns = { @JoinColumn(name = "course_id", referencedColumnName = "id") }, inverseJoinColumns = {
             @JoinColumn(name = "organization_id", referencedColumnName = "id") })
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
     private Set<Organization> organizations = new HashSet<>();
 
@@ -253,6 +253,9 @@ public class Course extends DomainObject {
     private Long numberOfPrerequisitesTransient;
 
     @Transient
+    private Long numberOfAcceptedFaqsTransient;
+
+    @Transient
     private boolean trainingEnabledTransient;
 
     public boolean isTrainingEnabled() {
@@ -277,6 +280,14 @@ public class Course extends DomainObject {
 
     public void setNumberOfTutorialGroups(Long numberOfTutorialGroups) {
         this.numberOfTutorialGroupsTransient = numberOfTutorialGroups;
+    }
+
+    public Long getNumberOfAcceptedFaqs() {
+        return numberOfAcceptedFaqsTransient;
+    }
+
+    public void setNumberOfAcceptedFaqs(Long numberOfAcceptedFaqs) {
+        this.numberOfAcceptedFaqsTransient = numberOfAcceptedFaqs;
     }
 
     public void setNumberOfCompetencies(Long numberOfCompetencies) {
@@ -578,12 +589,18 @@ public class Course extends DomainObject {
         this.enrollmentEnabled = enrollmentEnabled;
     }
 
-    public boolean isFaqEnabled() {
-        return faqEnabled;
+    public boolean isOnboardingDone() {
+        return onboardingDone;
     }
 
-    public void setFaqEnabled(boolean faqEnabled) {
-        this.faqEnabled = faqEnabled;
+    public void setOnboardingDone(boolean onboardingDone) {
+        this.onboardingDone = onboardingDone;
+    }
+
+    // TODO: Remove this method once the mobile iOS app no longer reads faqEnabled and all users have updated to the latest app version.
+    @JsonProperty("faqEnabled")
+    public boolean isFaqEnabled() {
+        return true;
     }
 
     public String getEnrollmentConfirmationMessage() {
@@ -676,7 +693,7 @@ public class Course extends DomainObject {
                 + "'" + ", enrollmentStartDate='" + getEnrollmentStartDate() + "'" + ", enrollmentEndDate='" + getEnrollmentEndDate() + "'" + ", unenrollmentEndDate='"
                 + getUnenrollmentEndDate() + "'" + ", semester='" + getSemester() + "'" + "'" + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'"
                 + ", courseIcon='" + getCourseIcon() + "'" + ", enrollmentEnabled='" + isEnrollmentEnabled() + "'" + ", unenrollmentEnabled='" + isUnenrollmentEnabled() + "'"
-                + ", presentationScore='" + getPresentationScore() + "'" + ", faqEnabled='" + isFaqEnabled() + "'" + "}";
+                + ", presentationScore='" + getPresentationScore() + "'" + "}";
     }
 
     public void setNumberOfInstructors(Long numberOfInstructors) {
@@ -818,13 +835,20 @@ public class Course extends DomainObject {
     }
 
     /**
-     * Validates that the short name of the course follows SHORT_NAME_PATTERN
+     * Validates that the short name of the course follows SHORT_NAME_PATTERN and (for new courses) does not exceed
+     * {@link de.tum.cit.aet.artemis.core.config.Constants#COURSE_SHORT_NAME_MAX_LENGTH}.
+     * Course short names are immutable after creation, but the update path re-runs this validator with the persisted
+     * value — so the max-length check is gated on a missing id to avoid breaking edits of legacy courses whose
+     * shortName predates the limit.
      */
     public void validateShortName() {
         // Check if the course shortname matches regex
         Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(getShortName());
         if (!shortNameMatcher.matches()) {
             throw new BadRequestAlertException("The shortname is invalid", ENTITY_NAME, "shortnameInvalid", true);
+        }
+        if (getId() == null && getShortName().length() > COURSE_SHORT_NAME_MAX_LENGTH) {
+            throw new BadRequestAlertException("The shortname must not exceed " + COURSE_SHORT_NAME_MAX_LENGTH + " characters", ENTITY_NAME, "shortnameTooLong", true);
         }
     }
 

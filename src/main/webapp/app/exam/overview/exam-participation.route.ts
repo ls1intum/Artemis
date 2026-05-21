@@ -6,7 +6,7 @@ import { IS_AT_LEAST_STUDENT } from 'app/shared/constants/authority.constants';
 export const examParticipationRoute: Routes = [
     {
         path: 'overview/grading-key',
-        loadComponent: () => import('app/assessment/manage/grading-system/grading-key-overview/grading-key-overview.component').then((m) => m.GradingKeyOverviewComponent),
+        loadComponent: () => import('app/assessment/manage/grading/grading-key-overview/grading-key-overview.component').then((m) => m.GradingKeyOverviewComponent),
         data: {
             authorities: IS_AT_LEAST_STUDENT,
             pageTitle: 'artemisApp.exam.title',
@@ -15,7 +15,7 @@ export const examParticipationRoute: Routes = [
     },
     {
         path: 'overview/bonus-grading-key',
-        loadComponent: () => import('app/assessment/manage/grading-system/grading-key-overview/grading-key-overview.component').then((m) => m.GradingKeyOverviewComponent),
+        loadComponent: () => import('app/assessment/manage/grading/grading-key-overview/grading-key-overview.component').then((m) => m.GradingKeyOverviewComponent),
         data: {
             authorities: IS_AT_LEAST_STUDENT,
             pageTitle: 'artemisApp.exam.title',

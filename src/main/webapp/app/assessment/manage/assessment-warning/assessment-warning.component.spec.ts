@@ -1,16 +1,28 @@
+import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import dayjs from 'dayjs/esm';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { MockDirective, MockProvider } from 'ng-mocks';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('AssessmentWarningComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: AssessmentWarningComponent;
     let fixture: ComponentFixture<AssessmentWarningComponent>;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({})
+        TestBed.configureTestingModule({
+            providers: [MockProvider(TranslateService)],
+        })
+            .overrideComponent(AssessmentWarningComponent, {
+                remove: { imports: [TranslateDirective] },
+                add: { imports: [MockDirective(TranslateDirective)] },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(AssessmentWarningComponent);
@@ -18,27 +30,27 @@ describe('AssessmentWarningComponent', () => {
             });
     });
 
-    it('should not be before exercise due date if the exercise has no due date', () => {
+    it('should not be before exercise due date if the exercise has no due date', async () => {
         fixture.componentRef.setInput('exercise', new ProgrammingExercise(undefined, undefined));
 
-        component.ngOnChanges();
+        await fixture.whenStable();
 
-        expect(component.isBeforeExerciseDueDate).toBeFalse();
-        expect(component.showWarning).toBeFalse();
+        expect(component.isBeforeExerciseDueDate).toBe(false);
+        expect(component.showWarning).toBe(false);
     });
 
-    it('should be before the exercise due date if the exercise due date is in the future', () => {
+    it('should be before the exercise due date if the exercise due date is in the future', async () => {
         const exercise = new ProgrammingExercise(undefined, undefined);
         exercise.dueDate = dayjs().add(2, 'hours');
         fixture.componentRef.setInput('exercise', exercise);
 
-        component.ngOnChanges();
+        await fixture.whenStable();
 
-        expect(component.isBeforeExerciseDueDate).toBeTrue();
-        expect(component.showWarning).toBeTrue();
+        expect(component.isBeforeExerciseDueDate).toBe(true);
+        expect(component.showWarning).toBe(true);
     });
 
-    it('should be before the latest due date if the exercise due date is in the past but individual due dates in the future', () => {
+    it('should be before the latest due date if the exercise due date is in the past but individual due dates in the future', async () => {
         const exercise = new ProgrammingExercise(undefined, undefined);
         exercise.dueDate = dayjs().subtract(2, 'hours');
 
@@ -62,9 +74,9 @@ describe('AssessmentWarningComponent', () => {
 
         fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('submissions', [submission2, submission4, submission3, submission1]);
-        component.ngOnChanges();
+        await fixture.whenStable();
 
-        expect(component.isBeforeExerciseDueDate).toBeFalse();
-        expect(component.showWarning).toBeTrue();
+        expect(component.isBeforeExerciseDueDate).toBe(false);
+        expect(component.showWarning).toBe(true);
     });
 });

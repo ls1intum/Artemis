@@ -37,17 +37,7 @@
                                 <span jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle"></span>
                             </a>
                         }
-                        @if (irisEnabled && programmingExercise.isAtLeastInstructor && programmingExercise.course && !isExamExercise) {
-                            <a
-                                [routerLink]="['/course-management', programmingExercise.course.id!, 'programming-exercises', programmingExercise.id, 'iris-settings']"
-                                ngbTooltip="{{ 'artemisApp.iris.settings.button.programmingExercise.tooltip' | artemisTranslate }}"
-                                class="btn btn-warning btn-sm"
-                            >
-                                <fa-icon [icon]="faRobot" />
-                                <span jhiTranslate="artemisApp.iris.settings.button.programmingExercise.title"></span>
-                            </a>
-                        }
-                        @if (programmingExercise.isAtLeastTutor) {
+                        @if (canAccessParticipationsAndScores) {
                             <a [routerLink]="[baseResource, 'participations']" class="btn btn-primary btn-sm">
                                 <fa-icon [icon]="faListAlt" />
                                 <span jhiTranslate="artemisApp.exercise.participations"></span>
@@ -73,8 +63,14 @@
                                 </a>
                             </jhi-feature-overlay>
                         }
-                        @if (programmingExercise.isAtLeastTutor) {
-                            <a [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm">
+                        @if (programmingExercise.isAtLeastEditor) {
+                            <a [routerLink]="[baseResource, 'version-history']" class="btn btn-info btn-sm">
+                                <fa-icon [icon]="faHistory" />
+                                <span jhiTranslate="artemisApp.exercise.versionHistory.title"></span>
+                            </a>
+                        }
+                        @if (canAccessParticipationsAndScores) {
+                            <a [routerLink]="[baseResource, 'scores']" class="btn btn-info btn-sm">
                                 <fa-icon [icon]="faTable" />
                                 <span jhiTranslate="entity.action.scores"></span>
                             </a>
@@ -119,6 +115,20 @@
                                 <fa-icon [icon]="faCheckDouble" />
                                 <span jhiTranslate="artemisApp.consistencyCheck.button"></span>
                             </button>
+                            @if (atlasModuleActive && programmingExercise.isAtLeastInstructor && !isExamExercise) {
+                                <button
+                                    type="button"
+                                    [jhiFeatureToggleHide]="FeatureToggle.AtlasAgent"
+                                    (click)="triggerAtlasOrchestrator()"
+                                    [disabled]="orchestrationRunning()"
+                                    pTooltip="{{ 'artemisApp.atlasOrchestrator.tooltip' | artemisTranslate }}"
+                                    class="btn btn-outline-primary btn-sm me-1 mb-2"
+                                >
+                                    <fa-icon [icon]="faWandMagicSparkles" />
+                                    <span jhiTranslate="artemisApp.programmingExercise.atlasOrchestrator.button"></span>
+                                </button>
+                                <jhi-orchestration-result-dialog [(visible)]="orchestrationDialogVisible" [summary]="orchestrationDialogSummary()" />
+                            }
                             <button
                                 [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                                 jhiProgrammingExerciseResetButton
@@ -133,7 +143,15 @@
                             <button
                                 jhiDeleteButton
                                 [entityTitle]="programmingExercise.title || ''"
+                                entitySummaryTitle="artemisApp.exercise.delete.summary.title"
+                                [fetchEntitySummary]="fetchExerciseDeletionSummary()"
                                 deleteQuestion="artemisApp.programmingExercise.delete.questionLocalVC.single"
+                                [translateValues]="{
+                                    courseTitle: programmingExercise.course!.title,
+                                    courseType: programmingExercise.course!.testCourse
+                                        ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
+                                        : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
+                                }"
                                 (delete)="deleteProgrammingExercise($event)"
                                 [dialogError]="dialogError$"
                                 [additionalChecks]="

@@ -1,6 +1,7 @@
 import { Page } from 'playwright';
 import dayjs from 'dayjs';
 import { BASE_API } from '../../constants';
+import { setMonacoEditorContentByLocator } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the Lecture Creation Page.
@@ -35,9 +36,9 @@ export class LectureCreationPage {
      * @param description - The description text for the lecture.
      */
     async typeDescription(description: string) {
-        const descriptionField = this.page.locator('.monaco-editor');
-        await descriptionField.click();
-        await descriptionField.pressSequentially(description);
+        // Use the specific container for the description Monaco editor
+        const descriptionField = this.page.locator('#field_description');
+        await setMonacoEditorContentByLocator(this.page, descriptionField, description);
     }
 
     /**

@@ -1,67 +1,121 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+/**
+ * Vitest tests for ConfigurationComponent.
+ */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
+
 import { ConfigurationComponent } from 'app/core/admin/configuration/configuration.component';
 import { ConfigurationService } from 'app/core/admin/configuration/configuration.service';
 import { Bean, PropertySource } from 'app/core/admin/configuration/configuration.model';
-import { provideHttpClient } from '@angular/common/http';
 
-describe('Component Tests', () => {
-    describe('ConfigurationComponent', () => {
-        let comp: ConfigurationComponent;
-        let fixture: ComponentFixture<ConfigurationComponent>;
-        let service: ConfigurationService;
+describe('ConfigurationComponent', () => {
+    setupTestBed({ zoneless: true });
 
-        beforeEach(waitForAsync(() => {
-            TestBed.configureTestingModule({
-                providers: [provideHttpClient(), provideHttpClientTesting(), ConfigurationService],
-            })
-                .overrideTemplate(ConfigurationComponent, '')
-                .compileComponents();
-        }));
+    let comp: ConfigurationComponent;
+    let fixture: ComponentFixture<ConfigurationComponent>;
+    let service: ConfigurationService;
 
-        beforeEach(() => {
-            fixture = TestBed.createComponent(ConfigurationComponent);
-            comp = fixture.componentInstance;
-            service = TestBed.inject(ConfigurationService);
-        });
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ConfigurationComponent],
+            providers: [provideHttpClient(), provideHttpClientTesting(), ConfigurationService],
+        })
+            .overrideTemplate(ConfigurationComponent, '')
+            .compileComponents();
 
-        describe('onInit', () => {
-            it('should call load all on init', () => {
-                // GIVEN
-                const beans: Bean[] = [
-                    {
-                        prefix: 'jhipster',
-                        properties: {
-                            clientApp: {
-                                name: 'jhipsterApp',
-                            },
-                        },
+        fixture = TestBed.createComponent(ConfigurationComponent);
+        comp = fixture.componentInstance;
+        service = TestBed.inject(ConfigurationService);
+    });
+
+    it('should load beans and property sources on init', () => {
+        const beans: Bean[] = [
+            {
+                prefix: 'jhipster',
+                properties: {
+                    clientApp: {
+                        name: 'jhipsterApp',
                     },
-                ];
-                const propertySources: PropertySource[] = [
-                    {
-                        name: 'server.ports',
-                        properties: {
-                            'local.server.port': {
-                                value: '8080',
-                            },
-                        },
+                },
+            },
+        ];
+        const propertySources: PropertySource[] = [
+            {
+                name: 'server.ports',
+                properties: {
+                    'local.server.port': {
+                        value: '8080',
                     },
-                ];
-                jest.spyOn(service, 'getBeans').mockReturnValue(of(beans));
-                jest.spyOn(service, 'getPropertySources').mockReturnValue(of(propertySources));
+                },
+            },
+        ];
+        vi.spyOn(service, 'getBeans').mockReturnValue(of(beans));
+        vi.spyOn(service, 'getPropertySources').mockReturnValue(of(propertySources));
 
-                // WHEN
-                comp.ngOnInit();
+        comp.ngOnInit();
 
-                // THEN
-                expect(service.getBeans).toHaveBeenCalledOnce();
-                expect(service.getPropertySources).toHaveBeenCalledOnce();
-                expect(comp.allBeans).toEqual(beans);
-                expect(comp.beans).toEqual(beans);
-                expect(comp.propertySources).toEqual(propertySources);
-            });
-        });
+        expect(service.getBeans).toHaveBeenCalledOnce();
+        expect(service.getPropertySources).toHaveBeenCalledOnce();
+        // beans() returns the filtered/sorted signal value
+        expect(comp.beans()).toEqual(beans);
+        expect(comp.propertySources()).toEqual(propertySources);
+    });
+
+    it('should filter beans by prefix', () => {
+        const allBeans: Bean[] = [
+            { prefix: 'jhipster', properties: {} },
+            { prefix: 'spring', properties: {} },
+            { prefix: 'jhipster-test', properties: {} },
+        ];
+        // Mock the service and initialize to load beans
+        vi.spyOn(service, 'getBeans').mockReturnValue(of(allBeans));
+        vi.spyOn(service, 'getPropertySources').mockReturnValue(of([]));
+        comp.ngOnInit();
+
+        // Now apply filter - computed signal updates automatically
+        comp.beansFilter.set('jhipster');
+
+        expect(comp.beans()).toHaveLength(2);
+        expect(comp.beans().every((b) => b.prefix.includes('jhipster'))).toBe(true);
+    });
+
+    it('should sort beans in ascending order by default', () => {
+        const allBeans: Bean[] = [
+            { prefix: 'spring', properties: {} },
+            { prefix: 'artemis', properties: {} },
+            { prefix: 'jhipster', properties: {} },
+        ];
+        vi.spyOn(service, 'getBeans').mockReturnValue(of(allBeans));
+        vi.spyOn(service, 'getPropertySources').mockReturnValue(of([]));
+        comp.ngOnInit();
+
+        // Computed signal updates automatically when beansAscending changes
+        comp.beansAscending.set(true);
+
+        expect(comp.beans()[0].prefix).toBe('artemis');
+        expect(comp.beans()[1].prefix).toBe('jhipster');
+        expect(comp.beans()[2].prefix).toBe('spring');
+    });
+
+    it('should sort beans in descending order when beansAscending is false', () => {
+        const allBeans: Bean[] = [
+            { prefix: 'spring', properties: {} },
+            { prefix: 'artemis', properties: {} },
+            { prefix: 'jhipster', properties: {} },
+        ];
+        vi.spyOn(service, 'getBeans').mockReturnValue(of(allBeans));
+        vi.spyOn(service, 'getPropertySources').mockReturnValue(of([]));
+        comp.ngOnInit();
+
+        // Computed signal updates automatically when beansAscending changes
+        comp.beansAscending.set(false);
+
+        expect(comp.beans()[0].prefix).toBe('spring');
+        expect(comp.beans()[1].prefix).toBe('jhipster');
+        expect(comp.beans()[2].prefix).toBe('artemis');
     });
 });

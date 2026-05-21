@@ -1,25 +1,26 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import org.hibernate.NonUniqueResultException;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 
 /**
  * Spring Data JPA repository for the Lecture Unit entity.
  */
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Lazy
 @Repository
 public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit, Long> {
@@ -82,6 +83,20 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
             """)
     Optional<LectureUnit> findByNameAndLectureTitleAndCourseIdWithCompetencies(@Param("name") String name, @Param("lectureTitle") String lectureTitle,
             @Param("courseId") long courseId) throws NonUniqueResultException;
+
+    /**
+     * Loads all lecture units for the given IDs together with their parent lecture in a single query.
+     *
+     * @param ids the IDs of the lecture units to load
+     * @return the lecture units with their lectures eagerly fetched; units whose ID is not found are simply absent from the result
+     */
+    @Query("""
+            SELECT lu
+            FROM LectureUnit lu
+                JOIN FETCH lu.lecture
+            WHERE lu.id IN :ids
+            """)
+    List<LectureUnit> findAllByIdsWithLecture(@Param("ids") Collection<Long> ids);
 
     default LectureUnit findByIdWithCompletedUsersElseThrow(long lectureUnitId) {
         return getValueElseThrow(findByIdWithCompletedUsers(lectureUnitId), lectureUnitId);

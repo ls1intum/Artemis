@@ -1,0 +1,180 @@
+.sortable {
+    cursor: pointer;
+    user-select: none;
+
+    &:hover {
+        background-color: var(--bs-table-hover-bg);
+    }
+}
+
+.card {
+    background-color: var(--card-bg);
+    border-color: var(--card-border-color);
+    transition: box-shadow 0.2s ease-in-out;
+
+    &:hover {
+        box-shadow: 0 0.5rem 1rem rgb(0 0 0 / 15%);
+    }
+
+    .card-body {
+        background-color: var(--card-bg);
+    }
+
+    .card-title {
+        color: var(--bs-body-color);
+    }
+
+    .card-text {
+        color: var(--bs-secondary-color);
+    }
+}
+
+// Explanation alert box - needs dark mode override for alert-light
+.alert.alert-light {
+    background-color: var(--card-bg);
+    border-color: var(--card-border-color);
+    color: var(--bs-body-color);
+
+    .alert-heading {
+        color: var(--bs-body-color);
+    }
+
+    p {
+        color: var(--bs-body-color);
+
+        &.text-muted {
+            color: var(--bs-secondary-color) !important;
+        }
+    }
+
+    hr {
+        border-color: var(--card-border-color);
+        opacity: 0.5;
+    }
+}
+
+// Table styling for dark mode
+.table {
+    --bs-table-bg: transparent;
+    color: var(--bs-body-color);
+
+    thead.table-light {
+        --bs-table-bg: var(--brighter-body-bg);
+        --bs-table-color: var(--bs-body-color);
+        color: var(--bs-body-color);
+
+        th {
+            background-color: var(--brighter-body-bg);
+            color: var(--bs-body-color);
+            border-color: var(--bs-border-color);
+        }
+    }
+
+    tbody {
+        tr {
+            color: var(--bs-body-color);
+            border-color: var(--bs-border-color);
+
+            td {
+                color: var(--bs-body-color);
+                border-color: var(--bs-border-color);
+
+                strong {
+                    color: var(--bs-body-color);
+                }
+
+                small.text-muted {
+                    color: var(--bs-secondary-color) !important;
+                }
+            }
+
+            // Vulnerable row highlighting in dark mode
+            &.table-danger {
+                --bs-table-bg: var(--artemis-alert-danger-background);
+                --bs-table-color: var(--artemis-alert-danger-color);
+                background-color: var(--artemis-alert-danger-background);
+            }
+        }
+    }
+}
+
+// Badge readability in dark mode
+.badge {
+    &.bg-info {
+        color: var(--bs-white);
+    }
+
+    &.bg-secondary {
+        background-color: var(--bs-secondary) !important;
+        color: var(--bs-white);
+    }
+
+    &.bg-success {
+        color: var(--bs-white);
+    }
+
+    &.bg-warning {
+        color: var(--bs-dark) !important;
+    }
+
+    &.bg-danger {
+        color: var(--bs-white);
+    }
+
+    &.bg-primary {
+        color: var(--bs-white);
+    }
+}
+
+// Input group styling for dark mode
+.input-group {
+    .input-group-text {
+        background-color: var(--input-group-addon-bg);
+        border-color: var(--bs-border-color);
+        color: var(--bs-body-color);
+    }
+
+    .form-control {
+        background-color: var(--form-control-focus-background);
+        border-color: var(--bs-border-color);
+        color: var(--bs-body-color);
+
+        &::placeholder {
+            color: var(--bs-secondary-color);
+        }
+    }
+}
+
+// Button group styling
+.btn-group {
+    .btn-outline-primary {
+        color: var(--bs-primary);
+        border-color: var(--bs-primary);
+
+        &:hover,
+        &.active {
+            color: var(--bs-white);
+        }
+    }
+}
+
+// Upgrade banner alerts
+.alert {
+    &.alert-danger {
+        background-color: var(--artemis-alert-danger-background);
+        border-color: var(--artemis-alert-danger-border);
+        color: var(--artemis-alert-danger-color);
+    }
+
+    &.alert-warning {
+        background-color: var(--artemis-alert-warning-background);
+        border-color: var(--artemis-alert-warning-border);
+        color: var(--artemis-alert-warning-color);
+    }
+
+    &.alert-info {
+        background-color: var(--artemis-alert-info-background);
+        border-color: var(--artemis-alert-info-border);
+        color: var(--artemis-alert-info-color);
+    }
+}

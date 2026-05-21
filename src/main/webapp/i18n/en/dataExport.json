@@ -1,7 +1,40 @@
 {
     "artemisApp": {
         "dataExport": {
-            "title": "Data export",
+            "title": "Data Export",
+            "admin": {
+                "title": "Data Exports",
+                "createExport": "Create Export",
+                "user": "User",
+                "userLogin": "Login",
+                "createdDate": "Requested",
+                "creationFinishedDate": "Completed",
+                "status": "Status",
+                "noExports": "No data exports found.",
+                "notDownloadable": "This export is not available for download.",
+                "schedule": "Schedule",
+                "scheduleDescription": "The export will be processed during the next scheduled run (typically at 4 AM).",
+                "executeNow": "Execute Now",
+                "executeNowDescription": "The export will be created immediately. This may take a while for users with large amounts of data.",
+                "createSuccessScheduled": "Data export for {{ login }} has been scheduled.",
+                "createSuccessImmediate": "Data export for {{ login }} has been created.",
+                "createError": "Failed to create data export for {{ login }}.",
+                "loadError": "Failed to load data exports.",
+                "cancel": "Cancel",
+                "cancelSuccess": "Data export for {{ login }} has been cancelled.",
+                "cancelError": "Failed to cancel data export for {{ login }}.",
+                "cancelConfirmation": "Are you sure you want to cancel this data export request?",
+                "state": {
+                    "REQUESTED": "Requested",
+                    "IN_CREATION": "In Progress",
+                    "EMAIL_SENT": "Ready",
+                    "DOWNLOADED": "Downloaded",
+                    "FAILED": "Failed",
+                    "EMAIL_FAILED": "Email Failed",
+                    "DELETED": "Deleted",
+                    "DOWNLOADED_DELETED": "Deleted"
+                }
+            },
             "titleDownload": "Download data export",
             "description": "Here you can request a data export in accordance with Art. 15 GDPR Right of Access. Once the export has been created, you will receive an email. In the following seven days you can download the export. Afterward, it will be deleted.",
             "descriptionDownload": "Here you can download your requested data export.",

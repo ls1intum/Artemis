@@ -9,6 +9,8 @@ import org.springframework.stereotype.Controller;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 
@@ -19,10 +21,14 @@ public class TutorialGroupApi extends AbstractTutorialGroupApi {
 
     private final TutorialGroupRepository tutorialGroupRepository;
 
+    private final TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
+
     private final TutorialGroupService tutorialGroupService;
 
-    public TutorialGroupApi(TutorialGroupRepository tutorialGroupRepository, TutorialGroupService tutorialGroupService) {
+    public TutorialGroupApi(TutorialGroupRepository tutorialGroupRepository, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
+            TutorialGroupService tutorialGroupService) {
         this.tutorialGroupRepository = tutorialGroupRepository;
+        this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
         this.tutorialGroupService = tutorialGroupService;
     }
 
@@ -35,10 +41,42 @@ public class TutorialGroupApi extends AbstractTutorialGroupApi {
     }
 
     public void deleteById(Long id) {
-        tutorialGroupRepository.deleteById(id);
+        // We must first fetch the entity with its sessions to ensure JPA cascade works correctly.
+        // Using deleteById directly may not trigger cascades if the entity's collections aren't loaded.
+        tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(id).ifPresent(tutorialGroupRepository::delete);
     }
 
     public Set<CalendarEventDTO> getCalendarEventDTOsFromTutorialsGroups(long userId, Long courseId) {
         return tutorialGroupService.getCalendarEventDTOsFromTutorialsGroups(userId, courseId);
+    }
+
+    /**
+     * Deletes all tutorial group registrations for a given course.
+     * This removes student registrations while preserving tutorial group definitions.
+     *
+     * @param courseId the ID of the course
+     */
+    public void deleteAllRegistrationsByCourseId(long courseId) {
+        tutorialGroupRegistrationRepository.deleteAllByTutorialGroupCourseId(courseId);
+    }
+
+    /**
+     * Finds all tutorial group registrations for a given course.
+     *
+     * @param courseId the ID of the course
+     * @return set of all registrations in the course
+     */
+    public Set<TutorialGroupRegistration> findAllRegistrationsByCourseId(long courseId) {
+        return tutorialGroupRegistrationRepository.findAllByTutorialGroupCourseId(courseId);
+    }
+
+    /**
+     * Counts the number of tutorial group registrations for a given course.
+     *
+     * @param courseId the ID of the course
+     * @return the number of registrations
+     */
+    public long countRegistrationsByCourseId(long courseId) {
+        return tutorialGroupRegistrationRepository.findAllByTutorialGroupCourseId(courseId).size();
     }
 }

@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { UserManagementDropdownComponent } from './user-management-dropdown.component';
 import { faGraduationCap, faListAlt, faPersonChalkboard, faSchool } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -10,6 +12,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 
 describe('UserManagementDropdownComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: UserManagementDropdownComponent;
     let fixture: ComponentFixture<UserManagementDropdownComponent>;
 
@@ -27,14 +31,18 @@ describe('UserManagementDropdownComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should create the component', () => {
         expect(component).toBeTruthy();
     });
 
     it('should initialize userAddActions with correct links and translations when courseId is provided', () => {
         fixture.componentRef.setInput('courseId', 123);
-        fixture.detectChanges();
-        expect(component.userAddActions).toEqual([
+        fixture.changeDetectorRef.detectChanges();
+        expect(component.userAddActions()).toEqual([
             {
                 icon: faSchool,
                 routerLink: ['/course-management/123/groups/students'],
@@ -64,7 +72,7 @@ describe('UserManagementDropdownComponent', () => {
 
     it('should not initialize userAddActions when courseId is undefined', () => {
         fixture.componentRef.setInput('courseId', undefined);
-        fixture.detectChanges();
-        expect(component.userAddActions).toEqual([]);
+        fixture.changeDetectorRef.detectChanges();
+        expect(component.userAddActions()).toEqual([]);
     });
 });

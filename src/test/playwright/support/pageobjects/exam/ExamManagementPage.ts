@@ -1,5 +1,7 @@
 import { Page, expect } from '@playwright/test';
 import { Dayjs } from 'dayjs';
+import { EXAM_DASHBOARD_TIMEOUT } from '../../timeouts';
+import { setMonacoEditorContentByLocator } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam management page.
@@ -56,23 +58,14 @@ export class ExamManagementPage {
     }
 
     /**
-     * Opens the student exams page.
-     */
-    async openStudentExams(examId: number) {
-        await this.page.locator(`#student-exams-${examId}`).click();
-    }
-
-    /**
      * Opens the exam assessment dashboard
      * @param courseID the id of the course
      * @param examID the id of the exam
      * @param timeout timeout of waiting for assessment dashboard button
      */
-    async openAssessmentDashboard(courseID: number, examID: number, timeout = 60000) {
-        await this.page.goto(`/course-management/${courseID}/exams`);
-        const assessmentButton = this.page.locator(`#exercises-button-${examID}`);
-        await assessmentButton.waitFor({ state: 'attached', timeout: timeout });
-        await assessmentButton.click();
+    async openAssessmentDashboard(courseID: number, examID: number, timeout = EXAM_DASHBOARD_TIMEOUT) {
+        await this.page.goto(`/course-management/${courseID}/exams/${examID}/assessment-dashboard`);
+        await this.page.waitForLoadState('domcontentloaded');
     }
 
     /**
@@ -97,14 +90,19 @@ export class ExamManagementPage {
     }
 
     async verifySubmitted(courseID: number, examID: number, username: string) {
-        await this.page.goto(`/course-management/${courseID}/exams/${examID}/student-exams`);
-        await this.page.locator('#student-exam').waitFor({ state: 'visible' });
-        await expect(this.page.locator('#student-exam .datatable-body-row', { hasText: username }).locator('.submitted')).toHaveText('Yes');
+        await this.page.goto(`/course-management/${courseID}/exams/${examID}/students`);
+        await this.page.waitForLoadState('domcontentloaded');
+        const row = this.page.locator('tbody tr', { hasText: username }).first();
+        await row.waitFor({ state: 'visible' });
+        await expect(row).toContainText('Submitted');
     }
 
     async checkQuizSubmission(courseID: number, examID: number, username: string, score: string) {
-        await this.page.goto(`/course-management/${courseID}/exams/${examID}/student-exams`);
-        await this.page.locator('#student-exam .datatable-body-row', { hasText: username }).locator('.view-submission').click();
+        await this.page.goto(`/course-management/${courseID}/exams/${examID}/students`);
+        await this.page.waitForLoadState('domcontentloaded');
+        const row = this.page.locator('tbody tr', { hasText: username }).first();
+        await row.waitFor({ state: 'visible' });
+        await row.getByRole('link', { name: 'View exam' }).click();
         await this.page.locator('.summery').click();
         await expect(this.page.locator('#exercise-result-score')).toHaveText(score, { useInnerText: true });
     }
@@ -114,11 +112,13 @@ export class ExamManagementPage {
     }
 
     async typeAnnouncementMessage(message: string) {
-        await this.page.locator('.monaco-editor textarea').fill(message);
+        // Match either the legacy NgbModal (.modal-content) or the migrated PrimeNG dialog (.p-dialog-content).
+        const modalContent = this.page.locator('.p-dialog-content, .modal-content').first();
+        await setMonacoEditorContentByLocator(this.page, modalContent, message);
     }
 
     async verifyAnnouncementContent(announcementTime: Dayjs, message: string, authorUsername: string) {
-        const announcementDialog = this.page.locator('.modal-content');
+        const announcementDialog = this.page.locator('.p-dialog-content, .modal-content').first();
         const timeFormat = 'MMM D, YYYY HH:mm';
         const announcementTimeFormatted = announcementTime.format(timeFormat);
         const announcementTimeAfterMinute = announcementTime.add(1, 'minute').format(timeFormat);
@@ -127,7 +127,9 @@ export class ExamManagementPage {
     }
 
     async sendAnnouncement() {
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/announcements') && resp.request().method() === 'POST' && resp.ok());
         await this.page.locator('button', { hasText: 'Send Announcement' }).click();
+        await responsePromise;
     }
 
     async openEditWorkingTimeDialog() {

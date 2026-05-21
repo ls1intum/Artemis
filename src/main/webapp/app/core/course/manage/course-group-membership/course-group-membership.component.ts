@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Course, CourseGroup, courseGroups } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -23,15 +23,60 @@ export class CourseGroupMembershipComponent implements OnInit {
     private userService = inject(UserService);
     private accountService = inject(AccountService);
 
-    allCourseGroupUsers: User[] = [];
-    course: Course;
-    courseGroup: CourseGroup;
-    isLoading = false;
-    isAdmin = false;
+    allCourseGroupUsers = signal<User[]>([]);
+    course = signal<Course | undefined>(undefined);
+    courseGroup = signal<CourseGroup | undefined>(undefined);
+    isLoading = signal(false);
+    isAdmin = signal(false);
     paramSub: Subscription;
-    filteredUsersSize = 0;
+    filteredUsersSize = signal(0);
 
     readonly capitalize = capitalize;
+
+    /**
+     * Property that returns the course group name, e.g. "artemis-test-students"
+     */
+    courseGroupName = computed(() => {
+        const course = this.course();
+        const courseGroup = this.courseGroup();
+        if (!course || !courseGroup) {
+            return undefined;
+        }
+        switch (courseGroup) {
+            case CourseGroup.STUDENTS:
+                return course.studentGroupName;
+            case CourseGroup.TUTORS:
+                return course.teachingAssistantGroupName;
+            case CourseGroup.EDITORS:
+                return course.editorGroupName;
+            case CourseGroup.INSTRUCTORS:
+                return course.instructorGroupName;
+            default:
+                captureException('Unknown course group: ' + courseGroup);
+                return undefined;
+        }
+    });
+
+    /**
+     * Property that returns the course group entity name, e.g. "students" or "tutors".
+     * If the count of users is exactly 1, singular is used instead of plural.
+     */
+    courseGroupEntityName = computed(() => {
+        const courseGroup = this.courseGroup();
+        if (!courseGroup) {
+            return '';
+        }
+        return this.allCourseGroupUsers().length === 1 ? courseGroup.slice(0, -1) : courseGroup;
+    });
+
+    exportFilename = computed(() => {
+        const entityName = this.courseGroupEntityName();
+        const course = this.course();
+        if (!entityName || !course) {
+            return '';
+        }
+        return entityName.charAt(0).toUpperCase() + entityName.slice(1) + ' ' + course.title;
+    });
 
     ngOnInit(): void {
         this.loadAll();
@@ -39,67 +84,36 @@ export class CourseGroupMembershipComponent implements OnInit {
 
     userSearch = (loginOrName: string) => this.userService.search(loginOrName);
 
-    addToGroup = (login: string) => this.courseService.addUserToCourseGroup(this.course.id!, this.courseGroup, login);
+    addToGroup = (login: string) => this.courseService.addUserToCourseGroup(this.course()!.id!, this.courseGroup()!, login);
 
-    removeFromGroup = (login: string) => this.courseService.removeUserFromCourseGroup(this.course.id!, this.courseGroup, login);
+    removeFromGroup = (login: string) => this.courseService.removeUserFromCourseGroup(this.course()!.id!, this.courseGroup()!, login);
 
     /**
      * Update the number of filtered users
      *
      * @param filteredUsersSize Total number of users after filters have been applied
      */
-    handleUsersSizeChange = (filteredUsersSize: number) => (this.filteredUsersSize = filteredUsersSize);
+    handleUsersSizeChange = (filteredUsersSize: number) => this.filteredUsersSize.set(filteredUsersSize);
 
     /**
      * Load all users of given course group.
      * Redirect to course-management when given course group is in predefined standard course groups.
      */
     loadAll = () => {
-        this.isLoading = true;
-        this.isAdmin = this.accountService.isAdmin();
+        this.isLoading.set(true);
+        this.isAdmin.set(this.accountService.isAdmin());
         this.route.parent!.data.subscribe(({ course }) => {
-            this.course = course;
+            this.course.set(course);
             this.paramSub = this.route.params.subscribe((params) => {
-                this.courseGroup = params['courseGroup'];
-                if (!courseGroups.includes(this.courseGroup)) {
+                this.courseGroup.set(params['courseGroup']);
+                if (!courseGroups.includes(this.courseGroup()!)) {
                     return this.router.navigate(['/course-management']);
                 }
-                this.courseService.getAllUsersInCourseGroup(this.course.id!, this.courseGroup).subscribe((usersResponse) => {
-                    this.allCourseGroupUsers = usersResponse.body!;
-                    this.isLoading = false;
+                this.courseService.getAllUsersInCourseGroup(this.course()!.id!, this.courseGroup()!).subscribe((usersResponse) => {
+                    this.allCourseGroupUsers.set(usersResponse.body!);
+                    this.isLoading.set(false);
                 });
             });
         });
     };
-
-    /**
-     * Property that returns the course group name, e.g. "artemis-test-students"
-     */
-    get courseGroupName() {
-        switch (this.courseGroup) {
-            case CourseGroup.STUDENTS:
-                return this.course.studentGroupName;
-            case CourseGroup.TUTORS:
-                return this.course.teachingAssistantGroupName;
-            case CourseGroup.EDITORS:
-                return this.course.editorGroupName;
-            case CourseGroup.INSTRUCTORS:
-                return this.course.instructorGroupName;
-            default:
-                captureException('Unknown course group: ' + this.courseGroup);
-                return undefined;
-        }
-    }
-
-    /**
-     * Property that returns the course group entity name, e.g. "students" or "tutors".
-     * If the count of users is exactly 1, singular is used instead of plural.
-     */
-    get courseGroupEntityName(): string {
-        return this.allCourseGroupUsers.length === 1 ? this.courseGroup.slice(0, -1) : this.courseGroup;
-    }
-
-    get exportFilename(): string {
-        return this.courseGroupEntityName.charAt(0).toUpperCase() + this.courseGroupEntityName.slice(1) + ' ' + this.course.title;
-    }
 }

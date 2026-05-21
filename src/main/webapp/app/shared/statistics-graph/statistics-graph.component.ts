@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
 import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
 import dayjs from 'dayjs/esm';
 import { GraphColors, Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/statistics.model';
@@ -16,7 +16,7 @@ import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
     styleUrls: ['../chart/vertical-bar-chart.scss'],
     imports: [FaIconComponent, BarChartModule, ArtemisTranslatePipe],
 })
-export class StatisticsGraphComponent implements OnChanges {
+export class StatisticsGraphComponent implements OnInit, OnChanges {
     private service = inject(StatisticsService);
     private translateService = inject(TranslateService);
 
@@ -28,6 +28,8 @@ export class StatisticsGraphComponent implements OnChanges {
     statisticsView: StatisticsView;
     @Input()
     entityId?: number;
+
+    private initialized = false;
 
     // Html properties
     LEFT = false;
@@ -66,11 +68,31 @@ export class StatisticsGraphComponent implements OnChanges {
     }
 
     /**
+     * Life cycle hook for initial component setup
+     */
+    ngOnInit(): void {
+        if (!this.initialized && this.graphType && this.currentSpan && this.statisticsView) {
+            this.setupAndInitializeChart();
+            this.initialized = true;
+        }
+    }
+
+    /**
      * Life cycle hook to indicate component changes
      * @param {SimpleChanges} changes - Changes being made to the component
      */
     ngOnChanges(changes: SimpleChanges): void {
-        this.currentSpan = changes.currentSpan?.currentValue;
+        if (changes.currentSpan) {
+            this.currentSpan = changes.currentSpan.currentValue;
+        }
+        // Only reinitialize if already initialized or if this is a change after init
+        if (this.initialized || (this.graphType && this.currentSpan && this.statisticsView)) {
+            this.setupAndInitializeChart();
+            this.initialized = true;
+        }
+    }
+
+    private setupAndInitializeChart(): void {
         this.barChartLabels = [];
         this.currentPeriod = 0;
         this.chartName = `statistics.${this.graphType.toString().toLowerCase()}`;

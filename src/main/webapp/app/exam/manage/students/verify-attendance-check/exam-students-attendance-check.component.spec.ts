@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -14,16 +16,15 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('ExamStudentsAttendanceCheckComponent', () => {
+    setupTestBed({ zoneless: true });
     const course = { id: 1 } as Course;
     const user1 = { id: 1, name: 'name', login: 'login' } as User;
     const user2 = { id: 2, login: 'user2' } as User;
@@ -41,13 +42,12 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
     let examManagementService: ExamManagementService;
     let sortService: SortService;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [ExamStudentsAttendanceCheckComponent, MockDirective(TranslateDirective), MockDirective(SortDirective), MockPipe(ArtemisTranslatePipe)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ExamStudentsAttendanceCheckComponent, MockDirective(TranslateDirective), MockDirective(SortDirective), MockPipe(ArtemisTranslatePipe)],
             providers: [
                 provideRouter([]),
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: AccountService, useClass: MockAccountService },
@@ -63,7 +63,7 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
         fixture.destroy();
     });
 
@@ -72,17 +72,17 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
         expect(component).not.toBeNull();
         expect(component.courseId).toEqual(course.id);
         expect(component.exam).toEqual(examWithCourse);
-        expect(component.hasExamStarted).toBeTrue();
+        expect(component.hasExamStarted()).toBe(true);
     });
 
     it('should test on error', () => {
         component.onError('ErrorString');
-        expect(component.isTransitioning).toBeFalse();
-        expect(component.isLoading).toBeFalse();
+        expect(component.isTransitioning()).toBe(false);
+        expect(component.isLoading()).toBe(false);
     });
 
     it('should test on sort', () => {
-        const sortServiceSpy = jest.spyOn(sortService, 'sortByProperty');
+        const sortServiceSpy = vi.spyOn(sortService, 'sortByProperty');
 
         fixture.detectChanges();
         component.sortRows();
@@ -99,14 +99,14 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
         examUserAttendanceCheckDTO.started = true;
         examUserAttendanceCheckDTO.submitted = false;
         const response: ExamUserAttendanceCheckDTO[] = [examUserAttendanceCheckDTO];
-        const examServiceStub = jest.spyOn(examManagementService, 'verifyExamUserAttendance').mockReturnValue(of(new HttpResponse({ body: response })));
+        const examServiceStub = vi.spyOn(examManagementService, 'verifyExamUserAttendance').mockReturnValue(of(new HttpResponse({ body: response })));
 
         fixture.detectChanges();
 
         expect(examServiceStub).toHaveBeenCalledOnce();
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id);
-        expect(component.allExamUsersAttendanceCheck).toEqual(response);
-        expect(component.allExamUsersAttendanceCheck).toHaveLength(1);
-        expect(component.isLoading).toBeFalse();
+        expect(component.allExamUsersAttendanceCheck()).toEqual(response);
+        expect(component.allExamUsersAttendanceCheck()).toHaveLength(1);
+        expect(component.isLoading()).toBe(false);
     });
 });

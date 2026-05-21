@@ -16,4 +16,9 @@
             width: 100%;
         }
     }
+
+    .card-header {
+        background-color: transparent;
+        border-bottom: 1px solid var(--course-exercise-card-border-color);
+    }
 }

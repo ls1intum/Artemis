@@ -1,6 +1,0 @@
-_build/
-.venv/
-.idea/
-__pycache__/
-.env
-venv

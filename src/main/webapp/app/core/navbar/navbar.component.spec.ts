@@ -1,8 +1,10 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClient } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { expectedProfileInfo } from 'app/core/layouts/profiles/shared/profile.service.spec';
+import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -12,7 +14,20 @@ import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.dire
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { Component, input } from '@angular/core';
+
+// Create stub components that don't have dependencies
+@Component({ selector: 'jhi-connection-warning', template: '' })
+class StubConnectionWarningComponent {}
+
+@Component({ selector: 'jhi-loading-notification', template: '' })
+class StubLoadingNotificationComponent {}
+
+@Component({ selector: 'jhi-theme-switch', template: '' })
+class StubThemeSwitchComponent {
+    popoverPlacement = input<string>();
+}
 import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
@@ -34,6 +49,10 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
 import { ActiveMenuDirective } from 'app/core/navbar/active-menu.directive';
 import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
 import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
+import { WebsocketService } from 'app/shared/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { LoadingNotificationService } from 'app/core/loading-notification/loading-notification.service';
+import { BehaviorSubject } from 'rxjs';
 
 class MockBreadcrumb {
     label: string;
@@ -42,9 +61,11 @@ class MockBreadcrumb {
 }
 
 describe('NavbarComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<NavbarComponent>;
     let component: NavbarComponent;
-    let entityTitleServiceStub: jest.SpyInstance;
+    let entityTitleServiceStub: ReturnType<typeof vi.spyOn>;
     let entityTitleService: EntityTitleService;
     let examParticipationService: ExamParticipationService;
 
@@ -74,7 +95,7 @@ describe('NavbarComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [
+            imports: [
                 NavbarComponent,
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(ActiveMenuDirective),
@@ -83,16 +104,12 @@ describe('NavbarComponent', () => {
                 MockRouterLinkActiveOptionsDirective,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(FindLanguageFromKeyPipe),
-                MockComponent(LoadingNotificationComponent),
-                MockComponent(JhiConnectionWarningComponent),
                 MockComponent(SystemNotificationComponent),
                 FaIconComponent,
-                MockComponent(ThemeSwitchComponent),
             ],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                MockProvider(UrlSerializer),
                 { provide: AccountService, useClass: MockAccountService },
                 LocalStorageService,
                 SessionStorageService,
@@ -100,11 +117,16 @@ describe('NavbarComponent', () => {
                 { provide: Router, useValue: router },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
+                { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: LoadingNotificationService, useValue: { loadingStatus: new BehaviorSubject(false) } },
             ],
         })
             .overrideComponent(NavbarComponent, {
                 remove: {
-                    imports: [ThemeSwitchComponent],
+                    imports: [ThemeSwitchComponent, JhiConnectionWarningComponent, LoadingNotificationComponent],
+                },
+                add: {
+                    imports: [StubThemeSwitchComponent, StubConnectionWarningComponent, StubLoadingNotificationComponent],
                 },
             })
             .compileComponents();
@@ -112,13 +134,13 @@ describe('NavbarComponent', () => {
         component = fixture.componentInstance;
         examParticipationService = TestBed.inject(ExamParticipationService);
         entityTitleService = TestBed.inject(EntityTitleService);
-        entityTitleServiceStub = jest.spyOn(entityTitleService, 'getTitle').mockImplementation((type) => of('Test ' + type.substring(0, 1) + type.substring(1).toLowerCase()));
+        entityTitleServiceStub = vi.spyOn(entityTitleService, 'getTitle').mockImplementation((type) => of('Test ' + type.substring(0, 1) + type.substring(1).toLowerCase()));
         const profileService = TestBed.inject(ProfileService);
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(expectedProfileInfo);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(expectedProfileInfo);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize component', () => {
@@ -128,9 +150,9 @@ describe('NavbarComponent', () => {
 
     it('should make api call when logged in user changes language', () => {
         const languageService = TestBed.inject(TranslateService);
-        const useSpy = jest.spyOn(languageService, 'use');
+        const useSpy = vi.spyOn(languageService, 'use');
         const accountService = TestBed.inject(AccountService);
-        const languageChangeSpy = jest.spyOn(accountService, 'updateLanguage');
+        const languageChangeSpy = vi.spyOn(accountService, 'updateLanguage');
 
         fixture.detectChanges();
         component.changeLanguage('elvish');
@@ -141,12 +163,13 @@ describe('NavbarComponent', () => {
 
     it('should not make api call when anonymous user changes language', () => {
         const languageService = TestBed.inject(TranslateService);
-        const useSpy = jest.spyOn(languageService, 'use');
+        const useSpy = vi.spyOn(languageService, 'use');
         const accountService = TestBed.inject(AccountService);
-        const languageChangeSpy = jest.spyOn(accountService, 'updateLanguage');
+        const languageChangeSpy = vi.spyOn(accountService, 'updateLanguage');
 
         fixture.detectChanges();
         component.currAccount = undefined;
+        fixture.changeDetectorRef.detectChanges();
         component.changeLanguage('elvish');
 
         expect(useSpy).toHaveBeenCalledWith('elvish');
@@ -188,20 +211,24 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs).toHaveLength(3);
+        expect(component.breadcrumbs).toHaveLength(4);
 
-        const systemBreadcrumb = {
-            label: 'artemisApp.systemNotification.systemNotifications',
+        expect(component.breadcrumbs[0]).toEqual({
+            label: 'global.menu.admin.main',
+            translate: true,
+            uri: '/admin/',
+        } as MockBreadcrumb);
+        expect(component.breadcrumbs[1]).toEqual({
+            label: 'global.menu.admin.sidebar.notifications',
             translate: true,
             uri: '/admin/system-notification-management/',
-        } as MockBreadcrumb;
-        expect(component.breadcrumbs[0]).toEqual(systemBreadcrumb);
-        expect(component.breadcrumbs[1]).toEqual({
+        } as MockBreadcrumb);
+        expect(component.breadcrumbs[2]).toEqual({
             label: '1',
             translate: false,
             uri: '/admin/system-notification-management/1/',
         } as MockBreadcrumb);
-        expect(component.breadcrumbs[2]).toEqual({
+        expect(component.breadcrumbs[3]).toEqual({
             label: 'global.generic.edit',
             translate: true,
             uri: '/admin/system-notification-management/1/edit/',
@@ -214,14 +241,19 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs).toHaveLength(2);
+        expect(component.breadcrumbs).toHaveLength(3);
 
         expect(component.breadcrumbs[0]).toEqual({
-            label: 'artemisApp.userManagement.home.title',
+            label: 'global.menu.admin.main',
+            translate: true,
+            uri: '/admin/',
+        } as MockBreadcrumb);
+        expect(component.breadcrumbs[1]).toEqual({
+            label: 'global.menu.admin.sidebar.users',
             translate: true,
             uri: '/admin/user-management/',
         } as MockBreadcrumb);
-        expect(component.breadcrumbs[1]).toEqual({
+        expect(component.breadcrumbs[2]).toEqual({
             label: 'test_user',
             translate: false,
             uri: '/admin/user-management/test_user/',
@@ -236,14 +268,19 @@ describe('NavbarComponent', () => {
 
         expect(entityTitleServiceStub).toHaveBeenCalledOnce();
         expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.ORGANIZATION, [1]);
-        expect(component.breadcrumbs).toHaveLength(2);
+        expect(component.breadcrumbs).toHaveLength(3);
 
         expect(component.breadcrumbs[0]).toEqual({
-            label: 'artemisApp.organizationManagement.title',
+            label: 'global.menu.admin.main',
+            translate: true,
+            uri: '/admin/',
+        } as MockBreadcrumb);
+        expect(component.breadcrumbs[1]).toEqual({
+            label: 'global.menu.admin.sidebar.organizations',
             translate: true,
             uri: '/admin/organization-management/',
         } as MockBreadcrumb);
-        expect(component.breadcrumbs[1]).toEqual({
+        expect(component.breadcrumbs[2]).toEqual({
             label: 'Test Organization',
             translate: false,
             uri: '/admin/organization-management/1/',
@@ -256,9 +293,14 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs).toHaveLength(1);
+        expect(component.breadcrumbs).toHaveLength(2);
 
         expect(component.breadcrumbs[0]).toEqual({
+            label: 'global.menu.admin.main',
+            translate: true,
+            uri: '/admin/',
+        } as MockBreadcrumb);
+        expect(component.breadcrumbs[1]).toEqual({
             label: 'route-without-translation',
             translate: false,
             uri: '/admin/route-without-translation/',
@@ -267,21 +309,23 @@ describe('NavbarComponent', () => {
 
     it('should hide breadcrumb when exam is started', () => {
         (examParticipationService as any).examIsStarted$ = of(true);
-        component.isExamActive = true;
         const testUrl = '/courses/1/exams/2';
         router.setUrl(testUrl);
 
         fixture.detectChanges();
+        component.isExamActive = true;
+        fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('.breadcrumb')).toBeNull();
 
         component.isExamStarted = false;
-        fixture.detectChanges();
+        component.isExamActive = false;
+        fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('.breadcrumb')).not.toBeNull();
     });
 
-    it('should have correct git info', fakeAsync(() => {
+    it('should have correct git info', () => {
         const profileService = TestBed.inject(ProfileService);
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(expectedProfileInfo);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(expectedProfileInfo);
 
         fixture.detectChanges();
 
@@ -289,9 +333,10 @@ describe('NavbarComponent', () => {
         expect(component.gitBranchName).toBe('code-button');
         expect(component.gitTimestamp).toBe('Sun, 20 Nov 2022 20:35:01 GMT');
         expect(component.gitUsername).toBe('Max Musterman');
-    }));
+    });
 
-    it('should set the exam active state correctly', fakeAsync(() => {
+    it('should set the exam active state correctly', async () => {
+        vi.useFakeTimers();
         const now = dayjs();
         const examParticipationService = TestBed.inject(ExamParticipationService);
         const activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
@@ -309,15 +354,17 @@ describe('NavbarComponent', () => {
                 gracePeriod: 180,
             },
         } as StudentExam);
+        fixture.changeDetectorRef.detectChanges();
 
-        expect(component.isExamActive).toBeFalse();
-        tick(61000);
-        expect(component.isExamActive).toBeTrue();
-        tick(61000);
-        expect(component.isExamActive).toBeTrue();
-        tick(180000);
-        expect(component.isExamActive).toBeFalse();
-    }));
+        expect(component.isExamActive).toBe(false);
+        await vi.advanceTimersByTimeAsync(61000);
+        expect(component.isExamActive).toBe(true);
+        await vi.advanceTimersByTimeAsync(61000);
+        expect(component.isExamActive).toBe(true);
+        await vi.advanceTimersByTimeAsync(180000);
+        expect(component.isExamActive).toBe(false);
+        vi.useRealTimers();
+    });
 
     describe('Special Cases for Breadcrumbs', () => {
         it('programming exercise import', () => {
@@ -815,7 +862,7 @@ describe('NavbarComponent', () => {
         },
     ])('should calculate correct breakpoints', ({ width, account, roles, expected }) => {
         const accountService = TestBed.inject(AccountService);
-        jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockImplementation((authArray) => authArray.some((auth) => (roles as Authority[]).includes(auth)));
+        vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockImplementation((authArray) => authArray.some((auth) => (roles as Authority[]).includes(auth)));
 
         component.currAccount = account as User;
         window['innerWidth'] = width;

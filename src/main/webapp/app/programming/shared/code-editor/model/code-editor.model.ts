@@ -130,6 +130,7 @@ export enum GitConflictState {
  */
 export enum FileBadgeType {
     FEEDBACK_SUGGESTION = 'FEEDBACK_SUGGESTION',
+    REVIEW_COMMENT = 'REVIEW_COMMENT',
 }
 
 /**

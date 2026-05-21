@@ -261,12 +261,12 @@ public class ProgrammingExerciseRetrievalResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/test-case-state")
     @EnforceAtLeastTutor
-    public ResponseEntity<ProgrammingExerciseTestCaseStateDTO> hasAtLeastOneStudentResult(@PathVariable long exerciseId) {
+    public ResponseEntity<ProgrammingExerciseTestCaseStateDTO> getTestCaseState(@PathVariable long exerciseId) {
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
-        boolean hasAtLeastOneStudentResult = programmingExerciseService.hasAtLeastOneStudentResult(programmingExercise);
+        boolean hasAtLeastOneResult = programmingExerciseService.hasAtLeastOneResult(programmingExercise);
         boolean isReleased = programmingExercise.isReleased();
-        ProgrammingExerciseTestCaseStateDTO testCaseDTO = new ProgrammingExerciseTestCaseStateDTO(isReleased, hasAtLeastOneStudentResult, programmingExercise.getTestCasesChanged(),
+        ProgrammingExerciseTestCaseStateDTO testCaseDTO = new ProgrammingExerciseTestCaseStateDTO(isReleased, hasAtLeastOneResult, programmingExercise.getTestCasesChanged(),
                 programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         return ResponseEntity.ok(testCaseDTO);
     }

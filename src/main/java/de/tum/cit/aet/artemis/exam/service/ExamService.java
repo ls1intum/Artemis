@@ -75,12 +75,14 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
 import de.tum.cit.aet.artemis.core.util.CalendarEventType;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
@@ -99,6 +101,9 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
@@ -196,6 +201,8 @@ public class ExamService {
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
+    private final Optional<SearchableEntityWeaviateService> searchableItemWeaviateService;
+
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, TutorLeaderboardService tutorLeaderboardService,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
@@ -205,7 +212,8 @@ public class ExamService {
             SubmittedAnswerRepository submittedAnswerRepository, AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService,
             QuizResultService quizResultService, ExerciseRepository exerciseRepository, QuizQuestionRepository quizQuestionRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository) {
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+            Optional<SearchableEntityWeaviateService> searchableItemWeaviateService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -227,12 +235,13 @@ public class ExamService {
         this.submittedAnswerRepository = submittedAnswerRepository;
         this.auditEventRepository = auditEventRepository;
         this.courseScoreCalculationService = courseScoreCalculationService;
-        this.defaultObjectMapper = new ObjectMapper();
+        this.defaultObjectMapper = JsonObjectMapper.get();
         this.quizResultService = quizResultService;
         this.exerciseRepository = exerciseRepository;
         this.quizQuestionRepository = quizQuestionRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
+        this.searchableItemWeaviateService = searchableItemWeaviateService;
     }
 
     private static boolean isSecondCorrectionEnabled(Exam exam) {
@@ -1274,6 +1283,7 @@ public class ExamService {
         }
 
         boolean existsUnassessedQuizzes = submissionRepository.existsUnassessedQuizzesByExamId(exam.getId());
+        boolean existsUnsubmittedExercises = submissionRepository.existsUnsubmittedExercisesByExamId(exam.getId());
 
         if (isInstructor) {
             // set number of student exams that have been generated
@@ -1305,11 +1315,9 @@ public class ExamService {
 
             return new ExamChecklistDTO(numberOfGeneratedStudentExams, numberOfTestRuns, totalNumberOfAssessmentsFinished, totalNumberOfParticipationsForAssessment,
                     numberOfStudentExamsSubmitted, numberOfStudentExamsStarted, totalNumberOfComplaints, totalNumberOfComplaintResponse, exercisesPrepared, existsUnassessedQuizzes,
-                    null);
+                    existsUnsubmittedExercises);
 
         }
-
-        boolean existsUnsubmittedExercises = submissionRepository.existsUnsubmittedExercisesByExamId(exam.getId());
 
         // For non-instructors, consider what limited information they should receive and adjust accordingly
         return new ExamChecklistDTO(totalNumberOfAssessmentsFinished, totalNumberOfParticipationsForAssessment, existsUnassessedQuizzes, existsUnsubmittedExercises);
@@ -1498,7 +1506,7 @@ public class ExamService {
      * @param pageable paging specification
      * @return a page of exams visible to the user
      */
-    public Page<Exam> getAllActiveExams(final Pageable pageable, final User user) {
+    public Page<ActiveExamDTO> getAllActiveExams(final Pageable pageable, final User user) {
         // active exam means that exam has visible date in the past 7 days or next 7 days.
         var now = ZonedDateTime.now();
         var fromDate = now.minusDays(EXAM_ACTIVE_DAYS);
@@ -1540,8 +1548,11 @@ public class ExamService {
         var now = now();
 
         var studentExams = exam.getStudentExams();
+        // Track original working times so we can include them in the notification sent after saving
+        var originalWorkingTimes = new HashMap<Long, Integer>();
         for (var studentExam : studentExams) {
             int originalStudentWorkingTime = studentExam.getWorkingTime();
+            originalWorkingTimes.put(studentExam.getId(), originalStudentWorkingTime);
             int originalTimeExtension = originalStudentWorkingTime - originalExamDuration;
             // NOTE: take the original working time extensions into account
             if (originalTimeExtension == 0) {
@@ -1554,13 +1565,54 @@ public class ExamService {
                 int adjustedWorkingTime = Math.max(newNormalWorkingTime + timeAdjustment, 0);
                 studentExam.setWorkingTime(adjustedWorkingTime);
             }
+        }
+        // Important: persist all student exams BEFORE sending WebSocket notifications.
+        // The client uses a REST fallback (GET /student-exams/live-events) to recover missed events.
+        // If we send WebSocket messages before saving, a client that immediately calls the REST
+        // endpoint on receiving the message might not find the event in the database yet.
+        studentExamRepository.saveAll(studentExams);
 
-            // NOTE: if the exam is already visible, notify the student about the working time change
-            if (now.isAfter(exam.getVisibleDate())) {
+        // Notify students about the working time changes via WebSocket live events
+        if (now.isAfter(exam.getVisibleDate())) {
+            for (var studentExam : studentExams) {
+                int originalStudentWorkingTime = originalWorkingTimes.get(studentExam.getId());
                 examLiveEventsService.createAndSendWorkingTimeUpdateEvent(studentExam, studentExam.getWorkingTime(), originalStudentWorkingTime, true);
             }
         }
-        studentExamRepository.saveAll(studentExams);
+    }
+
+    /**
+     * Syncs exam exercises with Weaviate if visible date, start date, or end date has changed.
+     *
+     * @param examWithExercises         the exam with exercises loaded
+     * @param visibleOrStartDateChanged whether the visible or start date has changed
+     * @param endDateChanged            whether the end date has changed
+     */
+    public void syncExamExercisesMetadata(Exam examWithExercises, boolean visibleOrStartDateChanged, boolean endDateChanged) {
+        if (visibleOrStartDateChanged || endDateChanged) {
+            searchableItemWeaviateService.ifPresent(service -> {
+                examRepository.findWithExerciseGroupsAndExercisesById(examWithExercises.getId()).ifPresent(reloadedExam -> {
+                    service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(reloadedExam));
+                    service.updateExercisesAsync(reloadedExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+                            .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, reloadedExam)).toList(), reloadedExam.getId());
+                });
+            });
+        }
+    }
+
+    /**
+     * Syncs exam and its exercises with Weaviate.
+     *
+     * @param exam the exam whose metadata and exercises should be synced
+     */
+    public void syncExamExercisesMetadata(Exam exam) {
+        searchableItemWeaviateService.ifPresent(service -> {
+            examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).ifPresent(reloadedExam -> {
+                service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(reloadedExam));
+                service.updateExercisesAsync(reloadedExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+                        .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, reloadedExam)).toList(), reloadedExam.getId());
+            });
+        });
     }
 
     /**

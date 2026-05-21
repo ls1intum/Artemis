@@ -2,15 +2,18 @@ package de.tum.cit.aet.artemis.core.web.admin;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
+import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,11 +23,17 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.OrganizationCountDTO;
+import de.tum.cit.aet.artemis.core.dto.OrganizationCourseDTO;
+import de.tum.cit.aet.artemis.core.dto.OrganizationDTO;
+import de.tum.cit.aet.artemis.core.dto.OrganizationMemberDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
@@ -32,6 +41,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.OrganizationService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 
 /**
  * REST controller for administrating the Organization entities
@@ -134,7 +144,7 @@ public class AdminOrganizationResource {
         Organization organization = organizationRepository.findByIdElseThrow(organizationId);
         userRepository.removeOrganizationFromUser(user.getId(), organization);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, user.getLogin())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "organizationUser", user.getLogin())).build();
     }
 
     /**
@@ -186,20 +196,55 @@ public class AdminOrganizationResource {
     }
 
     /**
-     * GET organizations : Get all organizations
+     * GET organizations : Get a paginated, filtered, and sorted list of organizations
      *
-     * @return ResponseEntity containing a list of all organizations with status 200 (OK)
+     * @param search     the search criteria containing the search term and pagination/sorting info
+     * @param withCounts whether to include aggregated user and course counts (default: {@code false});
+     *                       pass {@code true} to load counts via JOIN aggregation
+     * @return ResponseEntity containing a page of organization DTOs with status 200 (OK)
      */
     @GetMapping("organizations")
-    public ResponseEntity<List<Organization>> getAllOrganizations() {
-        log.debug("REST request to get all organizations");
-        // TODO: we should avoid findAll() and instead load batches of organizations
-        List<Organization> organizations = organizationRepository.findAll();
-        return new ResponseEntity<>(organizations, HttpStatus.OK);
+    public ResponseEntity<List<OrganizationDTO>> getOrganizations(@Valid SearchTermPageableSearchDTO<String> search, @RequestParam(defaultValue = "false") boolean withCounts) {
+        final Page<OrganizationDTO> page = organizationRepository.getAllOrganizations(search, withCounts);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
     /**
-     * GET organizations/:organizationId/count : Get the number of users and courses currently mapped to an organization
+     * GET organizations/:organizationId/users : Get a paginated list of users belonging to an organization
+     *
+     * @param organizationId the id of the organization
+     * @param search         the search criteria containing the search term and pagination/sorting info
+     * @return ResponseEntity containing a page of member DTOs with status 200 (OK)
+     */
+    @GetMapping("organizations/{organizationId}/users")
+    public ResponseEntity<List<OrganizationMemberDTO>> getOrganizationUsers(@PathVariable long organizationId, @Valid SearchTermPageableSearchDTO<String> search) {
+        log.debug("REST request to get users of organization : {}", organizationId);
+        organizationRepository.findByIdElseThrow(organizationId);
+        Page<OrganizationMemberDTO> page = organizationRepository.getUsersByOrganizationId(organizationId, search);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
+     * GET organizations/:organizationId/courses : Get a paginated list of courses belonging to an organization
+     *
+     * @param organizationId the id of the organization
+     * @param search         the search criteria containing the search term and pagination/sorting info
+     * @return ResponseEntity containing a page of course DTOs with status 200 (OK)
+     */
+    @GetMapping("organizations/{organizationId}/courses")
+    public ResponseEntity<List<OrganizationCourseDTO>> getOrganizationCourses(@PathVariable long organizationId, @Valid SearchTermPageableSearchDTO<String> search) {
+        log.debug("REST request to get courses of organization : {}", organizationId);
+        organizationRepository.findByIdElseThrow(organizationId);
+        Page<OrganizationCourseDTO> page = organizationRepository.getCoursesByOrganizationId(organizationId, search);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
+     * GET organizations/:organizationId/count : Get the number of users and courses
+     * currently mapped to an organization
      *
      * @param organizationId the id of the organization to retrieve the number of users and courses
      * @return ResponseEntity containing a map containing the numbers of users and courses
@@ -215,27 +260,6 @@ public class AdminOrganizationResource {
     }
 
     /**
-     * GET organizations/count-all : Get the number of users and courses currently mapped to each organization
-     *
-     * @return ResponseEntity containing a map containing the organizations' id as key and an inner map
-     *         containing their relative numbers of users and courses
-     */
-    @GetMapping("organizations/count-all")
-    public ResponseEntity<List<OrganizationCountDTO>> getNumberOfUsersAndCoursesOfAllOrganizations() {
-        log.debug("REST request to get number of users and courses of all organizations");
-
-        List<OrganizationCountDTO> result = new ArrayList<>();
-        // TODO: we should avoid findAll() and instead calculate the data directly in the database
-        List<Organization> organizations = organizationRepository.findAll();
-        for (Organization organization : organizations) {
-            result.add(new OrganizationCountDTO(organization.getId(), organizationRepository.getNumberOfUsersByOrganizationId(organization.getId()),
-                    organizationRepository.getNumberOfCoursesByOrganizationId(organization.getId())));
-        }
-
-        return new ResponseEntity<>(result, HttpStatus.OK);
-    }
-
-    /**
      * GET organizations/:organizationId : Get an organization by its id
      *
      * @param organizationId the id of the organization to get
@@ -246,20 +270,6 @@ public class AdminOrganizationResource {
     public ResponseEntity<Organization> getOrganizationById(@PathVariable long organizationId) {
         log.debug("REST request to get organization : {}", organizationId);
         Organization organization = organizationRepository.findByIdElseThrow(organizationId);
-        return new ResponseEntity<>(organization, HttpStatus.OK);
-    }
-
-    /**
-     * GET organizations/:organizationId/full : Get an organization by its id with eagerly loaded users and courses
-     *
-     * @param organizationId the id of the organization to get
-     * @return ResponseEntity containing the organization with eagerly loaded users and courses, with status 200 (OK)
-     *         if exists, else with status 404 (Not Found)
-     */
-    @GetMapping("organizations/{organizationId}/full")
-    public ResponseEntity<Organization> getOrganizationByIdWithUsersAndCourses(@PathVariable long organizationId) {
-        log.debug("REST request to get organization with users and courses : {}", organizationId);
-        Organization organization = organizationRepository.findByIdWithEagerUsersAndCoursesElseThrow(organizationId);
         return new ResponseEntity<>(organization, HttpStatus.OK);
     }
 

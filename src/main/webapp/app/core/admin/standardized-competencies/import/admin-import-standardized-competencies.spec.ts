@@ -1,39 +1,41 @@
+/**
+ * Vitest tests for AdminImportStandardizedCompetenciesComponent.
+ * Tests the import functionality for standardized competencies from JSON files.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { of } from 'rxjs';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+
 import { AdminImportStandardizedCompetenciesComponent } from 'app/core/admin/standardized-competencies/import/admin-import-standardized-competencies.component';
+import { AdminStandardizedCompetencyService } from 'app/core/admin/standardized-competencies/admin-standardized-competency.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { KnowledgeAreaTreeStubComponent } from 'test/helpers/stubs/atlas/knowledge-area-tree-stub.component';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
-import { AdminStandardizedCompetencyService } from 'app/core/admin/standardized-competencies/admin-standardized-competency.service';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { of } from 'rxjs';
-import { KnowledgeAreasForImportDTO } from 'app/atlas/shared/entities/standardized-competency.model';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { KnowledgeAreaValidators, KnowledgeAreasForImportDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
 import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 
 describe('AdminImportStandardizedCompetenciesComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let componentFixture: ComponentFixture<AdminImportStandardizedCompetenciesComponent>;
     let component: AdminImportStandardizedCompetenciesComponent;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
+            imports: [AdminImportStandardizedCompetenciesComponent],
             providers: [
-                MockPipe(HtmlForMarkdownPipe),
-                KnowledgeAreaTreeStubComponent,
-                MockComponent(ButtonComponent),
-                MockComponent(StandardizedCompetencyDetailComponent),
-                MockModule(FontAwesomeModule),
-                MockComponent(StandardizedCompetencyDetailComponent),
-                MockComponent(KnowledgeAreaTreeComponent),
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -41,25 +43,33 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                componentFixture = TestBed.createComponent(AdminImportStandardizedCompetenciesComponent);
-                component = componentFixture.componentInstance;
-            });
+        }).overrideComponent(AdminImportStandardizedCompetenciesComponent, {
+            set: {
+                imports: [
+                    MockModule(FontAwesomeModule),
+                    MockComponent(StandardizedCompetencyDetailComponent),
+                    MockComponent(KnowledgeAreaTreeComponent),
+                    MockComponent(ButtonComponent),
+                    MockPipe(HtmlForMarkdownPipe),
+                ],
+            },
+        });
+        await TestBed.compileComponents();
+        componentFixture = TestBed.createComponent(AdminImportStandardizedCompetenciesComponent);
+        component = componentFixture.componentInstance;
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it.each([[[new File([''], 'f.txt')]], [[new File([''], 'f1.json'), new File([''], 'f2.json')]], [[{ name: 'f.json', size: MAX_FILE_SIZE + 1 } as File]]])(
         'should show error for invalid files',
         (files) => {
             const mockAlertService = TestBed.inject(AlertService);
-            const errorSpy = jest.spyOn(mockAlertService, 'error');
+            const errorSpy = vi.spyOn(mockAlertService, 'error');
 
-            //explicitly use any to avoid problems with event type
+            // Explicitly use any to avoid problems with event type
             const event: any = {
                 target: {
                     files: files,
@@ -67,15 +77,15 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
             };
 
             component.onFileChange(event);
-            expect(errorSpy).toHaveBeenCalled();
+            expect(errorSpy).toHaveBeenCalledOnce();
         },
     );
 
     it('should not show error for valid file', () => {
         const mockAlertService = TestBed.inject(AlertService);
-        const errorSpy = jest.spyOn(mockAlertService, 'error');
+        const errorSpy = vi.spyOn(mockAlertService, 'error');
 
-        //explicitly use any to avoid problems with event type
+        // Explicitly use any to avoid problems with event type
         const event: any = {
             target: {
                 files: [new File([''], 'f1.json')],
@@ -90,7 +100,7 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
         'should not set import data for invalid json',
         (result) => {
             const mockAlertService = TestBed.inject(AlertService);
-            const errorSpy = jest.spyOn(mockAlertService, 'error');
+            const errorSpy = vi.spyOn(mockAlertService, 'error');
             component['fileReader'] = {
                 result: result,
             } as FileReader;
@@ -98,7 +108,7 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
             component['setImportDataAndCount']();
 
             expect(errorSpy).toHaveBeenCalled();
-            expect(component['importData']).toBeUndefined();
+            expect(component['importData']()).toBeUndefined();
         },
     );
 
@@ -107,10 +117,12 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
             knowledgeAreas: [
                 {
                     title: 'ka1',
+                    shortTitle: 'ka1',
                     children: [
                         {
                             title: 'ka2',
-                            children: [{ title: 'ka3' }],
+                            shortTitle: 'ka2',
+                            children: [{ title: 'ka3', shortTitle: 'ka3' }],
                             competencies: [{ title: 'c4' }, { title: 'c5' }],
                         },
                     ],
@@ -118,6 +130,7 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
                 },
                 {
                     title: 'ka4',
+                    shortTitle: 'ka4',
                     children: [],
                     competencies: [],
                 },
@@ -126,6 +139,7 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
                 {
                     id: 1,
                     title: 'any source',
+                    author: 'any author',
                 },
             ],
         };
@@ -136,55 +150,175 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
 
         component['setImportDataAndCount']();
 
-        expect(component['importCount']).toEqual(expectedCount);
+        expect(component['importCount']()).toEqual(expectedCount);
     });
 
     it('should navigate on successful competency import', () => {
         const mockRouter = TestBed.inject(Router);
-        const navigateSpy = jest.spyOn(mockRouter, 'navigate');
+        const navigateSpy = vi.spyOn(mockRouter, 'navigate');
         const competencyService = TestBed.inject(AdminStandardizedCompetencyService);
-        jest.spyOn(competencyService, 'importStandardizedCompetencyCatalog').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+        vi.spyOn(competencyService, 'importStandardizedCompetencyCatalog').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
 
         component.importCompetencies();
 
-        expect(navigateSpy).toHaveBeenCalled();
+        expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
     it('should cancel', () => {
         const mockRouter = TestBed.inject(Router);
-        const navigateSpy = jest.spyOn(mockRouter, 'navigate');
+        const navigateSpy = vi.spyOn(mockRouter, 'navigate');
 
         component.cancel();
 
-        expect(navigateSpy).toHaveBeenCalled();
+        expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
     it('should toggle collapse', () => {
-        component['isCollapsed'] = false;
+        component['isCollapsed'].set(false);
 
         component.toggleCollapse();
 
-        expect(component['isCollapsed']).toBeTrue();
+        expect(component['isCollapsed']()).toBe(true);
+    });
+
+    describe('validateImportData', () => {
+        it('should not set import data for knowledge area missing title', () => {
+            component['fileReader'] = {
+                result: JSON.stringify({
+                    knowledgeAreas: [{ shortTitle: 'KA' }],
+                    sources: [],
+                }),
+            } as FileReader;
+
+            component['setImportDataAndCount']();
+
+            expect(component['importData']()).toBeUndefined();
+            expect(component['validationErrors']()).toHaveLength(1);
+        });
+
+        it('should not set import data for knowledge area with shortTitle too long', () => {
+            component['fileReader'] = {
+                result: JSON.stringify({
+                    knowledgeAreas: [{ title: 'KA', shortTitle: 'A'.repeat(KnowledgeAreaValidators.SHORT_TITLE_MAX + 1) }],
+                    sources: [],
+                }),
+            } as FileReader;
+
+            component['setImportDataAndCount']();
+
+            expect(component['importData']()).toBeUndefined();
+            expect(component['validationErrors']()).toSatisfy((errors: string[]) => errors.some((e) => e.includes('shortTitleTooLong')));
+        });
+
+        it('should not set import data for competency missing title', () => {
+            component['fileReader'] = {
+                result: JSON.stringify({
+                    knowledgeAreas: [{ title: 'KA', shortTitle: 'KA', competencies: [{ description: 'no title' }] }],
+                    sources: [],
+                }),
+            } as FileReader;
+
+            component['setImportDataAndCount']();
+
+            expect(component['importData']()).toBeUndefined();
+            expect(component['validationErrors']()).toSatisfy((errors: string[]) => errors.some((e) => e.includes('titleRequired')));
+        });
+
+        it('should not set import data for invalid taxonomy', () => {
+            component['fileReader'] = {
+                result: JSON.stringify({
+                    knowledgeAreas: [{ title: 'KA', shortTitle: 'KA', competencies: [{ title: 'C', taxonomy: 'INVALID' }] }],
+                    sources: [],
+                }),
+            } as FileReader;
+
+            component['setImportDataAndCount']();
+
+            expect(component['importData']()).toBeUndefined();
+            expect(component['validationErrors']()).toSatisfy((errors: string[]) => errors.some((e) => e.includes('taxonomyInvalid')));
+        });
+
+        it('should not set import data when sourceId does not match any source', () => {
+            component['fileReader'] = {
+                result: JSON.stringify({
+                    knowledgeAreas: [{ title: 'KA', shortTitle: 'KA', competencies: [{ title: 'C', sourceId: 999 }] }],
+                    sources: [{ id: 1, title: 'Source', author: 'Author' }],
+                }),
+            } as FileReader;
+
+            component['setImportDataAndCount']();
+
+            expect(component['importData']()).toBeUndefined();
+            expect(component['validationErrors']()).toSatisfy((errors: string[]) => errors.some((e) => e.includes('sourceIdInvalid')));
+        });
+
+        it('should set import data for valid data with no validation errors', () => {
+            component['fileReader'] = {
+                result: JSON.stringify({
+                    knowledgeAreas: [
+                        {
+                            title: 'KA',
+                            shortTitle: 'KA',
+                            competencies: [{ title: 'C', taxonomy: 'REMEMBER', sourceId: 1 }],
+                        },
+                    ],
+                    sources: [{ id: 1, title: 'Source', author: 'Author' }],
+                }),
+            } as FileReader;
+
+            component['setImportDataAndCount']();
+
+            expect(component['importData']()?.knowledgeAreas).toHaveLength(1);
+            expect(component['validationErrors']()).toHaveLength(0);
+        });
+
+        it('should not set import data when source is missing title', () => {
+            component['fileReader'] = {
+                result: JSON.stringify({
+                    knowledgeAreas: [{ title: 'KA', shortTitle: 'KA' }],
+                    sources: [{ id: 1, author: 'Author' }],
+                }),
+            } as FileReader;
+
+            component['setImportDataAndCount']();
+
+            expect(component['importData']()).toBeUndefined();
+            expect(component['validationErrors']()).toSatisfy((errors: string[]) => errors.some((e) => e.includes('sourceTitleRequired')));
+        });
+
+        it('should not set import data when source is missing author', () => {
+            component['fileReader'] = {
+                result: JSON.stringify({
+                    knowledgeAreas: [{ title: 'KA', shortTitle: 'KA' }],
+                    sources: [{ id: 1, title: 'Source' }],
+                }),
+            } as FileReader;
+
+            component['setImportDataAndCount']();
+
+            expect(component['importData']()).toBeUndefined();
+            expect(component['validationErrors']()).toSatisfy((errors: string[]) => errors.some((e) => e.includes('sourceAuthorRequired')));
+        });
     });
 
     it('should open details', () => {
-        component['importData'] = { knowledgeAreas: [], sources: [{ id: 1, title: 'any source' }] };
+        component['importData'].set({ knowledgeAreas: [], sources: [{ id: 1, title: 'any source' }] });
         const competencyToOpen = { id: 2, isVisible: true, sourceId: 1 };
         const knowledgeAreaTitle = 'knowledgeArea';
 
         component['openCompetencyDetails'](competencyToOpen, knowledgeAreaTitle);
 
-        expect(component['selectedCompetency']).toEqual(competencyToOpen);
-        expect(component['knowledgeAreaTitle']).toEqual(knowledgeAreaTitle);
-        expect(component['sourceString']).toBeTruthy();
+        expect(component['selectedCompetency']()).toEqual(competencyToOpen);
+        expect(component['knowledgeAreaTitle']()).toEqual(knowledgeAreaTitle);
+        expect(component['sourceString']()).toBeTruthy();
     });
 
     it('should close details', () => {
-        component['selectedCompetency'] = { id: 2, isVisible: true };
+        component['selectedCompetency'].set({ id: 2, isVisible: true });
 
         component['closeCompetencyDetails']();
 
-        expect(component['selectedCompetency']).toBeUndefined();
-        expect(component['knowledgeAreaTitle']).toBe('');
+        expect(component['selectedCompetency']()).toBeUndefined();
+        expect(component['knowledgeAreaTitle']()).toBe('');
     });
 });

@@ -1,47 +1,51 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { input, runInInjectionContext } from '@angular/core';
 import { faBullhorn, faHashtag, faLock } from '@fortawesome/free-solid-svg-icons';
 
 describe('ChannelIconComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ChannelIconComponent;
     let fixture: ComponentFixture<ChannelIconComponent>;
 
-    beforeEach(waitForAsync(() => {
-        TestBed.configureTestingModule({ imports: [ChannelIconComponent, FaIconComponent] }).compileComponents();
-    }));
+    beforeEach(async () => {
+        TestBed.configureTestingModule({ imports: [ChannelIconComponent, FaIconComponent] });
+    });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(ChannelIconComponent);
         component = fixture.componentInstance;
-        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
+        fixture.detectChanges();
         expect(component).toBeTruthy();
     });
 
     it('should return faBullhorn when isAnnouncementChannel is true', () => {
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.isAnnouncementChannel = input<boolean>(true);
-        });
+        fixture.componentRef.setInput('isAnnouncementChannel', true);
+        fixture.detectChanges();
         expect(component.getIcon()).toBe(faBullhorn);
     });
 
     it('should return faHashtag when isPublic is true, and is not announcement', () => {
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.isAnnouncementChannel = input<boolean>(false);
-            component.isPublic = input<boolean>(true);
-        });
+        fixture.componentRef.setInput('isAnnouncementChannel', false);
+        fixture.componentRef.setInput('isPublic', true);
+        fixture.detectChanges();
         expect(component.getIcon()).toBe(faHashtag);
     });
 
     it('should return faLock when isPublic is false, and is not announcement', () => {
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.isAnnouncementChannel = input<boolean>(false);
-            component.isPublic = input<boolean>(false);
-        });
+        fixture.componentRef.setInput('isAnnouncementChannel', false);
+        fixture.componentRef.setInput('isPublic', false);
+        fixture.detectChanges();
         expect(component.getIcon()).toBe(faLock);
     });
 });

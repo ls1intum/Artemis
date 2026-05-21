@@ -14,8 +14,11 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
@@ -26,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
@@ -34,7 +38,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.DistributedTopic;
 
 /**
  * Coordinates submission, tracking, timeout handling, and cancellation of build jobs
@@ -77,6 +80,12 @@ public class BuildJobManagementService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobManagementService.class);
 
+    /**
+     * Interval between retries when waiting for cluster connection during startup.
+     * Uses the same interval as the availability check in SharedQueueProcessingService for consistency.
+     */
+    private static final java.time.Duration CLUSTER_CONNECTION_RETRY_INTERVAL = java.time.Duration.ofSeconds(5);
+
     private final BuildJobExecutionService buildJobExecutionService;
 
     private final BuildAgentConfiguration buildAgentConfiguration;
@@ -86,6 +95,26 @@ public class BuildJobManagementService {
     private final DistributedDataAccessService distributedDataAccessService;
 
     private final BuildLogsMap buildLogsMap;
+
+    private final TaskScheduler taskScheduler;
+
+    /**
+     * Scheduled future for retrying cluster connection and initialization.
+     * This is used when the build agent starts before any core node is available.
+     * Uses AtomicReference for thread-safe check-then-act operations.
+     */
+    private final AtomicReference<ScheduledFuture<?>> connectionRetryFuture = new AtomicReference<>();
+
+    /**
+     * Flag to track whether initialization has completed successfully.
+     * Uses AtomicBoolean to ensure thread-safe access from the retry task.
+     */
+    private final AtomicBoolean initialized = new AtomicBoolean(false);
+
+    /**
+     * UUID of the cancel build job message listener. Stored to allow removal on reconnection.
+     */
+    private java.util.UUID cancelListenerId;
 
     /**
      * Guards job lifecycle state transitions that must be atomic across multiple data structures:
@@ -109,12 +138,24 @@ public class BuildJobManagementService {
      */
     private final ReentrantLock jobLifecycleLock = new ReentrantLock();
 
+    /**
+     * Maximum allowed timeout for build jobs in seconds. Individual jobs can specify a lower timeout,
+     * but not higher than this value. Default is 240 seconds (4 minutes).
+     */
     @Value("${artemis.continuous-integration.build-timeout-seconds.max:240}")
     private int timeoutSeconds;
 
+    /**
+     * Whether to run build jobs asynchronously (true) or synchronously (false).
+     * Synchronous mode is primarily used for testing to ensure deterministic behavior.
+     */
     @Value("${artemis.continuous-integration.asynchronous:true}")
     private boolean runBuildJobsAsynchronously;
 
+    /**
+     * Prefix for Docker container names. Each build job's container is named "{prefix}{buildJobId}".
+     * This allows easy identification and management of build containers.
+     */
     @Value("${artemis.continuous-integration.build-container-prefix:local-ci-}")
     private String buildContainerPrefix;
 
@@ -138,34 +179,126 @@ public class BuildJobManagementService {
     private final Set<String> cancelledBuildJobs = new ConcurrentSkipListSet<>();
 
     public BuildJobManagementService(DistributedDataAccessService distributedDataAccessService, BuildJobExecutionService buildJobExecutionService,
-            BuildAgentConfiguration buildAgentConfiguration, BuildJobContainerService buildJobContainerService, BuildLogsMap buildLogsMap) {
+            BuildAgentConfiguration buildAgentConfiguration, BuildJobContainerService buildJobContainerService, BuildLogsMap buildLogsMap, TaskScheduler taskScheduler) {
         this.buildJobExecutionService = buildJobExecutionService;
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildJobContainerService = buildJobContainerService;
         this.distributedDataAccessService = distributedDataAccessService;
         this.buildLogsMap = buildLogsMap;
+        this.taskScheduler = taskScheduler;
     }
 
     /**
-     * Add a listener to the canceledBuildJobsTopic that cancels the build job for the given buildJobId.
-     * It gets broadcast to all nodes in the cluster. Only the node that is running the build job will cancel it.
+     * Initialize the service by setting up the cancel listener for build jobs.
+     * <p>
+     * When running as a Hazelcast client with asyncStart=true, the client may not yet be
+     * connected to the cluster when this method is called. In that case, we schedule
+     * periodic retries until the connection is established and initialization completes.
+     * <p>
+     * Additionally, a connection state listener is registered to handle reconnection after
+     * a connection loss. When the client reconnects to the cluster, the listener re-initializes
+     * the distributed topic listener which may have been lost during the disconnection.
+     * <p>
      * EventListener cannot be used here, as the bean is lazy
      * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
     @PostConstruct
     public void init() {
-        DistributedTopic<String> canceledBuildJobsTopic = distributedDataAccessService.getCanceledBuildJobsTopic();
-        canceledBuildJobsTopic.addMessageListener(buildJobId -> {
-            jobLifecycleLock.lock();
-            try {
-                if (runningFutures.containsKey(buildJobId)) {
-                    cancelBuildJob(buildJobId);
-                }
+        // Register a connection state listener to handle both initial connection and reconnection.
+        // On reconnection (isInitialConnection=false), the topic listener needs to be re-registered
+        // because it may have been lost when the connection was interrupted.
+        distributedDataAccessService.addConnectionStateListener(isInitialConnection -> {
+            if (!isInitialConnection) {
+                // This is a reconnection - reset the initialized flag so listeners are re-registered
+                log.info("Hazelcast client reconnected to cluster. Re-initializing BuildJobManagementService listeners.");
+                initialized.set(false);
             }
-            finally {
-                jobLifecycleLock.unlock();
+            boolean initSucceeded = tryInitialize();
+            // If initialization failed, schedule retries (handles both connection issues and transient failures)
+            if (!initSucceeded) {
+                scheduleConnectionRetryIfNeeded();
             }
         });
+
+        // If already connected, tryInitialize was called by the listener above.
+        // If not connected yet, schedule periodic retries as a fallback.
+        if (!initialized.get() && !distributedDataAccessService.isConnectedToCluster()) {
+            log.info("Hazelcast client not yet connected to cluster. Scheduling periodic initialization retries every {} seconds.", CLUSTER_CONNECTION_RETRY_INTERVAL.toSeconds());
+            scheduleConnectionRetryIfNeeded();
+        }
+    }
+
+    /**
+     * Atomically schedules a connection retry task if one is not already running.
+     * Uses AtomicReference.updateAndGet to prevent race conditions where multiple
+     * threads could schedule duplicate retry tasks.
+     */
+    private void scheduleConnectionRetryIfNeeded() {
+        connectionRetryFuture.updateAndGet(current -> {
+            if (current == null || current.isDone()) {
+                return taskScheduler.scheduleAtFixedRate(() -> {
+                    if (tryInitialize()) {
+                        // Initialization succeeded - cancel the retry task
+                        ScheduledFuture<?> future = connectionRetryFuture.get();
+                        if (future != null) {
+                            future.cancel(false);
+                        }
+                    }
+                }, CLUSTER_CONNECTION_RETRY_INTERVAL);
+            }
+            return current;
+        });
+    }
+
+    /**
+     * Attempts to initialize the cancel listener for build jobs.
+     * <p>
+     * This method checks if the Hazelcast client is connected to the cluster before
+     * attempting to access distributed data structures. If not connected, it returns
+     * false so the caller can retry later.
+     *
+     * @return true if initialization succeeded, false if not connected to cluster
+     */
+    private synchronized boolean tryInitialize() {
+        if (initialized.get()) {
+            return true;
+        }
+
+        if (!distributedDataAccessService.isConnectedToCluster()) {
+            log.debug("Cannot initialize BuildJobManagementService: not connected to Hazelcast cluster yet");
+            return false;
+        }
+
+        try {
+            var canceledBuildJobsTopic = distributedDataAccessService.getCanceledBuildJobsTopic();
+
+            // Remove old listener if it exists (prevents duplicate listeners on reconnection)
+            if (cancelListenerId != null) {
+                canceledBuildJobsTopic.removeMessageListener(cancelListenerId);
+                cancelListenerId = null;
+            }
+
+            cancelListenerId = canceledBuildJobsTopic.addMessageListener(buildJobId -> {
+                jobLifecycleLock.lock();
+                try {
+                    if (runningFutures.containsKey(buildJobId)) {
+                        cancelBuildJob(buildJobId);
+                    }
+                }
+                finally {
+                    jobLifecycleLock.unlock();
+                }
+            });
+
+            initialized.set(true);
+            log.info("BuildJobManagementService initialized successfully - cancel listener registered");
+            return true;
+        }
+        catch (Exception e) {
+            // This can happen if the connection is lost between the check and the access
+            log.warn("Failed to initialize BuildJobManagementService: {}. Will retry.", e.getMessage());
+            return false;
+        }
     }
 
     /**
@@ -227,9 +360,8 @@ public class BuildJobManagementService {
                 return future.get(buildJobTimeoutSeconds, TimeUnit.SECONDS);
             }
             catch (Exception ex) {
-                Throwable cause = ex.getCause();
-                if (cause != null && DockerUtil.isDockerNotAvailable(cause)) {
-                    log.error("Cannot connect to Docker Host. Make sure Docker is running and configured properly! {}", cause.getMessage());
+                if (DockerUtil.isDockerNotAvailable(ex)) {
+                    log.warn("Docker is not available. Build job {} cannot be executed.", buildJobItem.id());
                     throw new CompletionException(ex);
                 }
                 // RejectedExecutionException is thrown if the queue size limit (defined in "artemis.continuous-integration.queue-size-limit") is reached.
@@ -245,6 +377,10 @@ public class BuildJobManagementService {
                 else {
                     finishBuildJobExceptionally(buildJobItem.id(), containerName, ex);
                     if (ex instanceof TimeoutException) {
+                        // Cancel the underlying future to interrupt the build job that's still running.
+                        // Without this, the build job continues running in the background and may create
+                        // a "zombie" container after the timeout has already been reported.
+                        future.cancel(true);
                         logTimedOutBuildJob(buildJobItem, buildJobTimeoutSeconds);
                     }
                     throw new CompletionException(ex);
@@ -271,10 +407,27 @@ public class BuildJobManagementService {
         buildLogsMap.appendBuildLogEntry(buildJobItem.id(), msg);
     }
 
+    /**
+     * Returns a snapshot of all currently running build job IDs on this node.
+     * <p>
+     * This is useful for monitoring and debugging purposes. The returned set is a copy,
+     * so modifications won't affect the internal state.
+     *
+     * @return an immutable set of build job IDs currently being executed on this node
+     */
     Set<String> getRunningBuildJobIds() {
         return Set.copyOf(runningFutures.keySet());
     }
 
+    /**
+     * Returns the public-facing CompletableFuture wrapper for a running build job.
+     * <p>
+     * This wrapper is used by REST/websocket layers to observe build completion and stream logs.
+     * Returns null if no build job with the given ID is currently running on this node.
+     *
+     * @param buildJobId the ID of the build job
+     * @return the CompletableFuture wrapper, or null if not found
+     */
     CompletableFuture<BuildResult> getRunningBuildJobFutureWrapper(String buildJobId) {
         return runningFuturesWrapper.get(buildJobId);
     }
@@ -307,6 +460,8 @@ public class BuildJobManagementService {
 
     /**
      * Finish the build job if an exception occurred while building and testing the repository.
+     * This method logs the error, provides user-friendly messaging for infrastructure issues,
+     * and ensures the container is properly stopped.
      *
      * @param buildJobId    The id of the build job that failed.
      * @param containerName The name of the Docker container that was used to execute the build job.
@@ -315,15 +470,47 @@ public class BuildJobManagementService {
     private void finishBuildJobExceptionally(String buildJobId, String containerName, Exception exception) {
         String msg = "Error while executing build job " + buildJobId + ": " + exception.getMessage();
         String stackTrace = stackTraceToString(exception);
-        buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogDTO(ZonedDateTime.now(), msg + "\n" + stackTrace));
-        log.error(msg, exception);
 
-        log.info("Getting ID of running container {}", containerName);
+        // Check if this is a tar archive failure (infrastructure issue)
+        boolean isTarFailure = isTarArchiveFailure(exception);
+        if (isTarFailure) {
+            String userFriendlyMsg = "Build failed due to a temporary infrastructure issue while preparing the build environment. "
+                    + "This is not caused by your code. Please try rerunning your build.";
+            buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogDTO(ZonedDateTime.now(), userFriendlyMsg));
+            log.error("Tar archive failure for build job {}: {}", buildJobId, exception.getMessage(), exception);
+        }
+        else {
+            buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogDTO(ZonedDateTime.now(), msg + "\n" + stackTrace));
+            log.error(msg, exception);
+        }
+
+        log.info("Getting ID of running container {} for cleanup after build job {} failure", containerName, buildJobId);
         String containerId = buildJobContainerService.getIDOfRunningContainer(containerName);
-        log.info("Stopping unresponsive container with ID {}", containerId);
         if (containerId != null) {
+            log.info("Stopping container with ID {} after build job {} failed", containerId, buildJobId);
             buildJobContainerService.stopUnresponsiveContainer(containerId);
         }
+        else {
+            log.debug("No running container found with name {} for build job {}", containerName, buildJobId);
+        }
+    }
+
+    /**
+     * Checks if the exception is related to a tar archive operation failure.
+     *
+     * @param exception the exception to check
+     * @return true if the exception is related to tar archive operations
+     */
+    private boolean isTarArchiveFailure(Exception exception) {
+        String message = exception.getMessage();
+        if (message == null) {
+            return false;
+        }
+
+        // Check for tar-related error messages
+        return message.contains("tar archive") || message.contains("Could not copy to container") || message.contains("Could not create tar")
+                || message.contains("Failed to retrieve archive") || (exception.getCause() != null && exception.getCause().getMessage() != null
+                        && (exception.getCause().getMessage().contains("tar") || exception.getCause().getMessage().contains("IOException")));
     }
 
     /**
@@ -362,6 +549,14 @@ public class BuildJobManagementService {
         cancelledBuildJobs.remove(buildJobId);
     }
 
+    /**
+     * Converts an exception's stack trace to a string for logging purposes.
+     * <p>
+     * This is useful for including full stack traces in build logs to help with debugging.
+     *
+     * @param e the throwable whose stack trace should be converted
+     * @return the stack trace as a string
+     */
     private String stackTraceToString(Throwable e) {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);

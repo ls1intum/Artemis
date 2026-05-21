@@ -1,6 +1,6 @@
 <div class="course-detail-parent-container col">
     <div class="d-flex flex-nowrap justify-content-center gap-2 mt-3">
-        <a [routerLink]="['/course-management', course.id, 'course-statistics']" class="text-center">
+        <a [routerLink]="['/course-management', course().id, 'course-statistics']" class="text-center">
             <h5 jhiTranslate="artemisApp.courseStatistics.activeStudents"></h5>
         </a>
         <jhi-help-icon class="chart-explanation-tooltip" placement="right auto" text="artemisApp.courseStatistics.activeStudentsExplanation" />
@@ -9,11 +9,11 @@
         <ng-container>
             <div>
                 <div class="d-flex gap-3 justify-content-end me-3">
-                    @if (course.startDate) {
+                    @if (course().startDate) {
                         <div class="d-flex">
                             <button
                                 class="btn"
-                                [disabled]="!showLifetimeOverview && displayedNumberOfWeeks === 4"
+                                [disabled]="!showLifetimeOverview() && displayedNumberOfWeeks() === 4"
                                 (click)="displayPeriodOverview(4)"
                                 ngbTooltip="{{ 'artemisApp.courseStatistics.scopeButton.periodTooltip' | artemisTranslate: { amount: 4 } }}"
                                 jhiTranslate="artemisApp.courseStatistics.scopeButton.period"
@@ -21,7 +21,7 @@
                             ></button>
                             <button
                                 class="btn"
-                                [disabled]="!showLifetimeOverview && displayedNumberOfWeeks === 8"
+                                [disabled]="!showLifetimeOverview() && displayedNumberOfWeeks() === 8"
                                 (click)="displayPeriodOverview(8)"
                                 ngbTooltip="{{ 'artemisApp.courseStatistics.scopeButton.periodTooltip' | artemisTranslate: { amount: 8 } }}"
                                 jhiTranslate="artemisApp.courseStatistics.scopeButton.period"
@@ -29,7 +29,7 @@
                             ></button>
                             <button
                                 class="btn"
-                                [disabled]="showLifetimeOverview"
+                                [disabled]="showLifetimeOverview()"
                                 (click)="displayLifetimeOverview()"
                                 ngbTooltip="{{ 'artemisApp.courseStatistics.scopeButton.overviewTooltip' | artemisTranslate }}"
                                 jhiTranslate="artemisApp.courseStatistics.scopeButton.overview"
@@ -38,29 +38,29 @@
                         <span class="pt-1">|</span>
                     }
                     <div class="d-flex gap-1">
-                        <button class="btn" [disabled]="startDateDisplayed" (click)="switchTimeSpan(SwitchTimeSpanDirection.LEFT)">
+                        <button class="btn" [disabled]="startDateDisplayed()" (click)="switchTimeSpan(SwitchTimeSpanDirection.LEFT)">
                             <fa-icon [icon]="faArrowLeft" />
                         </button>
-                        <button class="btn" [disabled]="showsCurrentWeek" (click)="switchTimeSpan(SwitchTimeSpanDirection.RIGHT)">
+                        <button class="btn" [disabled]="showsCurrentWeek()" (click)="switchTimeSpan(SwitchTimeSpanDirection.RIGHT)">
                             <fa-icon [icon]="faArrowRight" />
                         </button>
                     </div>
                 </div>
                 <div #containerRef class="d-flex mt-1 justify-content-center align-items-center h-99">
-                    @if (!loading) {
+                    @if (!loading()) {
                         <ngx-charts-line-chart
                             [view]="[containerRef.offsetWidth, 320]"
                             [scheme]="chartColor"
                             [showXAxisLabel]="true"
                             [xAxis]="true"
                             [yAxis]="true"
-                            [xAxisLabel]="xAxisLabel"
-                            [results]="data"
+                            [xAxisLabel]="xAxisLabel()"
+                            [results]="data()"
                             [yScaleMin]="0"
                             [yScaleMax]="100"
                             [yAxisTickFormatting]="formatYAxis"
                             [curve]="curve"
-                            [referenceLines]="[average]"
+                            [referenceLines]="[average()]"
                             [showRefLines]="true"
                             [showRefLabels]="true"
                         >
@@ -85,7 +85,7 @@
     } @else {
         <ng-container>
             <h4 class="text-center mt-3" jhiTranslate="artemisApp.course.notStartedYet"></h4>
-            <h3 class="text-center">{{ course.startDate | artemisDate }}</h3>
+            <h3 class="text-center">{{ course().startDate | artemisDate }}</h3>
         </ng-container>
     }
 </div>

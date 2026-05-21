@@ -36,6 +36,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.core.web.SharingSupportResource;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
@@ -81,7 +82,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
 
     @BeforeEach
     void setupObjectMapper() {
-        objectMapper = new ObjectMapper();
+        objectMapper = JsonObjectMapper.get().copy();
         objectMapper.findAndRegisterModules();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
@@ -216,7 +217,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
     @WithMockUser(username = INSTRUCTOR_NAME, roles = "INSTRUCTOR")
     void setUpWithMissingExercise() throws Exception {
 
-        SharingSetupInfo emptySetupInfo = new SharingSetupInfo(null, null, null);
+        SharingSetupInfoDTO emptySetupInfo = new SharingSetupInfoDTO(null, 0, null);
 
         // last step: do Exercise Import
         requestUtilService.performMvcRequest(post("/api/programming/sharing/setup-import").contentType(MediaType.APPLICATION_JSON)
@@ -234,7 +235,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
                 .content(objectMapper.writeValueAsString(sharingInfo)).accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
     }
 
-    private String importBasket() throws Exception {
+    private void importBasket() throws Exception {
         String sampleBasket = IOUtils.toString(Objects.requireNonNull(this.getClass().getResource("./basket/sampleBasket.json")), StandardCharsets.UTF_8);
 
         URI basketURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/" + SAMPLE_BASKET_TOKEN);
@@ -251,7 +252,6 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
 
         ShoppingBasket sb = objectMapper.readerFor(ShoppingBasket.class).readValue(content);
         assertThat(sb.userInfo.email).isEqualTo("test.user@example.com");
-        return SAMPLE_BASKET_TOKEN;
     }
 
 }

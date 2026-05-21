@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.assessment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -14,10 +15,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.Rating;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.dashboard.RatingListItemDTO;
 import de.tum.cit.aet.artemis.assessment.service.RatingService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -45,11 +48,13 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
 
     private Course course;
 
+    private TextExercise exercise;
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        exercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         participationUtilService.createAndSaveParticipationForExercise(exercise, student1.getLogin());
 
@@ -147,27 +152,51 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetRatingForInstructorDashboard_asInstructor() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
-        final var ratings = request.getList("/api/assessment/course/" + course.getId() + "/rating", HttpStatus.OK, Rating.class);
+
+        // Test paginated endpoint - response is a list with pagination info in headers
+        List<RatingListItemDTO> ratings = request.getList("/api/assessment/course/" + course.getId() + "/rating", HttpStatus.OK, RatingListItemDTO.class);
 
         assertThat(ratings).hasSize(1);
-        assertThat(ratings.getFirst().getId()).isEqualTo(savedRating.getId());
+
+        var ratingDto = ratings.getFirst();
+        assertThat(ratingDto.id()).isEqualTo(savedRating.getId());
+        assertThat(ratingDto.rating()).isEqualTo(savedRating.getRating());
+        assertThat(ratingDto.exerciseTitle()).isEqualTo(exercise.getTitle());
+        assertThat(ratingDto.exerciseType()).isEqualTo(ExerciseType.TEXT);
+        assertThat(ratingDto.resultId()).isNotNull();
+        assertThat(ratingDto.submissionId()).isNotNull();
+        assertThat(ratingDto.participationId()).isNotNull();
+        assertThat(ratingDto.exerciseId()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetRatingForInstructorDashboard_withPagination() throws Exception {
+        // Create a rating
+        ratingService.saveRating(result.getId(), rating.getRating());
+
+        // Test with explicit pagination and sorting parameters
+        List<RatingListItemDTO> ratings = request.getList("/api/assessment/course/" + course.getId() + "/rating?page=0&size=10&sort=id,desc", HttpStatus.OK,
+                RatingListItemDTO.class);
+
+        assertThat(ratings).hasSize(1);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetRatingForInstructorDashboard_asTutor_FORBIDDEN() throws Exception {
-        request.getList("/api/assessment/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, Rating.class);
+        request.get("/api/assessment/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetRatingForInstructorDashboard_asStudent_FORBIDDEN() throws Exception {
-        request.getList("/api/assessment/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, Rating.class);
+        request.get("/api/assessment/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testGetRatingForInstructorDashboard_asInstructor_FORBIDDEN() throws Exception {
-        request.getList("/api/assessment/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, Rating.class);
+        request.get("/api/assessment/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, List.class);
     }
 }

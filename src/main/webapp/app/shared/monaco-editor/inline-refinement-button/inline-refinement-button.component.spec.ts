@@ -1,0 +1,203 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { InlineRefinementButtonComponent } from './inline-refinement-button.component';
+import { TranslateService } from '@ngx-translate/core';
+import { vi } from 'vitest';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { Subject } from 'rxjs';
+
+describe('InlineRefinementButtonComponent', () => {
+    setupTestBed({ zoneless: true });
+
+    let fixture: ComponentFixture<InlineRefinementButtonComponent>;
+    let comp: InlineRefinementButtonComponent;
+    let translateService: TranslateService;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [InlineRefinementButtonComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(InlineRefinementButtonComponent);
+        comp = fixture.componentInstance;
+        translateService = TestBed.inject(TranslateService);
+
+        // Set required inputs
+        fixture.componentRef.setInput('top', 100);
+        fixture.componentRef.setInput('left', 200);
+        fixture.componentRef.setInput('selectedText', 'Some selected text');
+        fixture.componentRef.setInput('startLine', 1);
+        fixture.componentRef.setInput('endLine', 2);
+        fixture.componentRef.setInput('startColumn', 5);
+        fixture.componentRef.setInput('endColumn', 10);
+
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('should create', () => {
+        expect(comp).toBeTruthy();
+    });
+
+    it('should initialize with collapsed state', () => {
+        expect(comp.isExpanded()).toBeFalsy();
+        expect(comp.instruction()).toBe('');
+    });
+
+    it('should expand and focus input when expand is called', () => {
+        vi.useFakeTimers();
+        comp.expand();
+        vi.advanceTimersByTime(100);
+
+        expect(comp.isExpanded()).toBeTruthy();
+        vi.useRealTimers();
+    });
+
+    it('should emit refine event with correct data on submit', () => {
+        const refineSpy = vi.spyOn(comp.refine, 'emit');
+
+        comp.expand();
+        comp.instruction.set('Improve clarity');
+        comp.submit();
+
+        expect(refineSpy).toHaveBeenCalledWith({
+            instruction: 'Improve clarity',
+            startLine: 1,
+            endLine: 2,
+            startColumn: 5,
+            endColumn: 10,
+        });
+    });
+
+    it('should not emit refine event when instruction is empty', () => {
+        const refineSpy = vi.spyOn(comp.refine, 'emit');
+
+        comp.expand();
+        comp.instruction.set('');
+        comp.submit();
+
+        expect(refineSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not emit refine event when instruction is only whitespace', () => {
+        const refineSpy = vi.spyOn(comp.refine, 'emit');
+
+        comp.expand();
+        comp.instruction.set('   ');
+        comp.submit();
+
+        expect(refineSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not emit refine event when isLoading is true', () => {
+        const refineSpy = vi.spyOn(comp.refine, 'emit');
+
+        fixture.componentRef.setInput('isLoading', true);
+        fixture.detectChanges();
+
+        comp.expand();
+        comp.instruction.set('Test instruction');
+        comp.submit();
+
+        expect(refineSpy).not.toHaveBeenCalled();
+    });
+
+    it('should submit on Enter key press', () => {
+        const submitSpy = vi.spyOn(comp, 'submit');
+        const event = new KeyboardEvent('keydown', { key: 'Enter' });
+        vi.spyOn(event, 'stopPropagation');
+        vi.spyOn(event, 'preventDefault');
+
+        comp.onKeydown(event);
+
+        expect(event.stopPropagation).toHaveBeenCalled();
+        expect(event.preventDefault).toHaveBeenCalled();
+        expect(submitSpy).toHaveBeenCalled();
+    });
+
+    it('should not submit on Shift+Enter key press', () => {
+        const submitSpy = vi.spyOn(comp, 'submit');
+        const event = new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true });
+
+        comp.onKeydown(event);
+
+        expect(submitSpy).not.toHaveBeenCalled();
+    });
+
+    it('should emit closeRefinement on Escape key press', () => {
+        const closeSpy = vi.spyOn(comp.closeRefinement, 'emit');
+        const event = new KeyboardEvent('keydown', { key: 'Escape' });
+
+        comp.onKeydown(event);
+
+        expect(closeSpy).toHaveBeenCalled();
+    });
+
+    it('should emit closeRefinement when handleClose is called', () => {
+        const closeSpy = vi.spyOn(comp.closeRefinement, 'emit');
+
+        comp.handleClose();
+
+        expect(closeSpy).toHaveBeenCalled();
+    });
+
+    it('should detect when instruction is near character limit', () => {
+        expect(comp.isNearLimit()).toBeFalsy();
+
+        // 90% of 500 = 450 chars
+        comp.instruction.set('a'.repeat(450));
+        expect(comp.isNearLimit()).toBeTruthy();
+    });
+
+    it('should not flag as near limit below threshold', () => {
+        comp.instruction.set('a'.repeat(449));
+        expect(comp.isNearLimit()).toBeFalsy();
+    });
+
+    it('should trigger change detection on language change', async () => {
+        const langChangeSubject = new Subject<any>();
+        (translateService as any).onLangChange = langChangeSubject.asObservable();
+
+        // Re-create component to pick up the new observable
+        fixture = TestBed.createComponent(InlineRefinementButtonComponent);
+        comp = fixture.componentInstance;
+        fixture.componentRef.setInput('top', 100);
+        fixture.componentRef.setInput('left', 200);
+        fixture.componentRef.setInput('selectedText', 'text');
+        fixture.componentRef.setInput('startLine', 1);
+        fixture.componentRef.setInput('endLine', 1);
+        fixture.componentRef.setInput('startColumn', 0);
+        fixture.componentRef.setInput('endColumn', 5);
+
+        // Spy on the new component's cdr BEFORE detectChanges
+        const cdrSpy = vi.spyOn(comp['cdr'], 'markForCheck');
+        fixture.detectChanges();
+
+        langChangeSubject.next({ lang: 'de' });
+
+        expect(cdrSpy).toHaveBeenCalled();
+    });
+
+    it('should have correct input values', () => {
+        expect(comp.top()).toBe(100);
+        expect(comp.left()).toBe(200);
+        expect(comp.selectedText()).toBe('Some selected text');
+        expect(comp.startLine()).toBe(1);
+        expect(comp.endLine()).toBe(2);
+        expect(comp.startColumn()).toBe(5);
+        expect(comp.endColumn()).toBe(10);
+    });
+
+    it('should stop propagation on all keydown events', () => {
+        const event = new KeyboardEvent('keydown', { key: 'a' });
+        vi.spyOn(event, 'stopPropagation');
+
+        comp.onKeydown(event);
+
+        expect(event.stopPropagation).toHaveBeenCalled();
+    });
+});

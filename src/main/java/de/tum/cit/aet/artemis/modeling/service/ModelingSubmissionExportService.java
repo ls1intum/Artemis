@@ -1,15 +1,13 @@
 package de.tum.cit.aet.artemis.modeling.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -18,9 +16,10 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionExportService;
+import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 
-@Profile(PROFILE_CORE)
+@Conditional(ModelingEnabled.class)
 @Lazy
 @Service
 public class ModelingSubmissionExportService extends SubmissionExportService {

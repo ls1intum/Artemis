@@ -1,12 +1,10 @@
 package de.tum.cit.aet.artemis.iris.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,15 +15,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
+import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisTutorSuggestionSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
 /**
  * REST controller for managing Iris tutor suggestion sessions.
  */
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 @RestController
 @RequestMapping("api/iris/tutor-suggestion/")
 @Lazy
@@ -55,19 +54,19 @@ public class IrisTutorSuggestionSessionResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("{postId}/sessions/current")
-    public ResponseEntity<IrisTutorSuggestionSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long postId) throws URISyntaxException {
+    public ResponseEntity<IrisChatSessionResponseDTO> getCurrentSessionOrCreateIfNotExists(@PathVariable Long postId) throws URISyntaxException {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var post = postRepository.findPostOrMessagePostByIdElseThrow(postId);
         var course = post.getCoursePostingBelongsTo();
         if (!userRepository.isAtLeastTeachingAssistantInCourse(user.getLogin(), course.getId())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TUTOR_SUGGESTION, course);
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
 
         var sessionOptional = irisTutorSuggestionSessionRepository.findLatestSessionsByPostIdAndUserIdWithMessages(postId, user.getId(), Pageable.ofSize(1)).stream().findFirst();
         if (sessionOptional.isPresent()) {
             var session = sessionOptional.get();
-            return ResponseEntity.ok(session);
+            return ResponseEntity.ok(IrisChatSessionResponseDTO.ofWithMessages(session));
         }
         return createSessionForPost(postId);
     }
@@ -80,7 +79,7 @@ public class IrisTutorSuggestionSessionResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("{postId}/sessions")
-    public ResponseEntity<IrisTutorSuggestionSession> createSessionForPost(@PathVariable Long postId) throws URISyntaxException {
+    public ResponseEntity<IrisChatSessionResponseDTO> createSessionForPost(@PathVariable Long postId) throws URISyntaxException {
         var post = postRepository.findPostOrMessagePostByIdElseThrow(postId);
 
         var course = post.getCoursePostingBelongsTo();
@@ -88,12 +87,12 @@ public class IrisTutorSuggestionSessionResource {
         if (!userRepository.isAtLeastTeachingAssistantInCourse(user.getLogin(), course.getId())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TUTOR_SUGGESTION, course);
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
 
         var session = irisTutorSuggestionSessionRepository.save(new IrisTutorSuggestionSession(post.getId(), user));
         var uriString = "/api/iris/sessions/" + session.getId();
 
-        return ResponseEntity.created(new URI(uriString)).body(session);
+        return ResponseEntity.created(new URI(uriString)).body(IrisChatSessionResponseDTO.of(session));
     }
 
 }

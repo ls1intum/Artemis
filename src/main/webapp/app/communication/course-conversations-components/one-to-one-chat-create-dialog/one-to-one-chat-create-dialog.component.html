@@ -12,7 +12,7 @@
                 (ngModelChange)="onSelectedUsersChange($event)"
                 [multiSelect]="false"
                 [showUserList]="false"
-                [courseId]="course.id!"
+                [courseId]="course()!.id!"
                 [label]="'artemisApp.dialogs.createOneToOneChat.userSelectorLabel' | artemisTranslate"
             />
         </div>

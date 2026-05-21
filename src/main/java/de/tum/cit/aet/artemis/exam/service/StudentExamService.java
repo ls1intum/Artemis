@@ -53,9 +53,10 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionVersionService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.modeling.api.ModelingSubmissionApi;
+import de.tum.cit.aet.artemis.modeling.config.ModelingApiNotPresentException;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -112,7 +113,7 @@ public class StudentExamService {
 
     private final Optional<TextSubmissionApi> textSubmissionApi;
 
-    private final ModelingSubmissionRepository modelingSubmissionRepository;
+    private final Optional<ModelingSubmissionApi> modelingSubmissionApi;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -126,7 +127,7 @@ public class StudentExamService {
 
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, Optional<TextSubmissionApi> textSubmissionApi,
-            ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService, SubmissionService submissionService,
+            Optional<ModelingSubmissionApi> modelingSubmissionApi, SubmissionVersionService submissionVersionService, SubmissionService submissionService,
             StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingTriggerService programmingTriggerService, ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService,
             @Qualifier("taskScheduler") TaskScheduler scheduler, ExamService examService) {
@@ -136,7 +137,7 @@ public class StudentExamService {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.submittedAnswerRepository = submittedAnswerRepository;
         this.textSubmissionApi = textSubmissionApi;
-        this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.modelingSubmissionApi = modelingSubmissionApi;
         this.submissionVersionService = submissionVersionService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.examQuizService = examQuizService;
@@ -284,7 +285,7 @@ public class StudentExamService {
         ModelingSubmission existingSubmissionInDatabase = (ModelingSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
         ModelingSubmission modelingSubmissionFromClient = (ModelingSubmission) submissionFromClient;
         if (!isContentEqualTo(existingSubmissionInDatabase, modelingSubmissionFromClient)) {
-            modelingSubmissionRepository.save(modelingSubmissionFromClient);
+            modelingSubmissionApi.orElseThrow(() -> new ModelingApiNotPresentException(ModelingSubmissionApi.class)).save(modelingSubmissionFromClient);
             saveSubmissionVersion(currentUser, submissionFromClient);
         }
     }
@@ -730,10 +731,7 @@ public class StudentExamService {
         var studentExams = exam.getStudentExams();
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
 
-        var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
-        if (cache != null) {
-            cache.evict(examId);
-        }
+        this.invalidateExerciseStartStatus(examId);
 
         var finishedExamsCounter = new AtomicInteger(0);
         var failedExamsCounter = new AtomicInteger(0);
@@ -801,6 +799,13 @@ public class StudentExamService {
                 .map(wrapper -> (ExamExerciseStartPreparationStatus) wrapper.get());
     }
 
+    public void invalidateExerciseStartStatus(Long examId) {
+        var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
+        if (cache != null) {
+            cache.evict(examId);
+        }
+    }
+
     /**
      * Generates a new individual StudentExam for the specified student and stores it in the database.
      *
@@ -830,6 +835,7 @@ public class StudentExamService {
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateStudentExams(final Exam exam) {
+        this.invalidateExerciseStartStatus(exam.getId());
         final var existingStudentExams = studentExamRepository.findByExamId(exam.getId());
         // deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
         studentExamRepository.deleteAll(existingStudentExams);
@@ -850,6 +856,7 @@ public class StudentExamService {
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateMissingStudentExams(Exam exam) {
+        this.invalidateExerciseStartStatus(exam.getId());
 
         // Get all users who already have an individual exam
         Set<User> usersWithStudentExam = studentExamRepository.findUsersWithStudentExamsForExam(exam.getId());

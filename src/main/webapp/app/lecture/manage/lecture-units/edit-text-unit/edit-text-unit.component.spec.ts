@@ -1,6 +1,8 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import dayjs from 'dayjs/esm';
 
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
@@ -24,11 +26,15 @@ import { ProfileService } from '../../../../core/layouts/profiles/shared/profile
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('EditTextUnitComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<EditTextUnitComponent>;
     let editTextUnitComponent: EditTextUnitComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        global.ResizeObserver = MockResizeObserver as any;
+
+        await TestBed.configureTestingModule({
             imports: [OwlNativeDateTimeModule],
             providers: [
                 MockProvider(TextUnitService),
@@ -66,23 +72,20 @@ describe('EditTextUnitComponent', () => {
         fixture = TestBed.createComponent(EditTextUnitComponent);
         editTextUnitComponent = fixture.componentInstance;
         const alertService = TestBed.inject(AlertService);
-        jest.spyOn(alertService, 'error').mockReturnValue({ message: '' } as Alert);
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-            return new MockResizeObserver(callback);
-        });
+        vi.spyOn(alertService, 'error').mockReturnValue({ message: '' } as Alert);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
-    it('should initialize', fakeAsync(() => {
+    it('should initialize', async () => {
         fixture.detectChanges();
-        tick();
+        await fixture.whenStable();
         expect(editTextUnitComponent).not.toBeNull();
-    }));
+    });
 
     it('should set form data correctly', async () => {
-        jest.spyOn(console, 'warn').mockImplementation(() => {});
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
         const textUnitService = TestBed.inject(TextUnitService);
 
         const originalTextUnit: TextUnit = new TextUnit();
@@ -96,18 +99,17 @@ describe('EditTextUnitComponent', () => {
             status: 200,
         });
 
-        const findByIdStub = jest.spyOn(textUnitService, 'findById').mockReturnValue(of(response));
+        const findByIdStub = vi.spyOn(textUnitService, 'findById').mockReturnValue(of(response));
         fixture.detectChanges();
         const textUnitFormComponent: TextUnitFormComponent = fixture.debugElement.query(By.directive(TextUnitFormComponent)).componentInstance;
 
         fixture.detectChanges();
-        return fixture.whenStable().then(() => {
-            expect(findByIdStub).toHaveBeenCalledOnce();
-            expect(editTextUnitComponent.formData.name).toEqual(originalTextUnit.name);
-            expect(editTextUnitComponent.formData.releaseDate).toEqual(originalTextUnit.releaseDate);
-            expect(editTextUnitComponent.formData.content).toEqual(originalTextUnit.content);
-            expect(textUnitFormComponent.formData()).toEqual(editTextUnitComponent.formData);
-        });
+        await fixture.whenStable();
+        expect(findByIdStub).toHaveBeenCalledTimes(1);
+        expect(editTextUnitComponent.formData.name).toEqual(originalTextUnit.name);
+        expect(editTextUnitComponent.formData.releaseDate).toEqual(originalTextUnit.releaseDate);
+        expect(editTextUnitComponent.formData.content).toEqual(originalTextUnit.content);
+        expect(textUnitFormComponent.formData()).toEqual(editTextUnitComponent.formData);
     });
 
     it('should send PUT request upon form submission and navigate', async () => {
@@ -125,7 +127,7 @@ describe('EditTextUnitComponent', () => {
             status: 200,
         });
 
-        const findByIdStub = jest.spyOn(textUnitService, 'findById').mockReturnValue(of(findByidResponse));
+        const findByIdStub = vi.spyOn(textUnitService, 'findById').mockReturnValue(of(findByidResponse));
 
         const formDate: TextUnitFormData = {
             name: 'CHANGED',
@@ -142,19 +144,18 @@ describe('EditTextUnitComponent', () => {
             body: updatedTextUnit,
             status: 200,
         });
-        const updatedStub = jest.spyOn(textUnitService, 'update').mockReturnValue(of(updateResponse));
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const updatedStub = vi.spyOn(textUnitService, 'update').mockReturnValue(of(updateResponse));
+        const navigateSpy = vi.spyOn(router, 'navigate');
 
         fixture.detectChanges();
 
         const textUnitForm: TextUnitFormComponent = fixture.debugElement.query(By.directive(TextUnitFormComponent)).componentInstance;
         textUnitForm.formSubmitted.emit(formDate);
 
-        return fixture.whenStable().then(() => {
-            expect(findByIdStub).toHaveBeenCalledOnce();
-            expect(updatedStub).toHaveBeenCalledOnce();
-            expect(navigateSpy).toHaveBeenCalledOnce();
-            navigateSpy.mockRestore();
-        });
+        await fixture.whenStable();
+        expect(findByIdStub).toHaveBeenCalledTimes(1);
+        expect(updatedStub).toHaveBeenCalledTimes(1);
+        expect(navigateSpy).toHaveBeenCalledTimes(1);
+        navigateSpy.mockRestore();
     });
 });

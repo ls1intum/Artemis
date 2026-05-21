@@ -22,8 +22,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.persistence.UniqueConstraint;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.ConcreteProxy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -49,7 +48,7 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "P")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@ConcreteProxy
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // Annotation necessary to distinguish between concrete implementations of Exercise when deserializing from JSON
 // @formatter:off
@@ -95,9 +94,9 @@ public abstract class Participation extends DomainObject implements Participatio
      * have to use the save function and not the saveAndFlush function because otherwise an exception is thrown. We can think about adding orphanRemoval=true here, after adding the
      * participationId to all submissions.
      */
+    // No @Cache: grows on every submit; NONSTRICT produced stale submission lists for concurrent readers, same class of bug as #12574.
     @OneToMany(mappedBy = "participation", fetch = FetchType.LAZY)
     @JsonIgnoreProperties({ "participation" })
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Submission> submissions = new HashSet<>();
 
     /**

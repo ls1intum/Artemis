@@ -1,0 +1,83 @@
+@if (gradingScale().course) {
+    <div class="form-group">
+        <div class="row">
+            <div class="col-auto">
+                <div>
+                    <label class="label-narrow" jhiTranslate="artemisApp.gradingSystem.presentationType.title"></label>
+                    <jhi-help-icon text="artemisApp.gradingSystem.presentationType.description" />
+                </div>
+                <div>
+                    <jhi-mode-picker [options]="modePickerOptions" [value]="presentationsConfig().presentationType" (valueChange)="onPresentationTypeChange($event!)" />
+                </div>
+            </div>
+            @if (presentationsConfig().presentationType === BASIC && gradingScale().course !== undefined) {
+                <div class="col-auto">
+                    <div>
+                        <label class="label-narrow" jhiTranslate="artemisApp.gradingSystem.basicPresentation.label"></label>
+                    </div>
+                    <div>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for="field_numberBasicPresentations" jhiTranslate="artemisApp.gradingSystem.gradedPresentation.number"
+                                    >Number</label
+                                >
+                            </div>
+                            <input
+                                name="numBasicPresentations"
+                                id="field_numberBasicPresentations"
+                                type="number"
+                                min="1"
+                                pattern="\d*"
+                                required
+                                class="form-control input-number-short"
+                                [ngModel]="gradingScale().course!.presentationScore"
+                                (ngModelChange)="updatePresentationScore($event)"
+                            />
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (presentationsConfig().presentationType === GRADED) {
+                <div class="col-auto">
+                    <div>
+                        <label class="label-narrow" jhiTranslate="artemisApp.gradingSystem.gradedPresentation.label"></label>
+                    </div>
+                    <div>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for="field_numberPresentations" jhiTranslate="artemisApp.gradingSystem.gradedPresentation.number"></label>
+                            </div>
+                            <input
+                                name="numPresentations"
+                                id="field_numberPresentations"
+                                type="number"
+                                min="1"
+                                pattern="\d*"
+                                required
+                                class="form-control input-number-short"
+                                [ngModel]="presentationsConfig().presentationsNumber"
+                                (ngModelChange)="updatePresentationsNumber($event)"
+                            />
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for="field_weightPresentations" jhiTranslate="artemisApp.gradingSystem.gradedPresentation.weight"
+                                    >Combined Weight</label
+                                >
+                            </div>
+                            <input
+                                name="weightPresentations"
+                                id="field_weightPresentations"
+                                type="number"
+                                min="0"
+                                max="99"
+                                required
+                                class="form-control input-number-short"
+                                [ngModel]="presentationsConfig().presentationsWeight"
+                                (ngModelChange)="updatePresentationsWeight($event)"
+                            />
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}

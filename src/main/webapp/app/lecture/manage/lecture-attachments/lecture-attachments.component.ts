@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, ViewChild, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -63,7 +63,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
     private readonly fileService = inject(FileService);
     private readonly formBuilder = inject(FormBuilder);
 
-    @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
+    fileInput = viewChild<ElementRef>('fileInput');
     datePickerComponent = viewChild(FormDateTimePickerComponent);
 
     lecture = signal<Lecture>(new Lecture());
@@ -168,7 +168,10 @@ export class LectureAttachmentsComponent implements OnDestroy {
     private handleFailedUpload(error: HttpErrorResponse): void {
         this.errorMessage = error.message;
         this.erroredFile = this.attachmentFile();
-        this.fileInput.nativeElement.value = '';
+        const fileInputEl = this.fileInput();
+        if (fileInputEl) {
+            fileInputEl.nativeElement.value = '';
+        }
         this.attachmentFile.set(undefined);
         this.resetAttachment();
     }
@@ -178,8 +181,9 @@ export class LectureAttachmentsComponent implements OnDestroy {
     }
 
     editAttachment(attachment: Attachment): void {
-        if (this.fileInput) {
-            this.fileInput.nativeElement.value = '';
+        const fileInputEl = this.fileInput();
+        if (fileInputEl) {
+            fileInputEl.nativeElement.value = '';
         }
 
         // attachmentFileName can only be set to an empty string due to security reasons in current angular version (18)

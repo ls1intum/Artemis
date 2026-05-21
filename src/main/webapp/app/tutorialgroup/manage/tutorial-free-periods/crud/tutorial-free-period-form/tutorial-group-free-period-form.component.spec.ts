@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -16,6 +18,8 @@ import dayjs from 'dayjs/esm';
 import { TranslateModule } from '@ngx-translate/core';
 
 describe('TutorialFreePeriodFormComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<TutorialGroupFreePeriodFormComponent>;
     let component: TutorialGroupFreePeriodFormComponent;
 
@@ -34,8 +38,17 @@ describe('TutorialFreePeriodFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, OwlDateTimeModule, OwlNativeDateTimeModule, TranslateModule.forRoot()],
-            declarations: [TutorialGroupFreePeriodFormComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockPipe(ArtemisDatePipe)],
+            imports: [
+                ReactiveFormsModule,
+                FormsModule,
+                OwlDateTimeModule,
+                OwlNativeDateTimeModule,
+                TranslateModule.forRoot(),
+                TutorialGroupFreePeriodFormComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(FaIconComponent),
+                MockPipe(ArtemisDatePipe),
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TutorialGroupFreePeriodFormComponent);
@@ -52,7 +65,7 @@ describe('TutorialFreePeriodFormComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -92,13 +105,13 @@ describe('TutorialFreePeriodFormComponent', () => {
         timeFrameTestHelperMethod(TimeFrame.PeriodWithinDay, formData);
     });
 
-    it('should submit valid form', fakeAsync(() => {
+    it('should submit valid form', async () => {
         setFormValues(validStartDateBerlin, undefined, undefined, undefined, validReason);
-        runOnPushChangeDetection(fixture);
-        expect(component.form.valid).toBeTrue();
-        expect(component.isSubmitPossible).toBeTrue();
+        await runOnPushChangeDetection(fixture);
+        expect(component.form.valid).toBe(true);
+        expect(component.isSubmitPossible).toBe(true);
         clickSubmit(true);
-    }));
+    });
 
     it('should reset unused form values when time frame changes', () => {
         setFormValues(validStartDateBerlin, validEndDateBerlinFreePeriod, undefined, undefined, validReason);
@@ -148,7 +161,7 @@ describe('TutorialFreePeriodFormComponent', () => {
         },
     ];
 
-    test.each(testCases)('%s', ({ expectedTimeFrame, formData }) => {
+    it.each(testCases)('%s', ({ expectedTimeFrame, formData }) => {
         fixture.componentRef.setInput('isEditMode', true);
         fixture.componentRef.setInput('formData', formData);
         fixture.detectChanges();
@@ -326,7 +339,7 @@ describe('TutorialFreePeriodFormComponent', () => {
         component.form.patchValue({ startDate: start, endDate: endBefore, startTime: undefined, endTime: undefined, reason: validReason });
         component.setTimeFrame(TimeFrame.Period);
 
-        expect(component.isStartBeforeEnd).toBeFalse();
+        expect(component.isStartBeforeEnd).toBe(false);
     });
 
     it('should return true if endDate > startDate when timeFrame is Period', () => {
@@ -336,7 +349,7 @@ describe('TutorialFreePeriodFormComponent', () => {
         component.form.patchValue({ startDate: start, endDate: endAfter, startTime: undefined, endTime: undefined, reason: validReason });
         component.setTimeFrame(TimeFrame.Period);
 
-        expect(component.isStartBeforeEnd).toBeTrue();
+        expect(component.isStartBeforeEnd).toBe(true);
     });
 
     it('should return true if endTime > startTime when timeFrame is PeriodWithinDay', () => {
@@ -352,7 +365,7 @@ describe('TutorialFreePeriodFormComponent', () => {
         });
         component.setTimeFrame(TimeFrame.PeriodWithinDay);
 
-        expect(component.isStartBeforeEnd).toBeTrue();
+        expect(component.isStartBeforeEnd).toBe(true);
     });
 
     it('should return false if endTime ≤ startTime when timeFrame is PeriodWithinDay', () => {
@@ -368,7 +381,7 @@ describe('TutorialFreePeriodFormComponent', () => {
         });
         component.setTimeFrame(TimeFrame.PeriodWithinDay);
 
-        expect(component.isStartBeforeEnd).toBeFalse();
+        expect(component.isStartBeforeEnd).toBe(false);
     });
 
     // === helper functions ===

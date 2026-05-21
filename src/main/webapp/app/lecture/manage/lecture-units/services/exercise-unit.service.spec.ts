@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -12,6 +14,8 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 
 describe('ExerciseUnitService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ExerciseUnitService;
     let httpMock: HttpTestingController;
     let elemDefault: ExerciseUnit;

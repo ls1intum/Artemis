@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, OnDestroy, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, OnDestroy, OnInit, TemplateRef, inject, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,7 +12,7 @@ import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
@@ -122,11 +122,11 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     private scoresStorageService = inject(ScoresStorageService);
     private translateService = inject(TranslateService);
     private route = inject(ActivatedRoute);
-    private gradingSystemService = inject(GradingSystemService);
+    private gradingService = inject(GradingService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     categoryFilter = inject(ChartCategoryFilter);
 
-    readonly documentationType: DocumentationType = 'Statistics';
+    readonly documentationType: DocumentationType = 'StudentStatistics';
 
     courseId: number;
     private courseExercises: Exercise[];
@@ -239,7 +239,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     faClipboard = faClipboard;
 
     // The extracted controls template from our template to be rendered in the top bar of "CourseOverviewComponent"
-    @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
+    private readonly controls = viewChild.required<TemplateRef<any>>('controls');
     // Provides the control configuration to be read and used by "CourseOverviewComponent"
     public readonly controlConfiguration: BarControlConfiguration = {
         subject: new Subject<TemplateRef<any>>(),
@@ -281,8 +281,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     ngAfterViewInit() {
         // Send our controls template to parent so it will be rendered in the top bar
-        if (this.controls) {
-            this.controlConfiguration.subject!.next(this.controls);
+        const controls = this.controls();
+        if (controls) {
+            this.controlConfiguration.subject!.next(controls);
             this.controlsRendered.emit();
         }
     }
@@ -294,7 +295,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     private calculateCourseGrade(): void {
-        this.gradingSystemService.matchPercentageToGradeStep(this.totalRelativeScore, this.courseId).subscribe((gradeDTO) => {
+        this.gradingService.matchPercentageToGradeStep(this.totalRelativeScore, this.courseId).subscribe((gradeDTO) => {
             if (gradeDTO) {
                 this.gradingScaleExists = true;
                 this.gradeDTO = gradeDTO;

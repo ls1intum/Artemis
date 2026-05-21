@@ -20,13 +20,11 @@ import org.apache.commons.io.filefilter.NotFileFilter;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -34,8 +32,10 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
@@ -70,13 +70,12 @@ public class ProgrammingExerciseImportFromFileService {
 
     private final BuildPlanRepository buildPlanRepository;
 
-    @Value("${artemis.temp-path}")
-    private Path tempPath;
+    private final TempFileUtilService tempFileUtilService;
 
     public ProgrammingExerciseImportFromFileService(ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
             ProgrammingExerciseValidationService programmingExerciseValidationService, ZipFileService zipFileService, StaticCodeAnalysisService staticCodeAnalysisService,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, RepositoryService repositoryService, GitService gitService, FileService fileService,
-            ProfileService profileService, BuildPlanRepository buildPlanRepository) {
+            ProfileService profileService, BuildPlanRepository buildPlanRepository, TempFileUtilService tempFileUtilService) {
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.zipFileService = zipFileService;
@@ -87,6 +86,7 @@ public class ProgrammingExerciseImportFromFileService {
         this.fileService = fileService;
         this.profileService = profileService;
         this.buildPlanRepository = buildPlanRepository;
+        this.tempFileUtilService = tempFileUtilService;
     }
 
     /**
@@ -102,15 +102,15 @@ public class ProgrammingExerciseImportFromFileService {
      * @return the imported programming exercise
      **/
     public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise originalProgrammingExercise, MultipartFile zipFile, Course course, User user,
-            boolean isImportFromSharing) throws IOException, GitAPIException, URISyntaxException {
+            boolean isImportFromSharing) throws IOException, GitAPIException {
         if (!"zip".equals(FilenameUtils.getExtension(zipFile.getOriginalFilename()))) {
             throw new BadRequestAlertException("The file is not a zip file", "programmingExercise", "fileNotZip");
         }
         Path importExerciseDir = null;
         ProgrammingExercise newProgrammingExercise;
         try {
-            importExerciseDir = Files.createTempDirectory(tempPath, "imported-exercise-dir");
-            Path exerciseFilePath = Files.createTempFile(importExerciseDir, "exercise-for-import", ".zip");
+            importExerciseDir = tempFileUtilService.createTempDirectory("imported-exercise-dir");
+            Path exerciseFilePath = tempFileUtilService.createTempFile(importExerciseDir, "exercise-for-import", ".zip");
 
             if (isImportFromSharing) {
                 // Exercises from Sharing are currently exported in a slightly different zip structure containing an additional root dir
@@ -297,9 +297,7 @@ public class ProgrammingExerciseImportFromFileService {
      */
     private ProgrammingExercise getProgrammingExerciseFromDetailsFile(Path extractedZipPath) throws IOException {
         var exerciseJsonPath = retrieveExerciseJsonPath(extractedZipPath);
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        objectMapper.findAndRegisterModules();
+        ObjectMapper objectMapper = JsonObjectMapper.get();
 
         try {
             return objectMapper.readValue(exerciseJsonPath.toFile(), ProgrammingExercise.class);

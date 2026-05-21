@@ -1,12 +1,13 @@
 package de.tum.cit.aet.artemis.lecture.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import java.time.ZonedDateTime;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.service.SlideService;
@@ -14,7 +15,7 @@ import de.tum.cit.aet.artemis.lecture.service.SlideService;
 /**
  * API for managing slides.
  */
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Controller
 @Lazy
 public class SlideApi extends AbstractLectureApi {
@@ -38,5 +39,9 @@ public class SlideApi extends AbstractLectureApi {
 
     public void handleDueDateChange(Exercise originalExercise, Exercise updatedExercise) {
         slideService.handleDueDateChange(originalExercise, updatedExercise);
+    }
+
+    public void handleDueDateChange(ZonedDateTime originalDueDate, Exercise updatedExercise) {
+        slideService.handleDueDateChange(originalDueDate, updatedExercise);
     }
 }

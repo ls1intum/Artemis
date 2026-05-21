@@ -40,34 +40,33 @@ public interface QuizTrainingLeaderboardRepository extends ArtemisJpaRepository<
      * - Diamond (2): 300-500
      * - Master (1): 500 and above
      */
-    @Transactional
+    @Transactional // ok because of modifying query
     @Modifying
     @Query("""
-                UPDATE QuizTrainingLeaderboard qtl
-                SET qtl.league =
-                            CASE
-                                WHEN (qtl.score + :scoreDelta) < 50 THEN 5
-                                WHEN (qtl.score + :scoreDelta) >= 50 AND (qtl.score + :scoreDelta) < 150 THEN 4
-                                WHEN (qtl.score + :scoreDelta) >= 150 AND (qtl.score + :scoreDelta) < 300 THEN 3
-                                WHEN (qtl.score + :scoreDelta) >= 300 AND (qtl.score + :scoreDelta)< 500 THEN 2
-                                ELSE 1
-                            END,
-                       qtl.score = qtl.score + :scoreDelta,
-                       qtl.answeredCorrectly = qtl.answeredCorrectly + :correctAnswers,
-                       qtl.answeredWrong = qtl.answeredWrong + :wrongAnswers,
-                       qtl.dueDate = :dueDate
-                WHERE qtl.user.id = :userId AND qtl.course.id = :courseId
+            UPDATE QuizTrainingLeaderboard qtl
+            SET qtl.league =
+                        CASE
+                            WHEN (qtl.score + :scoreDelta) < 50 THEN 5
+                            WHEN (qtl.score + :scoreDelta) >= 50 AND (qtl.score + :scoreDelta) < 150 THEN 4
+                            WHEN (qtl.score + :scoreDelta) >= 150 AND (qtl.score + :scoreDelta) < 300 THEN 3
+                            WHEN (qtl.score + :scoreDelta) >= 300 AND (qtl.score + :scoreDelta)< 500 THEN 2
+                            ELSE 1
+                        END,
+                   qtl.score = qtl.score + :scoreDelta,
+                   qtl.answeredCorrectly = qtl.answeredCorrectly + :correctAnswers,
+                   qtl.answeredWrong = qtl.answeredWrong + :wrongAnswers,
+                   qtl.dueDate = :dueDate
+            WHERE qtl.user.id = :userId AND qtl.course.id = :courseId
             """)
     void updateLeaderboardEntry(@Param("userId") long userId, @Param("courseId") long courseId, @Param("scoreDelta") int scoreDelta, @Param("correctAnswers") int correctAnswers,
             @Param("wrongAnswers") int wrongAnswers, @Param("dueDate") ZonedDateTime dueDate);
 
-    @Transactional
+    @Transactional // ok because of modifying query
     @Modifying
     @Query("""
-
             UPDATE QuizTrainingLeaderboard qtl
-                SET qtl.showInLeaderboard = :showInLeaderboard
-                WHERE qtl.user.id = :userId
+            SET qtl.showInLeaderboard = :showInLeaderboard
+            WHERE qtl.user.id = :userId
             """)
     void updateShowInLeaderboard(@Param("userId") long userId, @Param("showInLeaderboard") boolean showInLeaderboard);
 

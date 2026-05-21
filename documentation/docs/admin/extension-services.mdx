@@ -1,0 +1,618 @@
+---
+id: extensions-setup
+title: Setup of Extension Services
+sidebar_label: Extensions Setup
+---
+
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../src/components/Image/Image";
+import sharingHealth1 from "./assets/sharing/sharing_health1.png";
+import sharingHealth2 from "./assets/sharing/sharing_health2.png";
+import sharingButton1 from "./assets/sharing/sharingButtonArtemis.png";
+import sharingButton2 from "./assets/sharing/sharingButtonSharing.png";
+import Callout from "../../src/components/Callout/Callout";
+
+# Setup of Extension Services
+
+This section describes the required setup for various extension services that can be used to activate additional functionality in your Artemis instance.
+
+---
+
+## EduTelligence Suite
+
+EduTelligence is a comprehensive suite of AI-powered microservices designed to enhance Artemis with intelligent features. Some of the AI-powered services that integrate with Artemis are now part of this unified suite.
+
+**Compatibility**: EduTelligence maintains compatibility with different versions of Artemis. Please refer to the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">compatibility matrix</a> to ensure you're using compatible versions for optimal integration and functionality.
+
+**Repository**: <a href="https://github.com/ls1intum/edutelligence">github.com/ls1intum/edutelligence</a>
+
+---
+
+## Global Search (Standalone Weaviate)
+
+Artemis can run its global keyword and semantic search directly against Weaviate, **without** Pyris. This is useful for deployments that do not need Iris but still want global search across lectures, exercises, and channels.
+
+### When to use this section
+
+- You want to enable Artemis global search and **do not** run Pyris.
+- You run both Artemis and Pyris and want them to share a single Weaviate instance — read this section first, then continue with the [Iris & Pyris Setup Guide](#iris--pyris-setup-guide). Both consumers can coexist as long as their `collection-prefix` values differ (Artemis defaults to `Artemis_`).
+
+### Deploying Weaviate
+
+The Artemis repository ships its own Weaviate compose files for development; for production, use the same images and reuse the configuration documented in the [Weaviate Setup developer guide](/developer/weaviate-setup) (env files, vectorizer choice, API-key auth). You do not need any EduTelligence component for this path.
+
+A typical standalone production layout:
+
+- One Weaviate container (e.g. behind Traefik with TLS).
+- Anonymous access disabled, API key authentication enabled (see the developer guide's [Authentication](/developer/weaviate-setup#authentication) section).
+- Either `text2vec-openai` (OpenAI-compatible API such as Ollama or a TUM GPU server) or self-provided vectors (`vectorizer-module: none`) depending on your embedding strategy.
+
+### Configuring Artemis
+
+In `application-artemis.yml`, enable Weaviate and point it at your server:
+
+```yaml
+artemis:
+  weaviate:
+    enabled: true
+    http-host: weaviate.your-domain.com
+    http-port: 443
+    grpc-port: 50051
+    scheme: https
+    collection-prefix: Artemis_       # Differentiates from a Pyris-managed instance if you share one
+    vectorizer-module: text2vec-openai  # or "none" / "text2vec-transformers"
+    api-key: your-weaviate-api-key
+    # The following two are only needed for vectorizer-module: text2vec-openai
+    open-ai-embedding-model: Qwen/Qwen3-Embedding-8B
+    open-ai-base-url: https://gpu.aet.cit.tum.de/api/
+    gpu-api-key: your-gpu-key
+```
+
+Iris remains independent — `artemis.iris.enabled` does not have to be set for Weaviate to work.
+
+### Verifying
+
+Once Artemis starts, the Weaviate health indicator is registered automatically and shows up under `/management/health` (gated by `artemis.weaviate.enabled`). You can also probe Weaviate directly:
+
+```bash
+curl -H "Authorization: Bearer your-weaviate-api-key" \
+  https://weaviate.your-domain.com/v1/.well-known/ready
+```
+
+### Sharing one Weaviate between Artemis and Pyris
+
+If you already run a Weaviate instance for Pyris and want Artemis global search to use it as well:
+
+- Keep Pyris's `collection-prefix` (it manages its own collections).
+- Set Artemis's `collection-prefix` to a distinct value (default `Artemis_`).
+- Use a single API key with sufficient permissions, or distinct keys if you enable per-user authorization on the Weaviate server.
+
+---
+
+## Iris & Pyris Setup Guide
+
+<Callout variant={CalloutVariant.info}>
+
+  Pyris is part of the <a href="https://github.com/ls1intum/edutelligence">EduTelligence</a> suite. Always check the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">compatibility matrix</a> to ensure your Artemis version matches the EduTelligence version you deploy.
+
+</Callout>
+
+### Overview
+
+Iris is an intelligent virtual tutor integrated into Artemis, providing one-on-one programming assistance, course content support, and competency generation for students. It relies on **Pyris**, a FastAPI service from the EduTelligence suite that brokers requests between Artemis and various Large Language Models (LLMs).
+
+This guide covers everything needed to get Iris running: configuring Artemis, deploying Pyris, and connecting both.
+
+### Step 1: Configure Artemis
+
+#### 1.1 Enable Iris
+
+In your `application-artemis.yml`, enable Iris and point it at your Pyris instance:
+
+```yaml
+artemis:
+  iris:
+    enabled: true
+    url: https://pyris.your-domain.com   # Or http://localhost:8000 for local development
+    secret-token: your-shared-secret      # Must match the token configured in Pyris
+```
+
+<Callout variant={CalloutVariant.info}>
+
+  The `secret-token` value must exactly match one of the tokens under `api_keys` in the Pyris `application.yml`. If they don't match, Artemis will receive 401 errors when calling Pyris.
+
+</Callout>
+
+#### 1.2 Optional: Configure rate limiting
+
+```yaml
+artemis:
+  iris:
+    ratelimit:
+      default-limit: 100             # Max requests per user (-1 for unlimited)
+      default-timeframe-hours: 3     # Time window for the limit
+```
+
+### Step 2: Deploy Pyris
+
+Choose one of the deployment options below depending on your environment.
+
+#### Option A: Docker (Recommended for Production)
+
+This is the recommended approach for production deployments. All Docker Compose files are located in the `iris/docker/` directory of the EduTelligence repository.
+
+**1. Clone the repository**
+
+```bash
+git clone https://github.com/ls1intum/edutelligence.git
+cd edutelligence/iris
+```
+
+**2. Create configuration files**
+
+Create two configuration files on your server. You can use the provided examples as a starting point:
+
+```bash
+cp application.example.yml application.yml
+cp llm_config.example.yml llm_config.yml
+```
+
+Edit `application.yml`:
+
+```yaml
+api_keys:
+  - token: "your-shared-secret"   # Must match artemis.iris.secret-token
+
+weaviate:
+  host: "weaviate"                # Docker service name (not localhost)
+  port: "8001"
+  grpc_port: "50051"
+
+env_vars:
+```
+
+<Callout variant={CalloutVariant.warning}>
+
+  When running inside Docker, set `weaviate.host` to `"weaviate"` (the Docker service name), not `"localhost"`. The containers communicate over an internal Docker network.
+
+</Callout>
+
+Edit `llm_config.yml` with your model configurations. Pyris needs **three types of models**:
+
+- **Chat models** (required) — powers all Iris conversations
+- **Embedding models** (required) — for RAG-based retrieval of course content
+- **Reranker models** (optional) — improves retrieval quality
+
+<Callout variant={CalloutVariant.warning}>
+
+  The examples below use Azure OpenAI, which is recommended for production (GDPR-compliant). For local development, you can also use direct OpenAI entries — see `llm_config.example.yml` for examples.
+
+</Callout>
+
+**Azure OpenAI chat model example:**
+
+```yaml
+- id: "azure-gpt-5-mini"
+  name: "GPT 5 Mini"
+  description: "GPT 5 Mini on Azure"
+  type: "azure_chat"
+  endpoint: "<your_azure_endpoint>"
+  api_version: "2025-04-01-preview"
+  azure_deployment: "gpt-5-mini"
+  model: "gpt-5-mini"
+  api_key: "<your_azure_api_key>"
+  cost_per_million_input_token: 0.4
+  cost_per_million_output_token: 1.6
+```
+
+**Azure embedding model example:**
+
+```yaml
+- id: "azure-embedding-large"
+  name: "Embedding Large"
+  description: "Embedding Large 8k Azure"
+  type: "azure_embedding"
+  endpoint: "<your_azure_endpoint>"
+  api_version: "2023-05-15"
+  azure_deployment: "te-3-large"
+  model: "text-embedding-3-large"
+  api_key: "<your_azure_api_key>"
+  cost_per_million_input_token: 0.13
+```
+
+See `llm_config.example.yml` for the complete list of model types, including OpenAI chat models, OpenAI embeddings, and Cohere reranker.
+
+**Configuration parameter reference:**
+
+- `id`: Unique identifier across all configured models.
+- `model`: Official model name as used by the vendor (e.g. `gpt-5-mini`, `text-embedding-3-large`). Used internally by Pyris for model selection.
+- `type`: Selects the appropriate client. Supported values: `openai_chat`, `azure_chat`, `ollama`, `openai_embedding`, `azure_embedding`, `cohere_azure`.
+- `api_key`: API key for the model provider.
+- `endpoint`: Provider URL (required for Azure and Cohere).
+- `api_version`: API version (Azure only).
+- `azure_deployment`: Deployment name (Azure only).
+- `tools`: Tools supported by the model (usually `[]`).
+- `cost_per_million_input_token` / `cost_per_million_output_token`: Pricing info used for model routing decisions.
+
+<Callout variant={CalloutVariant.info}>
+
+  Most Iris pipelines require the GPT-5 model family (`gpt-5.2`, `gpt-5-mini`, `gpt-5-nano`) plus at least one embedding model. Monitor Pyris logs for warnings about missing models.
+
+</Callout>
+
+**3. Choose a Docker Compose profile and start**
+
+| File | Use case |
+|------|----------|
+| `docker/pyris-production.yml` | Production with Nginx (SSL termination, reverse proxy) |
+| `docker/pyris-production-internal.yml` | Production without Nginx (e.g. behind an existing reverse proxy) |
+| `docker/pyris-dev.yml` | Local development (builds from source) |
+
+**Production with Nginx** (handles SSL termination):
+
+```bash
+PYRIS_DOCKER_TAG=latest \
+PYRIS_APPLICATION_YML_FILE=$(pwd)/application.yml \
+PYRIS_LLM_CONFIG_YML_FILE=$(pwd)/llm_config.yml \
+NGINX_PROXY_SSL_CERTIFICATE_PATH=/path/to/fullchain.pem \
+NGINX_PROXY_SSL_CERTIFICATE_KEY_PATH=/path/to/priv_key.pem \
+docker compose -f docker/pyris-production.yml up -d
+```
+
+**Production without Nginx** (direct access on configurable port):
+
+```bash
+PYRIS_DOCKER_TAG=latest \
+PYRIS_APPLICATION_YML_FILE=$(pwd)/application.yml \
+PYRIS_LLM_CONFIG_YML_FILE=$(pwd)/llm_config.yml \
+PYRIS_PORT=8000 \
+docker compose -f docker/pyris-production-internal.yml up -d
+```
+
+<Callout variant={CalloutVariant.info}>
+
+  Instead of passing environment variables inline, you can create a `docker.env` file and use `--env-file docker.env` with `docker compose`. This is the recommended approach for production servers.
+
+</Callout>
+
+**Environment variable reference:**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PYRIS_DOCKER_TAG` | `latest` | Docker image tag (e.g. `latest`, `pr-123`, a branch name) |
+| `PYRIS_APPLICATION_YML_FILE` | — | Absolute path to your `application.yml` |
+| `PYRIS_LLM_CONFIG_YML_FILE` | — | Absolute path to your `llm_config.yml` |
+| `PYRIS_PORT` | `8000` | Host port for Pyris (production-internal only) |
+| `WEAVIATE_PORT` | `8001` | Host port for Weaviate REST API |
+| `WEAVIATE_GRPC_PORT` | `50051` | Host port for Weaviate gRPC |
+| `NGINX_PROXY_SSL_CERTIFICATE_PATH` | — | Path to SSL certificate (production with Nginx only) |
+| `NGINX_PROXY_SSL_CERTIFICATE_KEY_PATH` | — | Path to SSL private key (production with Nginx only) |
+
+**4. Verify the deployment**
+
+```bash
+# Check Pyris health (with Nginx profile)
+curl https://pyris.your-domain.com/api/v1/health
+
+# Check Pyris health (production-internal profile)
+curl http://localhost:${PYRIS_PORT:-8000}/api/v1/health
+
+# Check Weaviate health (from the server, if ports are not exposed externally)
+curl http://localhost:${WEAVIATE_PORT:-8001}/v1/.well-known/ready
+```
+
+**Managing containers:**
+
+```bash
+# View logs
+docker compose -f docker/pyris-production.yml logs -f pyris-app
+
+# Stop
+docker compose -f docker/pyris-production.yml down
+
+# Pull new image and restart
+PYRIS_DOCKER_TAG=latest docker compose -f docker/pyris-production.yml up -d --pull always
+```
+
+#### Option B: Local Development Setup (without Docker)
+
+Use this approach when developing Pyris itself or when you want to run it directly on your machine.
+
+**Prerequisites:** Python 3.12, <a href="https://python-poetry.org/">Poetry</a>, Docker (for Weaviate only).
+
+**1. Clone and install**
+
+```bash
+git clone https://github.com/ls1intum/edutelligence.git
+cd edutelligence/iris
+poetry install
+```
+
+**2. Start Weaviate**
+
+Pyris requires a Weaviate vector database for RAG. Start it using the provided Docker Compose file:
+
+```bash
+docker compose -f docker/weaviate.yml up -d
+```
+
+Verify: `curl http://localhost:8001/v1/.well-known/ready`
+
+**3. Create configuration files**
+
+```bash
+cp application.example.yml application.local.yml
+cp llm_config.example.yml llm_config.local.yml
+```
+
+Edit `application.local.yml`:
+
+```yaml
+api_keys:
+  - token: "secret"             # Must match artemis.iris.secret-token
+
+weaviate:
+  host: "localhost"             # localhost for non-Docker setup
+  port: "8001"
+  grpc_port: "50051"
+
+env_vars:
+```
+
+Edit `llm_config.local.yml` with your API keys. See the model configuration examples above or refer to `llm_config.example.yml`.
+
+**4. Run the server**
+
+```bash
+APPLICATION_YML_PATH=./application.local.yml \
+LLM_CONFIG_PATH=./llm_config.local.yml \
+poetry run uvicorn iris.main:app --reload
+```
+
+The server starts at `http://localhost:8000`. API docs are at `http://localhost:8000/docs`.
+
+### Step 3: Verify End-to-End
+
+Once both Artemis and Pyris are running:
+
+1. Open Artemis and navigate to a programming exercise.
+2. Open the Iris chat panel.
+3. Send a test message — Iris should respond via Pyris.
+
+If Iris does not respond, check:
+
+- Artemis logs for HTTP errors when contacting Pyris (401 = secret mismatch, connection refused = wrong URL).
+- Pyris logs for model errors (`No model found for ...` = missing model in `llm_config.yml`).
+- That the `secret-token` in Artemis matches the `api_keys` token in Pyris exactly.
+- That Weaviate is running and reachable from Pyris.
+
+### Troubleshooting
+
+- **Port conflicts**: Change host ports via environment variables (`PYRIS_PORT`, `WEAVIATE_PORT`).
+- **Permission issues**: Ensure correct permissions on SSL certificates and config files.
+- **Docker resources**: Ensure Docker has at least 4 GB of memory allocated.
+- **Missing models**: Check Pyris logs for `No model found for ...` warnings and add the missing model to `llm_config.yml`.
+
+---
+
+## Athena Service
+
+The semi-automatic text assessment relies on the <a href="https://github.com/ls1intum/edutelligence/tree/main/athena">Athena</a> service, which is part of the EduTelligence suite. To enable automatic text assessments, special configuration is required:
+
+<Callout variant={CalloutVariant.info}>
+
+  Athena is now part of the EduTelligence suite. Please check the <a href="https://github.com/ls1intum/edutelligence#-artemis-compatibility">compatibility matrix</a> to ensure you're using compatible versions of Artemis and EduTelligence.
+
+</Callout>
+
+### Enable the athena Spring profile
+```
+--spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local,athena
+```
+
+### Configure API Endpoints
+
+The Athena service is running on a dedicated machine and is addressed via HTTP. We need to extend the configuration in the file `src/main/resources/config/application-artemis.yml` like so:
+```yaml
+artemis:
+  # ...
+  athena:
+     url: http://localhost:5100
+     secret: abcdef12345
+     modules:
+        # See https://github.com/ls1intum/edutelligence/tree/main/athena for a list of available modules
+        text: module_text_cofee
+        programming: module_programming_themisml
+```
+
+The secret can be any string. For more detailed instructions on how to set it up in Athena, refer to the <a href="https://github.com/ls1intum/edutelligence/tree/main/athena">Athena documentation</a>.
+
+---
+
+## Other Extension Services
+
+### Text Assessment Analytics Service
+
+Text Assessment Analytics is an internal analytics service used to gather data regarding the features of the text assessment process. Certain assessment events are tracked:
+
+1. Adding new feedback on a manually selected block
+2. Adding new feedback on an automatically selected block
+3. Deleting a feedback
+4. Clicking to resolve feedback conflicts
+5. Clicking to view origin submission of automatically generated feedback
+6. Hovering over the text assessment feedback impact warning
+7. Editing/Discarding an automatically generated feedback
+8. Clicking the Submit button when assessing a text submission
+9. Clicking the Assess Next button when assessing a text submission
+
+These events are tracked by attaching a POST call to the respective DOM elements on the client side. The POST call accesses the **TextAssessmentEventResource** which then adds the events in its respective table. This feature is disabled by default. We can enable it by modifying the configuration in the file: `src/main/resources/config/application-artemis.yml` like so:
+```yaml
+info:
+   textAssessmentAnalyticsEnabled: true
+```
+
+---
+
+### Apollon Service
+
+<a href="https://github.com/ls1intum/Apollon_converter">Apollon Converter</a> is needed to convert models from their JSON representation to PDF. Special configuration is required:
+
+#### Enable the apollon Spring profile
+```
+--spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local,apollon
+```
+
+#### Configure API Endpoints
+
+The Apollon conversion service is running on a dedicated machine and is addressed via HTTP. We need to extend the configuration in the file `src/main/resources/config/application-artemis.yml` like so:
+```yaml
+apollon:
+   conversion-service-url: http://localhost:8080
+```
+
+---
+
+### Hermes Service
+
+Push notifications for the mobile Android and iOS clients rely on the <a href="https://github.com/ls1intum/Hermes">Hermes</a> service. To enable push notifications the Hermes service needs to be started separately and the configuration of the Artemis instance must be extended.
+
+#### Configure and start Hermes
+
+To run Hermes, you need to clone the <a href="https://github.com/ls1intum/Hermes">repository</a> and replace the placeholders within the `docker-compose` file.
+
+The following environment variables need to be updated for push notifications to Apple devices:
+
+* `APNS_CERTIFICATE_PATH`: String - Path to the APNs certificate .p12 file as described <a href="https://developer.apple.com/documentation/usernotifications/setting_up_a_remote_notification_server/establishing_a_certificate-based_connection_to_apns">here</a>
+* `APNS_CERTIFICATE_PWD`: String - The APNS certificate password
+* `APNS_PROD_ENVIRONMENT`: Bool - True if it should use the Production APNS Server (Default false)
+
+Furthermore, the `<APNS_Key>.p12` needs to be mounted into the Docker under the above specified path.
+
+To run the services for Android support the following environment variable is required:
+
+* `GOOGLE_APPLICATION_CREDENTIALS`: String - Path to the firebase.json
+
+Furthermore, the Firebase.json needs to be mounted into the Docker under the above specified path.
+
+To run both APNS and Firebase, configure the environment variables for both.
+
+To start Hermes, run the `docker compose up` command in the folder where the `docker-compose` file is located.
+
+#### Artemis Configuration
+
+The Hermes service is running on a dedicated machine and is addressed via HTTPS. We need to extend the Artemis configuration in the file `src/main/resources/config/application-artemis.yml` like:
+```yaml
+artemis:
+  # ...
+ push-notification-relay: <url>
+```
+
+---
+
+### Hyperion Service
+
+<Callout variant={CalloutVariant.info}>
+
+  This documentation has been migrated to the new documentation system. Please refer to the <a href="/admin/hyperion">Hyperion Setup Guide</a>.
+
+</Callout>
+
+---
+
+### Aeolus Service
+
+Aeolus is a service that provides a REST API for the Artemis platform to generate custom build plans for programming exercises. It is designed to be used in combination with the Artemis platform to provide build plans in multiple CI systems, currently Jenkins and LocalCI.
+
+This section outlines how to set up Aeolus in your own Artemis instance.
+
+#### Prerequisites
+
+- Ensure you have a running instance of Artemis.
+- Set up a running instance of Aeolus. See the <a href="https://ls1intum.github.io/Aeolus/">Aeolus documentation</a> for more information.
+
+#### Enable the aeolus Spring profile
+```
+--spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local,aeolus
+```
+
+#### Configure the Aeolus Endpoint
+
+The Aeolus service can run on a dedicated machine since Artemis accesses it via a REST API call. We need to extend the configuration in the file `src/main/resources/config/application-artemis.yml` to include the Aeolus endpoint. How to do this is described in the configuration documentation for Aeolus.
+
+---
+
+### Setup Guide for Exchange with the Sharing Platform
+
+#### Background
+
+<a href="https://search.sharing-codeability.uibk.ac.at/">Sharing Platform</a> is an open platform for sharing teaching materials related to programming. It is operated by the <a href="https://www.uibk.ac.at/en/">University of Innsbruck</a>. While primarily designed as an open exchange platform, it also provides features such as private group exchanges and the ability to restrict public access to certain content, such as the solution repository of an Artemis exercise.
+
+For more details, visit <a href="https://search.sharing-codeability.uibk.ac.at/">help menu</a> of the sharing platform.
+
+To facilitate the exchange of programming exercises among instructors, the sharing platform offers a connector to Artemis, enabling any Artemis instance to integrate with the platform for seamless sharing.
+
+The Sharing Platform is open source. The source code can be found at https://sharing-codeability.uibk.ac.at/development/sharing/codeability-sharing-platform.
+
+#### Prerequisites
+
+To connect to the sharing platform, you need an API key. To request one, contact the platform maintainers at `artemis-support-informatik@uibk.ac.at` and provide the URL of your active Artemis instance.
+
+**Important:** Sharing only works if your Artemis instance is accessible on the internet. If making your instance publicly available is not an option, the maintainers can provide a list of required Artemis URLs that must be accessible to the sharing platform.
+
+#### Configuration
+
+Once you receive your API key, you should add it to the configuration file **`application-core.yml`** or your `.env` file:
+
+**Option 1: application-artemis.yml**
+```yaml
+artemis:
+  sharing:
+    enabled: true
+    # Shared common secret
+    apikey: <your API Key>
+    serverurl: https://search.sharing-codeability.uibk.ac.at/
+    actionname: Export to Artemis@myUniversity
+```
+
+**Option 2: .env file for Docker initialization**
+```bash
+ARTEMIS_SHARING_ENABLED=true
+ARTEMIS_SHARING_SERVERURL=https://search.sharing-codeability.uibk.ac.at/
+ARTEMIS_SHARING_APIKEY=<Enter your API Key here>
+ARTEMIS_SHARING_ACTIONNAME=Export to Artemis@<Enter an ID here>
+```
+
+Once configured, restart your Artemis instance.
+
+#### Instructor Access Requirements
+
+For instructors to exchange programming exercises, they need an account on the sharing platform. They can register using one of the following methods:
+
+- **EduID Authentication**: The simplest way is through <a href="https://www.aco.net/federation.html">EduID (Austria)</a> or <a href="https://doku.tid.dfn.de/de:aai:eduid:start">EduID (Germany)</a>. Forward the necessary connection details to the sharing platform maintainers.
+- **GitLab-Based Registration**: If EduID is not an option, users can register via the sharing platform's GitLab instance. However, for security reasons, self-registration is restricted to certain email domains. To enable access, forward the desired domains to the maintainers for approval.
+
+#### Troubleshooting
+
+To assist in troubleshooting, the **sharing profile** includes an additional health indicator, accessible via the **`Administration -> Health`** menu.
+
+<Image src={sharingHealth1} alt={"Sharing health indicator 1"} size={ImageSize.medium} />
+
+Under **Details**, you will typically find the following entries:
+
+<Image src={sharingHealth2} alt={"Sharing health indicator 2"} size={ImageSize.medium} />
+
+- The **first entry** is an initialization request sent after startup.
+- The **second entry** reflects the subsequent receipt of the connector configuration from the sharing platform.
+- Additional entries represent regular configuration polling requests from the sharing platform.
+
+The **Details** log stores the last 10 entries.
+
+If the health status is not **`up`**, check the error message in the details. If the issue is unclear, feel free to contact the sharing platform maintainers for support.
+
+#### Conclusion
+
+Once everything is set up correctly, you should see the <Image src={sharingButton1} alt={"Sharing button Artemis"} inline /> button in the **Programming Exercise Details** dialog in Artemis.
+
+Similarly, the <Image src={sharingButton2} alt={"Sharing button Sharing"} inline /> button should appear on the sharing platform for any programming exercise available there.
+
+Before testing the import and export functionality, refer to the user documentation for further details.

@@ -1,4 +1,6 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
@@ -19,7 +21,13 @@ import { ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { NewStudentParticipationResolver, StudentParticipationResolver } from 'app/text/manage/assess/service/text-submission-assessment-resolve.service';
 
+/**
+ * Test suite for TextAssessment Service.
+ * Tests assessment CRUD operations, complaint handling, example assessments,
+ * feedback data retrieval, and student participation resolvers.
+ */
 describe('TextAssessment Service', () => {
+    setupTestBed({ zoneless: true });
     let service: TextAssessmentService;
     let httpMock: HttpTestingController;
     const textSubmission = new TextSubmission();
@@ -63,8 +71,8 @@ describe('TextAssessment Service', () => {
         course: { id: 123, isAtLeastInstructor: true } as Course,
     } as TextExercise;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
         });
         service = TestBed.inject(TextAssessmentService);
@@ -189,17 +197,16 @@ describe('TextAssessment Service', () => {
         httpMock.verify();
     });
 
-    it('should send assessment event to analytics', fakeAsync(() => {
+    it('should send assessment event to analytics', () => {
         const assessmentEvent: TextAssessmentEvent = new TextAssessmentEvent();
         service.addTextAssessmentEvent(assessmentEvent).subscribe((response) => {
             expect(response.status).toBe(200);
         });
         const mockRequest = httpMock.expectOne({ url: 'api/text/event-insights/text-assessment/events', method: 'POST' });
         mockRequest.flush(mockResponse);
-        tick();
-    }));
+    });
 
-    it('should get feedback data for submission', fakeAsync(() => {
+    it('should get feedback data for submission', () => {
         const submissionId = 42;
         service
             .getFeedbackDataForExerciseSubmission(submissionId)
@@ -211,10 +218,9 @@ describe('TextAssessment Service', () => {
             method: 'GET',
         });
         req.flush(mockResponse);
-        tick();
-    }));
+    });
 
-    it('should get feedback data with resultId set', fakeAsync(() => {
+    it('should get feedback data with resultId set', () => {
         const submissionId = 42;
         const resultId = result.id;
 
@@ -228,8 +234,7 @@ describe('TextAssessment Service', () => {
             method: 'GET',
         });
         req.flush(mockResponse);
-        tick();
-    }));
+    });
 
     it('should get example result for defined exercise and submission', () => {
         service
@@ -244,7 +249,7 @@ describe('TextAssessment Service', () => {
         expect(actualResponse).toEqual(mockResponse);
     });
 
-    it('should get number of tutors involved in assessment', fakeAsync(() => {
+    it('should get number of tutors involved in assessment', () => {
         const responseNumberOfTutors = 5;
         service
             .getNumberOfTutorsInvolvedInAssessment(1, 1)
@@ -256,8 +261,7 @@ describe('TextAssessment Service', () => {
             method: 'GET',
         });
         req.flush(responseNumberOfTutors);
-        tick();
-    }));
+    });
 
     it('should match blocks with feedbacks', () => {
         const blocks = mockResponse.submissions[0].blocks;
@@ -271,7 +275,7 @@ describe('TextAssessment Service', () => {
     it('should resolve new StudentParticipations for TextSubmissionAssessmentComponent', () => {
         const resolver = TestBed.inject(NewStudentParticipationResolver);
         const textSubmissionService = TestBed.inject(TextSubmissionService);
-        const newStudentParticipationStub = jest.spyOn(textSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(textSubmission));
+        const newStudentParticipationStub = vi.spyOn(textSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(textSubmission));
 
         const snapshot = {
             paramMap: convertToParamMap({ exerciseId: 1 }),
@@ -286,7 +290,7 @@ describe('TextAssessment Service', () => {
 
     it('should resolve the needed StudentParticipations for TextSubmissionAssessmentComponent', () => {
         const resolver = TestBed.inject(StudentParticipationResolver);
-        const studentParticipationSpy = jest.spyOn(service, 'getFeedbackDataForExerciseSubmission');
+        const studentParticipationSpy = vi.spyOn(service, 'getFeedbackDataForExerciseSubmission');
 
         const snapshot = {
             paramMap: convertToParamMap({ participationId: 1, submissionId: 2, resultId: 1 }),

@@ -1,38 +1,38 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('Alert Overlay Component Tests', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: AlertOverlayComponent;
     let fixture: ComponentFixture<AlertOverlayComponent>;
     let alertService: AlertService;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [NoopAnimationsModule],
             providers: [
                 { provide: AlertService, useClass: AlertService },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(AlertOverlayComponent);
-                comp = fixture.componentInstance;
-                alertService = TestBed.inject(AlertService);
-            });
+        });
+        await TestBed.compileComponents();
+        fixture = TestBed.createComponent(AlertOverlayComponent);
+        comp = fixture.componentInstance;
+        alertService = TestBed.inject(AlertService);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should call alertService.get on init', () => {
-        const getStub = jest.spyOn(alertService, 'get');
+        const getStub = vi.spyOn(alertService, 'get');
 
         // WHEN
         comp.ngOnInit();
@@ -42,7 +42,7 @@ describe('Alert Overlay Component Tests', () => {
     });
 
     it('should close all alerts on destroy', () => {
-        const clearStub = jest.spyOn(alertService, 'closeAll');
+        const clearStub = vi.spyOn(alertService, 'closeAll');
 
         // WHEN
         comp.ngOnDestroy();
@@ -54,7 +54,7 @@ describe('Alert Overlay Component Tests', () => {
     it('should call action callback if button is clicked', () => {
         comp.ngOnInit();
 
-        const callback = jest.fn();
+        const callback = vi.fn();
         const alert = alertService.addAlert({
             type: AlertType.INFO,
             message: '123',
@@ -78,7 +78,7 @@ describe('Alert Overlay Component Tests', () => {
     it('should close the alert if the close icon is clicked', () => {
         comp.ngOnInit();
 
-        const onClose = jest.fn();
+        const onClose = vi.fn();
         const alert = alertService.addAlert({
             type: AlertType.INFO,
             message: '123',

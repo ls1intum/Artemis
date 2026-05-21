@@ -287,7 +287,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testStudentSeesFirstCorrectionPointsWhenSecondCorrectionIncomplete() throws Exception {
+    void testStudentSeesFirstCorrectionPointsWhenSecondCorrectionIncomplete() {
         // Setup test data
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         Exam exam = examUtilService.setupExamWithTwoCorrectionRounds();

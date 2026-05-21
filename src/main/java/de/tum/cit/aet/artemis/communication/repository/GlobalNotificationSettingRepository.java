@@ -71,7 +71,7 @@ public interface GlobalNotificationSettingRepository extends ArtemisJpaRepositor
         return result;
     }
 
-    @Transactional
+    @Transactional // ok because of deletion
     @Modifying
     void deleteAllByUserId(Long userId);
 }

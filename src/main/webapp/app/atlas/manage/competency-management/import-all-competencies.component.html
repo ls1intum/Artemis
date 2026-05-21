@@ -1,10 +1,12 @@
-<form>
-    <div class="modal-header">
-        <h4 class="modal-title" [jhiTranslate]="'artemisApp.' + competencyType() + '.importAll.title'"></h4>
-        <button (click)="clear()" aria-hidden="true" class="btn-close" data-dismiss="modal" type="button"></button>
-    </div>
-    <div class="modal-body">
-        <div class="form-group form-inline">
+<form class="d-flex flex-column h-100">
+    @if (!isOpenedAsDialog) {
+        <div class="modal-header">
+            <h4 class="modal-title" [jhiTranslate]="'artemisApp.' + competencyType() + '.importAll.title'"></h4>
+            <button (click)="clear()" aria-hidden="true" class="btn-close" data-dismiss="modal" type="button"></button>
+        </div>
+    }
+    <div class="modal-body d-flex flex-column flex-grow-1 overflow-hidden">
+        <div class="form-group form-inline mb-3">
             <span jhiTranslate="artemisApp.competency.importAll.search"></span>
             <input [(ngModel)]="searchTerm" class="form-control ms-2" name="searchCourse" type="text" />
             <span class="ms-3" jhiTranslate="artemisApp.competency.import.importRelations"></span>
@@ -13,43 +15,58 @@
                 <span class="ms-3" jhiTranslate="loading"></span>
             }
         </div>
-        <table class="table table-striped align-middle flex">
-            <thead class="thead-dark">
-                <!-- ID column, always present -->
-                <tr (sortChange)="sortRows()" [(ascending)]="listSorting" [(predicate)]="sortedColumn" class="flex-row" jhiSort>
-                    <th class="col-1" jhiSortBy="ID">
-                        <span>#</span>
-                        <fa-icon [icon]="faSort" />
-                    </th>
-                    @for (column of columns; track column) {
-                        <th class="col-4" [jhiSortBy]="column.name">
-                            <span>{{ 'artemisApp.competency.importAll.table.' + column.name | artemisTranslate }}</span>
+        <div class="flex-grow-1 overflow-auto">
+            <table class="table table-striped align-middle flex">
+                <thead class="thead-dark">
+                    <!-- ID column, always present -->
+                    <tr (sortChange)="sortRows()" [(ascending)]="listSorting" [(predicate)]="sortedColumn" class="flex-row" jhiSort>
+                        <th class="col-1" jhiSortBy="ID">
+                            <span>#</span>
                             <fa-icon [icon]="faSort" />
                         </th>
-                    }
-                    <th class="col-1"></th>
-                </tr>
-            </thead>
-            <tbody>
-                @for (course of content.resultsOnPage; track trackId($index, course)) {
-                    <tr class="flex-row">
-                        <td class="col-1">
-                            <span>{{ course.id }}</span>
-                        </td>
                         @for (column of columns; track column) {
-                            <td class="text-break col-4">
-                                <ngb-highlight [result]="column.getProperty(course)" [term]="searchTerm" />
-                            </td>
+                            <th class="col-4" [jhiSortBy]="column.name">
+                                <span>{{ 'artemisApp.competency.importAll.table.' + column.name | artemisTranslate }}</span>
+                                <fa-icon [icon]="faSort" />
+                            </th>
                         }
-                        <td class="col-1">
-                            <jhi-button (onClick)="selectImport(course)" [disabled]="disabledIds.includes(course.id!)" [title]="'artemisApp.competency.importAll.table.doImport'" />
-                        </td>
+                        <th class="col-1"></th>
                     </tr>
-                }
-            </tbody>
-        </table>
-        <div class="d-flex justify-content-between p-2">
-            <ngb-pagination (pageChange)="onPageChange($event)" [(page)]="state.page" [collectionSize]="total" [maxSize]="10" [pageSize]="state.pageSize" [rotate]="true" />
+                </thead>
+                <tbody>
+                    @for (course of content.resultsOnPage; track trackId($index, course)) {
+                        <tr class="flex-row">
+                            <td class="col-1">
+                                <span>{{ course.id }}</span>
+                            </td>
+                            @for (column of columns; track column) {
+                                <td class="text-break col-4">
+                                    <ngb-highlight [result]="column.getProperty(course)" [term]="searchTerm" />
+                                </td>
+                            }
+                            <td class="col-1">
+                                <jhi-button
+                                    (onClick)="selectImport(course)"
+                                    [disabled]="disabledIds.includes(course.id!)"
+                                    [title]="'artemisApp.competency.importAll.table.doImport'"
+                                />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="d-flex justify-content-between p-2 mt-auto">
+            <ngb-pagination
+                (pageChange)="onPageChange($event)"
+                [(page)]="state.page"
+                [collectionSize]="total"
+                [maxSize]="5"
+                [pageSize]="state.pageSize"
+                [rotate]="true"
+                [ellipses]="true"
+                [boundaryLinks]="true"
+            />
         </div>
     </div>
 </form>

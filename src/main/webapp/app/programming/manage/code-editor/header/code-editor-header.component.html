@@ -1,4 +1,4 @@
-<div class="d-flex justify-content-between card-header bg-primary text-white">
+<div [class]="secondary() ? 'card-second-header d-flex justify-content-between' : 'd-flex justify-content-between card-header bg-primary text-white'">
     <h3 class="mt-1 card-title">
         <fa-icon [icon]="farFileAlt" />
         <span> &nbsp;{{ fileName() }}</span>

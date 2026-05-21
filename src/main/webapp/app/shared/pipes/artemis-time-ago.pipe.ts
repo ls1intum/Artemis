@@ -32,7 +32,7 @@ export class ArtemisTimeAgoPipe implements PipeTransform, OnDestroy {
             this.lastTime = getTime(value);
             this.lastValue = value;
             this.lastOmitSuffix = omitSuffix;
-            this.lastLocale = this.translateService.currentLang;
+            this.lastLocale = this.translateService.getCurrentLang();
             this.formatFn = formatFn || this.format.bind(this);
             this.removeTimer();
             this.createTimer();
@@ -78,7 +78,7 @@ export class ArtemisTimeAgoPipe implements PipeTransform, OnDestroy {
     }
 
     private hasChanged(value: dayjs.ConfigType, omitSuffix?: boolean): boolean {
-        return getTime(value) !== this.lastTime || this.translateService.currentLang !== this.lastLocale || omitSuffix !== this.lastOmitSuffix;
+        return getTime(value) !== this.lastTime || this.translateService.getCurrentLang() !== this.lastLocale || omitSuffix !== this.lastOmitSuffix;
     }
 }
 

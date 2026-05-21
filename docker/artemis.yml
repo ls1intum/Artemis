@@ -6,7 +6,7 @@ services:
     artemis-app:
         container_name: artemis-app
         # look in the docs for more information about how to build your Artemis code with Docker
-        # https://docs.artemis.cit.tum.de/dev/setup/#
+        # https://docs.artemis.tum.de/developer/docker-compose
         image: ghcr.io/ls1intum/artemis
         build:
             context: ..
@@ -24,7 +24,7 @@ services:
         # as stated in the docker compose docs (at least not when this was committed)
         # https://docs.docker.com/compose/compose-file/#finding-referenced-service
         healthcheck:
-            test: wget -nv -t1 --spider http://localhost:8080/actuator/health || exit 1
+            test: wget -nv -t1 --spider http://localhost:8080/management/health || exit 1
             start_period: 600s
             interval: 1s
         # expose the port to make it reachable docker internally even if the external port mapping changes

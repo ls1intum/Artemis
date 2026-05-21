@@ -106,6 +106,7 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
     /**
      * Deletes {@link TextBlock} entries associated with rated {@link Result} that are not the latest rated result
      * for a {@link Participation}, within courses conducted between the specified date range.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation -> exercise.
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
@@ -121,13 +122,13 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
                     LEFT JOIN f.result r
                     LEFT JOIN r.submission s
                     LEFT JOIN s.participation p
-                    LEFT JOIN p.exercise e
-                    LEFT JOIN e.course c
+                    JOIN Exercise e ON r.exerciseId = e.id
+                    JOIN e.course c
                 WHERE f.result.id NOT IN (
                     SELECT MAX(r2.id)
                     FROM Result r2
-                    LEFT JOIN r2.submission s2
-                    LEFT JOIN s2.participation p2
+                        LEFT JOIN r2.submission s2
+                        LEFT JOIN s2.participation p2
                     WHERE p2.id = p.id
                         AND r2.rated = TRUE
                 )
@@ -141,6 +142,7 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
     /**
      * Counts {@link TextBlock} entries associated with rated {@link Result} that are not the latest rated result
      * for a {@link Participation}, within courses conducted between the specified date range.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation -> exercise.
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
@@ -155,13 +157,13 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
                     LEFT JOIN f.result r
                     LEFT JOIN r.submission s
                     LEFT JOIN s.participation p
-                    LEFT JOIN p.exercise e
-                    LEFT JOIN e.course c
+                    JOIN Exercise e ON r.exerciseId = e.id
+                    JOIN e.course c
                 WHERE f.result.id NOT IN (
                     SELECT MAX(r2.id)
                     FROM Result r2
-                    LEFT JOIN r2.submission s2
-                    LEFT JOIN s2.participation p2
+                        LEFT JOIN r2.submission s2
+                        LEFT JOIN s2.participation p2
                     WHERE p2.id = p.id
                         AND r2.rated = TRUE
                 )
@@ -178,6 +180,7 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
      * are between the specified date range.
      * This query deletes text blocks for feedback associated with results that are not rated, within the courses
      * whose end date is before {@code deleteTo} and start date is after {@code deleteFrom}.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation -> exercise.
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
@@ -193,13 +196,13 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
                     LEFT JOIN f.result r
                     LEFT JOIN r.submission s
                     LEFT JOIN s.participation p
-                    LEFT JOIN p.exercise e
-                    LEFT JOIN e.course c
+                    JOIN Exercise e ON r.exerciseId = e.id
+                    JOIN e.course c
                 WHERE f.result.id NOT IN (
                     SELECT MAX(r2.id)
                     FROM Result r2
-                    LEFT JOIN r2.submission s2
-                    LEFT JOIN s2.participation p2
+                        LEFT JOIN r2.submission s2
+                        LEFT JOIN s2.participation p2
                     WHERE p2.id = p.id
                         AND r2.rated = FALSE
                 )
@@ -214,6 +217,7 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
      * Counts {@link TextBlock} entries linked to non-rated {@link Result} that are not the latest non-rated result
      * for a {@link Participation}, where the associated course's start and end dates
      * are between the specified date range.
+     * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation -> exercise.
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
@@ -228,13 +232,13 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
                     LEFT JOIN f.result r
                     LEFT JOIN r.submission s
                     LEFT JOIN s.participation p
-                    LEFT JOIN p.exercise e
-                    LEFT JOIN e.course c
+                    JOIN Exercise e ON r.exerciseId = e.id
+                    JOIN e.course c
                 WHERE f.result.id NOT IN (
                     SELECT MAX(r2.id)
                     FROM Result r2
-                    LEFT JOIN r2.submission s2
-                    LEFT JOIN s2.participation p2
+                        LEFT JOIN r2.submission s2
+                        LEFT JOIN s2.participation p2
                     WHERE p2.id = p.id
                         AND r2.rated = FALSE
                 )

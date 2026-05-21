@@ -1,24 +1,24 @@
 package de.tum.cit.aet.artemis.modeling.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.Optional;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 
 /**
  * Spring Data JPA repository for the ModelingSubmission entity.
  */
-@Profile(PROFILE_CORE)
+@Conditional(ModelingEnabled.class)
 @Lazy
 @Repository
 public interface ModelingSubmissionRepository extends ArtemisJpaRepository<ModelingSubmission, Long> {

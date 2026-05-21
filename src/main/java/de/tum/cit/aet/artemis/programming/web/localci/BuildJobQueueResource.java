@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
@@ -65,6 +66,41 @@ public class BuildJobQueueResource {
         this.courseRepository = courseRepository;
         this.buildJobRepository = buildJobRepository;
         this.distributedDataAccessService = distributedDataAccessService;
+    }
+
+    /**
+     * Returns a single build job by its ID, verifying it belongs to the given course.
+     * Checks running jobs, queued jobs, and finished jobs in that order.
+     *
+     * @param courseId   the id of the course
+     * @param buildJobId the id of the build job
+     * @return the build job, or 404 if not found or does not belong to the course
+     */
+    @GetMapping("courses/{courseId}/build-job/{buildJobId}")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<BuildJobDTO> getBuildJobById(@PathVariable long courseId, @PathVariable String buildJobId) {
+        if (buildJobId == null || buildJobId.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        buildJobId = buildJobId.trim();
+        log.debug("REST request to get build job by id {} for course {}", buildJobId, courseId);
+
+        // Check running jobs first
+        BuildJobQueueItem processingJob = distributedDataAccessService.getDistributedProcessingJobs().get(buildJobId);
+        if (processingJob != null && processingJob.courseId() == courseId) {
+            return ResponseEntity.ok(processingJob);
+        }
+
+        // Check queued jobs
+        for (BuildJobQueueItem queuedJob : distributedDataAccessService.getQueuedJobs()) {
+            if (buildJobId.equals(queuedJob.id()) && queuedJob.courseId() == courseId) {
+                return ResponseEntity.ok(queuedJob);
+            }
+        }
+
+        // Check finished jobs in database (use findWithData to eagerly fetch result, submission, and participation)
+        return buildJobRepository.findWithDataByBuildJobId(buildJobId).filter(buildJob -> buildJob.getCourseId() == courseId).<BuildJobDTO>map(FinishedBuildJobDTO::of)
+                .map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     /**
@@ -209,7 +245,7 @@ public class BuildJobQueueResource {
     public ResponseEntity<ZonedDateTime> getBuildJobEstimatedStartDate(@RequestParam long participationId) {
         var start = System.nanoTime();
         if (participationId <= 0) {
-            ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().build();
         }
         ZonedDateTime estimatedJobQueueReleaseTime = localCIBuildJobQueueService.getBuildJobEstimatedStartDate(participationId);
         log.debug("Queue duration estimation took {} ms", TimeLogUtil.formatDurationFrom(start));

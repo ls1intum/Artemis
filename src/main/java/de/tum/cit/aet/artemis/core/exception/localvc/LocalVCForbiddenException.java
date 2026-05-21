@@ -10,6 +10,10 @@ public class LocalVCForbiddenException extends LocalVCOperationException {
         // empty constructor
     }
 
+    public LocalVCForbiddenException(String message) {
+        super(message);
+    }
+
     public LocalVCForbiddenException(Throwable cause) {
         super(cause);
     }

@@ -8,7 +8,7 @@
         </div>
 
         <div class="d-flex flex-column gap-3">
-            @for (exercise of exerciseTypes; track exercise.type) {
+            @for (exercise of exerciseTypes(); track exercise.type) {
                 <div class="row align-items-center">
                     <div class="col-4">
                         <strong jhiTranslate="{{ exercise.translationKey }}">{{ exercise.type }}</strong>
@@ -16,21 +16,19 @@
                     <div class="ms-n3 col-8">
                         <div class="row gx-2">
                             <div class="col-6">
-                                <jhi-exercise-create-button
+                                <jhi-exercise-import-button
                                     [course]="course()"
-                                    [translationKey]="'global.generic.create'"
                                     [exerciseType]="exercise.type"
                                     [featureToggle]="exercise.featureToggle"
-                                    (click)="hidePopover()"
+                                    (beforeNavigate)="hidePopover()"
                                 />
                             </div>
                             <div class="col-6">
-                                <jhi-exercise-import-button
+                                <jhi-exercise-create-button
                                     [course]="course()"
-                                    [translationKey]="'entity.action.to-import'"
                                     [exerciseType]="exercise.type"
                                     [featureToggle]="exercise.featureToggle"
-                                    (click)="hidePopover()"
+                                    (beforeNavigate)="hidePopover()"
                                 />
                             </div>
                         </div>

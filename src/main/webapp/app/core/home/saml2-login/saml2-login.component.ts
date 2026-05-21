@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LoginService } from 'app/core/login/login.service';
 import { Saml2Config } from 'app/core/home/saml2-login/saml2.config';
@@ -11,26 +11,26 @@ import { AlertService } from 'app/shared/service/alert.service';
     imports: [],
 })
 export class Saml2LoginComponent implements OnInit {
-    private loginService = inject(LoginService);
-    private eventManager = inject(EventManager);
-    private alertService = inject(AlertService);
+    private readonly loginService = inject(LoginService);
+    private readonly eventManager = inject(EventManager);
+    private readonly alertService = inject(AlertService);
 
-    @Input() rememberMe = true;
-    @Input() acceptedTerms = false;
-    @Input() saml2Profile: Saml2Config;
+    readonly rememberMe = input(true);
+    readonly acceptedTerms = input(false);
+    readonly saml2Profile = input.required<Saml2Config>();
 
     ngOnInit(): void {
         // If SAML2 flow was started, retry login.
         if (document.cookie.indexOf('SAML2flow=') >= 0) {
             // remove cookie
-            document.cookie = 'SAML2flow=; expires=Thu, 01 Jan 1970 00:00:00 UTC; ; SameSite=Lax;';
+            document.cookie = 'SAML2flow=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax;';
             this.loginSAML2();
         }
     }
 
     loginSAML2() {
         this.loginService
-            .loginSAML2(this.rememberMe)
+            .loginSAML2(this.rememberMe())
             .then(() => {
                 this.eventManager.broadcast({
                     name: 'authenticationSuccess',
@@ -39,8 +39,9 @@ export class Saml2LoginComponent implements OnInit {
             })
             .catch((error: HttpErrorResponse) => {
                 if (error.status === 401) {
-                    // (re)set cookie
-                    document.cookie = 'SAML2flow=true; max-age=120; SameSite=Lax;';
+                    // (re)set cookie. path=/ matches the deletion in ngOnInit and APP_INITIALIZER so the
+                    // cookie can be reliably cleared from the document root after the IdP round-trip.
+                    document.cookie = 'SAML2flow=true; max-age=120; path=/; SameSite=Lax;';
                     // arbitrary by SAML2 HTTP Filter Chain secured URL
                     window.location.replace('/saml2/authenticate');
                 } else if (error.status === 403) {

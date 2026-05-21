@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
+import de.tum.cit.aet.artemis.assessment.config.FeedbackConfiguration;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -86,13 +87,14 @@ class FeedbackTest {
 
     @Test
     void trimVeryLongLongFeedback() {
-        final String veryLongFeedback = getText(Constants.LONG_FEEDBACK_MAX_LENGTH + 1_000);
+        final int maxFeedbackLength = FeedbackConfiguration.getMaxFeedbackLengthStatic();
+        final String veryLongFeedback = getText(maxFeedbackLength + 1_000);
 
         final Feedback feedback = new Feedback();
         feedback.setDetailText(veryLongFeedback);
 
         final LongFeedbackText longFeedback = feedback.getLongFeedback().orElseThrow();
-        assertThat(longFeedback.getText()).hasSize(Constants.LONG_FEEDBACK_MAX_LENGTH);
+        assertThat(longFeedback.getText()).hasSize(maxFeedbackLength);
     }
 
     private String getText(final int length) {

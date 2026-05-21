@@ -62,4 +62,25 @@ public interface StudentParticipationTestRepository extends StudentParticipation
             """)
     List<StudentParticipation> findByCourseIdAndStudentIdWithEagerRatedResults(@Param("courseId") long courseId, @Param("studentId") long studentId);
 
+    /**
+     * Finds participations for a specific exercise and student with all data needed for data export.
+     * Includes submissions, results, and feedbacks.
+     * <p>
+     * This method is only used in tests and should not be in production code.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @return participations with submissions, results, and feedbacks
+     */
+    @Query("""
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks
+            WHERE p.exercise.id = :exerciseId
+                AND p.student.id = :studentId
+            """)
+    List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerSubmissionsResultsAndFeedbacks(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+
 }

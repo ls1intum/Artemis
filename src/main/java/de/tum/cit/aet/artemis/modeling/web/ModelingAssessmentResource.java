@@ -1,13 +1,11 @@
 package de.tum.cit.aet.artemis.modeling.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,6 +26,8 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
 import de.tum.cit.aet.artemis.assessment.web.AssessmentResource;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.dto.ModelingAssessmentDTO;
@@ -46,7 +47,7 @@ import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
 /**
  * REST controller for managing ModelingAssessment.
  */
-@Profile(PROFILE_CORE)
+@Conditional(ModelingEnabled.class)
 @Lazy
 @RestController
 @RequestMapping("api/modeling/")
@@ -73,14 +74,37 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     /**
      * Get the result of the modeling submission with the given id. See {@link AssessmentResource#getAssessmentBySubmissionId}.
+     * If a resultId is provided, retrieves that specific result with authorization and sensitive data filtering applied.
      *
      * @param submissionId the id of the submission that should be sent to the client
+     * @param resultId     optional id of a specific result to retrieve; if not provided, returns the latest result
      * @return the assessment of the given submission
      */
-    @Override
     @GetMapping("modeling-submissions/{submissionId}/result")
     @EnforceAtLeastStudent
-    public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId) {
+    public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId, @RequestParam(value = "resultId", required = false) Long resultId) {
+        if (resultId != null) {
+            log.debug("REST request to get result {} for modeling submission {}", resultId, submissionId);
+            ModelingSubmission submission = modelingSubmissionRepository
+                    .findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(submissionId);
+            Result result = submission.getResults().stream().filter(r -> r.getId().equals(resultId)).findFirst().orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+
+            if (!(submission.getParticipation() instanceof StudentParticipation participation)) {
+                throw new AccessForbiddenException();
+            }
+            ModelingExercise exercise = modelingExerciseRepository.findByIdElseThrow(participation.getExercise().getId());
+
+            if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result)) {
+                throw new AccessForbiddenException();
+            }
+
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                exercise.filterSensitiveInformation();
+                result.filterSensitiveInformation();
+            }
+
+            return ResponseEntity.ok(result);
+        }
         return super.getAssessmentBySubmissionId(submissionId);
     }
 

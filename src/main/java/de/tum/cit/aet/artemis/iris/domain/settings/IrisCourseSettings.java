@@ -1,142 +1,60 @@
 package de.tum.cit.aet.artemis.iris.domain.settings;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH;
 
+import java.io.Serializable;
+import java.util.Objects;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
+
+import org.jspecify.annotations.Nullable;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * An {@link IrisSettings} implementation for course specific settings.
- * Course settings are used to override global settings and allows all sub setting types.
+ * JSON object persisted for Iris course settings.
  */
-@Entity
-@DiscriminatorValue("COURSE")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class IrisCourseSettings extends IrisSettings {
+public record IrisCourseSettings(boolean enabled, @Size(max = IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH) @Nullable String customInstructions, IrisPipelineVariant variant,
+        @Valid @Nullable IrisRateLimitConfiguration rateLimit) implements Serializable {
 
-    private long courseId;
+    private static final IrisCourseSettings DEFAULT = new IrisCourseSettings(true, null, IrisPipelineVariant.DEFAULT, null);
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JoinColumn(name = "iris_chat_settings_id")
-    private IrisProgrammingExerciseChatSubSettings irisProgrammingExerciseChatSettings;
-
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JoinColumn(name = "iris_text_exercise_chat_settings_id")
-    private IrisTextExerciseChatSubSettings irisTextExerciseChatSettings;
-
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "iris_course_chat_settings_id")
-    private IrisCourseChatSubSettings irisCourseChatSettings;
-
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JoinColumn(name = "iris_lecture_ingestion_settings_id")
-    private IrisLectureIngestionSubSettings irisLectureIngestionSettings;
-
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JoinColumn(name = "iris_lecture_chat_settings_id")
-    private IrisLectureChatSubSettings irisLectureChatSettings;
-
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JoinColumn(name = "iris_faq_ingestion_settings_id")
-    private IrisFaqIngestionSubSettings irisFaqIngestionSettings;
-
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "iris_competency_generation_settings_id")
-    private IrisCompetencyGenerationSubSettings irisCompetencyGenerationSettings;
-
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JoinColumn(name = "iris_tutor_suggestion_settings_id")
-    private IrisTutorSuggestionSubSettings irisTutorSuggestionSettings;
-
-    public long getCourseId() {
-        return courseId;
+    @JsonCreator
+    public IrisCourseSettings(@JsonProperty("enabled") boolean enabled, @JsonProperty("customInstructions") @Nullable String customInstructions,
+            @JsonProperty("variant") IrisPipelineVariant variant, @JsonProperty("rateLimit") @Valid IrisRateLimitConfiguration rateLimit) {
+        this.enabled = enabled;
+        this.customInstructions = sanitizeCustomInstructions(customInstructions);
+        this.variant = Objects.requireNonNullElse(variant, IrisPipelineVariant.DEFAULT);
+        this.rateLimit = rateLimit; // null = use defaults, non-null = explicit override (even if values are null = unlimited)
     }
 
-    public void setCourseId(long courseId) {
-        this.courseId = courseId;
+    public static IrisCourseSettings defaultSettings() {
+        return DEFAULT;
     }
 
-    @Override
-    public IrisLectureIngestionSubSettings getIrisLectureIngestionSettings() {
-        return irisLectureIngestionSettings;
+    private static String sanitizeCustomInstructions(@Nullable String instructions) {
+        if (instructions == null) {
+            return null;
+        }
+        var trimmed = instructions.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
-    @Override
-    public void setIrisLectureIngestionSettings(IrisLectureIngestionSubSettings irisLectureIngestionSettings) {
-        this.irisLectureIngestionSettings = irisLectureIngestionSettings;
-    }
-
-    @Override
-    public IrisProgrammingExerciseChatSubSettings getIrisProgrammingExerciseChatSettings() {
-        return irisProgrammingExerciseChatSettings;
-    }
-
-    @Override
-    public void setIrisProgrammingExerciseChatSettings(IrisProgrammingExerciseChatSubSettings irisProgrammingExerciseChatSettings) {
-        this.irisProgrammingExerciseChatSettings = irisProgrammingExerciseChatSettings;
-    }
-
-    @Override
-    public IrisTextExerciseChatSubSettings getIrisTextExerciseChatSettings() {
-        return irisTextExerciseChatSettings;
-    }
-
-    @Override
-    public void setIrisTextExerciseChatSettings(IrisTextExerciseChatSubSettings irisTextExerciseChatSettings) {
-        this.irisTextExerciseChatSettings = irisTextExerciseChatSettings;
-    }
-
-    @Override
-    public IrisLectureChatSubSettings getIrisLectureChatSettings() {
-        return irisLectureChatSettings;
-    }
-
-    @Override
-    public void setIrisLectureChatSettings(IrisLectureChatSubSettings irisLectureChatSettings) {
-        this.irisLectureChatSettings = irisLectureChatSettings;
-    }
-
-    @Override
-    public IrisCourseChatSubSettings getIrisCourseChatSettings() {
-        return irisCourseChatSettings;
-    }
-
-    @Override
-    public void setIrisCourseChatSettings(IrisCourseChatSubSettings irisCourseChatSettings) {
-        this.irisCourseChatSettings = irisCourseChatSettings;
-    }
-
-    @Override
-    public IrisCompetencyGenerationSubSettings getIrisCompetencyGenerationSettings() {
-        return irisCompetencyGenerationSettings;
-    }
-
-    @Override
-    public void setIrisCompetencyGenerationSettings(IrisCompetencyGenerationSubSettings irisCompetencyGenerationSubSettings) {
-        this.irisCompetencyGenerationSettings = irisCompetencyGenerationSubSettings;
-    }
-
-    @Override
-    public IrisFaqIngestionSubSettings getIrisFaqIngestionSettings() {
-        return irisFaqIngestionSettings;
-    }
-
-    @Override
-    public void setIrisFaqIngestionSettings(IrisFaqIngestionSubSettings irisFaqIngestionSubSettings) {
-        this.irisFaqIngestionSettings = irisFaqIngestionSubSettings;
-    }
-
-    @Override
-    public IrisTutorSuggestionSubSettings getIrisTutorSuggestionSettings() {
-        return irisTutorSuggestionSettings;
-    }
-
-    @Override
-    public void setIrisTutorSuggestionSettings(IrisTutorSuggestionSubSettings irisTutorSuggestionSubSettings) {
-        this.irisTutorSuggestionSettings = irisTutorSuggestionSubSettings;
+    /**
+     * Creates an object with overrides merged on top of defaults.
+     *
+     * @param enabled            desired enabled flag
+     * @param customInstructions optional custom instructions
+     * @param variant            desired variant (defaults to {@link IrisPipelineVariant#DEFAULT})
+     * @param rateLimit          optional rate limit overrides
+     * @return sanitized instance
+     */
+    public static IrisCourseSettings of(boolean enabled, @Nullable String customInstructions, @Nullable IrisPipelineVariant variant,
+            @Nullable IrisRateLimitConfiguration rateLimit) {
+        return new IrisCourseSettings(enabled, customInstructions, variant, rateLimit);
     }
 }

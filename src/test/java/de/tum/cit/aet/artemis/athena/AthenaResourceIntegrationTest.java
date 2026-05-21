@@ -8,10 +8,15 @@ import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.AT
 import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_RESTRICTED_MODULE_TEXT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.NonNull;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -21,8 +26,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-
-import com.fasterxml.jackson.core.type.TypeReference;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -33,21 +37,27 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
+import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
 import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
+import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
@@ -92,13 +102,22 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     private TextExerciseRepository textExerciseRepository;
 
     @Autowired
-    private ModelingExerciseRepository modelingExerciseRepository;
+    private ModelingExerciseTestRepository modelingExerciseRepository;
 
     @Autowired
     private FeedbackRepository feedbackRepository;
 
     @Autowired
     private LearnerProfileUtilService learnerProfileUtilService;
+
+    @Autowired
+    private LocalVCLocalCITestService localVCLocalCITestService;
+
+    @Autowired
+    private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationTestRepository;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
 
     private TextExercise textExercise;
 
@@ -153,6 +172,11 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         studentParticipationRepository.save(modelingParticipation);
         modelingSubmission.setParticipation(modelingParticipation);
         modelingSubmissionRepository.save(modelingSubmission);
+    }
+
+    @AfterEach
+    void cleanupRepositories() {
+        RepositoryExportTestUtil.cleanupTrackedRepositories();
     }
 
     @Test
@@ -374,11 +398,13 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         programmingExerciseRepository.save(programmingExercise);
 
+        result.setSubmission(null); // avoid sending the submission to the server, keep the payload small
         Result response = request.putWithResponseBody("/api/programming/participations/" + participation.getId() + "/manual-results?submit=true", result, Result.class,
                 HttpStatus.OK);
 
         // Check that nothing went wrong, even with Athena enabled
         assertThat(response).as("response is not null").isNotNull();
+        // TODO: add more assertions here
     }
 
     @ParameterizedTest
@@ -392,13 +418,12 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
 
         // Seed a LocalVC bare repository with content
-        var sourceRepo = new LocalRepository(defaultBranch);
+        var sourceRepo = RepositoryExportTestUtil.trackRepository(new LocalRepository(defaultBranch));
         sourceRepo.configureRepos(localVCBasePath, "athenaSrcLocalRepo", "athenaSrcOriginRepo");
 
         // Ensure tests repository URI exists on the exercise
-        var testsSlug = programmingExercise.getProjectKey().toLowerCase() + "-tests";
-        var testsUri = new LocalVCRepositoryUri(localVCBaseUri, programmingExercise.getProjectKey(), testsSlug);
-        programmingExercise.setTestRepositoryUri(testsUri.toString());
+        var testsSlug = programmingExercise.getProjectKey().toLowerCase() + "-" + RepositoryType.TESTS.getName();
+        programmingExercise.setTestRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, programmingExercise.getProjectKey(), testsSlug));
         programmingExerciseRepository.save(programmingExercise);
 
         var sourceUri = new LocalVCRepositoryUri(localVCBaseUri, sourceRepo.remoteBareGitRepoFile.toPath());
@@ -414,20 +439,70 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         gitService.copyBareRepositoryWithoutHistory(sourceUri, testsRepoUri, defaultBranch);
 
         // Get repository contents as map from endpoint
+        final var authHeaders = getAuthHeaders(athenaSecret);
+
+        Map<String, String> repoFiles = request.getMap("/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.OK, String.class,
+                String.class, new LinkedMultiValueMap<>(), authHeaders);
+        assertThat(repoFiles).as("export returns exactly one file: README.md").isNotNull().hasSize(1).containsOnlyKeys("README.md").containsEntry("README.md", "Initial commit");
+    }
+
+    @Test
+    void testStudentRepositoryExportEndpoint() throws Exception {
+        // Enable Athena for the exercise
+        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        programmingExerciseRepository.save(programmingExercise);
+
+        // Create a programming student participation with a submission and result
+        var studentLogin = TEST_PREFIX + "student1";
+        var result = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, studentLogin);
+        programmingSubmission = (ProgrammingSubmission) result.getSubmission();
+
+        // Prepare a LocalVC student repository and wire it to the participation referenced by the submission.
+        var projectKey = programmingExercise.getProjectKey();
+        String srcSlug = projectKey.toLowerCase() + "-athena-src";
+        var sourceRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, srcSlug));
+        // Remove default seed file (test.txt) from the working copy and commit deletion
+        var defaultSeed = sourceRepo.workingCopyGitRepoFile.toPath().resolve("test.txt");
+        if (Files.exists(defaultSeed)) {
+            Files.delete(defaultSeed);
+            sourceRepo.workingCopyGitRepo.add().addFilepattern(".").call();
+            GitService.commit(sourceRepo.workingCopyGitRepo).setMessage("Remove default seed").call();
+            sourceRepo.workingCopyGitRepo.push().setRemote("origin").call();
+        }
+        // Seed a README.md so the export contains the expected file
+        Path readme = sourceRepo.workingCopyGitRepoFile.toPath().resolve("README.md");
+        FileUtils.writeStringToFile(readme.toFile(), "Initial commit", java.nio.charset.StandardCharsets.UTF_8);
+        sourceRepo.workingCopyGitRepo.add().addFilepattern(".").call();
+        GitService.commit(sourceRepo.workingCopyGitRepo).setMessage("Initial commit").call();
+        sourceRepo.workingCopyGitRepo.push().setRemote("origin").call();
+        var studentRepoSlug = localVCLocalCITestService.getRepositorySlug(projectKey, studentLogin);
+        RepositoryExportTestUtil.seedLocalVcBareFrom(localVCLocalCITestService, projectKey, studentRepoSlug, sourceRepo);
+
+        // Persist repository URI on the participation
+        var programmingStudentParticipation = programmingExerciseStudentParticipationTestRepository.findById(programmingSubmission.getParticipation().getId()).orElseThrow();
+        programmingStudentParticipation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, studentRepoSlug));
+        programmingExerciseStudentParticipationTestRepository.save(programmingStudentParticipation);
+
+        // Call the internal endpoint with valid Athena auth and verify file map
+        final var authHeaders = getAuthHeaders(athenaSecret);
+
+        Map<String, String> repoFiles = request.getMap(
+                "/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/submissions/" + programmingSubmission.getId() + "/repository", HttpStatus.OK,
+                String.class, String.class, new LinkedMultiValueMap<>(), authHeaders);
+        assertThat(repoFiles).as("student export returns exactly one file: README.md").isNotNull().hasSize(1).containsOnlyKeys("README.md").containsEntry("README.md",
+                "Initial commit");
+    }
+
+    private @NonNull HttpHeaders getAuthHeaders(String athenaSecret) {
         var authHeaders = new HttpHeaders();
         authHeaders.add(HttpHeaders.AUTHORIZATION, athenaSecret);
-
-        String json = request.get("/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.OK, String.class, authHeaders);
-        Map<String, String> repoFiles = request.getObjectMapper().readValue(json, new TypeReference<Map<String, String>>() {
-        });
-        assertThat(repoFiles).as("export returns exactly one file: README.md").isNotNull().hasSize(1).containsOnlyKeys("README.md").containsEntry("README.md", "Initial commit");
+        return authHeaders;
     }
 
     @ParameterizedTest
     @ValueSource(strings = { "repository/template", "repository/solution", "repository/tests" })
     void testRepositoryExportEndpointsFailWhenAthenaNotEnabled(String urlSuffix) throws Exception {
-        var authHeaders = new HttpHeaders();
-        authHeaders.add(HttpHeaders.AUTHORIZATION, athenaSecret);
+        final var authHeaders = getAuthHeaders(athenaSecret);
 
         // Expect status 503 because Athena is not enabled for the exercise
         request.get("/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.SERVICE_UNAVAILABLE, Result.class, authHeaders);
@@ -436,8 +511,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @ParameterizedTest
     @ValueSource(strings = { "repository/template", "repository/solution", "repository/tests", "submissions/100/repository" })
     void testRepositoryExportEndpointsFailWithWrongAuthentication(String urlSuffix) throws Exception {
-        var authHeaders = new HttpHeaders();
-        authHeaders.add(HttpHeaders.AUTHORIZATION, athenaSecret + "-wrong");
+        final var authHeaders = getAuthHeaders(athenaSecret + "-wrong");
 
         // Enable Athena for the exercise
         programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
@@ -450,8 +524,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @ParameterizedTest
     @ValueSource(strings = { "repository/user", "repository/auxiliary" })
     void testRepositoryExportEndpointsFailWithInvalidRepositoryType(String urlSuffix) throws Exception {
-        var authHeaders = new HttpHeaders();
-        authHeaders.add(HttpHeaders.AUTHORIZATION, athenaSecret);
+        final var authHeaders = getAuthHeaders(athenaSecret);
 
         // Enable Athena for the exercise
         programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
@@ -459,4 +532,6 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
         request.get("/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.NOT_FOUND, Result.class, authHeaders);
     }
+
+    // Removed legacy public endpoint test that expected BAD_REQUEST for invalid repository type
 }

@@ -1,28 +1,28 @@
 <div>
     <h1>
-        {{ this.titleKey | artemisTranslate }}
+        {{ titleKey() | artemisTranslate }}
     </h1>
     <p>
-        {{ this.description | artemisTranslate }}
+        {{ description() | artemisTranslate }}
     </p>
     <div class="column d-flex justify-content-center align-content-center">
-        @if (!downloadMode) {
+        @if (!downloadMode()) {
             <button
                 jhiDataExportRequestButton
-                [adminDialog]="isAdmin"
-                [expectedLogin]="currentLogin!"
+                [adminDialog]="isAdmin()"
+                [expectedLogin]="currentLogin()!"
                 [dialogError]="dialogError$"
                 (dataExportRequest)="requestExport()"
                 (dataExportRequestForAnotherUser)="requestExportForAnotherUser($event)"
                 class="mb-1"
-                [disabled]="!canRequestDataExport && !isAdmin"
+                [disabled]="!canRequestDataExport() && !isAdmin()"
             ></button>
         }
-        @if (canDownload) {
+        @if (canDownload()) {
             <jhi-button
                 id="download-data-export-btn"
                 [btnSize]="ButtonSize.LARGE"
-                [disabled]="!canDownload"
+                [disabled]="!canDownload()"
                 [tooltip]="'artemisApp.dataExport.download'"
                 [title]="'artemisApp.dataExport.download'"
                 (onClick)="downloadDataExport()"
@@ -30,19 +30,19 @@
         }
     </div>
     <div class="mt-3 d-flex-column align-content-center">
-        @if (dataExport?.createdDate && state !== DataExportState.FAILED) {
+        @if (dataExport().createdDate && state() !== DataExportState.FAILED) {
             <p>
                 <span jhiTranslate="artemisApp.dataExport.lastRequestDate"></span>
-                <span class="bold">{{ dataExport?.createdDate | artemisDate: 'long-date' }}</span>
+                <span class="bold">{{ dataExport().createdDate | artemisDate: 'long-date' }}</span>
             </p>
         }
-        @if (dataExport?.nextRequestDate && (state === DataExportState.DELETED || state === DataExportState.DOWNLOADED_DELETED) && !canRequestDataExport) {
+        @if (dataExport().nextRequestDate && (state() === DataExportState.DELETED || state() === DataExportState.DOWNLOADED_DELETED) && !canRequestDataExport()) {
             <p>
                 <span jhiTranslate="artemisApp.dataExport.nextRequestDate"></span>
-                <span class="bold">{{ dataExport?.nextRequestDate | artemisDate: 'long-date' }}</span>
+                <span class="bold">{{ dataExport().nextRequestDate | artemisDate: 'long-date' }}</span>
             </p>
         }
-        @if (state === DataExportState.REQUESTED || state === DataExportState.IN_CREATION) {
+        @if (state() === DataExportState.REQUESTED || state() === DataExportState.IN_CREATION) {
             <p>
                 <span jhiTranslate="artemisApp.dataExport.isBeingCreated"></span>
             </p>

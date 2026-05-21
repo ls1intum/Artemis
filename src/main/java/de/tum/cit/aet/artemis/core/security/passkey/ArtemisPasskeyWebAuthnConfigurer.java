@@ -26,6 +26,8 @@ import org.springframework.security.web.webauthn.management.UserCredentialReposi
 import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsRepository;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -35,6 +37,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.service.AndroidFingerprintService;
 import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
+import de.tum.cit.aet.artemis.core.service.RateLimitService;
 import de.tum.cit.aet.artemis.core.util.AndroidApkKeyHashUtil;
 
 /**
@@ -71,6 +74,8 @@ public class ArtemisPasskeyWebAuthnConfigurer {
 
     private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
 
+    private final RateLimitService rateLimitService;
+
     private final PasskeyCredentialsRepository passkeyCredentialsRepository;
 
     @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}")
@@ -91,15 +96,14 @@ public class ArtemisPasskeyWebAuthnConfigurer {
 
     private final String relyingPartyName = "Artemis";
 
-    public ArtemisPasskeyWebAuthnConfigurer(AuditEventRepository auditEventRepository, MappingJackson2HttpMessageConverter converter, JWTCookieService jwtCookieService,
-            UserRepository userRepository, PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, UserCredentialRepository userCredentialRepository,
+    public ArtemisPasskeyWebAuthnConfigurer(AuditEventRepository auditEventRepository, ObjectMapper objectMapper, JWTCookieService jwtCookieService, UserRepository userRepository,
+            PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, UserCredentialRepository userCredentialRepository,
             PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository,
             PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository, AndroidFingerprintService androidFingerprintService,
             MailSendingService mailSendingService, ArtemisSuccessfulLoginService artemisSuccessfulLoginService,
-            GlobalNotificationSettingRepository globalNotificationSettingRepository,
-            de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository passkeyCredentialsRepository) {
+            GlobalNotificationSettingRepository globalNotificationSettingRepository, RateLimitService rateLimitService, PasskeyCredentialsRepository passkeyCredentialsRepository) {
         this.auditEventRepository = auditEventRepository;
-        this.converter = converter;
+        this.converter = new MappingJackson2HttpMessageConverter(objectMapper);
         this.jwtCookieService = jwtCookieService;
         this.userRepository = userRepository;
         this.publicKeyCredentialUserEntityRepository = publicKeyCredentialUserEntityRepository;
@@ -110,6 +114,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
         this.mailSendingService = mailSendingService;
         this.artemisSuccessfulLoginService = artemisSuccessfulLoginService;
         this.globalNotificationSettingRepository = globalNotificationSettingRepository;
+        this.rateLimitService = rateLimitService;
         this.passkeyCredentialsRepository = passkeyCredentialsRepository;
     }
 
@@ -175,7 +180,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
 
         WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(auditEventRepository, converter, jwtCookieService, userRepository,
                 publicKeyCredentialUserEntityRepository, userCredentialRepository, publicKeyCredentialCreationOptionsRepository, publicKeyCredentialRequestOptionsRepository,
-                mailSendingService, artemisSuccessfulLoginService, globalNotificationSettingRepository, passkeyCredentialsRepository);
+                mailSendingService, artemisSuccessfulLoginService, globalNotificationSettingRepository, rateLimitService, passkeyCredentialsRepository);
 
         http.with(webAuthnConfigurer, configurer -> {
             configurer.allowedOrigins(allowedOrigins).rpId(relyingPartyId).rpName(relyingPartyName);

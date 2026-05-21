@@ -8,7 +8,7 @@ on:
       - 'CONTRIBUTING.md'
       - 'LICENSE'
       - 'SECURITY.md'
-      - 'docs/**'
+      - 'documentation/**'
       - '.github/**'
       - '!.github/workflows/test-android.yml'
   push:
@@ -16,19 +16,25 @@ on:
       - develop
       - main
       - release/*
-    tags: '[0-9]+.[0-9]+.[0-9]+'
+    tags:
+      - '[0-9]+.[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+'
     paths-ignore:
       - 'README.md'
       - 'CODE_OF_CONDUCT.md'
       - 'CONTRIBUTING.md'
       - 'LICENSE'
       - 'SECURITY.md'
-      - 'docs/**'
+      - 'documentation/**'
       - '.github/**'
       - '!.github/workflows/test-android.yml'
   release:
     types:
       - created
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   e2e-tests:
@@ -49,7 +55,7 @@ jobs:
           path: android-repo
 
       - name: Gradle Wrapper Verification
-        uses: gradle/actions/wrapper-validation@v4
+        uses: gradle/actions/wrapper-validation@v6
 
         # sanity cleanup
       - name: Stop mysql server
@@ -77,7 +83,7 @@ jobs:
 
         # Use check to wait for the artemis server to come online. Periodically ping the server for sign of life.
       - name: Wait for Artemis Server to be healthy
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@v4
         with:
           timeout_minutes: 10
           retry_wait_seconds: 10
@@ -100,7 +106,7 @@ jobs:
         continue-on-error: true
 
       - name: Test Report
-        uses: dorny/test-reporter@v2
+        uses: dorny/test-reporter@v3
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: Android E2E Test Results

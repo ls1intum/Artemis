@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { uniq } from 'lodash-es';
-import { RegExpLineNumberMatchArray, matchRegexWithLineNumbers } from 'app/shared/util/global.utils';
+import { RegExpLineNumberMatchArray, matchRegexWithLineNumbers } from 'app/shared/util/string-pure.utils';
 import { AnalysisItem, ProblemStatementAnalysis, ProblemStatementIssue } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 
 const TEST_CASE_REGEX = /\[[^[\]]+]\(((?:[^(),]+(?:\([^()]*\)[^(),]*)?(?:,[^(),]+(?:\([^()]*\)[^(),]*)?)*)?)\)/;

@@ -24,17 +24,20 @@ public class ExerciseAssessedNotification extends CourseNotification {
 
     protected Long score;
 
+    protected Long examId;
+
     /**
      * Default constructor used when creating a new post notification.
      */
     public ExerciseAssessedNotification(Long courseId, String courseTitle, String courseImageUrl, Long exerciseId, String exerciseTitle, String exerciseType, Long numberOfPoints,
-            Long score) {
+            Long score, Long examId) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
         this.exerciseId = exerciseId;
         this.exerciseTitle = exerciseTitle;
         this.numberOfPoints = numberOfPoints;
         this.exerciseType = exerciseType;
         this.score = score;
+        this.examId = examId;
     }
 
     /**
@@ -61,6 +64,9 @@ public class ExerciseAssessedNotification extends CourseNotification {
 
     @Override
     public String getRelativeWebAppUrl() {
+        if (examId != null) {
+            return "/courses/" + courseId + "/exams/" + examId;
+        }
         return "/courses/" + courseId + "/exercises/" + exerciseId;
     }
 }

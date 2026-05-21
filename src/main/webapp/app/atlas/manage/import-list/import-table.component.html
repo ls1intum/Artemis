@@ -62,14 +62,18 @@
         </tbody>
     </table>
 </div>
-<ngb-pagination
-    [collectionSize]="collectionSize()"
-    [pageSize]="pageSize()"
-    [page]="page()"
-    (pageChange)="setPage($event)"
-    size="sm"
-    class="d-flex justify-content-end mt-2 pagination"
-/>
+<div class="d-flex justify-content-between p-2">
+    <ngb-pagination
+        [collectionSize]="collectionSize()"
+        [pageSize]="pageSize()"
+        [page]="page()"
+        (pageChange)="setPage($event)"
+        [maxSize]="5"
+        [rotate]="true"
+        [ellipses]="true"
+        [boundaryLinks]="true"
+    />
+</div>
 
 <ng-template #sortIcon let-sortedColumn="sortedColumn" let-currentSortedColumn="currentSortedColumn" let-sortingOrder="sortingOrder">
     @if (sortedColumn !== currentSortedColumn) {

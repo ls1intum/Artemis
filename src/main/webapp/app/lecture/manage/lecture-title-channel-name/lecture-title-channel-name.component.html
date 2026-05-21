@@ -1,9 +1,11 @@
 <jhi-title-channel-name
-    [(title)]="lecture.title"
-    [(channelName)]="lecture.channelName"
+    [title]="lecture().title"
+    (titleChange)="onTitleChange($event)"
+    [channelName]="lecture().channelName"
+    (channelNameChange)="onChannelNameChange($event)"
     channelNamePrefix="lecture-"
     [hideTitleLabel]="false"
     [emphasizeLabels]="false"
-    [hideChannelName]="hideChannelNameInput"
-    [initChannelName]="lecture.id === undefined"
+    [hideChannelName]="hideChannelNameInput()"
+    [initChannelName]="lecture().id === undefined"
 />

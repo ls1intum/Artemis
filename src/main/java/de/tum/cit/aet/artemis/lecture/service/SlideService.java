@@ -1,21 +1,20 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Lazy
 @Service
 public class SlideService {
@@ -39,11 +38,22 @@ public class SlideService {
      * @param updatedExercise  The updated exercise after the update
      */
     public void handleDueDateChange(Exercise originalExercise, Exercise updatedExercise) {
-        ZonedDateTime originalDueDate = originalExercise.getDueDate();
+        handleDueDateChange(originalExercise.getDueDate(), updatedExercise);
+    }
+
+    /**
+     * Checks if the due date of an exercise has changed and updates related slides if needed.
+     * This method should be called after saving an updated exercise.
+     *
+     * @param originalDueDate The original due date before the update
+     * @param updatedExercise The updated exercise after the update
+     */
+    public void handleDueDateChange(ZonedDateTime originalDueDate, Exercise updatedExercise) {
         ZonedDateTime updatedDueDate = updatedExercise.getDueDate();
+        boolean hasDueDateChanged = updatedDueDate != null && (originalDueDate == null || !originalDueDate.equals(updatedDueDate));
 
         // Check if the due date has changed
-        if (updatedDueDate != null && (originalDueDate == null || !originalDueDate.equals(updatedDueDate))) {
+        if (hasDueDateChanged) {
 
             updateSlidesHiddenDate(updatedExercise);
         }

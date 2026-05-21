@@ -55,8 +55,8 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
 
         var programmingExerciseCountBefore = programmingExerciseRepository.count();
 
-        ProgrammingExercise updatedProgrammingExercise = request.putWithResponseBody("/api/programming/programming-exercises", programmingExercise, ProgrammingExercise.class,
-                HttpStatus.OK);
+        ProgrammingExercise updatedProgrammingExercise = request.putWithResponseBody("/api/programming/programming-exercises",
+                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class, HttpStatus.OK);
 
         // The result from the put response should be updated with the new data.
         assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);
@@ -97,7 +97,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
 
         assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);
         verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(any(), any(), any());
-        verify(groupNotificationScheduleService, timeout(2000).times(1)).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any());
+        verify(groupNotificationScheduleService, timeout(2000).times(1)).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any(), any());
 
         ProgrammingExercise fromDb = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId).orElseThrow();
         assertThat(fromDb.getProblemStatement()).isEqualTo(newProblem);
@@ -117,7 +117,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
 
         assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);
         verify(examLiveEventsService, timeout(2000).times(1)).createAndSendProblemStatementUpdateEvent(any(), any(), any());
-        verify(groupNotificationScheduleService, never()).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any());
+        verify(groupNotificationScheduleService, never()).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any(), any());
 
         ProgrammingExercise fromDb = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId())
                 .orElseThrow();

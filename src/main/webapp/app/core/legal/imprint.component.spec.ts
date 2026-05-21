@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockDirective, MockPipe } from 'ng-mocks';
@@ -11,21 +13,25 @@ import { ImprintComponent } from 'app/core/legal/imprint.component';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
-import { provideHttpClient, withFetch } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ImprintComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ImprintComponent;
     let fixture: ComponentFixture<ImprintComponent>;
     let legalDocumentService: LegalDocumentService;
     let languageHelper: JhiLanguageHelper;
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [ImprintComponent, MockDirective(TranslateDirective), MockPipe(HtmlForMarkdownPipe)],
+            imports: [ImprintComponent, MockDirective(TranslateDirective), MockPipe(HtmlForMarkdownPipe)],
             providers: [
                 { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
                 SessionStorageService,
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
-                provideHttpClient(withFetch()),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(ImprintComponent);
@@ -35,11 +41,15 @@ describe('ImprintComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should load imprint on init in correct language', () => {
-        jest.spyOn(languageHelper, 'language', 'get').mockReturnValue(of('en'));
-        const imprintServiceSpy = jest.spyOn(legalDocumentService, 'getImprint');
+        vi.spyOn(languageHelper, 'language', 'get').mockReturnValue(of('en'));
+        const imprintServiceSpy = vi.spyOn(legalDocumentService, 'getImprint');
         component.ngOnInit();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(imprintServiceSpy).toHaveBeenCalledOnce();
         expect(imprintServiceSpy).toHaveBeenCalledWith(LegalDocumentLanguage.ENGLISH);
     });

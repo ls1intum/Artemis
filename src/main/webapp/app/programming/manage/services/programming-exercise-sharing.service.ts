@@ -1,7 +1,6 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { MODULE_FEATURE_SHARING } from 'app/app.constants';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
@@ -52,14 +51,14 @@ export class ProgrammingExerciseSharingService {
     /**
      * Sets a new programming exercise up
      * @param programmingExercise which should be setup
-     * @param course in which the exercise should be imported
+     * @param courseId id of the course in which the exercise should be imported
      * @param sharingInfo sharing related data needed for the import
      */
-    setUpFromSharingImport(programmingExercise: ProgrammingExercise, course: Course, sharingInfo: SharingInfo): Observable<EntityResponseType> {
-        let copy = this.convertDataFromClient(programmingExercise);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+    setUpFromSharingImport(programmingExercise: ProgrammingExercise, courseId: number, sharingInfo: SharingInfo): Observable<EntityResponseType> {
+        let exerciseCopy = this.convertDataFromClient(programmingExercise);
+        exerciseCopy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(exerciseCopy);
         return this.http
-            .post<ProgrammingExercise>(this.resourceUrlSetupImport, { exercise: copy, course, sharingInfo }, { observe: 'response' })
+            .post<ProgrammingExercise>(this.resourceUrlSetupImport, { exercise: exerciseCopy, courseId, sharingInfo }, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 

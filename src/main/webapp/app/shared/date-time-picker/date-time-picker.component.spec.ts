@@ -89,7 +89,7 @@ describe('FormDateTimePickerComponent', () => {
         const valueChangedStub = jest.spyOn(component, 'valueChanged').mockImplementation();
         const newDate = normalDate.add(2, 'days');
         fixture.componentRef.setInput('value', normalDate);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.updateField(newDate);
 

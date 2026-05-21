@@ -1,9 +1,11 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, Routes, UrlTree } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_STUDENT } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_STUDENT } from 'app/shared/constants/authority.constants';
 import { navbarRoute } from 'app/core/navbar/navbar.route';
 import { errorRoute } from 'app/core/layouts/error/error.route';
 import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
+import { AccountService } from 'app/core/auth/account.service';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 
@@ -11,6 +13,29 @@ const routes: Routes = [
     ...LAYOUT_ROUTES,
     {
         path: '',
+        pathMatch: 'full',
+        loadComponent: () => import('./core/landing/landing.component').then((m) => m.LandingComponent),
+        data: {
+            pageTitle: 'landing.pageTitle',
+            showSkeleton: false,
+        },
+        canActivate: [
+            (): boolean | UrlTree => {
+                const accountService = inject(AccountService);
+                const router = inject(Router);
+                // Identity is already resolved by the APP_INITIALIZER, so check synchronously.
+                // Note: when returning from a SAML2 IdP, the initializer also completes the
+                // second-step JWT exchange before this guard runs, so userIdentity() is already
+                // populated and no SAML-specific branch is needed here.
+                if (accountService.userIdentity()) {
+                    return router.parseUrl('/courses');
+                }
+                return true;
+            },
+        ],
+    },
+    {
+        path: 'sign-in',
         loadComponent: () => import('./core/home/home.component').then((m) => m.HomeComponent),
         data: {
             pageTitle: 'home.title',
@@ -49,6 +74,18 @@ const routes: Routes = [
         },
     },
     {
+        path: 'ai-experience-info',
+        loadComponent: () => import('./logos/llm-selection-info.component').then((m) => m.LlmSelectionInfoComponent),
+        data: {
+            pageTitle: 'artemisApp.aiExperienceInfo.pageTitle',
+        },
+    },
+    {
+        path: 'llm-selection',
+        redirectTo: 'ai-experience-info',
+        pathMatch: 'full',
+    },
+    {
         path: 'privacy/data-exports',
         loadComponent: () => import('app/core/legal/data-export/data-export.component').then((m) => m.DataExportComponent),
         data: {
@@ -65,6 +102,16 @@ const routes: Routes = [
             pageTitle: 'artemisApp.dataExport.title',
             usesModuleBackground: true,
         },
+    },
+    {
+        path: 'course-requests',
+        loadComponent: () => import('app/core/course/request/course-request.component').then((m) => m.CourseRequestComponent),
+        data: {
+            authorities: IS_AT_LEAST_STUDENT,
+            pageTitle: 'artemisApp.courseRequest.title',
+            usesModuleBackground: true,
+        },
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'imprint',
@@ -177,8 +224,8 @@ const routes: Routes = [
     },
     // ===== GRADING SYSTEM =====
     {
-        path: 'courses/:courseId/grading-system',
-        loadChildren: () => import('./assessment/manage/grading-system/grading-system.route').then((m) => m.gradingSystemRoutes),
+        path: 'courses/:courseId/grading',
+        loadComponent: () => import('app/assessment/manage/grading/grading.component').then((m) => m.GradingComponent),
         data: {
             usesModuleBackground: true,
         },
@@ -209,12 +256,21 @@ const routes: Routes = [
         loadChildren: () => import('./exam/manage/exam-management.route').then((m) => m.examManagementRoutes),
     },
     {
-        path: 'courses/:courseId/exams/:examId/grading-system',
-        loadChildren: () => import('./assessment/manage/grading-system/grading-system.route').then((m) => m.gradingSystemRoutes),
+        path: 'courses/:courseId/exams/:examId/grading',
+        loadComponent: () => import('app/assessment/manage/grading/grading.component').then((m) => m.GradingComponent),
     },
     {
         path: 'courses/:courseId/exams/:examId/exercises/:exerciseId/repository',
         loadChildren: () => import('./programming/overview/programming-repository.route').then((m) => m.programmingRepositoryRoutes),
+    },
+    {
+        path: 'exams/rooms',
+        loadComponent: () => import('app/exam/manage/students/room-distribution/exam-rooms.component').then((m) => m.ExamRoomsComponent),
+        data: {
+            authorities: IS_AT_LEAST_INSTRUCTOR,
+            pageTitle: 'artemisApp.examRooms.management.title',
+        },
+        canActivate: [UserRouteAccessService],
     },
     {
         path: 'features',
@@ -224,15 +280,6 @@ const routes: Routes = [
         path: 'lti',
         loadChildren: () => import('./lti/shared/lti.route').then((m) => m.ltiLaunchRoutes),
     },
-    {
-        path: 'about-iris',
-        pathMatch: 'full',
-        loadComponent: () => import('app/iris/overview/about-iris/about-iris.component').then((m) => m.AboutIrisComponent),
-        data: {
-            pageTitle: 'artemisApp.exerciseChatbot.title',
-            usesModuleBackground: true,
-        },
-    },
     // ===== SHARING =====
     {
         path: 'sharing/import/:basketToken',
@@ -241,6 +288,17 @@ const routes: Routes = [
             pageTitle: 'artemisApp.sharing.title',
         },
         loadComponent: () => import('./sharing/sharing.component').then((m) => m.SharingComponent),
+    },
+    // ===== PDF VIEWER IFRAME =====
+    {
+        path: 'pdf-viewer-iframe',
+        loadComponent: () => import('./lecture/shared/pdf-viewer/pdf-viewer-iframe-content.component').then((m) => m.PdfViewerIframeContentComponent),
+        data: {
+            authorities: IS_AT_LEAST_STUDENT,
+            pageTitle: 'artemisApp.attachmentVideoUnit.pdfViewer.title',
+            hidePageRibbon: true,
+        },
+        canActivate: [UserRouteAccessService],
     },
 ];
 

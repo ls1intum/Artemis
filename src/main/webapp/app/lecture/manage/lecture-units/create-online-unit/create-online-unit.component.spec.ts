@@ -1,5 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CreateOnlineUnitComponent } from 'app/lecture/manage/lecture-units/create-online-unit/create-online-unit.component';
 import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/online-unit.service';
 import { MockProvider } from 'ng-mocks';
@@ -21,10 +23,12 @@ import { ProfileService } from '../../../../core/layouts/profiles/shared/profile
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('CreateOnlineUnitComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let createOnlineUnitComponentFixture: ComponentFixture<CreateOnlineUnitComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [OwlNativeDateTimeModule],
             providers: [
                 MockProvider(OnlineUnitService),
@@ -66,18 +70,16 @@ describe('CreateOnlineUnitComponent', () => {
                 provideHttpClientTesting(),
                 { provide: AccountService, useClass: MockAccountService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                createOnlineUnitComponentFixture = TestBed.createComponent(CreateOnlineUnitComponent);
-            });
+        }).compileComponents();
+
+        createOnlineUnitComponentFixture = TestBed.createComponent(CreateOnlineUnitComponent);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should send POST request upon form submission and navigate', fakeAsync(() => {
+    it('should send POST request upon form submission and navigate', async () => {
         const router: Router = TestBed.inject(Router);
         const onlineUnitService = TestBed.inject(OnlineUnitService);
 
@@ -93,28 +95,27 @@ describe('CreateOnlineUnitComponent', () => {
             status: 201,
         });
 
-        const createStub = jest.spyOn(onlineUnitService, 'create').mockReturnValue(of(response));
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const createStub = vi.spyOn(onlineUnitService, 'create').mockReturnValue(of(response));
+        const navigateSpy = vi.spyOn(router, 'navigate');
 
         createOnlineUnitComponentFixture.detectChanges();
-        tick();
+        await createOnlineUnitComponentFixture.whenStable();
         const onlineUnitForm: OnlineUnitFormComponent = createOnlineUnitComponentFixture.debugElement.query(By.directive(OnlineUnitFormComponent)).componentInstance;
         onlineUnitForm.formSubmitted.emit(formDate);
 
-        createOnlineUnitComponentFixture.whenStable().then(() => {
-            const onlineUnitCallArgument: OnlineUnit = createStub.mock.calls[0][0];
-            const lectureIdCallArgument: number = createStub.mock.calls[0][1];
+        await createOnlineUnitComponentFixture.whenStable();
+        const onlineUnitCallArgument: OnlineUnit = createStub.mock.calls[0][0];
+        const lectureIdCallArgument: number = createStub.mock.calls[0][1];
 
-            expect(onlineUnitCallArgument.name).toEqual(formDate.name);
-            expect(onlineUnitCallArgument.description).toEqual(formDate.description);
-            expect(onlineUnitCallArgument.releaseDate).toEqual(formDate.releaseDate);
-            expect(onlineUnitCallArgument.source).toEqual(formDate.source);
-            expect(lectureIdCallArgument).toBe(1);
+        expect(onlineUnitCallArgument.name).toEqual(formDate.name);
+        expect(onlineUnitCallArgument.description).toEqual(formDate.description);
+        expect(onlineUnitCallArgument.releaseDate).toEqual(formDate.releaseDate);
+        expect(onlineUnitCallArgument.source).toEqual(formDate.source);
+        expect(lectureIdCallArgument).toBe(1);
 
-            expect(createStub).toHaveBeenCalledOnce();
-            expect(navigateSpy).toHaveBeenCalledOnce();
+        expect(createStub).toHaveBeenCalledTimes(1);
+        expect(navigateSpy).toHaveBeenCalledTimes(1);
 
-            navigateSpy.mockRestore();
-        });
-    }));
+        navigateSpy.mockRestore();
+    });
 });

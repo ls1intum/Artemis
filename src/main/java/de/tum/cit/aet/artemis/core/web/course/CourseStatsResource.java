@@ -5,6 +5,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +26,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementDetailViewDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementOverviewStatisticsDTO;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
+import de.tum.cit.aet.artemis.core.dto.StudentGroupCountDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -91,12 +94,7 @@ public class CourseStatsResource {
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         List<Course> courses = courseForUserGroupService.getCoursesForTutors(user, onlyActive);
-        for (Course course : courses) {
-            course.setNumberOfInstructors(userRepository.countUserInGroup(course.getInstructorGroupName()));
-            course.setNumberOfTeachingAssistants(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
-            course.setNumberOfEditors(userRepository.countUserInGroup(course.getEditorGroupName()));
-            course.setNumberOfStudents(userRepository.countUserInGroup(course.getStudentGroupName()));
-        }
+        userRepository.setUserCountsForCourses(courses);
         return ResponseEntity.ok(courses);
     }
 
@@ -133,10 +131,17 @@ public class CourseStatsResource {
     public ResponseEntity<List<CourseManagementOverviewStatisticsDTO>> getExerciseStatsForCourseOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
         log.debug("REST request to get statistics for the courses of the user");
         final List<CourseManagementOverviewStatisticsDTO> courseDTOs = new ArrayList<>();
-        for (final var course : courseOverviewService.getAllCoursesForManagementOverview(onlyActive)) {
+        var courses = courseOverviewService.getAllCoursesForManagementOverview(onlyActive);
+
+        // Batch-fetch student group counts for all courses in a single query
+        Set<String> studentGroupNames = courses.stream().map(Course::getStudentGroupName).collect(Collectors.toSet());
+        var studentGroupCounts = userRepository.countUsersInGroups(studentGroupNames).stream()
+                .collect(Collectors.toMap(StudentGroupCountDTO::studentGroupName, StudentGroupCountDTO::count, Long::sum));
+
+        for (final var course : courses) {
             final var courseId = course.getId();
             var studentsGroup = course.getStudentGroupName();
-            var amountOfStudentsInCourse = Math.toIntExact(userRepository.countUserInGroup(studentsGroup));
+            var amountOfStudentsInCourse = Math.toIntExact(studentGroupCounts.getOrDefault(studentsGroup, 0L));
             var exerciseStatistics = exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse);
 
             var exerciseIds = exerciseRepository.findExerciseIdsByCourseId(courseId);

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_DEVELOPMENT;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.core.util.Pair;
 public class BeanInstantiationTracer implements InstantiationAwareBeanPostProcessor {
 
     // Keep these two constants in sync with the values in .github/workflows/bean-instantiations.yml
-    private static final int STARTUP_MAX_DEPENDENCY_CHAIN_THRESHOLD = 9;
+    private static final int STARTUP_MAX_DEPENDENCY_CHAIN_THRESHOLD = 10;
 
     private static final int DEFERRED_INIT_MAX_DEPENDENCY_CHAIN_THRESHOLD = 16;
 

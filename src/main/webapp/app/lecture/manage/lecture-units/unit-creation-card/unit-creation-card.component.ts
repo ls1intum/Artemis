@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { faCheck, faFileVideo, faLink, faScroll } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
@@ -16,10 +16,9 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 export class UnitCreationCardComponent {
     readonly documentationType: DocumentationType = 'Units';
 
-    @Input() emitEvents = false;
+    emitEvents = input<boolean>(false);
 
-    @Output()
-    onUnitCreationCardClicked: EventEmitter<LectureUnitType> = new EventEmitter<LectureUnitType>();
+    onUnitCreationCardClicked = output<LectureUnitType>();
 
     unitType = LectureUnitType;
 
@@ -30,7 +29,7 @@ export class UnitCreationCardComponent {
     faFileVideo = faFileVideo;
 
     onButtonClicked(type: LectureUnitType) {
-        if (this.emitEvents) {
+        if (this.emitEvents()) {
             this.onUnitCreationCardClicked.emit(type);
             return;
         }

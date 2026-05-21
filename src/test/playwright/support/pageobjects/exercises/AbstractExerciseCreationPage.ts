@@ -1,6 +1,6 @@
 import { Locator, Page } from '@playwright/test';
 import { Dayjs } from 'dayjs';
-import { enterDate } from '../../utils';
+import { enterDate, setMonacoEditorContentByLocator } from '../../utils';
 
 export class AbstractExerciseCreationPage {
     protected readonly page: Page;
@@ -28,9 +28,13 @@ export class AbstractExerciseCreationPage {
     }
 
     async clearText(textEditor: Locator) {
-        await textEditor.click();
-        await textEditor.press('Control+a');
-        await textEditor.press('Delete');
+        // Use the setMonacoEditorContentByLocator utility to clear the content
+        await setMonacoEditorContentByLocator(this.page, textEditor, '');
+    }
+
+    async typeTextInMonaco(textEditor: Locator, text: string) {
+        // Use the setMonacoEditorContentByLocator utility to set the content
+        await setMonacoEditorContentByLocator(this.page, textEditor, text);
     }
 
     async waitForFormToLoad() {

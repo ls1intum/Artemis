@@ -1,12 +1,10 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.dto.SlideDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideUnhideDTO;
@@ -21,7 +20,7 @@ import de.tum.cit.aet.artemis.lecture.dto.SlideUnhideDTO;
 /**
  * Spring Data JPA repository for the Attachment Unit entity.
  */
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Lazy
 @Repository
 public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {

@@ -6,7 +6,7 @@ This project contains Python scripts that automate the setup and management of c
 
 ## Prerequisites
 
-- Python 3.13 or higher
+- Python 3.14 or higher
 - pip
 
 ## 1. Optionally, create and activate a virtual environment

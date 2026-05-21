@@ -14,7 +14,7 @@ describe('ProgrammingExerciseGradingService', () => {
     let httpService: HttpClient;
     let exercise1TestCaseSubject: Subject<Result>;
     let exercise2TestCaseSubject: Subject<Result>;
-    let receiveStub: jest.SpyInstance;
+    let subscribeStub: jest.SpyInstance;
     let getStub: jest.SpyInstance;
 
     let gradingService: ProgrammingExerciseGradingService;
@@ -49,18 +49,19 @@ describe('ProgrammingExerciseGradingService', () => {
                 httpService = TestBed.inject(HttpClient);
                 gradingService = TestBed.inject(ProgrammingExerciseGradingService);
 
-                receiveStub = jest.spyOn(websocketService, 'receive');
+                subscribeStub = jest.spyOn(websocketService, 'subscribe');
                 getStub = jest.spyOn(httpService, 'get');
 
                 exercise1TestCaseSubject = new Subject();
                 exercise2TestCaseSubject = new Subject();
-                receiveStub.mockImplementation((arg1) => {
+                subscribeStub.mockImplementation((arg1) => {
                     switch (arg1) {
                         case exercise1Topic:
-                            return exercise1TestCaseSubject;
+                            return exercise1TestCaseSubject.asObservable();
                         case exercise2Topic:
-                            return exercise2TestCaseSubject;
+                            return exercise2TestCaseSubject.asObservable();
                     }
+                    return new Subject().asObservable();
                 });
                 getStub.mockImplementation((arg1) => {
                     switch (arg1) {

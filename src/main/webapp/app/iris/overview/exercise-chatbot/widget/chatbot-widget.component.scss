@@ -8,18 +8,19 @@
     left: 0;
     width: 330px;
     height: 430px;
-    background-color: var(--iris-chat-widget-background);
+    background-color: var(--iris-primary-background);
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.4);
-    border-radius: var(--bs-border-radius-lg);
+    border-radius: 8px;
     display: flex;
     flex-direction: column;
-}
 
-.chat-widget-top-resize-area {
-    position: absolute;
-    height: 5px;
-    width: 100%;
-    z-index: 10;
+    &-top-resize-area {
+        position: absolute;
+        top: 0;
+        width: 100%;
+        height: 5px;
+        z-index: 10;
+    }
 }
 
 .ng-draggable {

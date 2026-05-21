@@ -1,6 +1,7 @@
 import { Account } from 'app/core/user/account.model';
 import dayjs from 'dayjs/esm';
 import { Organization } from 'app/core/shared/entities/organization.model';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 export class User extends Account {
     public id?: number;
@@ -14,7 +15,8 @@ export class User extends Account {
     public password?: string;
     public vcsAccessToken?: string;
     public vcsAccessTokenExpiryDate?: string;
-    public externalLLMUsageAccepted?: dayjs.Dayjs;
+    public selectedLLMUsage?: LLMSelectionDecision;
+    public selectedLLMUsageTimestamp?: dayjs.Dayjs;
     public memirisEnabled?: boolean;
     /**
      * True if
@@ -24,6 +26,8 @@ export class User extends Account {
      * <li>and <code>artemis.user-management.passkey.ask-users-to-setup</code> is set to true</li>
      * </ul>
      */
+    public bot?: boolean;
+
     public askToSetupPasskey?: boolean;
 
     public loggedInWithPasskey?: boolean;
@@ -48,7 +52,8 @@ export class User extends Account {
         imageUrl?: string,
         vcsAccessToken?: string,
         vcsAccessTokenExpiryDate?: string,
-        externalLLMUsageAccepted?: dayjs.Dayjs,
+        selectedLLMUsage?: LLMSelectionDecision,
+        LLMSelectionDecisionDate?: dayjs.Dayjs,
         memirisEnabled?: boolean,
         askToSetupPasskey?: boolean,
         loggedInWithPasskey?: boolean,
@@ -64,7 +69,8 @@ export class User extends Account {
         this.password = password;
         this.vcsAccessToken = vcsAccessToken;
         this.vcsAccessTokenExpiryDate = vcsAccessTokenExpiryDate;
-        this.externalLLMUsageAccepted = externalLLMUsageAccepted;
+        this.selectedLLMUsage = selectedLLMUsage;
+        this.selectedLLMUsageTimestamp = LLMSelectionDecisionDate;
         this.memirisEnabled = memirisEnabled;
         this.askToSetupPasskey = askToSetupPasskey;
         this.loggedInWithPasskey = loggedInWithPasskey;
@@ -94,5 +100,13 @@ export class UserPublicInfoDTO {
  */
 export class UserNameAndLoginDTO {
     public name?: string;
+    public login?: string;
+}
+
+/**
+ * A DTO representing a user which contains only the ID and login
+ */
+export class UserIdAndLoginDTO {
+    public id?: number;
     public login?: string;
 }

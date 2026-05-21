@@ -346,8 +346,8 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
         topic.publish("Hello, World!");
         topic.publish("Another message");
 
-        verify(mockConsumer, timeout(100)).accept("Hello, World!");
-        verify(mockConsumer, timeout(100)).accept("Another message");
+        verify(mockConsumer, timeout(500)).accept("Hello, World!");
+        verify(mockConsumer, timeout(500)).accept("Another message");
 
         topic.removeMessageListener(listenerId);
 

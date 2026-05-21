@@ -15,41 +15,41 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.ConcreteProxy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.dto.IrisCitationMetaDTO;
 
 /**
  * An IrisSession represents a list of messages of Artemis, a user, and an LLM.
- * See {@link IrisProgrammingExerciseChatSession} and {@link IrisCourseChatSession} for concrete implementations.
+ * See {@link IrisChatSession} and {@link IrisTutorSuggestionSession} for concrete implementations.
  */
 @Entity
 @Table(name = "iris_session")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@ConcreteProxy
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // @formatter:off
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = IrisProgrammingExerciseChatSession.class, name = "programming_exercise_chat"),
-    @JsonSubTypes.Type(value = IrisTextExerciseChatSession.class, name = "text_exercise_chat"),
-    @JsonSubTypes.Type(value = IrisCourseChatSession.class, name = "course_chat"),
-    @JsonSubTypes.Type(value = IrisLectureChatSession.class, name = "lecture_chat"),
+    @JsonSubTypes.Type(value = IrisChatSession.class, name = "chat"),
     @JsonSubTypes.Type(value = IrisTutorSuggestionSession.class, name = "tutor_suggestion"),
 })
 // @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class IrisSession extends DomainObject {
 
+    private long userId;
+
     @OrderColumn(name = "iris_message_order")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @OneToMany(mappedBy = "session", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<IrisMessage> messages = new ArrayList<>();
 
@@ -65,6 +65,13 @@ public abstract class IrisSession extends DomainObject {
      */
     @Column(name = "latest_suggestions")
     private String latestSuggestions;
+
+    /**
+     * Citation metadata extracted from the session messages.
+     * This information is derived at runtime and not persisted.
+     */
+    @Transient
+    private List<IrisCitationMetaDTO> citationInfo;
 
     public IrisMessage newMessage() {
         var message = new IrisMessage();
@@ -104,6 +111,31 @@ public abstract class IrisSession extends DomainObject {
         this.latestSuggestions = latestSuggestions;
     }
 
-    public abstract boolean shouldAcceptExternalLLMUsage();
+    @JsonProperty("citationInfo")
+    public List<IrisCitationMetaDTO> getCitationInfo() {
+        return citationInfo;
+    }
+
+    public void setCitationInfo(List<IrisCitationMetaDTO> citationInfo) {
+        this.citationInfo = citationInfo;
+    }
+
+    public long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(long userId) {
+        this.userId = userId;
+    }
+
+    public abstract boolean shouldSelectLLMUsage();
+
+    /**
+     * Returns the ID of the domain entity this session is associated with.
+     * For chat sessions this is the course, exercise, or lecture ID; for tutor-suggestion sessions it is the post ID.
+     *
+     * @return the entity ID associated with this session
+     */
+    public abstract Long getEntityId();
 
 }

@@ -10,7 +10,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 
 describe('ProgrammingExercise Sharing Service', () => {
@@ -82,7 +81,7 @@ describe('ProgrammingExercise Sharing Service', () => {
             const programmingExercise = new ProgrammingExercise(undefined, undefined);
 
             service
-                .setUpFromSharingImport(programmingExercise, new Course(), defailtSharingInfo)
+                .setUpFromSharingImport(programmingExercise, 1, defailtSharingInfo)
                 .subscribe((res: HttpResponse<ProgrammingExercise>) => expect(res.body).toEqual(programmingExercise));
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(programmingExercise);
@@ -92,9 +91,7 @@ describe('ProgrammingExercise Sharing Service', () => {
         it('should setup for import with null body response', fakeAsync(() => {
             const programmingExercise = new ProgrammingExercise(undefined, undefined);
 
-            service
-                .setUpFromSharingImport(programmingExercise, new Course(), defailtSharingInfo)
-                .subscribe((res: HttpResponse<ProgrammingExercise>) => expect(res.body).toBeNull());
+            service.setUpFromSharingImport(programmingExercise, 1, defailtSharingInfo).subscribe((res: HttpResponse<ProgrammingExercise>) => expect(res.body).toBeNull());
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(null);
             tick();
@@ -105,7 +102,7 @@ describe('ProgrammingExercise Sharing Service', () => {
             programmingExercise.solutionParticipation = undefined;
 
             service
-                .setUpFromSharingImport(programmingExercise, new Course(), defailtSharingInfo)
+                .setUpFromSharingImport(programmingExercise, 1, defailtSharingInfo)
                 .subscribe((res: HttpResponse<ProgrammingExercise>) => expect(res.body).toEqual(programmingExercise));
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(programmingExercise);

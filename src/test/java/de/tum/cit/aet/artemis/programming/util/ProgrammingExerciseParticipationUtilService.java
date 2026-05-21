@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.programming.util;
 
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 
 import java.net.URI;
 
@@ -52,9 +52,9 @@ public class ProgrammingExerciseParticipationUtilService {
         var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
         participation.setRepositoryUri(localVcRepoUri.toString());
         participation.setInitializationState(InitializationState.INITIALIZED);
-        templateProgrammingExerciseParticipationTestRepo.save(participation);
+        templateProgrammingExerciseParticipationTestRepo.saveAndFlush(participation);
         exercise.setTemplateParticipation(participation);
-        return programmingExerciseRepository.save(exercise);
+        return programmingExerciseRepository.saveAndFlush(exercise);
     }
 
     /**
@@ -71,8 +71,8 @@ public class ProgrammingExerciseParticipationUtilService {
         var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
         participation.setRepositoryUri(localVcRepoUri.toString());
         participation.setInitializationState(InitializationState.INITIALIZED);
-        solutionProgrammingExerciseParticipationRepo.save(participation);
+        solutionProgrammingExerciseParticipationRepo.saveAndFlush(participation);
         exercise.setSolutionParticipation(participation);
-        return programmingExerciseRepository.save(exercise);
+        return programmingExerciseRepository.saveAndFlush(exercise);
     }
 }

@@ -138,9 +138,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndepende
             }
         });
 
-        baseExportOptions = new SubmissionExportOptionsDTO();
-        baseExportOptions.setExportAllParticipants(true);
-        baseExportOptions.setFilterLateSubmissions(false);
+        baseExportOptions = SubmissionExportOptionsDTO.exportAll();
     }
 
     private void saveEmptySubmissionFile(Exercise exercise, FileUploadSubmission submission) throws IOException {
@@ -180,55 +178,50 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndepende
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testNoSubmissionsForStudent_asInstructor() throws Exception {
-        baseExportOptions.setExportAllParticipants(false);
-        baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
-        request.post("/api/text/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
-        request.post("/api/modeling/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
-        request.post("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
+        var exportOptions = new SubmissionExportOptionsDTO(false, false, null, "nonexistentstudent");
+        request.post("/api/text/text-exercises/" + textExercise.getId() + "/export-submissions", exportOptions, HttpStatus.BAD_REQUEST);
+        request.post("/api/modeling/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", exportOptions, HttpStatus.BAD_REQUEST);
+        request.post("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", exportOptions, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testNoSubmissionsForStudent_asInstructorNotInGroup() throws Exception {
-        baseExportOptions.setExportAllParticipants(false);
-        baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
+        var exportOptions = new SubmissionExportOptionsDTO(false, false, null, "nonexistentstudent");
         Course course = textExercise.getCourseViaExerciseGroupOrCourseMember();
         course.setInstructorGroupName("abc");
         courseUtilService.saveCourse(course);
-        request.post("/api/text/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
-        request.post("/api/modeling/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
-        request.post("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
+        request.post("/api/text/text-exercises/" + textExercise.getId() + "/export-submissions", exportOptions, HttpStatus.FORBIDDEN);
+        request.post("/api/modeling/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", exportOptions, HttpStatus.FORBIDDEN);
+        request.post("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", exportOptions, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testNoSubmissionsForStudent_asTutor() throws Exception {
-        baseExportOptions.setExportAllParticipants(true);
-        baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
-        request.post("/api/text/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
-        request.post("/api/modeling/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
-        request.post("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.FORBIDDEN);
+        var exportOptions = new SubmissionExportOptionsDTO(true, false, null, "nonexistentstudent");
+        request.post("/api/text/text-exercises/" + textExercise.getId() + "/export-submissions", exportOptions, HttpStatus.FORBIDDEN);
+        request.post("/api/modeling/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", exportOptions, HttpStatus.FORBIDDEN);
+        request.post("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", exportOptions, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testWrongExerciseId_asInstructor() throws Exception {
-        baseExportOptions.setExportAllParticipants(false);
-        baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
+        var exportOptions = new SubmissionExportOptionsDTO(false, false, null, "nonexistentstudent");
         long NOT_EXISTING_EXERCISE_ID = 5489218954L;
-        request.post("/api/text/text-exercises/" + NOT_EXISTING_EXERCISE_ID + "/export-submissions", baseExportOptions, HttpStatus.NOT_FOUND);
-        request.post("/api/modeling/modeling-exercises/" + NOT_EXISTING_EXERCISE_ID + "/export-submissions", baseExportOptions, HttpStatus.NOT_FOUND);
-        request.post("/api/fileupload/file-upload-exercises/" + NOT_EXISTING_EXERCISE_ID + "/export-submissions", baseExportOptions, HttpStatus.NOT_FOUND);
+        request.post("/api/text/text-exercises/" + NOT_EXISTING_EXERCISE_ID + "/export-submissions", exportOptions, HttpStatus.NOT_FOUND);
+        request.post("/api/modeling/modeling-exercises/" + NOT_EXISTING_EXERCISE_ID + "/export-submissions", exportOptions, HttpStatus.NOT_FOUND);
+        request.post("/api/fileupload/file-upload-exercises/" + NOT_EXISTING_EXERCISE_ID + "/export-submissions", exportOptions, HttpStatus.NOT_FOUND);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testNoSubmissionsForDate_asInstructor() throws Exception {
-        baseExportOptions.setFilterLateSubmissions(true);
-        baseExportOptions.setFilterLateSubmissionsDate(ZonedDateTime.now().minusDays(2));
-        request.post("/api/text/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
-        request.post("/api/modeling/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
-        request.post("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
+        var exportOptions = new SubmissionExportOptionsDTO(true, true, ZonedDateTime.now().minusDays(2), null);
+        request.post("/api/text/text-exercises/" + textExercise.getId() + "/export-submissions", exportOptions, HttpStatus.BAD_REQUEST);
+        request.post("/api/modeling/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", exportOptions, HttpStatus.BAD_REQUEST);
+        request.post("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", exportOptions, HttpStatus.BAD_REQUEST);
     }
 
     @Test

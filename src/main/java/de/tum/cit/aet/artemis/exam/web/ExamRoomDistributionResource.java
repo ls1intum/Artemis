@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.exam.web;
 import java.util.List;
 import java.util.Set;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -18,17 +20,23 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
+import de.tum.cit.aet.artemis.exam.domain.room.ExamRoomExamAssignment;
 import de.tum.cit.aet.artemis.exam.dto.room.AttendanceCheckerAppExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamDistributionCapacityDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.ReseatInformationDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.SeatsOfExamRoomDTO;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomDistributionService;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomService;
+import de.tum.cit.aet.artemis.exam.service.ExamUserService;
+import jodd.util.StringUtil;
 
 /**
  * REST controller for managing distributions of {@link ExamUser}s to {@link ExamRoom}s in an {@link Exam}
@@ -49,10 +57,14 @@ public class ExamRoomDistributionResource {
 
     private final ExamRoomDistributionService examRoomDistributionService;
 
-    public ExamRoomDistributionResource(ExamAccessService examAccessService, ExamRoomService examRoomService, ExamRoomDistributionService examRoomDistributionService) {
+    private final ExamUserService examUserService;
+
+    public ExamRoomDistributionResource(ExamAccessService examAccessService, ExamRoomService examRoomService, ExamRoomDistributionService examRoomDistributionService,
+            ExamUserService examUserService) {
         this.examAccessService = examAccessService;
         this.examRoomService = examRoomService;
         this.examRoomDistributionService = examRoomDistributionService;
+        this.examUserService = examUserService;
     }
 
     /**
@@ -154,5 +166,86 @@ public class ExamRoomDistributionResource {
         var information = examRoomDistributionService.getAttendanceCheckerAppInformation(examId);
 
         return ResponseEntity.ok(information);
+    }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/rooms-used : Gets room metadata of all rooms that are used in the given exam
+     *
+     * @param courseId The id of the course
+     * @param examId   The id of the exam
+     * @return 200 (OK) All rooms used in the exam, if the retrieval was successful
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/rooms-used")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Set<ExamRoomForDistributionDTO>> getRoomsUsedInExam(@PathVariable long courseId, @PathVariable long examId) {
+        log.debug("REST request to get rooms used in exam : {}", examId);
+
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+
+        var rooms = examRoomDistributionService.getRoomsUsedInExam(examId);
+        return ResponseEntity.ok(rooms);
+    }
+
+    /**
+     * GET /rooms/{examRoomId}/seats : Gets a list of all seats of this exam room
+     *
+     * @param examRoomId The id of the exam room
+     * @return 200 (OK) All seats of the room, if the retrieval was successful
+     */
+    @GetMapping("rooms/{examRoomId}/seats")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<SeatsOfExamRoomDTO> getSeatsOfExamRoom(@PathVariable long examRoomId) {
+        log.debug("REST request to get seats of exam room : {}", examRoomId);
+
+        var seats = examRoomDistributionService.getSeatsOfExamRoom(examRoomId);
+        return ResponseEntity.ok(seats);
+    }
+
+    /**
+     * POST /courses/{courseId}/exams/{examId}/reseat-student : Reseat an {@link ExamUser} to a different seat.
+     * <p>
+     * If no new seat is explicitly specified, then this function attempts to automatically find the next available seat.
+     * Obtaining this next seat is only possible if the new room is persisted.
+     * <p>
+     * When this function talks about persisted rooms, it refers to those {@link ExamRoom}s that are stored in the DB
+     * and connected via {@link ExamRoomExamAssignment} to the given exam.
+     * This function does not automatically register a new room when a student is distributed to a stored,
+     * but non-connected room.
+     * <p>
+     * This function automatically fills gaps originating from moving a student out of a room if the old room is persisted.
+     * This function does not automatically fill gaps originating from moving a student to a room.
+     * This function does not fill any gaps if the user is moved within the same room.
+     * <p>
+     * This function does not allow to reseat a student to a seat that is already taken by another student.
+     *
+     * @param courseId          The id of the course
+     * @param examId            The id of the exam
+     * @param reseatInformation the reseating information, containing:
+     *                              <ul>
+     *                              <li><strong>examUserId</strong> – the ID of the exam user</li>
+     *                              <li><strong>newRoom</strong> – the room number of the new room</li>
+     *                              <li><strong>newSeat</strong> – the name of the new seat;
+     *                              automatically determined if omitted</li>
+     *                              </ul>
+     * @return 200 (OK) on success
+     */
+    @PostMapping("courses/{courseId}/exams/{examId}/reseat-student")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Void> reseatStudent(@PathVariable long courseId, @PathVariable long examId, @Valid @RequestBody ReseatInformationDTO reseatInformation) {
+        log.debug("REST request to reseat exam user : {}, for exam : {}", reseatInformation.examUserId(), examId);
+
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        examUserService.checkExamUserExistsAndBelongsToExamElseThrow(reseatInformation.examUserId(), examId);
+
+        if (StringUtil.isBlank(reseatInformation.newRoom())) {
+            throw new BadRequestAlertException("No room number was provided", ENTITY_NAME, "room.noRoomProvided");
+        }
+
+        if (StringUtil.isBlank(reseatInformation.newSeat()) && !examRoomService.isRoomPersistedAndConnectedToExam(reseatInformation.newRoom(), examId)) {
+            throw new BadRequestAlertException("Can't automatically determine seat of unpersisted room", ENTITY_NAME, "room.noAutomaticSeat");
+        }
+
+        examRoomDistributionService.reseatStudent(reseatInformation.examUserId(), reseatInformation.newRoom(), reseatInformation.newSeat());
+        return ResponseEntity.ok().build();
     }
 }

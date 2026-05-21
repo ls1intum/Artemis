@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import dayjs from 'dayjs/esm';
 import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/online-unit.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -21,11 +23,13 @@ import { ProfileService } from '../../../../core/layouts/profiles/shared/profile
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('EditOnlineUnitComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let editOnlineUnitComponentFixture: ComponentFixture<EditOnlineUnitComponent>;
     let editOnlineUnitComponent: EditOnlineUnitComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [OwlNativeDateTimeModule],
             providers: [
                 MockProvider(OnlineUnitService),
@@ -65,16 +69,14 @@ describe('EditOnlineUnitComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                editOnlineUnitComponentFixture = TestBed.createComponent(EditOnlineUnitComponent);
-                editOnlineUnitComponent = editOnlineUnitComponentFixture.componentInstance;
-            });
+        }).compileComponents();
+
+        editOnlineUnitComponentFixture = TestBed.createComponent(EditOnlineUnitComponent);
+        editOnlineUnitComponent = editOnlineUnitComponentFixture.componentInstance;
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -97,12 +99,12 @@ describe('EditOnlineUnitComponent', () => {
             status: 200,
         });
 
-        const findByIdStub = jest.spyOn(onlineUnitService, 'findById').mockReturnValue(of(response));
+        const findByIdStub = vi.spyOn(onlineUnitService, 'findById').mockReturnValue(of(response));
         editOnlineUnitComponentFixture.detectChanges();
         const onlineUnitFormComponent: OnlineUnitFormComponent = editOnlineUnitComponentFixture.debugElement.query(By.directive(OnlineUnitFormComponent)).componentInstance;
         editOnlineUnitComponentFixture.detectChanges(); // onInit
         expect(editOnlineUnitComponent.onlineUnit).toEqual(onlineUnitOfResponse);
-        expect(findByIdStub).toHaveBeenCalledOnce();
+        expect(findByIdStub).toHaveBeenCalledTimes(1);
         expect(editOnlineUnitComponent.formData.name).toEqual(onlineUnitOfResponse.name);
         expect(editOnlineUnitComponent.formData.releaseDate).toEqual(onlineUnitOfResponse.releaseDate);
         expect(editOnlineUnitComponent.formData.description).toEqual(onlineUnitOfResponse.description);
@@ -125,10 +127,10 @@ describe('EditOnlineUnitComponent', () => {
             body: onlineUnitInDatabase,
             status: 200,
         });
-        const findByIdStub = jest.spyOn(onlineUnitService, 'findById').mockReturnValue(of(findByIdResponse));
+        const findByIdStub = vi.spyOn(onlineUnitService, 'findById').mockReturnValue(of(findByIdResponse));
 
         editOnlineUnitComponentFixture.detectChanges(); // onInit
-        expect(findByIdStub).toHaveBeenCalledOnce();
+        expect(findByIdStub).toHaveBeenCalledTimes(1);
         expect(editOnlineUnitComponent.onlineUnit).toEqual(onlineUnitInDatabase);
 
         const changedUnit: OnlineUnit = {
@@ -140,8 +142,8 @@ describe('EditOnlineUnitComponent', () => {
             body: changedUnit,
             status: 200,
         });
-        const updatedStub = jest.spyOn(onlineUnitService, 'update').mockReturnValue(of(updateResponse));
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const updatedStub = vi.spyOn(onlineUnitService, 'update').mockReturnValue(of(updateResponse));
+        const navigateSpy = vi.spyOn(router, 'navigate');
 
         const textUnitForm: OnlineUnitFormComponent = editOnlineUnitComponentFixture.debugElement.query(By.directive(OnlineUnitFormComponent)).componentInstance;
         textUnitForm.formSubmitted.emit({
@@ -151,8 +153,8 @@ describe('EditOnlineUnitComponent', () => {
             source: changedUnit.source,
         });
 
-        expect(updatedStub).toHaveBeenCalledOnce();
-        expect(navigateSpy).toHaveBeenCalledOnce();
+        expect(updatedStub).toHaveBeenCalledTimes(1);
+        expect(navigateSpy).toHaveBeenCalledTimes(1);
         navigateSpy.mockRestore();
     });
 });

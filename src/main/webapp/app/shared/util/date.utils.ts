@@ -21,6 +21,15 @@ export function convertDateFromServer(date?: dayjs.Dayjs): dayjs.Dayjs | undefin
     return date ? dayjs(date) : undefined;
 }
 
+/**
+ * Converts a date string from a server DTO to a proper dayjs object
+ * @param dateString the ISO date string sent by the server
+ * @return the date as dayjs object if it is defined
+ */
+export function convertDateStringFromServer(dateString: string | undefined): dayjs.Dayjs | undefined {
+    return dateString ? dayjs(dateString) : undefined;
+}
+
 function padWithZero(x: number): string {
     if (x < 10) {
         return '0' + x.toString();

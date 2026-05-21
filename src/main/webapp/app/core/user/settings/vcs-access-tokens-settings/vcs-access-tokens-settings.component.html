@@ -1,4 +1,4 @@
-<h1 jhiTranslate="artemisApp.userSettings.vcsAccessTokenSettings"></h1>
+<h2 jhiTranslate="artemisApp.userSettings.vcsAccessTokenSettings"></h2>
 @if (currentUser) {
     <div class="list-group d-block">
         <div class="list-group-item">
@@ -8,110 +8,104 @@
         </div>
         @if (!edit) {
             <div class="list-group-item">
-                <dt>
-                    @if (this.currentUser?.vcsAccessToken) {
-                        <table class="table table-striped flex">
-                            <thead class="thead-dark">
-                                <tr>
-                                    <th class="col-2">
-                                        <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.vcsAccessToken"></span>
-                                    </th>
-                                    <th class="col-1"></th>
-                                    <th class="col-4">
-                                        <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.expiryDate"></span>
-                                    </th>
-                                    <th class="col-4">
-                                        <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.actions"></span>
-                                    </th>
-                                </tr>
-                            </thead>
+                @if (this.currentUser?.vcsAccessToken) {
+                    <table class="table table-striped flex">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th class="col-2">
+                                    <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.vcsAccessToken"></span>
+                                </th>
+                                <th class="col-1"></th>
+                                <th class="col-4">
+                                    <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.expiryDate"></span>
+                                </th>
+                                <th class="col-4">
+                                    <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.actions"></span>
+                                </th>
+                            </tr>
+                        </thead>
 
-                            <tbody>
-                                <tr>
-                                    <td>***************</td>
-                                    <td>
-                                        <jhi-copy-to-clipboard-button [copyText]="currentUser.vcsAccessToken ?? ''" [class]="'btn-secondary btn-sm me-2'" />
-                                    </td>
-                                    <td>{{ this.currentUser?.vcsAccessTokenExpiryDate | artemisDate }}</td>
-                                    <td>
-                                        <button
-                                            class="btn btn-md flex-grow-1 d-flex align-items-center"
-                                            id="delete-vcs-token-button"
-                                            jhiDeleteButton
-                                            [renderButtonText]="false"
-                                            (delete)="deleteVcsAccessToken()"
-                                            deleteQuestion="artemisApp.userSettings.vcsAccessTokensSettingsPage.deleteVcsAccessTokenQuestion"
-                                            [dialogError]="dialogError$"
-                                        >
-                                            <fa-icon [icon]="faTrash" />
-                                            <div jhiTranslate="entity.action.delete" class="ms-2"></div>
-                                        </button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    } @else {
-                        <div jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.noTokenSet"></div>
-                    }
-                </dt>
+                        <tbody>
+                            <tr>
+                                <td>***************</td>
+                                <td>
+                                    <jhi-copy-to-clipboard-button [copyText]="currentUser.vcsAccessToken ?? ''" [class]="'btn-secondary btn-sm me-2'" />
+                                </td>
+                                <td>{{ this.currentUser?.vcsAccessTokenExpiryDate | artemisDate }}</td>
+                                <td>
+                                    <button
+                                        class="btn btn-md flex-grow-1 d-flex align-items-center"
+                                        id="delete-vcs-token-button"
+                                        jhiDeleteButton
+                                        [renderButtonText]="false"
+                                        (delete)="deleteVcsAccessToken()"
+                                        deleteQuestion="artemisApp.userSettings.vcsAccessTokensSettingsPage.deleteVcsAccessTokenQuestion"
+                                        [dialogError]="dialogError$"
+                                    >
+                                        <fa-icon [icon]="faTrash" />
+                                        <div jhiTranslate="entity.action.delete" class="ms-2"></div>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                } @else {
+                    <div jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.noTokenSet"></div>
+                }
             </div>
             @if (!this.currentUser?.vcsAccessToken) {
                 <div class="list-group-item">
-                    <dt>
-                        <div class="btn-group" role="group" aria-label="Actions">
-                            <jhi-button
-                                class="d-flex"
-                                id="add-new-token-button"
-                                [btnType]="ButtonType.PRIMARY"
-                                [btnSize]="ButtonSize.SMALL"
-                                [icon]="faEdit"
-                                [title]="'artemisApp.userSettings.vcsAccessTokensSettingsPage.addToken'"
-                                (onClick)="addNewVcsAccessToken()"
-                            />
-                        </div>
-                    </dt>
+                    <div class="btn-group" role="group" aria-label="Actions">
+                        <jhi-button
+                            class="d-flex"
+                            id="add-new-token-button"
+                            [btnType]="ButtonType.PRIMARY"
+                            [btnSize]="ButtonSize.SMALL"
+                            [icon]="faPlus"
+                            [title]="'artemisApp.userSettings.vcsAccessTokensSettingsPage.addToken'"
+                            (onClick)="addNewVcsAccessToken()"
+                        />
+                    </div>
                 </div>
             }
         } @else {
             <div class="list-group-item">
-                <dt>
-                    <h4 jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.addTokenTitle"></h4>
+                <h4 jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.addTokenTitle"></h4>
 
-                    <div class="row mb-3">
-                        <div class="col-sm-6">
-                            <jhi-date-time-picker
-                                [shouldDisplayTimeZoneWarning]="false"
-                                labelName="{{ 'artemisApp.userSettings.vcsAccessTokensSettingsPage.expiryDate' | artemisTranslate }}"
-                                [(ngModel)]="expiryDate"
-                                (valueChange)="validateDate()"
-                                [error]="!!expiryDate && !validExpiryDate"
-                                name="expiryDate"
-                                id="expiryDate"
-                            />
-                        </div>
-                    </div>
-
-                    <div class="btn-group" role="group" aria-label="Actions">
-                        <jhi-button
-                            class="me-1"
-                            id="create-vcs-token-button"
-                            [btnType]="ButtonType.PRIMARY"
-                            [btnSize]="ButtonSize.SMALL"
-                            [disabled]="!validExpiryDate"
-                            [icon]="faSave"
-                            [title]="'artemisApp.userSettings.vcsAccessTokensSettingsPage.createAccessToken'"
-                            (onClick)="sendTokenCreationRequest()"
-                        />
-                        <jhi-button
-                            id="cancel-vcs-token-creation-button"
-                            [btnType]="ButtonType.SECONDARY"
-                            [btnSize]="ButtonSize.SMALL"
-                            [icon]="faBan"
-                            [title]="'entity.action.cancel'"
-                            (onClick)="cancelTokenCreation()"
+                <div class="row mb-3">
+                    <div class="col-sm-6">
+                        <jhi-date-time-picker
+                            [shouldDisplayTimeZoneWarning]="false"
+                            labelName="{{ 'artemisApp.userSettings.vcsAccessTokensSettingsPage.expiryDate' | artemisTranslate }}"
+                            [(ngModel)]="expiryDate"
+                            (valueChange)="validateDate()"
+                            [error]="!!expiryDate && !validExpiryDate"
+                            name="expiryDate"
+                            id="expiryDate"
                         />
                     </div>
-                </dt>
+                </div>
+
+                <div class="btn-group" role="group" aria-label="Actions">
+                    <jhi-button
+                        class="me-1"
+                        id="create-vcs-token-button"
+                        [btnType]="ButtonType.PRIMARY"
+                        [btnSize]="ButtonSize.SMALL"
+                        [disabled]="!validExpiryDate"
+                        [icon]="faSave"
+                        [title]="'artemisApp.userSettings.vcsAccessTokensSettingsPage.createAccessToken'"
+                        (onClick)="sendTokenCreationRequest()"
+                    />
+                    <jhi-button
+                        id="cancel-vcs-token-creation-button"
+                        [btnType]="ButtonType.SECONDARY"
+                        [btnSize]="ButtonSize.SMALL"
+                        [icon]="faBan"
+                        [title]="'entity.action.cancel'"
+                        (onClick)="cancelTokenCreation()"
+                    />
+                </div>
             </div>
         }
     </div>

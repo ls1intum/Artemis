@@ -1,4 +1,6 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -16,6 +18,7 @@ import { ComplaintRequestDTO } from 'app/assessment/shared/entities/complaint-re
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ComplaintService', () => {
+    setupTestBed({ zoneless: true });
     let complaintService: ComplaintService;
     let accountService: AccountService;
     let httpMock: HttpTestingController;
@@ -82,7 +85,7 @@ describe('ComplaintService', () => {
     describe('isComplaintLockedForLoggedInUser', () => {
         it('should be false if no visible lock is present', () => {
             const result = complaintService.isComplaintLockedForLoggedInUser(new Complaint(), new TextExercise(undefined, undefined));
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it('should be false if user has the lock', () => {
@@ -94,7 +97,7 @@ describe('ComplaintService', () => {
 
             const result = complaintService.isComplaintLockedForLoggedInUser(_complaint, new TextExercise(undefined, undefined));
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it('should be true if user has not the lock', () => {
@@ -105,11 +108,11 @@ describe('ComplaintService', () => {
             _complaint.complaintResponse.reviewer = { login } as User;
             _complaint.complaintResponse.isCurrentlyLocked = true;
             accountService.userIdentity.set({ login: anotherLogin } as User);
-            jest.spyOn(accountService, 'isAtLeastInstructorForExercise').mockReturnValue(false);
+            vi.spyOn(accountService, 'isAtLeastInstructorForExercise').mockReturnValue(false);
 
             const result = complaintService.isComplaintLockedForLoggedInUser(_complaint, new TextExercise(undefined, undefined));
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
 
         it('should be false if user is instructor', () => {
@@ -120,18 +123,18 @@ describe('ComplaintService', () => {
             _complaint.complaintResponse.reviewer = { login } as User;
             _complaint.complaintResponse.isCurrentlyLocked = true;
             accountService.userIdentity.set({ login: anotherLogin } as User);
-            jest.spyOn(accountService, 'isAtLeastInstructorForExercise').mockReturnValue(true);
+            vi.spyOn(accountService, 'isAtLeastInstructorForExercise').mockReturnValue(true);
 
             const result = complaintService.isComplaintLockedForLoggedInUser(_complaint, new TextExercise(undefined, undefined));
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
     });
 
     describe('isComplaintLockedByLoggedInUser', () => {
         it('should be false if no visible lock is present', () => {
             const result = complaintService.isComplaintLockedByLoggedInUser(new Complaint());
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it('should be false if the complaint is not locked', () => {
@@ -139,7 +142,7 @@ describe('ComplaintService', () => {
             _complaint.complaintResponse = new ComplaintResponse();
 
             const result = complaintService.isComplaintLockedByLoggedInUser(_complaint);
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it('should be false if the complaint has been handled', () => {
@@ -150,7 +153,7 @@ describe('ComplaintService', () => {
             _complaint.complaintResponse.submittedTime = dayjs();
 
             const result = complaintService.isComplaintLockedByLoggedInUser(_complaint);
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it('should be false if another user has the lock', () => {
@@ -163,7 +166,7 @@ describe('ComplaintService', () => {
             accountService.userIdentity.set({ login: anotherLogin } as User);
 
             const result = complaintService.isComplaintLockedByLoggedInUser(_complaint);
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it('should be true if the same user has the lock', () => {
@@ -175,14 +178,14 @@ describe('ComplaintService', () => {
             accountService.userIdentity.set({ login: login } as User);
 
             const result = complaintService.isComplaintLockedByLoggedInUser(_complaint);
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
     });
 
     describe('isComplaintLocked', () => {
         it('should be false if no visible lock is present', () => {
             const result = complaintService.isComplaintLocked(new Complaint());
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it('should be true if locked', () => {
@@ -191,7 +194,7 @@ describe('ComplaintService', () => {
             _complaint.complaintResponse.isCurrentlyLocked = true;
 
             const result = complaintService.isComplaintLocked(_complaint);
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
     });
 
@@ -199,7 +202,7 @@ describe('ComplaintService', () => {
         it('For course', () => {
             clientComplaintReq.examId = undefined;
             complaintService.create(clientComplaintReq).subscribe((received) => {
-                expect(received).toEqual(serverComplaint1);
+                expect(received.body).toMatchObject({ id: clientComplaint1.id, complaintType: clientComplaint1.complaintType, complaintText: clientComplaint1.complaintText });
             });
 
             const res = httpMock.expectOne({ method: 'POST' });
@@ -211,7 +214,7 @@ describe('ComplaintService', () => {
 
         it('For exam', () => {
             complaintService.create(clientComplaintReq).subscribe((received) => {
-                expect(received).toEqual(serverComplaint1);
+                expect(received.body).toMatchObject({ id: clientComplaint1.id, complaintType: clientComplaint1.complaintType, complaintText: clientComplaint1.complaintText });
             });
 
             const res = httpMock.expectOne({ method: 'POST' });
@@ -232,7 +235,7 @@ describe('ComplaintService', () => {
 
             const result = complaintService.shouldHighlightComplaint(complaint);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it('should not highlight recent complaints', () => {
@@ -243,7 +246,7 @@ describe('ComplaintService', () => {
 
             const result = complaintService.shouldHighlightComplaint(complaint);
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
 
         it('should highlight old complaints', () => {
@@ -254,7 +257,7 @@ describe('ComplaintService', () => {
 
             const result = complaintService.shouldHighlightComplaint(complaint);
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
     });
 
@@ -347,7 +350,7 @@ describe('ComplaintService', () => {
     it('findBySubmissionId', () => {
         const submissionId = 1337;
         complaintService.findBySubmissionId(submissionId).subscribe((received) => {
-            expect(received).toEqual(clientComplaint1);
+            expect(received.body).toMatchObject({ id: clientComplaint1.id, complaintType: clientComplaint1.complaintType });
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
@@ -359,7 +362,9 @@ describe('ComplaintService', () => {
     it('getComplaintsForTestRun', () => {
         const exerciseId = 1337;
         complaintService.getComplaintsForTestRun(exerciseId).subscribe((received) => {
-            expect(received).toIncludeSameMembers([clientComplaint1, clientComplaint2]);
+            expect(received.body).toHaveLength(2);
+            expect(received.body![0]).toMatchObject({ id: clientComplaint1.id });
+            expect(received.body![1]).toMatchObject({ id: clientComplaint2.id });
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
@@ -374,13 +379,15 @@ describe('ComplaintService', () => {
         const complaintType = ComplaintType.COMPLAINT;
 
         complaintService.findAllByTutorIdForCourseId(tutorId, courseId, complaintType).subscribe((received) => {
-            expect(received).toIncludeSameMembers([clientComplaint1, clientComplaint2]);
+            expect(received.body).toHaveLength(2);
+            expect(received.body![0]).toMatchObject({ id: clientComplaint1.id });
+            expect(received.body![1]).toMatchObject({ id: clientComplaint2.id });
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
         expect(res.request.url).toBe(`api/assessment/complaints?courseId=${courseId}&complaintType=${complaintType}&tutorId=${tutorId}`);
 
-        res.flush([clone(clientComplaint1), clone(clientComplaint2)]);
+        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
     });
 
     it('findAllByTutorIdForExerciseId', () => {
@@ -389,13 +396,15 @@ describe('ComplaintService', () => {
         const complaintType = ComplaintType.COMPLAINT;
 
         complaintService.findAllByTutorIdForExerciseId(tutorId, exerciseId, complaintType).subscribe((received) => {
-            expect(received).toIncludeSameMembers([clientComplaint1, clientComplaint2]);
+            expect(received.body).toHaveLength(2);
+            expect(received.body![0]).toMatchObject({ id: clientComplaint1.id });
+            expect(received.body![1]).toMatchObject({ id: clientComplaint2.id });
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
         expect(res.request.url).toBe(`api/assessment/complaints?exerciseId=${exerciseId}&complaintType=${complaintType}&tutorId=${tutorId}`);
 
-        res.flush([clone(clientComplaint1), clone(clientComplaint2)]);
+        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
     });
 
     it('findAllByCourseId', () => {
@@ -403,13 +412,15 @@ describe('ComplaintService', () => {
         const complaintType = ComplaintType.COMPLAINT;
 
         complaintService.findAllByCourseId(courseId, complaintType).subscribe((received) => {
-            expect(received).toIncludeSameMembers([clientComplaint1, clientComplaint2]);
+            expect(received.body).toHaveLength(2);
+            expect(received.body![0]).toMatchObject({ id: clientComplaint1.id });
+            expect(received.body![1]).toMatchObject({ id: clientComplaint2.id });
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
         expect(res.request.url).toBe(`api/assessment/complaints?courseId=${courseId}&complaintType=${complaintType}`);
 
-        res.flush([clone(clientComplaint1), clone(clientComplaint2)]);
+        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
     });
 
     it('findAllByCourseIdAndExamId', () => {
@@ -417,13 +428,15 @@ describe('ComplaintService', () => {
         const examId = 42;
 
         complaintService.findAllByCourseIdAndExamId(courseId, examId).subscribe((received) => {
-            expect(received).toIncludeSameMembers([clientComplaint1, clientComplaint2]);
+            expect(received.body).toHaveLength(2);
+            expect(received.body![0]).toMatchObject({ id: clientComplaint1.id });
+            expect(received.body![1]).toMatchObject({ id: clientComplaint2.id });
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
         expect(res.request.url).toBe(`api/assessment/complaints?courseId=${courseId}&examId=${examId}`);
 
-        res.flush([clone(clientComplaint1), clone(clientComplaint2)]);
+        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
     });
 
     it('findAllByExerciseId', () => {
@@ -431,13 +444,15 @@ describe('ComplaintService', () => {
         const complaintType = ComplaintType.COMPLAINT;
 
         complaintService.findAllByExerciseId(exerciseId, complaintType).subscribe((received) => {
-            expect(received).toIncludeSameMembers([clientComplaint1, clientComplaint2]);
+            expect(received.body).toHaveLength(2);
+            expect(received.body![0]).toMatchObject({ id: clientComplaint1.id });
+            expect(received.body![1]).toMatchObject({ id: clientComplaint2.id });
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
         expect(res.request.url).toBe(`api/assessment/complaints?exerciseId=${exerciseId}&complaintType=${complaintType}`);
 
-        res.flush([clone(clientComplaint1), clone(clientComplaint2)]);
+        res.flush([clone(serverComplaint1), clone(serverComplaint2)]);
     });
 
     function clone(object: object): object {

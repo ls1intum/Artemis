@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.core.util;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory.generateResult;
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -263,7 +263,7 @@ public class CourseUtilService {
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
         course.addExercises(programmingExercise);
 
-        Lecture lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
+        Lecture lecture = lectureUtilService.createLecture(course);
         course.addLectures(lecture);
 
         CompetencyUtilService service = competencyUtilService.orElseThrow();

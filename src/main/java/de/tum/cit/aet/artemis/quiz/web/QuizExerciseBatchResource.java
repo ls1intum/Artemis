@@ -32,7 +32,9 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.quiz.domain.QuizAction;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.dto.QuizBatchDTO;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
+import de.tum.cit.aet.artemis.quiz.dto.QuizBatchWithPasswordDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
@@ -90,7 +92,7 @@ public class QuizExerciseBatchResource {
      */
     @PostMapping("quiz-exercises/{quizExerciseId}/join")
     @EnforceAtLeastStudent
-    public ResponseEntity<QuizBatch> joinBatch(@PathVariable Long quizExerciseId, @RequestBody QuizBatchJoinDTO joinRequest) {
+    public ResponseEntity<QuizBatchDTO> joinBatch(@PathVariable Long quizExerciseId, @RequestBody QuizBatchJoinDTO joinRequest) {
         log.info("REST request to join quiz batch : {}, {}", quizExerciseId, joinRequest);
         var quizExercise = quizExerciseRepository.findByIdElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -103,7 +105,7 @@ public class QuizExerciseBatchResource {
 
         try {
             var batch = quizBatchService.joinBatch(quizExercise, user, joinRequest.password());
-            return ResponseEntity.ok(batch);
+            return ResponseEntity.ok(QuizBatchDTO.of(batch));
         }
         catch (QuizJoinException ex) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", ex.getError(), ex.getMessage())).build();
@@ -118,7 +120,7 @@ public class QuizExerciseBatchResource {
      */
     @PutMapping("quiz-exercises/{quizExerciseId}/add-batch")
     @EnforceAtLeastTutorInExercise(resourceIdFieldName = "quizExerciseId")
-    public ResponseEntity<QuizBatch> addBatch(@PathVariable Long quizExerciseId) {
+    public ResponseEntity<QuizBatchWithPasswordDTO> addBatch(@PathVariable Long quizExerciseId) {
         log.info("REST request to add quiz batch : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithBatchesElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -132,7 +134,7 @@ public class QuizExerciseBatchResource {
         var quizBatch = quizBatchService.createBatch(quizExercise, user);
         quizBatch = quizBatchService.save(quizBatch);
 
-        return ResponseEntity.ok(quizBatch);
+        return ResponseEntity.ok(QuizBatchWithPasswordDTO.of(quizBatch));
     }
 
     /**
@@ -144,7 +146,7 @@ public class QuizExerciseBatchResource {
      */
     @PutMapping("quiz-exercises/{quizBatchId}/start-batch")
     @EnforceAtLeastTutor
-    public ResponseEntity<QuizBatch> startBatch(@PathVariable Long quizBatchId) {
+    public ResponseEntity<QuizBatchDTO> startBatch(@PathVariable Long quizBatchId) {
         log.info("REST request to start quiz batch : {}", quizBatchId);
         QuizBatch batch = quizBatchRepository.findByIdElseThrow(quizBatchId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(batch.getQuizExercise().getId());
@@ -169,6 +171,6 @@ public class QuizExerciseBatchResource {
         quizExercise.setQuizBatches(Set.of(batch));
         quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, batch, QuizAction.START_BATCH);
 
-        return ResponseEntity.ok(batch);
+        return ResponseEntity.ok(QuizBatchDTO.of(batch));
     }
 }

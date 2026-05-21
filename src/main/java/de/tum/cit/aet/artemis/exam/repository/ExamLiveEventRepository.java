@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -42,6 +43,7 @@ public interface ExamLiveEventRepository extends ArtemisJpaRepository<ExamLiveEv
      *
      * @param examId the id of the exam
      */
+    @Modifying
     @Transactional // ok because of delete
-    void deleteAllByExamId(Long examId);
+    void deleteAllByExamId(long examId);
 }

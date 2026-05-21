@@ -1,0 +1,19 @@
+package de.tum.cit.aet.artemis.core.dto;
+
+import java.time.Instant;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.core.config.validator.Base64Url;
+
+/**
+ * A DTO representing a passkey credential with user information for administrative purposes.
+ * This extends the basic PasskeyDTO with additional user details.
+ */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record PasskeyAdminDTO(@NotNull @Base64Url String credentialId, String label, @NotNull Instant created, Instant lastUsed, boolean isSuperAdminApproved, @NotNull Long userId,
+        @NotBlank String userLogin, @NotNull String userName) {
+}

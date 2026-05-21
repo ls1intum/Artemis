@@ -143,20 +143,20 @@ public interface ExerciseMetricsRepository extends ArtemisJpaRepository<Exercise
      * Get the latest submission dates for a set of exercises.
      * <p>
      * This query fetches all latest submission dates for the specified set of exercises.
-     * It considers all participations related to the exercises.
+     * It considers all student participations (non-test runs) related to the exercises.
+     * Optimized to use INNER JOINs and StudentParticipation directly for better query performance.
      *
      * @param exerciseIds the ids of the exercises for which to fetch the latest submission dates
      * @return a set of ResourceTimestampDTO objects containing the exercise id and the latest submission date for each exercise
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO(e.id, MAX(s.submissionDate), p.id)
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO(p.exercise.id, MAX(s.submissionDate), p.id)
             FROM Submission s
-                LEFT JOIN Participation p ON s.participation.id = p.id
-                LEFT JOIN p.exercise e
-            WHERE e.id IN :exerciseIds
+                JOIN StudentParticipation p ON s.participation.id = p.id
+            WHERE p.exercise.id IN :exerciseIds
                 AND s.submitted = TRUE
                 AND p.testRun = FALSE
-            GROUP BY e.id, p.id
+            GROUP BY p.exercise.id, p.id
             """)
     Set<ResourceTimestampDTO> findLatestSubmissionDates(@Param("exerciseIds") Set<Long> exerciseIds);
 

@@ -1,0 +1,13 @@
+@if (hasValidCategories()) {
+    <span class="category-badges">
+        @for (category of detail().data.categories; track category) {
+            @if (category.category) {
+                <span class="badge category-badge" [ngStyle]="{ backgroundColor: category.color }">
+                    {{ category.category }}
+                </span>
+            }
+        }
+    </span>
+} @else {
+    <jhi-no-data />
+}

@@ -4,52 +4,56 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { input } from '@angular/core';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 const exam = {
     id: 2,
 };
 describe('ExamModePickerComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ExamModePickerComponent;
     let fixture: ComponentFixture<ExamModePickerComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [ExamModePickerComponent, MockPipe(ArtemisTranslatePipe)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ExamModePickerComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExamModePickerComponent);
-                component = fixture.componentInstance;
-                TestBed.runInInjectionContext(() => {
-                    component.exam = input(exam);
-                    component.disableInput = input(false);
-                });
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(ExamModePickerComponent);
+        component = fixture.componentInstance;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should be in readonly mode', () => {
         const examCopy = { ...exam };
-        TestBed.runInInjectionContext(() => {
-            component.disableInput = input(true);
-        });
+        fixture.componentRef.setInput('exam', exam);
+        fixture.componentRef.setInput('disableInput', true);
         fixture.detectChanges();
         component.setExamMode(true);
         expect(component.exam()).toEqual(examCopy);
     });
 
     it('should set exam mode test', () => {
+        fixture.componentRef.setInput('exam', exam);
+        fixture.componentRef.setInput('disableInput', false);
         fixture.detectChanges();
         component.setExamMode(true);
-        expect(component.exam().testExam).toBeTrue();
+        expect(component.exam().testExam).toBe(true);
         expect(component.exam().numberOfCorrectionRoundsInExam).toBe(0);
     });
 
     it('should set exam mode test false', () => {
+        fixture.componentRef.setInput('exam', exam);
+        fixture.componentRef.setInput('disableInput', false);
         fixture.detectChanges();
         component.setExamMode(false);
-        expect(component.exam().testExam).toBeFalse();
+        expect(component.exam().testExam).toBe(false);
         expect(component.exam().numberOfCorrectionRoundsInExam).toBe(1);
     });
 });

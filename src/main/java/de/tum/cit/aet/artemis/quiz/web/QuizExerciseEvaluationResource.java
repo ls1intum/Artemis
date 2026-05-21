@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithStatisticsDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.service.QuizResultService;
@@ -154,12 +155,14 @@ public class QuizExerciseEvaluationResource {
      */
     @GetMapping("quiz-exercises/{quizExerciseId}/recalculate-statistics")
     @EnforceAtLeastTutorInExercise(resourceIdFieldName = "quizExerciseId")
-    public ResponseEntity<QuizExercise> recalculateStatistics(@PathVariable Long quizExerciseId) {
+    public ResponseEntity<QuizExerciseWithStatisticsDTO> recalculateStatistics(@PathVariable Long quizExerciseId) {
         log.info("REST request to recalculate quiz statistics : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         quizStatisticService.recalculateStatistics(quizExercise);
         // fetch the quiz exercise again to make sure the latest changes are included
-        return ResponseEntity.ok(quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId()));
+        quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
+        QuizExerciseWithStatisticsDTO quizExerciseDTO = QuizExerciseWithStatisticsDTO.of(quizExercise);
+        return ResponseEntity.ok(quizExerciseDTO);
     }
 
 }

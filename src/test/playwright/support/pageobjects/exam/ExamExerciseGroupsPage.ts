@@ -29,7 +29,7 @@ export class ExamExerciseGroupsPage {
 
     async clickDeleteGroup(groupID: number, groupName: string) {
         await this.page.click(`#group-${groupID} .delete-group`);
-        const deleteButton = this.page.locator('#delete');
+        const deleteButton = this.page.getByTestId('delete-dialog-confirm-button');
         await expect(deleteButton).toBeDisabled();
         await this.page.fill('#confirm-entity-name', groupName);
         await expect(deleteButton).toBeEnabled();
@@ -37,27 +37,39 @@ export class ExamExerciseGroupsPage {
     }
 
     async shouldShowNumberOfExerciseGroups(numberOfGroups: number) {
-        await expect(this.page.locator('#number-groups')).toContainText(numberOfGroups.toString());
+        const numberOfGroupsLocator = this.page.locator('#number-groups');
+        await numberOfGroupsLocator.waitFor({ state: 'visible', timeout: 30000 });
+        await expect(numberOfGroupsLocator).toContainText(numberOfGroups.toString(), { timeout: 30000 });
     }
 
     async clickAddExerciseGroup() {
-        await this.page.locator('#create-new-group').click();
+        const createButton = this.page.locator('#create-new-group');
+        await createButton.waitFor({ state: 'visible', timeout: 30000 });
+        await createButton.click();
     }
 
     async clickAddTextExercise(groupID: number) {
-        await this.page.locator(`#group-${groupID} .add-text-exercise`).click();
+        const addButton = this.page.locator(`#group-${groupID} .add-text-exercise`);
+        await addButton.waitFor({ state: 'visible', timeout: 30000 });
+        await addButton.click();
     }
 
     async clickAddModelingExercise(groupID: number) {
-        await this.page.locator(`#group-${groupID} .add-modeling-exercise`).click();
+        const addButton = this.page.locator(`#group-${groupID} .add-modeling-exercise`);
+        await addButton.waitFor({ state: 'visible', timeout: 30000 });
+        await addButton.click();
     }
 
     async clickAddQuizExercise(groupID: number) {
-        await this.page.locator(`#group-${groupID} .add-quiz-exercise`).click();
+        const addButton = this.page.locator(`#group-${groupID} .add-quiz-exercise`);
+        await addButton.waitFor({ state: 'visible', timeout: 30000 });
+        await addButton.click();
     }
 
     async clickAddProgrammingExercise(groupID: number) {
-        await this.page.locator(`#group-${groupID} .add-programming-exercise`).click();
+        const addButton = this.page.locator(`#group-${groupID} .add-programming-exercise`);
+        await addButton.waitFor({ state: 'visible', timeout: 30000 });
+        await addButton.click();
     }
 
     async clickEditExercise(groupID: number, exerciseID: number) {
@@ -65,12 +77,18 @@ export class ExamExerciseGroupsPage {
     }
 
     async visitPageViaUrl(courseId: number, examId: number) {
-        await this.page.goto(`course-management/${courseId}/exams/${examId}/exercise-groups`);
+        await this.page.goto(`/course-management/${courseId}/exams/${examId}/exercise-groups`);
+        await this.page.locator('#number-groups').waitFor({ state: 'visible', timeout: 30000 });
     }
 
     async shouldContainExerciseWithTitle(groupID: number, exerciseTitle: string) {
+        // Wait for DOM content to load but NOT networkidle, because programming exercise
+        // creation triggers async builds that produce ongoing network traffic, causing
+        // networkidle to block indefinitely and the test to time out.
+        await this.page.waitForLoadState('domcontentloaded');
         const exerciseElement = this.page.locator(`#group-${groupID} #exercises`, { hasText: exerciseTitle });
+        await exerciseElement.waitFor({ state: 'attached', timeout: 30000 });
         await exerciseElement.scrollIntoViewIfNeeded();
-        await expect(exerciseElement).toBeVisible();
+        await expect(exerciseElement).toBeVisible({ timeout: 10000 });
     }
 }

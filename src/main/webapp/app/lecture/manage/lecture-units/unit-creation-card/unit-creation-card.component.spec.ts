@@ -1,5 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -8,25 +10,32 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { RouterModule } from '@angular/router';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('UnitCreationCardComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let unitCreationCardComponentFixture: ComponentFixture<UnitCreationCardComponent>;
     let unitCreationCardComponent: UnitCreationCardComponent;
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([]), FaIconComponent],
-            declarations: [UnitCreationCardComponent, MockPipe(ArtemisTranslatePipe), MockComponent(DocumentationButtonComponent), MockDirective(TranslateDirective)],
-            providers: [MockProvider(TranslateService)],
-        })
-            .compileComponents()
-            .then(() => {
-                unitCreationCardComponentFixture = TestBed.createComponent(UnitCreationCardComponent);
-                unitCreationCardComponent = unitCreationCardComponentFixture.componentInstance;
-            });
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
+                RouterModule.forRoot([]),
+                FaIconComponent,
+                UnitCreationCardComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(DocumentationButtonComponent),
+                MockDirective(TranslateDirective),
+            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        }).compileComponents();
+
+        unitCreationCardComponentFixture = TestBed.createComponent(UnitCreationCardComponent);
+        unitCreationCardComponent = unitCreationCardComponentFixture.componentInstance;
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -35,8 +44,8 @@ describe('UnitCreationCardComponent', () => {
     });
 
     it('should emit creation card event', () => {
-        const emitSpy = jest.spyOn(unitCreationCardComponent.onUnitCreationCardClicked, 'emit');
-        unitCreationCardComponent.emitEvents = true;
+        const emitSpy = vi.spyOn(unitCreationCardComponent.onUnitCreationCardClicked, 'emit');
+        unitCreationCardComponentFixture.componentRef.setInput('emitEvents', true);
         unitCreationCardComponent.onButtonClicked(LectureUnitType.ONLINE);
         expect(emitSpy).toHaveBeenCalledWith(LectureUnitType.ONLINE);
     });

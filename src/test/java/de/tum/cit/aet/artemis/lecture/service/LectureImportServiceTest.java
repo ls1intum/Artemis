@@ -18,7 +18,6 @@ import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
-import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class LectureImportServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -33,9 +32,6 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentTest 
 
     @Autowired
     private UserUtilService userUtilService;
-
-    @Autowired
-    private LectureUtilService lectureUtilService;
 
     @Autowired
     private CourseUtilService courseUtilService;
@@ -82,10 +78,6 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(lecture2.getDescription()).isNotNull().isEqualTo(this.lecture1.getDescription());
         assertThat(lecture2.getStartDate()).isNotNull().isEqualTo(this.lecture1.getStartDate());
         assertThat(lecture2.getEndDate()).isNotNull().isEqualTo(this.lecture1.getEndDate());
-
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code OR comment back in */
-        // assertThat(lecture2.getVisibleDate()).isNotNull().isEqualTo(this.lecture1.getVisibleDate());
 
         // Assert that all lecture units (except exercise units) were copied
         assertThat(lecture2.getLectureUnits().stream().map(LectureUnit::getName).toList()).containsExactlyElementsOf(

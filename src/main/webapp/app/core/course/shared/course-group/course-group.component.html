@@ -5,10 +5,10 @@
             <ng-content />
         </h2>
         <div class="d-flex mt-1 mb-1 gap-1">
-            @if (course?.isAtLeastInstructor) {
-                <jhi-user-import-button [courseId]="course.id!" [courseGroup]="courseGroup!" (importDone)="importFinish.emit()" [tutorialGroup]="tutorialGroup" />
+            @if (course().isAtLeastInstructor) {
+                <jhi-user-import-button [courseId]="course().id!" [courseGroup]="courseGroup()" (importDone)="importFinish.emit()" [tutorialGroup]="tutorialGroup()" />
             }
-            @if (course?.isAtLeastInstructor && allGroupUsers.length > 0) {
+            @if (course().isAtLeastInstructor && allGroupUsers().length > 0) {
                 <button class="btn btn-primary btn-sm" (click)="exportUserInformation()">
                     <fa-icon [icon]="faDownload" [fixedWidth]="true" />
                     <span jhiTranslate="artemisApp.instructorDashboard.exportCSV"></span>
@@ -18,13 +18,13 @@
     </div>
     <jhi-data-table
         id="registered-students"
-        [isLoading]="isLoadingAllGroupUsers"
-        [isSearching]="isSearching"
-        [searchFailed]="searchFailed"
-        [searchNoResults]="searchNoResults"
-        [isTransitioning]="isTransitioning"
+        [isLoading]="isLoadingAllGroupUsers()"
+        [isSearching]="isSearching()"
+        [searchFailed]="searchFailed()"
+        [searchNoResults]="searchNoResults()"
+        [isTransitioning]="isTransitioning()"
         entityType="user"
-        [allEntities]="allGroupUsers"
+        [allEntities]="allGroupUsers()"
         entitiesPerPageTranslation="artemisApp.course.courseGroup.usersPerPage"
         showAllEntitiesTranslation="artemisApp.course.courseGroup.showAllUsers"
         searchNoResultsTranslation="artemisApp.course.courseGroup.searchNoResults"
@@ -34,7 +34,7 @@
         [searchResultFormatter]="searchResultFormatter"
         [onSearchWrapper]="searchAllUsers"
         [onAutocompleteSelectWrapper]="onAutocompleteSelect"
-        (entitiesSizeChange)="handleUsersSizeChange($event)"
+        (entitiesSizeChange)="handleUsersSizeChange()($event)"
     >
         <ng-template let-settings="settings" let-controls="controls">
             <ngx-datatable
@@ -57,7 +57,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        @if (isAdmin) {
+                        @if (isAdmin()) {
                             <a routerLink="/admin/user-management/{{ value?.login }}"> {{ value.id }} </a>
                         } @else {
                             {{ value?.id }}

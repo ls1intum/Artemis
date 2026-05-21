@@ -9,23 +9,16 @@ on:
     - 'CONTRIBUTING.md'
     - 'LICENSE'
     - 'SECURITY.md'
-    - 'docs/**'
-    - '.github/**'
-    - '!.github/workflows/codeql-analysis.yml'
-  pull_request:
-    # The branches below must be a subset of the branches above
-    branches: [develop]
-    paths-ignore:
-    - 'README.md'
-    - 'CODE_OF_CONDUCT.md'
-    - 'CONTRIBUTING.md'
-    - 'LICENSE'
-    - 'SECURITY.md'
-    - 'docs/**'
+    - 'documentation/**'
     - '.github/**'
     - '!.github/workflows/codeql-analysis.yml'
   schedule:
     - cron: '0 16 * * 0'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 # Keep in sync with build.yml and test.yml and analysis-of-endpoint-connections.yml
 env:
@@ -43,11 +36,15 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v6
 
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        run_install: false
     - name: Setup Node.js
       uses: actions/setup-node@v6
       with:
         node-version: '${{ env.node }}'
-        cache: 'npm'
+        cache: 'pnpm'
 
     # Install Java
     - name: Setup Java
@@ -59,16 +56,21 @@ jobs:
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
+      uses: github/codeql-action/init@v4
       # Override language selection by uncommenting this and choosing your languages
       with:
          languages: javascript, java
 
-    # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v3
+    # Build Angular client separately so esbuild gets full system memory without
+    # competing with the Gradle JVM (which reserves up to 4g).
+    - name: Install pnpm dependencies
+      run: pnpm install --frozen-lockfile
+    - name: Build Angular Client
+      run: pnpm run clean-www && pnpm run prebuild && pnpm exec ng build --configuration production --optimization=false
+    - name: Build Java
+      run: ./gradlew -Pprod -Pwar bootWar -x webapp
 
     - run: rm -rf build/resources/main/static
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
+      uses: github/codeql-action/analyze@v4

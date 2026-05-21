@@ -1,4 +1,4 @@
-@if (course) {
+@if (course()) {
     <div class="justify-content-center conversation-messages">
         <div class="channel-content">
             <!-- loading messages -->
@@ -85,7 +85,7 @@
                                 class="message-input"
                                 [posting]="newPost!"
                                 (onCreate)="handleNewMessageCreated()"
-                                [course]="course"
+                                [course]="course()"
                                 [activeConversation]="newPost.conversation"
                             />
                         }
@@ -104,7 +104,7 @@
                             class="message-input"
                             [posting]="newPost!"
                             (onCreate)="handleNewMessageCreated()"
-                            [course]="course"
+                            [course]="course()"
                             [activeConversation]="newPost.conversation"
                         />
                     }

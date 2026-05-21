@@ -1,3 +1,9 @@
+/**
+ * Tests for TextExerciseResolver.
+ * Verifies the resolver's behavior for resolving text exercises in different contexts.
+ */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { TextExerciseResolver } from 'app/text/manage/text-exercise/service/text-exercise-resolver.service';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
@@ -13,11 +19,12 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { Course } from 'app/core/course/shared/entities/course.model';
 
 describe('TextExerciseResolver', () => {
+    setupTestBed({ zoneless: true });
     let resolver: TextExerciseResolver;
     let route: ActivatedRouteSnapshot;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 MockProvider(CourseManagementService),
                 MockProvider(TextExerciseService),
@@ -34,7 +41,7 @@ describe('TextExerciseResolver', () => {
     it('should resolve a TextExercise when exerciseId is provided', () => {
         const dummyExercise = new TextExercise(undefined, undefined);
         const textExerciseService = TestBed.inject(TextExerciseService);
-        jest.spyOn(textExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: dummyExercise })));
+        vi.spyOn(textExerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: dummyExercise })));
 
         route.params = { exerciseId: '123' };
 
@@ -48,7 +55,7 @@ describe('TextExerciseResolver', () => {
     it('should resolve a TextExercise for a course and exercise group', () => {
         const dummyExerciseGroup = { id: 3 } as ExerciseGroup;
         const exerciseGroupService = TestBed.inject(ExerciseGroupService);
-        jest.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: dummyExerciseGroup })));
+        vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: dummyExerciseGroup })));
 
         route.params = { courseId: '1', examId: '2', exerciseGroupId: '3' };
 
@@ -66,7 +73,7 @@ describe('TextExerciseResolver', () => {
     it('should resolve a TextExercise for a course without an exercise group', () => {
         const dummyCourse = { id: 1 } as Course;
         const courseService = TestBed.inject(CourseManagementService);
-        jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: dummyCourse })));
+        vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: dummyCourse })));
 
         route.params = { courseId: '1' };
 

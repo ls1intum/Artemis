@@ -1,15 +1,15 @@
-@for (group of textBlockRefGroups; track group) {
+@for (group of textBlockRefGroups(); track $index) {
     @if (group.singleRef) {
         <jhi-text-block-assessment-card
             [textBlockRef]="group.singleRef"
-            [selected]="selectedRef === group.singleRef"
-            (didSelect)="selectedRef = $event; selectedRefChange.emit($event)"
+            [selected]="selectedRef() === group.singleRef"
+            (didSelect)="selectedRef.set($event)"
             (didChange)="textBlockRefsChangeEmit()"
-            [readOnly]="readOnly"
-            [criteria]="criteria"
+            [readOnly]="readOnly()"
+            [criteria]="criteria()"
         />
     } @else {
         <!-- DO NOT ADD LINEBREAKS INSIDE <jhi-manual-text-selection> -->
-        <jhi-manual-text-selection [submission]="submission" [words]="group" [textBlockRefGroup]="group" (didSelectWord)="handleTextSelection($event)" />
+        <jhi-manual-text-selection [submission]="submission()" [textBlockRefGroup]="group" (didSelectWord)="handleTextSelection($event)" />
     }
 }

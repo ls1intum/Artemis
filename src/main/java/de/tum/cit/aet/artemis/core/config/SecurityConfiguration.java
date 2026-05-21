@@ -13,8 +13,10 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
@@ -28,17 +30,18 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
-import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
-import de.tum.cit.aet.artemis.core.security.DomainUserDetailsService;
+import de.tum.cit.aet.artemis.core.security.ArtemisInternalAuthenticationProvider;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
@@ -46,7 +49,6 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.security.passkey.ArtemisPasskeyWebAuthnConfigurer;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 
@@ -73,8 +75,6 @@ public class SecurityConfiguration {
 
     private final PasswordService passwordService;
 
-    private final ProfileService profileService;
-
     private final TokenProvider tokenProvider;
 
     private final ModuleFeatureService moduleFeatureService;
@@ -100,46 +100,77 @@ public class SecurityConfiguration {
     }
 
     public SecurityConfiguration(CorsFilter corsFilter, Optional<CustomLti13Configurer> customLti13Configurer, Optional<ArtemisPasskeyWebAuthnConfigurer> passkeyWebAuthnConfigurer,
-            PasswordService passwordService, ProfileService profileService, TokenProvider tokenProvider, JWTCookieService jwtCookieService,
-            ModuleFeatureService moduleFeatureService) {
+            PasswordService passwordService, TokenProvider tokenProvider, JWTCookieService jwtCookieService, ModuleFeatureService moduleFeatureService) {
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;
         this.passkeyWebAuthnConfigurer = passkeyWebAuthnConfigurer;
         this.passwordService = passwordService;
-        this.profileService = profileService;
         this.tokenProvider = tokenProvider;
         this.jwtCookieService = jwtCookieService;
         this.moduleFeatureService = moduleFeatureService;
     }
 
     /**
-     * Spring Security will attempt to authenticate with the providers in the order they're added. If an external provider is configured, it will be queried first;
-     * the internal database is used as a fallback if external authentication fails or is not configured.
+     * Configures the {@link AuthenticationManager} with the appropriate authentication providers.
+     * <p>
+     * Spring Security attempts to authenticate with providers in the order they're added:
+     * <ol>
+     * <li>If an external provider (e.g., LDAP) is configured, it is tried first. The external provider will skip
+     * internal users (returns null) and only authenticate external users or users not yet in the database.</li>
+     * <li>The internal provider serves as a fallback, authenticating only internal users stored in the Artemis database.</li>
+     * </ol>
+     * <p>
+     * This explicit configuration is required to:
+     * <ul>
+     * <li>Ensure the correct provider order (external first, internal second)</li>
+     * <li>Prevent Spring Boot's auto-configuration from creating a parent AuthenticationManager that would register
+     * providers twice (as both parent and child), which could cause authentication issues</li>
+     * </ul>
      *
-     * @param http                             The {@link HttpSecurity} to configure.
-     * @param userDetailsService               The {@link UserDetailsService} to use for internal authentication. See {@link DomainUserDetailsService} for the current
-     *                                             implementation.
-     * @param remoteUserAuthenticationProvider An optional {@link AuthenticationProvider} for external authentication (e.g., LDAP).
+     * @param http                                  The {@link HttpSecurity} to configure.
+     * @param artemisInternalAuthenticationProvider The {@link ArtemisInternalAuthenticationProvider} for internal authentication using the Artemis database.
+     * @param externalUserAuthenticationProvider    An optional {@link AuthenticationProvider} for external authentication (e.g., LDAP).
      * @return The {@link AuthenticationManager} to use for authenticating users.
      */
     @Bean
-    public AuthenticationManager authenticationManager(HttpSecurity http, UserDetailsService userDetailsService, Optional<AuthenticationProvider> remoteUserAuthenticationProvider)
-            throws Exception {
+    @Primary
+    public AuthenticationManager authenticationManager(HttpSecurity http, ArtemisInternalAuthenticationProvider artemisInternalAuthenticationProvider,
+            @Qualifier("ldapAuthenticationProvider") Optional<AuthenticationProvider> externalUserAuthenticationProvider) {
         var builder = http.getSharedObject(AuthenticationManagerBuilder.class);
-        // Configure the user details service for internal authentication using the Artemis database.
-        builder.userDetailsService(userDetailsService);
-        // Optionally configure an external authentication provider (e.g., {@link de.tum.cit.aet.artemis.service.connectors.ldap.LdapAuthenticationProvider}) for remote user
-        // authentication.
-        remoteUserAuthenticationProvider.ifPresent(builder::authenticationProvider);
-        // Spring Security processes authentication providers in the order they're added. If an external provider is configured,
-        // it will be tried first. The internal database-backed provider serves as a fallback if external authentication is not available or fails.
+
+        // External provider (e.g., LDAP) is added first - it will be tried first and skip internal users by returning null
+        externalUserAuthenticationProvider.ifPresent(builder::authenticationProvider);
+
+        // Internal provider is added second - it serves as a fallback for internal users
+        builder.authenticationProvider(artemisInternalAuthenticationProvider);
+
+        // Explicitly set parent to null to prevent Spring Boot's auto-configured AuthenticationManager from being used as parent.
+        // Without this, providers could be registered twice (in parent and child), causing duplicate authentication attempts.
+        builder.parentAuthenticationManager(null);
+
         return builder.build();
     }
 
-    // NOTE: this replaces the old @Import annotation above the class because it does not work with Spring Boot 3.3 and Spring Security 6.3 any more
+    /**
+     * Returns 401 Unauthorized for unauthenticated requests.
+     *
+     * @return the authentication entry point
+     */
     @Bean
-    public SecurityProblemSupport securityProblemSupport(@Qualifier("handlerExceptionResolver") HandlerExceptionResolver resolver) {
-        return new SecurityProblemSupport(resolver);
+    public AuthenticationEntryPoint authenticationEntryPoint() {
+        return new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED);
+    }
+
+    /**
+     * Delegates access-denied failures to the HandlerExceptionResolver so that
+     * {@link de.tum.cit.aet.artemis.core.exception.ExceptionTranslator} can produce ProblemDetail responses.
+     *
+     * @param resolver the exception resolver to delegate to
+     * @return the access denied handler
+     */
+    @Bean
+    public AccessDeniedHandler accessDeniedHandler(@Qualifier("handlerExceptionResolver") HandlerExceptionResolver resolver) {
+        return (request, response, accessDeniedException) -> resolver.resolveException(request, response, null, accessDeniedException);
     }
 
     @Bean
@@ -159,8 +190,9 @@ public class SecurityConfiguration {
      * @return A fully configured {@link DefaultMethodSecurityExpressionHandler} instance ready for use
      *         in securing methods based on security expressions.
      */
+    // Renamed for clarity; Spring Security 7 auto-detects this bean by type, not by name
     @Bean
-    public DefaultMethodSecurityExpressionHandler methodExpressionHandler() {
+    public DefaultMethodSecurityExpressionHandler methodSecurityExpressionHandler() {
         DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
         expressionHandler.setRoleHierarchy(roleHierarchy());
         return expressionHandler;
@@ -181,8 +213,22 @@ public class SecurityConfiguration {
      */
     @Bean
     public RoleHierarchy roleHierarchy() {
-        return RoleHierarchyImpl.fromHierarchy("ROLE_ADMIN > ROLE_INSTRUCTOR > ROLE_EDITOR > ROLE_TA > ROLE_USER > ROLE_ANONYMOUS");
+        return RoleHierarchyImpl.fromHierarchy("ROLE_SUPER_ADMIN > ROLE_ADMIN > ROLE_INSTRUCTOR > ROLE_EDITOR > ROLE_TA > ROLE_USER > ROLE_ANONYMOUS");
     }
+
+    /**
+     * Content Security Policy directives applied to every HTTP response.
+     *
+     * <p>
+     * Kept as a package-private constant so that unit tests can assert the exact policy without spinning up a full Spring Boot context.
+     * </p>
+     *
+     * <p>
+     * NOTE: Additional origins required by the YouTube IFrame API (e.g. {@code s.ytimg.com}) should be verified during manual testing (Task 18) and added here if
+     * the browser blocks them.
+     * </p>
+     */
+    static final String CSP_POLICY_DIRECTIVES = "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.youtube.com; worker-src 'self' blob:";
 
     /**
      * Configures the {@link SecurityFilterChain} for the application, specifying security settings for HTTP requests.
@@ -199,13 +245,14 @@ public class SecurityConfiguration {
      * </ul>
      * </p>
      *
-     * @param http                   The {@link HttpSecurity} object to configure security settings for HTTP requests.
-     * @param securityProblemSupport The {@link SecurityProblemSupport} instance to handle authentication entry points and access denied responses.
+     * @param http          The {@link HttpSecurity} object to configure security settings for HTTP requests.
+     * @param entryPoint    The {@link AuthenticationEntryPoint} to handle unauthenticated requests.
+     * @param deniedHandler The {@link AccessDeniedHandler} to handle access denied responses.
      * @return The configured {@link SecurityFilterChain}.
      * @throws Exception If an error occurs during the configuration process.
      */
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, SecurityProblemSupport securityProblemSupport) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationEntryPoint entryPoint, AccessDeniedHandler deniedHandler) throws Exception {
         // @formatter:off
         http
             // Disables CSRF (Cross-Site Request Forgery) protection; useful in stateless APIs where the token management is unnecessary.
@@ -213,13 +260,15 @@ public class SecurityConfiguration {
             // Adds a CORS (Cross-Origin Resource Sharing) filter before the username/password authentication to handle cross-origin requests.
             .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
             // Configures exception handling with a custom entry point and access denied handler for authentication issues.
-            .exceptionHandling(handler -> handler.authenticationEntryPoint(securityProblemSupport).accessDeniedHandler(securityProblemSupport))
+            .exceptionHandling(handler -> handler.authenticationEntryPoint(entryPoint).accessDeniedHandler(deniedHandler))
             // Adds a custom filter for Single Page Applications (SPA), i.e. the client, after the basic authentication filter.
             .addFilterAfter(new SpaWebFilter(), BasicAuthenticationFilter.class)
             // Configures security headers.
             .headers(headers -> headers
                 // Sets Content Security Policy (CSP) directives to prevent XSS attacks.
-                .contentSecurityPolicy(csp -> csp.policyDirectives("script-src 'self' 'unsafe-inline' 'unsafe-eval'"))
+                .contentSecurityPolicy(csp -> csp
+                    .policyDirectives(CSP_POLICY_DIRECTIVES)
+                )
                 // Prevents the website from being framed, avoiding clickjacking attacks.
                 .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
                 // Sets Referrer Policy to limit the amount of referrer information sent with requests.
@@ -238,7 +287,7 @@ public class SecurityConfiguration {
                     .requestMatchers("/", "/index.html", "/public/**").permitAll()
                     .requestMatchers("/*.js", "/*.css", "/*.map", "/*.json").permitAll()
                     .requestMatchers("/manifest.webapp", "/robots.txt").permitAll()
-                    .requestMatchers("/content/**", "/i18n/*.json", "/logo/*").permitAll()
+                    .requestMatchers("/content/**", "/i18n/*.json", "/logo/*", "/webjars/katex/**").permitAll()
                     // Information and health endpoints do not need authentication
                     .requestMatchers("/management/info", "/management/health").permitAll()
                     // Admin area requires specific authority.
@@ -246,7 +295,6 @@ public class SecurityConfiguration {
                     // Publicly accessible API endpoints (allowed for everyone, potentially with secret authentication).
                     .requestMatchers("/api/*/public/**").permitAll()
                     .requestMatchers("/api/*/internal/**").permitAll()
-                    .requestMatchers("/login/webauthn").permitAll()
                     // Websocket and other specific endpoints allowed without authentication.
                     .requestMatchers("/websocket/**").permitAll()
                     .requestMatchers("/.well-known/jwks.json").permitAll()
@@ -291,10 +339,10 @@ public class SecurityConfiguration {
             passkeyWebAuthnConfigurer.orElseThrow(() -> new IllegalStateException("Passkey enabled but SecurityConfigurer could not be injected")).configure(http);
         }
 
-        // Conditionally adds configuration for LTI if it is active.
-        if (profileService.isLtiActive()) {
+        // Conditionally adds configuration for LTI if it is enabled.
+        if (moduleFeatureService.isLtiEnabled()) {
             // Activates the LTI endpoints and filters.
-            log.info("LTI profile is active; enabling LTI endpoints and security configuration.");
+            log.info("LTI module feature is enabled; enabling LTI endpoints and security configuration.");
             http.with(customLti13Configurer.orElseThrow(), configurer -> configurer.configure(http));
         }
 

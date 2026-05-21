@@ -1,18 +1,24 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
 import { QuizReEvaluateService } from 'app/quiz/manage/re-evaluate/services/quiz-re-evaluate.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { provideHttpClient } from '@angular/common/http';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import * as blobUtil from 'app/shared/util/blob-util';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('QuizReEvaluateService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: QuizReEvaluateService;
     let httpMock: HttpTestingController;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting(), QuizReEvaluateService],
+            providers: [provideHttpClient(), provideHttpClientTesting(), QuizReEvaluateService, { provide: TranslateService, useClass: MockTranslateService }],
         });
         service = TestBed.inject(QuizReEvaluateService);
         httpMock = TestBed.inject(HttpTestingController);
@@ -22,31 +28,30 @@ describe('QuizReEvaluateService', () => {
         httpMock.verify();
     });
 
-    it('should send reevaluate request correctly', fakeAsync(() => {
+    it('should send reevaluate request correctly', async () => {
         const quizExercise = { id: 1 } as QuizExercise;
         const files = new Map<string, Blob>();
         files.set('test1', new Blob());
         files.set('test2', new Blob());
         service.reevaluate(quizExercise, files).subscribe((res) => {
             expect(res.body).toBeNull();
-            expect(res.ok).toBeTrue();
+            expect(res.ok).toBe(true);
         });
 
         const req = httpMock.expectOne({ method: 'PUT', url: 'api/quiz/quiz-exercises/1/re-evaluate' });
         expect(req.request.body).toBeInstanceOf(FormData);
-        expect(req.request.body.getAll('exercise')).toBeArrayOfSize(1);
+        expect(req.request.body.getAll('exercise')).toHaveLength(1);
         expect(req.request.body.get('exercise')).toBeInstanceOf(Blob);
         const formDataFiles = req.request.body.getAll('files');
-        expect(formDataFiles).toBeArrayOfSize(2);
+        expect(formDataFiles).toHaveLength(2);
         expect(formDataFiles[0]).toBeInstanceOf(Blob);
         expect(formDataFiles[1]).toBeInstanceOf(Blob);
         req.flush(null, { status: 200, statusText: 'OK' });
-        tick();
-    }));
+    });
 
     it('should convert QuizExercise with all question types into correct DTO and send it as FormData', () => {
         // Spy on objectToJsonBlob to capture the DTO passed to it
-        const blobSpy = jest.spyOn(blobUtil, 'objectToJsonBlob');
+        const blobSpy = vi.spyOn(blobUtil, 'objectToJsonBlob');
 
         // Build a QuizExercise with MC, DnD, and SA questions to cover all conversions
         const mcQuestion = {
@@ -128,8 +133,8 @@ describe('QuizReEvaluateService', () => {
         // Top-level DTO expectations
         expect(dto.title).toBe('Quiz Title');
         expect(dto.includedInOverallScore).toBe('INCLUDED_AS_BONUS');
-        expect(dto.randomizeQuestionOrder).toBeFalse();
-        expect(dto.quizQuestions).toBeArrayOfSize(3);
+        expect(dto.randomizeQuestionOrder).toBe(false);
+        expect(dto.quizQuestions).toHaveLength(3);
 
         // Multiple-choice DTO
         const dtoMc = dto.quizQuestions.find((q: any) => q.type === 'multiple-choice');
@@ -137,12 +142,12 @@ describe('QuizReEvaluateService', () => {
         expect(dtoMc.id).toBe(5);
         expect(dtoMc.title).toBe('MCQ');
         expect(dtoMc.scoringType).toBe('ALL_OR_NOTHING');
-        expect(dtoMc.randomizeOrder).toBeTrue();
-        expect(dtoMc.invalid).toBeTrue();
+        expect(dtoMc.randomizeOrder).toBe(true);
+        expect(dtoMc.invalid).toBe(true);
         expect(dtoMc.text).toBe('Which?');
         expect(dtoMc.hint).toBe('Think.');
         expect(dtoMc.explanation).toBe('Because.');
-        expect(dtoMc.answerOptions).toBeArrayOfSize(2);
+        expect(dtoMc.answerOptions).toHaveLength(2);
         expect(dtoMc.answerOptions[0]).toEqual(expect.objectContaining({ id: 1, text: 'A', hint: 'h1', explanation: 'e1', isCorrect: true, invalid: false }));
         expect(dtoMc.answerOptions[1]).toEqual(expect.objectContaining({ id: 2, text: 'B', hint: 'h2', explanation: 'e2', isCorrect: false, invalid: true }));
 
@@ -152,16 +157,16 @@ describe('QuizReEvaluateService', () => {
         expect(dtoDnd.id).toBe(6);
         expect(dtoDnd.title).toBe('DnD');
         expect(dtoDnd.scoringType).toBe('PROPORTIONAL_WITH_PENALTY');
-        expect(dtoDnd.randomizeOrder).toBeFalse();
-        expect(dtoDnd.invalid).toBeTrue();
+        expect(dtoDnd.randomizeOrder).toBe(false);
+        expect(dtoDnd.invalid).toBe(true);
         expect(dtoDnd.text).toBe('Drag it');
         expect(dtoDnd.hint).toBe('h');
         expect(dtoDnd.explanation).toBe('e');
-        expect(dtoDnd.dropLocations).toBeArrayOfSize(1);
+        expect(dtoDnd.dropLocations).toHaveLength(1);
         expect(dtoDnd.dropLocations[0]).toEqual(expect.objectContaining({ id: 11, invalid: false }));
-        expect(dtoDnd.dragItems).toBeArrayOfSize(1);
+        expect(dtoDnd.dragItems).toHaveLength(1);
         expect(dtoDnd.dragItems[0]).toEqual(expect.objectContaining({ id: 21, invalid: true, text: 'Item 1', pictureFilePath: 'img.png' }));
-        expect(dtoDnd.correctMappings).toBeArrayOfSize(1);
+        expect(dtoDnd.correctMappings).toHaveLength(1);
         expect(dtoDnd.correctMappings[0]).toEqual(expect.objectContaining({ dragItemId: 21, dropLocationId: 11 }));
 
         // Short-answer DTO
@@ -170,14 +175,14 @@ describe('QuizReEvaluateService', () => {
         expect(dtoSa.id).toBe(7);
         expect(dtoSa.title).toBe('SAQ');
         expect(dtoSa.scoringType).toBe('PROPORTIONAL_WITHOUT_PENALTY');
-        expect(dtoSa.randomizeOrder).toBeTrue();
-        expect(dtoSa.invalid).toBeTrue();
+        expect(dtoSa.randomizeOrder).toBe(true);
+        expect(dtoSa.invalid).toBe(true);
         expect(dtoSa.text).toBe('Fill in');
         expect(dtoSa.similarityValue).toBe(80);
-        expect(dtoSa.matchLetterCase).toBeTrue();
-        expect(dtoSa.spots).toBeArrayOfSize(1);
+        expect(dtoSa.matchLetterCase).toBe(true);
+        expect(dtoSa.spots).toHaveLength(1);
         expect(dtoSa.spots[0]).toEqual(expect.objectContaining({ id: 31, invalid: false }));
-        expect(dtoSa.solutions).toBeArrayOfSize(2);
+        expect(dtoSa.solutions).toHaveLength(2);
         // One solution by id, one by tempID
         expect(dtoSa.solutions).toEqual(
             expect.arrayContaining([
@@ -185,14 +190,14 @@ describe('QuizReEvaluateService', () => {
                 expect.objectContaining({ tempID: 999, text: 'answer2', invalid: true }),
             ]),
         );
-        expect(dtoSa.correctMappings).toBeArrayOfSize(2);
+        expect(dtoSa.correctMappings).toHaveLength(2);
         expect(dtoSa.correctMappings).toEqual(
             expect.arrayContaining([expect.objectContaining({ solutionId: 41, spotId: 31 }), expect.objectContaining({ solutionTempID: 999, spotId: 31 })]),
         );
 
         // Also ensure the file was appended
         const formDataFiles = req.request.body.getAll('files');
-        expect(formDataFiles).toBeArrayOfSize(1);
+        expect(formDataFiles).toHaveLength(1);
         expect(formDataFiles[0]).toBeInstanceOf(Blob);
 
         // Finish request

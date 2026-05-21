@@ -1,0 +1,302 @@
+---
+id: course-management
+title: Course Management
+sidebar_label: Course Management
+---
+
+# Course Management for Administrators
+
+This guide covers administrative operations for course management, including course reset and course archiving functionality. These operations are only available to system administrators.
+
+---
+
+## Course Reset
+
+The **Course Reset** operation allows administrators to clear all student data from a course while preserving the course structure. This is useful for:
+
+- **Data privacy compliance** (e.g., GDPR) - removing student data after a semester ends
+- **Reusing course templates** - preparing a course for a new cohort of students
+- **Testing purposes** - resetting a test course to its initial state
+
+:::warning
+The course reset operation **cannot be undone**. Before performing a reset, consider archiving the course to preserve student data for future reference.
+:::
+
+### What is Preserved vs Deleted
+
+The following tables show exactly what data is affected by a course reset:
+
+#### Data that is **PRESERVED** (kept after reset)
+
+| Category | Data Type | Description |
+|----------|-----------|-------------|
+| **Course Structure** | Course settings | Title, description, dates, groups, all configuration |
+| | Exercises | All exercise definitions (programming, text, modeling, quiz, file upload) |
+| | Exercise materials | Problem statements, grading criteria, example solutions |
+| | Programming exercise repos | Template, solution, and test repositories |
+| | Exams | Exam definitions, exercise groups, registered students list structure |
+| | Lectures | Lecture content, attachments, units |
+| | Competencies | Competency definitions and relations |
+| | Tutorial groups | Tutorial group definitions and schedules (but not student registrations) |
+| **Communication** | Channels/Conversations | Channel and conversation structure (but not messages) |
+| **Staff** | Instructors | All instructor assignments |
+
+#### Data that is **DELETED** (removed during reset)
+
+| Category | Data Type | Description |
+|----------|-----------|-------------|
+| **Exercise Data** | Participations | All student exercise participations |
+| | Submissions | All student submissions (code, text, models, files) |
+| | Results | All assessment results and scores |
+| | Feedbacks | All manual and automatic feedback |
+| | Build results | Programming exercise build logs and results |
+| | Plagiarism cases | All plagiarism detection results |
+| **Exam Data** | Student exams | All student exam instances |
+| | Exam participations | All exam exercise participations |
+| | Exam submissions | All exam submissions and results |
+| | Exam grades | All exam grading data |
+| **Learning Analytics** | Competency progress | Student progress on competencies |
+| | Learner profiles | Course-specific learner profile data |
+| | Participant scores | Cached scores for exercises |
+| **Communication** | Posts | All posts in channels and conversations |
+| | Answer posts | All replies to posts |
+| | Reactions | All reactions to posts and answers |
+| | Notifications | All course notifications |
+| | Notification settings | User notification preferences for the course |
+| **AI Features** | Iris chat sessions | All AI tutor conversation history |
+| | LLM token usage | Records of AI model usage and costs |
+| **Tutorial Groups** | Registrations | All student registrations to tutorial groups |
+| **Enrollment** | Students | Removed from student group |
+| | Tutors | Removed from tutor group |
+| | Editors | Removed from editor group |
+
+---
+
+## Course Archive
+
+The **Course Archive** operation creates a ZIP file containing course data for long-term storage. The archive is useful for:
+
+- **Record keeping** - Maintaining evidence of student work and assessments
+- **Compliance** - Meeting data retention requirements
+- **Backup** - Preserving course data before deletion or reset
+
+### Archive Contents
+
+The course archive is structured as follows:
+
+```
+course-archive.zip
+├── course-exercises/
+│   └── [exercise exports with submissions...]
+├── exams/
+│   └── [exam exports with student exams...]
+├── student-data/
+│   ├── course-scores.csv
+│   ├── exam-scores-{examId}-{examTitle}.csv
+│   ├── participation-results.csv
+│   ├── posts.csv
+│   ├── competency-progress.csv
+│   ├── learner-profiles.csv
+│   ├── tutorial-group-registrations.csv
+│   ├── iris-sessions.json
+│   └── llm-token-usage.csv
+├── report.csv
+└── exportErrors.txt
+```
+
+### What is Included vs Not Included
+
+#### Data that is **INCLUDED** in the archive
+
+| Category | File/Folder | Contents |
+|----------|-------------|----------|
+| **Exercises** | `course-exercises/` | All course exercises with student submissions |
+| | Programming exercises | Repositories (template, solution, test, student repos) |
+| | Text exercises | Submissions with assessments and feedback |
+| | Modeling exercises | Model submissions with assessments |
+| | File upload exercises | Uploaded files with assessments |
+| | Quiz exercises | Quiz submissions and answers |
+| **Exams** | `exams/` | All exams with student exam data |
+| | Student exams | Individual student exam instances |
+| | Exam exercises | All exam exercise submissions |
+| **Scores** | `student-data/course-scores.csv` | Aggregated student scores for all course exercises |
+| | `student-data/exam-scores-*.csv` | Aggregated student scores per exam (one file per exam) |
+| **Student Data** | `student-data/participation-results.csv` | Latest submission and result per participation with feedback |
+| | `student-data/posts.csv` | All posts and answer posts from conversations |
+| | `student-data/competency-progress.csv` | Student competency progress records |
+| | `student-data/learner-profiles.csv` | Course learner profile data |
+| | `student-data/tutorial-group-registrations.csv` | Student registrations to tutorial groups |
+| | `student-data/iris-sessions.json` | Iris AI tutor chat sessions (if Iris enabled) |
+| | `student-data/llm-token-usage.csv` | LLM token usage traces (if Iris enabled) |
+| **Reports** | `report.csv` | Export statistics per exercise |
+| | `exportErrors.txt` | Any errors encountered during export |
+
+#### Data that is **NOT INCLUDED** in the archive
+
+| Category | Data Type | Reason |
+|----------|-----------|--------|
+| **Course Structure** | Course settings | Can be recreated; not student data |
+| | Exercise definitions | Embedded in exercise exports |
+| | Lecture content | Not part of archival scope |
+| | Competency definitions | Can be recreated; only progress is archived |
+| | Tutorial group definitions | Can be recreated; only registrations are archived |
+| **Communication** | Reactions | Derived from posts; not separately archived |
+| | Private messages | Privacy considerations |
+| **System Data** | Notifications | Ephemeral; not needed for records |
+| | Notification settings | User preferences; not student work |
+| | Audit logs | Managed separately by system |
+| **User Data** | User accounts | Managed at system level |
+| | Group memberships | Can be derived from participation data |
+
+### Student Data Export Files
+
+#### course-scores.csv
+
+Contains aggregated course scores for all students. Uses the same calculation as the course statistics UI:
+
+| Column | Description |
+|--------|-------------|
+| StudentId | Unique identifier of the student |
+| StudentLogin | Student's login username |
+| PointsAchieved | Total points achieved across all exercises |
+| ScoreAchieved | Percentage score achieved (0-100) |
+| RegularPointsAchievable | Maximum achievable points |
+
+#### exam-scores-\{examId\}-\{examTitle\}.csv
+
+Contains aggregated exam scores for each exam (one file per exam). Uses the same calculation as the exam statistics UI:
+
+| Column | Description |
+|--------|-------------|
+| StudentId | Unique identifier of the student |
+| StudentLogin | Student's login username |
+| PointsAchieved | Total points achieved in the exam |
+| ScoreAchieved | Percentage score achieved (0-100) |
+| RegularPointsAchievable | Maximum achievable points in the exam |
+
+#### participation-results.csv
+
+Contains the latest submission and result for each student participation:
+
+| Column | Description |
+|--------|-------------|
+| ExerciseId | Unique identifier of the exercise |
+| ExerciseTitle | Name of the exercise |
+| ParticipantLogin | Student's login username |
+| ParticipantName | Student's display name |
+| ParticipationType | RATED (before due date) or PRACTICE (after due date) |
+| SubmissionDate | When the submission was made |
+| Score | Achieved score (percentage) |
+| Rated | Whether the result counts for grading |
+| Successful | Whether the submission passed (for programming exercises) |
+| FeedbackCount | Number of feedback items |
+| FeedbackDetails | Concatenated feedback text with points |
+
+#### posts.csv
+
+Contains all posts and answer posts from course conversations:
+
+| Column | Description |
+|--------|-------------|
+| Type | POST or ANSWER |
+| Id | Unique post identifier |
+| AuthorLogin | Username of the post author |
+| CreationDate | When the post was created |
+| Content | Text content of the post |
+| ConversationId | ID of the containing conversation (for posts) |
+| ParentPostId | ID of the parent post (for answers) |
+
+#### competency-progress.csv
+
+Contains student progress on course competencies:
+
+| Column | Description |
+|--------|-------------|
+| CompetencyId | Unique identifier of the competency |
+| CompetencyTitle | Name of the competency |
+| UserLogin | Student's login username |
+| Progress | Progress value (0.0 to 1.0) |
+| Confidence | Confidence value (0.0 to 1.0) |
+| LastModified | When the progress was last updated |
+
+#### learner-profiles.csv
+
+Contains course-specific learner profile data:
+
+| Column | Description |
+|--------|-------------|
+| UserLogin | Student's login username |
+| AimForGradeOrBonus | Student's grade/bonus goal setting |
+| TimeInvestment | Planned time investment level |
+| RepetitionIntensity | Preferred repetition intensity |
+
+#### tutorial-group-registrations.csv
+
+Contains student registrations to tutorial groups:
+
+| Column | Description |
+|--------|-------------|
+| TutorialGroupId | Unique identifier of the tutorial group |
+| TutorialGroupTitle | Name of the tutorial group |
+| StudentLogin | Student's login username |
+| StudentName | Student's display name |
+| RegistrationType | Type of registration (e.g., STUDENT) |
+
+#### iris-sessions.json
+
+Contains Iris AI tutor chat sessions (JSON format):
+
+```json
+[
+  {
+    "id": 123,
+    "userId": 456,
+    "creationDate": "2024-01-15T10:30:00Z",
+    "messages": [
+      {
+        "id": 789,
+        "sentAt": "2024-01-15T10:30:05Z",
+        "sender": "USER",
+        "content": "How do I implement a binary search?",
+        "helpful": true
+      }
+    ]
+  }
+]
+```
+
+#### llm-token-usage.csv
+
+Contains LLM token usage records for AI features:
+
+| Column | Description |
+|--------|-------------|
+| TraceId | Unique trace identifier |
+| ServiceType | Type of AI service (e.g., IRIS) |
+| UserId | User who triggered the request |
+| ExerciseId | Associated exercise (if applicable) |
+| Time | When the request was made |
+| Model | AI model used |
+| Pipeline | Service pipeline identifier |
+| NumInputTokens | Number of input tokens |
+| NumOutputTokens | Number of output tokens |
+| CostPerMillionInputTokens | Cost rate for input tokens |
+| CostPerMillionOutputTokens | Cost rate for output tokens |
+
+---
+
+## Best Practices
+
+### Before Resetting a Course
+
+1. **Create an archive** - Always archive the course before resetting to preserve student data
+2. **Notify stakeholders** - Inform instructors about the reset
+3. **Verify the course** - Double-check you are resetting the correct course
+4. **Check data retention policies** - Ensure you comply with institutional requirements
+
+### After Archiving a Course
+
+1. **Verify the archive** - Check the ZIP file can be extracted and contains expected data
+2. **Store securely** - Move the archive to secure, backed-up storage
+3. **Document location** - Record where the archive is stored for future reference
+4. **Set retention period** - Note when the archive can be deleted per policy

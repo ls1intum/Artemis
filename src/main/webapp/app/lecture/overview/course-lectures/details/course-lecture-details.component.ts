@@ -1,7 +1,8 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { PROFILE_IRIS, addPublicFilePrefix } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS, addPublicFilePrefix } from 'app/app.constants';
 import { downloadStream } from 'app/shared/util/download.util';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -19,7 +20,7 @@ import { ScienceEventType } from 'app/shared/science/science.model';
 import { Subscription } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
-import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
+import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UpperCasePipe } from '@angular/common';
@@ -27,7 +28,6 @@ import { ExerciseUnitComponent } from '../exercise-unit/exercise-unit.component'
 import { AttachmentVideoUnitComponent } from '../attachment-video-unit/attachment-video-unit.component';
 import { TextUnitComponent } from '../text-unit/text-unit.component';
 import { OnlineUnitComponent } from '../online-unit/online-unit.component';
-import { CompetenciesPopoverComponent } from 'app/atlas/shared/competencies-popover/competencies-popover.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -53,7 +53,6 @@ export interface LectureUnitCompletionEvent {
         AttachmentVideoUnitComponent,
         TextUnitComponent,
         OnlineUnitComponent,
-        CompetenciesPopoverComponent,
         FaIconComponent,
         DiscussionSectionComponent,
         UpperCasePipe,
@@ -74,6 +73,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private readonly profileService = inject(ProfileService);
     private readonly irisSettingsService = inject(IrisSettingsService);
     private readonly scienceService = inject(ScienceService);
+    private readonly destroyRef = inject(DestroyRef);
 
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly isCommunicationEnabled = isCommunicationEnabled;
@@ -90,14 +90,18 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     isDownloadingLink?: string;
     lectureUnits: LectureUnit[] = [];
     hasPdfLectureUnit: boolean;
-    irisSettings?: IrisSettings;
+    irisSettings?: IrisCourseSettingsWithRateLimitDTO;
     paramsSubscription: Subscription;
     courseParamsSubscription: Subscription;
     irisEnabled = false;
     informationBoxData: InformationBox[] = [];
 
+    readonly targetUnitId = signal<number | undefined>(undefined);
+    readonly targetVideoTimestamp = signal<number | undefined>(undefined);
+    readonly targetPdfPage = signal<number | undefined>(undefined);
+
     ngOnInit(): void {
-        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+        this.irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
 
         // As defined in courses.route.ts, the courseId is in the grand parent route of the lectureId route.
         const grandParentRoute = this.activatedRoute.parent?.parent;
@@ -113,6 +117,25 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             if (this.lectureId) {
                 this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN, this.lectureId);
                 this.loadData();
+            }
+        });
+
+        this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+            const unitId = Number(params['unit']);
+            if (Number.isInteger(unitId) && unitId > 0) {
+                this.targetUnitId.set(unitId);
+                const timestamp = Number(params['timestamp']);
+                this.targetVideoTimestamp.set(Number.isFinite(timestamp) && timestamp >= 0 ? timestamp : undefined);
+                const pageNum = Number(params['page']);
+                this.targetPdfPage.set(Number.isInteger(pageNum) && pageNum > 0 ? pageNum : undefined);
+            } else {
+                this.targetUnitId.set(undefined);
+                this.targetVideoTimestamp.set(undefined);
+                this.targetPdfPage.set(undefined);
+            }
+
+            if (this.lectureUnits.length > 0) {
+                this.ensureValidDeepLinkTargets();
             }
         });
     }
@@ -137,16 +160,13 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                         });
 
                         this.lectureUnits = this.lecture?.lectureUnits ?? [];
-                        if (this.lectureUnits?.length) {
-                            // Check if PDF attachments exist in lecture units
-                            this.hasPdfLectureUnit =
-                                (<AttachmentVideoUnit[]>this.lectureUnits.filter((unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO)).filter(
-                                    (unit) => unit.attachment?.link?.split('.').pop()!.toLocaleLowerCase() === 'pdf',
-                                ).length > 0;
-                        }
+                        this.ensureValidDeepLinkTargets();
+                        this.hasPdfLectureUnit = this.lectureUnits.some(
+                            (unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO && (unit as AttachmentVideoUnit).attachment?.link?.toLowerCase().endsWith('.pdf'),
+                        );
                         if (this.irisEnabled && this.lecture?.course?.id) {
-                            this.irisSettingsService.getCombinedCourseSettings(this.lecture.course.id).subscribe((irisSettings) => {
-                                this.irisSettings = irisSettings;
+                            this.irisSettingsService.getCourseSettingsWithRateLimit(this.lecture.course.id).subscribe((response) => {
+                                this.irisSettings = response;
                             });
                         }
                         this.informationBoxData = [];
@@ -206,6 +226,38 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
     completeLectureUnit(event: LectureUnitCompletionEvent): void {
         this.lectureUnitService.completeLectureUnit(this.lecture!, event);
+    }
+
+    private ensureValidDeepLinkTargets(): void {
+        const targetUnitId = this.targetUnitId();
+        if (!targetUnitId) {
+            return;
+        }
+
+        const targetUnit = this.lectureUnits.find((unit) => unit.id === targetUnitId);
+        if (!targetUnit) {
+            this.targetUnitId.set(undefined);
+            this.targetVideoTimestamp.set(undefined);
+            this.targetPdfPage.set(undefined);
+            return;
+        }
+
+        if (targetUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
+            const attachmentUnit = targetUnit as AttachmentVideoUnit;
+            const hasVideo = !!attachmentUnit.videoSource || !!attachmentUnit.youtubeVideoId;
+            const isPdf = attachmentUnit.attachment?.link?.toLowerCase().endsWith('.pdf');
+            // Clear timestamp only if unit has NO video source
+            if (!hasVideo) {
+                this.targetVideoTimestamp.set(undefined);
+            }
+            // Clear PDF page only if unit has NO PDF attachment
+            if (!isPdf) {
+                this.targetPdfPage.set(undefined);
+            }
+        } else {
+            this.targetVideoTimestamp.set(undefined);
+            this.targetPdfPage.set(undefined);
+        }
     }
 
     createDateInfoBox(date: Dayjs, contentStringName: string): InformationBox {

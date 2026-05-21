@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
+import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
@@ -23,6 +24,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 
 @Component({
     selector: 'jhi-exam-exercise-row-buttons',
@@ -35,6 +37,7 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private modelingExerciseService = inject(ModelingExerciseService);
     private quizExerciseService = inject(QuizExerciseService);
+    private exerciseService = inject(ExerciseService);
     private eventManager = inject(EventManager);
     private profileService = inject(ProfileService);
 
@@ -170,6 +173,10 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
+    }
+
+    fetchExerciseDeletionSummary(): Observable<EntitySummary> {
+        return this.exerciseService.getDeletionSummary(this.exercise);
     }
 
     /**

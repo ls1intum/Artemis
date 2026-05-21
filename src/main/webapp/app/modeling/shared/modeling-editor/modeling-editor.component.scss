@@ -33,26 +33,44 @@ $draggable-width: 15px;
 
 .resizable {
     display: flex;
+    flex-wrap: wrap;
 
-    .draggable-right,
-    .draggable-bottom {
+    .apollon-container {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    .draggable-right {
         display: flex;
         align-items: center;
         justify-content: center;
         min-width: $draggable-width;
+        cursor: col-resize;
+    }
+
+    .draggable-bottom {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: $draggable-width;
+        cursor: row-resize;
     }
 }
 
 .apollon-container {
-    height: 100%;
-    min-height: 750px;
-    overflow: hidden;
+    height: 600px;
 }
 
 .readonly-diagram {
     height: 100%;
     overflow-x: auto;
     overflow-y: auto;
+
+    > svg {
+        display: block;
+        margin: 0 auto;
+    }
 }
 
 .scroll-container {

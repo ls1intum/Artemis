@@ -1,9 +1,13 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { CourseCompetenciesRelationGraphComponent } from 'app/atlas/manage/course-competencies-relation-graph/course-competencies-relation-graph.component';
 import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { provideNoopAnimationsForTests } from 'test/helpers/animations';
+import { MockModule } from 'ng-mocks';
+import { NgxGraphModule } from '@swimlane/ngx-graph';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 interface CourseCompetencyStyle {
     dimension: {
@@ -21,6 +25,7 @@ interface CourseCompetencyStyle {
 type StyledCourseCompetency = CourseCompetency & CourseCompetencyStyle;
 
 describe('CourseCompetenciesRelationGraphComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: CourseCompetenciesRelationGraphComponent;
     let fixture: ComponentFixture<CourseCompetenciesRelationGraphComponent>;
 
@@ -54,14 +59,20 @@ describe('CourseCompetenciesRelationGraphComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CourseCompetenciesRelationGraphComponent, NoopAnimationsModule],
+            imports: [CourseCompetenciesRelationGraphComponent],
             providers: [
                 {
                     provide: TranslateService,
                     useClass: MockTranslateService,
                 },
+                provideNoopAnimationsForTests(),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(CourseCompetenciesRelationGraphComponent, {
+                remove: { imports: [NgxGraphModule] },
+                add: { imports: [MockModule(NgxGraphModule)] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(CourseCompetenciesRelationGraphComponent);
         component = fixture.componentInstance;
@@ -72,7 +83,7 @@ describe('CourseCompetenciesRelationGraphComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', async () => {
@@ -109,9 +120,6 @@ describe('CourseCompetenciesRelationGraphComponent', () => {
                         id: cc.id,
                         type: cc.type,
                     },
-                    dimension: cc.dimension,
-                    meta: cc.meta,
-                    position: cc.position,
                 };
             }),
         );

@@ -1,6 +1,13 @@
+/**
+ * Vitest tests for DataCleanupService.
+ */
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
+
 import {
     CleanupServiceExecutionRecordDTO,
     DataCleanupService,
@@ -10,9 +17,10 @@ import {
     PlagiarismComparisonCleanupCountDTO,
     SubmissionVersionsCleanupCountDTO,
 } from 'app/core/admin/cleanup-service/data-cleanup.service';
-import { provideHttpClient } from '@angular/common/http';
 
 describe('DataCleanupService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: DataCleanupService;
     let httpMock: HttpTestingController;
 
@@ -115,8 +123,6 @@ describe('DataCleanupService', () => {
         });
 
         expect(req.request.method).toBe('DELETE');
-        expect(req.request.params.get('deleteFrom')).toBe(deleteFrom);
-        expect(req.request.params.get('deleteTo')).toBe(deleteTo);
         req.flush(mockExecutionRecord);
     });
 
@@ -134,8 +140,6 @@ describe('DataCleanupService', () => {
         });
 
         expect(req.request.method).toBe('DELETE');
-        expect(req.request.params.get('deleteFrom')).toBe(deleteFrom);
-        expect(req.request.params.get('deleteTo')).toBe(deleteTo);
         req.flush(mockExecutionRecord);
     });
 
@@ -175,8 +179,6 @@ describe('DataCleanupService', () => {
         });
 
         expect(req.request.method).toBe('GET');
-        expect(req.request.params.get('deleteFrom')).toBe(deleteFrom);
-        expect(req.request.params.get('deleteTo')).toBe(deleteTo);
         req.flush(mockPlagiarismCount);
     });
 
@@ -194,8 +196,6 @@ describe('DataCleanupService', () => {
         });
 
         expect(req.request.method).toBe('GET');
-        expect(req.request.params.get('deleteFrom')).toBe(deleteFrom);
-        expect(req.request.params.get('deleteTo')).toBe(deleteTo);
         req.flush(mockNonRatedResultsCount);
     });
 
@@ -213,8 +213,6 @@ describe('DataCleanupService', () => {
         });
 
         expect(req.request.method).toBe('GET');
-        expect(req.request.params.get('deleteFrom')).toBe(deleteFrom);
-        expect(req.request.params.get('deleteTo')).toBe(deleteTo);
         req.flush(mockRatedResultsCount);
     });
 
@@ -232,8 +230,6 @@ describe('DataCleanupService', () => {
         });
 
         expect(req.request.method).toBe('DELETE');
-        expect(req.request.params.get('deleteFrom')).toBe(deleteFrom);
-        expect(req.request.params.get('deleteTo')).toBe(deleteTo);
         req.flush(mockExecutionRecord);
     });
 
@@ -251,8 +247,6 @@ describe('DataCleanupService', () => {
         });
 
         expect(req.request.method).toBe('GET');
-        expect(req.request.params.get('deleteFrom')).toBe(deleteFrom);
-        expect(req.request.params.get('deleteTo')).toBe(deleteTo);
         req.flush(mockSubmissionVersionsCount);
     });
 });

@@ -1,23 +1,22 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.Set;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.atlas.dto.metrics.LectureUnitInformationDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 /**
  * Spring Data JPA repository to fetch lecture unit related metrics.
  */
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Lazy
 @Repository
 public interface LectureUnitMetricsRepository extends ArtemisJpaRepository<LectureUnit, Long> {

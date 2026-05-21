@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { v4 as uuidv4 } from 'uuid';
-import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType, TIME_FORMAT } from './constants';
+import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingLanguage, TIME_FORMAT } from './constants';
 import * as fs from 'fs';
 import { dirname } from 'path';
 import { Browser, Locator, Page, expect } from '@playwright/test';
@@ -10,8 +10,6 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamAPIRequests } from './requests/ExamAPIRequests';
 import { ExerciseAPIRequests } from './requests/ExerciseAPIRequests';
 import { ExamExerciseGroupCreationPage } from './pageobjects/exam/ExamExerciseGroupCreationPage';
-import { CoursesPage } from './pageobjects/course/CoursesPage';
-import { CourseOverviewPage } from './pageobjects/course/CourseOverviewPage';
 import { ModelingEditor } from './pageobjects/exercises/modeling/ModelingEditor';
 import { OnlineEditorPage } from './pageobjects/exercises/programming/OnlineEditorPage';
 import { MultipleChoiceQuiz } from './pageobjects/exercises/quiz/MultipleChoiceQuiz';
@@ -21,7 +19,7 @@ import { ExamStartEndPage } from './pageobjects/exam/ExamStartEndPage';
 import { ExamParticipationPage } from './pageobjects/exam/ExamParticipationPage';
 import { Commands } from './commands';
 import { admin, studentOne } from './users';
-import javaPartiallySuccessful from '../fixtures/exercise/programming/java/partially_successful/submission.json';
+import cPartiallySuccessful from '../fixtures/exercise/programming/c/partially_successful/submission.json';
 import { ExamManagementPage } from './pageobjects/exam/ExamManagementPage';
 import { CourseAssessmentDashboardPage } from './pageobjects/assessment/CourseAssessmentDashboardPage';
 import { ExerciseAssessmentDashboardPage } from './pageobjects/assessment/ExerciseAssessmentDashboardPage';
@@ -135,9 +133,158 @@ export function base64StringToBlob(base64: string, type?: string): Blob {
     return new Blob([buffer], { type });
 }
 
-export async function clearTextField(textField: Locator) {
-    await textField.click({ clickCount: 4, force: true });
-    await textField.press('Backspace');
+export async function clearTextField(textField: Locator, page?: Page) {
+    // Check if this is a Monaco editor
+    const isMonaco = (await textField.locator('.monaco-editor').count()) > 0 || (await textField.evaluate((el) => el.classList.contains('monaco-editor')));
+
+    if (isMonaco) {
+        // Wait for editor to be visible
+        await textField.waitFor({ state: 'visible' });
+        // Click directly on the Monaco editor to focus it
+        await textField.click();
+    } else {
+        await textField.click({ force: true });
+    }
+
+    // Small delay to ensure focus
+    if (page) {
+        await page.waitForTimeout(300);
+    }
+
+    // Use platform-appropriate select all shortcut
+    const isMac = process.platform === 'darwin';
+    const selectAllKey = isMac ? 'Meta+a' : 'Control+a';
+    if (page) {
+        // Use page.keyboard for consistency
+        await page.keyboard.press(selectAllKey);
+        await page.waitForTimeout(100);
+        await page.keyboard.press('Backspace');
+    } else {
+        await textField.press(selectAllKey);
+        await textField.press('Backspace');
+    }
+}
+
+/**
+ * Sets the content of a Monaco editor directly using Monaco's API.
+ * This approach identifies the editor by its DOM element position to reliably find the correct editor
+ * when multiple editors exist on the page.
+ * @param page - Playwright Page instance
+ * @param containerSelector - CSS selector for the container element that contains the Monaco editor
+ * @param text - The text to set in the editor
+ */
+export async function setMonacoEditorContent(page: Page, containerSelector: string, text: string) {
+    await setMonacoEditorContentByLocator(page, page.locator(containerSelector), text);
+}
+
+/**
+ * Sets the content of a Monaco editor directly using Monaco's API.
+ * This variant works with a Locator that contains the Monaco editor.
+ * It identifies the editor by its DOM element position to reliably find the correct editor
+ * when multiple editors exist on the page.
+ * @param page - Playwright Page instance
+ * @param containerLocator - Locator for the container element that contains the Monaco editor
+ * @param text - The text to set in the editor
+ */
+export async function setMonacoEditorContentByLocator(page: Page, containerLocator: Locator, text: string) {
+    // Wait for the Monaco editor to be visible
+    await containerLocator.waitFor({ state: 'visible' });
+    const monacoEditor = containerLocator.locator('.monaco-editor').first();
+    await monacoEditor.waitFor({ state: 'visible' });
+
+    // Wait for Monaco to be available on window (exposed by MonacoEditorService)
+    await page.waitForFunction(() => (window as any).monaco?.editor, { timeout: 10000 });
+
+    // Identify the target Monaco instance via its DOM node reference rather than
+    // screen coordinates. Bounding-box matching was fragile when hydration
+    // caused layout shifts — coordinates could change mid-observation and
+    // silently fall through to "last editor", which is not necessarily the
+    // right one when multiple editors coexist.
+    const editorHandle = await monacoEditor.elementHandle();
+    if (!editorHandle) {
+        throw new Error('Could not resolve Monaco editor element handle');
+    }
+
+    // When called on an /edit page, the Angular component may still be hydrating the
+    // form from the server response. A setValue() that races ahead of hydration gets
+    // overwritten when the API response arrives (including late arrivals after our
+    // debounce wait). Retry setValue until Monaco holds our text *and keeps holding
+    // it* across a sustained observation window — i.e., no late hydration will
+    // clobber it after we return.
+    const MAX_ATTEMPTS = 8;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        // Click on the editor to ensure it's initialized + focused
+        await monacoEditor.click();
+        await page.waitForTimeout(100);
+
+        const result = await page.evaluate(
+            ({ newText, editorNode }) => {
+                const monaco = (window as any).monaco;
+                if (!monaco || !monaco.editor) {
+                    return { success: false, error: 'Monaco not available' };
+                }
+                const editors = monaco.editor.getEditors();
+                if (editors.length === 0) {
+                    return { success: false, error: 'No Monaco editors registered' };
+                }
+                // Deterministic match: identical or contained DOM node reference.
+                // No coordinate comparisons — layout shifts don't affect this.
+                const findByNode = () =>
+                    editors.find((e: any) => {
+                        const dom = e.getDomNode();
+                        return dom && (dom === editorNode || dom.contains(editorNode) || editorNode.contains(dom));
+                    });
+                const targetEditor = findByNode() || editors.find((e: any) => e.hasTextFocus() || e.hasWidgetFocus()) || editors[editors.length - 1];
+                if (!targetEditor) {
+                    return { success: false, error: `No matching Monaco editor found (${editors.length} editors registered)` };
+                }
+                targetEditor.setValue(newText);
+                return { success: true };
+            },
+            { newText: text, editorNode: editorHandle },
+        );
+
+        if (!result.success) {
+            throw new Error(`Failed to set Monaco editor content: ${result.error}`);
+        }
+
+        // Sustained-value check: read Monaco's value every 300ms for 2.1s. We need
+        // the value to both (a) match `text` and (b) stay that way — that catches
+        // late hydration that would otherwise overwrite after we return. The first
+        // 1s covers the textChanged debounce (200ms, with buffer), the rest guards
+        // against deferred form population. `readValue` uses the same fallback
+        // chain as `setValue` above so they can never pick different editors.
+        const readValue = async () =>
+            page.evaluate(
+                ({ editorNode }) => {
+                    const monaco = (window as any).monaco;
+                    const editors = monaco?.editor?.getEditors() || [];
+                    const findByNode = () =>
+                        editors.find((e: any) => {
+                            const dom = e.getDomNode();
+                            return dom && (dom === editorNode || dom.contains(editorNode) || editorNode.contains(dom));
+                        });
+                    const targetEditor = findByNode() || editors.find((e: any) => e.hasTextFocus() || e.hasWidgetFocus()) || editors[editors.length - 1];
+                    return targetEditor?.getValue() ?? null;
+                },
+                { editorNode: editorHandle },
+            );
+
+        let stable = true;
+        for (let i = 0; i < 7; i++) {
+            await page.waitForTimeout(300);
+            const v = await readValue();
+            if (v !== text) {
+                stable = false;
+                break;
+            }
+        }
+        if (stable) {
+            return;
+        }
+    }
+
+    throw new Error(`Monaco editor did not retain the expected text after ${MAX_ATTEMPTS} attempts (likely clobbered by Angular form hydration)`);
 }
 
 export async function hasAttributeWithValue(page: Page, selector: string, value: string): Promise<boolean> {
@@ -170,7 +317,7 @@ export async function createFileWithContent(filePath: string, content: string) {
 }
 
 export async function newBrowserPage(browser: Browser) {
-    const context = await browser.newContext();
+    const context = await browser.newContext({ ignoreHTTPSErrors: true });
     return await context.newPage();
 }
 
@@ -204,8 +351,6 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
     const examAPIRequests = new ExamAPIRequests(page);
     const exerciseAPIRequests = new ExerciseAPIRequests(page);
     const examExerciseGroupCreation = new ExamExerciseGroupCreationPage(page, examAPIRequests, exerciseAPIRequests);
-    const courseList = new CoursesPage(page);
-    const courseOverview = new CourseOverviewPage(page);
     const modelingExerciseEditor = new ModelingEditor(page);
     const programmingExerciseEditor = new OnlineEditorPage(page);
     const quizExerciseMultipleChoice = new MultipleChoiceQuiz(page);
@@ -213,8 +358,6 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
     const examNavigation = new ExamNavigationBar(page);
     const examStartEnd = new ExamStartEndPage(page);
     const examParticipation = new ExamParticipationPage(
-        courseList,
-        courseOverview,
         examNavigation,
         examStartEnd,
         modelingExerciseEditor,
@@ -232,7 +375,7 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
         endDate: end,
         numberOfCorrectionRoundsInExam: numberOfCorrectionRounds,
         examStudentReviewStart: resultDate,
-        examStudentReviewEnd: resultDate.add(1, 'minute'),
+        examStudentReviewEnd: resultDate.add(5, 'minutes'),
         publishResultsDate: resultDate,
         gracePeriod: 10,
     };
@@ -241,8 +384,9 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
     switch (exerciseType) {
         case ExerciseType.PROGRAMMING:
             additionalData = {
-                submission: javaPartiallySuccessful,
+                submission: cPartiallySuccessful,
                 progExerciseAssessmentType: ProgrammingExerciseAssessmentType.SEMI_AUTOMATIC,
+                programmingLanguage: ProgrammingLanguage.C,
             };
             break;
         case ExerciseType.TEXT:
@@ -274,9 +418,23 @@ export async function makeExamSubmission(
     await examParticipation.startParticipation(studentOne, course, exam);
     await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
     await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     await examNavigation.handInEarly();
     await examStartEnd.finishExam();
+}
+
+/**
+ * Waits for the exam to end if it hasn't already.
+ * This is necessary because the assessment dashboard button only appears after the exam ends.
+ * @param examEnd - The exam end date
+ * @param page - The Playwright page object (used for waitForTimeout)
+ */
+export async function waitForExamEnd(examEnd: dayjs.Dayjs, page: Page) {
+    if (examEnd.isAfter(dayjs())) {
+        const timeToWait = examEnd.diff(dayjs()) + 2000; // Add 2 second buffer
+        console.log(`Waiting ${timeToWait}ms for exam to end...`);
+        await page.waitForTimeout(timeToWait);
+    }
 }
 
 export async function startAssessing(
@@ -290,7 +448,7 @@ export async function startAssessing(
     isFirstTimeAssessing: boolean = true,
 ) {
     await examManagement.openAssessmentDashboard(courseID, examID, timeout);
-    await courseAssessment.clickExerciseDashboardButton();
+    await courseAssessment.clickExerciseDashboardButton(0, timeout);
     if (toggleSecondRound) {
         await exerciseAssessment.toggleSecondCorrectionRound();
     }

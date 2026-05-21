@@ -23,9 +23,16 @@ export class CourseManagementPage {
 
     /**
      * Opens the course settings page.
+     * <p>
+     * Waits explicitly for the settings tab to render before clicking. The course detail layout is
+     * hydrated asynchronously after openCourse() navigates, so the bare .click() races the render
+     * under parallel CI load (see CourseManagement.spec.ts:260, where the deletion-summary test
+     * builds up 25+ child entities via API before reaching the UI step).
      */
     async openCourseSettings() {
-        await this.page.locator('#course-settings').click();
+        const settings = this.page.locator('#course-settings');
+        await settings.waitFor({ state: 'visible', timeout: 30_000 });
+        await settings.click();
     }
 
     /**
@@ -41,7 +48,11 @@ export class CourseManagementPage {
      * @param courseID the id of the course
      */
     async openExercisesOfCourse(courseID: number) {
-        await this.getCourse(courseID).locator('#course-card-open-exercises').click();
+        // Wait for the course card and its open-exercises link to be visible. The course list is
+        // hydrated asynchronously after navigation, so the bare .click() races the render.
+        const link = this.getCourse(courseID).locator('#course-card-open-exercises');
+        await link.waitFor({ state: 'visible', timeout: 30_000 });
+        await link.click();
         await this.page.waitForURL('**/exercises**');
     }
 
@@ -58,30 +69,46 @@ export class CourseManagementPage {
      * @param courseID
      */
     async openCourse(courseID: number) {
-        await this.getCourse(courseID).locator('#course-card-header').click();
+        // Wait for the course card header to be visible before clicking; the course list renders
+        // asynchronously and the bare .click() races the render under parallel test load.
+        const header = this.getCourse(courseID).locator('#course-card-header');
+        await header.waitFor({ state: 'visible', timeout: 30_000 });
+        await header.click();
+        // Wait for SPA navigation into the course detail to complete before subsequent steps
+        // (e.g. openCourseSettings) race the next render. Without this, the next click() can fire
+        // while the previous page is still mounted, then auto-wait against the wrong DOM.
+        await this.page.waitForURL(new RegExp(`/course-management/${courseID}(/|$)`));
     }
 
     private async assertCourseSummary(expectedCourseSummary: CourseSummary) {
-        expect(await this.page.locator(`text=/Test Course: ${expectedCourseSummary.isTestCourse}/`).isVisible()).toBe(true);
+        // Verify test course indicator is shown in the delete question text
+        if (expectedCourseSummary.isTestCourse) {
+            await expect(this.page.locator('strong', { hasText: 'test course' })).toBeVisible();
+        }
 
-        const exerciseTypes = [
-            { label: 'Number of Students', expected: expectedCourseSummary.students },
-            { label: 'Number of Tutors', expected: expectedCourseSummary.tutors },
-            { label: 'Number of Editors', expected: expectedCourseSummary.editors },
-            { label: 'Number of Instructors', expected: expectedCourseSummary.instructors },
-            { label: 'Number of Exams', expected: expectedCourseSummary.exams },
-            { label: 'Number of Lectures', expected: expectedCourseSummary.lectures },
-            { label: 'Number of Programming Exercises', expected: expectedCourseSummary.programingExercises },
-            { label: 'Number of Modeling Exercises', expected: expectedCourseSummary.modelingExercises },
-            { label: 'Number of Quiz Exercises', expected: expectedCourseSummary.quizExercises },
-            { label: 'Number of Text Exercises', expected: expectedCourseSummary.textExercises },
-            { label: 'Number of File Upload Exercises', expected: expectedCourseSummary.fileUploadExercises },
-            { label: 'Number of Communication Posts', expected: expectedCourseSummary.communicationPosts },
+        // The delete dialog now shows a table with label/value pairs in cells
+        // Each row has: label cell, value cell, (optional second pair: label cell, value cell)
+        const summaryItems = [
+            { label: 'Students', expected: expectedCourseSummary.students },
+            { label: 'Tutors', expected: expectedCourseSummary.tutors },
+            { label: 'Editors', expected: expectedCourseSummary.editors },
+            { label: 'Instructors', expected: expectedCourseSummary.instructors },
+            { label: 'Exams', expected: expectedCourseSummary.exams },
+            { label: 'Lectures', expected: expectedCourseSummary.lectures },
+            { label: 'Programming Exercises', expected: expectedCourseSummary.programingExercises },
+            { label: 'Modeling Exercises', expected: expectedCourseSummary.modelingExercises },
+            { label: 'Quiz Exercises', expected: expectedCourseSummary.quizExercises },
+            { label: 'Text Exercises', expected: expectedCourseSummary.textExercises },
+            { label: 'File Upload Exercises', expected: expectedCourseSummary.fileUploadExercises },
+            { label: 'Posts', expected: expectedCourseSummary.communicationPosts },
         ];
 
-        for (const { label, expected } of exerciseTypes) {
-            const actual = Number((await this.page.locator(`text=/${label}: \\d+/`).innerText()).split(':')[1].trim());
-            expect(actual).toBe(expected);
+        for (const { label, expected } of summaryItems) {
+            // Find the label cell and get the value from the next sibling cell
+            const labelCell = this.page.locator('.item-label-cell', { hasText: label }).first();
+            const valueCell = labelCell.locator('+ .item-value-cell');
+            const actualValue = await valueCell.innerText();
+            expect(Number(actualValue)).toBe(expected);
         }
     }
 
@@ -92,7 +119,8 @@ export class CourseManagementPage {
      */
     async deleteCourse(course: Course, expectedCourseSummary?: CourseSummary) {
         await this.page.locator('#delete-course').click();
-        await expect(this.page.locator('#delete')).toBeDisabled();
+        const deleteButton = this.page.getByTestId('delete-dialog-confirm-button');
+        await expect(deleteButton).toBeDisabled();
 
         if (expectedCourseSummary) {
             await this.assertCourseSummary(expectedCourseSummary);
@@ -100,7 +128,7 @@ export class CourseManagementPage {
 
         await this.page.locator('#confirm-entity-name').fill(course.title!);
         const responsePromise = this.page.waitForResponse(`${COURSE_ADMIN_BASE}/${course.id}`);
-        await this.page.locator('#delete').click();
+        await deleteButton.click();
         await responsePromise;
     }
 
@@ -144,10 +172,17 @@ export class CourseManagementPage {
 
     /**
      * Removes the first user from the registered students.
+     * <p>
+     * The students table re-renders after `addStudent()` and the bare click() can race that
+     * second render under parallel load — the row that previously had the delete button is
+     * detached and the locator points at nothing. Wait for the delete button to be attached
+     * and visible before clicking.
      */
     async removeFirstUser() {
-        await this.page.locator('#registered-students button[jhideletebutton]').first().click();
-        await this.page.locator('.modal #delete').click();
+        const deleteButton = this.page.locator('#registered-students button[jhideletebutton]').first();
+        await deleteButton.waitFor({ state: 'visible', timeout: 30_000 });
+        await deleteButton.click();
+        await this.page.getByTestId('delete-dialog-confirm-button').click();
     }
 
     async updateCourse(course: Course) {
@@ -196,7 +231,7 @@ export class CourseManagementPage {
     }
 
     async checkIfStudentSubmissionExists(studentName: string) {
-        await expect(this.page.locator('.datatable-body-row', { hasText: studentName })).toBeVisible();
+        await expect(this.page.getByRole('row').filter({ hasText: studentName })).toBeVisible();
     }
 
     /*

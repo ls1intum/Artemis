@@ -8,6 +8,7 @@ import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.servi
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { calculateMaxScore } from 'app/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
+import { Subscription } from 'rxjs';
 import { round } from 'app/shared/util/utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { BarChartModule } from '@swimlane/ngx-charts';
@@ -37,6 +38,7 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
 
     maxScore: number;
     websocketChannelForData: string;
+    private websocketSubscription?: Subscription;
 
     // Icons
     faSync = faSync;
@@ -57,10 +59,9 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
 
             // subscribe websocket for new statistical data
             this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
-            this.websocketService.subscribe(this.websocketChannelForData);
 
             // ask for new Data if the websocket for new statistical data was notified
-            this.websocketService.receive(this.websocketChannelForData).subscribe(() => {
+            this.websocketSubscription = this.websocketService.subscribe<QuizExercise>(this.websocketChannelForData).subscribe(() => {
                 if (this.accountService.isAtLeastTutor()) {
                     this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
                         this.loadQuizSuccess(res.body!);
@@ -72,7 +73,7 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
     }
 
     ngOnDestroy() {
-        this.websocketService.unsubscribe(this.websocketChannelForData);
+        this.websocketSubscription?.unsubscribe();
     }
 
     /**

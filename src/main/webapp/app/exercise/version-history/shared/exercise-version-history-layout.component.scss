@@ -1,0 +1,47 @@
+.version-history-layout {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+}
+
+// ::ng-deep is required to style PrimeNG Splitter internals (no public API for these overrides)
+:host ::ng-deep .version-history-splitter {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    background: transparent;
+    border: 0;
+}
+
+:host ::ng-deep .version-history-splitter .p-splitterpanel {
+    display: flex;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.left-pane,
+.right-pane {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    overflow: auto;
+    background: var(--surface-card);
+    border: 1px solid var(--surface-border);
+    border-radius: 10px;
+}
+
+.left-pane {
+    padding: 0.15rem 0.25rem;
+}
+
+.right-pane {
+    padding: 0.35rem 0.45rem;
+}
+
+@media (max-width: 992px) {
+    :host ::ng-deep .version-history-splitter {
+        flex-direction: column;
+    }
+}

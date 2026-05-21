@@ -7,6 +7,7 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { HttpResponse } from '@angular/common/http';
 import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { getExerciseGeneralDetailsSection, getExerciseGradingDefaultDetails, getExerciseModeDetailSection } from 'app/exercise/util/utils';
+import { getExerciseCompetencies } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { isQuizEditable } from 'app/quiz/shared/service/quiz-manage-util.service';
 import { firstValueFrom } from 'rxjs';
@@ -70,7 +71,7 @@ export class QuizExerciseDetailComponent implements OnInit {
         this.quizExerciseService.find(this.quizId).subscribe(async (response: HttpResponse<QuizExercise>) => {
             this.quizExercise = response.body!;
             this.quizExercise.quizBatches = this.quizExercise.quizBatches?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
-            this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
+            this.quizExercise.isEditable = (this.quizExercise.isEditable ?? true) && isQuizEditable(this.quizExercise);
             this.quizExercise.status = this.quizExerciseService.getStatus(this.quizExercise);
             this.quizExercise.startDate = this.quizExercise.dueDate && dayjs(this.quizExercise.dueDate).subtract(this.quizExercise.duration ?? 0, 'second');
             this.showStatistics = !this.quizExercise.releaseDate || dayjs(this.quizExercise.releaseDate).isBefore(dayjs());
@@ -90,11 +91,12 @@ export class QuizExerciseDetailComponent implements OnInit {
         const modeSection = getExerciseModeDetailSection(exercise);
         const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise);
 
-        if (exercise.competencyLinks?.length) {
+        const competencies = getExerciseCompetencies(exercise);
+        if (competencies.length > 0) {
             modeSection.details.push({
                 title: 'artemisApp.competency.link.title',
                 type: DetailType.Text,
-                data: { text: exercise.competencyLinks?.map((competencyLink) => competencyLink.competency?.title).join(', ') },
+                data: { text: competencies.map((competency) => competency.title).join(', ') },
             });
         }
         return [

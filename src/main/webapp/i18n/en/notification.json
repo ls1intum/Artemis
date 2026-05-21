@@ -41,7 +41,9 @@
             },
             "created": "Created new system notification with identifier {{ param }}",
             "updated": "Updated system notification with identifier {{ param }}",
-            "deleted": "Deleted system notification with identifier {{ param }}"
+            "deleted": "Deleted system notification with identifier {{ param }}",
+            "sendMaintenanceEmail": "Announce maintenance to all instructors via email",
+            "maintenanceEmailInfo": "An email will be sent to {{ count }} instructor(s) of all ongoing courses."
         },
         "groupNotification": {
             "title": {

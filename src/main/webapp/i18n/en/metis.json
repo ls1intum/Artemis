@@ -150,6 +150,7 @@
                 "deleteMessage": "Delete message",
                 "replyMessage": "Reply in thread",
                 "forwardMessage": "Forward message",
+                "markAsUnread": "Mark as unread",
                 "deletedContent": "Post is being deleted in {{ progress }} second(s).",
                 "undoDelete": "Undo delete",
                 "bookmarkPost": "Save post for later",
@@ -158,22 +159,27 @@
                 "bookmarkPostArchived": "Archive saved post",
                 "bookmarkPostComplete": "Mark saved post as done",
                 "thread": "Thread",
-                "saved": "Saved for later"
+                "saved": "Saved for later",
+                "removeBookmarkError": "An error occurred while removing the bookmark. Please try again later.",
+                "changeSavedStatusError": "An error occurred while changing the status. Please try again later."
             },
             "answerPost": {
                 "created": "New reply successfully created",
-                "deleted": "Reply successfully deleted"
+                "deleted": "Reply successfully deleted",
+                "deleteAnswer": "Delete answer"
             },
             "userRoles": {
                 "instructor": "Instructor",
                 "tutor": "Tutor",
                 "student": "Student",
+                "bot": "Bot",
                 "deleted": "Deleted"
             },
             "userAuthorityTooltips": {
                 "instructor": "Instructor: Responsible for course conduction.",
                 "tutor": "Tutor: Responsible for helping users with their questions about the course and exercises.",
                 "student": "Student: Takes courses, participates in exercises, and asks questions.",
+                "bot": "Bot: An automated assistant.",
                 "deleted": "Deleted: This user was deleted."
             },
             "forward": {

@@ -1,13 +1,14 @@
 <div (focusout)="onTouched()">
     <div class="form-group">
-        @if (label) {
-            <label [for]="id + '-user-input'">{{ label }}</label>
+        @if (label()) {
+            <label [for]="id + '-search-input'">{{ label() }}</label>
         }
         <input
             #searchInput
             [disabled]="disabled"
             (selectItem)="onSelectItem($event)"
-            [id]="id + '-user-input'"
+            [id]="id + '-search-input'"
+            name="search-filter"
             type="text"
             class="form-control"
             [placeholder]="'artemisApp.userSelector.placeholderText' | artemisTranslate"
@@ -16,9 +17,16 @@
             [resultTemplate]="resultTemplate"
             [editable]="false"
             [focusFirst]="false"
+            [container]="'body'"
             (input)="onInputChange($event)"
             placement="bottom-start"
             #instance="ngbTypeahead"
+            autocomplete="nope"
+            role="searchbox"
+            aria-autocomplete="list"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-form-type="other"
         />
         <ng-template #resultTemplate let-user="result">
             <div class="d-flex align-items-center">
@@ -50,19 +58,19 @@
         }
     </div>
     <div class="text-end">
-        @if (rolesToAllowSearchingIn.includes('students')) {
+        @if (rolesToAllowSearchingIn().includes('students')) {
             <div class="form-check form-check-inline">
                 <input type="checkbox" class="form-check-input" id="students" [checked]="searchStudents" (change)="searchStudents = !searchStudents; onFilterChange()" />
                 <label class="form-check-label" for="students" jhiTranslate="artemisApp.course.students"></label>
             </div>
         }
-        @if (rolesToAllowSearchingIn.includes('tutors')) {
+        @if (rolesToAllowSearchingIn().includes('tutors')) {
             <div class="form-check form-check-inline">
                 <input type="checkbox" class="form-check-input" id="tutors" [checked]="searchTutors" (change)="searchTutors = !searchTutors; onFilterChange()" />
                 <label class="form-check-label" for="tutors" jhiTranslate="artemisApp.course.tutors"></label>
             </div>
         }
-        @if (rolesToAllowSearchingIn.includes('instructors')) {
+        @if (rolesToAllowSearchingIn().includes('instructors')) {
             <div class="form-check form-check-inline">
                 <input
                     type="checkbox"
@@ -75,7 +83,7 @@
             </div>
         }
     </div>
-    @if (showUserList) {
+    @if (showUserList()) {
         <ul class="list-group">
             @for (user of selectedUsers; track trackIdentity(i, user); let i = $index) {
                 <li class="selected-user list-group-item d-flex justify-content-between align-items-center">

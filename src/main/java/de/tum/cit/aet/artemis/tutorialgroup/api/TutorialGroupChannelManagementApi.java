@@ -32,8 +32,8 @@ public class TutorialGroupChannelManagementApi extends AbstractTutorialGroupApi 
         return tutorialGroupChannelManagementService.getTutorialGroupBelongingToChannel(channel);
     }
 
-    public void deleteTutorialGroupChannel(TutorialGroup tutorialGroup) {
-        tutorialGroupChannelManagementService.deleteTutorialGroupChannel(tutorialGroup);
+    public void deleteTutorialGroupChannel(Long tutorialGroupId) {
+        tutorialGroupChannelManagementService.deleteTutorialGroupChannel(tutorialGroupId);
     }
 
     public void onTimeZoneUpdate(Course course) {

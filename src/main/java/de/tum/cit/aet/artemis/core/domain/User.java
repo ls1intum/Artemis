@@ -15,6 +15,8 @@ import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
@@ -29,8 +31,6 @@ import jakarta.validation.constraints.Size;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.BatchSize;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -39,6 +39,7 @@ import org.springframework.security.web.webauthn.api.Bytes;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
@@ -58,9 +59,10 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
  */
 @Entity
 @Table(name = "jhi_user")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class User extends AbstractAuditingEntity implements Participant {
+
+    public static final String IRIS_BOT_LOGIN = "iris_bot";
 
     @NonNull
     @Pattern(regexp = Constants.LOGIN_REGEX)
@@ -157,19 +159,17 @@ public class User extends AbstractAuditingEntity implements Participant {
     @ManyToMany
     @JoinTable(name = "jhi_user_authority", joinColumns = { @JoinColumn(name = "user_id", referencedColumnName = "id") }, inverseJoinColumns = {
             @JoinColumn(name = "authority_name", referencedColumnName = "name") })
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @BatchSize(size = 20)
     private Set<Authority> authorities = new HashSet<>();
 
     @ManyToMany
     @JoinTable(name = "user_organization", joinColumns = { @JoinColumn(name = "user_id", referencedColumnName = "id") }, inverseJoinColumns = {
             @JoinColumn(name = "organization_id", referencedColumnName = "id") })
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties("user")
+    @JsonIgnoreProperties(value = "user", allowSetters = true)
     private Set<Organization> organizations = new HashSet<>();
 
+    // No @Cache: mutated on every tutorial-group enrolment change; NONSTRICT caused stale cross-node reads, same class of bug as #12574.
     @OneToMany(mappedBy = "student", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties(value = "student", allowSetters = true)
     public Set<TutorialGroupRegistration> tutorialGroupRegistrations = new HashSet<>();
 
@@ -185,8 +185,8 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JsonIgnore
     private Set<LearningPath> learningPaths = new HashSet<>();
 
+    // No @Cache: mutated on every exam registration; NONSTRICT caused stale cross-node reads, same class of bug as #12574.
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnore
     private Set<ExamUser> examUsers = new HashSet<>();
 
@@ -195,15 +195,20 @@ public class User extends AbstractAuditingEntity implements Participant {
     private Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations = new HashSet<>();
 
     @Nullable
-    @Column(name = "external_llm_usage_accepted")
-    private ZonedDateTime externalLLMUsageAccepted = null;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "ai_selection_decision")
+    private AiSelectionDecision aiSelectionDecision = null;
+
+    @Nullable
+    @Column(name = "ai_selection_decision_date")
+    private ZonedDateTime aiSelectionDecisionDate = null;
 
     @NonNull
     @Column(name = "memiris_enabled", nullable = false)
-    private boolean memirisEnabled = false;
+    private boolean memirisEnabled = true;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnoreProperties("user")
+    @JsonIgnoreProperties(value = "user", allowSetters = true)
     @JoinColumn(name = "learner_profile_id")
     private LearnerProfile learnerProfile;
 
@@ -445,6 +450,11 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.internal = internal;
     }
 
+    @JsonProperty("bot")
+    public boolean isBot() {
+        return IRIS_BOT_LOGIN.equals(this.login);
+    }
+
     public boolean isDeleted() {
         return deleted;
     }
@@ -488,25 +498,33 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     @Nullable
-    public ZonedDateTime getExternalLLMUsageAcceptedTimestamp() {
-        return externalLLMUsageAccepted;
+    public ZonedDateTime getSelectedLLMUsageTimestamp() {
+        return aiSelectionDecisionDate;
     }
 
-    public void setExternalLLMUsageAcceptedTimestamp(@Nullable ZonedDateTime externalLLMUsageAccepted) {
-        this.externalLLMUsageAccepted = externalLLMUsageAccepted;
+    public void setSelectedLLMUsageTimestamp(@Nullable ZonedDateTime aiSelectionDecisionDate) {
+        this.aiSelectionDecisionDate = aiSelectionDecisionDate;
     }
 
-    public boolean hasAcceptedExternalLLMUsage() {
-        return externalLLMUsageAccepted != null;
+    public boolean hasOptedIntoLLMUsage() {
+        return aiSelectionDecision != null && aiSelectionDecision != AiSelectionDecision.NO_AI;
+    }
+
+    public AiSelectionDecision getSelectedLLMUsage() {
+        return aiSelectionDecision;
+    }
+
+    public void setSelectedLLMUsage(@Nullable AiSelectionDecision aiSelectionDecision) {
+        this.aiSelectionDecision = aiSelectionDecision;
     }
 
     /**
-     * Checks if the user has accepted the external LLM privacy policy.
+     * Checks if the user has selected to use AI.
      * If not, an {@link AccessForbiddenException} is thrown.
      */
-    public void hasAcceptedExternalLLMUsageElseThrow() {
-        if (externalLLMUsageAccepted == null) {
-            throw new AccessForbiddenException("The user has not accepted the external LLM privacy policy yet.");
+    public void hasOptedIntoLLMUsageElseThrow() {
+        if (!hasOptedIntoLLMUsage()) {
+            throw new AccessForbiddenException("The user has not selected to use AI.");
         }
     }
 

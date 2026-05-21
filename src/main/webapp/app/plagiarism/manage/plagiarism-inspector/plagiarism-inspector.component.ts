@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -18,6 +18,7 @@ import { Range } from 'app/shared/util/utils';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { Subscription } from 'rxjs';
 import { PlagiarismResultDTO, PlagiarismResultStats } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -55,7 +56,7 @@ export type PlagiarismCheckState = {
         ArtemisTranslatePipe,
     ],
 })
-export class PlagiarismInspectorComponent implements OnInit {
+export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private textExerciseService = inject(TextExerciseService);
@@ -154,6 +155,7 @@ export class PlagiarismInspectorComponent implements OnInit {
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
     faChevronRight = faChevronRight;
+    private plagiarismWebsocketSubscription?: Subscription;
 
     ngOnInit() {
         this.route.data.subscribe(({ exercise }) => {
@@ -164,15 +166,18 @@ export class PlagiarismInspectorComponent implements OnInit {
         });
     }
 
+    ngOnDestroy(): void {
+        this.plagiarismWebsocketSubscription?.unsubscribe();
+    }
+
     /**
      * Registers to the websocket topic of the plagiarism check
      * to get feedback about the progress
      */
     registerToPlagarismDetectionTopic() {
         const topic = this.getPlagarismDetectionTopic();
-        this.websocketService.subscribe(topic);
-        this.websocketService
-            .receive(topic)
+        this.plagiarismWebsocketSubscription = this.websocketService
+            .subscribe<PlagiarismCheckState>(topic)
             .pipe(tap((plagiarismCheckState: PlagiarismCheckState) => this.handlePlagiarismCheckStateChange(plagiarismCheckState)))
             .subscribe();
     }

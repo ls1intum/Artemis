@@ -245,24 +245,29 @@ public class BonusResource {
         ExamAccessApi api = examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class));
         api.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        Bonus oldBonus = bonusRepository.findByIdElseThrow(updatedBonus.getId());
-        checkBonusAppliesToExam(oldBonus, examId);
+        // Fetch the existing bonus from the database (this is the managed entity)
+        Bonus existingBonus = bonusRepository.findByIdElseThrow(bonusId);
+        checkBonusAppliesToExam(existingBonus, examId);
 
-        GradingScale bonusToGradingScale = gradingScaleRepository.findWithEagerBonusFromByBonusFromId(oldBonus.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Grading Scale From Bonus", updatedBonus.getId()));
+        GradingScale bonusToGradingScale = gradingScaleRepository.findWithEagerBonusFromByBonusFromId(existingBonus.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Grading Scale From Bonus", bonusId));
 
         boolean isSourceGradeScaleUpdated = false;
-        if (updatedBonus.getSourceGradingScale() != null && !oldBonus.getSourceGradingScale().getId().equals(updatedBonus.getSourceGradingScale().getId())) {
+        if (updatedBonus.getSourceGradingScale() != null && !existingBonus.getSourceGradingScale().getId().equals(updatedBonus.getSourceGradingScale().getId())) {
             var sourceFromDb = gradingScaleRepository.findById(updatedBonus.getSourceGradingScale().getId()).orElseThrow();
-            updatedBonus.setSourceGradingScale(sourceFromDb);
+            existingBonus.setSourceGradingScale(sourceFromDb);
             checkIsAtLeastInstructorForGradingScaleCourse(sourceFromDb);
             isSourceGradeScaleUpdated = true;
         }
 
-        bonusToGradingScale.addBonusFrom(updatedBonus);
+        // Apply values from the detached entity to the managed entity
+        existingBonus.setWeight(updatedBonus.getWeight());
+        existingBonus.setBonusStrategy(updatedBonus.getBonusStrategy());
+
+        bonusToGradingScale.addBonusFrom(existingBonus);
         bonusToGradingScale.setBonusStrategy(updatedBonus.getBonusStrategy());
         gradingScaleRepository.save(bonusToGradingScale);
-        Bonus savedBonus = bonusService.saveBonus(updatedBonus, isSourceGradeScaleUpdated);
+        Bonus savedBonus = bonusService.saveBonus(existingBonus, isSourceGradeScaleUpdated);
 
         filterBonusForResponse(savedBonus, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(savedBonus);

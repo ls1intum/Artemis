@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnInit, effect, inject, input, output, signal } from '@angular/core';
 import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -20,7 +20,7 @@ import { facSaveSuccess, facSaveWarning } from 'app/shared/icons/icons';
     styleUrls: ['./exam-exercise-overview-page.scss', '../../exam-navigation-sidebar/exam-navigation-sidebar.component.scss'],
     imports: [TranslateDirective, FaIconComponent, NgbTooltip, NgClass, UpdatingResultComponent, ArtemisTranslatePipe],
 })
-export class ExamExerciseOverviewPageComponent extends ExamPageComponent implements OnInit, OnChanges {
+export class ExamExerciseOverviewPageComponent extends ExamPageComponent implements OnInit {
     private examParticipationService = inject(ExamParticipationService);
 
     studentExam = input.required<StudentExam>();
@@ -31,9 +31,20 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
     }>();
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
-    showResultWidth = 10;
+    readonly showResultWidth = signal(10);
 
     examExerciseOverviewItems: ExamExerciseOverviewItem[] = [];
+
+    constructor() {
+        super();
+        // refresh icon status whenever the studentExam input changes
+        effect(() => {
+            this.studentExam();
+            this.examExerciseOverviewItems?.forEach((item) => {
+                this.setExerciseIconStatus(item);
+            });
+        });
+    }
 
     ngOnInit() {
         this.studentExam().exercises?.forEach((exercise) => {
@@ -44,14 +55,8 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
         });
     }
 
-    ngOnChanges() {
-        this.examExerciseOverviewItems?.forEach((item) => {
-            this.setExerciseIconStatus(item);
-        });
-    }
-
     updateShowResultWidth() {
-        this.showResultWidth = 35;
+        this.showResultWidth.set(35);
     }
 
     openExercise(exercise: Exercise) {

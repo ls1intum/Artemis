@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RemoveSecondsPipe } from 'app/tutorialgroup/shared/pipe/remove-seconds.pipe';
 
 describe('RemoveSecondsPipe', () => {
@@ -5,6 +6,10 @@ describe('RemoveSecondsPipe', () => {
 
     beforeEach(() => {
         pipe = new RemoveSecondsPipe();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should remove seconds from a time string', () => {

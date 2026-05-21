@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.lti.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -13,8 +11,8 @@ import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -32,16 +30,17 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.ArtemisAuthenticationProvider;
+import de.tum.cit.aet.artemis.core.security.RandomUtil;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import tech.jhipster.security.RandomUtil;
+import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 
 @Lazy
 @Service
-@Profile(PROFILE_LTI)
+@Conditional(LtiEnabled.class)
 public class LtiService {
 
     @Value("${artemis.lti.trustExternalLTISystems:false}")

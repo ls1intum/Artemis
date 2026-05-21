@@ -1,0 +1,20 @@
+{
+    "artemisApp": {
+        "adminPasskeyManagement": {
+            "title": "Passkey Management",
+            "userLogin": "User Login",
+            "userName": "User Name",
+            "label": "Label",
+            "created": "Created",
+            "lastUsed": "Last Used",
+            "approved": "Approved",
+            "yes": "Yes",
+            "no": "No",
+            "noPasskeys": "No passkeys found for regular administrators (non-super-admins).",
+            "toggleApproval": "Toggle approval status",
+            "errors": {
+                "passkeyNotFound": "Passkey not found."
+            }
+        }
+    }
+}

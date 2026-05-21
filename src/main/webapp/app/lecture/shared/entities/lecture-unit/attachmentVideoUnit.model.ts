@@ -7,25 +7,17 @@ export class AttachmentVideoUnit extends LectureUnit {
     public attachment?: Attachment;
     public slides?: Slide[];
     public videoSource?: string;
+    public videoSourceType?: 'TUM_LIVE' | 'YOUTUBE' | null;
+    public youtubeVideoId?: string | null;
     public transcriptionProperties?: LectureTranscriptionDTO;
-    public pyrisIngestionState?: IngestionState;
 
     constructor() {
         super(LectureUnitType.ATTACHMENT_VIDEO);
     }
 }
 
-export enum IngestionState {
-    NOT_STARTED = 'NOT_STARTED',
-    IN_PROGRESS = 'IN_PROGRESS',
-    DONE = 'DONE',
-    ERROR = 'ERROR',
-    PARTIALLY_INGESTED = 'PARTIALLY_INGESTED',
-}
-
 export enum TranscriptionStatus {
     PENDING = 'PENDING',
-    PROCESSING = 'PROCESSING',
     COMPLETED = 'COMPLETED',
     FAILED = 'FAILED',
 }

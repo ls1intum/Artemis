@@ -54,6 +54,12 @@ public class BinaryFileExtensionConfiguration {
             // Firmware and embedded binaries
             ".hex", ".elf", ".uf2",
 
+            // Audio files
+            ".mp3", ".wav", ".flac", ".aac", ".ogg", ".wma", ".m4a", ".aiff", ".opus", ".mid", ".midi",
+
+            // Video files
+            ".mp4", ".avi", ".mov", ".mkv", ".wmv", ".flv", ".webm", ".m4v", ".mpeg", ".mpg",
+
             // Miscellaneous development-related binaries
             ".img", ".dsk", ".qcow2", ".mdb", ".sqlite");
 

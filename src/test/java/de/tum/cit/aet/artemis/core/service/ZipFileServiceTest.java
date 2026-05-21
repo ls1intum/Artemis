@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Predicate;
@@ -22,16 +21,19 @@ class ZipFileServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ZipFileService zipFileService;
 
+    @Autowired
+    private TempFileUtilService tempFileUtilService;
+
     @Test
     void testExtractZipFileRecursively_unzipsNestedZipCorrectly() throws IOException {
-        Path testDir = Files.createTempDirectory(tempPath, "test-dir");
-        Path zipDir = Files.createTempDirectory(tempPath, "zip-dir");
-        Path rootDir = Files.createTempDirectory(testDir, "root-dir");
-        Path subDir = Files.createTempDirectory(rootDir, "sub-dir");
-        Path subDir2 = Files.createTempDirectory(subDir, "sub-dir2");
-        Path file1 = Files.createTempFile(rootDir, "file1", ".json");
-        Path file2 = Files.createTempFile(subDir2, "file2", ".json");
-        Path zipFile = Files.createTempFile(zipDir, "abc", ".zip");
+        Path testDir = tempFileUtilService.createTempDirectory("test-dir");
+        Path zipDir = tempFileUtilService.createTempDirectory("zip-dir");
+        Path rootDir = tempFileUtilService.createTempDirectory(testDir, "root-dir");
+        Path subDir = tempFileUtilService.createTempDirectory(rootDir, "sub-dir");
+        Path subDir2 = tempFileUtilService.createTempDirectory(subDir, "sub-dir2");
+        Path file1 = tempFileUtilService.createTempFile(rootDir, "file1", ".json");
+        Path file2 = tempFileUtilService.createTempFile(subDir2, "file2", ".json");
+        Path zipFile = tempFileUtilService.createTempFile(zipDir, "abc", ".zip");
         Path zippedFile = zipFileService.createZipFileWithFolderContent(zipFile, testDir, null);
         zipFileService.extractZipFileRecursively(zippedFile);
 
@@ -48,7 +50,7 @@ class ZipFileServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testCreateTemporaryZipFileSchedulesFileForDeletion() throws IOException {
-        var tempZipFile = Files.createTempFile(tempPath, "test", ".zip");
+        var tempZipFile = tempFileUtilService.createTempFile("test", ".zip");
         zipFileService.createTemporaryZipFile(tempZipFile, List.of(), 5);
         assertThat(tempZipFile).exists();
         verify(fileService).schedulePathForDeletion(tempZipFile, 5L);
@@ -56,8 +58,8 @@ class ZipFileServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testCreateZipFileWithFolderContentInMemory() throws Exception {
-        Path testDir = Files.createTempDirectory(tempPath, "test-dir");
-        Path testFile = Files.createTempFile(testDir, "test", ".txt");
+        Path testDir = tempFileUtilService.createTempDirectory("test-dir");
+        Path testFile = tempFileUtilService.createTempFile(testDir, "test", ".txt");
         FileUtils.writeByteArrayToFile(testFile.toFile(), "test content".getBytes());
 
         ByteArrayResource result = zipFileService.createZipFileWithFolderContentInMemory(testDir, "test-archive.zip", null);

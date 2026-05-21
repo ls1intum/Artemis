@@ -1,9 +1,9 @@
-<div [id]="'exercise-card-' + exercise.id" class="course-exercise-row align-items-center position-relative">
-    <a class="stretched-link" [routerLink]="routerLink"></a>
+<div [id]="'exercise-card-' + exercise().id" class="course-exercise-row align-items-center position-relative">
+    <a class="stretched-link" [routerLink]="routerLink()"></a>
     <div class="col-auto d-none d-md-block">
-        <a class="exercise-row-icon" [routerLink]="routerLink">
-            @if (exercise.type) {
-                <fa-icon class="me-3" [icon]="getIcon(exercise.type)" size="lg" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" />
+        <a class="exercise-row-icon" [routerLink]="routerLink()">
+            @if (exercise().type) {
+                <fa-icon class="me-3" [icon]="getIcon(exercise().type)" size="lg" [ngbTooltip]="getIconTooltip(exercise().type) | artemisTranslate" />
             }
         </a>
     </div>
@@ -11,41 +11,41 @@
         <div class="row m-0">
             <div class="col-auto p-0 d-md-none">
                 <h4 class="fw-medium exercise-title">
-                    @if (exercise.type) {
-                        <fa-icon [icon]="getIcon(exercise.type)" />
+                    @if (exercise().type) {
+                        <fa-icon [icon]="getIcon(exercise().type)" />
                     }
                     &nbsp;
-                    {{ exercise.title }}
+                    {{ exercise().title }}
                 </h4>
             </div>
             <div class="col-sm p-0 col d-none d-md-flex">
-                <h5 class="exercise-title">{{ exercise.title }}</h5>
+                <h5 class="exercise-title">{{ exercise().title }}</h5>
             </div>
-            @if (!isPresentationMode) {
-                <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="gradedStudentParticipation" [triggerLastGraded]="false" class="result" />
+            @if (!isPresentationMode()) {
+                <jhi-submission-result-status [exercise]="enrichedExercise()" [studentParticipation]="gradedStudentParticipation()" [triggerLastGraded]="false" class="result" />
             }
         </div>
         <div class="row" style="justify-content: space-between">
-            @if (!isPresentationMode) {
+            @if (!isPresentationMode()) {
                 <jhi-exercise-details-student-actions
                     [smallButtons]="true"
-                    [courseId]="course.id!"
+                    [courseId]="course().id!"
                     [smallColumns]="true"
                     [equalColumns]="false"
-                    [exercise]="exercise"
+                    [exercise]="enrichedExercise()"
                     [ngClass]="'mt-2 mb-2 raised-actions'"
                 />
             }
             <jhi-exercise-categories
-                [exercise]="exercise"
-                [showTags]="{ difficulty: true, includedInScore: true, notReleased: true, quizLive: !isPresentationMode }"
+                [exercise]="enrichedExercise()"
+                [showTags]="{ difficulty: true, includedInScore: true, notReleased: true, quizLive: !isPresentationMode() }"
                 class="exercise-tags col-auto col-sm justify-content-center d-none d-md-flex"
             />
-            @if (dueDate) {
-                <div class="col-sm-auto mb-2 due-date" [ngClass]="getUrgentClass(dueDate) || ''" [ngbTooltip]="dueDate | artemisDate" [routerLink]="routerLink">
+            @if (dueDate()) {
+                <div class="col-sm-auto mb-2 due-date" [ngClass]="getUrgentClass(dueDate()) || ''" [ngbTooltip]="dueDate() | artemisDate" [routerLink]="routerLink()">
                     <span class="d-none d-sm-inline"> {{ 'artemisApp.exercise.dueDate' | artemisTranslate }}: </span>
                     <span class="d-sm-none"> {{ 'artemisApp.courseOverview.exerciseList.shortDueDate' | artemisTranslate }}: </span>
-                    {{ dueDate | artemisTimeAgo }}
+                    {{ dueDate() | artemisTimeAgo }}
                 </div>
             } @else {
                 <div class="col-auto mb-2" jhiTranslate="artemisApp.courseOverview.exerciseList.noDueDate"></div>

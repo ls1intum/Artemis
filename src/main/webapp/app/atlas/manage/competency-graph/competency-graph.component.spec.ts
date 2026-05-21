@@ -1,12 +1,17 @@
+import { vi } from 'vitest';
 import { CompetencyGraphComponent } from 'app/atlas/manage/competency-graph/competency-graph.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyGraphDTO, CompetencyGraphEdgeDTO, CompetencyGraphNodeDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { SizeUpdate } from 'app/atlas/manage/competency-node/competency-node.component';
+import { provideNoopAnimationsForTests } from 'test/helpers/animations';
+import { MockModule } from 'ng-mocks';
+import { NgxGraphModule } from '@swimlane/ngx-graph';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyGraphComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: CompetencyGraphComponent;
     let fixture: ComponentFixture<CompetencyGraphComponent>;
 
@@ -31,14 +36,20 @@ describe('CompetencyGraphComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CompetencyGraphComponent, NoopAnimationsModule],
+            imports: [CompetencyGraphComponent],
             providers: [
                 {
                     provide: TranslateService,
                     useClass: MockTranslateService,
                 },
+                provideNoopAnimationsForTests(),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(CompetencyGraphComponent, {
+                remove: { imports: [NgxGraphModule] },
+                add: { imports: [MockModule(NgxGraphModule)] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(CompetencyGraphComponent);
         component = fixture.componentInstance;
@@ -47,7 +58,7 @@ describe('CompetencyGraphComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', async () => {

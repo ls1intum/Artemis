@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -6,9 +8,11 @@ import { RemoveSecondsPipe } from 'app/tutorialgroup/shared/pipe/remove-seconds.
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('MeetingPatternPipe', () => {
+    setupTestBed({ zoneless: true });
+
     let pipe: MeetingPatternPipe;
     let translateService: TranslateService;
-    let translateSpy: jest.SpyInstance;
+    let translateSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -19,8 +23,12 @@ describe('MeetingPatternPipe', () => {
             .then(() => {
                 translateService = TestBed.inject(TranslateService);
                 pipe = TestBed.inject(MeetingPatternPipe);
-                translateSpy = jest.spyOn(translateService, 'instant');
+                translateSpy = vi.spyOn(translateService, 'instant');
             });
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should return an empty string if schedule is undefined', () => {
@@ -29,7 +37,7 @@ describe('MeetingPatternPipe', () => {
 
     it('should return an empty string', () => {
         const schedule = undefined;
-        translateSpy.mockImplementation((key) => key);
+        translateSpy.mockImplementation((key: string) => key);
 
         const result = pipe.transform(schedule, true);
         expect(result).toBe('');
@@ -43,7 +51,7 @@ describe('MeetingPatternPipe', () => {
             startTime: '14:00:00',
             endTime: '15:00:00',
         };
-        translateSpy.mockImplementation((key) => key);
+        translateSpy.mockImplementation((key: string) => key);
 
         const result = pipe.transform(schedule, true);
 
@@ -58,7 +66,7 @@ describe('MeetingPatternPipe', () => {
             startTime: '14:00:00',
             endTime: '15:00:00',
         };
-        translateSpy.mockImplementation((key) => key);
+        translateSpy.mockImplementation((key: string) => key);
 
         const result = pipe.transform(schedule, true);
 
@@ -73,7 +81,7 @@ describe('MeetingPatternPipe', () => {
             startTime: '14:00:00',
             endTime: '15:00:00',
         };
-        translateSpy.mockImplementation((key) => key);
+        translateSpy.mockImplementation((key: string) => key);
 
         const result = pipe.transform(schedule);
 

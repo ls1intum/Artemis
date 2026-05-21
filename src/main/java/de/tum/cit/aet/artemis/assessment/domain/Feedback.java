@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.assessment.domain;
 import static de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_PREVIEW_TEXT_MAX_LENGTH;
-import static de.tum.cit.aet.artemis.core.config.Constants.LONG_FEEDBACK_MAX_LENGTH;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -23,14 +22,13 @@ import jakarta.validation.constraints.Size;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.assessment.config.FeedbackConfiguration;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
@@ -40,7 +38,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
  */
 @Entity
 @Table(name = "feedback")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Feedback extends DomainObject {
 
@@ -51,6 +48,8 @@ public class Feedback extends DomainObject {
     public static final String SUBMISSION_POLICY_FEEDBACK_IDENTIFIER = "SubPolFeedbackIdentifier:";
 
     private static final String DETAIL_TEXT_TRIMMED_MARKER = " [...]";
+
+    private static final String LONG_FEEDBACK_TRUNCATION_MARKER = "\n\n[Feedback truncated: exceeded maximum length]";
 
     @Size(max = 500)
     @Column(name = "text", length = 500)
@@ -176,9 +175,39 @@ public class Feedback extends DomainObject {
         return StringUtils.truncate(detailText, maxLength) + DETAIL_TEXT_TRIMMED_MARKER;
     }
 
+    /**
+     * Creates a {@link LongFeedbackText} entity for storing feedback produced by a single test case.
+     * <p>
+     * In normal operation, feedback text is short (typically well below 1&nbsp;000 characters).
+     * Very large feedback texts are almost always the result of faulty or misconfigured test cases
+     * (e.g. infinite loops, excessive logging, repeated stack traces) and do not provide additional
+     * educational value to students.
+     * <p>
+     * To protect the database from excessive storage usage, the feedback text is truncated to
+     * the configured maximum length (default: 20,000). If truncation occurs, a marker is appended to make this
+     * behavior explicit and observable.
+     *
+     * @param detailText the raw feedback text produced by a single test case; may be {@code null}
+     * @return a {@link LongFeedbackText} entity containing the (possibly truncated) feedback text
+     */
     private LongFeedbackText buildLongFeedback(final String detailText) {
         final LongFeedbackText longFeedback = new LongFeedbackText();
-        longFeedback.setText(StringUtils.truncate(detailText, LONG_FEEDBACK_MAX_LENGTH));
+
+        if (detailText == null) {
+            return longFeedback;
+        }
+
+        final int maxFeedbackLength = FeedbackConfiguration.getMaxFeedbackLengthStatic();
+
+        if (detailText.length() <= maxFeedbackLength) {
+            longFeedback.setText(detailText);
+            return longFeedback;
+        }
+
+        final int maxTextLength = maxFeedbackLength - LONG_FEEDBACK_TRUNCATION_MARKER.length();
+
+        longFeedback.setText(detailText.substring(0, Math.max(0, maxTextLength)) + LONG_FEEDBACK_TRUNCATION_MARKER);
+
         return longFeedback;
     }
 
@@ -453,5 +482,23 @@ public class Feedback extends DomainObject {
     public String toString() {
         return "Feedback{" + "text='" + text + '\'' + ", detailText='" + detailText + '\'' + ", hasLongFeedbackText=" + hasLongFeedbackText + ", reference='" + reference + '\''
                 + ", credits=" + credits + ", positive=" + positive + ", type=" + type + ", visibility=" + visibility + '}';
+    }
+
+    /**
+     * Stable hash code that does not change across the unsaved → persisted transition.
+     *
+     * <p>
+     * {@link DomainObject#hashCode()} is id-based, which means an unsaved Feedback (id == null,
+     * hashCode() == 0) would land in a different bucket once Hibernate assigns an id during flush.
+     * That breaks {@link java.util.HashSet} semantics: a previously-added Feedback would no longer be
+     * found by {@code contains}/{@code remove}. Since {@link Result#getFeedbacks()} is now backed by a
+     * {@link java.util.Set}, we need a hash that is stable across that lifecycle. Returning a constant
+     * forces all Feedback instances into the same bucket; the (id-based) {@code equals} contract still
+     * distinguishes them. The performance impact is negligible — Result.feedbacks is small (per single
+     * submission), so the linear scan cost replaces what was already a linear scan elsewhere.
+     */
+    @Override
+    public int hashCode() {
+        return Feedback.class.hashCode();
     }
 }

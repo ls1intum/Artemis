@@ -23,7 +23,7 @@ export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
 
     disconnected = false;
     isOnExamParticipationPage = false;
-    websocketStatusSubscription: Subscription;
+    websocketStatusSubscription?: Subscription;
     routerSubscription: Subscription;
     openTimeout: any;
 
@@ -41,7 +41,7 @@ export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.websocketStatusSubscription = this.websocketService.connectionState.subscribe((status) => {
-            this.disconnected = !status.connected && !status.intendedDisconnect && status.wasEverConnectedBefore;
+            this.disconnected = !status.connected && status.wasEverConnectedBefore;
 
             if (this.disconnected) {
                 this.openTimeout = setTimeout(() => this.popover?.open(), 300);
@@ -53,7 +53,7 @@ export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.websocketStatusSubscription.unsubscribe();
+        this.websocketStatusSubscription?.unsubscribe();
         this.routerSubscription.unsubscribe();
     }
 }

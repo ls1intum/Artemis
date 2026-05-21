@@ -1,7 +1,8 @@
 package de.tum.cit.aet.artemis.communication.notification;
 
 import static java.time.ZonedDateTime.now;
-import static org.mockito.Mockito.any;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -91,9 +92,12 @@ class GroupNotificationScheduleServiceTest extends AbstractSpringIntegrationLoca
 
         exercise.setAssessmentDueDate(now().plus(DELAY_MS, ChronoUnit.MILLIS));
         exerciseRepository.saveAndFlush(exercise);
-        instanceMessageReceiveService.processScheduleAssessedExerciseSubmittedNotification(exercise.getId());
+        Long exerciseId = exercise.getId();
+        instanceMessageReceiveService.processScheduleAssessedExerciseSubmittedNotification(exerciseId);
 
-        verify(singleUserNotificationService, timeout(TIMEOUT_MS)).notifyUsersAboutAssessedExerciseSubmission(exercise);
+        // Use argThat matcher because the notification service reloads the exercise from the database,
+        // creating a different object instance than the one we have here
+        verify(singleUserNotificationService, timeout(TIMEOUT_MS)).notifyUsersAboutAssessedExerciseSubmission(argThat(ex -> ex != null && ex.getId().equals(exerciseId)));
         verify(javaMailSender, timeout(TIMEOUT_MS)).send(any(MimeMessage.class));
     }
 }

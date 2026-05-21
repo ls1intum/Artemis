@@ -1,0 +1,82 @@
+<div class="search-result-item p-3 cursor-pointer position-relative" [class.selected]="isSelected()" (click)="onClick()" [attr.aria-selected]="isSelected()" role="option">
+    <div class="d-flex align-items-start gap-3">
+        <!-- Icon -->
+        <div class="result-icon flex-shrink-0">
+            <fa-icon [icon]="icon()" size="lg" class="text-primary" aria-hidden="true" />
+        </div>
+
+        <!-- Content -->
+        <div class="result-content flex-grow-1 min-width-0">
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <h6 class="result-title mb-0 text-truncate">{{ result().title }}</h6>
+                @if (result().badge) {
+                    <span class="badge bg-secondary text-white px-2 py-1 small">{{ result().badge }}</span>
+                }
+                @if (isExamExercise()) {
+                    <span class="badge badge-exam d-inline-flex align-items-center gap-1 px-2 py-1 small">
+                        <fa-icon [icon]="faGraduationCap" size="xs" aria-hidden="true" />
+                        {{ 'global.search.results.examExercise' | artemisTranslate }}
+                    </span>
+                }
+            </div>
+
+            <!-- Metadata Row -->
+            @if (hasAnyMetadata()) {
+                <div class="result-metadata d-flex align-items-center gap-2 mb-2 text-secondary small">
+                    @if (courseName()) {
+                        <span class="d-flex align-items-center gap-1">
+                            <fa-icon [icon]="faBook" size="sm" aria-hidden="true" />
+                            <span>{{ courseName() }}</span>
+                        </span>
+                    }
+                    @if (showCourseSeparator()) {
+                        <span>•</span>
+                    }
+                    @if (dueDate()) {
+                        <span class="d-flex align-items-center gap-1">
+                            <fa-icon [icon]="faCalendarAlt" size="sm" aria-hidden="true" />
+                            <span>{{ 'global.search.results.due' | artemisTranslate: { date: formattedDueDate() } }}</span>
+                        </span>
+                    }
+                    @if (showStartDateOnly()) {
+                        <span class="d-flex align-items-center gap-1">
+                            <fa-icon [icon]="faCalendarAlt" size="sm" aria-hidden="true" />
+                            <span>{{ formattedStartDate() }}</span>
+                        </span>
+                    }
+                    @if (showDatePointsSeparator()) {
+                        <span>•</span>
+                    }
+                    @if (points()) {
+                        <span class="d-flex align-items-center gap-1">
+                            <fa-icon [icon]="faTrophy" size="sm" aria-hidden="true" />
+                            <span>{{ points() }} {{ (points() === 1 ? 'global.search.results.point' : 'global.search.results.points') | artemisTranslate }}</span>
+                        </span>
+                    }
+                    @if (showDifficultySeparator()) {
+                        <span>•</span>
+                    }
+                    @if (difficulty()) {
+                        <span class="text-capitalize">{{ difficulty() }}</span>
+                    }
+                </div>
+            }
+
+            <!-- Description -->
+            @if (result().description) {
+                <p class="result-description mb-0 text-secondary small text-truncate-2">
+                    {{ result().description }}
+                </p>
+            }
+        </div>
+    </div>
+
+    <!-- Navigation hint for selected item (positioned absolutely) -->
+    @if (isSelected()) {
+        <div class="result-nav-hint position-absolute text-secondary">
+            <kbd class="key-hint-small" [attr.aria-label]="'global.search.enterToActivate' | artemisTranslate">
+                <fa-icon [icon]="faLevelDownAlt" />
+            </kbd>
+        </div>
+    }
+</div>

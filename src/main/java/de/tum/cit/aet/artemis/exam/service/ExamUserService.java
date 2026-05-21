@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.function.TriConsumer;
 import org.apache.pdfbox.Loader;
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.ImageDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -39,6 +41,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExportExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
@@ -63,11 +66,15 @@ public class ExamUserService {
 
     private final ExamRoomRepository examRoomRepository;
 
-    public ExamUserService(FileService fileService, UserRepository userRepository, ExamUserRepository examUserRepository, ExamRoomRepository examRoomRepository) {
+    private final ExamRoomService examRoomService;
+
+    public ExamUserService(FileService fileService, UserRepository userRepository, ExamUserRepository examUserRepository, ExamRoomRepository examRoomRepository,
+            ExamRoomService examRoomService) {
         this.examUserRepository = examUserRepository;
         this.userRepository = userRepository;
         this.fileService = fileService;
         this.examRoomRepository = examRoomRepository;
+        this.examRoomService = examRoomService;
     }
 
     /**
@@ -248,5 +255,25 @@ public class ExamUserService {
      */
     public void setActualRoomAndSeatTransientForExamUsers(Set<ExamUser> examUsers) {
         setRoomAndSeatTransientForExamUsers(examUsers, ExamUser::getActualRoom, ExamUser::getActualSeat, ExamUser::setTransientActualRoomAndSeat);
+    }
+
+    public void checkExamUserExistsAndBelongsToExamElseThrow(long examUserId, long examId) {
+        examUserRepository.findWithExamById(examUserId).filter(examUser -> examUser.getExam().getId() == examId)
+                .orElseThrow(() -> new EntityNotFoundException("Exam user with id: " + examUserId + " does not exist in exam with id: " + examId));
+    }
+
+    /**
+     * Gathers information about students for exporting
+     *
+     * @param examId the exam id
+     * @return all exam users with their most important data for exporting
+     */
+    public List<ExportExamUserDTO> exportStudents(long examId) {
+        List<ExamUser> studentsInExam = examUserRepository.findAllByExamId(examId);
+        Set<ExamRoom> roomsUsedInExam = examRoomRepository.findAllByExamId(examId);
+        Map<String, String> roomNumbersToHumanReadable = roomsUsedInExam.stream().collect(Collectors.toMap(ExamRoom::getRoomNumber, examRoomService::humanReadableFormat));
+
+        return studentsInExam.stream()
+                .map(examUser -> new ExportExamUserDTO(examUser, roomNumbersToHumanReadable.getOrDefault(examUser.getPlannedRoom(), examUser.getPlannedRoom()))).toList();
     }
 }

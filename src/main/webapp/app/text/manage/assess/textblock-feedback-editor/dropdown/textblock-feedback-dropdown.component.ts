@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
@@ -11,16 +11,17 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
     imports: [HelpIconComponent],
 })
 export class TextblockFeedbackDropdownComponent {
-    @Output() didChange = new EventEmitter();
-    @Input() criterion: GradingCriterion;
-    @Input() feedback: Feedback = new Feedback();
+    didChange = output();
+    criterion = input.required<GradingCriterion>();
+    feedback = input<Feedback>(new Feedback());
 
     updateAssessmentWithDropdown(instruction: GradingInstruction) {
-        this.feedback.gradingInstruction = instruction;
-        this.feedback.credits = instruction.credits;
+        const feedbackValue = this.feedback();
+        feedbackValue.gradingInstruction = instruction;
+        feedbackValue.credits = instruction.credits;
 
         // Reset the feedback correction status upon setting grading instruction in order to hide it.
-        this.feedback.correctionStatus = undefined;
+        feedbackValue.correctionStatus = undefined;
 
         this.didChange.emit();
     }

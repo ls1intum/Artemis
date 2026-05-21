@@ -17,7 +17,8 @@
                 "course": {
                     "title": "Kurs Archivieren",
                     "question": "Möchtest du den Kurs <strong>{{title}}</strong> wirklich archivieren?",
-                    "statement1": "Der Prozess komprimiert alle Repositories, Übungen zum Hochladen von Dateien, Modellierungsübungen und Textübungen im Kursen und in allen Prüfungen."
+                    "statement1": "Der Prozess komprimiert alle Repositories, Übungen zum Hochladen von Dateien, Modellierungsübungen und Textübungen im Kursen und in allen Prüfungen.",
+                    "statement1b": "Zusätzlich enthält das Archiv umfassende Studierendendaten: Kurs- und Prüfungspunkte, Teilnahmeergebnisse mit Feedback, Beiträge und Nachrichten, Kompetenzfortschritt, Lernerprofile, Tutoriumsregistrierungen, Iris-Chat-Sitzungen und LLM-Token-Nutzungsprotokolle."
                 },
                 "exam": {
                     "title": "Prüfung Archivieren",

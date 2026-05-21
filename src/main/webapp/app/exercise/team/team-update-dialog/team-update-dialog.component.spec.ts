@@ -76,7 +76,7 @@ describe('TeamUpdateDialogComponent', () => {
         const closeSpy = jest.spyOn(ngbActiveModal, 'close');
         comp.team = mockEmptyTeam;
         comp.exercise = mockExercise;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Check that title is correct for creating a team
         const modalTitle = debugElement.query(By.css('.modal-title'));
@@ -99,7 +99,7 @@ describe('TeamUpdateDialogComponent', () => {
         // Enter a team name and a team short name
         inputs.teamName.nativeElement.value = 'Team 1';
         inputs.teamShortName.nativeElement.value = 'team1';
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Submit button still disabled since no students were added yet (number of students is less than the min recommended team size)
         expect(submitButton.nativeElement.disabled).toBeTrue();
@@ -107,29 +107,29 @@ describe('TeamUpdateDialogComponent', () => {
         // Try proceeding against recommended team size (forcing to create an empty team)
         inputs.ignoreTeamSizeRecommendation.nativeElement.checked = true;
         inputs.ignoreTeamSizeRecommendation.nativeElement.dispatchEvent(new Event('change'));
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(submitButton.nativeElement.disabled).toBeFalse();
 
         // Undo "proceeding against recommendation"
         inputs.ignoreTeamSizeRecommendation.nativeElement.checked = false;
         inputs.ignoreTeamSizeRecommendation.nativeElement.dispatchEvent(new Event('change'));
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(submitButton.nativeElement.disabled).toBeTrue();
 
         // Add a student to the team
         const [firstStudent, ...otherStudents] = mockTeamStudents;
         comp.onAddStudent(firstStudent);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(submitButton.nativeElement.disabled).toBeFalse();
 
         // Add the rest of the students to the team
         otherStudents.forEach((student) => comp.onAddStudent(student));
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(submitButton.nativeElement.disabled).toBeFalse();
 
         // Click on save
         submitButton.nativeElement.click();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         fixture.whenStable().then(() => {
             // Check that saving worked and that modal was closed
             expect(comp.team).toEqual(comp.pendingTeam);
@@ -145,7 +145,7 @@ describe('TeamUpdateDialogComponent', () => {
         const closeSpy = jest.spyOn(ngbActiveModal, 'close');
         comp.team = mockTeam;
         comp.exercise = mockExercise;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         // Check that title is correct for updating a team
@@ -171,7 +171,7 @@ describe('TeamUpdateDialogComponent', () => {
         inputs.teamName.nativeElement.value = updatedTeamName;
         inputs.teamName.nativeElement.dispatchEvent(new Event('input'));
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.pendingTeam.name).toEqual(updatedTeamName);
 
         // Submit button should be enabled (since we just changed the team name)
@@ -181,17 +181,17 @@ describe('TeamUpdateDialogComponent', () => {
         const studentRemoveLink = debugElement.query(By.css('.jest-student-remove-link'));
         studentRemoveLink.nativeElement.dispatchEvent(new Event('click'));
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.pendingTeam.students).toEqual(comp.team.students?.slice(1));
 
         // Add three new team members
         mockNonTeamStudents.forEach((student) => comp.onAddStudent(student));
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.pendingTeam.students).toEqual(comp.team.students?.slice(1).concat(mockNonTeamStudents));
 
         // Click on save
         submitButton.nativeElement.click();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Check that saving worked and that modal was closed
         expect(comp.team).toEqual(comp.pendingTeam);

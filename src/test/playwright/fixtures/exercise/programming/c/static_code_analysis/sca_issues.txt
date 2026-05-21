@@ -1,0 +1,8 @@
+// This file intentionally contains code with static analysis issues.
+// It is NOT compiled by the test Makefile (SOURCE = helloWorld.c only),
+// but IS compiled by the SCA step (gcc -c -Wall assignment/*.c).
+
+void sca_check(void) {
+    int unused_x = 42;
+    int unused_y = 99;
+}

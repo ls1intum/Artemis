@@ -9,19 +9,13 @@ export class ProgrammingExerciseParticipationsPage {
         this.page = page;
     }
 
-    getParticipation(participationId: number) {
-        return this.getParticipationByText(participationId.toString());
+    getParticipation(participantName: string) {
+        return this.page.getByRole('table').getByRole('row').filter({ hasText: participantName });
     }
 
     getStudentParticipation(user: UserCredentials) {
-        return this.getParticipationByText(user.username);
-    }
-
-    private getParticipationByText(text: string) {
-        return this.page
-            .getByRole('table')
-            .getByRole('row')
-            .filter({ hasText: `${text}` });
+        const namePattern = user.displayName ?? user.username;
+        return this.page.getByRole('table').getByRole('row').filter({ hasText: namePattern });
     }
 
     public async openStudentParticipationSubmissions(user: UserCredentials) {
@@ -43,34 +37,50 @@ export class ProgrammingExerciseParticipationsPage {
         }
     }
 
-    private async getParticipationCell(participationId: number, columnName: string) {
-        let participationRow: Locator = this.getParticipation(participationId);
+    private async getParticipationCell(participantName: string, columnName: string) {
+        let participationRow: Locator = this.getParticipation(participantName);
         return await this.getParticipationCellByLocator(participationRow, columnName);
     }
 
-    async openRepositoryOnNewPage(participationId: number): Promise<RepositoryPage> {
-        const participation = this.getParticipation(participationId);
+    async openRepositoryOnNewPage(participantName: string): Promise<RepositoryPage> {
+        console.log(`[openRepositoryOnNewPage] Opening repository for participation with participant ${participantName}`);
+        const participation = this.getParticipation(participantName);
         await participation.locator('.code-button').click();
-        // The link opens the repository in a new tab, so we need to wait for the new page to be created.
-        const pagePromise = this.page.context().waitForEvent('page');
-        await this.page.locator('.open-repository-button').click();
-        return new RepositoryPage(await pagePromise);
+        console.log('[openRepositoryOnNewPage] Clicked code button, waiting for popover...');
+
+        // Wait for the popover to appear and the button to be visible
+        const openRepoButton = this.page.locator('.open-repository-button');
+        await openRepoButton.waitFor({ state: 'visible' });
+        console.log('[openRepositoryOnNewPage] Popover visible, getting href...');
+
+        // Get the href from the link and open it in a new page directly
+        // This is more reliable than clicking when using Angular's routerLink with target="_blank"
+        const href = await openRepoButton.getAttribute('href');
+        if (!href) {
+            throw new Error('Could not find href on open-repository-button');
+        }
+        console.log(`[openRepositoryOnNewPage] Found href: ${href}`);
+
+        // Construct absolute URL from the relative href using the page's origin
+        const baseUrl = new URL(this.page.url()).origin;
+        const absoluteUrl = new URL(href, baseUrl).toString();
+        console.log(`[openRepositoryOnNewPage] Navigating to: ${absoluteUrl}`);
+
+        const newPage = await this.page.context().newPage();
+        await newPage.goto(absoluteUrl, { waitUntil: 'domcontentloaded' });
+        console.log(`[openRepositoryOnNewPage] Navigation complete. New page URL: ${newPage.url()}`);
+
+        return new RepositoryPage(newPage);
     }
 
-    async checkParticipationBuildPlan(participation: any) {
-        const buildPlanIdCell = await this.getParticipationCell(participation.id, 'Build Plan Id');
-        expect(buildPlanIdCell).not.toBeUndefined();
-        await expect(buildPlanIdCell!.filter({ hasText: participation.buildPlanId })).toBeVisible();
-    }
-
-    async checkParticipationTeam(participationId: number, teamName: string) {
-        const teamCell = await this.getParticipationCell(participationId, 'Team');
+    async checkParticipationTeam(participantName: string, teamName: string) {
+        const teamCell = await this.getParticipationCell(participantName, 'Team');
         expect(teamCell).not.toBeUndefined();
         await expect(teamCell!.filter({ hasText: teamName })).toBeVisible();
     }
 
-    async checkParticipationStudents(participationId: number, studentUsernames: string[]) {
-        const studentsCell = await this.getParticipationCell(participationId, 'Students');
+    async checkParticipationStudents(participantName: string, studentUsernames: string[]) {
+        const studentsCell = await this.getParticipationCell(participantName, 'Students');
         expect(studentsCell).not.toBeUndefined();
         for (const studentName of studentUsernames) {
             await expect(studentsCell!.filter({ hasText: studentName })).toBeVisible();

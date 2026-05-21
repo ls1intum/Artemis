@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
+
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.HashSet;
@@ -8,6 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.stream.Stream;
 
 import jakarta.persistence.CascadeType;
@@ -30,8 +33,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.ConcreteProxy;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -75,7 +77,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "E")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@ConcreteProxy
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // Annotation necessary to distinguish between concrete implementations of Exercise when deserializing from JSON
 // @formatter:off
@@ -117,12 +119,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     private Set<String> categories = new HashSet<>();
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exercise")
     private TeamAssignmentConfig teamAssignmentConfig;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exercise")
     private Set<Team> teams = new HashSet<>();
 
@@ -143,33 +143,32 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @ManyToOne
     private ExerciseGroup exerciseGroup;
 
+    // No @Cache: instructors edit grading criteria while assessors read them during assessment; NONSTRICT produced
+    // stale cross-node reads, same class of bug as #12574 / #12584.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "exercise", allowSetters = true)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<GradingCriterion> gradingCriteria = new HashSet<>();
 
+    // No @Cache: grows every time a student starts / submits the exercise; NONSTRICT caused stale reads for instructors and scoring paths, same class of bug as #12574.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exercise")
     private Set<StudentParticipation> studentParticipations = new HashSet<>();
 
     @OneToMany(mappedBy = "assessedExercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("assessedExercise")
     private Set<TutorParticipation> tutorParticipations = new HashSet<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exercise")
     private Set<ExampleSubmission> exampleSubmissions = new HashSet<>();
 
+    // No @Cache: instructors edit attachments while students are viewing the exercise page; NONSTRICT caused stale cross-node reads, same class of bug as #12574.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exercise")
     private Set<Attachment> attachments = new HashSet<>();
 
+    // No @Cache: plagiarism cases are appended by detection runs while instructors read the list, same class of bug as #12574.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIncludeProperties({ "id" })
     private Set<PlagiarismCase> plagiarismCases = new HashSet<>();
 
@@ -856,8 +855,8 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             throw new BadRequestAlertException("The max points needs to be greater than 0", "Exercise", "maxScoreInvalid");
         }
 
-        if (getBonusPoints() == null) {
-            // make sure the default value is set properly
+        if (getBonusPoints() == null || getBonusPoints() < 0) {
+            // Correct invalid bonusPoints to default value (prevents invalid state)
             setBonusPoints(0.0);
         }
 
@@ -883,6 +882,23 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         }
     }
 
+    /**
+     * Validate the exercise title.
+     * 1. Check presence and length of exercise title
+     * 2. Find forbidden patterns in exercise title
+     */
+    public void validateTitle() {
+        // Check if exercise title is set
+        if (getTitle() == null || getTitle().isBlank() || getTitle().length() < 3) {
+            throw new BadRequestAlertException("The title is not set or is too short.", "Exercise", "titleLengthInvalid");
+        }
+        // Check if the exercise title matches regex
+        Matcher titleMatcher = TITLE_NAME_PATTERN.matcher(getTitle());
+        if (!titleMatcher.matches()) {
+            throw new BadRequestAlertException("The title is invalid.", "Exercise", "titlePatternInvalid");
+        }
+    }
+
     public abstract ExerciseType getExerciseType();
 
     public abstract String getType();
@@ -895,5 +911,35 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     public void disconnectRelatedEntities() {
         Stream.of(teams, gradingCriteria, studentParticipations, tutorParticipations, exampleSubmissions, attachments, plagiarismCases).filter(Objects::nonNull)
                 .forEach(Collection::clear);
+    }
+
+    /**
+     * Ensures that the exercise has a mutable set for grading criteria.
+     * Creates and assigns a new {@link HashSet} if the current set is {@code null}.
+     *
+     * @return the non-null mutable set of grading criteria
+     */
+    public Set<GradingCriterion> ensureGradingCriteriaSet() {
+        Set<GradingCriterion> managedCriteria = getGradingCriteria();
+        if (managedCriteria == null) {
+            managedCriteria = new HashSet<>();
+            setGradingCriteria(managedCriteria);
+        }
+        return managedCriteria;
+    }
+
+    /**
+     * Ensures that the exercise has a mutable set for competency links.
+     * Creates and assigns a new {@link HashSet} if the current set is {@code null}.
+     *
+     * @return the non-null mutable set of competency links
+     */
+    public Set<CompetencyExerciseLink> ensureCompetencyLinksSet() {
+        Set<CompetencyExerciseLink> managedLinks = getCompetencyLinks();
+        if (managedLinks == null) {
+            managedLinks = new HashSet<>();
+            setCompetencyLinks(managedLinks);
+        }
+        return managedLinks;
     }
 }

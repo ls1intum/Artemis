@@ -1,21 +1,38 @@
-import { Component, input } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { IrisEnabledComponent } from 'app/iris/manage/settings/shared/iris-enabled/iris-enabled.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
+import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { faRobot } from '@fortawesome/free-solid-svg-icons';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { CardWrapperComponent } from 'app/shared/card-wrapper/card-wrapper.component';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 
 @Component({
     selector: 'jhi-control-center',
-    imports: [IrisEnabledComponent, TranslateDirective, HelpIconComponent, FaIconComponent, CardWrapperComponent],
+    imports: [IrisEnabledComponent, IrisLogoComponent, TranslateDirective],
     templateUrl: './control-center.component.html',
+    styleUrls: ['./control-center.component.scss'],
 })
 export class ControlCenterComponent {
-    protected readonly IrisSubSettingsType = IrisSubSettingsType;
-    protected readonly faRobot = faRobot;
+    protected readonly IrisLogoSize = IrisLogoSize;
+    private dialogService = inject(DialogService);
+    private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
+
     course = input.required<Course>();
     irisEnabled = input.required<boolean>();
+
+    openAboutIrisModal(): void {
+        this.aboutIrisDialogRef?.close();
+        this.aboutIrisDialogRef =
+            this.dialogService.open(AboutIrisModalComponent, {
+                modal: true,
+                closable: false,
+                dismissableMask: true,
+                showHeader: false,
+                styleClass: 'about-iris-dialog',
+                maskStyleClass: 'about-iris-dialog',
+                width: '40rem',
+                breakpoints: { '640px': '95vw' },
+                data: { hideTryButton: true },
+            }) ?? undefined;
+    }
 }

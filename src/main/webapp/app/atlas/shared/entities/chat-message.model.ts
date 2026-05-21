@@ -1,20 +1,122 @@
-import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
-import dayjs from 'dayjs/esm';
+import { WritableSignal } from '@angular/core';
+import { CompetencyRelationDTO, CompetencyRelationType, CompetencyTaxonomy, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
+
+export interface CompetencyPreviewResponse {
+    title: string;
+    description: string;
+    taxonomy: CompetencyTaxonomy;
+    icon: string;
+    competencyId?: number;
+    viewOnly?: boolean;
+}
+
+export interface CompetencyRelationPreviewResponse {
+    relationId?: number;
+    tailCompetencyId: number;
+    tailCompetencyTitle: string;
+    headCompetencyId: number;
+    headCompetencyTitle: string;
+    relationType: CompetencyRelationType;
+    viewOnly?: boolean;
+}
+
+export interface AgentChatResponse {
+    message: string;
+    timestamp: string;
+    competenciesModified: boolean;
+    competencyPreviews?: CompetencyPreviewResponse[];
+    relationPreviews?: CompetencyRelationPreviewResponse[];
+    relationGraphPreview?: RelationGraphPreview;
+    exerciseMappingPreview?: ExerciseMappingPreview;
+}
+
+export interface AgentHistoryMessage {
+    content: string;
+    isUser: boolean;
+    competencyPreviews?: CompetencyPreviewResponse[];
+    relationPreviews?: CompetencyRelationPreviewResponse[];
+    relationGraphPreview?: RelationGraphPreview;
+    exerciseMappingPreview?: ExerciseMappingPreview;
+}
 
 export interface ChatMessage {
     id: string;
     content: string;
     isUser: boolean;
     timestamp: Date;
-    canCreateCompetencies?: boolean;
-    suggestedCompetencies?: CompetencyDraft[];
+    relationGraphPreview?: RelationGraphPreview; // Graph visualization for relation preview
+    competencyPreviews?: CompetencyPreview[]; // Unified array for competency previews
+    relationPreviews?: CompetencyRelationPreview[]; // Unified array for relation previews
+    exerciseMappingPreview?: ExerciseMappingPreviewViewModel; // Preview for exercise-to-competency mapping
+    competencyCreated?: boolean;
+    relationCreated?: boolean;
+    exerciseMappingCreated?: boolean;
+    planPending?: boolean;
+    planApproved?: boolean;
+    // Pre-computed graph data for stable rendering
+    graphCompetencies?: CourseCompetency[];
+    graphRelations?: CompetencyRelationDTO[];
 }
 
-export interface CompetencyDraft {
+export interface CompetencyPreview {
     title: string;
     description: string;
     taxonomy: CompetencyTaxonomy;
-    masteryThreshold: number;
-    optional: boolean;
-    softDueDate?: dayjs.Dayjs;
+    icon?: string;
+    competencyId?: number; // Optional: present when updating existing competency
+    viewOnly?: boolean; // Optional: when true, no action buttons are shown
+}
+
+export interface CompetencyRelationPreview {
+    relationId?: number; // Optional: present when updating existing relation
+    headCompetencyId: number;
+    headCompetencyTitle: string;
+    tailCompetencyId: number;
+    tailCompetencyTitle: string;
+    relationType: CompetencyRelationType;
+    viewOnly?: boolean; // Optional: when true, no action buttons are shown
+}
+
+export interface RelationGraphNode {
+    id: string;
+    label: string;
+}
+
+export interface RelationGraphEdge {
+    id: string;
+    source: string;
+    target: string;
+    relationType: CompetencyRelationType;
+}
+
+export interface RelationGraphPreview {
+    nodes: RelationGraphNode[];
+    edges: RelationGraphEdge[];
+    viewOnly?: boolean;
+}
+
+export interface CompetencyMappingOption {
+    competencyId: number;
+    competencyTitle: string;
+    weight: number;
+    alreadyMapped?: boolean;
+    suggested?: boolean;
+}
+
+export interface ExerciseMappingPreview {
+    exerciseId: number;
+    exerciseTitle: string;
+    competencies: CompetencyMappingOption[];
+    viewOnly?: boolean;
+}
+
+export interface CompetencyMappingViewModel extends CompetencyMappingOption {
+    selected: WritableSignal<boolean>;
+}
+
+export interface ExerciseMappingPreviewViewModel {
+    exerciseId: number;
+    exerciseTitle: string;
+    competencies: CompetencyMappingViewModel[];
+    viewOnly?: boolean;
 }

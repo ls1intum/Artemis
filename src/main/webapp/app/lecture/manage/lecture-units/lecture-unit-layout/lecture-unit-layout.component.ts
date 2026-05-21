@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
@@ -7,5 +7,5 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [TranslateDirective],
 })
 export class LectureUnitLayoutComponent {
-    @Input() isLoading = false;
+    isLoading = input<boolean>(false);
 }

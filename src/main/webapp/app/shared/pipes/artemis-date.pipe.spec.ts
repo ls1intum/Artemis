@@ -38,7 +38,7 @@ describe('ArtemisDatePipe', () => {
     describe('en locale', () => {
         beforeEach(() => {
             dateTime.locale('en');
-            translateService.currentLang = 'en';
+            translateService.use('en');
         });
 
         describe('without seconds', () => {
@@ -129,7 +129,7 @@ describe('ArtemisDatePipe', () => {
     describe('de locale', () => {
         beforeEach(() => {
             dateTime.locale('de');
-            translateService.currentLang = 'de';
+            translateService.use('de');
         });
 
         describe('without seconds', () => {

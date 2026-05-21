@@ -85,10 +85,16 @@ public class ProgrammingExerciseService {
         return Path.of("templates", programmingLanguage.name().toLowerCase());
     }
 
-    public boolean hasAtLeastOneStudentResult(ProgrammingExercise programmingExercise) {
-        // Is true if the exercise is released and has at least one result.
-        // We can't use the resultService here due to a circular dependency issue.
-        return resultRepository.existsBySubmission_Participation_Exercise_Id(programmingExercise.getId());
+    /**
+     * Checks if the exercise has at least one result (from any participation type).
+     * Note: This includes results from template, solution, and student participations.
+     * We can't use the resultService here due to a circular dependency issue.
+     *
+     * @param programmingExercise the exercise to check
+     * @return true if there is at least one result for this exercise
+     */
+    public boolean hasAtLeastOneResult(ProgrammingExercise programmingExercise) {
+        return resultRepository.existsByExerciseId(programmingExercise.getId());
     }
 
     /**

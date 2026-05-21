@@ -1,5 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { input, runInInjectionContext } from '@angular/core';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -14,8 +15,12 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { ForwardedMessageComponent } from 'app/communication/forwarded-message/forwarded-message.component';
+import { MetisService } from 'app/communication/service/metis.service';
+import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
 
 describe('ForwardedMessageComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ForwardedMessageComponent;
     let fixture: ComponentFixture<ForwardedMessageComponent>;
 
@@ -31,9 +36,18 @@ describe('ForwardedMessageComponent', () => {
         post: mockPost,
     } as AnswerPost;
 
+    beforeEach(() => {
+        vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [
+            imports: [
                 ForwardedMessageComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
@@ -41,15 +55,19 @@ describe('ForwardedMessageComponent', () => {
                 MockComponent(ProfilePictureComponent),
                 MockComponent(PostingContentComponent),
             ],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        }).compileComponents();
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: MetisService, useClass: MockMetisService },
+            ],
+        }).overrideComponent(ForwardedMessageComponent, {
+            remove: { imports: [ProfilePictureComponent, PostingContentComponent, ArtemisTranslatePipe, ArtemisDatePipe] },
+            add: { imports: [MockComponent(ProfilePictureComponent), MockComponent(PostingContentComponent), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)] },
+        });
 
         fixture = TestBed.createComponent(ForwardedMessageComponent);
         component = fixture.componentInstance;
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.originalPostDetails = input<Posting>({
-                content: 'Test content',
-            });
+        fixture.componentRef.setInput('originalPostDetails', {
+            content: 'Test content',
         });
     });
 
@@ -58,27 +76,23 @@ describe('ForwardedMessageComponent', () => {
     });
 
     it('should call updateSourceName and update todayFlag when originalPostDetails changes', async () => {
-        jest.spyOn(component, 'updateSourceName');
-        jest.spyOn(component, 'getTodayFlag');
+        vi.spyOn(component, 'updateSourceName');
+        vi.spyOn(component, 'getTodayFlag');
 
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.originalPostDetails = input<Posting>(mockPost);
-            fixture.detectChanges();
-        });
+        fixture.componentRef.setInput('originalPostDetails', mockPost);
+        fixture.detectChanges();
 
         await fixture.whenStable();
 
         expect(component.updateSourceName).toHaveBeenCalled();
         expect(component.getTodayFlag).toHaveBeenCalled();
-        expect(component.postingIsOfToday).toBeFalse();
+        expect(component.postingIsOfToday).toBe(false);
     });
 
     it('should set sourceName correctly for a channel post', () => {
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.originalPostDetails = input<Posting>(mockPost);
-            fixture.detectChanges();
-            expect(component.sourceName).toBe('#general |');
-        });
+        fixture.componentRef.setInput('originalPostDetails', mockPost);
+        fixture.detectChanges();
+        expect(component.sourceName).toBe('#general |');
     });
 
     it('should set sourceName correctly for a one-to-one chat post when isAnswerPost is false', () => {
@@ -87,11 +101,9 @@ describe('ForwardedMessageComponent', () => {
             conversation: { type: 'oneToOneChat' } as any,
         } as Post;
 
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.originalPostDetails = input<Posting>(oneToOnePost);
-            fixture.detectChanges();
-            expect(component.sourceName).toBe('a direct message ');
-        });
+        fixture.componentRef.setInput('originalPostDetails', oneToOnePost);
+        fixture.detectChanges();
+        expect(component.sourceName).toBe('a direct message ');
     });
 
     it('should set sourceName correctly for a one-to-one chat post when isAnswerPost is true', () => {
@@ -100,29 +112,23 @@ describe('ForwardedMessageComponent', () => {
             post: { ...mockPost, conversation: { type: 'oneToOneChat' } as any },
         } as AnswerPost;
 
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.originalPostDetails = input<Posting>(oneToOneAnswerPost);
-            fixture.detectChanges();
-            expect(component.sourceName).toBe('a thread in a direct message ');
-        });
+        fixture.componentRef.setInput('originalPostDetails', oneToOneAnswerPost);
+        fixture.detectChanges();
+        expect(component.sourceName).toBe('a thread in a direct message ');
     });
 
     it('should set todayFlag to "artemisApp.metis.today" if post is created today', () => {
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.originalPostDetails = input<Posting>(mockAnswerPost);
-            fixture.detectChanges();
-            expect(component.postingIsOfToday).toBeTrue();
-            expect(component.todayFlag).toBe('artemisApp.metis.today');
-        });
+        fixture.componentRef.setInput('originalPostDetails', mockAnswerPost);
+        fixture.detectChanges();
+        expect(component.postingIsOfToday).toBe(true);
+        expect(component.todayFlag).toBe('artemisApp.metis.today');
     });
 
     it('should set todayFlag to undefined if post is not created today', () => {
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.originalPostDetails = input<Posting>(mockPost);
-            fixture.detectChanges();
-            expect(component.postingIsOfToday).toBeFalse();
-            expect(component.todayFlag).toBeUndefined();
-        });
+        fixture.componentRef.setInput('originalPostDetails', mockPost);
+        fixture.detectChanges();
+        expect(component.postingIsOfToday).toBe(false);
+        expect(component.todayFlag).toBeUndefined();
     });
 
     it('should set sourceName correctly for a group chat post when isAnswerPost is true', () => {
@@ -131,11 +137,9 @@ describe('ForwardedMessageComponent', () => {
             post: { ...mockPost, conversation: { type: 'groupChat' } as any },
         } as AnswerPost;
 
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.originalPostDetails = input<Posting>(groupChatAnswerPost);
-            fixture.detectChanges();
-            expect(component.sourceName).toBe('a thread in a group message ');
-        });
+        fixture.componentRef.setInput('originalPostDetails', groupChatAnswerPost);
+        fixture.detectChanges();
+        expect(component.sourceName).toBe('a thread in a group message ');
     });
 
     it('should set sourceName correctly for a group chat post when isAnswerPost is false', () => {
@@ -144,11 +148,9 @@ describe('ForwardedMessageComponent', () => {
             conversation: { type: 'groupChat', name: 'dev-team' } as any,
         } as Post;
 
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.originalPostDetails = input<Posting>(groupChatPost);
-            fixture.detectChanges();
-            expect(component.sourceName).toBe('a group message ');
-        });
+        fixture.componentRef.setInput('originalPostDetails', groupChatPost);
+        fixture.detectChanges();
+        expect(component.sourceName).toBe('a group message ');
     });
 
     it('should set sourceName to "#unknown |" for channel post without name and isAnswerPost false', () => {
@@ -157,11 +159,9 @@ describe('ForwardedMessageComponent', () => {
             conversation: { type: 'channel', name: undefined } as any,
         } as Post;
 
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.originalPostDetails = input<Posting>(channelPostWithoutName);
-            fixture.detectChanges();
-            expect(component.sourceName).toBe('#unknown |');
-        });
+        fixture.componentRef.setInput('originalPostDetails', channelPostWithoutName);
+        fixture.detectChanges();
+        expect(component.sourceName).toBe('#unknown |');
     });
 
     it('should set sourceName correctly for an unknown conversation type when isAnswerPost is true', () => {
@@ -170,11 +170,9 @@ describe('ForwardedMessageComponent', () => {
             post: { ...mockPost, conversation: { type: 'unknownType' } as any },
         } as AnswerPost;
 
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.originalPostDetails = input<Posting>(unknownTypeAnswerPost);
-            fixture.detectChanges();
-            expect(component.sourceName).toBe('a thread in a group message ');
-        });
+        fixture.componentRef.setInput('originalPostDetails', unknownTypeAnswerPost);
+        fixture.detectChanges();
+        expect(component.sourceName).toBe('a thread in a group message ');
     });
 
     it('should set sourceName correctly for an unknown conversation type when isAnswerPost is false', () => {
@@ -183,11 +181,9 @@ describe('ForwardedMessageComponent', () => {
             conversation: { type: 'unknownType' } as any,
         } as Post;
 
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.originalPostDetails = input<Posting>(unknownTypePost);
-            fixture.detectChanges();
-            expect(component.sourceName).toBe('a group message ');
-        });
+        fixture.componentRef.setInput('originalPostDetails', unknownTypePost);
+        fixture.detectChanges();
+        expect(component.sourceName).toBe('a group message ');
     });
 
     it('should set sourceName to empty string when conversation is undefined', () => {
@@ -196,21 +192,17 @@ describe('ForwardedMessageComponent', () => {
             conversation: undefined,
         } as Post;
 
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.originalPostDetails = input<Posting>(postWithoutConversation);
-            fixture.detectChanges();
-            expect(component.sourceName).toBe('');
-        });
+        fixture.componentRef.setInput('originalPostDetails', postWithoutConversation);
+        fixture.detectChanges();
+        expect(component.sourceName).toBe('');
     });
 
     it('should emit onNavigateToPost event when onTriggerNavigateToPost is called', () => {
-        const spy = jest.spyOn(component.onNavigateToPost, 'emit');
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.originalPostDetails = input<Posting>(mockPost);
-            component.onTriggerNavigateToPost();
+        const spy = vi.spyOn(component.onNavigateToPost, 'emit');
+        fixture.componentRef.setInput('originalPostDetails', mockPost);
+        component.onTriggerNavigateToPost();
 
-            expect(spy).toHaveBeenCalledWith(mockPost);
-        });
+        expect(spy).toHaveBeenCalledWith(mockPost);
     });
 
     it('should update sourceName correctly based on isAnswerPost flag (true case)', () => {
@@ -221,11 +213,9 @@ describe('ForwardedMessageComponent', () => {
             post: mockPost,
         };
 
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.originalPostDetails = input<Posting>(channelAnswerPost);
-            fixture.detectChanges();
-            expect(component.sourceName).toBe('a thread in #general |');
-        });
+        fixture.componentRef.setInput('originalPostDetails', channelAnswerPost);
+        fixture.detectChanges();
+        expect(component.sourceName).toBe('a thread in #general |');
     });
 
     it('should update sourceName correctly based on isAnswerPost flag (false case)', () => {
@@ -235,11 +225,9 @@ describe('ForwardedMessageComponent', () => {
             postingType: PostingType.POST,
         };
 
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.originalPostDetails = input<Posting>(channelPost);
-            fixture.detectChanges();
-            expect(component.sourceName).toBe('#general |');
-        });
+        fixture.componentRef.setInput('originalPostDetails', channelPost);
+        fixture.detectChanges();
+        expect(component.sourceName).toBe('#general |');
     });
 
     it('should update sourceName correctly when updateSourceName is called manually', () => {
@@ -248,12 +236,10 @@ describe('ForwardedMessageComponent', () => {
             conversation: { type: 'oneToOneChat' } as any,
         };
 
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.originalPostDetails = input<Posting>(oneToOnePost);
-            fixture.detectChanges();
-            component.updateSourceName();
-            expect(component.sourceName).toBe('a direct message ');
-        });
+        fixture.componentRef.setInput('originalPostDetails', oneToOnePost);
+        fixture.detectChanges();
+        component.updateSourceName();
+        expect(component.sourceName).toBe('a direct message ');
     });
 
     it('should handle missing conversation gracefully in updateSourceName', () => {
@@ -262,19 +248,17 @@ describe('ForwardedMessageComponent', () => {
             conversation: undefined,
         } as Post;
 
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.originalPostDetails = input<Posting>(postWithoutConversation);
-            fixture.detectChanges();
-            expect(component.sourceName).toBe('');
-        });
+        fixture.componentRef.setInput('originalPostDetails', postWithoutConversation);
+        fixture.detectChanges();
+        expect(component.sourceName).toBe('');
     });
 
     it('should toggle showFullForwardedMessage when toggleShowFullForwardedMessage is called', () => {
-        expect(component.showFullForwardedMessage).toBeFalse();
+        expect(component.showFullForwardedMessage).toBe(false);
         component.toggleShowFullForwardedMessage();
-        expect(component.showFullForwardedMessage).toBeTrue();
+        expect(component.showFullForwardedMessage).toBe(true);
         component.toggleShowFullForwardedMessage();
-        expect(component.showFullForwardedMessage).toBeFalse();
+        expect(component.showFullForwardedMessage).toBe(false);
     });
 
     it('should set isContentLong to true if content overflows', () => {
@@ -290,7 +274,7 @@ describe('ForwardedMessageComponent', () => {
 
         component.checkIfContentOverflows();
 
-        expect(component.isContentLong).toBeTrue();
+        expect(component.isContentLong).toBe(true);
     });
 
     it('should set isContentLong to false if content does not overflow', () => {
@@ -306,13 +290,13 @@ describe('ForwardedMessageComponent', () => {
 
         component.checkIfContentOverflows();
 
-        expect(component.isContentLong).toBeFalse();
+        expect(component.isContentLong).toBe(false);
     });
 
-    it('should call checkIfContentOverflows in ngAfterViewInit', fakeAsync(() => {
-        const spy = jest.spyOn(component, 'checkIfContentOverflows');
+    it('should call checkIfContentOverflows in ngAfterViewInit', () => {
+        const spy = vi.spyOn(component, 'checkIfContentOverflows');
         component.ngAfterViewInit();
-        tick();
+        vi.advanceTimersByTime(0);
         expect(spy).toHaveBeenCalled();
-    }));
+    });
 });

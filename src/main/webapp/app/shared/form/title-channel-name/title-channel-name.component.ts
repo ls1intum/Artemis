@@ -18,6 +18,9 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     channelNamePrefix = input<string | undefined>('');
     titlePattern = input<string>();
     hideTitleLabel = input<boolean>(false);
+    hideChannelNameLabel = input<boolean>(false);
+    titleHelpIconText = input<string>();
+    channelNameHelpIconText = input<string>('artemisApp.programmingExercise.channelNameTooltip');
     emphasizeLabels = input<boolean>(false);
     minTitleLength = input<number>();
     initChannelName = input<boolean>(true);

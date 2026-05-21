@@ -1,13 +1,15 @@
 <form>
-    <div class="modal-header">
-        @if (!subsequentExerciseGroupSelection()) {
-            <h4 class="modal-title" jhiTranslate="artemisApp.examManagement.importExam"></h4>
-        }
-        @if (subsequentExerciseGroupSelection()) {
-            <h4 class="modal-title" jhiTranslate="artemisApp.examManagement.exerciseGroup.import"></h4>
-        }
-        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
-    </div>
+    @if (!isOpenedAsDialog) {
+        <div class="modal-header">
+            @if (!subsequentExerciseGroupSelection()) {
+                <h4 class="modal-title" jhiTranslate="artemisApp.examManagement.importExam"></h4>
+            }
+            @if (subsequentExerciseGroupSelection()) {
+                <h4 class="modal-title" jhiTranslate="artemisApp.examManagement.exerciseGroup.import"></h4>
+            }
+            <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
+        </div>
+    }
     <!-- State 1: Selection of an exam for import -->
     @if (!exam) {
         <div class="modal-body">
@@ -73,7 +75,16 @@
                 </tbody>
             </table>
             <div class="d-flex justify-content-between p-2">
-                <ngb-pagination [maxSize]="10" [rotate]="true" [collectionSize]="total" [(page)]="state.page" [pageSize]="state.pageSize" (pageChange)="onPageChange($event)" />
+                <ngb-pagination
+                    [maxSize]="5"
+                    [rotate]="true"
+                    [ellipses]="true"
+                    [boundaryLinks]="true"
+                    [collectionSize]="total"
+                    [(page)]="state.page"
+                    [pageSize]="state.pageSize"
+                    (pageChange)="onPageChange($event)"
+                />
             </div>
         </div>
     }

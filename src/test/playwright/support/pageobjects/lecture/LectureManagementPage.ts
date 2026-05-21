@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { expect } from '@playwright/test';
 import { BASE_API } from '../../constants';
+import { setMonacoEditorContentByLocator } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the Lecture Management Page.
@@ -28,10 +29,11 @@ export class LectureManagementPage {
      */
     async deleteLecture(lecture: Lecture) {
         await this.getLecture(lecture.id!).locator('#delete-lecture').click();
-        await expect(this.page.locator('#delete')).toBeDisabled();
+        const deleteButton = this.page.getByTestId('delete-dialog-confirm-button');
+        await expect(deleteButton).toBeDisabled();
         await this.page.fill('#confirm-entity-name', lecture.title!);
         const responsePromise = this.page.waitForResponse(`${BASE_API}/lecture/lectures/*`);
-        await this.page.click('#delete');
+        await deleteButton.click();
         return await responsePromise;
     }
 
@@ -108,9 +110,9 @@ export class LectureManagementPage {
         await this.openCreateUnit(UnitType.TEXT);
         await this.page.fill('#name', name);
         await this.page.fill('#pick-releaseDate #date-input-field', releaseDate.toString());
-        const contentField = this.page.locator('.monaco-editor');
-        await contentField.click();
-        await contentField.pressSequentially(text);
+        // Use the specific container for the content Monaco editor
+        const contentField = this.page.locator('#content');
+        await setMonacoEditorContentByLocator(this.page, contentField, text);
         return this.submitUnit();
     }
 
@@ -178,7 +180,7 @@ export class LectureManagementPage {
 /**
  * Enum for unit types, mapping to their respective button selectors.
  */
-enum UnitType {
+export enum UnitType {
     TEXT = '#createTextUnitButton',
     EXERCISE = '#createExerciseUnitButton',
     VIDEO = '#createVideoUnitButton',

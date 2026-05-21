@@ -15,8 +15,6 @@ import jakarta.persistence.PostRemove;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
@@ -32,11 +31,11 @@ import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 /**
  * A DragItem.
  */
+// No @Cache here on purpose: loaded via cascade during quiz submission merge. See #12574 / #12584.
 @Entity
 @Table(name = "drag_item")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class DragItem extends TempIdObject implements QuizQuestionComponent<DragAndDropQuestion> {
+public class DragItem extends DomainObject implements QuizQuestionComponent<DragAndDropQuestion> {
 
     private static final Logger log = LoggerFactory.getLogger(DragItem.class);
 
@@ -59,7 +58,6 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
     // NOTE: without cascade and orphanRemoval, deletion of quizzes might not work properly, so we reference mappings here, even if we do not use them
     @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "dragItem")
     @JsonIgnore
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<DragAndDropMapping> mappings = new HashSet<>();
 
     public String getPictureFilePath() {

@@ -1,6 +1,6 @@
 <div class="row align-items-center mb-2 mt-2 position-relative">
-    @if (course && lecture) {
-        <a class="stretched-link" [routerLink]="['/courses', course.id!, 'lectures', lecture.id!]"></a>
+    @if (course() && lecture()) {
+        <a class="stretched-link" [routerLink]="['/courses', course().id!, 'lectures', lecture().id!]"></a>
     }
     <div class="col-auto d-none d-sm-block">
         <div class="exercise-row-icon">
@@ -13,14 +13,14 @@
                 <h4><fa-icon [icon]="faChalkboardTeacher" /></h4>
             </div>
             <div class="col-sm col">
-                <h4>{{ lecture?.title }}</h4>
+                <h4>{{ lecture()?.title }}</h4>
             </div>
         </div>
         <div class="row">
-            @if (lecture?.startDate) {
-                <div class="col-auto mb-2" [ngClass]="getUrgentClass(lecture.startDate)">
-                    <span class="d-none d-sm-inline"> {{ lecture.startDate | artemisDate: 'long-date' }} </span>
-                    ({{ lecture.startDate | artemisTimeAgo }})
+            @if (lecture()?.startDate) {
+                <div class="col-auto mb-2" [ngClass]="getUrgentClass(lecture().startDate)">
+                    <span class="d-none d-sm-inline"> {{ lecture().startDate | artemisDate: 'long-date' }} </span>
+                    ({{ lecture().startDate | artemisTimeAgo }})
                 </div>
             } @else {
                 <div class="col-auto mb-2" jhiTranslate="artemisApp.courseOverview.exerciseList.noDueDate"></div>

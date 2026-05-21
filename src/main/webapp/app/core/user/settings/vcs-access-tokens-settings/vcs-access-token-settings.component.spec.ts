@@ -1,12 +1,14 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { of, throwError } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { User } from 'app/core/user/user.model';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -14,20 +16,26 @@ import { provideHttpClient } from '@angular/common/http';
 import { VcsAccessTokensSettingsComponent } from 'app/core/user/settings/vcs-access-tokens-settings/vcs-access-tokens-settings.component';
 
 describe('VcsAccessTokensSettingsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<VcsAccessTokensSettingsComponent>;
     let comp: VcsAccessTokensSettingsComponent;
 
-    let accountServiceMock: { getAuthenticationState: jest.Mock; deleteUserVcsAccessToken: jest.Mock; addNewVcsAccessToken: jest.Mock };
-    const alertServiceMock = { error: jest.fn(), addAlert: jest.fn() };
+    let accountServiceMock: {
+        getAuthenticationState: ReturnType<typeof vi.fn>;
+        deleteUserVcsAccessToken: ReturnType<typeof vi.fn>;
+        addNewVcsAccessToken: ReturnType<typeof vi.fn>;
+    };
+    const alertServiceMock = { error: vi.fn(), addAlert: vi.fn(), success: vi.fn() };
     let translateService: TranslateService;
 
     const token = 'initial-token';
 
     beforeEach(async () => {
         accountServiceMock = {
-            getAuthenticationState: jest.fn(),
-            deleteUserVcsAccessToken: jest.fn(),
-            addNewVcsAccessToken: jest.fn(),
+            getAuthenticationState: vi.fn(),
+            deleteUserVcsAccessToken: vi.fn(),
+            addNewVcsAccessToken: vi.fn(),
         };
 
         await TestBed.configureTestingModule({
@@ -35,8 +43,8 @@ describe('VcsAccessTokensSettingsComponent', () => {
             providers: [
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: AlertService, useValue: alertServiceMock },
+                { provide: DialogService, useClass: MockDialogService },
                 provideHttpClient(),
             ],
         }).compileComponents();
@@ -44,17 +52,17 @@ describe('VcsAccessTokensSettingsComponent', () => {
         comp = fixture.componentInstance;
 
         translateService = TestBed.inject(TranslateService);
-        translateService.currentLang = 'en';
+        translateService.use('en');
 
         accountServiceMock.getAuthenticationState.mockReturnValue(of({ id: 1, vcsAccessToken: token, vcsAccessTokenExpiryDate: '11:20' } as User));
         accountServiceMock.addNewVcsAccessToken.mockReturnValue(of({ id: 1, vcsAccessToken: token, vcsAccessTokenExpiryDate: '11:20' } as User));
         accountServiceMock.deleteUserVcsAccessToken.mockReturnValue(of({}));
         // Avoid NG0953: Unexpected emit for destroyed OutputRef for date-time-picker.component.ts
-        jest.spyOn(console, 'warn').mockImplementation(() => {});
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.restoreAllMocks();
         fixture.destroy();
         TestBed.resetTestingModule();
     });
@@ -67,7 +75,7 @@ describe('VcsAccessTokensSettingsComponent', () => {
         // click button to send expiry date to server, to create the new token
         const createTokenButton = fixture.debugElement.query(By.css('#cancel-vcs-token-creation-button'));
         createTokenButton.triggerEventHandler('onClick', null);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.edit).toBeFalsy();
     });
 
@@ -78,12 +86,12 @@ describe('VcsAccessTokensSettingsComponent', () => {
         // add an invalid expiry date
         comp.expiryDate = dayjs().subtract(7, 'day');
         comp.validateDate();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // click button to send expiry date to server, to create the new token
         const createTokenButton = fixture.debugElement.query(By.css('#create-vcs-token-button'));
         createTokenButton.triggerEventHandler('onClick', null);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.edit).toBeTruthy();
         expect(comp.currentUser?.vcsAccessToken).toBeUndefined();
         expect(alertServiceMock.error).toHaveBeenCalled();
@@ -104,7 +112,7 @@ describe('VcsAccessTokensSettingsComponent', () => {
         // click button to send expiry date to server, to create the new token
         const createTokenButton = fixture.debugElement.query(By.css('#create-vcs-token-button'));
         createTokenButton.triggerEventHandler('onClick', null);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.edit).toBeTruthy();
         expect(alertServiceMock.error).toHaveBeenCalled();
     });
@@ -120,12 +128,12 @@ describe('VcsAccessTokensSettingsComponent', () => {
         // add an expiry date
         comp.expiryDate = tokenExpiryDate;
         comp.validateDate();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // click button to send expiry date to server, to create the new token
         const createTokenButton = fixture.debugElement.query(By.css('#create-vcs-token-button'));
         createTokenButton.triggerEventHandler('onClick', null);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(comp.edit).toBeFalsy();
         expect(accountServiceMock.addNewVcsAccessToken).toHaveBeenCalled();

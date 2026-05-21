@@ -1,3 +1,5 @@
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
@@ -10,6 +12,8 @@ import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entit
 import { MockCalendarService } from 'test/helpers/mocks/service/mock-calendar.service';
 
 describe('CalendarMobileMonthPresentationComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CalendarMobileMonthPresentationComponent>;
     let component: CalendarMobileMonthPresentationComponent;
     let mockMap: Map<string, CalendarEvent[]>;
@@ -26,6 +30,10 @@ describe('CalendarMobileMonthPresentationComponent', () => {
         new CalendarEvent(CalendarEventType.TextExercise, 'Start: Text Exercise', referenceDate.add(2, 'day')),
     ];
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     beforeAll(() => {
         mockMap = new Map();
         for (const event of events) {
@@ -38,8 +46,7 @@ describe('CalendarMobileMonthPresentationComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CalendarMobileMonthPresentationComponent],
-            declarations: [MockComponent(CalendarDayBadgeComponent), MockDirective(TranslateDirective)],
+            imports: [CalendarMobileMonthPresentationComponent, MockComponent(CalendarDayBadgeComponent), MockDirective(TranslateDirective)],
             providers: [
                 {
                     provide: CalendarService,
@@ -79,7 +86,7 @@ describe('CalendarMobileMonthPresentationComponent', () => {
     });
 
     it('should emit selected day on click', () => {
-        const emitSpy = jest.spyOn(component.onDateSelected, 'emit');
+        const emitSpy = vi.spyOn(component.onDateSelected, 'emit');
 
         const dayCell = fixture.debugElement.query(By.css('.day'));
         expect(dayCell).toBeTruthy();
@@ -90,6 +97,6 @@ describe('CalendarMobileMonthPresentationComponent', () => {
         expect(emitSpy).toHaveBeenCalledOnce();
         const emittedDay = emitSpy.mock.calls[0][0];
         expect(emittedDay).toBeDefined();
-        expect(dayjs.isDayjs(emittedDay)).toBeTrue();
+        expect(dayjs.isDayjs(emittedDay)).toBe(true);
     });
 });

@@ -1,4 +1,4 @@
-import { Component, Input, computed, input, viewChildren } from '@angular/core';
+import { Component, computed, input, viewChildren } from '@angular/core';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -12,13 +12,13 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     styleUrl: './lecture-period.component.scss',
 })
 export class LectureUpdatePeriodComponent {
-    @Input() validateDatesFunction: () => void;
+    validateDatesFunction = input.required<() => void>();
     lecture = input.required<Lecture>();
     periodSectionDatepickers = viewChildren(FormDateTimePickerComponent);
     isPeriodSectionValid = computed(() => this.computeIsPeriodSectionValid());
 
     onDateChange() {
-        this.validateDatesFunction();
+        this.validateDatesFunction()();
     }
 
     private computeIsPeriodSectionValid(): boolean {

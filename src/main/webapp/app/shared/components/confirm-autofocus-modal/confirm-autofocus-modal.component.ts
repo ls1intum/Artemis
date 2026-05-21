@@ -18,4 +18,5 @@ export class ConfirmAutofocusModalComponent {
     @Input() translateText: boolean;
     @Input() textIsMarkdown: boolean;
     @Input() contentRef?: TemplateRef<any>;
+    @Input() confirmDisabled = false;
 }

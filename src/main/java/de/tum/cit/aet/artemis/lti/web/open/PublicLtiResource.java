@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.lti.web.open;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import static de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer.LTI13_DEEPLINK_REDIRECT;
 import static de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY;
 
@@ -16,8 +15,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,11 +26,12 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.nimbusds.jwt.SignedJWT;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 
 /**
  * REST controller for receiving LTI requests.
  */
-@Profile(PROFILE_LTI)
+@Conditional(LtiEnabled.class)
 @Lazy
 @RestController
 public class PublicLtiResource {

@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -10,28 +10,27 @@ import {
     faExclamationTriangle,
     faEye,
     faFileSignature,
+    faHistory,
     faListAlt,
     faPencilAlt,
-    faRobot,
     faTable,
     faTrash,
     faUndo,
     faUserCheck,
     faUsers,
+    faWandMagicSparkles,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_IRIS, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
+import { TooltipModule } from 'primeng/tooltip';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseType, IncludedInOverallScore, getExerciseCompetencies } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
-import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ProgrammingExerciseResetButtonDirective } from 'app/programming/manage/reset/button/programming-exercise-reset-button.directive';
@@ -41,23 +40,24 @@ import { ProgrammingExerciseInstructorExerciseDownloadComponent } from 'app/prog
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
-import { AeolusService } from 'app/programming/shared/services/aeolus.service';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
 import { RepositoryDiffInformation, processRepositoryDiff } from 'app/programming/shared/utils/diff.utils';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { Detail, ProgrammingDiffReportDetail } from 'app/shared/detail-overview-list/detail.model';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { onError } from 'app/shared/util/global.utils';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
@@ -67,6 +67,11 @@ import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseInstructorExerciseSharingComponent } from '../../shared/actions/programming-exercise-instructor-exercise-sharing.component';
 import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
+import { CompetencyOrchestrationResultDTO } from 'app/atlas/shared/dto/competency-orchestration-dto';
+import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestration-result-dialog/orchestration-result-dialog.component';
+import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -82,6 +87,7 @@ import { ProgrammingExerciseSharingService } from '../services/programming-exerc
         NgbTooltip,
         ProgrammingExerciseInstructorExerciseDownloadComponent,
         FeatureToggleDirective,
+        FeatureToggleHideDirective,
         ProgrammingExerciseResetButtonDirective,
         DeleteButtonDirective,
         ExerciseDetailStatisticsComponent,
@@ -89,12 +95,15 @@ import { ProgrammingExerciseSharingService } from '../services/programming-exerc
         ArtemisTranslatePipe,
         FeatureOverlayComponent,
         ProgrammingExerciseInstructorExerciseSharingComponent,
+        OrchestrationResultDialogComponent,
+        TooltipModule,
     ],
 })
 export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);
     private accountService = inject(AccountService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
+    private exerciseService = inject(ExerciseService);
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private alertService = inject(AlertService);
     private programmingExerciseSubmissionPolicyService = inject(SubmissionPolicyService);
@@ -106,9 +115,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private router = inject(Router);
     private programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
     private consistencyCheckService = inject(ConsistencyCheckService);
-    private irisSettingsService = inject(IrisSettingsService);
-    private aeolusService = inject(AeolusService);
     private sharingService = inject(ProgrammingExerciseSharingService);
+    private competencyOrchestrationApiService = inject(CompetencyOrchestrationApiService);
+
+    protected readonly orchestrationDialogVisible = signal(false);
+    protected readonly orchestrationDialogSummary = signal('');
+    protected readonly orchestrationRunning = signal(false);
+    protected readonly atlasModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
 
     protected readonly dayjs = dayjs;
     protected readonly ActionType = ActionType;
@@ -133,17 +146,17 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faUsers = faUsers;
     protected readonly faEye = faEye;
+    protected readonly faHistory = faHistory;
     protected readonly faUserCheck = faUserCheck;
-    protected readonly faRobot = faRobot;
+    protected readonly faWandMagicSparkles = faWandMagicSparkles;
 
     programmingExercise: ProgrammingExercise;
     programmingExerciseBuildConfig?: ProgrammingExerciseBuildConfig;
     repositoryDiffInformation?: RepositoryDiffInformation;
     templateFileContentByPath?: Map<string, string>;
     solutionFileContentByPath?: Map<string, string>;
-    competencies: Competency[];
     isExamExercise: boolean;
-    supportsAuxiliaryRepositories: boolean;
+    supportsAuxiliaryRepositories = false; // default value
     baseResource: string;
     shortBaseResource: string;
     teamBaseResource: string;
@@ -163,8 +176,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     doughnutStats: ExerciseManagementStatisticsDto;
     formattedGradingInstructions: SafeHtml;
     localCIEnabled = true;
-    irisEnabled = false;
-    irisChatEnabled = false;
     plagiarismEnabled = false;
 
     isExportToSharingEnabled = false;
@@ -174,9 +185,18 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     plagiarismCheckSupported = false; // default value
 
-    private activatedRouteSubscription: Subscription;
+    /**
+     * Determines if the current user can access participations and scores for this exercise.
+     *
+     * Access rules based on exercise context:
+     * - Course exercises: Teaching assistants (tutors) and above can access
+     * - Exam exercises: Only instructors and above can access (more restrictive for exam confidentiality)
+     *
+     * This aligns with the access rights documented in docs/admin/access-rights.mdx
+     */
+    canAccessParticipationsAndScores = false;
+
     private templateAndSolutionParticipationSubscription: Subscription;
-    private irisSettingsSubscription: Subscription;
     private exerciseStatisticsSubscription: Subscription;
     private sharingEnabledSubscription: Subscription;
     private diffFetchSubscription?: Subscription;
@@ -193,89 +213,20 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.isBuildPlanEditable = this.profileService.isProfileActive(PROFILE_JENKINS);
         this.isExportToSharingEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_SHARING);
+        // Get route data directly from snapshot - no subscription needed
+        const programmingExercise = this.activatedRoute.snapshot.data?.programmingExercise;
+        if (programmingExercise) {
+            this.handleRouteData(programmingExercise);
+        }
 
-        this.activatedRouteSubscription = this.activatedRoute.data.subscribe(({ programmingExercise }) => {
-            this.programmingExercise = programmingExercise;
-            this.programmingExerciseBuildConfig = programmingExercise.buildConfig;
-            this.competencies = programmingExercise.competencies;
-            const exerciseId = this.programmingExercise.id!;
-            this.isExamExercise = !!this.programmingExercise.exerciseGroup;
-            this.courseId = this.isExamExercise ? this.programmingExercise.exerciseGroup!.exam!.course!.id! : this.programmingExercise.course!.id!;
-            this.isAdmin = this.accountService.isAdmin();
-            this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.programmingExercise.gradingInstructions);
+        this.subscribeToSharingStatus();
+    }
 
-            if (!this.isExamExercise) {
-                this.baseResource = `/course-management/${this.courseId}/programming-exercises/${exerciseId}/`;
-                this.shortBaseResource = `/course-management/${this.courseId}/`;
-                this.teamBaseResource = `/course-management/${this.courseId}/exercises/${exerciseId}/`;
-            } else {
-                this.baseResource =
-                    `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}` +
-                    `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/programming-exercises/${exerciseId}/`;
-                this.shortBaseResource = `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
-                this.teamBaseResource =
-                    `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}` +
-                    `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/exercises/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
-            }
-
-            this.templateAndSolutionParticipationSubscription = this.programmingExerciseService
-                .findWithTemplateAndSolutionParticipationAndLatestResults(programmingExercise.id!)
-                .pipe(
-                    tap((updatedProgrammingExercise) => {
-                        this.programmingExercise = updatedProgrammingExercise.body!;
-                        this.loadingTemplateParticipationResults = false;
-                        this.loadingSolutionParticipationResults = false;
-                    }),
-                    tap(() => {
-                        this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
-                        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
-                        const profileInfo = this.profileService.getProfileInfo();
-                        if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation?.buildPlanId && profileInfo.buildPlanURLTemplate) {
-                            this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
-                                profileInfo.buildPlanURLTemplate,
-                                this.programmingExercise.projectKey,
-                                this.programmingExercise.templateParticipation.buildPlanId,
-                            );
-                        }
-                        if (this.programmingExercise.projectKey && this.programmingExercise.solutionParticipation?.buildPlanId && profileInfo.buildPlanURLTemplate) {
-                            this.programmingExercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(
-                                profileInfo.buildPlanURLTemplate,
-                                this.programmingExercise.projectKey,
-                                this.programmingExercise.solutionParticipation.buildPlanId,
-                            );
-                        }
-                        this.supportsAuxiliaryRepositories =
-                            this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.auxiliaryRepositoriesSupported ?? false;
-                        if (this.irisEnabled && !this.isExamExercise) {
-                            this.irisSettingsSubscription = this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                                this.irisChatEnabled = settings?.irisProgrammingExerciseChatSettings?.enabled ?? false;
-                            });
-                        }
-                        this.plagiarismEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PLAGIARISM);
-                    }),
-                    mergeMap(() => this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId)),
-                    tap((submissionPolicy) => {
-                        this.programmingExercise.submissionPolicy = submissionPolicy;
-                    }),
-                )
-                // split pipe to keep type checks
-                .subscribe({
-                    next: () => {
-                        this.checkAndAlertInconsistencies();
-                        this.plagiarismCheckSupported =
-                            this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.plagiarismCheckSupported ?? false;
-
-                        this.startDiffRefresh();
-                    },
-                    error: (error) => {
-                        this.alertService.error(error.message);
-                    },
-                });
-
-            this.exerciseStatisticsSubscription = this.statisticsService.getExerciseStatistics(exerciseId!).subscribe((statistics: ExerciseManagementStatisticsDto) => {
-                this.doughnutStats = statistics;
-            });
-        });
+    /**
+     * Subscribes to the sharing service to check if exercise export to sharing is enabled.
+     * Updates isExportToSharingEnabled based on the service response, defaulting to false on errors.
+     */
+    private subscribeToSharingStatus(): void {
         this.sharingEnabledSubscription = this.sharingService
             .isSharingEnabled()
             .pipe(
@@ -291,12 +242,98 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
-        this.activatedRouteSubscription?.unsubscribe();
         this.templateAndSolutionParticipationSubscription?.unsubscribe();
-        this.irisSettingsSubscription?.unsubscribe();
         this.exerciseStatisticsSubscription?.unsubscribe();
         this.sharingEnabledSubscription?.unsubscribe();
         this.diffFetchSubscription?.unsubscribe();
+    }
+
+    /**
+     * Handles the route data when the programming exercise is loaded.
+     * This is called from the effect that watches the route data signal.
+     */
+    private handleRouteData(programmingExercise: ProgrammingExercise): void {
+        this.programmingExercise = programmingExercise;
+        this.programmingExerciseBuildConfig = programmingExercise.buildConfig;
+        const exerciseId = this.programmingExercise.id!;
+        this.isExamExercise = !!this.programmingExercise.exerciseGroup;
+        // Course exercises: TAs and above can access; Exam exercises: only instructors (for exam confidentiality)
+        this.canAccessParticipationsAndScores = (this.programmingExercise?.isAtLeastTutor && !this.isExamExercise) || !!this.programmingExercise?.isAtLeastInstructor;
+        this.courseId = this.isExamExercise ? this.programmingExercise.exerciseGroup!.exam!.course!.id! : this.programmingExercise.course!.id!;
+        this.isAdmin = this.accountService.isAdmin();
+        this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.programmingExercise.gradingInstructions);
+
+        if (!this.isExamExercise) {
+            this.baseResource = `/course-management/${this.courseId}/programming-exercises/${exerciseId}/`;
+            this.shortBaseResource = `/course-management/${this.courseId}/`;
+            this.teamBaseResource = `/course-management/${this.courseId}/exercises/${exerciseId}/`;
+        } else {
+            this.baseResource =
+                `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}` +
+                `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/programming-exercises/${exerciseId}/`;
+            this.shortBaseResource = `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
+            this.teamBaseResource =
+                `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}` +
+                `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/exercises/${exerciseId}/`;
+        }
+
+        this.templateAndSolutionParticipationSubscription = this.programmingExerciseService
+            .findWithTemplateAndSolutionParticipationAndLatestResults(programmingExercise.id!)
+            .pipe(
+                tap((exerciseWithParticipations) => {
+                    // Only update the template and solution participations, preserving all other exercise properties
+                    this.programmingExercise.templateParticipation = exerciseWithParticipations.body!.templateParticipation;
+                    this.programmingExercise.solutionParticipation = exerciseWithParticipations.body!.solutionParticipation;
+                    this.loadingTemplateParticipationResults = false;
+                    this.loadingSolutionParticipationResults = false;
+                }),
+                tap(() => {
+                    this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
+                    const profileInfo = this.profileService.getProfileInfo();
+                    if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation?.buildPlanId && profileInfo.buildPlanURLTemplate) {
+                        this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
+                            profileInfo.buildPlanURLTemplate,
+                            this.programmingExercise.projectKey,
+                            this.programmingExercise.templateParticipation.buildPlanId,
+                        );
+                    }
+                    if (this.programmingExercise.projectKey && this.programmingExercise.solutionParticipation?.buildPlanId && profileInfo.buildPlanURLTemplate) {
+                        this.programmingExercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(
+                            profileInfo.buildPlanURLTemplate,
+                            this.programmingExercise.projectKey,
+                            this.programmingExercise.solutionParticipation.buildPlanId,
+                        );
+                    }
+                    if (programmingExercise.programmingLanguage) {
+                        this.supportsAuxiliaryRepositories =
+                            this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.auxiliaryRepositoriesSupported ?? false;
+                    }
+                    this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
+                }),
+                mergeMap(() => this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId)),
+                tap((submissionPolicy) => {
+                    this.programmingExercise.submissionPolicy = submissionPolicy;
+                }),
+            )
+            // split pipe to keep type checks
+            .subscribe({
+                next: () => {
+                    this.checkAndAlertInconsistencies();
+                    if (programmingExercise.programmingLanguage) {
+                        this.plagiarismCheckSupported =
+                            this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.plagiarismCheckSupported ?? false;
+                    }
+
+                    this.startDiffRefresh();
+                },
+                error: (error) => {
+                    this.alertService.error(error.message);
+                },
+            });
+
+        this.exerciseStatisticsSubscription = this.statisticsService.getExerciseStatistics(exerciseId!).subscribe((statistics: ExerciseManagementStatisticsDto) => {
+            this.doughnutStats = statistics;
+        });
     }
 
     private ensureExerciseDetailsInitialized() {
@@ -422,9 +459,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 { type: DetailType.Text, title: 'artemisApp.exercise.title', data: { text: exercise.title } },
                 { type: DetailType.Text, title: 'artemisApp.exercise.shortName', data: { text: exercise.shortName } },
                 {
-                    type: DetailType.Text,
+                    type: DetailType.ExerciseCategories,
                     title: 'artemisApp.exercise.categories',
-                    data: { text: exercise.categories?.map((category) => category.category?.toUpperCase()).join(', ') },
+                    data: { categories: exercise.categories },
                 },
             ],
         };
@@ -469,7 +506,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     getExerciseDetailsLanguageSection(exercise: ProgrammingExercise): DetailOverviewSection {
-        this.checkAndSetWindFile(exercise);
+        const buildPlanPhases = parseBuildPlanPhases(exercise.buildConfig?.buildPlanConfiguration);
         const diffReportDetail = this.getDiffReportDetail();
         return {
             headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
@@ -572,13 +609,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 },
                 diffReportDetail,
                 !!exercise.buildConfig?.buildScript &&
-                    !!exercise.buildConfig?.windfile?.metadata?.docker?.image && {
+                    !!buildPlanPhases?.dockerImage && {
                         type: DetailType.Text,
                         title: 'artemisApp.programmingExercise.dockerImage',
-                        data: { text: exercise.buildConfig?.windfile?.metadata?.docker?.image },
+                        data: { text: buildPlanPhases?.dockerImage },
                     },
                 !!exercise.buildConfig?.buildScript &&
-                    !!exercise.buildConfig?.windfile?.metadata?.docker?.image && {
+                    !!buildPlanPhases?.dockerImage && {
                         type: DetailType.Markdown,
                         title: 'artemisApp.programmingExercise.script',
                         titleHelpText: 'artemisApp.programmingExercise.revertToTemplateBuildPlan',
@@ -594,7 +631,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     getExerciseDetailsProblemSection(exercise: ProgrammingExercise): DetailOverviewSection {
-        const hasCompetencies = !!this.competencies?.length;
+        const competencies = getExerciseCompetencies(exercise);
+        const hasCompetencies = competencies.length > 0;
         const details: Detail[] = [
             {
                 title: hasCompetencies ? 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle' : undefined,
@@ -607,7 +645,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             details.push({
                 title: 'artemisApp.competency.link.title',
                 type: DetailType.Text,
-                data: { text: this.competencies?.map((competency) => competency.title).join(', ') },
+                data: { text: competencies.map((competency) => competency.title).join(', ') },
             });
         }
 
@@ -685,14 +723,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     title: 'artemisApp.exercise.structuredAssessmentInstructions',
                     data: { gradingCriteria: exercise.gradingCriteria },
                 },
-                this.irisEnabled &&
-                    this.irisChatEnabled &&
-                    exercise.course &&
-                    !this.isExamExercise && {
-                        type: DetailType.ProgrammingIrisEnabled,
-                        title: 'artemisApp.iris.settings.subSettings.enabled.chat',
-                        data: { exercise, disabled: !exercise.isAtLeastInstructor, subSettingsType: IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT },
-                    },
             ],
         };
     }
@@ -760,6 +790,39 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         modalRef.componentInstance.exercisesToCheck = Array.of(exercise);
     }
 
+    async triggerAtlasOrchestrator() {
+        const exerciseId = this.programmingExercise?.id;
+        if (!exerciseId || this.orchestrationRunning()) {
+            return;
+        }
+        this.orchestrationRunning.set(true);
+        try {
+            // Backend returns 2xx only for SUCCESS; IN_PROGRESS (409) and FAILED (422/502/503)
+            // surface as HttpErrorResponse and are handled in the catch block below.
+            const result = await this.competencyOrchestrationApiService.runForProgrammingExercise(exerciseId);
+            const summary = result.summary?.trim() || '';
+            this.orchestrationDialogSummary.set(summary);
+            this.orchestrationDialogVisible.set(true);
+        } catch (err) {
+            const httpErr = err as HttpErrorResponse;
+            const body = httpErr?.error as CompetencyOrchestrationResultDTO | undefined;
+            const summary = body?.summary?.trim() || '';
+            if (httpErr?.status === 409) {
+                this.alertService.warning('artemisApp.atlasOrchestrator.inProgress');
+            } else if (httpErr?.status === 422 || httpErr?.status === 502 || httpErr?.status === 503) {
+                this.alertService.addAlert({
+                    type: AlertType.DANGER,
+                    message: summary || 'artemisApp.atlasOrchestrator.error',
+                    disableTranslation: summary.length > 0,
+                });
+            } else {
+                onError(this.alertService, httpErr);
+            }
+        } finally {
+            this.orchestrationRunning.set(false);
+        }
+    }
+
     /**
      * Executes a consistency check for this programming exercise and alerts the user if any inconsistencies are found
      * This is only run if the user is at least an instructor in the course
@@ -774,15 +837,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         }
     }
 
-    /**
-     * Checks if the build configuration is available and sets the windfile if it is, helpful for reliably displaying
-     * the build configuration in the UI
-     * @param exercise the programming exercise to check
-     */
-    checkAndSetWindFile(exercise: ProgrammingExercise) {
-        if (exercise.buildConfig && exercise.buildConfig?.buildPlanConfiguration && !exercise.buildConfig?.windfile) {
-            exercise.buildConfig!.windfile = this.aeolusService.parseWindFile(exercise.buildConfig?.buildPlanConfiguration);
-        }
+    fetchExerciseDeletionSummary(): Observable<EntitySummary> {
+        return this.exerciseService.getDeletionSummary(this.programmingExercise);
     }
 
     /**

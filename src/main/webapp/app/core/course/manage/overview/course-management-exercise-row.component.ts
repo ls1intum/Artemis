@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnChanges } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, input, signal } from '@angular/core';
 import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/core/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
@@ -42,61 +42,60 @@ export enum ExerciseRowType {
         ArtemisTimeAgoPipe,
     ],
 })
-export class CourseManagementExerciseRowComponent implements OnChanges {
-    @Input() course: Course;
-    @Input() details: Exercise;
-    @Input() statistic?: CourseManagementOverviewExerciseStatisticsDTO;
-    @Input() rowType: ExerciseRowType;
+export class CourseManagementExerciseRowComponent {
+    readonly course = input.required<Course>();
+    readonly details = input.required<Exercise>();
+    readonly statistic = input<CourseManagementOverviewExerciseStatisticsDTO>();
+    readonly rowType = input.required<ExerciseRowType>();
 
     // Expose enums to the template
-    exerciseType = ExerciseType;
-    exerciseRowType = ExerciseRowType;
-    quizStatus = {
-        CLOSED: 'CLOSED',
+    readonly exerciseType = ExerciseType;
+    readonly exerciseRowType = ExerciseRowType;
+    readonly quizStatus = {
         OPEN_FOR_PRACTICE: 'OPEN_FOR_PRACTICE',
         ACTIVE: 'ACTIVE',
         VISIBLE: 'VISIBLE',
         HIDDEN: 'HIDDEN',
     };
 
-    JSON = JSON;
+    readonly JSON = JSON;
 
-    hasLeftoverAssessments = false;
-    averageScoreNumerator: number;
-    icon: IconProp;
-    iconTooltip: string;
+    readonly hasLeftoverAssessments = signal(false);
+    readonly averageScoreNumerator = signal<number | undefined>(undefined);
 
-    private detailsLoaded = false;
+    readonly icon = computed<IconProp | undefined>(() => {
+        const details = this.details();
+        return details?.type ? getIcon(details.type) : undefined;
+    });
+
+    readonly iconTooltip = computed(() => {
+        const details = this.details();
+        return details?.type ? getIconTooltip(details.type) : '';
+    });
+
     private statisticsLoaded = false;
 
     // Icons
-    faTimes = faTimes;
-    faCalendarAlt = faCalendarAlt;
-    faBook = faBook;
-    faWrench = faWrench;
-    faUsers = faUsers;
-    faTable = faTable;
-    faExclamationTriangle = faExclamationTriangle;
-    faFileSignature = faFileSignature;
+    readonly faTimes = faTimes;
+    readonly faCalendarAlt = faCalendarAlt;
+    readonly faBook = faBook;
+    readonly faWrench = faWrench;
+    readonly faUsers = faUsers;
+    readonly faTable = faTable;
+    readonly faExclamationTriangle = faExclamationTriangle;
+    readonly faFileSignature = faFileSignature;
 
-    ngOnChanges() {
-        if (this.details && !this.detailsLoaded) {
-            this.detailsLoaded = true;
-            this.iconTooltip = getIconTooltip(this.details.type);
-            this.setIcon(this.details.type);
-        }
+    constructor() {
+        // Effect to process statistic changes
+        effect(() => {
+            const statistic = this.statistic();
+            const course = this.course();
+            if (!statistic || this.statisticsLoaded) {
+                return;
+            }
 
-        if (!this.statistic || this.statisticsLoaded) {
-            return;
-        }
-
-        this.statisticsLoaded = true;
-        this.averageScoreNumerator = roundValueSpecifiedByCourseSettings((this.statistic.averageScoreInPercent! * this.statistic.exerciseMaxPoints!) / 100, this.course);
-    }
-
-    setIcon(exerciseType?: ExerciseType) {
-        if (exerciseType) {
-            this.icon = getIcon(exerciseType);
-        }
+            this.statisticsLoaded = true;
+            this.averageScoreNumerator.set(roundValueSpecifiedByCourseSettings((statistic.averageScoreInPercent! * statistic.exerciseMaxPoints!) / 100, course));
+        });
     }
 }

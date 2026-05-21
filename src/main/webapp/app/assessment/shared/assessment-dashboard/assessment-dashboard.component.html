@@ -28,7 +28,7 @@
                         </a>
                     }
                     @if (course?.isAtLeastInstructor) {
-                        <a [routerLink]="['/course-management', course.id, 'grading-system']" class="tab-item btn btn-sm btn-info ms-1 me-1">
+                        <a [routerLink]="['/course-management', course.id, 'grading']" class="tab-item btn btn-sm btn-info ms-1 me-1">
                             <fa-icon [icon]="faClipboard" /> <span jhiTranslate="artemisApp.course.gradingSystem"></span>
                         </a>
 

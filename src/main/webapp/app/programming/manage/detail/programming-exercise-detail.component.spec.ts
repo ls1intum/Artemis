@@ -16,6 +16,8 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
+import { CompetencyOrchestrationStatus } from 'app/atlas/shared/dto/competency-orchestration-dto';
 import { MockProvider } from 'ng-mocks';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
@@ -29,10 +31,16 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
-import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
+import { By } from '@angular/platform-browser';
+import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestration-result-dialog/orchestration-result-dialog.component';
 import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { HttpHeaders } from '@angular/common/http';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { WebsocketService } from 'app/shared/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import dayjs from 'dayjs/esm';
 
 // Mock the diff.utils module to avoid Monaco Editor issues in tests
 jest.mock('app/programming/shared/utils/diff.utils', () => ({
@@ -136,7 +144,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot()],
+            imports: [TranslateModule.forRoot(), OwlNativeDateTimeModule],
             providers: [
                 MockProvider(AlertService),
                 MockProvider(ProgrammingLanguageFeatureService),
@@ -148,6 +156,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: NgbModal, useValue: new MockNgbModalService() },
                 { provide: Router, useClass: MockRouter },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -210,7 +219,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
         beforeEach(() => {
             const route = TestBed.inject(ActivatedRoute);
-            route.data = of({ programmingExercise });
+            route.snapshot.data = { programmingExercise };
         });
 
         it('should not be in exam mode', async () => {
@@ -224,7 +233,10 @@ describe('ProgrammingExerciseDetailComponent', () => {
             expect(getSolutionRepositoryFilesStub).toHaveBeenCalledOnce();
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
             await Promise.resolve();
-            expect(comp.programmingExercise).toEqual(mockProgrammingExercise);
+            // Verify that the route exercise is preserved but participations are updated from API
+            expect(comp.programmingExercise.id).toBe(programmingExercise.id);
+            expect(comp.programmingExercise.templateParticipation).toEqual(mockProgrammingExercise.templateParticipation);
+            expect(comp.programmingExercise.solutionParticipation).toEqual(mockProgrammingExercise.solutionParticipation);
             expect(comp.isExamExercise).toBeFalse();
             expect(comp.doughnutStats.participationsInPercent).toBe(100);
             expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
@@ -252,9 +264,9 @@ describe('ProgrammingExerciseDetailComponent', () => {
             const testExercise = new ProgrammingExercise(new Course(), undefined);
             testExercise.id = 456; // Different ID to avoid conflicts
 
-            // Set up the route data for this test
+            // Set up the route snapshot data for this test
             const route = TestBed.inject(ActivatedRoute);
-            route.data = of({ programmingExercise: testExercise });
+            route.snapshot.data = { programmingExercise: testExercise };
 
             const errorSpy = jest.spyOn(alertService, 'error');
 
@@ -290,7 +302,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
         beforeEach(() => {
             const route = TestBed.inject(ActivatedRoute);
-            route.data = of({ programmingExercise });
+            route.snapshot.data = { programmingExercise };
         });
 
         it('should be in exam mode', fakeAsync(async () => {
@@ -306,11 +318,77 @@ describe('ProgrammingExerciseDetailComponent', () => {
             expect(getTemplateRepositoryFilesStub).toHaveBeenCalledOnce();
             expect(getSolutionRepositoryFilesStub).toHaveBeenCalledOnce();
             await Promise.resolve();
-            expect(comp.programmingExercise).toEqual(mockProgrammingExercise);
+            // Verify that the route exercise is preserved but participations are updated from API
+            expect(comp.programmingExercise.id).toBe(programmingExercise.id);
+            expect(comp.programmingExercise.exerciseGroup).toEqual(exerciseGroup);
+            expect(comp.programmingExercise.templateParticipation).toEqual(mockProgrammingExercise.templateParticipation);
+            expect(comp.programmingExercise.solutionParticipation).toEqual(mockProgrammingExercise.solutionParticipation);
             expect(comp.isExamExercise).toBeTrue();
             expect(comp.repositoryDiffInformation).toBeDefined();
             expect(comp.repositoryDiffInformation!.diffInformations).toHaveLength(1);
         }));
+    });
+
+    describe('canAccessParticipationsAndScores', () => {
+        /**
+         * Helper to compute canAccessParticipationsAndScores like ngOnInit does.
+         * This simulates what happens when route data is received.
+         */
+        const computeCanAccessParticipationsAndScores = () => {
+            comp.canAccessParticipationsAndScores = (comp.programmingExercise?.isAtLeastTutor && !comp.isExamExercise) || !!comp.programmingExercise?.isAtLeastInstructor;
+        };
+
+        it('should return true for course exercise when user is at least tutor', () => {
+            const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+            programmingExercise.id = 1;
+            programmingExercise.isAtLeastTutor = true;
+            programmingExercise.isAtLeastInstructor = false;
+
+            comp.programmingExercise = programmingExercise;
+            comp.isExamExercise = false;
+            computeCanAccessParticipationsAndScores();
+
+            expect(comp.canAccessParticipationsAndScores).toBeTrue();
+        });
+
+        it('should return false for course exercise when user is not at least tutor', () => {
+            const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+            programmingExercise.id = 1;
+            programmingExercise.isAtLeastTutor = false;
+            programmingExercise.isAtLeastInstructor = false;
+
+            comp.programmingExercise = programmingExercise;
+            comp.isExamExercise = false;
+            computeCanAccessParticipationsAndScores();
+
+            expect(comp.canAccessParticipationsAndScores).toBeFalse();
+        });
+
+        it('should return false for exam exercise when user is only tutor', () => {
+            const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+            programmingExercise.id = 1;
+            programmingExercise.isAtLeastTutor = true;
+            programmingExercise.isAtLeastInstructor = false;
+
+            comp.programmingExercise = programmingExercise;
+            comp.isExamExercise = true;
+            computeCanAccessParticipationsAndScores();
+
+            expect(comp.canAccessParticipationsAndScores).toBeFalse();
+        });
+
+        it('should return true for exam exercise when user is at least instructor', () => {
+            const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+            programmingExercise.id = 1;
+            programmingExercise.isAtLeastTutor = true;
+            programmingExercise.isAtLeastInstructor = true;
+
+            comp.programmingExercise = programmingExercise;
+            comp.isExamExercise = true;
+            computeCanAccessParticipationsAndScores();
+
+            expect(comp.canAccessParticipationsAndScores).toBeTrue();
+        });
     });
 
     it('should create details', () => {
@@ -359,6 +437,69 @@ describe('ProgrammingExerciseDetailComponent', () => {
             message: 'success',
             disableTranslation: true,
         });
+    });
+
+    /**
+     * Builds an exercise that satisfies the parent template's render path so the dialog
+     * directive query has something to find. Sets a future releaseDate to skip the doughnut
+     * statistics block (which crashes on missing course context).
+     */
+    const buildInstructorExerciseForDialog = () =>
+        ({
+            ...mockProgrammingExercise,
+            isAtLeastEditor: true,
+            isAtLeastInstructor: true,
+            releaseDate: dayjs().add(1, 'day'),
+        }) as ProgrammingExercise;
+
+    /**
+     * atlasModuleActive is read in the component's field initializer, so the profile info
+     * must be in place before the component is constructed for the dialog to render.
+     */
+    const recreateFixtureWithAtlasModule = () => {
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({
+            activeProfiles: [],
+            activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_PLAGIARISM],
+        } as unknown as ProfileInfo);
+        fixture = TestBed.createComponent(ProgrammingExerciseDetailComponent);
+        comp = fixture.componentInstance;
+    };
+
+    it('should open the orchestration result dialog with the LLM summary when the run succeeds', async () => {
+        recreateFixtureWithAtlasModule();
+
+        const apiService = TestBed.inject(CompetencyOrchestrationApiService);
+        jest.spyOn(apiService, 'runForProgrammingExercise').mockResolvedValue({
+            status: CompetencyOrchestrationStatus.Success,
+            summary: 'I would link this exercise to the Recursion competency at weight 1.0.',
+        });
+        comp.programmingExercise = buildInstructorExerciseForDialog();
+        await comp.triggerAtlasOrchestrator();
+        fixture.detectChanges();
+
+        const dialog = fixture.debugElement.query(By.directive(OrchestrationResultDialogComponent)).componentInstance as OrchestrationResultDialogComponent;
+        expect(dialog.visible()).toBeTrue();
+        expect(dialog.summary()).toBe('I would link this exercise to the Recursion competency at weight 1.0.');
+    });
+
+    it('should error when Atlas orchestrator returns FAILED', async () => {
+        recreateFixtureWithAtlasModule();
+
+        const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+        const apiService = TestBed.inject(CompetencyOrchestrationApiService);
+        jest.spyOn(apiService, 'runForProgrammingExercise').mockRejectedValue(
+            new HttpErrorResponse({
+                status: 503,
+                error: { status: CompetencyOrchestrationStatus.Failed, summary: 'model not configured' },
+            }),
+        );
+        comp.programmingExercise = buildInstructorExerciseForDialog();
+        await comp.triggerAtlasOrchestrator();
+        fixture.detectChanges();
+
+        expect(addAlertSpy).toHaveBeenCalledWith({ type: AlertType.DANGER, message: 'model not configured', disableTranslation: true });
+        const dialog = fixture.debugElement.query(By.directive(OrchestrationResultDialogComponent)).componentInstance as OrchestrationResultDialogComponent;
+        expect(dialog.visible()).toBeFalse();
     });
 
     it('should error on generate structure oracle', () => {

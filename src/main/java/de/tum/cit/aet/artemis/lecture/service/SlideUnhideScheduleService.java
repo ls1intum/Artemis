@@ -10,11 +10,13 @@ import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.SlideLifecycle;
 import de.tum.cit.aet.artemis.lecture.dto.SlideUnhideDTO;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
@@ -24,6 +26,7 @@ import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
  * This handles the actual scheduling of tasks using both the traditional scheduling mechanisms
  * and the integrated ScheduleService.
  */
+@Conditional(LectureEnabled.class)
 @Profile(PROFILE_CORE_AND_SCHEDULING)
 @Lazy
 @Service

@@ -38,8 +38,18 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 @Repository
 public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam, Long> {
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises" })
-    Optional<StudentExam> findWithExercisesById(Long studentExamId);
+    @Query("""
+            SELECT se
+            FROM StudentExam se
+                LEFT JOIN FETCH se.exercises e
+                LEFT JOIN FETCH e.exerciseGroup
+                LEFT JOIN FETCH e.course
+                LEFT JOIN FETCH se.exam ex
+                LEFT JOIN FETCH ex.course
+                LEFT JOIN FETCH se.user
+            WHERE se.id = :studentExamId
+            """)
+    Optional<StudentExam> findWithExercisesById(@Param("studentExamId") Long studentExamId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "studentParticipations" })
     Optional<StudentExam> findWithExercisesAndStudentParticipationsById(Long studentExamId);
@@ -154,27 +164,22 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     long countStudentExamsSubmittedByExamIdIgnoreTestRuns(@Param("examId") long examId);
 
     /**
+     * Finds all student exams for a user with basic exercise data.
+     * This is a simplified query that only fetches the student exam structure needed for grouping and iteration.
      * It might happen that multiple test exams exist for a combination of userId/examId, that's why we return a set here.
      *
      * @param userId the id of the user
-     * @return all student exams for the given user
+     * @return all student exams for the given user with exercises
      */
-    // TODO: this query is way too complex and MUST be simplified in the future
     @Query("""
             SELECT DISTINCT se
             FROM StudentExam se
                 LEFT JOIN FETCH se.exam exam
-                LEFT JOIN FETCH se.exercises e
-                LEFT JOIN FETCH e.submissionPolicy spo
-                LEFT JOIN FETCH e.studentParticipations sp
-                LEFT JOIN FETCH sp.submissions s
-                LEFT JOIN FETCH s.results r
-                LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
-            WHERE se.user.id = sp.student.id
-                  AND se.user.id = :userId
+                LEFT JOIN FETCH exam.course
+                LEFT JOIN FETCH se.exercises
+            WHERE se.user.id = :userId
             """)
-    Set<StudentExam> findAllWithExercisesSubmissionPolicyParticipationsSubmissionsResultsAndFeedbacksByUserId(@Param("userId") long userId);
+    Set<StudentExam> findAllWithExercisesByUserId(@Param("userId") long userId);
 
     @Query("""
             SELECT DISTINCT se
@@ -371,6 +376,18 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             WHERE s.id = :studentExamId
             """)
     void startStudentExam(@Param("studentExamId") Long studentExamId, @Param("startedDate") ZonedDateTime startedDate);
+
+    /**
+     * Deletes all student exams for a given exam (excluding test runs).
+     * Used during exam reset to remove all student participation data.
+     * Note: This operation cascades to related entities through JPA cascade rules.
+     *
+     * @param examId the ID of the exam whose student exams should be deleted
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("DELETE FROM StudentExam se WHERE se.exam.id = :examId AND se.testRun = FALSE")
+    void deleteAllByExamId(@Param("examId") long examId);
 
     /**
      * Return the StudentExam of the participation's user, if possible

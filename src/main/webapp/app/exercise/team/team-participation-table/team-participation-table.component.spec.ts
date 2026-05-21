@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { DebugElement } from '@angular/core';
+import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { TeamService } from 'app/exercise/team/team.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -16,6 +16,8 @@ import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities
 import { Router } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('TeamParticipationTableComponent', () => {
     let comp: TeamParticipationTableComponent;
@@ -153,6 +155,12 @@ describe('TeamParticipationTableComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
             ],
         })
+            .overrideComponent(TeamParticipationTableComponent, {
+                set: {
+                    imports: [ArtemisDatePipe, ArtemisTranslatePipe],
+                    schemas: [NO_ERRORS_SCHEMA],
+                },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TeamParticipationTableComponent);

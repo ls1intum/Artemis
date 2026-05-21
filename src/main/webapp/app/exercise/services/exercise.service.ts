@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -18,9 +18,10 @@ import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { SafeHtml } from '@angular/platform-browser';
-import { IrisExerciseSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+import { ExerciseDeletionSummaryDTO } from 'app/exercise/shared/entities/exercise-deletion-summary.model';
+import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -35,7 +36,6 @@ export type ExampleSolutionInfo = {
 export type EntityDetailsResponseType = HttpResponse<ExerciseDetailsType>;
 export type ExerciseDetailsType = {
     exercise: Exercise;
-    irisSettings?: IrisExerciseSettings;
     plagiarismCaseInfo?: PlagiarismCaseInfo;
 };
 
@@ -64,27 +64,6 @@ export class ExerciseService {
     public resourceUrl = 'api/exercise/exercises';
     public adminResourceUrl = 'api/exercise/admin/exercises';
     public courseResourceUrl = 'api/core/courses';
-
-    /**
-     * Persist a new exercise
-     * @param { Exercise } exercise - Exercise that will be persisted
-     * return
-     */
-    create(exercise: Exercise): Observable<EntityResponseType> {
-        const copy = ExerciseService.convertExerciseDatesFromClient(exercise);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
-        return this.http.post<Exercise>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processExerciseEntityResponse(res)));
-    }
-
-    /**
-     * Update existing exercise
-     * @param { Exercise } exercise - Exercise that will be updated
-     */
-    update(exercise: Exercise): Observable<EntityResponseType> {
-        const copy = ExerciseService.convertExerciseDatesFromClient(exercise);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
-        return this.http.put<Exercise>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processExerciseEntityResponse(res)));
-    }
 
     /**
      * Validates if the dates are correct
@@ -196,6 +175,51 @@ export class ExerciseService {
      */
     reset(exerciseId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/reset`, { observe: 'response' });
+    }
+
+    /**
+     * Retrieves the deletion summary for an exercise.
+     *
+     * @param exercise the exercise
+     * @returns an observable of the deletion summary as EntitySummary
+     */
+    getDeletionSummary(exercise: Exercise): Observable<EntitySummary> {
+        if (exercise.id === undefined || exercise.type === undefined) {
+            return of({} as EntitySummary);
+        }
+
+        return this.http.get<ExerciseDeletionSummaryDTO>(`${this.resourceUrl}/${exercise.id}/deletion-summary`, { observe: 'response' }).pipe(
+            map((response) => {
+                const summary = response.body;
+                return summary ? this.createExerciseEntitySummary(summary, exercise.type!) : {};
+            }),
+        );
+    }
+
+    private createExerciseEntitySummary(dto: ExerciseDeletionSummaryDTO, exerciseType: ExerciseType): EntitySummary {
+        const numberOfStudentParticipations = 'artemisApp.exercise.delete.summary.numberOfStudentParticipations';
+        const numberOfBuilds = 'artemisApp.exercise.delete.summary.numberOfBuilds';
+        const numberOfAssessments = 'artemisApp.exercise.delete.summary.numberOfAssessments';
+        const numberOfCommunicationPosts = 'artemisApp.exercise.delete.summary.numberOfCommunicationPosts';
+        const numberOfAnswerPosts = 'artemisApp.exercise.delete.summary.numberOfAnswerPosts';
+
+        const summary: EntitySummary = {
+            [numberOfStudentParticipations]: dto.numberOfStudentParticipations,
+            [numberOfBuilds]: dto.numberOfBuilds,
+            [numberOfAssessments]: dto.numberOfAssessments,
+            [numberOfCommunicationPosts]: dto.numberOfCommunicationPosts,
+            [numberOfAnswerPosts]: dto.numberOfAnswerPosts,
+        };
+
+        if (exerciseType !== ExerciseType.PROGRAMMING) {
+            delete summary[numberOfBuilds];
+        }
+
+        if (exerciseType === ExerciseType.QUIZ) {
+            delete summary[numberOfAssessments];
+        }
+
+        return summary;
     }
 
     /**
@@ -381,10 +405,18 @@ export class ExerciseService {
      */
     static parseExerciseCategories(exercise?: Exercise) {
         if (exercise?.categories) {
-            exercise.categories = exercise.categories.map((category) => {
-                const categoryObj = JSON.parse(category as unknown as string);
-                return new ExerciseCategory(categoryObj.category, categoryObj.color);
-            });
+            exercise.categories = exercise.categories
+                .map((category) => {
+                    try {
+                        // Handle both JSON strings (from some endpoints) and objects (from DTOs)
+                        const categoryObj = typeof category === 'string' ? JSON.parse(category) : category;
+                        return new ExerciseCategory(categoryObj.category, categoryObj.color);
+                    } catch {
+                        // Skip malformed category entries
+                        return undefined;
+                    }
+                })
+                .filter((category): category is ExerciseCategory => category !== undefined);
         }
     }
 
@@ -575,5 +607,17 @@ export class ExerciseService {
             programmingExercise,
             exampleSolutionPublished: true,
         };
+    }
+
+    static stringifyExerciseDTOCategories(exercise: Exercise): string[] | undefined {
+        return exercise.categories?.map((category) => JSON.stringify(category));
+    }
+
+    static isExerciseVisibleToStudents(exercise: Exercise): boolean {
+        const effectiveDate = exercise.releaseDate ?? exercise.startDate;
+        if (!effectiveDate) {
+            return false;
+        }
+        return dayjs().isSameOrAfter(effectiveDate);
     }
 }

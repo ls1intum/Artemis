@@ -16,7 +16,7 @@
                 id="createButton"
                 type="button"
                 class="btn btn-primary"
-                [disabled]="exercisesToCreateUnitFor.length === 0"
+                [disabled]="exercisesToCreateUnitFor().length === 0"
                 (click)="createExerciseUnits()"
                 jhiTranslate="entity.action.submit"
             ></button>
@@ -59,7 +59,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @for (exercise of exercisesAvailableForUnitCreation; track exercise) {
+                        @for (exercise of exercisesAvailableForUnitCreation(); track exercise.id) {
                             <tr
                                 (click)="selectExerciseForUnitCreation(exercise)"
                                 [class.table-primary]="isExerciseSelectedForUnitCreation(exercise)"

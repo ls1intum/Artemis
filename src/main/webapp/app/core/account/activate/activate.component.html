@@ -3,13 +3,13 @@
         <div class="row justify-content-center">
             <div class="col-md-8">
                 <h1 jhiTranslate="activate.title"></h1>
-                @if (success) {
+                @if (success()) {
                     <div class="alert alert-success">
                         <span jhiTranslate="activate.messages.success"><strong>Your user account has been activated.</strong> Please </span>
                         <a class="alert-link" [routerLink]="['/']" jhiTranslate="global.messages.info.authenticated.link"></a>.
                     </div>
                 }
-                @if (error) {
+                @if (error()) {
                     <div class="alert alert-danger" jhiTranslate="activate.messages.error">
                         <strong>Your user could not be activated.</strong> Please use the registration form to sign up.
                     </div>

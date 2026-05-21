@@ -1,0 +1,31 @@
+---
+title: Course Requests
+sidebar_label: Course Requests
+---
+
+import Image from "../../../src/components/Image/Image";
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+import courseRequestFormImg from "./assets/course-requests/course-request-form.png";
+
+# Course Requests
+
+Only Artemis administrators can create courses. As an instructor, you can request a new course through the built-in course request form. Navigate to the course request page (e.g. [https://artemis.tum.de/course-requests](https://artemis.tum.de/course-requests)) and fill out the required information.
+
+<Image src={courseRequestFormImg} alt="Course request form" caption="Course request form with example data" />
+
+The form requires the following fields:
+
+1. **Course title**: The full name of your course as it will appear to students.
+2. **Short name**: A unique identifier for the course (3-7 characters, letters and numbers only). You can use the *Generate* button to create one automatically.
+3. **Semester**: Select the semester for the course (e.g. WS25 or SS26).
+4. **Start date** and **End date**: Define when the course is active (can be empty).
+5. **This is a test course**: Check this box if the course is only for testing purposes.
+6. **Reason**: Briefly explain why you need the course and provide relevant context, such as the number of expected students.
+
+After submitting the request, an Artemis administrator will review it within a few working days. Once the request is accepted, you will receive an email notification with a direct link to your new course. From there, you can start configuring it and adding content.
+
+<Callout variant={CalloutVariant.info}>
+If your request is not processed within a reasonable time, contact your Artemis administrator directly.
+</Callout>

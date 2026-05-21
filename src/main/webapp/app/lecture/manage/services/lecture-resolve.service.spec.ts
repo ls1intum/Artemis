@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -10,13 +12,15 @@ import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 
 describe('Resolvers', () => {
     describe('LectureResolve', () => {
+        setupTestBed({ zoneless: true });
+
         let resolver: LectureResolve;
         let service: LectureService;
         let route: ActivatedRouteSnapshot;
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                providers: [LectureResolve, { provide: LectureService, useValue: { find: jest.fn() } }],
+                providers: [LectureResolve, { provide: LectureService, useValue: { find: vi.fn() } }],
             });
             resolver = TestBed.inject(LectureResolve);
             service = TestBed.inject(LectureService);
@@ -25,7 +29,7 @@ describe('Resolvers', () => {
 
         it('should return lecture when lectureId param is present', () => {
             const mockLecture = new Lecture();
-            jest.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: mockLecture, status: 200 })));
+            vi.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: mockLecture, status: 200 })));
 
             route.params = { lectureId: 42 };
             let result: Lecture | undefined;
@@ -48,13 +52,15 @@ describe('Resolvers', () => {
     });
 
     describe('AttachmentResolve', () => {
+        setupTestBed({ zoneless: true });
+
         let resolver: AttachmentResolve;
         let service: AttachmentService;
         let route: ActivatedRouteSnapshot;
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                providers: [AttachmentResolve, { provide: AttachmentService, useValue: { find: jest.fn() } }],
+                providers: [AttachmentResolve, { provide: AttachmentService, useValue: { find: vi.fn() } }],
             });
             resolver = TestBed.inject(AttachmentResolve);
             service = TestBed.inject(AttachmentService);
@@ -63,7 +69,7 @@ describe('Resolvers', () => {
 
         it('should return attachment when attachmentId param is present', () => {
             const mockAttachment = new Attachment();
-            jest.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: mockAttachment, status: 200 })));
+            vi.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: mockAttachment, status: 200 })));
 
             route.params = { attachmentId: 99 };
             let result: Attachment | undefined;

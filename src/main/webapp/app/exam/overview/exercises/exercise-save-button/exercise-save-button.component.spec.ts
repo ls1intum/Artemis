@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { input } from '@angular/core';
 import { MockPipe } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -10,57 +9,52 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faFloppyDisk } from '@fortawesome/free-solid-svg-icons';
 import { facSaveSuccess } from 'app/shared/icons/icons';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExerciseSaveButtonComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ExerciseSaveButtonComponent;
     let fixture: ComponentFixture<ExerciseSaveButtonComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [ExerciseSaveButtonComponent, MockPipe(ArtemisTranslatePipe)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ExerciseSaveButtonComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExerciseSaveButtonComponent);
-                component = fixture.componentInstance;
-                fixture.detectChanges();
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(ExerciseSaveButtonComponent);
+        component = fixture.componentInstance;
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create the component', () => {
+        fixture.detectChanges();
         expect(component).toBeTruthy();
     });
 
     it('should disable the button if submission is synced', () => {
-        TestBed.runInInjectionContext(() => {
-            component.submission = input({ isSynced: true, submitted: false } as Submission);
-        });
-
+        fixture.componentRef.setInput('submission', { isSynced: true, submitted: false } as Submission);
         fixture.detectChanges();
 
         const button = fixture.debugElement.query(By.css('#save-exam'));
-        expect(button.nativeElement.disabled).toBeTrue();
+        expect(button.nativeElement.disabled).toBe(true);
     });
 
     it('should enable the button if submission is not synced', () => {
-        TestBed.runInInjectionContext(() => {
-            component.submission = input({ isSynced: false, submitted: false } as Submission);
-        });
+        fixture.componentRef.setInput('submission', { isSynced: false, submitted: false } as Submission);
         fixture.detectChanges();
 
         const button = fixture.debugElement.query(By.css('#save-exam'));
-        expect(button.nativeElement.disabled).toBeFalse();
+        expect(button.nativeElement.disabled).toBe(false);
     });
 
     it('should display facSaveSuccess icon if submission is synced and submitted', () => {
-        TestBed.runInInjectionContext(() => {
-            component.submission = input({ isSynced: true, submitted: true } as Submission);
-        });
+        fixture.componentRef.setInput('submission', { isSynced: true, submitted: true } as Submission);
         fixture.detectChanges();
 
         const icon = fixture.debugElement.query(By.directive(FaIconComponent));
@@ -68,9 +62,7 @@ describe('ExerciseSaveButtonComponent', () => {
     });
 
     it('should display faFloppyDisk icon if submission is not synced and submitted', () => {
-        TestBed.runInInjectionContext(() => {
-            component.submission = input({ isSynced: false, submitted: false } as Submission);
-        });
+        fixture.componentRef.setInput('submission', { isSynced: false, submitted: false } as Submission);
         fixture.detectChanges();
 
         const icon = fixture.debugElement.query(By.directive(FaIconComponent));
@@ -78,12 +70,10 @@ describe('ExerciseSaveButtonComponent', () => {
     });
 
     it('should call onSave when the button is clicked and submission is not synced', () => {
-        TestBed.runInInjectionContext(() => {
-            component.submission = input({ isSynced: false, submitted: false } as Submission);
-        });
+        fixture.componentRef.setInput('submission', { isSynced: false, submitted: false } as Submission);
         fixture.detectChanges();
 
-        const onSaveSpy = jest.spyOn(component, 'onSave');
+        const onSaveSpy = vi.spyOn(component, 'onSave');
 
         const button = fixture.debugElement.query(By.css('#save-exam'));
         button.nativeElement.click();

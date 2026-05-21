@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { SubmittedAnswerAfterEvaluation } from 'app/quiz/overview/course-training/course-training-quiz/SubmittedAnswerAfterEvaluation';
+import { SubmittedAnswerAfterEvaluation } from 'app/quiz/overview/course-training/course-training-quiz/submitted-answer-after-evaluation';
 import { QuizQuestionTraining } from 'app/quiz/overview/course-training/course-training-quiz/quiz-question-training.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';

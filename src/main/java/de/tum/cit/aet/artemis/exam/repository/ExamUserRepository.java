@@ -81,4 +81,7 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
             WHERE eu.exam.id = :examId
             """)
     long countByExamId(@Param("examId") long examId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "exam", "exam.examUsers" })
+    Optional<ExamUser> findWithExamWithExamUsersById(long examUserId);
 }

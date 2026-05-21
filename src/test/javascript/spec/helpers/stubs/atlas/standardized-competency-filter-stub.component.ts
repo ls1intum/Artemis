@@ -4,6 +4,7 @@ import { KnowledgeAreaDTO } from 'app/atlas/shared/entities/standardized-compete
 @Component({
     selector: 'jhi-standardized-competency-filter',
     template: '',
+    standalone: true,
 })
 export class StandardizedCompetencyFilterStubComponent {
     @Input() competencyTitleFilter: string;

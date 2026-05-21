@@ -4,9 +4,11 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -45,4 +47,15 @@ public interface ExamSessionRepository extends ArtemisJpaRepository<ExamSession,
             WHERE es.studentExam.exam.id = :examId
             """)
     Set<ExamSession> findAllExamSessionsByExamId(@Param("examId") long examId);
+
+    /**
+     * Deletes all exam sessions for a given exam.
+     * This must be called before deleting student exams to avoid foreign key constraint violations.
+     *
+     * @param examId the ID of the exam whose sessions should be deleted
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("DELETE FROM ExamSession es WHERE es.studentExam.exam.id = :examId")
+    void deleteAllByExamId(@Param("examId") long examId);
 }

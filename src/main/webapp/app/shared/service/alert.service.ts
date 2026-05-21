@@ -67,6 +67,7 @@ export class AlertService {
     httpErrorListener: Subscription;
 
     readonly conflictErrorKeysToSkip: string[] = ['cannotRegisterInstructor'];
+    readonly badRequestErrorKeysToSkip: string[] = ['courseShortNameExists', 'courseRequestShortNameExists'];
 
     constructor() {
         const eventManager = inject(EventManager);
@@ -115,7 +116,9 @@ export class AlertService {
                             this.addErrorAlert('Error on field "' + fieldName + '"', 'error.' + fieldError.message, { fieldName });
                         }
                     } else if (httpErrorResponse.error && httpErrorResponse.error.title) {
-                        this.addErrorAlert(httpErrorResponse.error.title, httpErrorResponse.error.message, httpErrorResponse.error.params);
+                        if (!this.badRequestErrorKeysToSkip.includes(httpErrorResponse.error.errorKey)) {
+                            this.addErrorAlert(httpErrorResponse.error.title, httpErrorResponse.error.message, httpErrorResponse.error.params);
+                        }
                     }
                     break;
 

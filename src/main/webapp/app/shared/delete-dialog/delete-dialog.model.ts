@@ -24,24 +24,43 @@ export interface EntitySummary {
 }
 
 /**
+ * A single item in an entity summary category
+ */
+export interface EntitySummaryItem {
+    labelKey: string;
+    value: string | number | boolean | undefined;
+}
+
+/**
+ * A category grouping related summary items
+ */
+export interface EntitySummaryCategory {
+    titleKey: string;
+    items: EntitySummaryItem[];
+}
+
+/**
  * Data that will be passed to the delete dialog component
  */
 export class DeleteDialogData {
     // error message emitted from the component delete method, that will be handled by the dialog
     // when delete method succeeded empty message is sent
-    dialogError: Observable<string>;
+    dialogError?: Observable<string>;
 
     // title of the entity we want to delete
     entityTitle?: string;
 
     // i18n key, that will be translated
-    deleteQuestion: string;
+    deleteQuestion?: string;
 
     // i18n key, that will be translated
     entitySummaryTitle?: string;
 
-    // observable that will fetch the entity summary
+    // observable that will fetch the entity summary (flat structure)
     fetchEntitySummary?: Observable<EntitySummary>;
+
+    // observable that will fetch the categorized entity summary (grouped structure)
+    fetchCategorizedEntitySummary?: Observable<EntitySummaryCategory[]>;
 
     // parameters used for the delete question
     translateValues: { [key: string]: unknown };

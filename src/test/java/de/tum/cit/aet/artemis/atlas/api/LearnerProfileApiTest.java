@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
+import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.service.profile.CourseLearnerProfileService;
 import de.tum.cit.aet.artemis.atlas.service.profile.LearnerProfileService;
@@ -28,13 +29,16 @@ class LearnerProfileApiTest {
     @Mock
     private LearnerProfileRepository learnerProfileRepository;
 
+    @Mock
+    private CourseLearnerProfileRepository courseLearnerProfileRepository;
+
     @InjectMocks
     private LearnerProfileApi learnerProfileApi;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        learnerProfileApi = new LearnerProfileApi(learnerProfileService, courseLearnerProfileService, learnerProfileRepository);
+        learnerProfileApi = new LearnerProfileApi(learnerProfileService, courseLearnerProfileService, learnerProfileRepository, courseLearnerProfileRepository);
     }
 
     @Test
@@ -89,5 +93,12 @@ class LearnerProfileApiTest {
         Course course = new Course();
         learnerProfileApi.deleteAllForCourse(course);
         verify(courseLearnerProfileService).deleteAllForCourse(course);
+    }
+
+    @Test
+    void deleteAllForCourseId_shouldDelegateToRepository() {
+        long courseId = 1L;
+        learnerProfileApi.deleteAllForCourseId(courseId);
+        verify(courseLearnerProfileRepository).deleteAllByCourseId(courseId);
     }
 }

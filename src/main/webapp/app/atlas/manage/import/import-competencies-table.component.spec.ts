@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MockComponent, MockDirective } from 'ng-mocks';
@@ -6,16 +7,19 @@ import { SortingOrder } from 'app/shared/table/pageable-table';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ImportCompetenciesTableComponent', () => {
+    setupTestBed({ zoneless: true });
     let componentFixture: ComponentFixture<ImportCompetenciesTableComponent>;
     let component: ImportCompetenciesTableComponent;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule],
-            declarations: [ImportCompetenciesTableComponent, MockDirective(SortDirective), MockDirective(TranslateDirective), MockComponent(NgbPagination)],
-            providers: [],
+            imports: [ReactiveFormsModule, ImportCompetenciesTableComponent, MockDirective(SortDirective), MockDirective(TranslateDirective), MockComponent(NgbPagination)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         componentFixture = TestBed.createComponent(ImportCompetenciesTableComponent);
@@ -30,7 +34,7 @@ describe('ImportCompetenciesTableComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -51,6 +55,6 @@ describe('ImportCompetenciesTableComponent', () => {
 
         expect(component.search().sortingOrder).toBe(SortingOrder.ASCENDING);
         expect(component.search().sortedColumn).toBe('TITLE');
-        expect(component.ascending).toBeTrue();
+        expect(component.ascending).toBeTruthy();
     });
 });

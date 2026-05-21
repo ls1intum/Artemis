@@ -1,55 +1,85 @@
-import { Injectable, inject } from '@angular/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { Injectable, inject, signal } from '@angular/core';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/component/delete-dialog.component';
-import { DeleteDialogData, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
-import { Observable, from } from 'rxjs';
+import { DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
 import { AlertService } from 'app/shared/service/alert.service';
-import { HttpErrorResponse } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
+import { Subscription } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class DeleteDialogService {
-    private modalService = inject(NgbModal);
-    alertService = inject(AlertService);
+    private dialogService = inject(DialogService);
+    private alertService = inject(AlertService);
+    private translateService = inject(TranslateService);
 
-    modalRef: NgbModalRef | null;
+    readonly dialogRef = signal<DynamicDialogRef | undefined>(undefined);
+    private errorSubscription?: Subscription;
 
     /**
      * Opens delete dialog
      * @param deleteDialogData data that is used in dialog
-     * @param animation if true, the modal will fade in and out
+     * @param animation if true, the modal will fade in and out (not used in PrimeNG, kept for API compatibility)
      */
     openDeleteDialog(deleteDialogData: DeleteDialogData, animation = true): void {
         this.alertService.closeAll();
-        this.modalRef = this.modalService.open(DeleteDialogComponent, { size: 'lg', backdrop: 'static', animation });
-        this.modalRef.componentInstance.entityTitle = deleteDialogData.entityTitle;
-        this.modalRef.componentInstance.deleteQuestion = deleteDialogData.deleteQuestion;
-        this.modalRef.componentInstance.translateValues = { ...deleteDialogData.translateValues, title: deleteDialogData.entityTitle };
-        this.modalRef.componentInstance.deleteConfirmationText = deleteDialogData.deleteConfirmationText;
-        this.modalRef.componentInstance.additionalChecks = deleteDialogData.additionalChecks;
-        this.modalRef.componentInstance.entitySummaryTitle = deleteDialogData.entitySummaryTitle;
-        this.modalRef.componentInstance.fetchEntitySummary = deleteDialogData.fetchEntitySummary;
-        this.modalRef.componentInstance.actionType = deleteDialogData.actionType;
-        this.modalRef.componentInstance.buttonType = deleteDialogData.buttonType;
-        this.modalRef.componentInstance.delete = deleteDialogData.delete;
-        this.modalRef.componentInstance.dialogError = deleteDialogData.dialogError;
-        this.modalRef.componentInstance.requireConfirmationOnlyForAdditionalChecks = deleteDialogData.requireConfirmationOnlyForAdditionalChecks;
+        // Clean up any previous error subscription
+        this.errorSubscription?.unsubscribe();
 
-        if (deleteDialogData.fetchEntitySummary !== undefined) {
-            this.fetchAndSetEntitySummary(deleteDialogData.fetchEntitySummary, this.modalRef.componentInstance);
+        const ref = this.dialogService.open(DeleteDialogComponent, {
+            header: this.getDialogHeader(deleteDialogData.actionType),
+            width: '50rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            data: {
+                entityTitle: deleteDialogData.entityTitle,
+                deleteQuestion: deleteDialogData.deleteQuestion,
+                translateValues: { ...deleteDialogData.translateValues, title: deleteDialogData.entityTitle },
+                deleteConfirmationText: deleteDialogData.deleteConfirmationText,
+                additionalChecks: deleteDialogData.additionalChecks,
+                entitySummaryTitle: deleteDialogData.entitySummaryTitle,
+                actionType: deleteDialogData.actionType,
+                buttonType: deleteDialogData.buttonType,
+                delete: deleteDialogData.delete,
+                dialogError: deleteDialogData.dialogError,
+                requireConfirmationOnlyForAdditionalChecks: deleteDialogData.requireConfirmationOnlyForAdditionalChecks,
+                fetchEntitySummary: deleteDialogData.fetchEntitySummary,
+                fetchCategorizedEntitySummary: deleteDialogData.fetchCategorizedEntitySummary,
+            },
+        });
+
+        this.dialogRef.set(ref ?? undefined);
+
+        // Subscribe to dialogError in the service (which stays alive) to handle errors
+        // even after the dialog is closed. This ensures errors are displayed via AlertService.
+        if (deleteDialogData.dialogError) {
+            this.errorSubscription = deleteDialogData.dialogError.subscribe((errorMessage: string) => {
+                if (errorMessage !== '') {
+                    this.alertService.error(errorMessage);
+                }
+                // Clean up subscription after receiving a response (success or error)
+                this.errorSubscription?.unsubscribe();
+                this.errorSubscription = undefined;
+            });
         }
 
-        from(this.modalRef.result).subscribe(() => (this.modalRef = null));
+        ref?.onClose.subscribe(() => {
+            this.dialogRef.set(undefined);
+        });
     }
 
-    /**
-     * Fetches and sets entity summary by subscribing to fetchEntitySummary.
-     * @param fetchEntitySummary observable that fetches entity summary
-     * @param componentInstance instance of DeleteDialogComponent
-     */
-    fetchAndSetEntitySummary(fetchEntitySummary: Observable<EntitySummary>, componentInstance: DeleteDialogComponent): void {
-        fetchEntitySummary.subscribe({
-            next: (entitySummary: EntitySummary) => (componentInstance.entitySummary = entitySummary),
-            error: (error: HttpErrorResponse) => this.alertService.error('error.unexpectedError', { error: error.message }),
-        });
+    private getDialogHeader(actionType?: string): string {
+        const headerKeys: { [key: string]: string } = {
+            delete: 'entity.delete.title',
+            reset: 'entity.reset.title',
+            cleanup: 'entity.cleanup.title',
+            remove: 'entity.remove.title',
+            unlink: 'entity.unlink.title',
+            'no-button-text-delete': 'entity.noButtonTextDelete.title',
+            'end-now': 'entity.endNow.title',
+        };
+        const key = headerKeys[actionType || 'delete'] || 'entity.delete.title';
+        return this.translateService.instant(key);
     }
 }

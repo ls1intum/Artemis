@@ -1,4 +1,4 @@
-@for (instruction of criterion.structuredGradingInstructions; track instruction) {
+@for (instruction of criterion().structuredGradingInstructions; track instruction) {
     <li>
         <a (click)="updateAssessmentWithDropdown(instruction)" class="dropdown-item" [style.background-color]="getInstrColour(instruction)">
             <table class="table layout-table">

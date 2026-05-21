@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
@@ -83,6 +84,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "buildConfig" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndBuildConfigById(long exerciseId);
 
+    @Query("SELECT COALESCE(bc.timeoutSeconds, 0) FROM ProgrammingExercise pe LEFT JOIN pe.buildConfig bc WHERE pe.id = :exerciseId")
+    Optional<Integer> findBuildTimeoutSecondsByExerciseId(@Param("exerciseId") long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results",
             "auxiliaryRepositories", "plagiarismDetectionConfig", "templateParticipation", "solutionParticipation", "buildConfig" })
     Optional<ProgrammingExercise> findForCreationById(long exerciseId);
@@ -93,7 +97,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = "auxiliaryRepositories")
     Optional<ProgrammingExercise> findWithAuxiliaryRepositoriesById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "auxiliaryRepositories", "competencyLinks.competency", "buildConfig", "categories" })
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories", "competencyLinks.competency", "buildConfig",
+            "categories", "plagiarismDetectionConfig", "gradingCriteria", "gradingCriteria.structuredGradingInstructions", "exampleSubmissions" })
     Optional<ProgrammingExercise> findForUpdateById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
@@ -203,12 +208,65 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     Optional<ProgrammingExercise> findWithTemplateParticipationAndLatestSubmissionById(@Param("exerciseId") long exerciseId);
 
     /**
+     * Get all programming exercise IDs that need to be scheduled based on their own dates (not individual participation dates).
+     * This is the first step in an optimized two-query approach.
+     *
+     * @param now the current time
+     * @return Set of exercise IDs that need scheduling based on exercise-level dates
+     */
+    @Query("""
+            SELECT pe.id
+            FROM ProgrammingExercise pe
+            WHERE pe.releaseDate > :now
+                OR pe.buildAndTestStudentSubmissionsAfterDueDate > :now
+                OR pe.dueDate > :now
+            """)
+    Set<Long> findAllExerciseIdsToBeScheduledByExerciseDates(@Param("now") ZonedDateTime now);
+
+    /**
+     * Get all programming exercise IDs that have participations with individual due dates in the future.
+     * This is used in combination with findAllExerciseIdsToBeScheduledByExerciseDates for complete scheduling.
+     *
+     * @param now the current time
+     * @return Set of exercise IDs with future individual due dates
+     */
+    @Query("""
+            SELECT DISTINCT p.exercise.id
+            FROM StudentParticipation p
+            WHERE TYPE(p.exercise) = ProgrammingExercise
+                AND p.individualDueDate IS NOT NULL
+                AND p.individualDueDate > :now
+            """)
+    Set<Long> findAllExerciseIdsWithIndividualDueDatesAfter(@Param("now") ZonedDateTime now);
+
+    /**
+     * Get programming exercises by IDs without fetching participations.
+     * Use this for exercises that don't need participation data for scheduling.
+     *
+     * @param exerciseIds the exercise IDs
+     * @return List of programming exercises
+     */
+    @Query("""
+            SELECT pe
+            FROM ProgrammingExercise pe
+            WHERE pe.id IN :exerciseIds
+            """)
+    List<ProgrammingExercise> findAllByIdIn(@Param("exerciseIds") Set<Long> exerciseIds);
+
+    /**
      * Get all programming exercises that need to be scheduled: Those must satisfy one of the following requirements:
      * <ul>
+     * <li>The release date is in the future</li>
      * <li>The build and test student submissions after due date is in the future</li>
      * <li>The due date is in the future</li>
      * <li>There are participations in the exercise with individual due dates in the future</li>
      * </ul>
+     * NOTE: This query can be slow on large datasets (7+ seconds observed) because it eagerly fetches all participations.
+     * For better performance, consider using the optimized multi-query approach:
+     * 1. Call findAllExerciseIdsToBeScheduledByExerciseDates to get exercises by exercise-level dates
+     * 2. Call findAllExerciseIdsWithIndividualDueDatesAfter to get exercises with individual due dates
+     * 3. Combine the IDs and load exercises using findAllByIdIn
+     * 4. Lazy-load participations only when actually needed for scheduling
      *
      * @param now the current time
      * @return List of the exercises that should be scheduled
@@ -507,6 +565,13 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     long countAllSubmissionsByExerciseIdsSubmitted(@Param("exerciseIds") Set<Long> exerciseIds);
 
     @Query("""
+            SELECT COUNT(p)
+            FROM ProgrammingExerciseStudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+            """)
+    long countStudentParticipationsByExerciseId(@Param("exerciseId") long exerciseId);
+
+    @Query("""
             SELECT DISTINCT p.id
             FROM ProgrammingExercise p
             WHERE p.exerciseGroup.exam.id = :examId
@@ -564,6 +629,19 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             WHERE e.id = :exerciseId
             """)
     Optional<ProgrammingExercise> findByIdWithGradingCriteria(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT e
+            FROM ProgrammingExercise e
+                LEFT JOIN FETCH e.gradingCriteria
+                LEFT JOIN FETCH e.exampleSubmissions
+            WHERE e.id = :exerciseId
+            """)
+    Optional<ProgrammingExercise> findByIdWithGradingCriteriaAndExampleSubmissions(@Param("exerciseId") long exerciseId);
+
+    default ProgrammingExercise findByIdWithGradingCriteriaAndExampleSubmissionsElseThrow(long exerciseId) {
+        return getValueElseThrow(findByIdWithGradingCriteriaAndExampleSubmissions(exerciseId), exerciseId);
+    }
 
     @Query("""
             SELECT e
@@ -931,6 +1009,13 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(programmingExercise.getShortName());
         if (!shortNameMatcher.matches()) {
             throw new BadRequestAlertException("The shortname is invalid", "Exercise", "shortnameInvalid");
+        }
+
+        // Programming exercise short names are immutable after creation, so this check only applies to newly created or imported exercises.
+        // It guards against student repository URLs exceeding the participation.repository_url column / NAME_MAX limits.
+        if (programmingExercise.getShortName().length() > PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH) {
+            throw new BadRequestAlertException("The shortname must not exceed " + PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH + " characters", "Exercise",
+                    "programmingExerciseShortnameTooLong");
         }
 
         // NOTE: we have to cover two cases here: exercises directly stored in the course and exercises indirectly stored in the course (exercise -> exerciseGroup -> exam ->

@@ -1,7 +1,5 @@
 <div class="transcript-column">
     <div class="transcript-header">
-        <div class="transcript-title" jhiTranslate="artemisApp.attachmentVideoUnit.videoPlayer.transcript">Transcript</div>
-
         <!-- Search Box -->
         <div class="search-container">
             <div class="search-input-wrapper">
@@ -51,7 +49,7 @@
         </div>
     </div>
 
-    <div class="transcript-list">
+    <div class="transcript-list" #transcriptList>
         @for (segment of filteredSegments(); track segment.startTime) {
             <div
                 class="transcript-line"

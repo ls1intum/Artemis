@@ -1,12 +1,13 @@
 import { test } from '../../support/fixtures';
 import dayjs from 'dayjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { admin, instructor, PlaywrightUserManagement, studentOne, studentThree, studentTwo, tutor, UserRole } from '../../support/users';
+import { admin, instructor, studentOne, studentThree, studentTwo, tutor } from '../../support/users';
 import { base64StringToBlob, convertBooleanToCheckIconClass, dayjsToString, generateUUID, trimDate } from '../../support/utils';
 import { expect } from '@playwright/test';
 import { Fixtures } from '../../fixtures/fixtures';
 import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
+import { ProgrammingLanguage } from '../../support/constants';
 
 // Common primitives
 const courseData = {
@@ -25,7 +26,6 @@ const courseData = {
     editorGroupName: process.env.EDITOR_GROUP_NAME ?? '',
     instructorGroupName: process.env.INSTRUCTOR_GROUP_NAME ?? '',
     enableComplaints: true,
-    enableFaqs: true,
     maxComplaints: 5,
     maxTeamComplaints: 3,
     maxComplaintTimeDays: 6,
@@ -119,7 +119,6 @@ test.describe('Course management', { tag: '@fast' }, () => {
             await courseCreation.setCourseMaxPoints(courseData.maxPoints);
             await courseCreation.setProgrammingLanguage(courseData.programmingLanguage);
             await courseCreation.setEnableComplaints(courseData.enableComplaints);
-            await courseCreation.setEnableFaq(courseData.enableFaqs);
             await courseCreation.setMaxComplaints(courseData.maxComplaints);
             await courseCreation.setMaxTeamComplaints(courseData.maxTeamComplaints);
             await courseCreation.setMaxComplaintsTimeDays(courseData.maxComplaintTimeDays);
@@ -140,7 +139,6 @@ test.describe('Course management', { tag: '@fast' }, () => {
             expect(courseBody.maxPoints).toBe(courseData.maxPoints);
             expect(courseBody.defaultProgrammingLanguage).toBe(courseData.programmingLanguage);
             expect(courseBody.complaintsEnabled).toBe(courseData.enableComplaints);
-            expect(courseBody.faqEnabled).toBe(courseData.enableFaqs);
             expect(courseBody.maxComplaints).toBe(courseData.maxComplaints);
             expect(courseBody.maxTeamComplaints).toBe(courseData.maxTeamComplaints);
             expect(courseBody.maxComplaintTimeDays).toBe(courseData.maxComplaintTimeDays);
@@ -269,13 +267,14 @@ test.describe('Course management', { tag: '@fast' }, () => {
             courseMessages,
             communicationAPIRequests,
         }) => {
-            await PlaywrightUserManagement.createUserInCourse(course.id!, studentOne, UserRole.Student, navigationBar, courseManagement);
-            await PlaywrightUserManagement.createUserInCourse(course.id!, studentTwo, UserRole.Student, navigationBar, courseManagement);
-            await PlaywrightUserManagement.createUserInCourse(course.id!, studentThree, UserRole.Student, navigationBar, courseManagement);
-            await PlaywrightUserManagement.createUserInCourse(course.id!, tutor, UserRole.Tutor, navigationBar, courseManagement);
-            await PlaywrightUserManagement.createUserInCourse(course.id!, instructor, UserRole.Instructor, navigationBar, courseManagement);
+            // Use API calls instead of UI navigation for faster user creation
+            await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
+            await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
+            await courseManagementAPIRequests.addStudentToCourse(course, studentThree);
+            await courseManagementAPIRequests.addTutorToCourse(course, tutor);
+            await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
 
-            await exerciseAPIRequests.createProgrammingExercise({ course });
+            await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
 
             await exerciseAPIRequests.createModelingExercise({ course });
             await exerciseAPIRequests.createModelingExercise({ course });
@@ -299,8 +298,8 @@ test.describe('Course management', { tag: '@fast' }, () => {
 
             const channel = await courseMessages.setupCommunicationChannel(login, admin, course, communicationAPIRequests);
             const messageText = 'Test Message';
-            await courseMessages.sendMessageInChannel(login, admin, course.id!, channel.id, messageText + ' 1');
-            await courseMessages.sendMessageInChannel(login, admin, course.id!, channel.id, messageText + ' 2');
+            await courseMessages.sendMessageInChannel(login, admin, course.id!, channel.id!, messageText + ' 1');
+            await courseMessages.sendMessageInChannel(login, admin, course.id!, channel.id!, messageText + ' 2');
 
             const expectedCourseSummaryValues: CourseSummary = {
                 isTestCourse: true,

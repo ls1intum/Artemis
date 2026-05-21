@@ -22,13 +22,6 @@
                 "averageLatenessLabel": "Durchschnittliche Verspätung",
                 "xAxisLabel": "Aufgaben",
                 "yAxisLabel": "Relative Fristnähe (%)"
-            },
-            "judgementOfLearning": {
-                "title": "Wie würdest du deine Kompetenzbeherrschung bewerten?",
-                "info": "Bewerte, wie gut du die Fertigkeiten aus dieser Kompetenz verstehst und anwenden kannst. Artemis bietet dir auch eine Bewertung basierend auf deiner Leistung, damit du siehst, wo du stehst.",
-                "artemisRating": "Artemis bewertet dein Verständnis als",
-                "error": "Beim Speichern deiner Bewertung ist ein Fehler aufgetreten.",
-                "redirectButton": "Bewerte Verständnis auf der Übersichtsseite"
             }
         }
     }

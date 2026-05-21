@@ -5,10 +5,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -21,7 +23,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
-import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -37,7 +38,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
-import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
+import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
@@ -47,8 +49,8 @@ import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildConfigService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
-import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 /**
  * Service for triggering builds on the local CI system.
@@ -74,11 +76,9 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final DistributedDataAccessService distributedDataAccessService;
 
-    private final AeolusTemplateService aeolusTemplateService;
+    private final BuildPhasesTemplateService buildPhasesTemplateService;
 
     private final BuildScriptProviderService buildScriptProviderService;
-
-    private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
@@ -87,6 +87,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     private final LocalCIBuildConfigurationService localCIBuildConfigurationService;
+
+    private final LegacyBuildPlanConverterService legacyBuildPlanConverterService;
 
     private final GitService gitService;
 
@@ -100,25 +102,28 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final BuildJobRepository buildJobRepository;
 
+    private final BuildPhaseEvaluationService buildPhaseEvaluationService;
+
     private static final int DEFAULT_BUILD_DURATION = 17;
 
     // Arbitrary value to ensure that the build duration is always a bit higher than the actual build duration
     private static final double BUILD_DURATION_SAFETY_FACTOR = 1.1;
 
-    public LocalCITriggerService(DistributedDataAccessService distributedDataAccessService, AeolusTemplateService aeolusTemplateService,
-            ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, GitService gitService, ExerciseDateService exerciseDateService,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            LocalCIBuildConfigurationService localCIBuildConfigurationService, ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository,
+    public LocalCITriggerService(DistributedDataAccessService distributedDataAccessService, BuildPhasesTemplateService buildPhasesTemplateService,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, GitService gitService,
+            ExerciseDateService exerciseDateService, SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+            LocalCIBuildConfigurationService localCIBuildConfigurationService, LegacyBuildPlanConverterService legacyBuildPlanConverterService,
+            ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, BuildScriptProviderService buildScriptProviderService,
-            ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService, BuildJobRepository buildJobRepository) {
+            ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService, BuildJobRepository buildJobRepository,
+            BuildPhaseEvaluationService buildPhaseEvaluationService) {
         this.distributedDataAccessService = distributedDataAccessService;
-        this.aeolusTemplateService = aeolusTemplateService;
-        this.programmingLanguageConfiguration = programmingLanguageConfiguration;
+        this.buildPhasesTemplateService = buildPhasesTemplateService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.localCIBuildConfigurationService = localCIBuildConfigurationService;
+        this.legacyBuildPlanConverterService = legacyBuildPlanConverterService;
         this.gitService = gitService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.exerciseDateService = exerciseDateService;
@@ -126,6 +131,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         this.programmingExerciseBuildConfigService = programmingExerciseBuildConfigService;
         this.programmingExerciseBuildStatisticsRepository = programmingExerciseBuildStatisticsRepository;
         this.buildJobRepository = buildJobRepository;
+        this.buildPhaseEvaluationService = buildPhaseEvaluationService;
     }
 
     /**
@@ -183,18 +189,25 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         String testCommitHash;
 
         if (triggeredByPushTo == null || triggeredByPushTo.equals(RepositoryType.AUXILIARY)) {
-            assignmentCommitHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri()).getName();
-            testCommitHash = gitService.getLastCommitHash(participation.getProgrammingExercise().getVcsTestRepositoryUri()).getName();
+            assignmentCommitHash = getCommitHashOrNull(participation.getVcsRepositoryUri(), "assignment repository");
+            testCommitHash = getCommitHashOrNull(participation.getProgrammingExercise().getVcsTestRepositoryUri(), "test repository");
         }
         else if (triggeredByPushTo.equals(RepositoryType.TESTS)) {
-            assignmentCommitHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri()).getName();
-            commitHashToBuild = Objects.requireNonNullElseGet(commitHashToBuild,
-                    () -> gitService.getLastCommitHash(participation.getProgrammingExercise().getVcsTestRepositoryUri()).getName());
+            assignmentCommitHash = getCommitHashOrNull(participation.getVcsRepositoryUri(), "assignment repository");
+            if (commitHashToBuild == null) {
+                commitHashToBuild = getCommitHashOrNull(participation.getProgrammingExercise().getVcsTestRepositoryUri(), "test repository");
+            }
             testCommitHash = commitHashToBuild;
         }
         else {
             assignmentCommitHash = commitHashToBuild;
-            testCommitHash = gitService.getLastCommitHash(participation.getProgrammingExercise().getVcsTestRepositoryUri()).getName();
+            testCommitHash = getCommitHashOrNull(participation.getProgrammingExercise().getVcsTestRepositoryUri(), "test repository");
+        }
+
+        // If we couldn't retrieve commit hashes, skip the build - there's nothing to build yet
+        if (assignmentCommitHash == null || testCommitHash == null) {
+            log.info("Skipping build for participation {} - commit hashes not available yet", participation.getId());
+            return;
         }
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
@@ -239,10 +252,6 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     }
 
     // -------Helper methods for triggerBuild()-------
-
-    private List<String> getTestResultPaths(Windfile windfile) {
-        return windfile.results().stream().map(result -> LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + result.path()).toList();
-    }
 
     /**
      * Collects all necessary information regarding the repositories involved in the build job processing.
@@ -316,31 +325,49 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         boolean staticCodeAnalysisEnabled = programmingExercise.isStaticCodeAnalysisEnabled();
         boolean sequentialTestRunsEnabled = buildConfig.hasSequentialTestRuns();
 
-        Windfile windfile;
-        String dockerImage;
-        try {
-            windfile = buildConfig.getWindfile();
-            dockerImage = windfile.metadata().docker().getFullImageName();
-        }
-        catch (NullPointerException e) {
-            log.warn("Could not retrieve windfile for programming exercise {}. Using default windfile instead.", programmingExercise.getId());
-            programmingExercise.setBuildConfig(buildConfig); // getDefaultWindfileFor could fail to lazy load build config
-            windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
-            dockerImage = programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()));
-        }
-
         DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
 
-        List<String> resultPaths = getTestResultPaths(windfile);
-        resultPaths = buildScriptProviderService.replaceResultPathsPlaceholders(resultPaths, buildConfig);
-
-        // Todo: If build agent does not have access to filesystem, we need to send the build script to the build agent and execute it there.
         programmingExercise.setBuildConfig(buildConfig);
-        String buildScript = localCIBuildConfigurationService.createBuildScript(programmingExercise);
+        Optional<BuildPlanPhasesDTO> buildPlanPhasesDTO = buildConfig.getBuildPlanPhases();
+
+        // legacy exercise handling
+        final boolean shouldFallBackToLegacyHandling = buildPlanPhasesDTO.isEmpty() && buildConfig.getBuildPlanConfiguration() != null && buildConfig.getBuildScript() != null;
+        if (shouldFallBackToLegacyHandling) {
+            LegacyBuildPlanConverterService.DataFromLegacyFormat dataFromLegacyFormat = legacyBuildPlanConverterService.convertLegacyBuildPlanConfiguration(programmingExercise)
+                    .orElse(null);
+            if (dataFromLegacyFormat != null) {
+                List<String> resultPaths = finalizeResultPaths(buildConfig, dataFromLegacyFormat.resultPaths().stream());
+                return new BuildConfig(dataFromLegacyFormat.buildScript(), dataFromLegacyFormat.dockerImage(), commitHashToBuild, assignmentCommitHash, testCommitHash, branch,
+                        programmingLanguage, projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(),
+                        buildConfig.getAssignmentCheckoutPath(), buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
+            }
+            log.error("The build config with id {} has a build script and plan but the legacy exercise was not able to be interpreted", buildConfig.getId());
+        }
+
+        final boolean isMissingDefaultPhases = buildPlanPhasesDTO.isEmpty() || buildPlanPhasesDTO.orElseThrow().phases() == null;
+        final List<BuildPhaseDTO> phases = isMissingDefaultPhases ? buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise)
+                : buildPlanPhasesDTO.orElseThrow().phases();
+
+        final boolean isMissingDefaultDockerImage = buildPlanPhasesDTO.isEmpty() || buildPlanPhasesDTO.orElseThrow().dockerImage() == null;
+        final String dockerImage = isMissingDefaultDockerImage ? buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise)
+                : buildPlanPhasesDTO.orElseThrow().dockerImage();
+
+        final List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
+
+        final Set<String> resultPathsSet = BuildPhaseEvaluationService.gatherResultPaths(activePhases);
+        final List<String> resultPaths = finalizeResultPaths(buildConfig, resultPathsSet.stream());
+
+        final String buildScript = localCIBuildConfigurationService.createBuildScriptFromActivePhases(programmingExercise.getBuildConfig(), activePhases);
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
                 staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(), buildConfig.getAssignmentCheckoutPath(),
                 buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
+    }
+
+    private List<String> finalizeResultPaths(final ProgrammingExerciseBuildConfig buildConfig, final Stream<String> resultPaths) {
+        List<String> resultPathsList = resultPaths.map(path -> LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + path).toList();
+        resultPathsList = buildScriptProviderService.replaceResultPathsPlaceholders(resultPathsList, buildConfig);
+        return resultPathsList;
     }
 
     private ProgrammingExerciseBuildConfig loadBuildConfig(ProgrammingExercise programmingExercise) {
@@ -395,5 +422,22 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             return priority + TESTCOURSE_PRIORITY_PENALTY;
         }
         return priority;
+    }
+
+    /**
+     * Gets the commit hash from the repository or returns null if it cannot be retrieved.
+     *
+     * @param repositoryUri   the URI of the repository
+     * @param repositoryLabel a human-readable label for the repository (used in log messages)
+     * @return the commit hash as a string, or null if not available
+     */
+    @Nullable
+    private String getCommitHashOrNull(LocalVCRepositoryUri repositoryUri, String repositoryLabel) {
+        var commitHash = gitService.getLastCommitHash(repositoryUri);
+        if (commitHash == null) {
+            log.warn("Could not retrieve commit hash for {} - the repository may not have any commits yet", repositoryLabel);
+            return null;
+        }
+        return commitHash;
     }
 }

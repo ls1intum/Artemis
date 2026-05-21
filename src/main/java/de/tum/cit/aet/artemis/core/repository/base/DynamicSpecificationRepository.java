@@ -21,17 +21,6 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 public interface DynamicSpecificationRepository<T, ID, F extends FetchOptions> extends ArtemisJpaRepository<T, ID>, JpaSpecificationExecutor<T> {
 
     /**
-     * Find an entity by its id and given specification or throw an EntityNotFoundException if it does not exist.
-     * Implemented in {@link RepositoryImpl#findOneByIdElseThrow(Specification, ID)}.
-     *
-     * @param specification the specification to apply
-     * @param id            the id of the entity to find
-     * @return the entity with the given id
-     */
-    @NonNull
-    T findOneByIdElseThrow(final Specification<T> specification, ID id);
-
-    /**
      * Finds an entity by its ID with optional dynamic fetching of associated entities.
      * Throws an {@link EntityNotFoundException} if the entity with the specified ID does not exist.
      *
@@ -75,7 +64,7 @@ public interface DynamicSpecificationRepository<T, ID, F extends FetchOptions> e
                     partialFetch = partialFetch.fetch(partialFetchPath, JoinType.LEFT);
                 }
             }
-            return null;
+            return criteriaBuilder.conjunction();
         };
     }
 }

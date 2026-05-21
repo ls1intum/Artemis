@@ -1,6 +1,7 @@
 .import-table-container {
-    height: 280px;
-    overflow-y: scroll;
+    min-height: 280px;
+    max-height: 50vh;
+    overflow-y: auto;
 
     table {
         thead th {

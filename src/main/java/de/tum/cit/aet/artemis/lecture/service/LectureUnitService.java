@@ -1,32 +1,20 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import jakarta.ws.rs.BadRequestException;
-
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
@@ -39,23 +27,22 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
-import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
+import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
+import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
-import de.tum.cit.aet.artemis.lecture.dto.LectureUnitDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Lazy
 @Service
 public class LectureUnitService {
-
-    private static final Logger log = LoggerFactory.getLogger(LectureUnitService.class);
 
     private final LectureUnitRepository lectureUnitRepository;
 
@@ -65,28 +52,29 @@ public class LectureUnitService {
 
     private final FileService fileService;
 
-    private final Optional<IrisLectureApi> irisLectureApi;
-
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final Optional<CourseCompetencyApi> courseCompetencyApi;
 
-    private final Optional<CompetencyRelationApi> competencyRelationApi;
-
     private final Optional<CompetencyRepositoryApi> competencyRepositoryApi;
 
+    private final Optional<CompetencyRelationApi> competencyRelationApi;
+
+    private final Optional<LectureContentProcessingApi> contentProcessingApi;
+
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            FileService fileService, Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<CourseCompetencyApi> courseCompetencyApi, Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyRepositoryApi> competencyRepositoryApi) {
+            FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CourseCompetencyApi> courseCompetencyApi,
+            Optional<CompetencyRepositoryApi> competencyRepositoryApi, Optional<CompetencyRelationApi> competencyRelationApi,
+            Optional<LectureContentProcessingApi> contentProcessingApi) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.fileService = fileService;
-        this.irisLectureApi = irisLectureApi;
         this.courseCompetencyApi = courseCompetencyApi;
         this.competencyProgressApi = competencyProgressApi;
-        this.competencyRelationApi = competencyRelationApi;
         this.competencyRepositoryApi = competencyRepositoryApi;
+        this.competencyRelationApi = competencyRelationApi;
+        this.contentProcessingApi = contentProcessingApi;
     }
 
     /**
@@ -153,7 +141,7 @@ public class LectureUnitService {
         }
     }
 
-    private LectureUnitCompletion createLectureUnitCompletion(LectureUnit lectureUnit, User user) {
+    private static LectureUnitCompletion createLectureUnitCompletion(LectureUnit lectureUnit, User user) {
         // Create a completion status for this lecture unit (only if it does not exist)
         LectureUnitCompletion completion = new LectureUnitCompletion();
         completion.setLectureUnit(lectureUnit);
@@ -163,7 +151,11 @@ public class LectureUnitService {
     }
 
     /**
-     * Deletes a lecture unit correctly in the database
+     * Deletes a lecture unit correctly in the database.
+     * Also cancels any ongoing content processing jobs (Pyris ingestion).
+     * <p>
+     * Note: The processing state is automatically deleted by database CASCADE DELETE
+     * when the lecture unit is deleted.
      *
      * @param lectureUnit lecture unit to delete
      */
@@ -171,6 +163,10 @@ public class LectureUnitService {
         LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnit.getId());
 
         if (lectureUnitToDelete instanceof AttachmentVideoUnit attachmentVideoUnit) {
+            // Cancel ongoing processing and delete from Pyris vector database
+            // Processing state deletion is handled by DB cascade when lecture unit is deleted
+            contentProcessingApi.ifPresent(api -> api.handleUnitDeletion(attachmentVideoUnit));
+
             if (attachmentVideoUnit.getAttachment() != null && attachmentVideoUnit.getAttachment().getLink() != null) {
                 fileService.schedulePathForDeletion(
                         FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT), 5);
@@ -189,55 +185,19 @@ public class LectureUnitService {
     }
 
     /**
-     * Link the competency to a set of lecture units
+     * Link the competency to a set of lecture units.
+     * Note: Since we use CascadeType.REMOVE only (not PERSIST), links must be saved explicitly.
      *
      * @param competency       The competency to be linked
      * @param lectureUnitLinks New set of lecture unit links to associate with the competency
      */
     public void linkLectureUnitsToCompetency(CourseCompetency competency, Set<CompetencyLectureUnitLink> lectureUnitLinks) {
-        if (courseCompetencyApi.isEmpty()) {
+        if (competencyRelationApi.isEmpty()) {
             return;
         }
         lectureUnitLinks.forEach(link -> link.setCompetency(competency));
-        competency.setLectureUnitLinks(lectureUnitLinks);
-        courseCompetencyApi.get().save(competency);
-    }
-
-    /**
-     * Validates the given URL string and returns the URL object
-     *
-     * @param urlString The URL string to validate
-     * @return The URL object
-     * @throws BadRequestException If the URL string is invalid
-     */
-    public URL validateUrlStringAndReturnUrl(String urlString) {
-        try {
-            return new URI(urlString).toURL();
-        }
-        catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
-            throw new BadRequestException();
-        }
-    }
-
-    /**
-     * This method is responsible for ingesting a specific `LectureUnit` into Pyris, but only if it is an instance of
-     * `AttachmentVideoUnit`. If the Pyris webhook service is available, it attempts to add the `LectureUnit` to the Pyris
-     * database.
-     * The method responds with different HTTP status codes based on the result:
-     * Returns {OK} if the ingestion is successful.
-     * Returns {SERVICE_UNAVAILABLE} if the Pyris webhook service is unavailable or if the ingestion fails.
-     * Returns {400 BAD_REQUEST} if the provided lecture unit is not of type {AttachmentVideoUnit}.
-     *
-     * @param lectureUnit the lecture unit to be ingested, which must be an instance of AttachmentVideoUnit.
-     * @return ResponseEntity<Void> representing the outcome of the operation with the appropriate HTTP status.
-     */
-    public ResponseEntity<Void> ingestLectureUnitInPyris(LectureUnit lectureUnit) {
-        if (irisLectureApi.isEmpty()) {
-            log.error("Could not send Lecture Unit to Pyris: Pyris webhook service is not available, check if IRIS is enabled.");
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
-        }
-        boolean isIngested = irisLectureApi.get().addLectureUnitToPyrisDB((AttachmentVideoUnit) lectureUnit) != null;
-        return ResponseEntity.status(isIngested ? HttpStatus.OK : HttpStatus.BAD_REQUEST).build();
+        // Save links explicitly since cascade does not include PERSIST
+        competencyRelationApi.get().saveAllLectureUnitLinks(lectureUnitLinks);
     }
 
     /**
@@ -296,27 +256,32 @@ public class LectureUnitService {
      * This method ensures that the managed entity's collection is updated correctly to avoid JPA issues and unnecessary database operations.
      * It makes sure to be Hibernate compliant by modifying the existing collection rather than replacing it.
      *
-     * @param lectureUnitDto      the DTO (from the client) containing the new state of competency links (new, existing or removed ones)
-     * @param existingLectureUnit the existing DB entity to update
+     * @param dto    the DTO (from the client) containing the new state of competency links (new, existing or removed ones)
+     * @param entity the existing DB entity to update
      */
-    public void updateCompetencyLinks(LectureUnitDTO lectureUnitDto, LectureUnit existingLectureUnit) {
+    // TODO: duplicated code, try to unify with ExerciseService.updateCompetencyLinks
+    public void updateCompetencyLinks(CompetencyLinksHolderDTO dto, LectureUnit entity) {
         if (competencyRepositoryApi.isEmpty()) {
             return;
         }
-        // TODO: think about optimizing this by loading all new competencies in a single query
-        if (lectureUnitDto.competencyLinks() == null || lectureUnitDto.competencyLinks().isEmpty()) {
-            // this handles the case where all competency links were removed
-            existingLectureUnit.getCompetencyLinks().clear();
+        if (dto.competencyLinks() == null) {
+            // null means "not provided" — do not change existing links (PATCH semantics)
+            // This is consistent with ExerciseService.updateCompetencyLinks
+            return;
+        }
+        if (dto.competencyLinks().isEmpty()) {
+            // empty set means "remove all" — clear existing links
+            entity.getCompetencyLinks().clear();
         }
         else {
             // 1) Existing links indexed by competency id
-            Map<Long, CompetencyLectureUnitLink> existingLinksByCompetencyId = existingLectureUnit.getCompetencyLinks().stream()
-                    .collect(Collectors.toMap(link -> link.getCompetency().getId(), Function.identity()));
+            final var existingLinksByCompetencyId = entity.getCompetencyLinks().stream().collect(Collectors.toMap(link -> link.getCompetency().getId(), Function.identity()));
 
             // 2) New state of links (reusing existing ones where possible)
             Set<CompetencyLectureUnitLink> updatedLinks = new HashSet<>();
 
-            for (var dtoLink : lectureUnitDto.competencyLinks()) {
+            // TODO: think about optimizing this by loading all new competencies in a single query
+            for (var dtoLink : dto.competencyLinks()) {
                 long competencyId = dtoLink.competency().id();
                 double weight = dtoLink.weight();
 
@@ -329,16 +294,16 @@ public class LectureUnitService {
                 else {
                     // no existing link → create a new one
                     var competency = competencyRepositoryApi.get().findCompetencyOrPrerequisiteByIdElseThrow(competencyId);
-                    var newLink = new CompetencyLectureUnitLink(competency, existingLectureUnit, weight);
+                    var newLink = new CompetencyLectureUnitLink(competency, entity, weight);
 
                     updatedLinks.add(newLink);
                 }
             }
 
             // 3) Replace the contents of the managed collection, NOT the collection itself
-            var managedSet = existingLectureUnit.getCompetencyLinks();
-            managedSet.clear();
-            managedSet.addAll(updatedLinks);
+            entity.getCompetencyLinks().clear();
+            entity.getCompetencyLinks().addAll(updatedLinks);
         }
     }
+
 }

@@ -1,4 +1,6 @@
-import { TestBed, fakeAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -18,7 +20,13 @@ import { throwError } from 'rxjs';
 import { Location } from '@angular/common';
 import { provideHttpClient } from '@angular/common/http';
 
+/**
+ * Test suite for TextAssessmentAnalytics Service.
+ * Tests analytics event tracking, route parameter handling,
+ * example submission filtering, and error handling.
+ */
 describe('TextAssessmentAnalytics Service', () => {
+    setupTestBed({ zoneless: true });
     let service: TextAssessmentAnalytics;
     let location: Location;
     let httpMock: HttpTestingController;
@@ -33,8 +41,8 @@ describe('TextAssessmentAnalytics Service', () => {
             },
         }) as any as ActivatedRoute;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -59,58 +67,55 @@ describe('TextAssessmentAnalytics Service', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.restoreAllMocks();
+        httpMock.verify();
     });
 
-    it('should send assessment event if artemis analytics is enabled', fakeAsync(() => {
+    it('should send assessment event if artemis analytics is enabled', () => {
         service.analyticsEnabled = true;
         service.sendAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
         httpMock.expectOne({ url: `api/text/event-insights/text-assessment/events`, method: 'POST' });
-    }));
+    });
 
-    it('should not send assessment event if artemis analytics is enabled', fakeAsync(() => {
+    it('should not send assessment event if artemis analytics is enabled', () => {
         service.analyticsEnabled = false;
         service.sendAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
         httpMock.expectNone({ url: 'api/text/event-insights/text-assessment/events', method: 'POST' });
-    }));
+    });
 
-    it('should not send assessment event if on example submission path', fakeAsync(() => {
+    it('should not send assessment event if on example submission path', () => {
         service.analyticsEnabled = true;
         location = TestBed.inject(Location);
-        const pathSpy = jest.spyOn(location, 'path').mockReturnValue('/course/1/exercise/1/participation/1/example-submissions/1');
+        const pathSpy = vi.spyOn(location, 'path').mockReturnValue('/course/1/exercise/1/participation/1/example-submissions/1');
         service.sendAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
         httpMock.expectNone({ url: 'api/text/event-insights/text-assessment/events', method: 'POST' });
         expect(pathSpy).toHaveBeenCalledOnce();
-    }));
+    });
 
-    it('should subscribe to route parameters if artemis analytics is enabled', fakeAsync(() => {
-        const subscribeToRouteParameters = jest.spyOn<any, any>(service, 'subscribeToRouteParameters');
+    it('should subscribe to route parameters if artemis analytics is enabled', () => {
+        const subscribeToRouteParameters = vi.spyOn<any, any>(service, 'subscribeToRouteParameters');
         service.analyticsEnabled = true;
         service.setComponentRoute(route());
         expect(subscribeToRouteParameters).toHaveBeenCalledOnce();
         expect(service['courseId']).toBe(1);
-    }));
+    });
 
     it('should display error when submitting event to the server', () => {
         const error = new Error();
         error.message = 'error occurred';
         service.analyticsEnabled = true;
         const textAssessmentService = TestBed.inject(TextAssessmentService);
-        const errorStub = jest.spyOn(textAssessmentService, 'addTextAssessmentEvent').mockReturnValue(throwError(() => error));
+        const errorStub = vi.spyOn(textAssessmentService, 'addTextAssessmentEvent').mockReturnValue(throwError(() => error));
 
         service.sendAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
 
         expect(errorStub).toHaveBeenCalledOnce();
     });
 
-    it('should not subscribe to route parameters if artemis analytics is disabled', fakeAsync(() => {
-        const subscribeToRouteParameters = jest.spyOn<any, any>(service, 'subscribeToRouteParameters');
+    it('should not subscribe to route parameters if artemis analytics is disabled', () => {
+        const subscribeToRouteParameters = vi.spyOn<any, any>(service, 'subscribeToRouteParameters');
         service.analyticsEnabled = false;
         service.setComponentRoute(new ActivatedRoute());
         expect(subscribeToRouteParameters).not.toHaveBeenCalled();
-    }));
-
-    afterEach(() => {
-        httpMock.verify();
     });
 });

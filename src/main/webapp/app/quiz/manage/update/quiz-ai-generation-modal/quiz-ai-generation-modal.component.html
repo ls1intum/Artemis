@@ -1,0 +1,146 @@
+<p-dialog
+    [(visible)]="visible"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{ width: '90vw', 'max-width': '84rem' }"
+    styleClass="quiz-ai-generation-modal"
+    [breakpoints]="{ '1200px': '96vw' }"
+    appendTo="body"
+>
+    <ng-template pTemplate="header">
+        <h5 class="mb-0" jhiTranslate="artemisApp.quizExercise.aiGeneration.modalTitle"></h5>
+    </ng-template>
+
+    <div class="quiz-ai-generation-layout">
+        <section class="quiz-ai-generation-configuration">
+            <h6 class="section-title" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.title"></h6>
+
+            <div class="field-group">
+                <label class="field-label" for="quiz-ai-topic" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.topic"></label>
+                <input id="quiz-ai-topic" pInputText class="w-100" [ngModel]="topic()" (ngModelChange)="topic.set($event)" />
+            </div>
+
+            <div class="field-group">
+                <div class="field-label label-with-help">
+                    <label class="mb-0" for="quiz-ai-optional-prompt" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.optionalPrompt"></label>
+                    <span
+                        class="text-secondary d-inline-flex align-items-center"
+                        [pTooltip]="'artemisApp.quizExercise.aiGeneration.configuration.optionalPromptTooltip' | artemisTranslate"
+                        tooltipPosition="right"
+                        appendTo="body"
+                        tooltipStyleClass="quiz-ai-generation-tooltip"
+                        tabindex="0"
+                    >
+                        <fa-stack class="icon-full-size">
+                            <fa-icon [icon]="faQuestionCircle" stackItemSize="1x" />
+                        </fa-stack>
+                    </span>
+                </div>
+                <textarea id="quiz-ai-optional-prompt" pTextarea class="w-100" rows="4" [ngModel]="optionalPrompt()" (ngModelChange)="optionalPrompt.set($event)"></textarea>
+            </div>
+
+            <div class="field-group">
+                <span class="field-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.language"></span>
+                <div class="selection-list">
+                    @for (languageOption of languages; track languageOption) {
+                        <button
+                            pButton
+                            type="button"
+                            severity="secondary"
+                            class="selection-button"
+                            [ngClass]="{ 'selection-button-active': isLanguageSelected(languageOption) }"
+                            (click)="selectLanguage(languageOption)"
+                        >
+                            <span [jhiTranslate]="getLanguageLabelKey(languageOption)"></span>
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label" for="quiz-ai-number-of-questions" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.numberOfQuestions"></label>
+                <p-inputnumber
+                    inputId="quiz-ai-number-of-questions"
+                    [ngModel]="numberOfQuestions()"
+                    (ngModelChange)="numberOfQuestions.set($event ?? 1)"
+                    [min]="1"
+                    [max]="10"
+                    [showButtons]="true"
+                    [useGrouping]="false"
+                    [step]="1"
+                    styleClass="w-100"
+                />
+            </div>
+
+            <div class="field-group">
+                <span class="field-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.questionType"></span>
+                <div class="selection-list">
+                    @for (questionType of questionTypes; track questionType) {
+                        <button
+                            pButton
+                            type="button"
+                            severity="secondary"
+                            class="selection-button"
+                            [ngClass]="{ 'selection-button-active': isQuestionTypeSelected(questionType) }"
+                            (click)="toggleQuestionType(questionType)"
+                        >
+                            <span [jhiTranslate]="getQuestionTypeLabelKey(questionType)"></span>
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <div class="field-group difficulty-field">
+                <span class="field-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.difficulty"></span>
+                <p-slider [ngModel]="difficulty()" (ngModelChange)="difficulty.set($event ?? 50)" [min]="0" [max]="100" />
+                <div class="difficulty-labels">
+                    <span jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.difficultyLevels.easy"></span>
+                    <span jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.difficultyLevels.medium"></span>
+                    <span jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.difficultyLevels.hard"></span>
+                </div>
+            </div>
+
+            <button pButton type="button" class="w-100 mt-2 generate-button" [disabled]="!canGenerate() || isGenerating()" (click)="generateQuestions()">
+                @if (isGenerating()) {
+                    <span class="generate-loading-label">
+                        <span [jhiTranslate]="getCurrentLoadingPhraseKey()"></span><span class="loading-dots">{{ getLoadingDots() }}</span>
+                    </span>
+                } @else {
+                    <span jhiTranslate="artemisApp.quizExercise.aiGeneration.actions.generate"></span>
+                }
+            </button>
+        </section>
+
+        <section class="quiz-ai-generation-preview">
+            <div class="preview-header">
+                <h6 class="section-title mb-0" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.title"></h6>
+                @if (hasGeneratedQuestions()) {
+                    <span class="preview-count" [jhiTranslate]="getResultCountTextKey()" [translateValues]="getResultCountTranslateValues()"></span>
+                }
+            </div>
+
+            @if (!hasGeneratedQuestions()) {
+                <div class="preview-empty">
+                    <h6 jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.emptyTitle"></h6>
+                    <p class="mb-0" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.emptyDescription"></p>
+                </div>
+            } @else {
+                <div class="question-list">
+                    @for (question of generatedQuestions(); track question.id; let questionIndex = $index) {
+                        <jhi-quiz-ai-generated-question-card [question]="question" [questionIndex]="questionIndex" />
+                    }
+                </div>
+            }
+        </section>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <button pButton type="button" severity="secondary" outlined (click)="close()">
+            <span jhiTranslate="entity.action.close"></span>
+        </button>
+        <button pButton type="button" severity="success" [disabled]="!hasGeneratedQuestions()" (click)="addGeneratedQuestionsToQuiz()">
+            <span jhiTranslate="artemisApp.quizExercise.aiGeneration.actions.addToEditor"></span>
+        </button>
+    </ng-template>
+</p-dialog>

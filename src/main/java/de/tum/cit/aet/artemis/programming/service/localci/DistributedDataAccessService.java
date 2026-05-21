@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
+import java.util.function.Consumer;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
@@ -198,12 +200,59 @@ public class DistributedDataAccessService {
     /**
      * This method is used to get a List containing all build agent information. This should be used for reading/iterating over the map.
      * If you want to write to the map or add a listener, use {@link DistributedDataAccessService#getDistributedBuildAgentInformation()} instead.
+     * On core nodes (data members), this filters out disconnected build agents using Hazelcast's client tracking.
+     * <p>
+     * Important: The returned BuildAgentInformation objects are enriched with the CURRENT processing jobs
+     * from the distributed processing jobs map. This ensures the runningBuildJobs list and numberOfCurrentBuildJobs
+     * are always accurate, even if the build agent hasn't updated its information recently.
      *
-     * @return a list of build agent information
+     * @return a list of active build agent information (excludes disconnected agents on core nodes)
      */
     public List<BuildAgentInformation> getBuildAgentInformation() {
         // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
-        return new ArrayList<>(getDistributedBuildAgentInformation().values());
+        List<BuildAgentInformation> allAgents = new ArrayList<>(getDistributedBuildAgentInformation().values());
+
+        // Get current processing jobs to enrich agent information with accurate running jobs data
+        List<BuildJobQueueItem> currentProcessingJobs = getProcessingJobs();
+
+        // Get connected client names from Hazelcast (only available on core nodes)
+        Set<String> connectedClients = distributedDataProvider.getConnectedClientNames();
+
+        // Enrich and filter agents
+        return allAgents.stream()
+                // Guard against null entries from distributed map
+                .filter(agent -> agent != null && agent.buildAgent() != null)
+                // Filter to only connected agents if we can determine connectivity
+                .filter(agent -> connectedClients.isEmpty() || connectedClients.contains(agent.buildAgent().name()))
+                // Enrich with current processing jobs for accurate runningBuildJobs data
+                .map(agent -> enrichWithCurrentProcessingJobs(agent, currentProcessingJobs)).toList();
+    }
+
+    /**
+     * Enriches a BuildAgentInformation with the current processing jobs from the distributed map.
+     * This ensures that the runningBuildJobs list and numberOfCurrentBuildJobs are always accurate,
+     * even if the build agent hasn't updated its information recently.
+     *
+     * @param agent                 the build agent information to enrich
+     * @param currentProcessingJobs the current list of all processing jobs
+     * @return a new BuildAgentInformation with accurate running jobs data
+     */
+    private BuildAgentInformation enrichWithCurrentProcessingJobs(BuildAgentInformation agent, List<BuildJobQueueItem> currentProcessingJobs) {
+        // Filter processing jobs for this specific agent
+        List<BuildJobQueueItem> agentJobs = currentProcessingJobs.stream().filter(job -> job.buildAgent() != null && job.buildAgent().name().equals(agent.buildAgent().name()))
+                .toList();
+
+        int currentJobCount = agentJobs.size();
+
+        // Determine accurate status based on current job count
+        BuildAgentStatus status = agent.status();
+        if (status != BuildAgentStatus.PAUSED && status != BuildAgentStatus.SELF_PAUSED) {
+            status = currentJobCount > 0 ? BuildAgentStatus.ACTIVE : BuildAgentStatus.IDLE;
+        }
+
+        // Return enriched agent info with current processing jobs
+        return new BuildAgentInformation(agent.buildAgent(), agent.maxNumberOfConcurrentBuildJobs(), currentJobCount, agentJobs, status, agent.publicSshKey(),
+                agent.buildAgentDetails(), agent.pauseAfterConsecutiveBuildFailures());
     }
 
     /**
@@ -288,16 +337,32 @@ public class DistributedDataAccessService {
     }
 
     /**
-     * @param memberAddress the build agent to retrieve job IDs for
-     * @return a list of the processing job IDs on a specific build agent
+     * @param memberAddress the build agent member address to retrieve jobs for
+     * @return a list of the processing jobs on a specific build agent by member address
      */
     public List<BuildJobQueueItem> getProcessingJobsForAgent(String memberAddress) {
-        return getProcessingJobs().stream().filter(job -> job.buildAgent().memberAddress().equals(memberAddress)).toList();
+        return getProcessingJobs().stream().filter(job -> job.buildAgent() != null && job.buildAgent().memberAddress().equals(memberAddress)).toList();
     }
 
     /**
-     * @param memberAddress the build agent to retrieve job IDs for
-     * @return a list of the processing job IDs on a specific build agent
+     * @param agentName the build agent name (short name) to retrieve jobs for
+     * @return a list of the processing jobs on a specific build agent by name
+     */
+    public List<BuildJobQueueItem> getProcessingJobsForAgentByName(String agentName) {
+        return getProcessingJobs().stream().filter(job -> job.buildAgent() != null && job.buildAgent().name().equals(agentName)).toList();
+    }
+
+    /**
+     * @param agentName the build agent name (short name) to retrieve job IDs for
+     * @return a list of the processing job IDs on a specific build agent by name
+     */
+    public List<String> getProcessingJobIdsForAgentByName(String agentName) {
+        return getProcessingJobsForAgentByName(agentName).stream().map(BuildJobQueueItem::id).toList();
+    }
+
+    /**
+     * @param memberAddress the build agent member address to retrieve job IDs for
+     * @return a list of the processing job IDs on a specific build agent by member address
      */
     public List<String> getProcessingJobIdsForAgent(String memberAddress) {
         return getProcessingJobsForAgent(memberAddress).stream().map(BuildJobQueueItem::id).toList();
@@ -355,16 +420,86 @@ public class DistributedDataAccessService {
     }
 
     /**
-     * Retrieves the build agent status for the local member.
+     * Checks if the distributed data provider is connected and ready to use.
+     * For cluster members (core nodes), this is equivalent to isInstanceRunning().
+     * For clients (build agents with asyncStart=true), this checks if the client
+     * has established a connection to at least one cluster member.
      *
-     * @return the status of the local build agent, or {@code null} if the local member is not registered as a build agent
+     * <p>
+     * This is important for async-start clients that may be running but not yet
+     * connected to the cluster. Operations on distributed objects will fail until
+     * the client is connected.
+     *
+     * @return true if the instance is connected and ready to use, false otherwise
+     */
+    public boolean isConnectedToCluster() {
+        return distributedDataProvider.isConnectedToCluster();
+    }
+
+    /**
+     * Retrieves the build agent status for a specific agent by its key.
+     *
+     * @param agentKey the key identifying the build agent (typically the short name)
+     * @return the status of the build agent, or {@code null} if the agent is not registered
      */
     @Nullable
-    public BuildAgentStatus getLocalBuildAgentStatus() {
-        BuildAgentInformation localAgentInfo = getDistributedBuildAgentInformation().get(getLocalMemberAddress());
-        if (localAgentInfo == null) {
+    public BuildAgentStatus getBuildAgentStatus(String agentKey) {
+        BuildAgentInformation agentInfo = getDistributedBuildAgentInformation().get(agentKey);
+        if (agentInfo == null) {
             return null;
         }
-        return localAgentInfo.status();
+        return agentInfo.status();
+    }
+
+    /**
+     * Registers a callback that will be invoked when the client connects or reconnects to the cluster.
+     * This is important for re-registering listeners on distributed objects after a connection loss.
+     *
+     * <p>
+     * The callback receives a boolean indicating whether this is the initial connection (true)
+     * or a reconnection after disconnection (false). Services can use this to differentiate
+     * between first-time setup and re-initialization after connection loss.
+     *
+     * @param callback a consumer that receives true for initial connection, false for reconnection
+     * @return a unique identifier that can be used to remove the listener later
+     */
+    public UUID addConnectionStateListener(Consumer<Boolean> callback) {
+        return distributedDataProvider.addConnectionStateListener(callback);
+    }
+
+    /**
+     * Removes a previously registered connection state listener.
+     *
+     * @param listenerId the unique identifier returned by {@link #addConnectionStateListener}
+     * @return true if the listener was found and removed, false otherwise
+     */
+    public boolean removeConnectionStateListener(UUID listenerId) {
+        return distributedDataProvider.removeConnectionStateListener(listenerId);
+    }
+
+    /**
+     * Registers a callback that will be invoked when a client (build agent) disconnects from the cluster.
+     * This is only available on data members (core nodes), not on clients (build agents).
+     * On clients, this method returns null and the callback is never invoked.
+     *
+     * <p>
+     * This is important for cleaning up stale data when build agents crash or disconnect
+     * unexpectedly. The callback receives the client name (build agent short name) that disconnected.
+     *
+     * @param callback a consumer that receives the disconnected client's name
+     * @return a unique identifier that can be used to remove the listener later, or null if not supported
+     */
+    public UUID addClientDisconnectionListener(Consumer<String> callback) {
+        return distributedDataProvider.addClientDisconnectionListener(callback);
+    }
+
+    /**
+     * Removes a previously registered client disconnection listener.
+     *
+     * @param listenerId the unique identifier returned by {@link #addClientDisconnectionListener}
+     * @return true if the listener was found and removed, false otherwise
+     */
+    public boolean removeClientDisconnectionListener(UUID listenerId) {
+        return distributedDataProvider.removeClientDisconnectionListener(listenerId);
     }
 }

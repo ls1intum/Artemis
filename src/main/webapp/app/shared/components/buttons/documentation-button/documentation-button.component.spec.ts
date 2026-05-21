@@ -5,16 +5,18 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('DocumentationButtonComponent', () => {
     let fixture: ComponentFixture<DocumentationButtonComponent>;
     let comp: DocumentationButtonComponent;
     let translateService: TranslateService;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip), FaIconComponent],
-            declarations: [DocumentationButtonComponent, MockPipe(ArtemisTranslatePipe)],
+    beforeEach(async () => {
+        setupTestBed({ zoneless: true });
+        await TestBed.configureTestingModule({
+            imports: [MockDirective(NgbTooltip), FaIconComponent, DocumentationButtonComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [MockProvider(TranslateService)],
         })
             .compileComponents()
@@ -22,12 +24,12 @@ describe('DocumentationButtonComponent', () => {
                 fixture = TestBed.createComponent(DocumentationButtonComponent);
                 translateService = TestBed.inject(TranslateService);
                 comp = fixture.componentInstance;
-                comp.type = 'Course';
+                fixture.componentRef.setInput('type', 'Course');
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -38,12 +40,22 @@ describe('DocumentationButtonComponent', () => {
     it('should return the correct translation string', () => {
         fixture.detectChanges();
 
-        const translateServiceSpy = jest.spyOn(translateService, 'instant');
+        const translateServiceSpy = vi.spyOn(translateService, 'instant');
 
         comp.getTooltipForType();
 
         expect(translateServiceSpy).toHaveBeenCalledTimes(2);
         expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.documentationLinks.prefix');
         expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.documentationLinks.course');
+    });
+
+    it('should render the correct documentation link for generate competencies', () => {
+        fixture.componentRef.setInput('type', 'GenerateCompetencies');
+        fixture.detectChanges();
+
+        const anchor: HTMLAnchorElement | null = fixture.nativeElement.querySelector('a');
+
+        expect(anchor).not.toBeNull();
+        expect(anchor?.getAttribute('href')).toBe('https://docs.artemis.tum.de/instructor/adaptive-learning#generate-competencies');
     });
 });

@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpHandler, HttpHeaders, HttpRequest, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
@@ -5,13 +7,15 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { TestBed } from '@angular/core/testing';
 
 describe(`NotificationInterceptor`, () => {
+    setupTestBed({ zoneless: true });
+
     let notificationInterceptor: NotificationInterceptor;
 
     let alertServiceMock: AlertService;
 
     beforeEach(() => {
         alertServiceMock = {
-            success: jest.fn(),
+            success: vi.fn(),
         } as any as AlertService;
 
         TestBed.configureTestingModule({
@@ -22,7 +26,7 @@ describe(`NotificationInterceptor`, () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create a success alert if alert headers are given', () => {

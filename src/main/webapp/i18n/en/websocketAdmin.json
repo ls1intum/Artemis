@@ -1,7 +1,7 @@
 {
     "artemisApp": {
         "websocketAdmin": {
-            "title": "Websocket broker reconnect",
+            "title": "Websocket Broker",
             "description": "List the Hazelcast nodes and trigger a reconnect of the websocket broker relay on a specific node or on all nodes.",
             "refreshNodes": "Refresh nodes",
             "reconnectAll": "Reconnect all nodes",

@@ -1,6 +1,7 @@
 <input
     #ngbTypeahead
     id="student-search-input"
+    name="search-filter"
     type="text"
     class="form-control"
     [placeholder]="'artemisApp.team.addStudentToTeam' | artemisTranslate"
@@ -8,4 +9,10 @@
     [ngbTypeahead]="onSearch"
     [resultFormatter]="searchResultFormatter"
     [inputFormatter]="searchInputFormatter"
+    autocomplete="nope"
+    role="searchbox"
+    aria-autocomplete="list"
+    data-1p-ignore="true"
+    data-lpignore="true"
+    data-form-type="other"
 />

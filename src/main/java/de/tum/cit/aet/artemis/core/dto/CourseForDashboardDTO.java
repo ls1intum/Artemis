@@ -23,12 +23,11 @@ import de.tum.cit.aet.artemis.exercise.dto.ParticipationResultDTO;
  * @param quizScores              the scores for just the quiz exercises in the course, including the max and reachable points and the scores of the currently logged in student
  * @param participationResults    the relevant result for each participation.
  * @param courseNotificationCount the number of notifications for the course
- * @param irisCourseChatEnabled   whether the Iris course chat is enabled for this course
+ * @param irisEnabledInCourse     whether the Iris course chat is enabled for this course
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CourseForDashboardDTO(Course course, CourseScoresDTO totalScores, CourseScoresDTO textScores, CourseScoresDTO programmingScores, CourseScoresDTO modelingScores,
-        CourseScoresDTO fileUploadScores, CourseScoresDTO quizScores, Set<ParticipationResultDTO> participationResults, Long courseNotificationCount,
-        Boolean irisCourseChatEnabled) {
+        CourseScoresDTO fileUploadScores, CourseScoresDTO quizScores, Set<ParticipationResultDTO> participationResults, Long courseNotificationCount, Boolean irisEnabledInCourse) {
 
     public CourseForDashboardDTO(Course course, CourseScoresDTO totalScores, CourseScoresDTO textScores, CourseScoresDTO programmingScores, CourseScoresDTO modelingScores,
             CourseScoresDTO fileUploadScores, CourseScoresDTO quizScores, Set<ParticipationResultDTO> participationResults) {

@@ -1,22 +1,17 @@
-<div class="modal-header">
-    <h4 class="modal-title" jhiTranslate="artemisApp.lecture.dismissChangesModal.title"></h4>
-</div>
 <div class="modal-body">
     <span jhiTranslate="artemisApp.lecture.dismissChangesModal.message" class="fw-bold"></span><br />
-    <!--    check if translation should be singular or plural, to be exchanged
-        with computed signals once input signals are supported with ng-bootstrap modals -->
-    @if (hasUnsavedChangesInTitleSection && hasUnsavedChangesInPeriodSection) {
+    @if (hasUnsavedChangesInTitleSection() && hasUnsavedChangesInPeriodSection()) {
         <span jhiTranslate="artemisApp.lecture.dismissChangesModal.sectionsThatContainUnsavedChangesPlural"></span>
     } @else {
         <span jhiTranslate="artemisApp.lecture.dismissChangesModal.sectionsThatContainUnsavedChangesSingular"></span>
     }
     <ul>
-        @if (hasUnsavedChangesInTitleSection) {
+        @if (hasUnsavedChangesInTitleSection()) {
             <li>
                 <span jhiTranslate="artemisApp.lecture.sections.title"></span>
             </li>
         }
-        @if (hasUnsavedChangesInPeriodSection) {
+        @if (hasUnsavedChangesInPeriodSection()) {
             <li>
                 <span jhiTranslate="artemisApp.lecture.sections.period"></span>
             </li>

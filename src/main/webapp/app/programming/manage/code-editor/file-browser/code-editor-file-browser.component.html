@@ -1,5 +1,5 @@
 <div id="cardFiles" class="card file-browser resizable-filebrowser" [ngStyle]="collapsed ? { height: '250px' } : { height: '100%' }">
-    <div class="card-header d-flex justify-content-center bg-primary text-white" (click)="toggleEditorCollapse($event)">
+    <div class="card-header d-flex justify-content-center bg-primary text-white" [class.d-none]="!showHeader()" (click)="toggleEditorCollapse($event)">
         <h3 class="card-title justify-content-center">
             @if (!collapsed) {
                 <span>
@@ -19,11 +19,11 @@
         <fa-icon class="ms-auto clickable" [icon]="faChevronLeft" />
     </div>
     <!-- Root actions -->
-    @if (!displayOnly) {
+    @if (!displayOnly()) {
         <div class="card-second-header">
             <button
                 id="create_file_root"
-                [disabled]="disableActions || isLoadingFiles || commitState === CommitState.CONFLICT"
+                [disabled]="disableActions() || isLoadingFiles || commitState() === CommitState.CONFLICT"
                 class="btn"
                 (click)="setCreatingFileInRoot(FileType.FILE)"
                 title="{{ 'artemisApp.editor.fileBrowser.createFileRoot' | artemisTranslate }}"
@@ -33,7 +33,7 @@
             </button>
             <button
                 id="create_folder_root"
-                [disabled]="disableActions || isLoadingFiles || commitState === CommitState.CONFLICT"
+                [disabled]="disableActions() || isLoadingFiles || commitState() === CommitState.CONFLICT"
                 class="btn ms-2"
                 (click)="setCreatingFileInRoot(FileType.FOLDER)"
                 title="{{ 'artemisApp.editor.fileBrowser.createFolderRoot' | artemisTranslate }}"
@@ -74,26 +74,26 @@
             </div>
         }
     </div>
-    @if (!collapsed && !displayOnly) {
-        <jhi-code-editor-status #status [editorState]="editorState" [commitState]="commitState" />
+    @if (!collapsed && !displayOnly()) {
+        <jhi-code-editor-status #status [editorState]="editorState()" [commitState]="commitState()" />
     }
 </div>
 <!--Treeview Item Template-->
 <ng-template #itemTemplate let-item="item" let-onCollapseExpand="onCollapseExpand">
     <!--Problem Statement-->
     @if (repositoryFiles?.[item.value] === FileType.PROBLEM_STATEMENT) {
-        <jhi-code-editor-file-browser-problem-statement [item]="item" (onNodeSelect)="handleNodeSelected(item)" />
+        <jhi-code-editor-file-browser-problem-statement [item]="item" [badges]="fileBadges()?.[item.value] ?? []" (onNodeSelect)="handleNodeSelected(item)" />
     }
     <!--folder-->
     @if (repositoryFiles?.[item.value] === FileType.FOLDER) {
         <jhi-code-editor-file-browser-folder
             [item]="item"
             [isBeingRenamed]="!!renamingFile && renamingFile![0] === item.value"
-            [hasUnsavedChanges]="unsavedFiles && unsavedFiles.includes(item.value)"
-            [hasError]="errorFiles && errorFiles.includes(item.value)"
+            [hasUnsavedChanges]="unsavedFiles().includes(item.value)"
+            [hasError]="errorFiles().includes(item.value)"
             [onCollapseExpand]="onCollapseExpand"
             [isCompressed]="compressFolders"
-            [disableActions]="disableActions || commitState === CommitState.CONFLICT"
+            [disableActions]="disableActions() || commitState() === CommitState.CONFLICT"
             [badges]="getFolderBadges(item)"
             (onSetRenamingNode)="setRenamingFile(item)"
             (onRenameNode)="onRenameFile($event)"
@@ -108,11 +108,11 @@
         <jhi-code-editor-file-browser-file
             [item]="item"
             [hasChanges]="repositoryFilesWithInformationAboutChange?.[item.value] ?? false"
-            [badges]="fileBadges?.[item.value] ?? []"
+            [badges]="fileBadges()?.[item.value] ?? []"
             [isBeingRenamed]="!!renamingFile && renamingFile![0] === item.value"
-            [hasUnsavedChanges]="unsavedFiles && unsavedFiles.includes(item.value)"
-            [hasError]="errorFiles && errorFiles.includes(item.value)"
-            [disableActions]="disableActions || commitState === CommitState.CONFLICT"
+            [hasUnsavedChanges]="unsavedFiles().includes(item.value)"
+            [hasError]="errorFiles().includes(item.value)"
+            [disableActions]="disableActions() || commitState() === CommitState.CONFLICT"
             (onSetRenamingNode)="setRenamingFile(item)"
             (onRenameNode)="onRenameFile($event)"
             (onNodeSelect)="handleNodeSelected(item)"

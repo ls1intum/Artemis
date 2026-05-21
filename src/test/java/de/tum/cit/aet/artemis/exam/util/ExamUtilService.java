@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.exam.util;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
@@ -62,7 +62,7 @@ import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionReposito
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
+import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -151,7 +151,7 @@ public class ExamUtilService {
     private ExamSessionRepository examSessionRepository;
 
     @Autowired
-    private ModelingExerciseRepository modelingExerciseRepository;
+    private ModelingExerciseTestRepository modelingExerciseRepository;
 
     @Autowired
     private ProgrammingSubmissionTestRepository programmingSubmissionRepository;

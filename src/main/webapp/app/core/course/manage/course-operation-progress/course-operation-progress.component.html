@@ -1,0 +1,51 @@
+<p-dialog
+    [header]="operationTitle()"
+    [visible]="dialogVisible()"
+    [modal]="true"
+    [closable]="isCompleted() || isFailed()"
+    [closeOnEscape]="isCompleted() || isFailed()"
+    [dismissableMask]="false"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{ width: '500px' }"
+    (onHide)="onClose()"
+    styleClass="course-operation-progress-dialog"
+>
+    <div class="operation-content">
+        <div class="d-flex align-items-center mb-3">
+            @if (isInProgress()) {
+                <fa-icon [icon]="faSpinner" animation="spin" class="me-2 status-icon text-primary" />
+            } @else if (isCompleted()) {
+                <fa-icon [icon]="faCheckCircle" class="me-2 status-icon text-success" />
+            } @else if (isFailed()) {
+                <fa-icon [icon]="faExclamationTriangle" class="me-2 status-icon text-danger" />
+            }
+            <span class="current-step">{{ bufferedProgress()?.currentStep || (isCompleted() ? completedMessage() : failedMessage()) }}</span>
+        </div>
+
+        <div class="progress-container mb-3">
+            <p-progressBar [value]="progressPercentage()" [showValue]="true" [style]="{ height: '1.5rem' }" [styleClass]="progressStyleClass()" />
+        </div>
+
+        <div class="d-flex justify-content-between text-muted small">
+            <span>{{ bufferedProgress()?.stepsCompleted || 0 }} / {{ bufferedProgress()?.totalSteps || 0 }} steps</span>
+            @if (eta() && isInProgress()) {
+                <span>{{ eta() }} remaining</span>
+            }
+        </div>
+
+        @if (bufferedProgress()?.itemsProcessed && bufferedProgress()?.totalItems) {
+            <div class="mt-2 text-muted small">Items: {{ bufferedProgress()?.itemsProcessed }} / {{ bufferedProgress()?.totalItems }}</div>
+        }
+
+        @if (bufferedProgress()?.failed) {
+            <div class="mt-2 text-warning small">{{ bufferedProgress()?.failed }} failed</div>
+        }
+
+        @if (bufferedProgress()?.errorMessage) {
+            <div class="alert alert-danger mt-3 mb-0">
+                {{ bufferedProgress()?.errorMessage }}
+            </div>
+        }
+    </div>
+</p-dialog>

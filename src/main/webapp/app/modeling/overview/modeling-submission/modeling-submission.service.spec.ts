@@ -1,5 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { take } from 'rxjs/operators';
@@ -8,6 +10,8 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ModelingSubmission Service', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ModelingSubmissionService;
     let httpMock: HttpTestingController;
     let elemDefault: ModelingSubmission;
@@ -23,6 +27,11 @@ describe('ModelingSubmission Service', () => {
         elemDefault.id = 5;
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+        httpMock.verify();
+    });
+
     const getDefaultValues = (updateValues = {}) => {
         const exerciseId = 5;
         const returnedFromService = { ...elemDefault, id: exerciseId, ...updateValues };
@@ -33,7 +42,7 @@ describe('ModelingSubmission Service', () => {
         return { exerciseId, returnedFromService, expected, requestOption, correctionRound, participationId };
     };
 
-    it('should find an element', fakeAsync(() => {
+    it('should find an element', () => {
         const { returnedFromService, correctionRound } = getDefaultValues();
         service
             .getSubmission(123, correctionRound)
@@ -43,10 +52,9 @@ describe('ModelingSubmission Service', () => {
         const req = httpMock.expectOne({ method: 'GET', url: `api/modeling/modeling-submissions/123?correction-round=7` });
         expect(req.request.params.get('correction-round')).toBe(`${correctionRound}`);
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should create a ModelingSubmission', fakeAsync(() => {
+    it('should create a ModelingSubmission', () => {
         const { returnedFromService, expected } = getDefaultValues();
         service
             .create(new ModelingSubmission(), 1)
@@ -54,10 +62,9 @@ describe('ModelingSubmission Service', () => {
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should update a ModelingSubmission', fakeAsync(() => {
+    it('should update a ModelingSubmission', () => {
         const { returnedFromService, expected } = getDefaultValues({ model: 'BBBBBB', explanationText: 'BBBBBB' });
         service
             .update(expected, 1)
@@ -65,10 +72,9 @@ describe('ModelingSubmission Service', () => {
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should get submissions without correction round', fakeAsync(() => {
+    it('should get submissions without correction round', () => {
         const { exerciseId, returnedFromService, requestOption } = getDefaultValues();
         service
             .getSubmissions(exerciseId, requestOption)
@@ -77,10 +83,9 @@ describe('ModelingSubmission Service', () => {
         const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/exercises/${exerciseId}/modeling-submissions?test=Test` });
         expect(req.request.params.get('test')).toBe('Test');
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should get submissions with correction round', fakeAsync(() => {
+    it('should get submissions with correction round', () => {
         const { exerciseId, returnedFromService, requestOption, correctionRound } = getDefaultValues();
         service
             .getSubmissions(5, requestOption, correctionRound)
@@ -90,10 +95,9 @@ describe('ModelingSubmission Service', () => {
         expect(req.request.params.get('test')).toBe('Test');
         expect(req.request.params.get('correction-round')).toBe(`${correctionRound}`);
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should getSubmissionWithoutAssessment', fakeAsync(() => {
+    it('should getSubmissionWithoutAssessment', () => {
         const { exerciseId, returnedFromService, correctionRound } = getDefaultValues();
         service
             .getSubmissionWithoutAssessment(exerciseId, true, correctionRound)
@@ -106,10 +110,9 @@ describe('ModelingSubmission Service', () => {
         expect(req.request.params.get('lock')).toBe('true');
         expect(req.request.params.get('correction-round')).toBe(`${correctionRound}`);
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should getLatestSubmissionForModelingEditor', fakeAsync(() => {
+    it('should getLatestSubmissionForModelingEditor', () => {
         const { returnedFromService, participationId } = getDefaultValues();
         service
             .getLatestSubmissionForModelingEditor(participationId)
@@ -117,10 +120,9 @@ describe('ModelingSubmission Service', () => {
             .subscribe((resp) => expect(resp).toMatchObject({ ...elemDefault }));
         const req = httpMock.expectOne({ method: 'GET', url: `api/modeling/participations/${participationId}/latest-modeling-submission` });
         req.flush(returnedFromService);
-        tick();
-    }));
+    });
 
-    it('should get submissions with results for participation', fakeAsync(() => {
+    it('should get submissions with results for participation', () => {
         const { participationId, returnedFromService } = getDefaultValues();
         const submissions = [returnedFromService];
 
@@ -136,10 +138,9 @@ describe('ModelingSubmission Service', () => {
             url: `api/modeling/participations/${participationId}/submissions-with-results`,
         });
         req.flush(submissions);
-        tick();
-    }));
+    });
 
-    it('should get submission without lock', fakeAsync(() => {
+    it('should get submission without lock', () => {
         const { returnedFromService } = getDefaultValues();
 
         service
@@ -150,10 +151,5 @@ describe('ModelingSubmission Service', () => {
         const req = httpMock.expectOne((request) => request.method === 'GET' && request.urlWithParams === 'api/modeling/modeling-submissions/123?withoutResults=true');
         expect(req.request.params.get('withoutResults')).toBe('true');
         req.flush(returnedFromService);
-        tick();
-    }));
-
-    afterEach(() => {
-        httpMock.verify();
     });
 });

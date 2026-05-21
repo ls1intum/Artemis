@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.competency.util;
 
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 
 import java.time.ZonedDateTime;
 
@@ -14,19 +14,16 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyJolRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyLectureUnitLinkTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
@@ -44,9 +41,6 @@ public class CompetencyUtilService {
 
     @Autowired
     private CompetencyRelationRepository competencyRelationRepository;
-
-    @Autowired
-    private CompetencyJolRepository competencyJOLRepository;
 
     @Autowired
     private CompetencyExerciseLinkTestRepository competencyExerciseLinkRepository;
@@ -193,25 +187,4 @@ public class CompetencyUtilService {
         return competencyRepo.save(competency);
     }
 
-    /**
-     * Creates and saves a CompetencyJOL for the given Competency and User.
-     *
-     * @param competency    The Competency the CompetencyJOL belongs to
-     * @param user          The User the CompetencyJOL belongs to
-     * @param value         The value of the CompetencyJOL
-     * @param judgementTime The time of the judgement
-     * @param progress      The progress of the CompetencyJOL
-     * @param confidence    The confidence of the CompetencyJOL
-     * @return The persisted CompetencyJOL
-     */
-    public CompetencyJol createJol(Competency competency, User user, short value, ZonedDateTime judgementTime, double progress, double confidence) {
-        CompetencyJol jol = new CompetencyJol();
-        jol.setCompetency(competency);
-        jol.setUser(user);
-        jol.setValue(value);
-        jol.setJudgementTime(judgementTime);
-        jol.setCompetencyProgress(progress);
-        jol.setCompetencyConfidence(confidence);
-        return competencyJOLRepository.save(jol);
-    }
 }

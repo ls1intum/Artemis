@@ -1,36 +1,21 @@
+/**
+ * Vitest tests for MetricsModalThreadsComponent.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
 import { MetricsModalThreadsComponent } from 'app/core/admin/metrics/blocks/metrics-modal-threads/metrics-modal-threads.component';
 import { Thread, ThreadState } from 'app/core/admin/metrics/metrics.model';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { MockProvider } from 'ng-mocks';
 
 describe('MetricsModalThreadsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let runnableThreads: Thread[];
     let waitingThreads: Thread[];
 
     let comp: MetricsModalThreadsComponent;
     let fixture: ComponentFixture<MetricsModalThreadsComponent>;
-    let activeModal: NgbActiveModal;
-
-    beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            imports: [MetricsModalThreadsComponent],
-            providers: [MockProvider(NgbActiveModal)],
-        })
-            .overrideTemplate(MetricsModalThreadsComponent, '')
-            .compileComponents();
-
-        fixture = TestBed.createComponent(MetricsModalThreadsComponent);
-        comp = fixture.componentInstance;
-        activeModal = TestBed.inject(NgbActiveModal);
-
-        runnableThreads = [createThread(1, ThreadState.Runnable), createThread(2, ThreadState.Runnable), createThread(3, ThreadState.Runnable)];
-        waitingThreads = [createThread(4, ThreadState.Waiting), createThread(5, ThreadState.Waiting), createThread(6, ThreadState.Waiting), createThread(7, ThreadState.Waiting)];
-    });
-
-    afterEach(() => {
-        jest.clearAllMocks();
-    });
 
     function createThread(threadId: number, threadState: ThreadState): Thread {
         return {
@@ -55,25 +40,39 @@ describe('MetricsModalThreadsComponent', () => {
         };
     }
 
-    describe('onInit', () => {
-        it('counts all thread types', () => {
-            // GIVEN
-            comp.threads = runnableThreads.concat(waitingThreads);
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [MetricsModalThreadsComponent],
+        })
+            .overrideTemplate(MetricsModalThreadsComponent, '')
+            .compileComponents();
 
-            // WHEN
-            comp.ngOnInit();
+        fixture = TestBed.createComponent(MetricsModalThreadsComponent);
+        comp = fixture.componentInstance;
 
-            // THEN
-            expect(comp.threadDumpAll).toEqual(comp.threads.length);
-            expect(comp.threadDumpBlocked).toBe(0);
-            expect(comp.threadDumpRunnable).toEqual(runnableThreads.length);
-            expect(comp.threadDumpTimedWaiting).toBe(0);
-            expect(comp.threadDumpWaiting).toEqual(waitingThreads.length);
+        runnableThreads = [createThread(1, ThreadState.Runnable), createThread(2, ThreadState.Runnable), createThread(3, ThreadState.Runnable)];
+        waitingThreads = [createThread(4, ThreadState.Waiting), createThread(5, ThreadState.Waiting), createThread(6, ThreadState.Waiting), createThread(7, ThreadState.Waiting)];
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    describe('thread counts', () => {
+        it('should count all thread types', () => {
+            fixture.componentRef.setInput('threads', runnableThreads.concat(waitingThreads));
+            fixture.detectChanges();
+
+            expect(comp.threadDumpAll()).toBe(comp.threads().length);
+            expect(comp.threadDumpBlocked()).toBe(0);
+            expect(comp.threadDumpRunnable()).toBe(runnableThreads.length);
+            expect(comp.threadDumpTimedWaiting()).toBe(0);
+            expect(comp.threadDumpWaiting()).toBe(waitingThreads.length);
         });
     });
 
     describe('background class', () => {
-        it('computes correct bg-* class based on thread state', () => {
+        it('should compute correct bg-* class based on thread state', () => {
             expect(comp.getBgClass(ThreadState.Runnable)).toBe('bg-success');
             expect(comp.getBgClass(ThreadState.Waiting)).toBe('bg-info');
             expect(comp.getBgClass(ThreadState.TimedWaiting)).toBe('bg-warning');
@@ -84,83 +83,55 @@ describe('MetricsModalThreadsComponent', () => {
     });
 
     describe('filters', () => {
-        describe('threads based on selected thread state', () => {
-            it('when selected thread state is undefined, nothing is filtered out', () => {
-                // GIVEN
-                comp.threads = runnableThreads.concat(waitingThreads);
-                comp.selectedThreadState = undefined;
+        it('should return all threads when no filter is applied', () => {
+            fixture.componentRef.setInput('threads', runnableThreads.concat(waitingThreads));
+            fixture.detectChanges();
+            comp.selectedThreadState = undefined;
 
-                // WHEN
-                comp.refreshFilteredThreads();
-
-                // THEN
-                expect(comp.filteredThreads).toEqual(runnableThreads.concat(waitingThreads));
-            });
-
-            it('when selected a specific thread state, only threads with specific thread state are returned', () => {
-                // GIVEN
-                comp.threads = runnableThreads.concat(waitingThreads);
-                comp.selectedThreadState = ThreadState.Runnable;
-
-                // WHEN
-                comp.refreshFilteredThreads();
-
-                // THEN
-                expect(comp.filteredThreads).toEqual(runnableThreads);
-            });
+            expect(comp.filteredThreads()).toEqual(runnableThreads.concat(waitingThreads));
         });
 
-        describe('threads based on filter text', () => {
-            it('when filter is undefined, nothing is filtered out', () => {
-                // GIVEN
-                comp.threads = runnableThreads.concat(waitingThreads);
-                comp.threadFilter = undefined;
+        it('should filter threads by selected thread state', () => {
+            fixture.componentRef.setInput('threads', runnableThreads.concat(waitingThreads));
+            fixture.detectChanges();
+            comp.selectedThreadState = ThreadState.Runnable;
 
-                // WHEN
-                comp.refreshFilteredThreads();
-
-                // THEN
-                expect(comp.filteredThreads).toEqual(runnableThreads.concat(waitingThreads));
-            });
-
-            it('when filter is entered, only matching results are returned', () => {
-                // GIVEN
-                comp.threads = runnableThreads.concat(waitingThreads);
-                comp.threadFilter = '2';
-
-                // WHEN
-                comp.refreshFilteredThreads();
-
-                // THEN
-                expect(comp.filteredThreads).toEqual([runnableThreads[1]]);
-            });
+            expect(comp.filteredThreads()).toEqual(runnableThreads);
         });
 
-        it('both on thread state and filter text', () => {
-            // GIVEN
-            comp.threads = runnableThreads.concat(waitingThreads);
+        it('should return all threads when filter text is undefined', () => {
+            fixture.componentRef.setInput('threads', runnableThreads.concat(waitingThreads));
+            fixture.detectChanges();
+            comp.threadFilter = undefined;
+
+            expect(comp.filteredThreads()).toEqual(runnableThreads.concat(waitingThreads));
+        });
+
+        it('should filter threads by filter text', () => {
+            fixture.componentRef.setInput('threads', runnableThreads.concat(waitingThreads));
+            fixture.detectChanges();
+            comp.threadFilter = '2';
+
+            expect(comp.filteredThreads()).toEqual([runnableThreads[1]]);
+        });
+
+        it('should filter by both thread state and filter text', () => {
+            fixture.componentRef.setInput('threads', runnableThreads.concat(waitingThreads));
+            fixture.detectChanges();
             comp.threadFilter = '2';
             comp.selectedThreadState = ThreadState.Waiting;
 
-            // WHEN
-            comp.refreshFilteredThreads();
-
-            // THEN
-            expect(comp.filteredThreads).toEqual([]);
+            expect(comp.filteredThreads()).toEqual([]);
         });
     });
 
-    describe('on dismiss', () => {
-        it('calls activeModal.dismiss()', () => {
-            // GIVEN
-            const dismissSpy = jest.spyOn(activeModal, 'dismiss').mockImplementation(() => {});
-            expect(dismissSpy).not.toHaveBeenCalled();
+    describe('dismiss', () => {
+        it('should set visible to false', () => {
+            comp.visible.set(true);
 
-            // WHEN
             comp.dismiss();
 
-            // THEN
-            expect(dismissSpy).toHaveBeenCalledOnce();
+            expect(comp.visible()).toBe(false);
         });
     });
 });

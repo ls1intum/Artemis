@@ -30,7 +30,9 @@
 />
 <jhi-assessment-complaint-alert [complaint]="complaint" />
 <ng-content />
-<jhi-assessment-note [assessmentNote]="result()?.assessmentNote" (onAssessmentNoteChange)="setAssessmentNoteForResult($event)" />
+@if (submission()) {
+    <jhi-assessment-note [assessmentNote]="result()?.assessmentNote" (onAssessmentNoteChange)="setAssessmentNoteForResult($event)" />
+}
 @if (complaint) {
     <jhi-complaints-for-tutor-form
         class="row mt-4"

@@ -11,7 +11,7 @@ export const enum ImageLoadingStatus {
 /**
  * Fetches an image from the server and displays it.
  * - Retries once if the initial request fails.
- * - Relies on browser caching (Artemis serves images publicly with proper caching headers, see {@link PublicResourcesConfiguration.java}).
+ * - Relies on browser caching (Artemis serves images with proper caching headers, see {@link StaticResourcesConfiguration.java}).
  *
  * Template note:
  * - We used `[attr.src]="localImageUrl()"` because it removes the `src` attribute if the value is `undefined`.

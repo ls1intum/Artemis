@@ -5,10 +5,10 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-language-table-cell',
-    template: "<span>{{ 'artemisApp.exerciseAssessmentDashboard.languages.' + (textSubmission().language || 'UNKNOWN') | artemisTranslate }}</span>",
+    templateUrl: './language-table-cell.component.html',
     imports: [ArtemisTranslatePipe],
 })
 export class LanguageTableCellComponent {
     readonly submission = input.required<Submission>();
-    readonly textSubmission = computed(() => this.submission as TextSubmission);
+    readonly textSubmission = computed(() => this.submission() as TextSubmission);
 }

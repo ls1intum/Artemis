@@ -1,15 +1,13 @@
 package de.tum.cit.aet.artemis.modeling.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -35,11 +33,12 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionVersionService;
+import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
 
-@Profile(PROFILE_CORE)
+@Conditional(ModelingEnabled.class)
 @Lazy
 @Service
 public class ModelingSubmissionService extends SubmissionService {
@@ -106,7 +105,7 @@ public class ModelingSubmissionService extends SubmissionService {
 
         // update submission properties
         // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
-        if (exercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
+        if (exercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation) || participation.isPracticeMode()) {
             modelingSubmission.setSubmitted(true);
         }
 

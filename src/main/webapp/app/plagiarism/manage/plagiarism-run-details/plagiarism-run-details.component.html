@@ -27,7 +27,7 @@
         <div class="plagiarism-run-details-stats-item">
             <div class="plagiarism-run-details-label" jhiTranslate="artemisApp.plagiarism.startedAt"></div>
             <div class="plagiarism-run-details-info">
-                {{ plagiarismResult()?.createdDate?.toLocaleString() | date: 'dd.MM.YY HH:mm' : 'GMT' }}
+                {{ plagiarismResult()?.createdDate | artemisDate: 'short' }}
             </div>
         </div>
         <div class="plagiarism-run-details-stats-item">

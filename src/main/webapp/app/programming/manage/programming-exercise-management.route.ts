@@ -84,6 +84,16 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: 'programming-exercises/:exerciseId/version-history',
+        loadComponent: () =>
+            import('app/programming/manage/version-history/programming-exercise-version-history.component').then((m) => m.ProgrammingExerciseVersionHistoryComponent),
+        data: {
+            authorities: IS_AT_LEAST_EDITOR,
+            pageTitle: 'artemisApp.exercise.versionHistory.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: 'programming-exercises/:exerciseId/plagiarism',
         loadComponent: () => import('app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.component').then((m) => m.PlagiarismInspectorComponent),
         resolve: {
@@ -116,10 +126,6 @@ export const routes: Routes = [
             pageTitle: 'exercise-statistics.title',
         },
         canActivate: [UserRouteAccessService],
-    },
-    {
-        path: 'programming-exercises/:exerciseId/iris-settings',
-        loadChildren: () => import('app/iris/manage/settings/iris-exercise-settings-update/iris-exercise-settings-update-route').then((m) => m.routes),
     },
     {
         path: 'programming-exercises/:exerciseId/edit-build-plan',

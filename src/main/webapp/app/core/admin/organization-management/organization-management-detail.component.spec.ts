@@ -1,30 +1,34 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+/**
+ * Vitest tests for OrganizationManagementDetailComponent.
+ */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { of, throwError } from 'rxjs';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+
+import { MockProvider } from 'ng-mocks';
+
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { of, throwError } from 'rxjs';
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
-
+import { AlertService } from 'app/shared/service/alert.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { OrganizationManagementDetailComponent } from 'app/core/admin/organization-management/organization-management-detail.component';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute } from '@angular/router';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { User } from 'app/core/user/user.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { UserService } from 'app/core/user/shared/user.service';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { MockComponent } from 'ng-mocks';
-import { iconsAsHTML } from 'app/shared/util/icons.utils';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TableLazyLoadEvent } from 'primeng/table';
 
 describe('OrganizationManagementDetailComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: OrganizationManagementDetailComponent;
     let fixture: ComponentFixture<OrganizationManagementDetailComponent>;
     let organizationService: OrganizationManagementService;
-    let userService: UserService;
-    let dataTable: DataTableComponent;
 
     const organization1 = new Organization();
     organization1.id = 5;
@@ -32,239 +36,174 @@ describe('OrganizationManagementDetailComponent', () => {
         data: of({ organization: organization1 }),
     } as any as ActivatedRoute;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [NgxDatatableModule],
-            declarations: [OrganizationManagementDetailComponent, MockComponent(DataTableComponent)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [OrganizationManagementDetailComponent],
             providers: [
                 LocalStorageService,
                 SessionStorageService,
-                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
-                { provide: DataTableComponent, useClass: DataTableComponent },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                MockProvider(AlertService),
+                { provide: AccountService, useClass: MockAccountService },
             ],
-        }).compileComponents();
+        })
+            .overrideTemplate(OrganizationManagementDetailComponent, '')
+            .compileComponents();
 
         fixture = TestBed.createComponent(OrganizationManagementDetailComponent);
         component = fixture.componentInstance;
         organizationService = TestBed.inject(OrganizationManagementService);
-        dataTable = TestBed.inject(DataTableComponent);
-        userService = TestBed.inject(UserService);
     });
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should initialize and load organization from route', fakeAsync(() => {
-        const user = new User();
-        user.id = 5;
-        user.login = 'user5';
-        const course = new Course();
-        course.id = 5;
-        course.title = 'course5';
-
+    it('should initialize and load organization metadata from route', () => {
         organization1.name = 'orgOne';
         organization1.shortName = 'oO1';
         organization1.emailPattern = '.*1';
-        organization1.users = [user];
-        organization1.courses = [course];
 
-        jest.spyOn(organizationService, 'getOrganizationByIdWithUsersAndCourses').mockReturnValue(of(organization1));
+        vi.spyOn(organizationService, 'getOrganizationById').mockReturnValue(of(organization1));
 
         component.ngOnInit();
-        tick();
 
-        expect(component.organization.id).toBe(organization1.id);
-        expect(component.organization.users).toHaveLength(1);
-        expect(component.organization.courses).toHaveLength(1);
-    }));
+        expect(organizationService.getOrganizationById).toHaveBeenCalledWith(organization1.id);
+        expect(component.organization().id).toBe(organization1.id);
+        expect(component.organizationId()).toBe(organization1.id);
+    });
 
-    it('should track id', fakeAsync(() => {
-        const user = new User();
-        user.id = 5;
-
-        expect(component.trackIdentity(0, user)).toBe(5);
-    }));
-
-    it('should remove user from organization', fakeAsync(() => {
-        organization1.users = createTestUsers();
-        component.organization = organization1;
-        jest.spyOn(organizationService, 'removeUserFromOrganization').mockReturnValue(of(new HttpResponse<void>()));
-
-        component.removeFromOrganization(organization1.users[0]);
-        tick();
-        expect(component.organization.users).toHaveLength(2);
-    }));
-
-    it('should not remove user from organization if error occurred', fakeAsync(() => {
-        organization1.users = createTestUsers();
-        component.organization = organization1;
-        jest.spyOn(organizationService, 'removeUserFromOrganization').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
-
-        component.removeFromOrganization(organization1.users[0]);
-        tick();
-        expect(component.organization.users).toHaveLength(3);
-    }));
-
-    it('should load all current organization users', fakeAsync(() => {
+    it('should call getOrganizationUsers when loadUsers is triggered', () => {
         const user1 = new User();
         user1.id = 11;
-        const user2 = new User();
-        user2.id = 12;
+        user1.login = 'user1';
+
+        component.organizationId.set(5);
+        vi.spyOn(organizationService, 'getOrganizationUsers').mockReturnValue(of({ content: [user1], totalElements: 1 }));
+
+        const event: TableLazyLoadEvent = { first: 0, rows: 50 };
+        component.loadUsers(event);
+
+        expect(organizationService.getOrganizationUsers).toHaveBeenCalledOnce();
+        expect(component.users()).toHaveLength(1);
+        expect(component.usersTotal()).toBe(1);
+        expect(component.usersLoading()).toBe(false);
+    });
+
+    it('should call getOrganizationCourses when loadCourses is triggered', () => {
         const course1 = new Course();
         course1.id = 21;
-        organization1.users = [user1, user2];
-        organization1.courses = [course1];
+        course1.title = 'Course A';
 
-        jest.spyOn(organizationService, 'getOrganizationByIdWithUsersAndCourses').mockReturnValue(of(organization1));
+        component.organizationId.set(5);
+        vi.spyOn(organizationService, 'getOrganizationCourses').mockReturnValue(of({ content: [course1], totalElements: 1 }));
 
-        component.loadAll();
-        expect(component.organization.users).toHaveLength(2);
-        expect(component.organization.courses).toHaveLength(1);
-    }));
+        const event: TableLazyLoadEvent = { first: 0, rows: 50 };
+        component.loadCourses(event);
 
-    it('should search users in the used DataTable component and return them and add organization icons', fakeAsync(() => {
-        const user1 = { id: 11, login: 'user1' } as User;
-        const user2 = { id: 12, login: 'user2' } as User;
-        const user3 = { id: 13, login: 'user3' } as User;
+        expect(organizationService.getOrganizationCourses).toHaveBeenCalledOnce();
+        expect(component.courses()).toHaveLength(1);
+        expect(component.coursesTotal()).toBe(1);
+        expect(component.coursesLoading()).toBe(false);
+    });
 
-        let typeAheadButtons = [
-            { insertAdjacentHTML: jest.fn(), classList: { add: jest.fn() }, querySelector: jest.fn() },
-            { insertAdjacentHTML: jest.fn(), classList: { add: jest.fn() }, querySelector: jest.fn() },
-        ];
+    it('should handle error when loading users fails', () => {
+        component.organizationId.set(5);
+        vi.spyOn(organizationService, 'getOrganizationUsers').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
-        jest.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [user1, user2, user3] })));
-        component.dataTable = { typeaheadButtons: typeAheadButtons } as any as DataTableComponent;
-        component.organization = { users: undefined };
+        const event: TableLazyLoadEvent = { first: 0, rows: 50 };
+        component.loadUsers(event);
 
-        const result = component.searchAllUsers(of({ text: 'user', entities: [] }));
+        expect(component.users()).toHaveLength(0);
+        expect(component.usersTotal()).toBe(0);
+        expect(component.usersLoading()).toBe(false);
+    });
 
-        result.subscribe((a) => {
-            expect(a).toStrictEqual([
-                { id: user1.id, login: user1.login },
-                { id: user2.id, login: user2.login },
-                { id: user3.id, login: user3.login },
-            ]);
-            expect(component.searchNoResults).toBeFalse();
-            expect(component.searchFailed).toBeFalse();
-        });
+    it('should handle error when loading courses fails', () => {
+        component.organizationId.set(5);
+        vi.spyOn(organizationService, 'getOrganizationCourses').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
-        tick();
-        expect(userService.search).toHaveBeenCalledOnce();
+        const event: TableLazyLoadEvent = { first: 0, rows: 50 };
+        component.loadCourses(event);
 
-        typeAheadButtons.forEach((button) => {
-            expect(button.insertAdjacentHTML).toHaveBeenCalledOnce();
-            expect(button.insertAdjacentHTML).toHaveBeenCalledWith('beforeend', iconsAsHTML['users-plus']);
-        });
+        expect(component.courses()).toHaveLength(0);
+        expect(component.coursesTotal()).toBe(0);
+        expect(component.coursesLoading()).toBe(false);
+    });
 
-        component.organization = { users: [user1] };
-        typeAheadButtons = [
-            { insertAdjacentHTML: jest.fn(), classList: { add: jest.fn() }, querySelector: jest.fn() },
-            { insertAdjacentHTML: jest.fn(), classList: { add: jest.fn() }, querySelector: jest.fn() },
-            { insertAdjacentHTML: jest.fn(), classList: { add: jest.fn() }, querySelector: jest.fn().mockReturnValue(true) },
-        ];
-        component.dataTable = { typeaheadButtons: typeAheadButtons } as any as DataTableComponent;
-        component.searchAllUsers(of({ text: 'user', entities: [] })).subscribe();
-        tick();
+    it('should remove user from organization and refresh the users list', () => {
+        component.organizationId.set(5);
 
-        expect(typeAheadButtons[0].insertAdjacentHTML).toHaveBeenCalledOnce();
-        expect(typeAheadButtons[0].insertAdjacentHTML).toHaveBeenCalledWith('beforeend', iconsAsHTML['users']);
-        expect(typeAheadButtons[0].classList.add).toHaveBeenCalledOnce();
-        expect(typeAheadButtons[0].classList.add).toHaveBeenCalledWith('already-member');
-        expect(typeAheadButtons[1].insertAdjacentHTML).toHaveBeenCalledOnce();
-        expect(typeAheadButtons[1].insertAdjacentHTML).toHaveBeenCalledWith('beforeend', iconsAsHTML['users-plus']);
-        expect(typeAheadButtons[1].classList.add).not.toHaveBeenCalled();
-        // The third button already has a user icon (indicated but the truthy return value of the querySelector) and insertAdjacentHTML should not be called
-        expect(typeAheadButtons[2].insertAdjacentHTML).not.toHaveBeenCalled();
-    }));
-
-    it('should return zero users if search term is less then 3 chars', fakeAsync(() => {
-        const user1 = { id: 11, login: 'user1' } as User;
-        const user2 = { id: 12, login: 'user2' } as User;
-
-        jest.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [user1, user2] })));
-        component.dataTable = dataTable;
-
-        const result = component.searchAllUsers(of({ text: 'us', entities: [] }));
-
-        result.subscribe((a) => {
-            expect(a).toStrictEqual([]);
-            expect(component.searchNoResults).toBeFalse();
-            expect(component.searchFailed).toBeFalse();
-        });
-
-        tick();
-        expect(userService.search).not.toHaveBeenCalled();
-    }));
-
-    it('should set the no results flag is no users were found during search', fakeAsync(() => {
-        jest.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [] })));
-        component.dataTable = dataTable;
-
-        const result = component.searchAllUsers(of({ text: 'user', entities: [] }));
-
-        result.subscribe((a) => {
-            expect(a).toStrictEqual([]);
-            expect(component.searchNoResults).toBeTrue();
-            expect(component.searchFailed).toBeFalse();
-        });
-
-        tick();
-        expect(userService.search).toHaveBeenCalledOnce();
-    }));
-
-    it('should set the search failed flag if search failed', fakeAsync(() => {
-        jest.spyOn(userService, 'search').mockReturnValue(throwError(() => new Error()));
-        component.dataTable = dataTable;
-
-        const result = component.searchAllUsers(of({ text: 'user', entities: [] }));
-
-        result.subscribe((a) => {
-            expect(a).toStrictEqual([]);
-            expect(component.searchNoResults).toBeFalse();
-            expect(component.searchFailed).toBeTrue();
-        });
-
-        tick();
-        expect(userService.search).toHaveBeenCalledOnce();
-    }));
-
-    it('should add the user to organization on autocomplete select', fakeAsync(() => {
-        component.organization = { id: 7, users: [{ id: 1 } as User] };
-        const addUserSpy = jest.spyOn(organizationService, 'addUserToOrganization').mockReturnValue(of(new HttpResponse<void>()));
-        const flashSpy = jest.spyOn(component, 'flashRowClass');
-
-        const callback = jest.fn();
-        const newUser = { id: 2, login: 'test' } as User;
-        component.onAutocompleteSelect(newUser, callback);
-        tick();
-        expect(addUserSpy).toHaveBeenCalledOnce();
-        expect(addUserSpy).toHaveBeenCalledWith(7, 'test');
-        expect(component.organization.users).toContain(newUser);
-        expect(callback).toHaveBeenCalledOnce();
-        expect(callback).toHaveBeenCalledWith(newUser);
-        expect(flashSpy).toHaveBeenCalledOnce();
-        expect(flashSpy).toHaveBeenCalledWith('newly-added-member');
-
-        const existingUser = { id: 1 } as User;
-        component.onAutocompleteSelect(existingUser, callback);
-        tick();
-        expect(callback).toHaveBeenCalledTimes(2);
-        expect(callback).toHaveBeenCalledWith(existingUser);
-        expect(addUserSpy).toHaveBeenCalledOnce();
-    }));
-
-    function createTestUsers() {
         const user1 = new User();
         user1.id = 11;
         user1.login = 'userOne';
-        const user2 = new User();
-        user2.id = 12;
-        const user3 = new User();
-        user3.id = 13;
-        return [user1, user2, user3];
-    }
+
+        vi.spyOn(organizationService, 'removeUserFromOrganization').mockReturnValue(of({} as any));
+        const loadUsersSpy = vi.spyOn(component, 'loadUsers');
+
+        const event: TableLazyLoadEvent = { first: 0, rows: 50 };
+        // Simulate a prior lazy load so lastUsersLoadEvent is set
+        vi.spyOn(organizationService, 'getOrganizationUsers').mockReturnValue(of({ content: [user1], totalElements: 1 }));
+        component.loadUsers(event);
+
+        component.removeFromOrganization(user1);
+
+        expect(organizationService.removeUserFromOrganization).toHaveBeenCalledWith(5, 'userOne');
+        expect(loadUsersSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not remove user from organization if user has no login', () => {
+        component.organizationId.set(5);
+        const removeSpy = vi.spyOn(organizationService, 'removeUserFromOrganization');
+
+        const userWithoutLogin = new User();
+        userWithoutLogin.id = 1;
+        component.removeFromOrganization(userWithoutLogin);
+
+        expect(removeSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not remove user if organizationId is not set', () => {
+        const removeSpy = vi.spyOn(organizationService, 'removeUserFromOrganization');
+
+        const user = new User();
+        user.id = 1;
+        user.login = 'testuser';
+        component.removeFromOrganization(user);
+
+        expect(removeSpy).not.toHaveBeenCalled();
+    });
+
+    it('should set dialogError on removal failure', () => {
+        component.organizationId.set(5);
+        vi.spyOn(organizationService, 'removeUserFromOrganization').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not Found' })));
+
+        const user = new User();
+        user.id = 1;
+        user.login = 'testuser';
+
+        let errorEmitted = false;
+        component.dialogError$.subscribe((err) => {
+            if (err) {
+                errorEmitted = true;
+            }
+        });
+
+        component.removeFromOrganization(user);
+        expect(errorEmitted).toBe(true);
+    });
+
+    it('should not load users when organizationId is not set', () => {
+        const spy = vi.spyOn(organizationService, 'getOrganizationUsers');
+        component.loadUsers({ first: 0, rows: 50 });
+        expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('should not load courses when organizationId is not set', () => {
+        const spy = vi.spyOn(organizationService, 'getOrganizationCourses');
+        component.loadCourses({ first: 0, rows: 50 });
+        expect(spy).not.toHaveBeenCalled();
+    });
 });

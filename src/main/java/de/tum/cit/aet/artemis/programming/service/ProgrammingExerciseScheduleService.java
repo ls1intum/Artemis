@@ -5,7 +5,9 @@ import static de.tum.cit.aet.artemis.core.config.StartupDelayConfig.PROGRAMMING_
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.annotation.PostConstruct;
 
@@ -26,6 +28,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
+import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
@@ -37,6 +40,14 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 
+/**
+ * Schedules lifecycle tasks (due date, build-and-test, individual due dates) for programming exercises.
+ * <p>
+ * This service uses {@link TimeUtil#now()} instead of {@code ZonedDateTime.now()} for all time comparisons.
+ * {@code TimeUtil.now()} delegates to a ThreadLocal clock that can be frozen in tests via
+ * {@code TimeUtil.setClock(Clock.fixed(...))}. This allows deterministic scheduling decisions in tests
+ * without affecting the real {@link TaskScheduler} which always uses system time.
+ */
 @Lazy
 @Service
 @Profile(PROFILE_CORE_AND_SCHEDULING)
@@ -101,14 +112,24 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             }
             SecurityUtils.setAuthorizationObject();
 
-            List<ProgrammingExercise> exercisesToBeScheduled = programmingExerciseRepository.findAllToBeScheduled(ZonedDateTime.now());
+            // Use optimized queries to find exercises to be scheduled without eagerly loading all participations
+            ZonedDateTime now = TimeUtil.now();
+            Set<Long> exerciseIdsByDates = programmingExerciseRepository.findAllExerciseIdsToBeScheduledByExerciseDates(now);
+            Set<Long> exerciseIdsWithIndividualDueDates = programmingExerciseRepository.findAllExerciseIdsWithIndividualDueDatesAfter(now);
+
+            // Combine all exercise IDs
+            Set<Long> allExerciseIds = new HashSet<>(exerciseIdsByDates);
+            allExerciseIds.addAll(exerciseIdsWithIndividualDueDates);
+
+            // Load exercises without participations (participations will be loaded on-demand during scheduling)
+            List<ProgrammingExercise> exercisesToBeScheduled = allExerciseIds.isEmpty() ? List.of() : programmingExerciseRepository.findAllByIdIn(allExerciseIds);
             exercisesToBeScheduled.forEach(this::scheduleExercise);
 
             List<ProgrammingExercise> programmingExercisesWithTestsAfterDueDateButNoRebuild = programmingExerciseRepository
-                    .findAllByDueDateAfterDateWithTestsAfterDueDateWithoutBuildStudentSubmissionsDate(ZonedDateTime.now());
+                    .findAllByDueDateAfterDateWithTestsAfterDueDateWithoutBuildStudentSubmissionsDate(TimeUtil.now());
             programmingExercisesWithTestsAfterDueDateButNoRebuild.forEach(this::scheduleExercise);
 
-            List<ProgrammingExercise> programmingExercisesWithExam = programmingExerciseRepository.findAllWithEagerExamByExamEndDateAfterDate(ZonedDateTime.now());
+            List<ProgrammingExercise> programmingExercisesWithExam = programmingExerciseRepository.findAllWithEagerExamByExamEndDateAfterDate(TimeUtil.now());
             programmingExercisesWithExam.forEach(this::scheduleExamExercise);
 
             log.info("Scheduled {} programming exercises.", exercisesToBeScheduled.size());
@@ -167,7 +188,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @return true, if the exercise needs to be scheduled.
      */
     private boolean needsToBeScheduledDueToDates(ProgrammingExercise exercise) {
-        final ZonedDateTime now = ZonedDateTime.now();
+        final ZonedDateTime now = TimeUtil.now();
 
         // Exercises with a release date in the future must be scheduled
         if (exercise.getReleaseDate() != null && now.isBefore(exercise.getReleaseDate())) {
@@ -225,7 +246,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             SecurityUtils.setAuthorizationObject();
         }
 
-        final ZonedDateTime now = ZonedDateTime.now();
+        final ZonedDateTime now = TimeUtil.now();
 
         // For any course exercise that needsToBeScheduled (buildAndTestAfterDueDate and/or manual assessment)
         if (exercise.getDueDate() != null && now.isBefore(exercise.getDueDate())) {
@@ -343,7 +364,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         Exam exam = exercise.getExerciseGroup().getExam();
         ZonedDateTime visibleDate = exam.getVisibleDate();
         ZonedDateTime startDate = exam.getStartDate();
-        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime now = TimeUtil.now();
         if (visibleDate == null || startDate == null) {
             log.error("Programming exercise {} for exam {} cannot be scheduled properly, visible date is {}, start date is {}", exercise.getId(), exam.getId(), visibleDate,
                     startDate);

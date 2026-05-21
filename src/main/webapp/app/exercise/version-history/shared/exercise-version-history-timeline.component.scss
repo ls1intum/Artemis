@@ -1,0 +1,165 @@
+:host {
+    display: block;
+    height: 100%;
+}
+
+// ── Shell ──────────────────────────────────────────────
+.version-timeline-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+// ── Header ─────────────────────────────────────────────
+.version-timeline__header {
+    padding: 0.5rem 0.65rem;
+}
+
+.version-timeline__title {
+    margin: 0;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.25rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--p-text-color);
+}
+
+.version-timeline__count {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--p-text-muted-color);
+}
+
+// ── Scrollable content area ────────────────────────────
+.version-timeline__content {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    min-height: 0;
+    padding: 0.5rem 0.5rem 0.65rem 0.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+// ── Skeleton loading state ─────────────────────────────
+.timeline-skeleton {
+    display: grid;
+    grid-template-columns: 1.125rem 1fr;
+    gap: 0.5rem;
+    align-items: start;
+    padding-left: 0.15rem;
+}
+
+.timeline-skeleton__card {
+    padding: 0.4rem 0.55rem;
+    border-radius: 8px;
+    border: 1px solid var(--p-content-border-color);
+    background: var(--p-content-hover-background);
+}
+
+// ── PrimeNG Timeline overrides ─────────────────────────
+// ::ng-deep is required to style PrimeNG Timeline internals (no public API for these overrides)
+// Hide the opposite column — we only show content on the left side
+:host ::ng-deep .version-timeline .p-timeline-event-opposite {
+    display: none;
+    flex: 0;
+    padding: 0;
+}
+
+// Layout each event row
+:host ::ng-deep .version-timeline .p-timeline-event {
+    min-height: 0;
+}
+
+// Separator column (marker + connector line)
+:host ::ng-deep .version-timeline .p-timeline-event-separator {
+    flex: 0 0 auto;
+    align-items: center;
+}
+
+// Content column
+:host ::ng-deep .version-timeline .p-timeline-event-content {
+    padding: 0 0 0.65rem 0.45rem;
+    min-width: 0;
+}
+
+// ── Card (the clickable entry) ─────────────────────────
+.timeline-card {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+    text-align: left;
+
+    padding: 0.42rem 0.55rem;
+    border-radius: 8px;
+    border: 1.5px solid var(--p-content-border-color);
+    background: var(--p-content-hover-background);
+    color: var(--p-text-color);
+
+    cursor: pointer;
+    appearance: none;
+    transition:
+        border-color 0.15s ease,
+        background-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.timeline-card:hover {
+    border-color: var(--p-primary-color);
+    background: var(--p-highlight-background);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--p-primary-color) 30%, transparent);
+}
+
+.timeline-card:focus-visible {
+    outline: 2px solid var(--p-primary-color);
+    outline-offset: 2px;
+}
+
+.timeline-card--selected {
+    border-color: var(--p-primary-color);
+    background: var(--p-highlight-focus-background);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--p-primary-color) 35%, transparent);
+}
+
+.timeline-card--selected .timeline-card__version {
+    color: var(--p-primary-color);
+}
+
+// ── Card content ───────────────────────────────────────
+.timeline-card__version {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--p-text-color);
+    transition: color 0.15s ease;
+}
+
+.timeline-card__author {
+    font-size: 0.84rem;
+    color: var(--p-text-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.timeline-card__author--secondary {
+    font-size: 0.76rem;
+    color: var(--p-text-muted-color);
+}
+
+.timeline-card__date {
+    font-size: 0.74rem;
+    color: var(--p-text-muted-color);
+}
+
+// ── Load-more button ───────────────────────────────────
+.timeline-load-more {
+    align-self: center;
+    min-width: 7.2rem;
+}

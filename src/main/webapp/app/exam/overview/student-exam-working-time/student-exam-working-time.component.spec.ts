@@ -3,9 +3,12 @@ import dayjs from 'dayjs/esm';
 import { StudentExamWorkingTimeComponent } from 'app/exam/overview/student-exam-working-time/student-exam-working-time.component';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { input } from '@angular/core';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('StudentExamWorkingTimeComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<StudentExamWorkingTimeComponent>;
     let comp: StudentExamWorkingTimeComponent;
 
@@ -31,11 +34,13 @@ describe('StudentExamWorkingTimeComponent', () => {
             });
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     const setExamWithWorkingTime = (workingTimeSeconds: number) => {
         studentExam.workingTime = workingTimeSeconds;
-        TestBed.runInInjectionContext(() => {
-            comp.studentExam = input(studentExam);
-        });
+        fixture.componentRef.setInput('studentExam', studentExam);
         comp.ngOnInit();
     };
 
@@ -60,20 +65,18 @@ describe('StudentExamWorkingTimeComponent', () => {
     });
 
     it('should only count exams as test runs if they explicitly are', () => {
-        TestBed.runInInjectionContext(() => {
-            comp.studentExam = input(studentExam);
-        });
+        fixture.componentRef.setInput('studentExam', studentExam);
 
         studentExam.testRun = undefined;
         comp.ngOnInit();
-        expect(comp.isTestRun).toBeFalse();
+        expect(comp.isTestRun).toBe(false);
 
         studentExam.testRun = false;
         comp.ngOnInit();
-        expect(comp.isTestRun).toBeFalse();
+        expect(comp.isTestRun).toBe(false);
 
         studentExam.testRun = true;
         comp.ngOnInit();
-        expect(comp.isTestRun).toBeTrue();
+        expect(comp.isTestRun).toBe(true);
     });
 });

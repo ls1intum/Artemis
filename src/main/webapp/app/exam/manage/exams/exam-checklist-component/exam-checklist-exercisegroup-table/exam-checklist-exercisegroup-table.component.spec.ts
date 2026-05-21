@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { Component, input } from '@angular/core';
+import { Component } from '@angular/core';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { ChecklistCheckComponent } from 'app/shared/components/checklist-check/checklist-check.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -13,6 +13,10 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExerciseGroupVariantColumn } from 'app/exam/shared/entities/exercise-group-variant-column.model';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 @Component({
     template: '',
@@ -20,6 +24,8 @@ import { provideRouter } from '@angular/router';
 class DummyComponent {}
 
 describe('ExamChecklistExerciseGroupTableComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let examChecklistComponentFixture: ComponentFixture<ExamChecklistExerciseGroupTableComponent>;
     let examChecklistExerciseGroupTableComponent: ExamChecklistExerciseGroupTableComponent;
 
@@ -56,9 +62,9 @@ describe('ExamChecklistExerciseGroupTableComponent', () => {
         return exerciseGroups;
     }
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
                 DummyComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
@@ -75,35 +81,32 @@ describe('ExamChecklistExerciseGroupTableComponent', () => {
                     { path: 'course-management/:courseId/exams/:examId/exercise-groups', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/assessment-dashboard', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/scores', component: DummyComponent },
-                    { path: 'course-management/:courseId/exams/:examId/student-exams', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/test-runs', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/students', component: DummyComponent },
                 ]),
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                examChecklistComponentFixture = TestBed.createComponent(ExamChecklistExerciseGroupTableComponent);
-                examChecklistExerciseGroupTableComponent = examChecklistComponentFixture.componentInstance;
-            });
+        }).compileComponents();
+
+        examChecklistComponentFixture = TestBed.createComponent(ExamChecklistExerciseGroupTableComponent);
+        examChecklistExerciseGroupTableComponent = examChecklistComponentFixture.componentInstance;
+        examChecklistComponentFixture.componentRef.setInput('quizExamMaxPoints', 0);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('test onChanges', () => {
         it('should set properties false', () => {
-            TestBed.runInInjectionContext(() => {
-                examChecklistExerciseGroupTableComponent.exerciseGroups = input(getExerciseGroups(false));
-            });
-            examChecklistExerciseGroupTableComponent.ngOnChanges();
+            examChecklistComponentFixture.componentRef.setInput('exerciseGroups', getExerciseGroups(false));
+            examChecklistComponentFixture.detectChanges();
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns).toHaveLength(2);
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].indexExerciseGroup).toBe(1);
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].indexExercise).toBe(1);
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].exerciseGroupPointsEqual).toBeFalse();
+            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].exerciseGroupPointsEqual).toBe(false);
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].exerciseTitle).toBe('A');
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].exerciseMaxPoints).toBe(50);
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].exerciseNumberOfParticipations).toBe(23);
@@ -117,14 +120,12 @@ describe('ExamChecklistExerciseGroupTableComponent', () => {
         });
 
         it('should set properties true', () => {
-            TestBed.runInInjectionContext(() => {
-                examChecklistExerciseGroupTableComponent.exerciseGroups = input(getExerciseGroups(true));
-            });
-            examChecklistExerciseGroupTableComponent.ngOnChanges();
+            examChecklistComponentFixture.componentRef.setInput('exerciseGroups', getExerciseGroups(true));
+            examChecklistComponentFixture.detectChanges();
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns).not.toHaveLength(0);
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].indexExerciseGroup).toBe(1);
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].indexExercise).toBe(1);
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].exerciseGroupPointsEqual).toBeTrue();
+            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].exerciseGroupPointsEqual).toBe(true);
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].exerciseTitle).toBe('A');
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].exerciseMaxPoints).toBe(101);
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].exerciseNumberOfParticipations).toBe(23);
@@ -132,11 +133,9 @@ describe('ExamChecklistExerciseGroupTableComponent', () => {
 
         it('should reset group variant columns first', () => {
             examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns = [{} as ExerciseGroupVariantColumn];
-            TestBed.runInInjectionContext(() => {
-                examChecklistExerciseGroupTableComponent.exerciseGroups = input([]);
-            });
-            examChecklistExerciseGroupTableComponent.ngOnChanges();
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns).toBeEmpty();
+            examChecklistComponentFixture.componentRef.setInput('exerciseGroups', []);
+            examChecklistComponentFixture.detectChanges();
+            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns).toEqual([]);
         });
     });
 });

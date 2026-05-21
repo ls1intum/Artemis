@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -34,6 +36,8 @@ import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exer
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 @Component({
     template: '',
@@ -41,13 +45,14 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 class DummyComponent {}
 
 describe('CourseExerciseRowComponent', () => {
-    let comp: CourseExerciseRowComponent;
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CourseExerciseRowComponent>;
-    let getAllParticipationsStub: jest.SpyInstance;
+    let getAllParticipationsStub: ReturnType<typeof vi.spyOn>;
     let participationWebsocketService: ParticipationWebsocketService;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        TestBed.configureTestingModule({
             imports: [
                 TranslateModule.forRoot(),
                 RouterModule.forRoot([
@@ -56,8 +61,6 @@ describe('CourseExerciseRowComponent', () => {
                 ]),
                 NgbModule,
                 FaIconComponent,
-            ],
-            declarations: [
                 MockComponent(SubmissionResultStatusComponent),
                 MockComponent(ExerciseDetailsStudentActionsComponent),
                 MockComponent(NotReleasedTagComponent),
@@ -75,52 +78,69 @@ describe('CourseExerciseRowComponent', () => {
                 { provide: CourseManagementService, useClass: MockCourseService },
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
                 SessionStorageService,
                 LocalStorageService,
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CourseExerciseRowComponent);
-                comp = fixture.componentInstance;
-                comp.course = { id: 123, isAtLeastInstructor: true } as Course;
-                participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
-                getAllParticipationsStub = jest.spyOn(participationWebsocketService, 'getParticipationsForExercise');
-            });
+        });
+        TestBed.overrideComponent(CourseExerciseRowComponent, {
+            remove: {
+                imports: [
+                    ArtemisTimeAgoPipe,
+                    ArtemisDatePipe,
+                    ArtemisTranslatePipe,
+                    SubmissionResultStatusComponent,
+                    ExerciseDetailsStudentActionsComponent,
+                    ExerciseCategoriesComponent,
+                ],
+            },
+            add: {
+                imports: [
+                    MockPipe(ArtemisTimeAgoPipe),
+                    MockPipe(ArtemisDatePipe),
+                    MockPipe(ArtemisTranslatePipe),
+                    MockComponent(SubmissionResultStatusComponent),
+                    MockComponent(ExerciseDetailsStudentActionsComponent),
+                    MockComponent(ExerciseCategoriesComponent),
+                ],
+            },
+        });
+        await TestBed.compileComponents();
+        fixture = TestBed.createComponent(CourseExerciseRowComponent);
+        fixture.componentRef.setInput('course', { id: 123, isAtLeastInstructor: true } as Course);
+        participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
+        getAllParticipationsStub = vi.spyOn(participationWebsocketService, 'getParticipationsForExercise');
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should display the score', () => {
-        setupExercise(ExerciseType.PROGRAMMING, dayjs());
-
+    it('should display the score', async () => {
         const studentParticipation = {
             id: 1,
             initializationState: InitializationState.INITIALIZED,
             testRun: false,
             results: [{ rated: true, score: 42 } as Result],
         } as StudentParticipation;
-        comp.exercise.studentParticipations = [studentParticipation];
 
         getAllParticipationsStub.mockReturnValue([studentParticipation]);
-        comp.ngOnChanges();
-        comp.ngOnInit();
 
+        const exercise = {
+            id: 1,
+            type: ExerciseType.PROGRAMMING,
+            dueDate: dayjs(),
+            studentParticipations: [studentParticipation],
+        } as Exercise;
+        fixture.componentRef.setInput('exercise', exercise);
+
+        TestBed.tick();
         fixture.detectChanges();
+        await fixture.whenStable();
 
         const result = fixture.debugElement.query(By.css('jhi-submission-result-status'));
         expect(result).not.toBeNull();
     });
-
-    const setupExercise = (exerciseType: ExerciseType, dueDate: dayjs.Dayjs) => {
-        comp.exercise = {
-            id: 1,
-            type: exerciseType,
-            dueDate,
-        } as Exercise;
-    };
 });

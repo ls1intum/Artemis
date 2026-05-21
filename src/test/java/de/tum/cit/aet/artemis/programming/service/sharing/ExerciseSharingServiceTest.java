@@ -233,7 +233,7 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
         try {
 
-            SharingSetupInfo setupInfo = new SharingSetupInfo(exercise, course1, sharingInfo);
+            SharingSetupInfoDTO setupInfo = new SharingSetupInfoDTO(exercise, course1.getId(), sharingInfo);
 
             ProgrammingExercise importedExercise = programmingExerciseImportFromSharingService.importProgrammingExerciseFromSharing(setupInfo);
 

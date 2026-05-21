@@ -42,6 +42,13 @@ public class AssessmentNote extends DomainObject {
     @JsonIgnore
     private Instant lastModifiedDate;
 
+    /**
+     * Read-only mapping of the FK column managed by {@link Result#assessmentNote}.
+     * Allows JPQL queries (e.g. {@code deleteByResultId}) without a full {@code @ManyToOne} relationship.
+     */
+    @Column(name = "result_id", insertable = false, updatable = false)
+    private Long resultId;
+
     @Column(name = "note")
     private String note;
 

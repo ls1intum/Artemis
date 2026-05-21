@@ -1,8 +1,83 @@
-import { SimpleChange } from '@angular/core';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+// IMPORTANT: The mock must be defined before '@tumaet/apollon' imports to prevent flaky client tests
+// Create mock class using vi.hoisted() to ensure it's available before vi.mock runs
+const { MockApollonEditor } = vi.hoisted(() => {
+    const deepClone = (obj: any): any => (obj ? JSON.parse(JSON.stringify(obj)) : {});
+
+    class MockApollonEditorClass {
+        _model: any;
+        _subscriptions = new Map<number, (model: any) => void>();
+        _assessmentSelectionSubscriptions = new Map<number, (selections: string[]) => void>();
+        _subscriptionCounter = 0;
+
+        subscribeToModelChange = vi.fn((callback: (model: any) => void) => {
+            const id = ++this._subscriptionCounter;
+            this._subscriptions.set(id, callback);
+            return id;
+        });
+
+        subscribeToAssessmentSelection = vi.fn((callback: (selections: string[]) => void) => {
+            const id = ++this._subscriptionCounter;
+            this._assessmentSelectionSubscriptions.set(id, callback);
+            return id;
+        });
+
+        unsubscribe = vi.fn((id: number) => {
+            this._subscriptions.delete(id);
+            this._assessmentSelectionSubscriptions.delete(id);
+        });
+
+        destroy = vi.fn();
+
+        addOrUpdateAssessment = vi.fn((assessment: any) => {
+            if (this._model) {
+                if (!this._model.assessments) {
+                    this._model.assessments = {};
+                }
+                this._model.assessments[assessment.modelElementId] = assessment;
+            }
+        });
+
+        nextRender = Promise.resolve();
+
+        constructor(_container: HTMLElement, options?: { model?: any }) {
+            this._model = options?.model ? deepClone(options.model) : {};
+            // Ensure v4-compatible structure with nodes/edges arrays,
+            // since the real ApollonEditor converts v2/v3 models to v4 internally.
+            if (!this._model.nodes) this._model.nodes = [];
+            if (!this._model.edges) this._model.edges = [];
+            if (!this._model.assessments) this._model.assessments = {};
+        }
+
+        get model() {
+            return this._model;
+        }
+
+        set model(value: any) {
+            this._model = value;
+        }
+    }
+
+    return { MockApollonEditor: MockApollonEditorClass };
+});
+
+// Mock the entire ApollonEditor class to prevent React initialization,
+// which causes unhandled errors from async React scheduler callbacks
+// ("Should not already be working", "document global was defined") in jsdom.
+vi.mock('@tumaet/apollon', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@tumaet/apollon')>();
+    return {
+        ...actual,
+        ApollonEditor: MockApollonEditor,
+    };
+});
+
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { UMLDiagramType, UMLModel, UMLRelationship } from '@ls1intum/apollon';
+import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
@@ -13,91 +88,106 @@ import { ModelElementCount } from 'app/modeling/shared/entities/modeling-submiss
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
+import { cloneDeep } from 'lodash-es';
+
+/**
+ * Creates a v4 format UMLModel with populated nodes and edges from the v3 test model.
+ * In the test environment, Apollon's model getter returns empty nodes/edges because
+ * React doesn't fully render. This helper creates a properly populated v4 model
+ * that can be used to mock apollonEditor.model for testing highlight and element count features.
+ */
+function createV4ModelWithNodes(): UMLModel {
+    const v3Model = cloneDeep(testClassDiagram as any);
+    const nodes: any[] = [];
+    const edges: any[] = [];
+
+    for (const [id, element] of Object.entries(v3Model.elements || {})) {
+        nodes.push({ ...(element as any), id, data: {} });
+    }
+    for (const [id, rel] of Object.entries(v3Model.relationships || {})) {
+        edges.push({ ...(rel as any), id, data: {} });
+    }
+
+    return {
+        id: 'test-model',
+        version: '4.0.0',
+        title: 'Test',
+        type: v3Model.type,
+        nodes,
+        edges,
+        assessments: v3Model.assessments || {},
+    } as unknown as UMLModel;
+}
+
+/** Helper to find a node or edge by ID in a v4 array-based model */
+function findElementById(elements: any[], id: string): any {
+    return elements.find((el: any) => el.id === id);
+}
+
+/**
+ * Mocks the apollonEditor.model getter/setter to use the provided model.
+ * This is necessary because in the test environment, Apollon doesn't fully render
+ * and returns empty nodes/edges. By mocking the getter, we can test the component's
+ * logic for updating highlights and element counts.
+ */
+function mockApollonEditorModel(apollonEditor: ApollonEditor, model: UMLModel): { getCapturedModel: () => UMLModel } {
+    let capturedModel = model;
+    Object.defineProperty(apollonEditor, 'model', {
+        get: () => capturedModel,
+        set: (newModel: UMLModel) => {
+            capturedModel = newModel;
+        },
+        configurable: true,
+    });
+    return { getCapturedModel: () => capturedModel };
+}
 
 describe('ModelingAssessmentComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ModelingAssessmentComponent>;
     let comp: ModelingAssessmentComponent;
     let translatePipe: ArtemisTranslatePipe;
 
-    const generateMockModel = (elementId: string, elementId2: string, relationshipId: string) => {
-        return {
-            version: '3.0.0',
-            type: 'ClassDiagram',
-            size: { width: 740, height: 660 },
-            interactive: { elements: {}, relationships: {} },
+    // Element IDs from test class diagram
+    const ELEMENT_ID_1 = 'b234e5cb-33e3-4957-ae04-f7990ce8571a'; // Package
+    const ELEMENT_ID_2 = '2f67120e-b491-4222-beb1-79e87c2cf54d'; // Connected Class
+    const RELATIONSHIP_ID = '5a9a4eb3-8281-4de4-b0f2-3e2f164574bd'; // First relationship
 
-            elements: {
-                [elementId]: {
-                    id: elementId,
-                    name: 'Package',
-                    type: 'Package',
-                    owner: null,
-                    bounds: { x: 160, y: 40, width: 200, height: 100 },
-                    highlight: undefined,
-                },
-                [elementId2]: {
-                    id: elementId2,
-                    name: 'Class',
-                    type: 'Class',
-                    owner: null,
-                    bounds: { x: 280, y: 320, width: 200, height: 100 },
-                    attributes: [],
-                    methods: [],
-                    highlight: undefined,
-                },
-            },
-            relationships: {
-                [relationshipId]: {
-                    id: relationshipId,
-                    name: '',
-                    type: 'ClassBidirectional',
-                    owner: null,
-                    bounds: { x: 120, y: 0, width: 265, height: 320 },
-                    path: [
-                        { x: 260, y: 320 },
-                        { x: 260, y: 280 },
-                        { x: 0, y: 280 },
-                        { x: 0, y: 0 },
-                        { x: 140, y: 0 },
-                        { x: 140, y: 40 },
-                    ],
-                    source: {
-                        direction: 'Up',
-                        element: elementId2,
-                    },
-                    target: {
-                        direction: 'Up',
-                        element: elementId,
-                    },
-                } as UMLRelationship,
-            },
-            assessments: {},
-        } as UMLModel;
-    };
+    const makeMockModel = () => cloneDeep(testClassDiagram as unknown as UMLModel);
 
-    const makeMockModel = () => generateMockModel('elementId1', 'elementId2', 'relationshipId');
     const mockFeedbackWithReference: Feedback = {
         text: 'FeedbackWithReference',
-        referenceId: 'relationshipId',
+        referenceId: RELATIONSHIP_ID,
         reference: 'reference',
         credits: 30,
         correctionStatus: 'CORRECT',
     };
     const mockFeedbackWithReferenceCopied: Feedback = {
         text: 'FeedbackWithReference Copied',
-        referenceId: 'relationshipId',
+        referenceId: RELATIONSHIP_ID,
         reference: 'reference',
         credits: 35,
         copiedFeedbackId: 12,
     };
-    const mockFeedbackWithoutReference: Feedback = { text: 'FeedbackWithoutReference', credits: 30, type: FeedbackType.MANUAL_UNREFERENCED };
-    const mockFeedbackInvalid: Feedback = { text: 'FeedbackInvalid', referenceId: '4', reference: 'reference', correctionStatus: FeedbackCorrectionErrorType.INCORRECT_SCORE };
+    const mockFeedbackWithoutReference: Feedback = {
+        text: 'FeedbackWithoutReference',
+        credits: 30,
+        type: FeedbackType.MANUAL_UNREFERENCED,
+    };
+    const mockFeedbackInvalid: Feedback = {
+        text: 'FeedbackInvalid',
+        referenceId: '4',
+        reference: 'reference',
+        correctionStatus: FeedbackCorrectionErrorType.INCORRECT_SCORE,
+    };
     const mockValidFeedbacks = [mockFeedbackWithReference, mockFeedbackWithoutReference];
     const mockFeedbacks = [...mockValidFeedbacks, mockFeedbackInvalid];
 
     const mockFeedbackWithGradingInstruction: Feedback = {
         text: 'FeedbackWithGradingInstruction',
-        referenceId: 'relationshipId',
+        referenceId: RELATIONSHIP_ID,
         reference: 'reference',
         credits: 30,
         gradingInstruction: new GradingInstruction(),
@@ -105,25 +195,35 @@ describe('ModelingAssessmentComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule)],
-            declarations: [ModelingAssessmentComponent, ScoreDisplayComponent, ModelingExplanationEditorComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [MockProvider(ArtemisTranslatePipe), { provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ModelingAssessmentComponent);
-                comp = fixture.componentInstance;
-                translatePipe = TestBed.inject(ArtemisTranslatePipe);
-            });
+            imports: [MockModule(FormsModule), ModelingAssessmentComponent, ScoreDisplayComponent, ModelingExplanationEditorComponent, MockPipe(ArtemisTranslatePipe)],
+            providers: [
+                MockProvider(ArtemisTranslatePipe),
+                {
+                    provide: TranslateService,
+                    useClass: MockTranslateService,
+                },
+            ],
+        });
+
+        fixture = TestBed.createComponent(ModelingAssessmentComponent);
+        comp = fixture.componentInstance;
+        translatePipe = TestBed.inject(ArtemisTranslatePipe);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        // Properly clean up the Apollon editor (React-based) before test environment teardown.
+        // Prevents "Should not already be working" React scheduler errors firing from setImmediate
+        // after the test ends. Mirrors the pattern in modeling-editor.component.spec.ts.
+        if (comp) {
+            comp.ngOnDestroy();
+        }
+        fixture?.destroy();
+        vi.restoreAllMocks();
     });
 
     it('should show title if any', () => {
         const title = 'Test Title';
-        comp.title = title;
+        fixture.componentRef.setInput('title', title);
         fixture.detectChanges();
         const el = fixture.debugElement.query((de) => de.nativeElement.textContent === title);
         expect(el).not.toBeNull();
@@ -134,21 +234,21 @@ describe('ModelingAssessmentComponent', () => {
         let maxScore: number;
         beforeEach(() => {
             totalScore = 40;
-            comp.totalScore = totalScore;
+            fixture.componentRef.setInput('totalScore', totalScore);
             maxScore = 66;
-            comp.maxScore = maxScore;
+            fixture.componentRef.setInput('maxScore', maxScore);
         });
         it('should display score display with right values', () => {
-            comp.displayPoints = true;
+            fixture.componentRef.setInput('displayPoints', true);
             fixture.detectChanges();
             const scoreDisplay = fixture.debugElement.query(By.directive(ScoreDisplayComponent));
             expect(scoreDisplay).not.toBeNull();
-            expect(scoreDisplay.componentInstance.score).toEqual(totalScore);
-            expect(scoreDisplay.componentInstance.maxPoints).toEqual(maxScore);
+            expect(scoreDisplay.componentInstance.score()).toEqual(totalScore);
+            expect(scoreDisplay.componentInstance.maxPoints()).toEqual(maxScore);
         });
 
         it('should not display score if displayPoints wrong', () => {
-            comp.displayPoints = false;
+            fixture.componentRef.setInput('displayPoints', false);
             fixture.detectChanges();
             const scoreDisplay = fixture.debugElement.query(By.directive(ScoreDisplayComponent));
             expect(scoreDisplay).toBeNull();
@@ -157,85 +257,131 @@ describe('ModelingAssessmentComponent', () => {
 
     it('should display explanation editor if there is an explanation', () => {
         const explanation = 'Explanation';
-        comp.explanation = explanation;
+        fixture.componentRef.setInput('explanation', explanation);
         fixture.detectChanges();
         const explanationEditor = fixture.debugElement.query(By.directive(ModelingExplanationEditorComponent));
         expect(explanationEditor).not.toBeNull();
-        expect(explanationEditor.componentInstance.explanation).toEqual(explanation);
-        expect(explanationEditor.componentInstance.readOnly).toBeTrue();
+        expect(explanationEditor.componentInstance.explanation()).toEqual(explanation);
+        expect(explanationEditor.componentInstance.readOnly()).toBe(true);
     });
 
     it('should initialize apollon editor', () => {
-        comp.umlModel = makeMockModel();
-        comp.diagramType = UMLDiagramType.ClassDiagram;
+        fixture.componentRef.setInput('umlModel', makeMockModel());
+        fixture.componentRef.setInput('diagramType', UMLDiagramType.ClassDiagram);
+
         fixture.detectChanges();
         expect(comp.apollonEditor).not.toBeNull();
     });
 
     it('should filter references', () => {
-        comp.umlModel = makeMockModel();
-        comp.readOnly = true;
-        comp.feedbacks = mockFeedbacks;
+        fixture.componentRef.setInput('umlModel', makeMockModel());
+        fixture.componentRef.setInput('readOnly', true);
+
+        fixture.componentRef.setInput('resultFeedbacks', mockFeedbacks);
         fixture.detectChanges();
         expect(comp.referencedFeedbacks).toEqual([mockFeedbackWithReference]);
         expect(comp.unreferencedFeedbacks).toEqual([mockFeedbackWithoutReference]);
-        expect(comp.feedbacks).toEqual(mockFeedbacks);
+        expect(comp.resultFeedbacks()).toEqual(mockFeedbacks);
     });
 
     it('should filter references by result feedbacks', () => {
-        expect(comp.referencedFeedbacks).toBeEmpty();
-        expect(comp.feedbacks).toBeUndefined();
+        expect(comp.referencedFeedbacks).toHaveLength(0);
+        expect(comp.resultFeedbacks()).toBeUndefined();
 
-        comp.umlModel = makeMockModel();
-        comp.resultFeedbacks = mockFeedbacks;
+        fixture.componentRef.setInput('umlModel', makeMockModel());
+        fixture.detectChanges();
+        fixture.componentRef.setInput('resultFeedbacks', mockFeedbacks);
+        fixture.detectChanges();
 
-        expect(comp.referencedFeedbacks).toEqual([mockFeedbackWithReference, mockFeedbackInvalid]);
-        expect(comp.feedbacks).toEqual(mockFeedbacks);
+        // The effect filters by reference != undefined (not by validating referenceId exists in model)
+        // mockFeedbackWithReference has reference: 'reference' - included
+        // mockFeedbackInvalid has reference: 'reference' - included (even though referenceId='4' does not exist in model)
+        // mockFeedbackWithoutReference has no reference property - excluded
+        expect(comp.referencedFeedbacks).toHaveLength(2);
+
+        // Verify mockFeedbackWithReference is present by referenceId
+        expect(comp.referencedFeedbacks.some((f) => f.referenceId === mockFeedbackWithReference.referenceId)).toBe(true);
+
+        // Verify mockFeedbackInvalid is present by referenceId (has reference property, so included by effect)
+        expect(comp.referencedFeedbacks.some((f) => f.referenceId === mockFeedbackInvalid.referenceId)).toBe(true);
+
+        // Verify unreferenced feedback is NOT present (has no reference property)
+        expect(comp.referencedFeedbacks.some((f) => f.text === mockFeedbackWithoutReference.text)).toBe(false);
+
+        expect(comp.resultFeedbacks()).toEqual(mockFeedbacks);
     });
 
     it('should calculate drop info', () => {
-        const spy = jest.spyOn(translatePipe, 'transform');
+        const spy = vi.spyOn(translatePipe, 'transform');
         const mockModel = makeMockModel();
-        comp.umlModel = mockModel;
-        comp.resultFeedbacks = [mockFeedbackWithGradingInstruction];
+        fixture.componentRef.setInput('umlModel', mockModel);
+        fixture.detectChanges();
+        fixture.componentRef.setInput('resultFeedbacks', [mockFeedbackWithGradingInstruction]);
+        fixture.detectChanges();
 
-        expect(spy).toHaveBeenCalledWith('artemisApp.assessment.messages.removeAssessmentInstructionLink');
-        expect(spy).toHaveBeenCalledWith('artemisApp.exercise.assessmentInstruction');
-        expect(spy).toHaveBeenCalledWith('artemisApp.assessment.feedbackHint');
-        expect(Object.values(mockModel.assessments)[0].dropInfo.instruction).toBe(mockFeedbackWithGradingInstruction.gradingInstruction);
+        // In v2, calculateDropInfo returns the GradingInstruction directly as dropInfo
+        // (Apollon stores dropInfo flat, not nested under dropInfo.instruction)
+        expect((Object.values(mockModel.assessments)[0] as any).dropInfo).toBe(mockFeedbackWithGradingInstruction.gradingInstruction);
 
-        // toHaveBeenCalledTimes(5): 2 from calculateLabel() + 3 from calculateDropInfo()
-        expect(spy).toHaveBeenCalledTimes(5);
+        // calculateLabel() always calls translate twice (first/second correction round text)
+        expect(spy).toHaveBeenCalledWith('artemisApp.assessment.diffView.correctionRoundDiffFirst');
+        expect(spy).toHaveBeenCalledWith('artemisApp.assessment.diffView.correctionRoundDiffSecond');
+        expect(spy).toHaveBeenCalledTimes(2);
     });
 
     it('should update element counts', async () => {
-        jest.spyOn(console, 'error').mockImplementation(); // prevent: findDOMNode is deprecated and will be removed in the next major release
-        function getElementCounts(model: UMLModel): ModelElementCount[] {
-            // Not sure whether this is the correct logic to build OtherModelElementCounts.
-            return Object.values(model.elements).map((el) => ({
-                elementId: el.id,
-                numberOfOtherElements: Object.values(model.elements).length - 1,
-            }));
-        }
+        vi.spyOn(console, 'error').mockImplementation(() => {}); // prevent: findDOMNode is deprecated and will be removed in the next major release
 
         const mockModel = makeMockModel();
-        comp.umlModel = mockModel;
-        const elementCounts = getElementCounts(mockModel);
-        comp.elementCounts = elementCounts;
-        const spy = jest.spyOn(translatePipe, 'transform');
+        const v4Model = createV4ModelWithNodes();
+
+        // Create element counts for specific elements
+        const elementCounts: ModelElementCount[] = [
+            { elementId: ELEMENT_ID_1, numberOfOtherElements: 5 },
+            { elementId: ELEMENT_ID_2, numberOfOtherElements: 3 },
+        ];
+
+        // Mock translatePipe to return a meaningful value so assessmentNote gets set
+        const spy = vi.spyOn(translatePipe, 'transform').mockImplementation((key: string, params?: any) => {
+            if (key === 'artemisApp.modelingAssessment.impactWarning' && params?.affectedSubmissionsCount) {
+                return `Warning: ${params.affectedSubmissionsCount} other submissions`;
+            }
+            return key;
+        });
+
+        fixture.componentRef.setInput('umlModel', mockModel);
+        fixture.componentRef.setInput('elementCounts', elementCounts);
         fixture.detectChanges();
-        await fixture.whenStable();
+
         await comp.ngAfterViewInit();
-        for (let i = 0; i < elementCounts.length; i++) {
-            expect(spy).toHaveBeenCalledWith('artemisApp.modelingAssessment.impactWarning', { affectedSubmissionsCount: elementCounts[i].numberOfOtherElements });
-        }
-        expect(spy).toHaveBeenCalledTimes(elementCounts.length);
+        await fixture.whenStable();
+
+        expect(comp.apollonEditor).toBeDefined();
+
+        // Mock the apollonEditor.model to return our v4 model with populated nodes
+        const { getCapturedModel } = mockApollonEditorModel(comp.apollonEditor!, v4Model);
+
+        // Now call updateElementCounts which will iterate over model.nodes
+        await (comp as any).updateElementCounts(elementCounts);
+
+        // Verify the translate pipe was called with the correct translation key and parameters
+        expect(spy).toHaveBeenCalledWith('artemisApp.modelingAssessment.impactWarning', { affectedSubmissionsCount: 5 });
+        expect(spy).toHaveBeenCalledWith('artemisApp.modelingAssessment.impactWarning', { affectedSubmissionsCount: 3 });
+
+        // Verify the assessmentNote was actually set on the nodes with the translated text
+        const updatedModel = getCapturedModel();
+        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_1).data.assessmentNote).toBe('Warning: 5 other submissions');
+        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_2).data.assessmentNote).toBe('Warning: 3 other submissions');
+
+        // Verify nodes not in elementCounts don't have assessmentNote set
+        const otherNodeId = 'ccac14e5-c828-4afb-ab97-0fb2a67e77d6'; // Class In Package
+        expect(findElementById(updatedModel.nodes as any[], otherNodeId).data.assessmentNote).toBeUndefined();
     });
 
     it('should generate feedback from assessment', () => {
         const mockModel = makeMockModel();
-        comp.umlModel = mockModel;
-        comp.resultFeedbacks = [mockFeedbackWithGradingInstruction];
+        fixture.componentRef.setInput('umlModel', mockModel);
+        fixture.componentRef.setInput('resultFeedbacks', [mockFeedbackWithGradingInstruction]);
 
         fixture.detectChanges();
 
@@ -244,126 +390,181 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     it('should highlight elements', async () => {
-        const highlightedElements = new Map();
-        highlightedElements.set('elementId1', 'red');
-        highlightedElements.set('relationshipId', 'blue');
-        comp.umlModel = makeMockModel();
-        comp.highlightedElements = highlightedElements;
+        const highlightedElements = new Map<string, string>();
+        highlightedElements.set(ELEMENT_ID_1, 'red');
+        highlightedElements.set(RELATIONSHIP_ID, 'blue');
+
+        const v4Model = createV4ModelWithNodes();
+
+        fixture.componentRef.setInput('umlModel', makeMockModel());
+        fixture.componentRef.setInput('highlightedElements', highlightedElements);
 
         fixture.detectChanges();
-        await fixture.whenStable();
         await comp.ngAfterViewInit();
+        await fixture.whenStable();
+
         expect(comp.apollonEditor).not.toBeNull();
 
-        const apollonModel = comp.apollonEditor!.model;
-        const elements = apollonModel.elements;
-        const highlightedElement = elements!['elementId1'];
-        const notHighlightedElement = elements!['elementId2'];
-        const relationship = (Object.values(apollonModel!.relationships) as UMLRelationship[])[0];
-        expect(highlightedElement).not.toBeNull();
-        expect(highlightedElement!.highlight).toBe('red');
-        expect(notHighlightedElement).not.toBeNull();
-        expect(notHighlightedElement!.highlight).toBeUndefined();
-        expect(relationship).not.toBeNull();
-        expect(relationship!.highlight).toBe('blue');
+        // Mock the apollonEditor.model to return our v4 model with populated nodes/edges
+        const { getCapturedModel } = mockApollonEditorModel(comp.apollonEditor!, v4Model);
+
+        // Call updateHighlightedElements which sets highlight property on nodes/edges
+        await (comp as any).updateHighlightedElements(highlightedElements);
+
+        // Verify the highlight property was actually set on the model elements
+        const updatedModel = getCapturedModel();
+        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_1).highlight).toBe('red');
+        expect(findElementById(updatedModel.edges as any[], RELATIONSHIP_ID).highlight).toBe('blue');
+
+        // Verify elements not in highlightedElements don't have highlight set
+        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_2).highlight).toBeUndefined();
     });
 
     it('should update model', async () => {
-        const newModel = generateMockModel('newElement1', 'newElement2', 'newRelationship');
-        const changes = { umlModel: { currentValue: newModel } as SimpleChange };
+        // Test that model can be updated with a new model
+        const initialModel = makeMockModel();
+        fixture.componentRef.setInput('umlModel', initialModel);
         fixture.detectChanges();
-        const apollonSpy = jest.spyOn(comp.apollonEditor!, 'model', 'set');
+        await comp.ngAfterViewInit();
+        await new Promise((r) => setTimeout(r, 0));
+        expect(comp.apollonEditor).not.toBeNull();
+
+        // Verify initial model was set
+        expect(comp.umlModel()).toBe(initialModel);
+
+        // Create a modified model (same structure, different content)
+        const newModel = makeMockModel();
+        newModel.type = 'ClassDiagram';
+        fixture.componentRef.setInput('umlModel', newModel);
+        fixture.detectChanges();
         await fixture.whenStable();
-        await comp.apollonEditor!.nextRender;
-        await comp.ngOnChanges(changes);
-        expect(apollonSpy).toHaveBeenCalledWith(newModel);
+        await new Promise((r) => setTimeout(r, 0));
+
+        // Verify the component's input was updated
+        expect(comp.umlModel()).toBe(newModel);
+        expect(comp.umlModel()?.type).toBe('ClassDiagram');
+
+        // Verify the apollon editor is still valid and has the correct diagram type
+        const apollonModel = comp.apollonEditor!.model;
+        expect(apollonModel.type).toBe(newModel.type);
     });
 
     it('should update highlighted elements', async () => {
-        const highlightedElements = new Map();
-        highlightedElements.set('elementId2', 'green');
-        const changes = { highlightedElements: { currentValue: highlightedElements } as SimpleChange };
-        comp.umlModel = makeMockModel();
-        comp.highlightedElements = highlightedElements;
+        const initialHighlights = new Map<string, string>();
+        initialHighlights.set(ELEMENT_ID_1, 'red');
+        initialHighlights.set(ELEMENT_ID_2, 'blue');
+
+        const v4Model = createV4ModelWithNodes();
+
+        fixture.componentRef.setInput('umlModel', makeMockModel());
+        fixture.componentRef.setInput('highlightedElements', initialHighlights);
 
         fixture.detectChanges();
-        await fixture.whenStable();
-        await comp.ngOnChanges(changes);
         await comp.ngAfterViewInit();
+        await fixture.whenStable();
 
         expect(comp.apollonEditor).not.toBeNull();
-        const apollonModel = comp.apollonEditor!.model;
-        const elements = apollonModel!.elements;
-        const highlightedElement = elements!['elementId2'];
-        const notHighlightedElement = elements!['elementId1'];
-        const relationship = (Object.values(apollonModel!.relationships) as UMLRelationship[])[0];
 
-        expect(highlightedElement).not.toBeNull();
-        expect(highlightedElement!.highlight).toBe('green');
-        expect(notHighlightedElement).not.toBeNull();
-        expect(notHighlightedElement!.highlight).toBeUndefined();
-        expect(relationship).not.toBeNull();
-        expect(relationship!.highlight).toBeUndefined();
-        expect(relationship!.highlight).toBeUndefined();
+        // Mock the apollonEditor.model to return our v4 model with populated nodes/edges
+        const { getCapturedModel } = mockApollonEditorModel(comp.apollonEditor!, v4Model);
+
+        // Apply initial highlights
+        await (comp as any).updateHighlightedElements(initialHighlights);
+
+        let updatedModel = getCapturedModel();
+        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_1).highlight).toBe('red');
+        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_2).highlight).toBe('blue');
+
+        // Now update with different highlights - only ELEMENT_ID_2 should be green
+        const newHighlights = new Map<string, string>();
+        newHighlights.set(ELEMENT_ID_2, 'green');
+
+        await (comp as any).updateHighlightedElements(newHighlights);
+
+        updatedModel = getCapturedModel();
+        // ELEMENT_ID_1 should now have undefined highlight (removed)
+        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_1).highlight).toBeUndefined();
+        // ELEMENT_ID_2 should have green highlight (updated)
+        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_2).highlight).toBe('green');
     });
 
     it('should update highlighted assessments first round', async () => {
-        const changes = { highlightDifferences: { currentValue: true } as SimpleChange };
-        comp.highlightDifferences = true;
-        comp.umlModel = makeMockModel();
-        comp.feedbacks = [mockFeedbackWithReference];
+        fixture.componentRef.setInput('highlightDifferences', true);
+        fixture.componentRef.setInput('umlModel', makeMockModel());
+        fixture.componentRef.setInput('resultFeedbacks', [mockFeedbackWithReference]);
         comp.referencedFeedbacks = [mockFeedbackWithReference];
-        jest.spyOn(translatePipe, 'transform').mockReturnValue('Second correction round');
+        vi.spyOn(translatePipe, 'transform').mockReturnValue('Second correction round');
 
         fixture.detectChanges();
-        await fixture.whenStable();
-        await comp.ngOnChanges(changes);
-        expect(comp.apollonEditor).toBeDefined();
+        await comp.ngAfterViewInit();
+        await new Promise((r) => setTimeout(r, 0));
 
-        await comp.apollonEditor!.nextRender;
+        expect(comp.apollonEditor).toBeDefined();
 
         const apollonModel = comp.apollonEditor!.model;
         const assessments: any = Object.values(apollonModel.assessments);
+
         expect(assessments[0].labelColor).toEqual(comp.secondCorrectionRoundColor);
         expect(assessments[0].label).toBe('Second correction round');
         expect(assessments[0].score).toBe(30);
     });
 
     it('should update highlighted assessments', async () => {
-        const changes = { highlightDifferences: { currentValue: true } as SimpleChange };
-        comp.highlightDifferences = true;
-        comp.umlModel = makeMockModel();
-
-        fixture.detectChanges();
-        comp.feedbacks = [mockFeedbackWithReferenceCopied];
+        fixture.componentRef.setInput('umlModel', makeMockModel());
+        fixture.componentRef.setInput('resultFeedbacks', [mockFeedbackWithReferenceCopied]);
         comp.referencedFeedbacks = [mockFeedbackWithReferenceCopied];
-        jest.spyOn(translatePipe, 'transform').mockReturnValue('First correction round');
+        vi.spyOn(translatePipe, 'transform').mockReturnValue('First correction round');
 
-        await comp.ngOnChanges(changes);
+        fixture.componentRef.setInput('highlightDifferences', true);
+        fixture.detectChanges();
+
         await fixture.whenStable();
-        await comp.apollonEditor!.nextRender;
+        await new Promise((r) => setTimeout(r, 0));
 
         expect(comp.apollonEditor).not.toBeNull();
 
         const apollonModel = comp.apollonEditor!.model;
         const assessments: any = Object.values(apollonModel.assessments);
+
         expect(assessments[0].labelColor).toEqual(comp.firstCorrectionRoundColor);
         expect(assessments[0].label).toBe('First correction round');
         expect(assessments[0].score).toBe(35);
     });
 
     it('should update feedbacks', () => {
-        const newMockFeedbackWithReference = { text: 'NewFeedbackWithReference', referenceId: 'relationshipId', reference: 'reference', credits: 30 } as Feedback;
-        const newMockFeedbackWithoutReference = { text: 'NewFeedbackWithoutReference', credits: 30, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback;
-        const newMockFeedbackInvalid = { text: 'NewFeedbackInvalid', referenceId: '4', reference: 'reference' };
+        const newMockFeedbackWithReference = {
+            text: 'NewFeedbackWithReference',
+            referenceId: RELATIONSHIP_ID,
+            reference: 'reference',
+            credits: 30,
+        } as Feedback;
+        const newMockFeedbackWithoutReference = {
+            text: 'NewFeedbackWithoutReference',
+            credits: 30,
+            type: FeedbackType.MANUAL_UNREFERENCED,
+        } as Feedback;
+        const newMockFeedbackInvalid = {
+            text: 'NewFeedbackInvalid',
+            referenceId: '4',
+            reference: 'reference',
+        } as Feedback;
+
         const newMockValidFeedbacks = [newMockFeedbackWithReference, newMockFeedbackWithoutReference];
         const newMockFeedbacks = [...newMockValidFeedbacks, newMockFeedbackInvalid];
-        comp.umlModel = makeMockModel();
-        comp.readOnly = true;
+
+        fixture.componentRef.setInput('umlModel', makeMockModel());
+        fixture.componentRef.setInput('readOnly', true);
+        fixture.componentRef.setInput('resultFeedbacks', newMockFeedbacks);
         fixture.detectChanges();
-        const changes = { feedbacks: { currentValue: newMockFeedbacks } as SimpleChange };
-        comp.ngOnChanges(changes);
-        expect(comp.feedbacks).toEqual(newMockFeedbacks);
+
+        (comp as any).handleFeedback();
+
+        expect(comp.resultFeedbacks()).toEqual(newMockFeedbacks);
         expect(comp.referencedFeedbacks).toEqual([newMockFeedbackWithReference]);
+    });
+
+    it('should ignore handleFeedback when resultFeedbacks is undefined', () => {
+        (comp as any).handleFeedback();
+        expect(comp.referencedFeedbacks).toEqual([]);
     });
 });

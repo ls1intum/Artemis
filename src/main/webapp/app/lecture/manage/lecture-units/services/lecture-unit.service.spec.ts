@@ -1,11 +1,13 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import dayjs from 'dayjs/esm';
-import { AttachmentVideoUnit, IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -13,8 +15,11 @@ import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import type { MockInstance } from 'vitest';
 
 describe('LectureUnitService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: LectureUnitService;
     let httpMock: HttpTestingController;
     let exerciseUnit: ExerciseUnit;
@@ -22,7 +27,7 @@ describe('LectureUnitService', () => {
     let textUnit: TextUnit;
     let lecture: Lecture;
     let expectedResultArray: any;
-    let convertDateFromServerEntitySpy: jest.SpyInstance;
+    let convertDateFromServerEntitySpy: MockInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -72,15 +77,15 @@ describe('LectureUnitService', () => {
         httpMock.verify();
     });
 
-    it('should receive updated order array', fakeAsync(() => {
-        convertDateFromServerEntitySpy = jest.spyOn(service, 'convertLectureUnitDateFromServer');
+    it('should receive updated order array', async () => {
+        convertDateFromServerEntitySpy = vi.spyOn(service, 'convertLectureUnitDateFromServer');
         const orderArray = [attachmentVideoUnit, textUnit, exerciseUnit];
         service.updateOrder(1, orderArray).subscribe((resp) => (expectedResultArray = resp));
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(orderArray);
-        expect(expectedResultArray.body).toBeArrayOfSize(3);
+        expect(expectedResultArray.body).toHaveLength(3);
         expect(convertDateFromServerEntitySpy).toHaveBeenCalledTimes(3);
-    }));
+    });
 
     it('should get title of associated element', async () => {
         expect(service.getLectureUnitName(attachmentVideoUnit)).toEqual(attachmentVideoUnit.name);
@@ -94,84 +99,128 @@ describe('LectureUnitService', () => {
         expect(service.getLectureUnitReleaseDate(textUnit)).toEqual(textUnit.releaseDate);
     });
 
-    it('should send a request to the server to get ngx representation of learning path', fakeAsync(() => {
+    it('should send a request to the server to get ngx representation of learning path', async () => {
         service.getLectureUnitForLearningPathNodeDetails(1).subscribe();
         httpMock.expectOne({ method: 'GET', url: 'api/lecture/lecture-units/1/for-learning-path-node-details' });
-    }));
+    });
 
-    it('should set lecture unit as completed', fakeAsync(() => {
+    it('should set lecture unit as completed', async () => {
         exerciseUnit.completed = false;
         service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: true });
         httpMock.expectOne({ method: 'POST', url: 'api/lecture/lectures/5/lecture-units/42/completion?completed=true' }).flush(null);
-        expect(exerciseUnit.completed).toBeTrue();
-    }));
+        expect(exerciseUnit.completed).toBe(true);
+    });
 
-    it('should set lecture unit as uncompleted', fakeAsync(() => {
+    it('should set lecture unit as uncompleted', async () => {
         exerciseUnit.completed = true;
         service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: false });
         httpMock.expectOne({ method: 'POST', url: 'api/lecture/lectures/5/lecture-units/42/completion?completed=false' }).flush(null);
-        expect(exerciseUnit.completed).toBeFalse();
-    }));
+        expect(exerciseUnit.completed).toBe(false);
+    });
 
-    it('should not set completion status if already completed', fakeAsync(() => {
+    it('should not set completion status if already completed', async () => {
         exerciseUnit.completed = false;
         service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: false });
         httpMock.expectNone({ method: 'POST', url: 'api/lecture/lectures/5/lecture-units/42/completion?completed=false' });
-    }));
+    });
 
-    it('should not set completion status if not visible', fakeAsync(() => {
+    it('should not set completion status if not visible', async () => {
         exerciseUnit.visibleToStudents = false;
         service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: false });
         httpMock.expectNone({ method: 'POST', url: 'api/lecture/lectures/5/lecture-units/42/completion?completed=false' });
-    }));
+    });
 
-    it('should handle empty response body when converting dates from server on response array', fakeAsync(() => {
-        const convertDateFromServerEntitySpy = jest.spyOn(service, 'convertLectureUnitDateFromServer');
+    it('should handle empty response body when converting dates from server on response array', async () => {
+        const convertDateFromServerEntitySpy = vi.spyOn(service, 'convertLectureUnitDateFromServer');
         const emptyResponse = new HttpResponse<LectureUnit[]>({ body: null });
 
         const result = service.convertLectureUnitResponseArrayDatesFromServer(emptyResponse);
 
         expect(convertDateFromServerEntitySpy).not.toHaveBeenCalled();
         expect(result).toBe(emptyResponse);
-    }));
-
-    it('should fetch the ingestion state for lecture units and return an OK response', () => {
-        const courseId = 123;
-        const lectureId = 456;
-        const expectedUrl = `api/iris/courses/${courseId}/lectures/${lectureId}/lecture-units/ingestion-state`;
-
-        const expectedResponse: Record<number, IngestionState> = {
-            1: IngestionState.DONE,
-            2: IngestionState.NOT_STARTED,
-        };
-
-        service.getIngestionState(courseId, lectureId).subscribe((response) => {
-            expect(response.body).toEqual(expectedResponse);
-        });
-
-        const req = httpMock.expectOne({
-            url: expectedUrl,
-            method: 'GET',
-        });
-
-        req.flush(expectedResponse, { status: 200, statusText: 'OK' });
-
-        expect(req.request.method).toBe('GET');
     });
 
-    it('should send a POST request to ingest a lecture unit and return an OK response', () => {
-        const lectureUnitId = 123;
-        const lectureId = 456;
-        const expectedUrl = `api/lecture/lectures/${lectureId}/lecture-units/${lectureUnitId}/ingest`;
+    it('should delete a lecture unit', async () => {
+        service.delete(37, 5).subscribe();
+        httpMock.expectOne({ method: 'DELETE', url: 'api/lecture/lectures/5/lecture-units/37' });
+    });
 
-        service.ingestLectureUnitInPyris(lectureUnitId, lectureId).subscribe((response) => {
-            expect(response.status).toBe(200);
-        });
-        const req = httpMock.expectOne({
-            url: expectedUrl,
-            method: 'POST',
-        });
-        req.flush(null, { status: 200, statusText: 'OK' });
-        expect(req.request.method).toBe('POST');
+    it('should call setCompletion endpoint', async () => {
+        service.setCompletion(42, 5, true).subscribe();
+        httpMock.expectOne({ method: 'POST', url: 'api/lecture/lectures/5/lecture-units/42/completion?completed=true' });
+    });
+
+    it('should get lecture unit by id', async () => {
+        service.getLectureUnitById(42).subscribe();
+        httpMock.expectOne({ method: 'GET', url: 'api/lecture/lecture-units/42' });
+    });
+
+    it('should retry processing', async () => {
+        service.retryProcessing(5, 42).subscribe();
+        httpMock.expectOne({ method: 'POST', url: 'api/lecture/lectures/5/lecture-units/42/retry-processing' });
+    });
+
+    it('should convert attachment video unit dates from client', () => {
+        const result = service.convertLectureUnitDatesFromClient(attachmentVideoUnit);
+        expect(result).toBeDefined();
+        expect(result.id).toBe(37);
+    });
+
+    it('should convert exercise unit dates from client', () => {
+        const result = service.convertLectureUnitDatesFromClient(exerciseUnit);
+        expect(result).toBeDefined();
+        expect(result.id).toBe(42);
+    });
+
+    it('should convert text unit dates from client', () => {
+        const result = service.convertLectureUnitDatesFromClient(textUnit);
+        expect(result).toBeDefined();
+        expect(result.id).toBe(23);
+    });
+
+    it('should convert lecture unit array dates from client', () => {
+        const units = [attachmentVideoUnit, textUnit, exerciseUnit];
+        const result = service.convertLectureUnitArrayDatesFromClient(units);
+        expect(result).toHaveLength(3);
+    });
+
+    it('should handle empty array when converting dates from client', () => {
+        const result = service.convertLectureUnitArrayDatesFromClient([]);
+        expect(result).toHaveLength(0);
+    });
+
+    it('should convert lecture unit response dates from server for attachment video unit', () => {
+        const response = new HttpResponse<AttachmentVideoUnit>({ body: attachmentVideoUnit });
+        const result = service.convertLectureUnitResponseDatesFromServer(response);
+        expect(result.body).toBeDefined();
+    });
+
+    it('should convert lecture unit response dates from server for exercise unit', () => {
+        const response = new HttpResponse<ExerciseUnit>({ body: exerciseUnit });
+        const result = service.convertLectureUnitResponseDatesFromServer(response);
+        expect(result.body).toBeDefined();
+    });
+
+    it('should convert lecture unit response dates from server for text unit', () => {
+        const response = new HttpResponse<TextUnit>({ body: textUnit });
+        const result = service.convertLectureUnitResponseDatesFromServer(response);
+        expect(result.body).toBeDefined();
+    });
+
+    it('should handle empty response body when converting dates from server', () => {
+        const response = new HttpResponse<LectureUnit>({ body: null });
+        const result = service.convertLectureUnitResponseDatesFromServer(response);
+        expect(result.body).toBeNull();
+    });
+
+    it('should convert lecture unit array dates from server', () => {
+        const units = [attachmentVideoUnit, textUnit, exerciseUnit];
+        const result = service.convertLectureUnitArrayDatesFromServer(units);
+        expect(result).toHaveLength(3);
+    });
+
+    it('should handle empty array when converting dates from server', () => {
+        const result = service.convertLectureUnitArrayDatesFromServer([]);
+        expect(result).toHaveLength(0);
     });
 });

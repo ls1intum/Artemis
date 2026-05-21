@@ -30,6 +30,11 @@ export class TheiaService {
      * Starts the online IDE (Theia) in a new window using provided parameters
      */
     async startOnlineIDE(theiaPortalURL: string, theiaImage: string, repositoryUri: string, userName?: string, userEmail?: string): Promise<void> {
+        const newWindow = window.open('', '_blank');
+        if (!newWindow) {
+            return;
+        }
+
         const artemisToken: string = (await firstValueFrom(this.accountService.getToolToken('SCORPIO'))) ?? '';
 
         let artemisUrl: string = '';
@@ -48,11 +53,6 @@ export class TheiaService {
             artemisToken,
             artemisUrl,
         };
-
-        const newWindow = window.open('', '_blank');
-        if (!newWindow) {
-            return;
-        }
 
         newWindow.name = 'Theia-IDE';
 

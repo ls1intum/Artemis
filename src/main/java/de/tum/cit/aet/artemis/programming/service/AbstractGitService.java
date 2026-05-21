@@ -101,15 +101,14 @@ public abstract class AbstractGitService {
                 .findGitDir()                    // keep builder behavior consistent if GIT_DIR is set
                 .setup();                        // finalize builder configuration
 
-        try (Repository repository = new Repository(builder, localPath, remoteRepositoryUri)) {
-            // Apply safe default Git configuration (GC, symlinks, commit signing, HEAD, etc.)
-            // Only modify config if write access to the repository is needed
-            if (writeAccess) {
-                setRepoConfig(defaultBranch, repository);
-            }
-
-            return repository;
+        Repository repository = new Repository(builder, localPath, remoteRepositoryUri);
+        // Apply safe default Git configuration (GC, symlinks, commit signing, HEAD, etc.)
+        // Only modify config if write access to the repository is needed
+        if (writeAccess) {
+            setRepoConfig(defaultBranch, repository);
         }
+
+        return repository;
     }
 
     /**
@@ -190,9 +189,7 @@ public abstract class AbstractGitService {
         builder.setGitDir(localPath.toFile());
         builder.setInitialBranch(defaultBranch).setMustExist(true).readEnvironment().findGitDir().setup(); // scan environment GIT_* variables
 
-        try (Repository repository = new Repository(builder, localPath, bareRepositoryUri)) {
-            return repository;
-        }
+        return new Repository(builder, localPath, bareRepositoryUri);
     }
 
     @NonNull
@@ -206,11 +203,11 @@ public abstract class AbstractGitService {
      * Get last commit hash from HEAD
      *
      * @param repoUri to get the latest hash from.
-     * @return the latestHash of the given repo.
+     * @return the latestHash of the given repo as a String.
      * @throws EntityNotFoundException if retrieving the latestHash from the git repo failed.
      */
     @Nullable
-    public ObjectId getLastCommitHash(@Nullable LocalVCRepositoryUri repoUri) throws EntityNotFoundException {
+    public String getLastCommitHash(@Nullable LocalVCRepositoryUri repoUri) throws EntityNotFoundException {
         if (repoUri == null || repoUri.getURI() == null) {
             return null;
         }
@@ -223,7 +220,8 @@ public abstract class AbstractGitService {
                 return null;
             }
 
-            return headRef.getObjectId();
+            ObjectId objectId = headRef.getObjectId();
+            return objectId != null ? objectId.getName() : null;
         }
         catch (GitAPIException | URISyntaxException ex) {
             throw new EntityNotFoundException("Could not retrieve the last commit hash for repoUri " + repoUri + " due to the following exception: " + ex);
@@ -257,13 +255,13 @@ public abstract class AbstractGitService {
      *
      * @param repository the Git repository (bare) to search within.
      * @param message    the commit message substring to search for (case-sensitive).
-     * @return the {@link ObjectId} of the first commit whose message contains {@code message},
-     *         or the {@link ObjectId} of the oldest commit if no match is found;
+     * @return the commit hash as a String of the first commit whose message contains {@code message},
+     *         or the commit hash of the oldest commit if no match is found;
      *         or {@code null} if the repository URI is invalid or inaccessible.
      * @throws EntityNotFoundException if the repository cannot be opened or traversed.
      */
     @Nullable
-    public ObjectId getFirstCommitWithMessage(Repository repository, String message) throws EntityNotFoundException {
+    public String getFirstCommitWithMessage(Repository repository, String message) throws EntityNotFoundException {
 
         try {
             try (RevWalk walk = new RevWalk(repository)) {
@@ -290,13 +288,13 @@ public abstract class AbstractGitService {
 
                     String msg = commit.getFullMessage();
                     if (msg != null && msg.contains(message)) {
-                        return commit.getId(); // Found a match, return early
+                        return commit.getId().getName(); // Found a match, return early
                     }
                 }
 
                 // Fallback: return the first (oldest) commit if no message matched
                 if (firstCommit != null) {
-                    return firstCommit.getId();
+                    return firstCommit.getId().getName();
                 }
 
                 return null;
@@ -308,7 +306,7 @@ public abstract class AbstractGitService {
         }
     }
 
-    protected String getGitUriAsString(LocalVCRepositoryUri vcsRepositoryUri) throws URISyntaxException {
+    public String getGitUriAsString(LocalVCRepositoryUri vcsRepositoryUri) throws URISyntaxException {
         return getGitUri(vcsRepositoryUri).toString();
     }
 

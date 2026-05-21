@@ -193,7 +193,24 @@ export class BuildOverviewService {
     }
 
     /**
-     * Get all build jobs of a course in the queue
+     * Get a single build job by its ID (admin)
+     * @param buildJobId the id of the build job
+     */
+    getBuildJobById(buildJobId: string): Observable<any> {
+        return this.http.get<any>(`${this.adminResourceUrl}/build-job/${buildJobId}`);
+    }
+
+    /**
+     * Get a single build job by its ID for a specific course
+     * @param courseId the id of the course
+     * @param buildJobId the id of the build job
+     */
+    getBuildJobByIdForCourse(courseId: number, buildJobId: string): Observable<any> {
+        return this.http.get<any>(`${this.resourceUrl}/courses/${courseId}/build-job/${buildJobId}`);
+    }
+
+    /**
+     * Get build job logs
      * @param buildJobId
      */
     getBuildJobLogs(buildJobId: string): Observable<string> {

@@ -2,6 +2,8 @@
     "register": {
         "title": "Registrierung",
         "form": {
+            "login": "Benutzername",
+            "login.placeholder": "Benutzername",
             "button": "Registrieren"
         },
         "messages": {

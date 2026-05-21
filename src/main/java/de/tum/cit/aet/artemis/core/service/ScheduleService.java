@@ -12,6 +12,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -58,7 +59,7 @@ public class ScheduleService {
 
     private final ParticipationLifecycleService participationLifecycleService;
 
-    private final SlideLifecycleServiceApi slideLifecycleService;
+    private final Optional<SlideLifecycleServiceApi> slideLifecycleService;
 
     private interface LifecycleKey {
 
@@ -110,7 +111,7 @@ public class ScheduleService {
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy - HH:mm:ss");
 
     public ScheduleService(ExerciseLifecycleService exerciseLifecycleService, ParticipationLifecycleService participationLifecycleService,
-            SlideLifecycleServiceApi slideLifecycleService) {
+            Optional<SlideLifecycleServiceApi> slideLifecycleService) {
         this.exerciseLifecycleService = exerciseLifecycleService;
         this.participationLifecycleService = participationLifecycleService;
         this.slideLifecycleService = slideLifecycleService;
@@ -329,8 +330,10 @@ public class ScheduleService {
         // check if already scheduled for slide. if so, cancel.
         // no slide should be scheduled more than once.
         cancelScheduledTaskForSlideLifecycle(slide.getId(), lifecycle);
-        ScheduledFuture<?> scheduledTask = slideLifecycleService.scheduleTask(slide, lifecycle, task);
-        addScheduledSlideTasks(slide, lifecycle, new HashSet<>(List.of(scheduledTask)), name);
+        if (slideLifecycleService.isPresent()) {
+            ScheduledFuture<?> scheduledTask = slideLifecycleService.get().scheduleTask(slide, lifecycle, task);
+            addScheduledSlideTasks(slide, lifecycle, new HashSet<>(List.of(scheduledTask)), name);
+        }
     }
 
     /**

@@ -23,8 +23,6 @@ import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Transient;
 
 import org.hibernate.Hibernate;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -41,7 +39,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
  * A QuizExercise contains multiple quiz quizQuestions, which can be either multiple choice, drag and drop or short answer. Artemis supports live quizzes with a start and end time
  * which are
  * rated. Within this time, students can participate in the quiz and select their answers to the given quizQuestions. After the end time, the quiz is automatically evaluated
- * Instructors can choose to open the quiz for practice so that students can participate arbitrarily often with an unrated result
+ * and made available to the students to practice.
  */
 @Entity
 @DiscriminatorValue(value = "Q")
@@ -58,9 +56,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     @Transient
     private transient Integer remainingNumberOfAttempts;
 
-    @Column(name = "is_open_for_practice")
-    private Boolean isOpenForPractice;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "quiz_mode", columnDefinition = "varchar(63) default 'SYNCHRONIZED'", nullable = false)
     private QuizMode quizMode = QuizMode.SYNCHRONIZED; // default value
@@ -76,14 +71,16 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     private QuizPointStatistic quizPointStatistic;
 
     // TODO: test if we should use mappedBy here as well
+    // No @Cache here on purpose: this collection is mutated on every quiz edit/import and re-read on every student participation.
+    // NONSTRICT_READ_WRITE on a clustered L2 cache produced partial / stale reads that were the #12574 / #12584 bug class.
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn
     @JoinColumn(name = "exercise_id")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<QuizQuestion> quizQuestions = new ArrayList<>();
 
+    // No @Cache here on purpose: quizBatches is mutated on every student join in BATCHED mode, so the cache is actively hot
+    // and NONSTRICT's async-invalidation window is too loose for the multi-node setup. See #12574 / #12584.
     @OneToMany(mappedBy = "quizExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<QuizBatch> quizBatches = new HashSet<>();
 
     // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
@@ -115,14 +112,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
 
     public void setRemainingNumberOfAttempts(Integer remainingNumberOfAttempts) {
         this.remainingNumberOfAttempts = remainingNumberOfAttempts;
-    }
-
-    public Boolean isIsOpenForPractice() {
-        return isOpenForPractice;
-    }
-
-    public void setIsOpenForPractice(Boolean isOpenForPractice) {
-        this.isOpenForPractice = isOpenForPractice;
     }
 
     public Integer getDuration() {
@@ -562,7 +551,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     @Override
     public String toString() {
         return "QuizExercise{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", randomizeQuestionOrder='" + isRandomizeQuestionOrder() + "'" + ", allowedNumberOfAttempts='"
-                + getAllowedNumberOfAttempts() + "'" + ", isOpenForPractice='" + isIsOpenForPractice() + "'" + ", releaseDate='" + getReleaseDate() + "'" + ", duration='"
-                + getDuration() + "'" + ", dueDate='" + getDueDate() + "'" + "}";
+                + getAllowedNumberOfAttempts() + "'" + ", releaseDate='" + getReleaseDate() + "'" + ", duration='" + getDuration() + "'" + ", dueDate='" + getDueDate() + "'" + "}";
     }
 }

@@ -17,3 +17,11 @@
         <fa-icon [icon]="faTrash" />
     </button>
 </div>
+
+<jhi-edit-tutorial-group-free-period
+    #editFreePeriodDialog
+    [course]="course()"
+    [tutorialGroupsConfiguration]="tutorialGroupConfiguration()"
+    [tutorialGroupFreePeriod]="tutorialFreePeriod()"
+    (freePeriodUpdated)="onFreePeriodUpdated()"
+/>

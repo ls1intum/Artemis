@@ -21,4 +21,22 @@ public class ExamDeletionApi extends AbstractExamApi {
     public void deleteByCourseId(long courseId) {
         examDeletionService.deleteByCourseId(courseId);
     }
+
+    /**
+     * Deletes an exam and all its associated data including student exams, exercise groups, and exercises.
+     *
+     * @param examId the ID of the exam to delete
+     */
+    public void delete(long examId) {
+        examDeletionService.delete(examId);
+    }
+
+    /**
+     * Resets an exam by deleting all student exams and related data while preserving the exam structure.
+     *
+     * @param examId the ID of the exam to reset
+     */
+    public void reset(long examId) {
+        examDeletionService.reset(examId);
+    }
 }

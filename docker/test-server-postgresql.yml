@@ -31,7 +31,7 @@ services:
         env_file:
             - ${DATABASE_ENV_FILE:-./postgres/default.env}
         volumes:
-            - ${DATABASE_VOLUME_MOUNT:-./.docker-data/artemis-postgres-data}:/var/lib/postgresql/data
+            - ${DATABASE_VOLUME_MOUNT:-./.docker-data/artemis-postgres-data}:/var/lib/postgresql
 
     nginx:
         extends:

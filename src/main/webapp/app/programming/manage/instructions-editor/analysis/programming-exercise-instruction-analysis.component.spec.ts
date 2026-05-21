@@ -87,10 +87,14 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             expect(comp.invalidTestCases).toEqual(invalidTestCases);
             expect(comp.repeatedTestCases).toEqual(repeatedTestCases);
 
+            // Use a different problem statement to trigger analysis again
+            // (distinctUntilChanged skips identical problem statements)
+            const updatedProblemStatement = problemStatement + ' updated';
+            comp.problemStatement = updatedProblemStatement;
             triggerChanges(comp, {
                 property: 'problemStatement',
-                currentValue: problemStatement,
-                previousValue: 'dolet amat',
+                currentValue: updatedProblemStatement,
+                previousValue: problemStatement,
                 firstChange: false,
             });
             tick(500); // Update is debounced, otherwise we would send updates on every change.
@@ -102,7 +106,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             expect(comp.repeatedTestCases).toEqual(repeatedTestCases);
 
             // Check that an event with the updated analysis is emitted.
-            // We expect two calls, once in ngOnInit and once in ngOnChanges
+            // We expect two calls, once in ngOnInit and once in ngOnChanges (with different problem statements)
             expect(emitAnalysisSpy).toHaveBeenCalledTimes(2);
             expect(emitAnalysisSpy).toHaveBeenCalledWith(completeAnalysis);
 

@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
@@ -48,6 +49,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
@@ -55,8 +57,6 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
-import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
-import de.tum.cit.aet.artemis.iris.dto.IrisCombinedSettingsDTO;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseInfoDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -104,15 +104,13 @@ public class ExerciseResource {
 
     private final Optional<ExamAccessApi> examAccessApi;
 
-    private final Optional<IrisSettingsApi> irisSettingsApi;
-
     private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, Optional<ExamDateApi> examDateApi, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ProgrammingExerciseRepository programmingExerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository,
             QuizBatchService quizBatchService, ParticipationRepository participationRepository, ExerciseVersionService exerciseVersionService,
-            Optional<ExamAccessApi> examAccessApi, Optional<IrisSettingsApi> irisSettingsApi, Optional<PlagiarismCaseApi> plagiarismCaseApi) {
+            Optional<ExamAccessApi> examAccessApi, Optional<PlagiarismCaseApi> plagiarismCaseApi) {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
@@ -127,7 +125,6 @@ public class ExerciseResource {
         this.participationRepository = participationRepository;
         this.exerciseVersionService = exerciseVersionService;
         this.examAccessApi = examAccessApi;
-        this.irisSettingsApi = irisSettingsApi;
         this.plagiarismCaseApi = plagiarismCaseApi;
     }
 
@@ -287,6 +284,19 @@ public class ExerciseResource {
     }
 
     /**
+     * GET /exercises/:exerciseId/deletion-summary : Get a summary for the deletion of an exercise.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the {@link ResponseEntity} with status {@code 200} and with body a summary of the deletion of the exercise
+     */
+    @GetMapping("exercises/{exerciseId}/deletion-summary")
+    @EnforceAtLeastInstructorInExercise
+    public ResponseEntity<ExerciseDeletionSummaryDTO> getDeletionSummary(@PathVariable long exerciseId) {
+        log.debug("REST request to get deletion summary for exercise : {}", exerciseId);
+        return ResponseEntity.ok(exerciseDeletionService.getDeletionSummary(exerciseId));
+    }
+
+    /**
      * GET /exercises/:exerciseId/stats-for-assessment-dashboard A collection of
      * useful statistics for the tutor exercise dashboard of the exercise with the
      * given exerciseId
@@ -314,12 +324,10 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("exercises/{exerciseId}/reset")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<Void> reset(@PathVariable Long exerciseId) {
         log.debug("REST request to reset Exercise : {}", exerciseId);
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        exerciseDeletionService.reset(exercise);
+        exerciseDeletionService.reset(exerciseId);
         return ResponseEntity.ok().build();
     }
 
@@ -374,10 +382,9 @@ public class ExerciseResource {
             exercise.filterSensitiveInformation();
         }
 
-        IrisCombinedSettingsDTO irisSettings = irisSettingsApi.map(api -> api.getCombinedIrisSettingsFor(exercise, api.shouldShowMinimalSettings(exercise, user))).orElse(null);
         PlagiarismCaseInfoDTO plagiarismCaseInfo = plagiarismCaseApi.flatMap(api -> api.getPlagiarismCaseInfoForExerciseAndUser(exercise.getId(), user.getId())).orElse(null);
 
-        return ResponseEntity.ok(new ExerciseDetailsDTO(exercise, irisSettings, plagiarismCaseInfo));
+        return ResponseEntity.ok(new ExerciseDetailsDTO(exercise, plagiarismCaseInfo));
     }
 
     /**

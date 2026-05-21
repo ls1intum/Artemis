@@ -1,0 +1,65 @@
+{
+    "artemisApp": {
+        "courseRequest": {
+            "title": "Neue Kursanfrage",
+            "description": "Trage die wichtigsten Kursinformationen ein. Wir melden uns, sobald ein Administrator die Anfrage bearbeitet hat.",
+            "form": {
+                "title": "Kurstitel",
+                "shortName": "Kürzel",
+                "shortNameHint": "Muss eindeutig sein, 3-7 Zeichen empfohlen, nur Buchstaben und Zahlen.",
+                "shortNameTooShort": "Das Kürzel muss mindestens 3 Zeichen lang sein.",
+                "shortNameInvalid": "Das Kürzel darf nur Buchstaben und Zahlen enthalten, ohne Leerzeichen.",
+                "shortNameNotUnique": "Dieses Kürzel wird bereits verwendet. Wir haben \"{{ suggestedShortName }}\" als Alternative vorgeschlagen.",
+                "generate": "Generieren",
+                "semester": "Semester",
+                "startDate": "Startdatum",
+                "endDate": "Enddatum",
+                "testCourse": "Dies ist ein Testkurs",
+                "reason": "Grund",
+                "reasonPlaceholder": "Warum benötigst du diesen Kurs?",
+                "submit": "Anfrage senden",
+                "dateError": "Das Startdatum muss vor dem Enddatum liegen."
+            },
+            "success": "Deine Kursanfrage wurde eingereicht. Wir melden uns in Kürze.",
+            "error": "Die Kursanfrage konnte nicht gesendet werden.",
+            "status": {
+                "PENDING": "Offen",
+                "ACCEPTED": "Akzeptiert",
+                "REJECTED": "Abgelehnt"
+            },
+            "admin": {
+                "title": "Kursanfragen",
+                "subtitle": "Prüfe Kursanfragen von Nutzern und erstelle mit einem Klick den Kurs.",
+                "pendingTitle": "Offene Anfragen",
+                "decidedTitle": "Bearbeitete Anfragen",
+                "requester": "Anfragender",
+                "course": "Kurs",
+                "semester": "Semester",
+                "dates": "Daten",
+                "reason": "Grund des Nutzers",
+                "decision": "Entscheidung",
+                "status": "Status",
+                "created": "Erstellt",
+                "processed": "Bearbeitet",
+                "actions": "Aktionen",
+                "testCourse": "Testkurs",
+                "previousInstructor": "Bisheriger Kursleiter",
+                "accept": "Akzeptieren",
+                "reject": "Ablehnen",
+                "rejectReasonLabel": "Ablehnungsgrund",
+                "rejectReasonPlaceholder": "Geben Sie einen Grund für die Ablehnung an",
+                "rejectConfirm": "Ablehnung senden",
+                "noRequests": "Aktuell liegen keine Kursanfragen vor.",
+                "noPendingRequests": "Keine offenen Anfragen.",
+                "noDecidedRequests": "Keine bearbeiteten Anfragen.",
+                "acceptSuccess": "Kursanfrage \"{{ title }}\" akzeptiert. Kurs {{ shortName }} erstellt.",
+                "rejectSuccess": "Kursanfrage \"{{ title }}\" abgelehnt.",
+                "link": "Kurs öffnen",
+                "edit": "Bearbeiten",
+                "editTitle": "Kursanfrage bearbeiten",
+                "editSuccess": "Kursanfrage erfolgreich aktualisiert.",
+                "shortNameConflict": "Das Kürzel \"{{ shortName }}\" wird bereits verwendet. Bitte bearbeite die Anfrage und verwende ein eindeutiges Kürzel wie z.B. \"{{ suggestedShortName }}\"."
+            }
+        }
+    }
+}

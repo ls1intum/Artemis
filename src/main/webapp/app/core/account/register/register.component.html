@@ -3,37 +3,31 @@
         <div class="row justify-content-center">
             <div class="col-md-8">
                 <h1 jhiTranslate="register.title"></h1>
-                <!-- TEST CODE -->
-                <!--            <div class="form-group">-->
-                <!--                <label for="regex" style="color: red" class="form-control-label">Email Pattern for Testing</label>-->
-                <!--                <input style="color: red" class="form-control" id="regex" name="regex" [(ngModel)]="allowedEmailPattern" (ngModelChange)="updateAllowedEmailPattern()" />-->
-                <!--            </div>-->
-                <!-- TEST CODE -->
-                @if (success) {
+                @if (success()) {
                     <div class="alert alert-success" jhiTranslate="register.messages.success"><strong>Registration saved!</strong> Please check your email for confirmation.</div>
                 }
-                @if (error) {
+                @if (error()) {
                     <div class="alert alert-danger" jhiTranslate="register.messages.error.fail"><strong>Registration failed!</strong> Please try again later.</div>
                 }
-                @if (errorUserExists) {
+                @if (errorUserExists()) {
                     <div class="alert alert-danger" jhiTranslate="register.messages.error.userExists">
                         <strong>Login name already registered!</strong> Please choose another one.
                     </div>
                 }
-                @if (errorEmailExists) {
+                @if (errorEmailExists()) {
                     <div class="alert alert-danger" jhiTranslate="register.messages.error.emailExists"><strong>Email is already in use!</strong> Please choose another one.</div>
                 }
-                @if (errorAccountRegistrationBlocked) {
+                @if (errorAccountRegistrationBlocked()) {
                     <div class="alert alert-danger" jhiTranslate="register.messages.error.blocked"><strong>Account Registration blocked! </strong> Please try again later.</div>
                 }
-                @if (doNotMatch) {
+                @if (doNotMatch()) {
                     <div class="alert alert-danger" jhiTranslate="global.messages.error.dontmatch"></div>
                 }
             </div>
         </div>
         <div class="row justify-content-center">
             <div class="col-md-8">
-                @if (!success) {
+                @if (!success()) {
                     <form name="form" role="form" (ngSubmit)="register()" [formGroup]="registerForm">
                         <div class="form-group">
                             <label class="form-control-label" for="firstName" jhiTranslate="global.form.firstname"></label>
@@ -60,37 +54,37 @@
                             />
                         </div>
                         <div class="form-group">
-                            <label class="form-control-label" for="login" jhiTranslate="global.form.username"></label>
+                            <label class="form-control-label" for="login" jhiTranslate="register.form.login"></label>
                             <input
                                 type="text"
                                 class="form-control"
                                 id="login"
                                 name="login"
                                 autocomplete="username"
-                                placeholder="{{ 'global.form.username.placeholder' | artemisTranslate }}"
+                                placeholder="{{ 'register.form.login.placeholder' | artemisTranslate }}"
                                 formControlName="login"
                                 #login
                             />
-                            @if (registerForm.get('login')!.invalid && (registerForm.get('login')!.dirty || registerForm.get('login')!.touched)) {
+                            @if (registerForm.controls.login.invalid && (registerForm.controls.login.dirty || registerForm.controls.login.touched)) {
                                 <div>
-                                    @if (registerForm.get('login')?.errors?.required) {
+                                    @if (registerForm.controls.login.errors?.required) {
                                         <small class="form-text text-danger" jhiTranslate="register.messages.validate.login.required"></small>
                                     }
-                                    @if (registerForm.get('login')?.errors?.minlength) {
+                                    @if (registerForm.controls.login.errors?.minlength) {
                                         <small
                                             class="form-text text-danger"
                                             jhiTranslate="register.messages.validate.login.minlength"
                                             [translateValues]="{ min: USERNAME_MIN_LENGTH }"
                                         ></small>
                                     }
-                                    @if (registerForm.get('login')?.errors?.maxlength) {
+                                    @if (registerForm.controls.login.errors?.maxlength) {
                                         <small
                                             class="form-text text-danger"
                                             jhiTranslate="register.messages.validate.login.maxlength"
                                             [translateValues]="{ max: USERNAME_MAX_LENGTH }"
                                         ></small>
                                     }
-                                    @if (registerForm.get('login')?.errors?.pattern) {
+                                    @if (registerForm.controls.login.errors?.pattern) {
                                         <small class="form-text text-danger" jhiTranslate="register.messages.validate.login.pattern"></small>
                                     }
                                 </div>
@@ -113,21 +107,21 @@
                                 placeholder="{{ 'global.form.email.placeholder' | artemisTranslate }}"
                                 formControlName="email"
                             />
-                            @if (registerForm.get('email')!.invalid && (registerForm.get('email')!.dirty || registerForm.get('email')!.touched)) {
+                            @if (registerForm.controls.email.invalid && (registerForm.controls.email.dirty || registerForm.controls.email.touched)) {
                                 <div>
-                                    @if (registerForm.get('email')?.errors?.required) {
+                                    @if (registerForm.controls.email.errors?.required) {
                                         <small class="form-text text-danger" jhiTranslate="global.messages.validate.email.required"></small>
                                     }
-                                    @if (registerForm.get('email')?.errors?.invalid) {
+                                    @if (registerForm.controls.email.errors?.email) {
                                         <small class="form-text text-danger" jhiTranslate="global.messages.validate.email.invalid"></small>
                                     }
-                                    @if (registerForm.get('email')?.errors?.minlength) {
+                                    @if (registerForm.controls.email.errors?.minlength) {
                                         <small class="form-text text-danger" jhiTranslate="global.messages.validate.email.minlength"></small>
                                     }
-                                    @if (registerForm.get('email')?.errors?.maxlength) {
+                                    @if (registerForm.controls.email.errors?.maxlength) {
                                         <small class="form-text text-danger" jhiTranslate="global.messages.validate.email.maxlength"></small>
                                     }
-                                    @if (registerForm.get('email')?.errors?.pattern) {
+                                    @if (registerForm.controls.email.errors?.pattern) {
                                         <small class="form-text text-danger" jhiTranslate="global.messages.validate.email.pattern"></small>
                                     }
                                 </div>
@@ -144,19 +138,19 @@
                                 placeholder="{{ 'global.form.newpassword.placeholder' | artemisTranslate }}"
                                 formControlName="password"
                             />
-                            @if (registerForm.get('password')!.invalid && (registerForm.get('password')!.dirty || registerForm.get('password')!.touched)) {
+                            @if (registerForm.controls.password.invalid && (registerForm.controls.password.dirty || registerForm.controls.password.touched)) {
                                 <div>
-                                    @if (registerForm.get('password')?.errors?.required) {
+                                    @if (registerForm.controls.password.errors?.required) {
                                         <small class="form-text text-danger" jhiTranslate="global.messages.validate.newpassword.required"></small>
                                     }
-                                    @if (registerForm.get('password')?.errors?.minlength) {
+                                    @if (registerForm.controls.password.errors?.minlength) {
                                         <small
                                             class="form-text text-danger"
                                             jhiTranslate="global.messages.validate.newpassword.minlength"
                                             [translateValues]="{ min: PASSWORD_MIN_LENGTH }"
                                         ></small>
                                     }
-                                    @if (registerForm.get('password')?.errors?.maxlength) {
+                                    @if (registerForm.controls.password.errors?.maxlength) {
                                         <small
                                             class="form-text text-danger"
                                             jhiTranslate="global.messages.validate.newpassword.maxlength"
@@ -165,7 +159,7 @@
                                     }
                                 </div>
                             }
-                            <jhi-password-strength-bar [passwordToCheck]="registerForm.get('password')!.value" />
+                            <jhi-password-strength-bar [passwordToCheck]="registerForm.controls.password.value" />
                         </div>
                         <div class="form-group">
                             <label class="form-control-label" for="confirmPassword" jhiTranslate="global.form.confirmpassword"></label>
@@ -178,19 +172,19 @@
                                 placeholder="{{ 'global.form.confirmpassword.placeholder' | artemisTranslate }}"
                                 formControlName="confirmPassword"
                             />
-                            @if (registerForm.get('confirmPassword')!.invalid && (registerForm.get('confirmPassword')!.dirty || registerForm.get('confirmPassword')!.touched)) {
+                            @if (registerForm.controls.confirmPassword.invalid && (registerForm.controls.confirmPassword.dirty || registerForm.controls.confirmPassword.touched)) {
                                 <div>
-                                    @if (registerForm.get('confirmPassword')?.errors?.required) {
+                                    @if (registerForm.controls.confirmPassword.errors?.required) {
                                         <small class="form-text text-danger" jhiTranslate="global.messages.validate.confirmpassword.required"></small>
                                     }
-                                    @if (registerForm.get('confirmPassword')?.errors?.minlength) {
+                                    @if (registerForm.controls.confirmPassword.errors?.minlength) {
                                         <small
                                             class="form-text text-danger"
                                             jhiTranslate="global.messages.validate.confirmpassword.minlength"
                                             [translateValues]="{ min: PASSWORD_MIN_LENGTH }"
                                         ></small>
                                     }
-                                    @if (registerForm.get('confirmPassword')?.errors?.maxlength) {
+                                    @if (registerForm.controls.confirmPassword.errors?.maxlength) {
                                         <small
                                             class="form-text text-danger"
                                             jhiTranslate="global.messages.validate.confirmpassword.maxlength"

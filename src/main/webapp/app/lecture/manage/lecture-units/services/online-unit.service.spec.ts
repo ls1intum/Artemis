@@ -1,6 +1,8 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
@@ -11,6 +13,8 @@ import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.
 import { OnlineResourceDTO } from 'app/lecture/manage/lecture-units/online-resource-dto.model';
 
 describe('OnlineUnitService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: OnlineUnitService;
     let httpMock: HttpTestingController;
     let elemDefault: OnlineUnit;
@@ -46,7 +50,7 @@ describe('OnlineUnitService', () => {
         httpMock.verify();
     });
 
-    it('should find a OnlineUnit', fakeAsync(() => {
+    it('should find a OnlineUnit', async () => {
         const returnedFromService = { ...elemDefault };
         service
             .findById(1, 1)
@@ -55,9 +59,9 @@ describe('OnlineUnitService', () => {
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
         expect(expectedResult.body).toEqual(elemDefault);
-    }));
+    });
 
-    it('should create a OnlineUnit', fakeAsync(() => {
+    it('should create a OnlineUnit', async () => {
         const returnedFromService = { ...elemDefault, id: 0 };
         const expected = { ...returnedFromService };
         service
@@ -67,9 +71,9 @@ describe('OnlineUnitService', () => {
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
         expect(expectedResult.body).toEqual(expected);
-    }));
+    });
 
-    it('should update a OnlineUnit', fakeAsync(() => {
+    it('should update a OnlineUnit', async () => {
         const returnedFromService = { ...elemDefault, name: 'Test' };
         const expected = { ...returnedFromService };
         service
@@ -79,7 +83,7 @@ describe('OnlineUnitService', () => {
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
         expect(expectedResult.body).toEqual(expected);
-    }));
+    });
 
     it('should send request to get online resource', async () => {
         const dto = new OnlineResourceDTO();

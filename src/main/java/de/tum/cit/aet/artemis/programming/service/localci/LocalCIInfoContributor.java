@@ -28,6 +28,9 @@ public class LocalCIInfoContributor implements InfoContributor {
     @Value("${artemis.continuous-integration.build-timeout-seconds.default:120}")
     private int defaultInstructorBuildTimeoutOption;
 
+    @Value("${artemis.continuous-integration.container-flags-limit.allowed-custom-networks:none}")
+    private List<String> networks;
+
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
     public LocalCIInfoContributor(ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
@@ -43,6 +46,9 @@ public class LocalCIInfoContributor implements InfoContributor {
         builder.withDetail(Constants.INSTRUCTOR_BUILD_TIMEOUT_MIN_OPTION, minInstructorBuildTimeoutOption);
         builder.withDetail(Constants.INSTRUCTOR_BUILD_TIMEOUT_MAX_OPTION, maxInstructorBuildTimeoutOption);
         builder.withDetail(Constants.INSTRUCTOR_BUILD_TIMEOUT_DEFAULT_OPTION, defaultInstructorBuildTimeoutOption);
+
+        // store the allowed custom networks
+        builder.withDetail(Constants.DOCKER_FLAG_ALLOWED_CUSTOM_NETWORKS, networks);
 
         List<String> defaultDockerFlags = programmingLanguageConfiguration.getDefaultDockerFlags();
 

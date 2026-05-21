@@ -83,13 +83,13 @@
             <!-- Highlight the difference between first and second correction -->
             @if (!isProgrammingExercise() && result() && correctionRound() > 0) {
                 <button class="btn ms-2 btn-primary" (click)="toggleHighlightDifferences()" [disabled]="saveBusy() || submitBusy() || cancelBusy()">
-                    @if (!highlightDifferences) {
+                    @if (!highlightDifferences()) {
                         <span
                             ngbTooltip="{{ 'artemisApp.assessment.diffView.highlightAssessmentDiffTooltipOn' | artemisTranslate }}"
                             jhiTranslate="artemisApp.assessment.diffView.differenceActivate"
                         ></span>
                     }
-                    @if (highlightDifferences) {
+                    @if (highlightDifferences()) {
                         <span
                             ngbTooltip="{{ 'artemisApp.assessment.diffView.highlightAssessmentDiffTooltipOff' | artemisTranslate }}"
                             jhiTranslate="artemisApp.assessment.diffView.differenceDeactivate"

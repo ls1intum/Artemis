@@ -24,7 +24,7 @@ describe('FeedbackCollapseComponent', () => {
 
     it('should not truncate if not necessary', () => {
         component.feedback = getFeedbackItem('a'.repeat(FEEDBACK_PREVIEW_CHARACTER_LIMIT - 1));
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.previewText).toBeUndefined();
     });
@@ -32,7 +32,7 @@ describe('FeedbackCollapseComponent', () => {
     it('should truncate if necessary', () => {
         const text = '0123456789'.repeat(FEEDBACK_PREVIEW_CHARACTER_LIMIT);
         component.feedback = getFeedbackItem(text);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const expected = text.slice(0, FEEDBACK_PREVIEW_CHARACTER_LIMIT);
 
@@ -42,7 +42,7 @@ describe('FeedbackCollapseComponent', () => {
     it('should only show first line if truncated', () => {
         const text = '0123456789\n'.repeat(FEEDBACK_PREVIEW_CHARACTER_LIMIT);
         component.feedback = getFeedbackItem(text);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const expected = text.slice(0, text.indexOf('\n'));
 
@@ -51,21 +51,21 @@ describe('FeedbackCollapseComponent', () => {
 
     it('should only show the first line of feedback if truncating necessary', () => {
         component.feedback = getFeedbackItem('Multi\nLine\nText' + 'a'.repeat(300));
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.previewText).toBe('Multi');
     });
 
     it('should always set the preview text if the feedback has long feedback', () => {
         component.feedback = getFeedbackItem('Truncated text [...]', true);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.previewText).toBe('Truncated text [...]');
     });
 
     it('should toggle properly', () => {
         component.feedback = getFeedbackItem('some text');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.toggleCollapse();
         expect(component.isCollapsed).toBeFalse();

@@ -1,4 +1,6 @@
+import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { AssessmentComplaintAlertComponent } from 'app/assessment/manage/assessment-complaint-alert/assessment-complaint-alert.component';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { By } from '@angular/platform-browser';
@@ -6,6 +8,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('AssessmentComplaintAlertComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: AssessmentComplaintAlertComponent;
     let fixture: ComponentFixture<AssessmentComplaintAlertComponent>;
 

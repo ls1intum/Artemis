@@ -54,7 +54,7 @@ describe('CodeEditorGridComponent', () => {
 
             comp.toggleCollapse(windowCollapseEvent, collapsableElement);
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             draggableIconForWindow = getDebugElement(windowName);
             expectWindowToBeCollapsed(windowName, true);

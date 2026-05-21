@@ -1,14 +1,14 @@
 import dayjs from 'dayjs';
 
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 
-import { admin, instructor } from '../../support/users';
+import { instructor } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 
 import { expect } from '@playwright/test';
 import { test } from '../../support/fixtures';
 import { Fixtures } from '../../fixtures/fixtures';
+import { SEED_COURSES } from '../../support/seedData';
 
 // Common primitives
 const dateFormat = 'MMM D, YYYY HH:mm';
@@ -19,14 +19,10 @@ const lectureData = {
     endDate: dayjs().add(1, 'hour'),
 };
 
-test.describe('Lecture management', { tag: '@fast' }, () => {
-    let course: Course;
+const course = { id: SEED_COURSES.lectureManagement.id, title: SEED_COURSES.lectureManagement.title } as any;
 
-    test.beforeEach(async ({ login, courseManagementAPIRequests }) => {
-        await login(admin);
-        course = await courseManagementAPIRequests.createCourse();
-        await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
-    });
+test.describe('Lecture management', { tag: '@fast' }, () => {
+    let lastCreatedLecture: Lecture | undefined;
 
     test('Creates a lecture', async ({ login, page, lectureManagement, lectureCreation }) => {
         await login(instructor, `/course-management/${course.id}`);
@@ -38,9 +34,16 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
         await lectureCreation.setStartDate(lectureData.startDate);
         await lectureCreation.setEndDate(lectureData.endDate);
         const lectureResponse = await lectureCreation.save();
-        const lecture: Lecture = await lectureResponse.json();
+        const lecture: Lecture = (lastCreatedLecture = await lectureResponse.json());
         expect(lectureResponse.status()).toBe(201);
         await expect(page).toHaveURL(`/course-management/${course.id}/lectures/${lecture.id}/edit`);
+        // Wait for the form to hydrate from the server before typing again.
+        // Asserting on the visible title input is a deterministic UI signal
+        // that the lecture has been loaded — more robust than `networkidle`,
+        // which can hang on SPAs with long-polling / SSE / background work.
+        // Monaco's own value would be an even closer signal, but title is
+        // both sufficient and trivial to observe.
+        await expect(page.locator('#field_title')).toHaveValue(lectureData.title);
 
         const adjustedDescription = description! + 'change to enable save button again';
         await lectureCreation.typeDescription(adjustedDescription);
@@ -68,9 +71,11 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
     test.describe('Handle existing lecture', () => {
         let lecture: Lecture;
 
-        test.beforeEach(async ({ login, courseManagementAPIRequests }) => {
-            await login(instructor, `/course-management/${course.id}/lectures`);
-            lecture = await courseManagementAPIRequests.createLecture(course);
+        test.beforeEach(async ({ login, page, courseManagementAPIRequests }) => {
+            await login(instructor);
+            lecture = lastCreatedLecture = await courseManagementAPIRequests.createLecture(course);
+            await page.goto(`/course-management/${course.id}/lectures`);
+            await page.waitForLoadState('domcontentloaded');
         });
 
         test('Deletes an existing lecture', async ({ lectureManagement }) => {
@@ -95,11 +100,18 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
 
         test('Can open page to add attachment unit to the lecture', async ({ lectureManagement, page }) => {
             await lectureManagement.openAttachmentUnitCreationPage(lecture.id!);
-            await expect(page.getByText('Create Attachment Unit')).toBeVisible();
+            await expect(page.getByText('Create File/Video Content')).toBeVisible();
         });
     });
 
-    test.afterEach(async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
+    test.afterEach('Delete lecture', async ({ courseManagementAPIRequests }) => {
+        if (lastCreatedLecture?.id) {
+            try {
+                await courseManagementAPIRequests.deleteLecture(lastCreatedLecture.id);
+            } catch {
+                // Lecture may already be deleted by the test
+            }
+            lastCreatedLecture = undefined;
+        }
     });
 });

@@ -6,7 +6,6 @@ import { Subject } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/core/admin/cleanup-service/data-cleanup.service';
 
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CleanupOperationModalComponent } from 'app/core/admin/cleanup-service/cleanup-operation-modal.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -14,20 +13,40 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
+/**
+ * Admin component for managing data cleanup operations.
+ * Allows scheduling and executing various cleanup tasks like deleting orphaned entities.
+ */
 @Component({
     selector: 'jhi-cleanup-service',
     templateUrl: './cleanup-service.component.html',
-    imports: [FormDateTimePickerComponent, ArtemisTranslatePipe, HelpIconComponent, TranslateDirective, FormsModule, ArtemisDatePipe],
+    imports: [
+        FormDateTimePickerComponent,
+        ArtemisTranslatePipe,
+        HelpIconComponent,
+        TranslateDirective,
+        FormsModule,
+        ArtemisDatePipe,
+        AdminTitleBarTitleDirective,
+        CleanupOperationModalComponent,
+    ],
 })
 export class CleanupServiceComponent implements OnInit {
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
 
-    private dataCleanupService: DataCleanupService = inject(DataCleanupService);
-    private modalService: NgbModal = inject(NgbModal);
+    private readonly dataCleanupService = inject(DataCleanupService);
 
-    cleanupOperations: CleanupOperation[] = [
+    /** Whether the cleanup operation modal is visible */
+    showCleanupModal = signal<boolean>(false);
+
+    /** The currently selected operation for the modal */
+    selectedOperation = signal<CleanupOperation | undefined>(undefined);
+
+    /** Cleanup operations data - uses signal for reactivity */
+    readonly cleanupOperations = signal<CleanupOperation[]>([
         {
             name: 'deleteOrphans',
             deleteFrom: dayjs().subtract(12, 'months'),
@@ -63,7 +82,7 @@ export class CleanupServiceComponent implements OnInit {
             lastExecuted: undefined,
             datesValid: signal(true),
         },
-    ];
+    ]);
 
     ngOnInit(): void {
         this.loadLastExecutions();
@@ -73,12 +92,15 @@ export class CleanupServiceComponent implements OnInit {
         this.dataCleanupService.getLastExecutions().subscribe((executionRecordsBody: HttpResponse<CleanupServiceExecutionRecordDTO[]>) => {
             const executionRecords = executionRecordsBody.body!;
             if (executionRecords && executionRecords.length > 0) {
-                this.cleanupOperations.forEach((operation, index) => {
-                    const executionRecord = executionRecords[index];
-                    if (executionRecord && executionRecord.executionDate) {
-                        operation.lastExecuted = convertDateFromServer(executionRecord.executionDate);
-                    }
-                });
+                this.cleanupOperations.update((operations) =>
+                    operations.map((operation, index) => {
+                        const executionRecord = executionRecords[index];
+                        if (executionRecord && executionRecord.executionDate) {
+                            return { ...operation, lastExecuted: convertDateFromServer(executionRecord.executionDate) };
+                        }
+                        return operation;
+                    }),
+                );
             }
         });
     }
@@ -92,7 +114,7 @@ export class CleanupServiceComponent implements OnInit {
      * Handles displaying the modal with operation details and counts.
      */
     openCleanupOperationModal(operation: CleanupOperation): void {
-        const modalRef = this.modalService.open(CleanupOperationModalComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.operation = signal<CleanupOperation>(operation);
+        this.selectedOperation.set(operation);
+        this.showCleanupModal.set(true);
     }
 }

@@ -2,7 +2,10 @@ package de.tum.cit.aet.artemis.quiz.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -19,7 +22,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -31,9 +33,15 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
+import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForCourseDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithStatisticsDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
@@ -66,9 +74,13 @@ public class QuizExerciseRetrievalResource {
 
     private final QuizBatchRepository quizBatchRepository;
 
+    private final Optional<ExamRepositoryApi> examRepositoryApi;
+
+    private final Optional<ExamDateApi> examDateApi;
+
     public QuizExerciseRetrievalResource(QuizExerciseRepository quizExerciseRepository, QuizExerciseService quizExerciseService, UserRepository userRepository,
             AuthorizationCheckService authCheckService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
-            ChannelRepository channelRepository, QuizBatchRepository quizBatchRepository) {
+            ChannelRepository channelRepository, QuizBatchRepository quizBatchRepository, Optional<ExamRepositoryApi> examRepositoryApi, Optional<ExamDateApi> examDateApi) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizExerciseService = quizExerciseService;
         this.userRepository = userRepository;
@@ -77,6 +89,8 @@ public class QuizExerciseRetrievalResource {
         this.quizBatchService = quizBatchService;
         this.channelRepository = channelRepository;
         this.quizBatchRepository = quizBatchRepository;
+        this.examRepositoryApi = examRepositoryApi;
+        this.examDateApi = examDateApi;
     }
 
     /**
@@ -87,20 +101,18 @@ public class QuizExerciseRetrievalResource {
      */
     @GetMapping("courses/{courseId}/quiz-exercises")
     @EnforceAtLeastTutorInCourse
-    public ResponseEntity<List<QuizExercise>> getQuizExercisesForCourse(@PathVariable Long courseId) {
-        log.info("REST request to get all quiz exercises for the course with id : {}", courseId);
+    public ResponseEntity<List<QuizExerciseForCourseDTO>> getQuizExercisesForCourse(@PathVariable long courseId) {
+        log.debug("REST request to get all quiz exercises for the course with id : {}", courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var quizExercises = quizExerciseRepository.findByCourseIdWithCategories(courseId);
-
+        var quizExerciseDTOs = new ArrayList<QuizExerciseForCourseDTO>();
         for (QuizExercise quizExercise : quizExercises) {
-            quizExercise.setQuizQuestions(null);
-            // not required in the returned json body
-            quizExercise.setStudentParticipations(null);
-            quizExercise.setCourse(null);
             setQuizBatches(user, quizExercise);
+            boolean isEditable = quizExerciseService.isEditable(quizExercise);
+            quizExerciseDTOs.add(QuizExerciseForCourseDTO.of(quizExercise, isEditable));
         }
 
-        return ResponseEntity.ok(quizExercises);
+        return ResponseEntity.ok(quizExerciseDTOs);
     }
 
     /**
@@ -111,20 +123,29 @@ public class QuizExerciseRetrievalResource {
      */
     @GetMapping("exams/{examId}/quiz-exercises")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<QuizExercise>> getQuizExercisesForExam(@PathVariable Long examId) {
-        log.info("REST request to get all quiz exercises for the exam with id : {}", examId);
-        List<QuizExercise> quizExercises = quizExerciseRepository.findByExamId(examId);
-        Course course = quizExercises.getFirst().getCourseViaExerciseGroupOrCourseMember();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+    public ResponseEntity<List<QuizExerciseForCourseDTO>> getQuizExercisesForExam(@PathVariable long examId) {
+        log.debug("REST request to get all quiz exercises for the exam with id : {}", examId);
+        ExamRepositoryApi examRepoApi = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
+        Exam exam = examRepoApi.findByIdElseThrow(examId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, exam.getCourse(), null);
 
-        for (QuizExercise quizExercise : quizExercises) {
-            quizExercise.setQuizQuestions(null);
-            // not required in the returned json body
-            quizExercise.setStudentParticipations(null);
-            quizExercise.setCourse(null);
-            quizExercise.setExerciseGroup(null);
+        List<QuizExercise> quizExercises = quizExerciseRepository.findByExamId(examId);
+        if (quizExercises.isEmpty()) {
+            return ResponseEntity.ok(List.of());
         }
-        return ResponseEntity.ok(quizExercises);
+
+        // All quiz exercises share the same exam, so compute editability and end date once
+        boolean isEditable = exam.getStartDate() == null || ZonedDateTime.now().isBefore(exam.getStartDate());
+        ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+        ZonedDateTime latestEnd = api.getLatestIndividualExamEndDate(exam);
+        boolean examEnded = latestEnd != null && ZonedDateTime.now().isAfter(latestEnd);
+
+        List<QuizExerciseForCourseDTO> quizExerciseDTOs = new ArrayList<>();
+        for (QuizExercise quizExercise : quizExercises) {
+            quizExercise.setQuizBatches(null);
+            quizExerciseDTOs.add(QuizExerciseForCourseDTO.of(quizExercise, isEditable, examEnded));
+        }
+        return ResponseEntity.ok(quizExerciseDTOs);
     }
 
     /**
@@ -135,7 +156,7 @@ public class QuizExerciseRetrievalResource {
      */
     @GetMapping("quiz-exercises/{quizExerciseId}")
     @EnforceAtLeastTutorInExercise(resourceIdFieldName = "quizExerciseId")
-    public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long quizExerciseId) {
+    public ResponseEntity<QuizExerciseWithStatisticsDTO> getQuizExercise(@PathVariable long quizExerciseId) {
         // TODO: Split this route in two: One for normal and one for exam exercises
         log.info("REST request to get quiz exercise : {}", quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -151,7 +172,10 @@ public class QuizExerciseRetrievalResource {
             }
         }
         setQuizBatches(user, quizExercise);
-        return ResponseEntity.ok(quizExercise);
+        boolean isEditable = quizExerciseService.isEditable(quizExercise);
+        boolean effectiveQuizEnded = computeEffectiveQuizEnded(quizExercise);
+        QuizExerciseWithStatisticsDTO quizExerciseDTO = QuizExerciseWithStatisticsDTO.of(quizExercise, isEditable, effectiveQuizEnded);
+        return ResponseEntity.ok(quizExerciseDTO);
     }
 
     /**
@@ -162,21 +186,19 @@ public class QuizExerciseRetrievalResource {
      */
     @GetMapping("quiz-exercises/{quizExerciseId}/for-student")
     @EnforceAtLeastStudent
-    public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long quizExerciseId) {
+    public ResponseEntity<?> getQuizExerciseForStudent(@PathVariable long quizExerciseId) {
         log.info("REST request to get quiz exercise : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAllowedToSeeCourseExercise(quizExercise, user)) {
             throw new AccessForbiddenException();
         }
-        quizExercise.setQuizBatches(null); // remove proxy and load batches only if required
+        quizExercise.setQuizBatches(null);
         var batch = quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin());
         log.info("Found batch {} for user {}", batch.orElse(null), user.getLogin());
         quizExercise.setQuizBatches(batch.stream().collect(Collectors.toSet()));
-        // filter out information depending on quiz state
-        quizExercise.applyAppropriateFilterForStudents(batch.orElse(null));
-
-        return ResponseEntity.ok(quizExercise);
+        Object dto = quizExerciseService.createQuizExerciseDTOForStudent(quizExercise, batch);
+        return ResponseEntity.ok(dto);
     }
 
     /**
@@ -194,6 +216,15 @@ public class QuizExerciseRetrievalResource {
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(quizExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
+    }
+
+    private boolean computeEffectiveQuizEnded(QuizExercise quizExercise) {
+        if (quizExercise.isExamExercise()) {
+            ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+            ZonedDateTime latestEnd = api.getLatestIndividualExamEndDate(quizExercise.getExerciseGroup().getExam());
+            return latestEnd != null && ZonedDateTime.now().isAfter(latestEnd);
+        }
+        return quizExercise.isQuizEnded();
     }
 
     private void setQuizBatches(User user, QuizExercise quizExercise) {

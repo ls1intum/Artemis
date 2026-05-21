@@ -6,18 +6,18 @@ import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { Subject } from 'rxjs';
 import { isEqual as _isEqual } from 'lodash-es';
-import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
+import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
 import { CodeEditorActionsComponent } from 'app/programming/shared/code-editor/actions/code-editor-actions.component';
 import { MockCodeEditorConflictStateService } from 'test/helpers/mocks/service/mock-code-editor-conflict-state.service';
 import { MockCodeEditorRepositoryFileService } from 'test/helpers/mocks/service/mock-code-editor-repository-file.service';
 import { MockCodeEditorRepositoryService } from 'test/helpers/mocks/service/mock-code-editor-repository.service';
-import { CommitState, EditorState } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { CommitState, EditorState, GitConflictState } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { MockModule } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -51,6 +51,10 @@ describe('CodeEditorActionsComponent', () => {
     let codeEditorRepositoryService: CodeEditorRepositoryService;
     let updateFilesStub: jest.SpyInstance;
     let commitStub: jest.SpyInstance;
+    let pullStub: jest.SpyInstance;
+    let resetRepositoryStub: jest.SpyInstance;
+    let modalService: NgbModal;
+    let conflictStateService: CodeEditorConflictStateService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -77,6 +81,10 @@ describe('CodeEditorActionsComponent', () => {
                 updateFilesStub = jest.spyOn(codeEditorRepositoryFileService, 'updateFiles');
                 codeEditorRepositoryService = TestBed.inject(CodeEditorRepositoryService);
                 commitStub = jest.spyOn(codeEditorRepositoryService, 'commit');
+                pullStub = jest.spyOn(codeEditorRepositoryService, 'pull');
+                resetRepositoryStub = jest.spyOn(codeEditorRepositoryService, 'resetRepository');
+                modalService = TestBed.inject(NgbModal);
+                conflictStateService = TestBed.inject(CodeEditorConflictStateService);
             });
     });
 
@@ -380,5 +388,105 @@ describe('CodeEditorActionsComponent', () => {
         fixture.destroy();
 
         expect(comp.editorState).toEqual(EditorState.SAVING);
+    });
+
+    it('should open refresh confirmation modal and execute refresh on confirmation', () => {
+        const shouldRefresh = new Subject<void>();
+        const openStub = jest.spyOn(modalService, 'open').mockReturnValue({
+            componentInstance: { shouldRefresh },
+        } as any);
+        const executeRefreshStub = jest.spyOn(comp, 'executeRefresh').mockImplementation();
+        comp.editorState = EditorState.UNSAVED_CHANGES;
+
+        comp.onRefresh();
+        shouldRefresh.next();
+
+        expect(openStub).toHaveBeenCalled();
+        expect(executeRefreshStub).toHaveBeenCalledOnce();
+    });
+
+    it('should execute refresh directly when editor is clean', () => {
+        const openStub = jest.spyOn(modalService, 'open');
+        const executeRefreshStub = jest.spyOn(comp, 'executeRefresh').mockImplementation();
+        comp.editorState = EditorState.CLEAN;
+
+        comp.onRefresh();
+
+        expect(openStub).not.toHaveBeenCalled();
+        expect(executeRefreshStub).toHaveBeenCalledOnce();
+    });
+
+    it('should execute refresh and set clean state on successful pull', () => {
+        const pullObservable = new Subject<void>();
+        const refreshFilesEmitStub = jest.spyOn(comp.onRefreshFiles, 'emit');
+        pullStub.mockReturnValue(pullObservable);
+
+        comp.executeRefresh();
+        expect(comp.editorState).toEqual(EditorState.REFRESHING);
+
+        pullObservable.next();
+
+        expect(refreshFilesEmitStub).toHaveBeenCalledOnce();
+        expect(comp.editorState).toEqual(EditorState.CLEAN);
+    });
+
+    it('should emit internet-disconnected refresh error on pull failure', () => {
+        const pullObservable = new Subject<void>();
+        const onErrorStub = jest.spyOn(comp.onError, 'emit');
+        pullStub.mockReturnValue(pullObservable);
+
+        comp.executeRefresh();
+        pullObservable.error(new ConnectionError());
+
+        expect(comp.editorState).toEqual(EditorState.UNSAVED_CHANGES);
+        expect(onErrorStub).toHaveBeenCalledWith('refreshFailedInternetDisconnected');
+    });
+
+    it('should emit generic refresh error on pull failure', () => {
+        const pullObservable = new Subject<void>();
+        const onErrorStub = jest.spyOn(comp.onError, 'emit');
+        pullStub.mockReturnValue(pullObservable);
+
+        comp.executeRefresh();
+        pullObservable.error(new Error('something'));
+
+        expect(comp.editorState).toEqual(EditorState.UNSAVED_CHANGES);
+        expect(onErrorStub).toHaveBeenCalledWith('refreshFailed');
+    });
+
+    it('should reset repository and refresh after modal confirmation', () => {
+        const shouldReset = new Subject<void>();
+        const resetObservable = new Subject<void>();
+        const openStub = jest.spyOn(modalService, 'open').mockReturnValue({
+            componentInstance: { shouldReset },
+        } as any);
+        const executeRefreshStub = jest.spyOn(comp, 'executeRefresh').mockImplementation();
+        const notifyConflictStateStub = jest.spyOn(conflictStateService, 'notifyConflictState');
+        resetRepositoryStub.mockReturnValue(resetObservable);
+
+        comp.resetRepository();
+        shouldReset.next();
+        resetObservable.next();
+
+        expect(openStub).toHaveBeenCalled();
+        expect(resetRepositoryStub).toHaveBeenCalledOnce();
+        expect(notifyConflictStateStub).toHaveBeenCalledWith(GitConflictState.OK);
+        expect(executeRefreshStub).toHaveBeenCalledOnce();
+    });
+
+    it('should emit reset error when repository reset fails', () => {
+        const shouldReset = new Subject<void>();
+        const resetObservable = new Subject<void>();
+        const onErrorStub = jest.spyOn(comp.onError, 'emit');
+        jest.spyOn(modalService, 'open').mockReturnValue({
+            componentInstance: { shouldReset },
+        } as any);
+        resetRepositoryStub.mockReturnValue(resetObservable);
+
+        comp.resetRepository();
+        shouldReset.next();
+        resetObservable.error(new Error('reset failed'));
+
+        expect(onErrorStub).toHaveBeenCalledWith('resetFailed');
     });
 });

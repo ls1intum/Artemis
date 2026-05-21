@@ -1,0 +1,13 @@
+.category-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.category-badge {
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.15rem 0.4rem;
+    color: #fff;
+    border-radius: 0.25rem;
+}

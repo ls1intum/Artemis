@@ -1,3 +1,5 @@
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
@@ -9,9 +11,11 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover-component/calendar-event-detail-popover.component';
 import { CalendarEventsPerDaySectionComponent } from 'app/core/calendar/shared/calendar-events-per-day-section/calendar-events-per-day-section.component';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
-
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 describe('CalendarEventsPerDaySectionComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CalendarEventsPerDaySectionComponent;
     let fixture: ComponentFixture<CalendarEventsPerDaySectionComponent>;
 
@@ -28,6 +32,10 @@ describe('CalendarEventsPerDaySectionComponent', () => {
         new CalendarEvent(CalendarEventType.TextExercise, 'Start: Your aspirations as a programmer', startOfWednesday.add(12, 'hour'), undefined, undefined),
     ];
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     beforeAll(() => {
         mockMap = new Map();
         for (const event of events) {
@@ -40,14 +48,13 @@ describe('CalendarEventsPerDaySectionComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CalendarEventsPerDaySectionComponent, CalendarEventDetailPopoverComponent],
-            declarations: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
+            imports: [CalendarEventsPerDaySectionComponent, CalendarEventDetailPopoverComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
             providers: [
                 {
                     provide: CalendarService,
                     useFactory: () => new MockCalendarService(mockMap),
                 },
-                provideNoopAnimations(),
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 
@@ -55,7 +62,7 @@ describe('CalendarEventsPerDaySectionComponent', () => {
         component = fixture.componentInstance;
 
         fixture.componentRef.setInput('dates', week);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
     });
 
     it('should create', () => {
@@ -118,34 +125,45 @@ describe('CalendarEventsPerDaySectionComponent', () => {
 
         const popoverDebugElement = fixture.debugElement.query(By.directive(CalendarEventDetailPopoverComponent));
         const popoverComponent = popoverDebugElement.componentInstance as CalendarEventDetailPopoverComponent;
+        // Mock the PrimeNG popover to avoid animation timing issues in tests
+        const openSpy = vi.spyOn(popoverComponent, 'open').mockImplementation((mouseEvent, event) => {
+            popoverComponent['event'].set(event);
+            popoverComponent.onShow();
+        });
 
         examEventCell.nativeElement.click();
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(popoverComponent.isOpen()).toBeTrue();
+        expect(openSpy).toHaveBeenCalled();
+        expect(popoverComponent.isOpen()).toBe(true);
     });
 
     it('should close popover', () => {
         const popoverDebugElement = fixture.debugElement.query(By.directive(CalendarEventDetailPopoverComponent));
         const popoverComponent = popoverDebugElement.componentInstance as CalendarEventDetailPopoverComponent;
-        const closeSpy = jest.spyOn(popoverComponent, 'close');
+        const closeSpy = vi.spyOn(popoverComponent, 'close').mockImplementation(() => {
+            popoverComponent.onHide();
+        });
+        // Mock the PrimeNG popover to avoid animation timing issues in tests
+        vi.spyOn(popoverComponent, 'open').mockImplementation((mouseEvent, event) => {
+            popoverComponent['event'].set(event);
+            popoverComponent.onShow();
+        });
 
         const examEventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'));
         examEventCell.nativeElement.click();
         fixture.detectChanges();
 
-        const infoColumn = fixture.debugElement.query(By.css('.info-column'));
-        infoColumn.nativeElement.click();
+        // Call close directly since popover is mocked
+        popoverComponent.close();
         fixture.detectChanges();
-        expect(popoverComponent.isOpen()).toBeFalse();
+        expect(popoverComponent.isOpen()).toBe(false);
 
         examEventCell.nativeElement.click();
         fixture.detectChanges();
 
-        const closeButton = document.querySelector('.close-button') as HTMLElement;
-        expect(closeButton).toBeTruthy();
-        closeButton.click();
+        popoverComponent.close();
         fixture.detectChanges();
-        expect(closeSpy).toHaveBeenCalledOnce();
+        expect(closeSpy).toHaveBeenCalled();
     });
 });

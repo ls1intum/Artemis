@@ -7,7 +7,10 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { Costs } from './costs';
 import { ConsistencyIssue } from './consistencyIssue';
+import { Timing } from './timing';
+import { Tokens } from './tokens';
 
 
 /**
@@ -15,8 +18,24 @@ import { ConsistencyIssue } from './consistencyIssue';
  */
 export interface ConsistencyCheckResponse { 
     /**
+     * Timestamp of the response generation
+     */
+    timestamp: string;
+    /**
      * List of consistency issues found
      */
     issues: Array<ConsistencyIssue>;
+    /**
+     * Execution timing details
+     */
+    timing?: Timing;
+    /**
+     * Token usage statistics
+     */
+    tokens?: Tokens;
+    /**
+     * Costs statistics
+     */
+    costs?: Costs;
 }
 

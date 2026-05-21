@@ -65,6 +65,30 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
             """)
     void updateLastReadAsync(@Param("userId") Long userId, @Param("conversationId") Long conversationId, @Param("now") ZonedDateTime now);
 
+    /**
+     * Mark a message and all subsequent messages as unread.
+     *
+     * @param conversationId the id of the conversation
+     * @param userId         the id of the user
+     * @param messageDate    the creation date of the target message
+     * @param lastRead       the lastRead timestamp to set (just before messageDate)
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+                UPDATE ConversationParticipant cp
+                SET cp.unreadMessagesCount = (
+                    SELECT COUNT(p) FROM Post p
+                    WHERE p.conversation.id = :conversationId
+                    AND p.creationDate >= :messageDate
+                    AND p.author.id <> :userId
+                ), cp.lastRead = :lastRead
+                WHERE cp.conversation.id = :conversationId
+                AND cp.user.id = :userId
+            """)
+    void markFromMessageAsUnread(@Param("conversationId") Long conversationId, @Param("userId") Long userId, @Param("messageDate") ZonedDateTime messageDate,
+            @Param("lastRead") ZonedDateTime lastRead);
+
     @Async
     @Transactional // ok because of modifying query
     @Modifying
@@ -119,6 +143,22 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
     }
 
     Optional<ConversationParticipant> findConversationParticipantByConversationIdAndUserId(Long conversationId, Long userId);
+
+    /**
+     * Finds all conversation participations for a user for GDPR data export.
+     *
+     * @param userId the ID of the user
+     * @return list of all conversation participations for the user
+     */
+    @Query("""
+            SELECT cp
+            FROM ConversationParticipant cp
+            LEFT JOIN FETCH cp.conversation c
+            LEFT JOIN FETCH c.course
+            WHERE cp.user.id = :userId
+            ORDER BY c.course.title, c.creationDate DESC
+            """)
+    List<ConversationParticipant> findAllByUserIdWithConversationAndCourse(@Param("userId") Long userId);
 
     @Query("""
             SELECT DISTINCT conversationParticipant

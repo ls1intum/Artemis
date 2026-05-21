@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.isA;
 import static org.mockito.Mockito.never;
@@ -17,12 +16,10 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.assertj.core.data.Offset;
-import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.ArgumentMatchers;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -58,8 +55,6 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "programmingassessment";
-
-    private final String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
 
     private final Double offsetByTenThousandth = 0.0001;
 
@@ -107,7 +102,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         manualResult.setSubmission(programmingSubmission);
         manualResult.setExerciseId(programmingExercise.getId());
 
-        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(ArgumentMatchers.any());
     }
 
     @Test
@@ -396,7 +390,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(response.getScore()).isEqualTo(105);
 
         // Check that result is capped to maximum of maxScore + bonus points -> 110
-        feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
+        manualResult.addFeedback(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
         points = manualResult.calculateTotalPointsForProgrammingExercises();
         manualResult.score(points);
 
@@ -491,8 +485,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         // Result has to be manual to be updated
         manualResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
-        // Remove feedbacks, change text and score.
-        manualResult.setFeedbacks(manualResult.getFeedbacks().subList(0, 1));
+        // Remove feedbacks, change text and score. Keep the "theory" feedback (+2 credits) deterministically so the asserted score below is stable.
+        Feedback keptFeedback = manualResult.getFeedbacks().stream().filter(f -> "theory".equals(f.getReference())).findFirst().orElseThrow();
+        manualResult.setFeedbacks(List.of(keptFeedback));
         double points = manualResult.calculateTotalPointsForProgrammingExercises();
         manualResult.setScore(points);
         manualResult = resultRepository.save(manualResult);
@@ -517,8 +512,10 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         programmingSubmission.setParticipation(programmingExerciseStudentParticipation);
         manualResult.setSubmission(programmingSubmission);
 
-        // Remove feedbacks, change text and score.
-        manualResult.setFeedbacks(manualResult.getFeedbacks().subList(0, 1));
+        // Remove feedbacks, change text and score. Keep the "theory" feedback deterministically; this test only asserts size, but a stable
+        // selection avoids flakes if other parts of the response start depending on the kept feedback.
+        Feedback keptFeedback = manualResult.getFeedbacks().stream().filter(f -> "theory".equals(f.getReference())).findFirst().orElseThrow();
+        manualResult.setFeedbacks(List.of(keptFeedback));
         manualResult.setScore(77D);
         manualResult.rated(true);
 
@@ -574,7 +571,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         result = request.putWithResponseBodyAndParams("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result,
                 Result.class, HttpStatus.OK, params);
 
-        var longFeedbackText = longFeedbackTextRepository.findByFeedbackId(result.getFeedbacks().getFirst().getId());
+        var longFeedbackText = longFeedbackTextRepository.findByFeedbackId(result.getFeedbacks().iterator().next().getId());
         assertThat(longFeedbackText).isPresent();
         assertThat(longFeedbackText.get().getText()).isEqualTo(longText);
     }
@@ -591,7 +588,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         result = resultRepository.save(result);
 
         var newLongText = "def".repeat(5000);
-        manualLongFeedback = result.getFeedbacks().getFirst();
+        manualLongFeedback = result.getFeedbacks().iterator().next();
 
         // The actual complete longtext is still stored in the detailText field when the result is sent from the client
         var detailText = Feedback.class.getDeclaredField("detailText");
@@ -603,7 +600,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         result = request.putWithResponseBodyAndParams("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result,
                 Result.class, HttpStatus.OK, params);
 
-        var longFeedbackText = longFeedbackTextRepository.findByFeedbackId(result.getFeedbacks().getFirst().getId());
+        var longFeedbackText = longFeedbackTextRepository.findByFeedbackId(result.getFeedbacks().iterator().next().getId());
         assertThat(longFeedbackText).isPresent();
         assertThat(longFeedbackText.get().getText()).isEqualTo(newLongText);
     }
@@ -765,8 +762,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         participationUtilService.addResultToSubmission(firstSubmission, AssessmentType.AUTOMATIC, null);
         final var secondSubmission = programmingExerciseUtilService.createProgrammingSubmission(studentParticipation, false, "2");
         participationUtilService.addResultToSubmission(secondSubmission, AssessmentType.AUTOMATIC, null);
-        // The commit hash must be the same as the one used for initializing the tests because this test calls gitService.getLastCommitHash
-        final var thirdSubmission = programmingExerciseUtilService.createProgrammingSubmission(studentParticipation, false, dummyHash);
+        var latestCommitHash = gitService.getLastCommitHash(studentParticipation.getVcsRepositoryUri());
+        // Ensure the existing submission matches the repository HEAD returned during locking
+        final var thirdSubmission = programmingExerciseUtilService.createProgrammingSubmission(studentParticipation, false, latestCommitHash);
         participationUtilService.addResultToSubmission(thirdSubmission, AssessmentType.AUTOMATIC, null);
 
         var submissionsOfParticipation = submissionRepository.findAllWithResultsAndAssessorByParticipationId(studentParticipation.getId());
@@ -827,7 +825,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(assessedSubmissionList.getFirst().getResultForCorrectionRound(0)).isEqualTo(firstSubmittedManualResult);
 
         // change the user here, so that for the next query the result will show up again.
-        // set to true, if a tutor is only able to assess a submission if he has not assessed it any prior correction rounds
+        // set to true, if a tutor is only able to assess a submission if they have not assessed it any prior correction rounds
         firstSubmittedManualResult.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
         resultRepository.save(firstSubmittedManualResult);
         assertThat(firstSubmittedManualResult.getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "instructor1");

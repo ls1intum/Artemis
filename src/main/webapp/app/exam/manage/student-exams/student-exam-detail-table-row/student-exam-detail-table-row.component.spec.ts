@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -22,14 +24,15 @@ import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faCheckDouble, faFileUpload, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
-import { UMLDiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@tumaet/apollon';
 import { provideRouter } from '@angular/router';
-import { input } from '@angular/core';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('StudentExamDetailTableRowComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let studentExamDetailTableRowComponentFixture: ComponentFixture<StudentExamDetailTableRowComponent>;
     let studentExamDetailTableRowComponent: StudentExamDetailTableRowComponent;
     let course: Course;
@@ -52,8 +55,17 @@ describe('StudentExamDetailTableRowComponent', () => {
         exercise.studentParticipations = [studentParticipation];
 
         return TestBed.configureTestingModule({
-            imports: [NgbModule, NgxDatatableModule, ReactiveFormsModule, TranslateModule.forRoot(), FaIconComponent],
-            declarations: [StudentExamDetailTableRowComponent, MockComponent(DataTableComponent), MockTranslateValuesDirective, MockPipe(ArtemisTranslatePipe)],
+            imports: [
+                NgbModule,
+                NgxDatatableModule,
+                ReactiveFormsModule,
+                TranslateModule.forRoot(),
+                FaIconComponent,
+                StudentExamDetailTableRowComponent,
+                MockComponent(DataTableComponent),
+                MockTranslateValuesDirective,
+                MockPipe(ArtemisTranslatePipe),
+            ],
             providers: [provideRouter([]), MockProvider(AlertService), MockDirective(TranslateDirective)],
         })
             .compileComponents()
@@ -63,7 +75,7 @@ describe('StudentExamDetailTableRowComponent', () => {
             });
     });
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should return the right icon based on exercise type', () => {
@@ -81,7 +93,7 @@ describe('StudentExamDetailTableRowComponent', () => {
     });
 
     it('should route to modeling submission', () => {
-        const getAssessmentLinkSpy = jest.spyOn(studentExamDetailTableRowComponent, 'getAssessmentLink');
+        const getAssessmentLinkSpy = vi.spyOn(studentExamDetailTableRowComponent, 'getAssessmentLink');
         const modelingExercise = {
             numberOfAssessmentsOfCorrectionRounds: [],
             secondCorrectionEnabled: false,
@@ -90,15 +102,13 @@ describe('StudentExamDetailTableRowComponent', () => {
             type: ExerciseType.MODELING,
             exerciseGroup: { id: 12 },
         };
-        TestBed.runInInjectionContext(() => {
-            studentExamDetailTableRowComponent.exercise = input(modelingExercise);
-            studentExamDetailTableRowComponent.examId = input(exam1.id!);
-            studentExamDetailTableRowComponent.isTestRun = input(false);
-            studentExamDetailTableRowComponent.course = input(course);
-            studentExamDetailTableRowComponent.busy = input(false);
-            studentExamDetailTableRowComponent.studentExam = input({} as StudentExam);
-            studentExamDetailTableRowComponent.achievedPointsPerExercise = input({ 1: 1 });
-        });
+        studentExamDetailTableRowComponentFixture.componentRef.setInput('exercise', modelingExercise);
+        studentExamDetailTableRowComponentFixture.componentRef.setInput('examId', exam1.id!);
+        studentExamDetailTableRowComponentFixture.componentRef.setInput('isTestRun', false);
+        studentExamDetailTableRowComponentFixture.componentRef.setInput('course', course);
+        studentExamDetailTableRowComponentFixture.componentRef.setInput('busy', false);
+        studentExamDetailTableRowComponentFixture.componentRef.setInput('studentExam', {} as StudentExam);
+        studentExamDetailTableRowComponentFixture.componentRef.setInput('achievedPointsPerExercise', { 1: 1 });
         studentExamDetailTableRowComponentFixture.detectChanges();
         studentExamDetailTableRowComponent.courseId = 23;
 

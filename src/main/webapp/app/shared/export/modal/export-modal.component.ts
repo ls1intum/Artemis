@@ -70,7 +70,7 @@ export class ExportModalComponent implements OnInit {
 
     ngOnInit(): void {
         // set default csv export options based on the current language
-        switch (this.translateService.currentLang) {
+        switch (this.translateService.getCurrentLang()) {
             case 'de':
                 this.options = {
                     fieldSeparator: CsvFieldSeparator.SEMICOLON,

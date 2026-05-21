@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.util;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -25,7 +26,7 @@ import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
+import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
@@ -69,10 +70,13 @@ public class ExerciseVersionUtilService {
     private FileUploadExerciseRepository fileUploadExerciseRepository;
 
     @Autowired
-    private ModelingExerciseRepository modelingExerciseRepository;
+    private ModelingExerciseTestRepository modelingExerciseRepository;
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
+
+    @Autowired
+    private ChannelRepository channelRepository;
 
     @Autowired
     private GitService gitService;
@@ -114,13 +118,20 @@ public class ExerciseVersionUtilService {
      *         or null if the exercise does not exist
      */
     private Exercise findExerciseForVersioning(Long exerciseId, ExerciseType exerciseType) {
-        return switch (exerciseType) {
+        Exercise fetchedExercise = switch (exerciseType) {
             case PROGRAMMING -> programmingExerciseRepository.findForVersioningById(exerciseId).orElse(null);
             case QUIZ -> quizExerciseTestRepository.findForVersioningById(exerciseId).orElse(null);
             case TEXT -> textExerciseRepository.findForVersioningById(exerciseId).orElse(null);
             case MODELING -> modelingExerciseRepository.findForVersioningById(exerciseId).orElse(null);
             case FILE_UPLOAD -> fileUploadExerciseRepository.findForVersioningById(exerciseId).orElse(null);
         };
+        if (fetchedExercise != null) {
+            var channel = channelRepository.findChannelByExerciseId(fetchedExercise.getId());
+            if (channel != null) {
+                fetchedExercise.setChannelName(channel.getName());
+            }
+        }
+        return fetchedExercise;
     }
 
     /**

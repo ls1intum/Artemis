@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, TemplateRef, ViewChild, inject } from '@angular/core';
+import { Component, TemplateRef, inject, input, output, viewChild } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
@@ -13,22 +13,22 @@ import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/butto
 export class ConfirmAutofocusButtonComponent {
     private modalService = inject(NgbModal);
 
-    @Input() icon: IconProp;
-    @Input() title: string;
-    @Input() tooltip: string;
-    @Input() disabled = false;
-    @Input() isLoading = false;
-    @Input() btnType = ButtonType.PRIMARY;
+    icon = input<IconProp | undefined>(undefined);
+    title = input<string>('');
+    tooltip = input<string>('');
+    disabled = input(false);
+    isLoading = input(false);
+    btnType = input(ButtonType.PRIMARY);
 
-    @Input() confirmationTitle: string;
-    @Input() confirmationTitleTranslationParams?: Record<string, string>;
-    @Input() confirmationText: string;
-    @Input() translateText?: boolean;
-    @Input() textIsMarkdown?: boolean;
-    @Output() onConfirm = new EventEmitter<void>();
-    @Output() onCancel = new EventEmitter<void>();
+    confirmationTitle = input<string>('');
+    confirmationTitleTranslationParams = input<Record<string, string>>();
+    confirmationText = input<string>('');
+    translateText = input<boolean>(false);
+    textIsMarkdown = input<boolean>(false);
+    onConfirm = output<void>();
+    onCancel = output<void>();
 
-    @ViewChild('content') content?: TemplateRef<any>;
+    content = viewChild<TemplateRef<any>>('content');
 
     /**
      * open confirmation modal with text and title
@@ -38,21 +38,13 @@ export class ConfirmAutofocusButtonComponent {
             size: 'lg',
             backdrop: 'static',
         });
-        if (this.textIsMarkdown === true) {
-            modalRef.componentInstance.text = htmlForMarkdown(this.confirmationText);
-            modalRef.componentInstance.textIsMarkdown = true;
-        } else {
-            modalRef.componentInstance.text = this.confirmationText;
-            modalRef.componentInstance.textIsMarkdown = false;
-        }
-        modalRef.componentInstance.title = this.confirmationTitle;
-        modalRef.componentInstance.titleTranslationParams = this.confirmationTitleTranslationParams;
-        if (this.translateText !== undefined) {
-            modalRef.componentInstance.translateText = this.translateText;
-        } else {
-            modalRef.componentInstance.translateText = false;
-        }
-        modalRef.componentInstance.contentRef = this.content;
+        const isMarkdown = this.textIsMarkdown();
+        modalRef.componentInstance.text = isMarkdown ? htmlForMarkdown(this.confirmationText()) : this.confirmationText();
+        modalRef.componentInstance.textIsMarkdown = isMarkdown;
+        modalRef.componentInstance.title = this.confirmationTitle();
+        modalRef.componentInstance.titleTranslationParams = this.confirmationTitleTranslationParams();
+        modalRef.componentInstance.translateText = this.translateText();
+        modalRef.componentInstance.contentRef = this.content();
         modalRef.result.then(
             () => {
                 this.onConfirm.emit();

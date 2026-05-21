@@ -3,14 +3,14 @@ import { ConversationDTO } from 'app/communication/shared/entities/conversation/
 import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { faBoxArchive, faBoxOpen, faEllipsisVertical, faGear, faHeart as faHearthSolid, faVolumeUp, faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
-import { EMPTY, Subject, debounceTime, distinctUntilChanged, from, takeUntil } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Subject, debounceTime, distinctUntilChanged, filter, takeUntil } from 'rxjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getAsGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/communication/course-conversations-components/other/conversation.util';
@@ -36,7 +36,7 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
     conversationService = inject(ConversationService);
     private metisService = inject(MetisService);
     private alertService = inject(AlertService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
 
     private ngUnsubscribe = new Subject<void>();
 
@@ -118,14 +118,17 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
 
     openConversationDetailDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(ConversationDetailDialogComponent, defaultFirstLayerDialogOptions);
-        modalRef.componentInstance.course = this.course;
-        modalRef.componentInstance.activeConversation = this.conversation;
-        modalRef.componentInstance.selectedTab = ConversationDetailTabs.SETTINGS;
-        modalRef.componentInstance.initialize();
-        from(modalRef.result)
+        const ref = this.dialogService.open(ConversationDetailDialogComponent, {
+            ...defaultFirstLayerDialogOptions,
+            data: {
+                course: this.course,
+                activeConversation: this.conversation,
+                selectedTab: ConversationDetailTabs.SETTINGS,
+            },
+        });
+        ref?.onClose
             .pipe(
-                catchError(() => EMPTY),
+                filter((result) => !!result),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe(() => {

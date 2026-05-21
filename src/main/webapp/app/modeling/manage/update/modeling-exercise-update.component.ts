@@ -1,53 +1,51 @@
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild, effect, inject, viewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, effect, inject, viewChild } from '@angular/core';
+import { FormsModule, NgModel } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
+import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/course-utils';
+import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
+import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
+import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
-import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
-import { ModelingExerciseService } from '../services/modeling-exercise.service';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { switchMap, tap } from 'rxjs/operators';
-import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { cloneDeep, isEmpty } from 'lodash-es';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
-import { onError } from 'app/shared/util/global.utils';
+import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
+import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { EditType, SaveExerciseCommand } from 'app/exercise/util/exercise.utils';
-import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
+import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
+import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { onError } from 'app/shared/util/global.utils';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
+import { cloneDeep, isEmpty } from 'lodash-es';
 import { Subscription } from 'rxjs';
-import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
-import { FormsModule, NgModel } from '@angular/forms';
-import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
-import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/course-utils';
-import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
-import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
-import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { switchMap, tap } from 'rxjs/operators';
+import { ModelingExerciseService } from '../services/modeling-exercise.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
     templateUrl: './modeling-exercise-update.component.html',
-    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FormsModule,
         TranslateDirective,
@@ -81,26 +79,24 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     private readonly eventManager = inject(EventManager);
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly calendarService = inject(CalendarService);
 
-    exerciseTitleChannelNameComponent = viewChild.required(ExerciseTitleChannelNameComponent);
-    @ViewChild(TeamConfigFormGroupComponent) teamConfigFormGroupComponent?: TeamConfigFormGroupComponent;
-    @ViewChild(ModelingEditorComponent, { static: false }) modelingEditor?: ModelingEditorComponent;
+    readonly exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
+    readonly teamConfigFormGroupComponent = viewChild(TeamConfigFormGroupComponent);
+    readonly modelingEditor = viewChild(ModelingEditorComponent);
 
-    @ViewChild('bonusPoints') bonusPoints?: NgModel;
-    @ViewChild('points') points?: NgModel;
-    @ViewChild('solutionPublicationDate') solutionPublicationDateField?: FormDateTimePickerComponent;
-    @ViewChild('releaseDate') releaseDateField?: FormDateTimePickerComponent;
-    @ViewChild('startDate') startDateField?: FormDateTimePickerComponent;
-    @ViewChild('dueDate') dueDateField?: FormDateTimePickerComponent;
-    @ViewChild('assessmentDueDate') assessmentDateField?: FormDateTimePickerComponent;
-    @ViewChild('editForm', { read: ElementRef }) editFormEl?: ElementRef<HTMLFormElement>;
+    readonly bonusPoints = viewChild<NgModel>('bonusPoints');
+    readonly points = viewChild<NgModel>('points');
+    readonly solutionPublicationDateField = viewChild<FormDateTimePickerComponent>('solutionPublicationDate');
+    readonly releaseDateField = viewChild<FormDateTimePickerComponent>('releaseDate');
+    readonly startDateField = viewChild<FormDateTimePickerComponent>('startDate');
+    readonly dueDateField = viewChild<FormDateTimePickerComponent>('dueDate');
+    readonly assessmentDateField = viewChild<FormDateTimePickerComponent>('assessmentDueDate');
+    readonly editFormEl = viewChild<ElementRef<HTMLFormElement>>('editForm');
 
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'Model';
 
-    AssessmentType = AssessmentType;
     UMLDiagramType = UMLDiagramType;
 
     modelingExercise: ModelingExercise;
@@ -115,7 +111,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     examCourseId?: number;
     isImport: boolean;
     isExamMode: boolean;
-    semiAutomaticAssessmentAvailable = true;
 
     formSectionStatus: FormSectionStatus[];
 
@@ -132,9 +127,9 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     }
 
     ngAfterViewInit() {
-        this.pointsSubscription = this.points?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
-        this.bonusPointsSubscription = this.bonusPoints?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
-        this.teamSubscription = this.teamConfigFormGroupComponent?.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
+        this.pointsSubscription = this.points()?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
+        this.bonusPointsSubscription = this.bonusPoints()?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
+        this.teamSubscription = this.teamConfigFormGroupComponent()?.formValidChanges?.subscribe(() => this.calculateFormSectionStatus());
     }
 
     constructor() {
@@ -147,7 +142,11 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
      * Triggers {@link calculateFormSectionStatus} whenever a relevant signal changes
      */
     private updateFormSectionsOnIsValidChange() {
-        this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(); // triggers effect on change
+        // Guard against viewChild not being available yet (before view init)
+        const titleComponent = this.exerciseTitleChannelNameComponent?.();
+        if (titleComponent?.titleChannelNameComponent) {
+            titleComponent.titleChannelNameComponent().isValid(); // triggers effect on change
+        }
 
         this.calculateFormSectionStatus().then();
     }
@@ -163,7 +162,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             this.modelingExercise = modelingExercise;
 
             if (this.modelingExercise.exampleSolutionModel != undefined) {
-                this.exampleSolution = JSON.parse(this.modelingExercise.exampleSolutionModel);
+                this.exampleSolution = importDiagram(JSON.parse(this.modelingExercise.exampleSolutionModel));
             }
 
             this.backupExercise = cloneDeep(this.modelingExercise);
@@ -203,8 +202,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
                         if (this.isExamMode) {
                             // The target exerciseGroupId where we want to import into
-                            const exerciseGroupId = params['exerciseGroupId'];
-                            const examId = params['examId'];
+                            const { exerciseGroupId, examId } = params;
 
                             this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => (this.modelingExercise.exerciseGroup = res.body!));
                             // We reference exam exercises by their exercise group, not their course. Having both would lead to conflicts on the server
@@ -234,35 +232,34 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     }
 
     async calculateFormSectionStatus() {
-        await this.modelingEditor?.apollonEditor?.nextRender;
         this.formSectionStatus = [
             {
                 title: 'artemisApp.exercise.sections.general',
-                valid: this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(),
+                valid: this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent()?.isValid() ?? true,
             },
-            { title: 'artemisApp.exercise.sections.mode', valid: Boolean(this.teamConfigFormGroupComponent?.formValid) },
+            { title: 'artemisApp.exercise.sections.mode', valid: Boolean(this.teamConfigFormGroupComponent()?.formValid) },
             { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.modelingExercise.problemStatement },
             {
                 title: 'artemisApp.exercise.sections.solution',
-                valid: Boolean(this.isExamMode || (!this.modelingExercise.exampleSolutionPublicationDateError && this.solutionPublicationDateField?.dateInput.valid)),
+                valid: Boolean(this.isExamMode || (!this.modelingExercise.exampleSolutionPublicationDateError && (this.solutionPublicationDateField()?.dateInput?.valid ?? true))),
                 empty:
-                    isEmpty(this.modelingEditor?.getCurrentModel()?.elements) ||
+                    isEmpty(this.modelingEditor()?.getCurrentModel()?.nodes) ||
                     (!this.isExamMode && !this.modelingExercise.exampleSolutionPublicationDate) ||
                     !this.modelingExercise.exampleSolutionExplanation,
             },
             {
                 title: 'artemisApp.exercise.sections.grading',
                 valid: Boolean(
-                    this.points?.valid &&
-                    this.bonusPoints?.valid &&
+                    (this.points()?.valid ?? true) &&
+                    (this.bonusPoints()?.valid ?? true) &&
                     (this.isExamMode ||
                         (!this.modelingExercise.startDateError &&
                             !this.modelingExercise.dueDateError &&
                             !this.modelingExercise.assessmentDueDateError &&
-                            this.releaseDateField?.dateInput.valid &&
-                            this.startDateField?.dateInput.valid &&
-                            this.dueDateField?.dateInput.valid &&
-                            this.assessmentDateField?.dateInput.valid)),
+                            (this.releaseDateField()?.dateInput?.valid ?? true) &&
+                            (this.startDateField()?.dateInput?.valid ?? true) &&
+                            (this.dueDateField()?.dateInput?.valid ?? true) &&
+                            (this.assessmentDateField()?.dateInput?.valid ?? true))),
                 ),
                 empty:
                     !this.isExamMode &&
@@ -273,9 +270,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                         !this.modelingExercise.releaseDate?.isValid()),
             },
         ];
-
-        // otherwise, the change detection does not work on the initial load
-        this.changeDetectorRef.detectChanges();
     }
 
     /**
@@ -295,6 +289,15 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         this.calculateFormSectionStatus();
     }
 
+    onMarkdownEditorKeydown(event: KeyboardEvent): void {
+        const isSpaceKey = event.code === 'Space';
+        const isCopyPaste = (event.ctrlKey || event.metaKey) && (event.code === 'KeyC' || event.code === 'KeyV');
+
+        if (isSpaceKey || isCopyPaste) {
+            event.stopPropagation();
+        }
+    }
+
     handleEnterKeyNavigation(event: Event): void {
         event.preventDefault();
         event.stopPropagation();
@@ -304,7 +307,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             return;
         }
 
-        const formRoot = this.editFormEl?.nativeElement as HTMLElement | undefined;
+        const formRoot = this.editFormEl()?.nativeElement as HTMLElement | undefined;
         if (!formRoot) {
             return;
         }
@@ -327,7 +330,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     }
 
     save() {
-        this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor?.getCurrentModel());
+        this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor()?.getCurrentModel());
         this.isSaving = true;
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType, this.alertService)
@@ -363,14 +366,5 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             onError(this.alertService, errorRes);
         }
         this.isSaving = false;
-    }
-
-    /**
-     * When the diagram type changes, we need to check whether {@link AssessmentType.SEMI_AUTOMATIC} is available for the type. If not, we revert to {@link AssessmentType.MANUAL}
-     */
-    diagramTypeChanged() {
-        if (!this.semiAutomaticAssessmentAvailable) {
-            this.modelingExercise.assessmentType = AssessmentType.MANUAL;
-        }
     }
 }

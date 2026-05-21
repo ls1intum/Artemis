@@ -28,7 +28,10 @@ public abstract class AbstractModuleTestArchitectureTest extends AbstractArchite
                 .because("All integration tests should extend any of %s".formatted(getAbstractModuleIntegrationTestClasses())).check(testClasses);
     }
 
-    @Disabled // TODO fix test setup for ExamUserIntegrationTest, AuxiliaryRepositoryResourceIntegrationTest, RepositoryIntegrationTest, SubmissionPolicyIntegrationTest
+    // TODO: Many integration tests across multiple modules still use @Autowired fields.
+    // The dependencies need to be moved to the abstract test base classes.
+    // Affected modules: Programming (53+ violations), Atlas, FileUpload, TutorialGroup
+    @Disabled
     @Test
     void integrationTestsShouldNotAutowireMembers() {
         classes().that().doNotHaveModifier(JavaModifier.ABSTRACT).and().areAssignableTo(isAssignableToAnyAllowedClass(getAbstractModuleIntegrationTestClasses()))

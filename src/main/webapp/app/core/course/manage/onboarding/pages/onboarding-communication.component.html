@@ -1,0 +1,92 @@
+<div>
+    <div class="step-hero step-hero--communication">
+        <div class="step-hero-icon">
+            <fa-icon [icon]="faComments" />
+        </div>
+        <div class="step-hero-text">
+            <h4>
+                <span jhiTranslate="artemisApp.course.onboarding.communication.title"></span>
+                <jhi-documentation-button [type]="'Communications'" />
+            </h4>
+            <p jhiTranslate="artemisApp.course.onboarding.communication.description"></p>
+        </div>
+    </div>
+    <div class="step-body">
+        <div class="d-flex align-items-center gap-3 mb-1">
+            <strong jhiTranslate="artemisApp.course.courseCommunicationSetting.communicationEnabled.label"></strong>
+            <div class="feature-toggle">
+                <button
+                    type="button"
+                    id="onboarding_communicationEnabled"
+                    class="toggle-btn"
+                    [ngClass]="{ 'active-enabled': communicationEnabled }"
+                    [attr.aria-pressed]="communicationEnabled"
+                    (click)="!communicationEnabled && toggleCommunication()"
+                >
+                    <fa-icon [icon]="faCheck" />
+                    <span jhiTranslate="artemisApp.iris.settings.enabled"></span>
+                </button>
+                <button
+                    type="button"
+                    class="toggle-btn"
+                    [ngClass]="{ 'active-disabled': !communicationEnabled }"
+                    [attr.aria-pressed]="!communicationEnabled"
+                    (click)="communicationEnabled && toggleCommunication()"
+                >
+                    <fa-icon [icon]="faTimes" />
+                    <span jhiTranslate="artemisApp.iris.settings.disabled"></span>
+                </button>
+            </div>
+        </div>
+        @if (communicationEnabled) {
+            <p class="text-muted small mb-3" jhiTranslate="artemisApp.course.onboarding.communication.communicationEnabled"></p>
+        } @else {
+            <p class="text-muted small mb-3" jhiTranslate="artemisApp.course.onboarding.communication.communicationDisabled"></p>
+        }
+
+        @if (communicationEnabled) {
+            <div class="ms-4">
+                <div class="d-flex align-items-center gap-3 mb-1">
+                    <strong jhiTranslate="artemisApp.course.courseCommunicationSetting.messagingEnabled.label"></strong>
+                    <div class="feature-toggle">
+                        <button
+                            type="button"
+                            class="toggle-btn"
+                            [ngClass]="{ 'active-enabled': messagingEnabled }"
+                            [attr.aria-pressed]="messagingEnabled"
+                            (click)="!messagingEnabled && toggleMessaging()"
+                        >
+                            <fa-icon [icon]="faCheck" />
+                            <span jhiTranslate="artemisApp.iris.settings.enabled"></span>
+                        </button>
+                        <button
+                            type="button"
+                            class="toggle-btn"
+                            [ngClass]="{ 'active-disabled': !messagingEnabled }"
+                            [attr.aria-pressed]="!messagingEnabled"
+                            (click)="messagingEnabled && toggleMessaging()"
+                        >
+                            <fa-icon [icon]="faTimes" />
+                            <span jhiTranslate="artemisApp.iris.settings.disabled"></span>
+                        </button>
+                    </div>
+                </div>
+                @if (messagingEnabled) {
+                    <p class="text-muted small mb-3" jhiTranslate="artemisApp.course.onboarding.communication.messagingEnabled"></p>
+                } @else {
+                    <p class="text-muted small mb-3" jhiTranslate="artemisApp.course.onboarding.communication.messagingDisabled"></p>
+                }
+
+                <div class="mb-3">
+                    <label class="form-label" jhiTranslate="artemisApp.codeOfConduct.title"></label>
+                    <p class="text-muted small mb-2" jhiTranslate="artemisApp.course.onboarding.communication.codeOfConductHint"></p>
+                    <jhi-markdown-editor-monaco
+                        class="markdown-editor"
+                        [markdown]="course().courseInformationSharingMessagingCodeOfConduct"
+                        (markdownChange)="updateCodeOfConduct($event)"
+                    />
+                </div>
+            </div>
+        }
+    </div>
+</div>

@@ -1,15 +1,10 @@
 // util methods for testing tutorial group forms as they all follow the same patterns
-
+import { vi } from 'vitest';
 import { ComponentFixture } from '@angular/core/testing';
 import {
     TutorialGroupFreePeriodFormComponent,
     TutorialGroupFreePeriodFormData,
 } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
-import {
-    TutorialGroupSessionFormComponent,
-    TutorialGroupSessionFormData,
-} from 'app/tutorialgroup/manage/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
-import { TutorialGroupFormComponent, TutorialGroupFormData } from 'app/tutorialgroup/manage/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 import {
     TutorialGroupsConfigurationFormComponent,
     TutorialGroupsConfigurationFormData,
@@ -17,14 +12,14 @@ import {
 import { runOnPushChangeDetection } from '../../on-push-change-detection.helper';
 import { By } from '@angular/platform-browser';
 
-type SupportedForms = TutorialGroupFreePeriodFormComponent | TutorialGroupSessionFormComponent | TutorialGroupsConfigurationFormComponent | TutorialGroupFormComponent;
+type SupportedForms = TutorialGroupFreePeriodFormComponent | TutorialGroupsConfigurationFormComponent;
 type SupportedFixtures = ComponentFixture<SupportedForms>;
-type SupportedFormData = TutorialGroupFreePeriodFormData | TutorialGroupSessionFormData | TutorialGroupsConfigurationFormData | TutorialGroupFormData;
+type SupportedFormData = TutorialGroupFreePeriodFormData | TutorialGroupsConfigurationFormData;
 
 export const generateClickSubmitButton = (component: SupportedForms, fixture: SupportedFixtures, expectedEventFormData?: SupportedFormData) => {
     return (expectSubmitEvent: boolean) => {
-        const submitFormSpy = jest.spyOn(component, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(component.formSubmitted, 'emit');
+        const submitFormSpy = vi.spyOn(component, 'submitForm');
+        const submitFormEventSpy = vi.spyOn(component.formSubmitted, 'emit');
 
         const submitButton = fixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
@@ -52,8 +47,8 @@ export const generateTestFormIsInvalidOnMissingRequiredProperty = (
         setValidFormValues();
 
         runOnPushChangeDetection(fixture);
-        expect(component.form.valid).toBeTrue();
-        expect(component.isSubmitPossible).toBeTrue();
+        expect(component.form.valid).toBe(true);
+        expect(component.isSubmitPossible).toBe(true);
 
         if (subFormName) {
             component.form.get(subFormName)!.get(controlName)!.setValue(null);
@@ -61,8 +56,8 @@ export const generateTestFormIsInvalidOnMissingRequiredProperty = (
             component.form.get(controlName)!.setValue(undefined);
         }
         runOnPushChangeDetection(fixture);
-        expect(component.form.invalid).toBeTrue();
-        expect(component.isSubmitPossible).toBeFalse();
+        expect(component.form.invalid).toBe(true);
+        expect(component.isSubmitPossible).toBe(false);
 
         clickSubmit(false);
     };

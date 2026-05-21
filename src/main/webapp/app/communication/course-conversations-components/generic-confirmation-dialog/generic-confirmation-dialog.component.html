@@ -1,15 +1,15 @@
 @if (isInitialized) {
     <div>
         <div class="modal-header">
-            <h4 class="modal-title">{{ translationKeys.titleKey | artemisTranslate: translationParameters }}</h4>
+            <h4 class="modal-title">{{ translationKeys?.titleKey | artemisTranslate: translationParameters }}</h4>
             <button type="button" class="btn-close" (click)="clear()"></button>
         </div>
         <div class="modal-body">
             <p>
-                <strong>{{ translationKeys.questionKey | artemisTranslate: translationParameters }}</strong>
+                <strong>{{ translationKeys?.questionKey | artemisTranslate: translationParameters }}</strong>
             </p>
             <p>
-                {{ translationKeys.descriptionKey | artemisTranslate: translationParameters }}
+                {{ translationKeys?.descriptionKey | artemisTranslate: translationParameters }}
             </p>
             @if (!canBeUndone) {
                 <p>
@@ -20,7 +20,7 @@
         <div class="modal-footer">
             <button type="button" class="btn btn-outline-secondary cancel" (click)="clear()" jhiTranslate="entity.action.cancel"></button>
             <button type="button" class="btn confirm" [class.btn-danger]="isDangerousAction" [class.btn-primary]="!isDangerousAction" (click)="confirm()">
-                {{ translationKeys.confirmButtonKey | artemisTranslate }}
+                {{ translationKeys?.confirmButtonKey | artemisTranslate }}
             </button>
         </div>
     </div>

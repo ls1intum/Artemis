@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
@@ -99,23 +99,45 @@ export enum FinishedBuildJobFilterKey {
     buildDurationFilterUpperBound = 'artemis.buildQueue.finishedBuildJobFilterBuildDurationFilterUpperBound',
 }
 
+/**
+ * Modal component for configuring filters on the finished build jobs list.
+ * Supports filtering by:
+ * - Build status (successful, failed, error, cancelled, etc.)
+ * - Build agent address (with typeahead autocomplete)
+ * - Build submission date range
+ * - Build duration range
+ *
+ * The component validates filter combinations and prevents invalid configurations
+ * (e.g., end date before start date, or lower bound greater than upper bound).
+ *
+ * Uses OnPush change detection for optimal performance.
+ */
 @Component({
     selector: 'jhi-finished-builds-filter-modal',
     imports: [ArtemisTranslatePipe, TranslateDirective, NgbTypeahead, FormDateTimePickerComponent, FormsModule],
     templateUrl: './finished-builds-filter-modal.component.html',
     styleUrl: './finished-builds-filter-modal.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FinishedBuildsFilterModalComponent implements OnInit {
     private activeModal = inject(NgbActiveModal);
 
-    @ViewChild('addressTypeahead', { static: true }) addressTypeahead: NgbTypeahead;
+    /** The filter configuration being edited in this modal */
     finishedBuildJobFilter: FinishedBuildJobFilter;
+
+    /** Available status values for the status filter dropdown */
     buildStatusFilterValues?: string[];
+
+    /** Subject for typeahead focus events */
     focus$ = new Subject<string>();
+
+    /** Subject for typeahead click events */
     click$ = new Subject<string>();
 
+    /** List of finished build jobs used to extract unique build agent addresses */
     finishedBuildJobs: FinishedBuildJob[] = [];
 
+    /** Whether the build agent filter should be shown and editable */
     buildAgentFilterable = false;
 
     /**

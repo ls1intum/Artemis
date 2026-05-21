@@ -1,35 +1,57 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ImageCropperModalComponent } from 'app/core/course/manage/image-cropper-modal/image-cropper-modal.component';
-
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ImageCropperComponent } from 'app/shared/image-cropper/component/image-cropper.component';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ImageCropperModalComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ImageCropperModalComponent;
     let fixture: ComponentFixture<ImageCropperModalComponent>;
-    let ngbActiveModal: NgbActiveModal;
+    let dialogRef: DynamicDialogRef;
 
     beforeEach(async () => {
+        const mockDialogRef = {
+            close: vi.fn(),
+        };
+
+        const mockDialogConfig = {
+            data: {
+                uploadFile: undefined,
+                roundCropper: true,
+                fileFormat: 'png',
+            },
+        };
+
         await TestBed.configureTestingModule({
             imports: [ImageCropperComponent, ImageCropperModalComponent],
-            providers: [NgbActiveModal, MockProvider(TranslateService)],
-            declarations: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ImageCropperModalComponent);
-                component = fixture.componentInstance;
-                ngbActiveModal = TestBed.inject(NgbActiveModal);
-                fixture.detectChanges();
-            });
+            providers: [
+                { provide: DynamicDialogRef, useValue: mockDialogRef },
+                { provide: DynamicDialogConfig, useValue: mockDialogConfig },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(ImageCropperModalComponent);
+        component = fixture.componentInstance;
+        dialogRef = TestBed.inject(DynamicDialogRef);
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should create', () => {
+        expect(component).toBeTruthy();
     });
 
     it('should call onCancel when cancel button is clicked', () => {
-        jest.spyOn(component, 'onCancel');
+        vi.spyOn(component, 'onCancel');
         const cancelButton = fixture.debugElement.nativeElement.querySelector('#cancel-cropping-button');
 
         cancelButton.click();
@@ -39,7 +61,7 @@ describe('ImageCropperModalComponent', () => {
     });
 
     it('should call onSave when save button is clicked', () => {
-        jest.spyOn(component, 'onSave');
+        vi.spyOn(component, 'onSave');
         const saveButton = fixture.debugElement.nativeElement.querySelector('#save-cropping-button');
 
         saveButton.click();
@@ -49,15 +71,29 @@ describe('ImageCropperModalComponent', () => {
     });
 
     it('should close the modal when onCancel is called', () => {
-        jest.spyOn(ngbActiveModal, 'close');
         component.onCancel();
-        expect(ngbActiveModal.close).toHaveBeenCalled();
+        expect(dialogRef.close).toHaveBeenCalled();
     });
 
     it('should close the modal with cropped image when onSave is called', () => {
-        jest.spyOn(ngbActiveModal, 'close');
-        component.croppedImage = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAU...';
+        component.croppedImage.set('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAU...');
         component.onSave();
-        expect(ngbActiveModal.close).toHaveBeenCalledWith(component.croppedImage);
+        expect(dialogRef.close).toHaveBeenCalledWith(component.croppedImage());
+    });
+
+    it('should update croppedImage signal when imageCropped is called', () => {
+        const mockEvent = {
+            base64: 'data:image/png;base64,newImageData',
+        };
+
+        component.imageCropped(mockEvent as any);
+
+        expect(component.croppedImage()).toBe('data:image/png;base64,newImageData');
+    });
+
+    it('should initialize with default values from config', () => {
+        expect(component.roundCropper()).toBe(true);
+        expect(component.fileFormat()).toBe('png');
+        expect(component.uploadFile()).toBeUndefined();
     });
 });

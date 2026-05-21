@@ -13,6 +13,8 @@
             background: #0275d8;
             border-radius: 0.25rem;
             color: #fff;
+            display: flex;
+            align-items: center;
 
             &:hover {
                 opacity: 0.8;
@@ -25,13 +27,81 @@
     }
 
     .group-tag-input {
-        height: 30px !important;
         color: var(--text-editor-color);
     }
 }
 
-::ng-deep .group-panel {
-    background-color: var(--bs-body-bg);
-    color: var(--bs-body-color);
-    border: 1px solid var(--bs-gray-400);
+// Global roles styling
+.global-roles-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.global-role-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    user-select: none;
+
+    &:hover {
+        border-color: var(--bs-primary);
+    }
+
+    .role-checkbox {
+        width: 1.25rem;
+        height: 1.25rem;
+        border: 2px solid var(--bs-border-color);
+        border-radius: 0.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s ease-in-out;
+        color: #fff;
+        font-size: 0.75rem;
+
+        &.checked {
+            background-color: var(--bs-primary);
+            border-color: var(--bs-primary);
+        }
+    }
+
+    .role-label {
+        font-weight: 500;
+        color: var(--bs-body-color);
+    }
+}
+
+// Material Design overrides for proper chip display
+::ng-deep {
+    .group-tag-list {
+        .mdc-text-field--outlined .mat-mdc-form-field-infix,
+        .mdc-text-field--no-label .mat-mdc-form-field-infix {
+            padding-top: 0.5rem !important;
+            padding-bottom: 0.5rem !important;
+            padding-left: 0.5rem !important;
+            min-height: 1.75rem !important;
+        }
+
+        .mat-mdc-standard-chip.mdc-evolution-chip--with-trailing-action .mdc-evolution-chip__action--primary {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+
+        // Remove the additional border around each custom tag
+        .mat-mdc-standard-chip .mdc-evolution-chip__action--primary::before {
+            border-style: none !important;
+        }
+    }
+
+    .group-panel {
+        background-color: var(--bs-body-bg);
+        color: var(--bs-body-color);
+        border: 1px solid var(--bs-gray-400);
+    }
 }

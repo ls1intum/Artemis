@@ -30,16 +30,20 @@ springBoot {
 
 bootRun {
     args = []
+    // Required by the Weaviate Java client v6, which uses Gson's reflection-based serialization on internal java.lang classes.
+    // See: https://github.com/weaviate/java-client?tab=readme-ov-file#gson-and-reflective-access-to-internal-jdk-classes
+    // This is harmless: it only opens java.lang to classpath code within the same JVM process and does not expand the attack surface for remote exploits.
+    jvmArgs = ["--add-opens=java.base/java.lang=ALL-UNNAMED"]
 }
 
 bootJar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
-tasks.register("webapp", NpmTask) {
+tasks.register("webapp", PnpmTask) {
     inputs.property("appVersion", project.version)
-    inputs.files("package-lock.json")
-        .withPropertyName("package-lock")
+    inputs.files("pnpm-lock.yaml")
+        .withPropertyName("pnpm-lock")
         .withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files("build.gradle")
         .withPropertyName("build.gradle")
@@ -56,7 +60,7 @@ tasks.register("webapp", NpmTask) {
     outputs.dir("build/resources/main/static/")
         .withPropertyName("webapp-build-dir")
 
-    dependsOn npmInstall
+    dependsOn pnpmInstall
 
     args = ["run", "webapp:build"]
     environment = [APP_VERSION: project.version]

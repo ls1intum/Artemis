@@ -6,7 +6,6 @@ import { catchError, map } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChartBar, faChevronLeft, faChevronRight, faCircleNotch, faDoorOpen, faEye, faListAlt, faSync, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -27,7 +26,7 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures/course-lectures.component';
-import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/shared/course-tutorial-groups/course-tutorial-groups.component';
+import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/overview/course-tutorial-groups/course-tutorial-groups.component';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { CourseUnenrollmentModalComponent } from 'app/core/course/overview/course-unenrollment-modal/course-unenrollment-modal.component';
@@ -38,6 +37,8 @@ import { CourseNotificationSettingService } from 'app/communication/course-notif
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { CourseNotificationPresetPickerComponent } from 'app/communication/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { CourseIrisComponent } from 'app/iris/overview/course-iris/course-iris.component';
+import { CourseDashboardComponent } from 'app/core/course/overview/course-dashboard/course-dashboard.component';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -57,6 +58,7 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
         CourseTitleBarComponent,
         CourseSidebarComponent,
         CourseNotificationPresetPickerComponent,
+        CourseUnenrollmentModalComponent,
     ],
     providers: [MetisConversationService],
 })
@@ -66,7 +68,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private websocketService = inject(WebsocketService);
     private serverDateService = inject(ArtemisServerDateService);
     private alertService = inject(AlertService);
-    private modalService = inject(NgbModal);
     private examParticipationService = inject(ExamParticipationService);
     private sidebarItemService = inject(CourseSidebarItemService);
     private calendarService = inject(CalendarService);
@@ -76,6 +77,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private toggleSidebarEventSubscription: Subscription;
     private teamAssignmentUpdateListener: Subscription;
     private quizExercisesChannel: string;
+    private quizExercisesSubscription?: Subscription;
     private examStartedSubscription: Subscription;
     manageViewLink = signal<string[]>(['']);
 
@@ -84,11 +86,19 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private info?: CourseNotificationInfo;
     private settingInfo?: CourseNotificationSettingInfo;
 
+    showUnenrollModal = signal<boolean>(false);
     courseActionItems = signal<CourseActionItem[]>([]);
     canUnenroll = signal<boolean>(false);
     showRefreshButton = signal<boolean>(false);
     activatedComponentReference = signal<
-        CourseExercisesComponent | CourseLecturesComponent | CourseExamsComponent | CourseTutorialGroupsComponent | CourseConversationsComponent | undefined
+        | CourseExercisesComponent
+        | CourseLecturesComponent
+        | CourseExamsComponent
+        | CourseTutorialGroupsComponent
+        | CourseConversationsComponent
+        | CourseIrisComponent
+        | CourseDashboardComponent
+        | undefined
     >(undefined);
 
     // Icons
@@ -105,7 +115,11 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
     async ngOnInit() {
         this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
-            this.isSidebarCollapsed.update((value) => this.activatedComponentReference()?.isCollapsed ?? !value);
+            this.isSidebarCollapsed.update((value) => {
+                const componentRef = this.activatedComponentReference();
+                const componentCollapsed = typeof componentRef?.isCollapsed === 'function' ? componentRef.isCollapsed() : (componentRef?.isCollapsed as boolean | undefined);
+                return componentCollapsed ?? !value;
+            });
         });
 
         this.subscription = this.route?.params.subscribe(async (params: { courseId: string }) => {
@@ -139,7 +153,9 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         });
 
         this.courseActionItems.set(this.getCourseActionItems());
-        this.isSidebarCollapsed.set(this.activatedComponentReference()?.isCollapsed ?? false);
+        const componentRef = this.activatedComponentReference();
+        const componentCollapsed = typeof componentRef?.isCollapsed === 'function' ? componentRef.isCollapsed() : (componentRef?.isCollapsed as boolean | undefined);
+        this.isSidebarCollapsed.set(componentCollapsed ?? false);
         this.sidebarItems.set(this.getSidebarItems());
         await this.initAfterCourseLoad();
     }
@@ -266,7 +282,9 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             componentRef instanceof CourseLecturesComponent ||
             componentRef instanceof CourseTutorialGroupsComponent ||
             componentRef instanceof CourseExamsComponent ||
-            componentRef instanceof CourseConversationsComponent
+            componentRef instanceof CourseConversationsComponent ||
+            componentRef instanceof CourseIrisComponent ||
+            componentRef instanceof CourseDashboardComponent
         ) {
             this.activatedComponentReference.set(componentRef);
         }
@@ -281,7 +299,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         }
         const childRouteComponent = this.activatedComponentReference();
         childRouteComponent?.toggleSidebar();
-        this.isSidebarCollapsed.set(childRouteComponent!.isCollapsed);
+        const componentCollapsed = typeof childRouteComponent!.isCollapsed === 'function' ? childRouteComponent!.isCollapsed() : (childRouteComponent!.isCollapsed as boolean);
+        this.isSidebarCollapsed.set(componentCollapsed);
     }
 
     getShowRefreshButton(): void {
@@ -293,13 +312,16 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         const currentCourse = this.course();
 
         // Use the service to get sidebar items
-        const defaultItems = this.sidebarItemService.getStudentDefaultItems(
-            currentCourse?.studentCourseAnalyticsDashboardEnabled || currentCourse?.irisCourseChatEnabled,
-            currentCourse?.trainingEnabled,
-        );
+        const defaultItems = this.sidebarItemService.getStudentDefaultItems(currentCourse?.studentCourseAnalyticsDashboardEnabled, currentCourse?.trainingEnabled);
+        if (currentCourse?.irisEnabledInCourse) {
+            const irisItem = this.sidebarItemService.getIrisItem();
+            const dashboardIndex = defaultItems.findIndex((item) => item.routerLink === 'dashboard');
+            const insertIndex = dashboardIndex >= 0 ? dashboardIndex + 1 : 0;
+            defaultItems.splice(insertIndex, 0, irisItem);
+        }
         sidebarItems.push(...defaultItems);
 
-        if (currentCourse?.lectures) {
+        if (this.lectureEnabled && currentCourse?.lectures) {
             const lecturesItem = this.sidebarItemService.getLecturesItem();
             sidebarItems.splice(-2, 0, lecturesItem);
         }
@@ -314,7 +336,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             sidebarItems.push(communicationsItem);
         }
 
-        if (this.hasTutorialGroups()) {
+        if (this.tutorialGroupEnabled && this.hasTutorialGroups()) {
             const tutorialGroupsItem = this.sidebarItemService.getTutorialGroupsItem();
             sidebarItems.push(tutorialGroupsItem);
         }
@@ -329,7 +351,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             }
         }
 
-        if (currentCourse?.faqEnabled) {
+        if ((currentCourse?.numberOfAcceptedFaqs ?? 0) > 0) {
             const faqItem = this.sidebarItemService.getFaqItem();
             sidebarItems.push(faqItem);
         }
@@ -372,8 +394,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     }
 
     openUnenrollStudentModal() {
-        const modalRef = this.modalService.open(CourseUnenrollmentModalComponent, { size: 'xl' });
-        modalRef.componentInstance.course = this.course();
+        this.showUnenrollModal.set(true);
     }
 
     /**
@@ -393,7 +414,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     }
 
     redirectToCourseRegistrationPage() {
-        this.router.navigate(['courses', this.courseId(), 'register']);
+        void this.router.navigate(['courses', this.courseId(), 'register']);
     }
 
     redirectToCourseRegistrationPageIfCanRegisterOrElseThrow(error: Error): void {
@@ -457,8 +478,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             this.quizExercisesChannel = '/topic/courses/' + this.courseId() + '/quizExercises';
 
             // quizExercise channel => react to changes made to quizExercise (e.g. start date)
-            this.websocketService.subscribe(this.quizExercisesChannel);
-            this.websocketService.receive(this.quizExercisesChannel)?.subscribe((quizExercise: QuizExercise) => {
+            this.quizExercisesSubscription = this.websocketService.subscribe<QuizExercise>(this.quizExercisesChannel).subscribe((quizExercise: QuizExercise) => {
                 quizExercise = this.courseExerciseService.convertExerciseDatesFromServer(quizExercise);
                 // the quiz was set to visible or started, we should add it to the exercise list and display it at the top
                 const currentCourse = this.course();
@@ -475,7 +495,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     switchCourse(course: Course) {
         const url = ['courses', course.id, 'dashboard'];
         this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
-            this.router.navigate(url);
+            void this.router.navigate(url);
         });
     }
 
@@ -484,9 +504,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         if (this.teamAssignmentUpdateListener) {
             this.teamAssignmentUpdateListener.unsubscribe();
         }
-        if (this.quizExercisesChannel) {
-            this.websocketService.unsubscribe(this.quizExercisesChannel);
-        }
+        this.quizExercisesSubscription?.unsubscribe();
         this.examStartedSubscription?.unsubscribe();
         this.toggleSidebarEventSubscription?.unsubscribe();
     }

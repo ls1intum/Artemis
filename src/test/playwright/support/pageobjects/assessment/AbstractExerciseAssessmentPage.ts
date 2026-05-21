@@ -1,5 +1,5 @@
 import { BASE_API, ExerciseType } from '../../constants';
-import { Page } from 'playwright';
+import { Page, expect } from '@playwright/test';
 
 /**
  * Parent class for all exercise assessment pages.
@@ -27,7 +27,37 @@ export abstract class AbstractExerciseAssessmentPage {
     }
 
     async submitWithoutInterception() {
-        await this.page.locator('#submit').click();
+        const submitButton = this.page.locator('#submit');
+        // Wait for the submit button to be visible and enabled
+        await submitButton.waitFor({ state: 'visible' });
+        await expect(submitButton).toBeEnabled({ timeout: 10000 });
+        // Use keyboard shortcut (Ctrl+Enter) which is more reliable than clicking
+        await this.page.keyboard.press('Control+Enter');
+    }
+
+    /**
+     * Submits the assessment and handles any confirmation dialogs that might appear.
+     * Sets up the dialog handler before submitting.
+     */
+    async submitWithDialogHandler() {
+        const submitButton = this.page.locator('#submit');
+        await submitButton.waitFor({ state: 'visible' });
+        await expect(submitButton).toBeEnabled({ timeout: 10000 });
+
+        // Set up dialog handler BEFORE triggering the action
+        const dialogPromise = new Promise<void>((resolve) => {
+            const handler = async (dialog: import('@playwright/test').Dialog) => {
+                await dialog.accept();
+                this.page.off('dialog', handler);
+                resolve();
+            };
+            this.page.on('dialog', handler);
+            // Resolve after a timeout if no dialog appears (dialog might not always appear)
+            setTimeout(() => resolve(), 2000);
+        });
+
+        await this.page.keyboard.press('Control+Enter');
+        await dialogPromise;
     }
 
     async submit() {
@@ -55,9 +85,13 @@ export abstract class AbstractExerciseAssessmentPage {
 
     private async handleComplaint(response: string, accept: boolean, exerciseType: ExerciseType, examMode: boolean) {
         if (exerciseType !== ExerciseType.MODELING && !examMode) {
-            await this.page.locator('#show-complaint').click();
+            await this.page.locator('#show-complaint').first().click();
         }
-        await this.page.locator('#responseTextArea').fill(response);
+        // The response textarea starts as readonly/disabled while the complaint data loads.
+        // Wait for it to become editable before filling.
+        const responseTextArea = this.page.locator('#responseTextArea');
+        await expect(responseTextArea).toBeEnabled({ timeout: 15000 });
+        await responseTextArea.fill(response);
 
         let responsePromise;
         switch (exerciseType) {

@@ -1,31 +1,38 @@
-import { Component, ElementRef, Input, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, input, model, viewChild } from '@angular/core';
 import { faGripLines, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
-import { ApollonEditor, UMLDiagramType, UMLModel } from '@ls1intum/apollon';
+import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { MODELING_EDITOR_MAX_HEIGHT, MODELING_EDITOR_MAX_WIDTH, MODELING_EDITOR_MIN_HEIGHT, MODELING_EDITOR_MIN_WIDTH } from 'app/shared/constants/modeling.constants';
 import interact from 'interactjs';
+import { Interactable } from '@interactjs/core/Interactable';
 
 @Component({
     template: '',
 })
-export abstract class ModelingComponent {
+export abstract class ModelingComponent implements OnDestroy {
     protected readonly faGripLines = faGripLines;
     protected readonly faGripLinesVertical = faGripLinesVertical;
 
-    @ViewChild('editorContainer', { static: false }) editorContainer: ElementRef;
-    @ViewChild('resizeContainer', { static: false }) resizeContainer: ElementRef;
-    @Input() resizeOptions: { horizontalResize?: boolean; verticalResize?: boolean };
-    @Input() umlModel: UMLModel;
-    @Input() diagramType?: UMLDiagramType;
-    @Input() explanation: string;
-    @Input() readOnly = false;
+    readonly editorContainer = viewChild<ElementRef<HTMLElement>>('editorContainer');
+    readonly resizeContainer = viewChild<ElementRef<HTMLElement>>('resizeContainer');
+    resizeOptions = input<{
+        horizontalResize?: boolean;
+        verticalResize?: boolean;
+    }>();
+    umlModel = input<UMLModel>();
+    diagramType = input<UMLDiagramType>();
+    explanation = model<string>('');
+    readOnly = input(false);
 
     apollonEditor?: ApollonEditor;
+    private interactable: Interactable | undefined;
 
     protected setupInteract(): void {
-        if (this.resizeOptions) {
-            interact('.resizable')
+        const resizeOptions = this.resizeOptions();
+        const resizeContainer = this.resizeContainer()?.nativeElement;
+        if (resizeOptions && resizeContainer) {
+            this.interactable = interact(resizeContainer)
                 .resizable({
-                    edges: { left: false, right: this.resizeOptions.horizontalResize && '.draggable-right', bottom: this.resizeOptions.verticalResize, top: false },
+                    edges: { left: false, right: resizeOptions.horizontalResize && '.draggable-right', bottom: resizeOptions.verticalResize && '.draggable-bottom', top: false },
                     modifiers: [
                         interact.modifiers!.restrictSize({
                             min: { width: MODELING_EDITOR_MIN_WIDTH, height: MODELING_EDITOR_MIN_HEIGHT },
@@ -42,13 +49,18 @@ export abstract class ModelingComponent {
                 })
                 .on('resizemove', (event: any) => {
                     const target = event.target;
-                    if (this.resizeOptions.horizontalResize) {
+                    const resizeOptionsValue = this.resizeOptions();
+                    if (resizeOptionsValue?.horizontalResize) {
                         target.style.width = event.rect.width + 'px';
                     }
-                    if (this.resizeOptions.verticalResize) {
+                    if (resizeOptionsValue?.verticalResize) {
                         target.style.height = event.rect.height + 'px';
                     }
                 });
         }
+    }
+
+    ngOnDestroy(): void {
+        this.interactable?.unset();
     }
 }

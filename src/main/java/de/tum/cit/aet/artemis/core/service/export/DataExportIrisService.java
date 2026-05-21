@@ -1,0 +1,100 @@
+package de.tum.cit.aet.artemis.core.service.export;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.tum.cit.aet.artemis.core.dto.export.IrisChatSessionExportDTO;
+import de.tum.cit.aet.artemis.core.dto.export.IrisMessageExportDTO;
+import de.tum.cit.aet.artemis.iris.api.IrisDataExportApi;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
+
+/**
+ * Service for creating Iris (AI tutor) data exports for GDPR compliance.
+ * <p>
+ * This service exports all AI tutor sessions and messages for a user,
+ * including both the user's questions and the AI's responses.
+ */
+@Profile(PROFILE_CORE)
+@Lazy
+@Service
+public class DataExportIrisService {
+
+    private static final Logger log = LoggerFactory.getLogger(DataExportIrisService.class);
+
+    private final Optional<IrisDataExportApi> irisDataExportApi;
+
+    private final ObjectMapper objectMapper;
+
+    public DataExportIrisService(Optional<IrisDataExportApi> irisDataExportApi, ObjectMapper objectMapper) {
+        this.irisDataExportApi = irisDataExportApi;
+        this.objectMapper = objectMapper;
+    }
+
+    /**
+     * Creates the Iris data export containing all AI tutor sessions and messages.
+     * If Iris is not enabled, this method does nothing.
+     *
+     * @param userId           the ID of the user for which the data should be exported
+     * @param workingDirectory the directory where the export file should be created
+     * @throws IOException if the file cannot be created
+     */
+    public void createIrisExport(long userId, Path workingDirectory) throws IOException {
+        if (irisDataExportApi.isEmpty()) {
+            log.debug("Iris is not enabled, skipping Iris data export for user {}", userId);
+            return;
+        }
+        var chatSessions = irisDataExportApi.get().findAllSessionsWithMessagesByUserId(userId);
+        createIrisExportFile(workingDirectory, chatSessions);
+    }
+
+    /**
+     * Creates a JSON file containing all Iris sessions and messages.
+     *
+     * @param workingDirectory the directory where the export file should be created
+     * @param chatSessions     the set of Iris sessions to be exported
+     * @throws IOException if the file cannot be created
+     */
+    private void createIrisExportFile(Path workingDirectory, Set<IrisSession> chatSessions) throws IOException {
+        if (chatSessions == null || chatSessions.isEmpty()) {
+            return;
+        }
+
+        // sort after creation date to have a deterministic order
+        List<IrisChatSessionExportDTO> exportDTOs = chatSessions.stream().sorted(Comparator.comparing(IrisSession::getCreationDate)).map(this::convertToExportDTO).toList();
+
+        Path outputFile = workingDirectory.resolve("iris_chat_sessions.json");
+        objectMapper.writerWithDefaultPrettyPrinter().writeValue(outputFile.toFile(), exportDTOs);
+    }
+
+    /**
+     * Converts an Iris session to an export DTO.
+     *
+     * @param session the Iris session to convert
+     * @return the export DTO
+     */
+    private IrisChatSessionExportDTO convertToExportDTO(IrisSession session) {
+        List<IrisMessageExportDTO> messages = session.getMessages().stream()
+                .map(message -> new IrisMessageExportDTO(message.getId(), message.getSentAt(), message.getSender() != null ? message.getSender().name() : null,
+                        message.getContent().stream().map(IrisMessageContent::getContentAsString).filter(Objects::nonNull).reduce((a, b) -> a + "\n" + b).orElse(null),
+                        message.getHelpful()))
+                .toList();
+
+        return new IrisChatSessionExportDTO(session.getId(), session.getUserId(), session.getCreationDate(), messages);
+    }
+}

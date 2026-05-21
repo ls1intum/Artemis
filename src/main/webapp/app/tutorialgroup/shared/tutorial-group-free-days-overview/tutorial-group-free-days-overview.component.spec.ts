@@ -1,24 +1,18 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FaIconComponent, FaStackComponent } from '@fortawesome/angular-fontawesome';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { generateExampleTutorialGroupFreePeriod } from 'test/helpers/sample/tutorialgroup/tutorialGroupFreePeriodExampleModel';
 import dayjs from 'dayjs/esm';
 import { SortService } from 'app/shared/service/sort.service';
-import { Component, Input, IterableDiffers } from '@angular/core';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { IterableDiffers } from '@angular/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialGroupFreeDaysOverviewComponent } from 'app/tutorialgroup/shared/tutorial-group-free-days-overview/tutorial-group-free-days-overview.component';
 
-@Component({ selector: 'jhi-side-panel', template: '' })
-class MockSidePanelComponent {
-    @Input() panelHeader: string;
-    @Input() panelDescriptionHeader?: string;
-}
 describe('TutorialGroupFreeDaysOverviewComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: TutorialGroupFreeDaysOverviewComponent;
     let fixture: ComponentFixture<TutorialGroupFreeDaysOverviewComponent>;
 
@@ -28,15 +22,7 @@ describe('TutorialGroupFreeDaysOverviewComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockDirective(NgbPopover), ArtemisTranslatePipe],
-            declarations: [
-                TutorialGroupFreeDaysOverviewComponent,
-                MockComponent(FaStackComponent),
-                MockComponent(FaIconComponent),
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDatePipe),
-                MockSidePanelComponent,
-            ],
+            imports: [TutorialGroupFreeDaysOverviewComponent],
             providers: [SortService, IterableDiffers, { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
@@ -58,8 +44,12 @@ describe('TutorialGroupFreeDaysOverviewComponent', () => {
 
         fixture.componentRef.setInput('tutorialGroupFreeDays', [{ ...firstOfJanuaryPeriod }, { ...thirdOfJanuaryPeriod }]);
         fixture.componentRef.setInput('timeZone', 'Europe/Berlin');
-        jest.spyOn(component, 'getCurrentDate').mockReturnValue(currentDate);
+        vi.spyOn(component, 'getCurrentDate').mockReturnValue(currentDate);
         fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {

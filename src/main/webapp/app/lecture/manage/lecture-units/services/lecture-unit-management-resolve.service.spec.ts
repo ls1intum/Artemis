@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { of } from 'rxjs';
@@ -7,13 +9,15 @@ import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/ser
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 
 describe('AttachmentVideoUnitResolve', () => {
+    setupTestBed({ zoneless: true });
+
     let resolver: AttachmentVideoUnitResolve;
     let service: AttachmentVideoUnitService;
     let route: ActivatedRouteSnapshot;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [AttachmentVideoUnitResolve, { provide: AttachmentVideoUnitService, useValue: { findById: jest.fn() } }],
+            providers: [AttachmentVideoUnitResolve, { provide: AttachmentVideoUnitService, useValue: { findById: vi.fn() } }],
         });
 
         resolver = TestBed.inject(AttachmentVideoUnitResolve);
@@ -23,7 +27,7 @@ describe('AttachmentVideoUnitResolve', () => {
 
     it('should fetch and return the attachment video unit when ID is present', () => {
         const mockUnit = new AttachmentVideoUnit();
-        (service.findById as jest.Mock).mockReturnValue(of(new HttpResponse({ body: mockUnit, status: 200 })));
+        (service.findById as ReturnType<typeof vi.fn>).mockReturnValue(of(new HttpResponse({ body: mockUnit, status: 200 })));
 
         route.params = { lectureId: 7, attachmentVideoUnitId: 123 };
 

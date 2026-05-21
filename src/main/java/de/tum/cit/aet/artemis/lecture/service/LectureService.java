@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 
@@ -17,8 +16,8 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -43,7 +42,13 @@ import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
-import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+import de.tum.cit.aet.artemis.iris.api.IrisChatSessionApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
@@ -56,8 +61,10 @@ import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.web.LectureResource;
+import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
+import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
 
-@Profile(PROFILE_CORE)
+@Conditional(LectureEnabled.class)
 @Lazy
 @Service
 public class LectureService {
@@ -70,7 +77,7 @@ public class LectureService {
 
     private final ChannelService channelService;
 
-    private final Optional<IrisLectureApi> irisLectureApi;
+    private final Optional<LectureContentProcessingApi> contentProcessingApi;
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
@@ -82,19 +89,30 @@ public class LectureService {
 
     private final LectureUnitRepository lectureUnitRepository;
 
+    private final Optional<IrisChatSessionApi> irisChatSessionApi;
+
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
+
+    private final YouTubeUrlService youTubeUrlService;
+
     public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
-            Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CompetencyRelationApi> competencyRelationApi,
-            Optional<CompetencyApi> competencyApi, ExerciseService exerciseService, LectureUnitRepository lectureUnitRepository) {
+            Optional<LectureContentProcessingApi> contentProcessingApi, Optional<CompetencyProgressApi> competencyProgressApi,
+            Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyApi> competencyApi, ExerciseService exerciseService,
+            LectureUnitRepository lectureUnitRepository, Optional<IrisChatSessionApi> irisChatSessionApi,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional, YouTubeUrlService youTubeUrlService) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
         this.channelService = channelService;
-        this.irisLectureApi = irisLectureApi;
+        this.contentProcessingApi = contentProcessingApi;
         this.competencyProgressApi = competencyProgressApi;
         this.competencyRelationApi = competencyRelationApi;
         this.competencyApi = competencyApi;
         this.exerciseService = exerciseService;
         this.lectureUnitRepository = lectureUnitRepository;
+        this.irisChatSessionApi = irisChatSessionApi;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
+        this.youTubeUrlService = youTubeUrlService;
     }
 
     /**
@@ -128,18 +146,14 @@ public class LectureService {
      * @param user                    the user for which this call should filter
      * @return lectures with filtered attachments
      */
-    public Set<Lecture> filterVisibleLecturesWithActiveAttachments(Course course, Set<Lecture> lecturesWithAttachments, User user) {
+    public Set<Lecture> filterLecturesWithActiveAttachments(Course course, Set<Lecture> lecturesWithAttachments, User user) {
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return lecturesWithAttachments;
         }
 
         Set<Lecture> lecturesWithFilteredAttachments = new HashSet<>();
         for (Lecture lecture : lecturesWithAttachments) {
-            /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-            /* TODO: #11479 - remove the commented out code OR comment back in */
-            // if (lecture.isVisibleToStudents()) {
             lecturesWithFilteredAttachments.add(filterActiveAttachments(lecture, user));
-            // }
         }
         return lecturesWithFilteredAttachments;
     }
@@ -172,14 +186,13 @@ public class LectureService {
      * @param updateCompetencyProgress whether the competency progress should be updated
      */
     public void delete(Lecture lecture, boolean updateCompetencyProgress) {
-        if (irisLectureApi.isPresent()) {
-            Lecture lectureWithAttachmentVideoUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture.getId());
-            List<AttachmentVideoUnit> attachmentVideoUnitList = lectureWithAttachmentVideoUnits.getLectureUnits().stream()
-                    .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).toList();
+        // Clean up external processing resources (delete from Pyris)
+        Lecture lectureWithAttachmentVideoUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture.getId());
+        List<AttachmentVideoUnit> attachmentVideoUnitList = lectureWithAttachmentVideoUnits.getLectureUnits().stream()
+                .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).toList();
 
-            if (!attachmentVideoUnitList.isEmpty()) {
-                irisLectureApi.get().deleteLectureFromPyrisDB(attachmentVideoUnitList);
-            }
+        if (!attachmentVideoUnitList.isEmpty()) {
+            contentProcessingApi.ifPresent(api -> api.handleUnitsDeletion(attachmentVideoUnitList));
         }
 
         if (updateCompetencyProgress && competencyProgressApi.isPresent()) {
@@ -193,22 +206,18 @@ public class LectureService {
 
         competencyRelationApi.ifPresent(api -> api.deleteAllLectureUnitLinksByLectureId(lecture.getId()));
 
-        lectureRepository.deleteById(lecture.getId());
-    }
+        // Remove any Iris chat sessions referencing this lecture. Since the unified iris_session
+        // schema uses a plain entity_id column (no FK), cleanup must happen explicitly here.
+        irisChatSessionApi.ifPresent(api -> api.deleteAllForLecture(lecture.getId()));
 
-    /**
-     * Ingest the lectures when triggered by the ingest lectures button
-     *
-     * @param lectures set of lectures to be ingested
-     */
-    public void ingestLecturesInPyris(Set<Lecture> lectures) {
-        if (irisLectureApi.isPresent()) {
-            List<AttachmentVideoUnit> attachmentVideoUnitList = lectures.stream().flatMap(lec -> lec.getLectureUnits().stream()).filter(unit -> unit instanceof AttachmentVideoUnit)
-                    .map(unit -> (AttachmentVideoUnit) unit).toList();
-            for (AttachmentVideoUnit attachmentVideoUnit : attachmentVideoUnitList) {
-                irisLectureApi.get().addLectureUnitToPyrisDB(attachmentVideoUnit);
-            }
-        }
+        // Clean up Weaviate: remove the lecture row and every lecture unit row that belonged to this
+        // lecture so the JPA cascade delete does not leave orphaned rows in the unified search index.
+        searchableEntityWeaviateService.ifPresent(service -> {
+            service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE, lecture.getId());
+            service.deleteAllLectureUnitsForLectureAsync(lecture.getId());
+        });
+
+        lectureRepository.deleteById(lecture.getId());
     }
 
     /**
@@ -309,8 +318,8 @@ public class LectureService {
         LectureDetailsDTO.CourseDTO courseDTO = Optional.ofNullable(lecture.getCourse()).map(this::mapCourse).orElse(null);
         List<LectureDetailsDTO.AttachmentDTO> attachments = lecture.getAttachments().stream().filter(Objects::nonNull).map(this::mapAttachment).toList();
         List<LectureDetailsDTO.LectureUnitDetailsDTO> lectureUnits = lecture.getLectureUnits().stream().filter(Objects::nonNull).map(this::mapLectureUnit).toList();
-        return new LectureDetailsDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lecture.getVisibleDate(),
-                lecture.isTutorialLecture(), courseDTO, lectureUnits, attachments);
+        return new LectureDetailsDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lecture.isTutorialLecture(),
+                courseDTO, lectureUnits, attachments);
     }
 
     private LectureDetailsDTO.CourseDTO mapCourse(Course course) {
@@ -334,9 +343,12 @@ public class LectureService {
         switch (lectureUnit) {
             case AttachmentVideoUnit attachmentVideoUnit -> {
                 LectureDetailsDTO.AttachmentDTO attachmentDTO = Optional.ofNullable(attachmentVideoUnit.getAttachment()).map(this::mapAttachment).orElse(null);
+                Optional<String> ytId = youTubeUrlService.extractYouTubeVideoId(attachmentVideoUnit.getVideoSource());
+                VideoSourceType videoSourceType = ytId.isPresent() ? VideoSourceType.YOUTUBE : null;
+                String youtubeVideoId = ytId.orElse(null);
                 return new LectureDetailsDTO.AttachmentUnitDTO(attachmentVideoUnit.getId(), lectureReference, attachmentVideoUnit.getName(),
                         resolveReleaseDate(attachmentVideoUnit), completed, visibleToStudents, competencyLinks, attachmentDTO, attachmentVideoUnit.getDescription(),
-                        attachmentVideoUnit.getVideoSource(), null);
+                        attachmentVideoUnit.getVideoSource(), videoSourceType, youtubeVideoId, null);
             }
             case ExerciseUnit exerciseUnit -> {
                 return new LectureDetailsDTO.ExerciseUnitDTO(exerciseUnit.getId(), lectureReference, exerciseUnit.getName(), exerciseUnit.getReleaseDate(), completed,
@@ -375,10 +387,9 @@ public class LectureService {
 
     /**
      * Retrieves a {@link LectureCalendarEventDTO} for each {@link Lecture} associated to the given courseId.
-     * Each DTO encapsulates the visibleDate, startDate and endDate of the respective lecture.
+     * Each DTO encapsulates the startDate and endDate of the respective lecture.
      * <p>
-     * The method then derives a set of {@link CalendarEventDTO}s from the DTOs. Whether events are included in the result
-     * depends on the visibleDate and whether the logged-in user is a student of the {@link Course})
+     * The method then derives a set of {@link CalendarEventDTO}s from the DTOs.
      *
      * @param courseId the ID of the course
      * @param language the language that will be used add context information to titles (e.g. the title of a lecture end event will be prefixed with "End: ")
@@ -405,13 +416,6 @@ public class LectureService {
         if (noDatesAvailable) {
             throw new IllegalArgumentException("Tried to derive CalendarEventDTOs from a LectureCalendarEventDTO without startDate and endDate.");
         }
-
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code OR comment back in */
-        // boolean lectureIsInvisible = userIsStudent && dto.visibleDate() != null && ZonedDateTime.now().isBefore(dto.visibleDate());
-        // if (lectureIsInvisible) {
-        // return Set.of();
-        // }
 
         boolean onlyEndDateAvailable = startDate == null && endDate != null;
         if (onlyEndDateAvailable) {
@@ -473,19 +477,39 @@ public class LectureService {
 
         Pattern defaultLectureNamePattern = Pattern.compile("^Lecture (\\d+)$");
         Pattern defaultChannelnamePattern = Pattern.compile("^lecture-lecture-(\\d+)$");
+
+        Set<Lecture> lecturesToUpdate = new HashSet<>();
+        Set<Channel> channelsToUpdate = new HashSet<>();
+
         for (int index = 0; index < existingLectures.size(); index++) {
             Lecture lecture = existingLectures.get(index);
-            if (defaultLectureNamePattern.matcher(lecture.getTitle()).matches()) {
-                lecture.setTitle("Lecture " + (index + 1));
+            String newTitle = "Lecture " + (index + 1);
+            if (defaultLectureNamePattern.matcher(lecture.getTitle()).matches() && !newTitle.equals(lecture.getTitle())) {
+                lecture.setTitle(newTitle);
+                lecturesToUpdate.add(lecture);
             }
             Channel channel = lectureToChannelMap.get(lecture.getId());
             String channelName = channel.getName();
-            if (channelName != null && defaultChannelnamePattern.matcher(channelName).matches()) {
-                channel.setName("lecture-lecture-" + (index + 1));
+            String newChannelName = "lecture-lecture-" + (index + 1);
+            if (channelName != null && defaultChannelnamePattern.matcher(channelName).matches() && !newChannelName.equals(channelName)) {
+                channel.setName(newChannelName);
+                channelsToUpdate.add(channel);
             }
         }
 
         lectureRepository.saveAll(existingLectures);
         channelRepository.saveAll(existingLectureChannels);
+
+        searchableEntityWeaviateService.ifPresent(service -> {
+            lecturesToUpdate.forEach(lecture -> service.upsertLectureAsync(LectureSearchableEntityDTO.fromLecture(lecture)));
+            channelsToUpdate.forEach(channel -> {
+                if (ChannelSearchableEntityDTO.isIndexable(channel)) {
+                    service.upsertChannelAsync(ChannelSearchableEntityDTO.fromChannel(channel));
+                }
+                else {
+                    service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
+                }
+            });
+        });
     }
 }
