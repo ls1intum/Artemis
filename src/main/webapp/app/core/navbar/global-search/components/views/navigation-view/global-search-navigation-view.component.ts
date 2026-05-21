@@ -320,7 +320,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     private navigateToPost(result: GlobalSearchResult, courseId: string) {
         const channelId = result.metadata?.['channelId'];
         if (channelId) {
-            this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId, messageId: result.id } });
+            this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId, focusPostId: result.id } });
         }
     }
 
