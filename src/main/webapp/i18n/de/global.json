@@ -65,15 +65,13 @@
                 "lecturesTitle": "Vorlesungsdetails",
                 "lecturesDescription": "Vorlesungsinhalte und Einheiten ansehen",
                 "communicationTitle": "Kommunikation",
-                "communicationDescription": "Kommunikationskanäle durchsuchen",
+                "communicationDescription": "Kanäle und Nachrichten durchsuchen",
                 "faqsTitle": "FAQs",
                 "faqsDescription": "Häufig gestellte Fragen durchsuchen",
                 "examsTitle": "Klausuren",
                 "examsDescription": "Klausuren in deinen Kursen durchsuchen",
                 "coursesTitle": "Kurse",
-                "coursesDescription": "Eingeschriebene Kurse durchsuchen",
-                "messagesTitle": "Nachrichten",
-                "messagesDescription": "Nachrichten in öffentlichen Kanälen durchsuchen"
+                "coursesDescription": "Eingeschriebene Kurse durchsuchen"
             },
             "types": {
                 "filter": "#Filter",

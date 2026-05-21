@@ -150,16 +150,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             icon: faComments,
             type: 'filter',
             enabled: true,
-            filterTags: ['channel'],
-        },
-        {
-            id: 'messages',
-            title: 'global.search.entities.messagesTitle',
-            description: 'global.search.entities.messagesDescription',
-            icon: faComment,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['post', 'answer_post'],
+            filterTags: ['channel', 'post', 'answer_post'],
         },
         {
             id: 'faqs',
