@@ -354,6 +354,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.activatedRoute.queryParams.pipe(takeUntil(this.ngUnsubscribe)).subscribe((queryParams) => {
             if (queryParams.focusPostId) {
                 this.focusPostId = Number(queryParams.focusPostId);
+                this.scrollToAndHighlightPost(this.focusPostId);
             }
             if (queryParams.openThreadOnFocus) {
                 this.openThreadOnFocus = queryParams.openThreadOnFocus;
@@ -751,6 +752,32 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.postInThread = undefined;
         this.pendingThreadPostId = undefined;
         this.updateQueryParameters();
+    }
+
+    private scrollToAndHighlightPost(postId: number): void {
+        const elementId = 'item-' + postId;
+
+        const tryHighlight = () => {
+            const host = document.getElementById(elementId);
+            const postDiv = host?.querySelector('.post');
+            if (postDiv) {
+                postDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                postDiv.classList.add('highlight-post');
+                setTimeout(() => postDiv.classList.remove('highlight-post'), 2000);
+                return true;
+            }
+            return false;
+        };
+
+        if (tryHighlight()) return;
+
+        const observer = new MutationObserver(() => {
+            if (tryHighlight()) {
+                observer.disconnect();
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+        setTimeout(() => observer.disconnect(), 5000);
     }
 
     private scrollToAndHighlightReply(replyId: number): void {

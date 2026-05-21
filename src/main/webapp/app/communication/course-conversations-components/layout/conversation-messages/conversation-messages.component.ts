@@ -147,6 +147,12 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             untracked(() => {
                 this.focusOnPostId = focusPostIdValue;
                 this.isOpenThreadOnFocus = openThreadOnFocusValue;
+                // When messages are already rendered (e.g. navigating to a post
+                // in the current conversation via global search), scroll and
+                // highlight immediately — the messages() effect won't re-fire.
+                if (focusPostIdValue && this.messages().length > 0) {
+                    requestAnimationFrame(() => this.goToLastSelectedElement(focusPostIdValue, openThreadOnFocusValue));
+                }
             });
         });
 
