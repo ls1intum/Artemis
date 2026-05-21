@@ -82,6 +82,7 @@ describe('Example Submission Component', () => {
     it('should delete an example submission', () => {
         // GIVEN
         component.exercise = exercise;
+        component.createdExampleAssessment = [false, false];
         const deleteStub = vi.spyOn(exampleSubmissionService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
 
         // WHEN
