@@ -23,10 +23,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
+import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
+import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -69,6 +75,12 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ConversationTestRepository conversationRepository;
+
+    @Autowired
+    private ConversationParticipantRepository conversationParticipantRepository;
 
     private Course course;
 
@@ -117,6 +129,38 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         answerPost.setPost(post);
         answerPost.setCreationDate(ZonedDateTime.now());
         return answerPostRepository.save(answerPost);
+    }
+
+    private Conversation createOneToOneChat() {
+        Conversation chat = new OneToOneChat();
+        chat.setCourse(course);
+        chat = conversationRepository.save(chat);
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        addParticipant(chat, instructor);
+        addParticipant(chat, tutor);
+        return chat;
+    }
+
+    private Conversation createGroupChat() {
+        Conversation chat = new GroupChat();
+        chat.setCourse(course);
+        chat = conversationRepository.save(chat);
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        addParticipant(chat, instructor);
+        addParticipant(chat, tutor);
+        return chat;
+    }
+
+    private void addParticipant(Conversation conversation, User user) {
+        var participant = ConversationParticipant.createWithDefaultValues(user, conversation);
+        conversationParticipantRepository.save(participant);
+    }
+
+    private Post createPostViaApi(Conversation conversation) throws Exception {
+        Post post = new Post();
+        post.setConversation(conversation);
+        post.setContent("Test message in " + conversation.getClass().getSimpleName());
+        return request.postWithResponseBody("/api/communication/courses/" + course.getId() + "/messages", post, Post.class, HttpStatus.CREATED);
     }
 
     @Nested
@@ -301,6 +345,64 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
             assertPostNotInWeaviate(weaviateService, postId);
             assertAnswerPostNotInWeaviate(weaviateService, answer1Id);
             assertAnswerPostNotInWeaviate(weaviateService, answer2Id);
+        }
+    }
+
+    @Nested
+    class PrivacyFilterTests {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testCreatePostInPrivateChannel_notIndexedInWeaviate() throws Exception {
+            // Sentinel: create post in public channel to confirm Weaviate pipeline works
+            Channel publicChannel = createPublicChannel("sentinel-priv");
+            Post sentinelPost = createPostViaApi(publicChannel);
+
+            // Create post in private channel via API
+            Channel privateChannel = createPrivateChannel("filter-private");
+            Post privatePost = createPostViaApi(privateChannel);
+
+            // Wait for sentinel to appear, proving async Weaviate operations have been processed
+            assertPostExistsInWeaviate(weaviateService, sentinelPost.getId());
+
+            // Assert the private channel post was NOT indexed
+            assertThat(queryPostProperties(weaviateService, privatePost.getId())).isNull();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testCreatePostInOneToOneChat_notIndexedInWeaviate() throws Exception {
+            // Sentinel: create post in public channel to confirm Weaviate pipeline works
+            Channel publicChannel = createPublicChannel("sentinel-dm");
+            Post sentinelPost = createPostViaApi(publicChannel);
+
+            // Create post in one-to-one chat via API
+            Conversation oneToOneChat = createOneToOneChat();
+            Post dmPost = createPostViaApi(oneToOneChat);
+
+            // Wait for sentinel to appear, proving async Weaviate operations have been processed
+            assertPostExistsInWeaviate(weaviateService, sentinelPost.getId());
+
+            // Assert the direct message post was NOT indexed
+            assertThat(queryPostProperties(weaviateService, dmPost.getId())).isNull();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testCreatePostInGroupChat_notIndexedInWeaviate() throws Exception {
+            // Sentinel: create post in public channel to confirm Weaviate pipeline works
+            Channel publicChannel = createPublicChannel("sentinel-gc");
+            Post sentinelPost = createPostViaApi(publicChannel);
+
+            // Create post in group chat via API
+            Conversation groupChat = createGroupChat();
+            Post gcPost = createPostViaApi(groupChat);
+
+            // Wait for sentinel to appear, proving async Weaviate operations have been processed
+            assertPostExistsInWeaviate(weaviateService, sentinelPost.getId());
+
+            // Assert the group chat post was NOT indexed
+            assertThat(queryPostProperties(weaviateService, gcPost.getId())).isNull();
         }
     }
 }
