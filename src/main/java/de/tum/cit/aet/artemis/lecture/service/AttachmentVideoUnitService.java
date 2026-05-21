@@ -99,13 +99,12 @@ public class AttachmentVideoUnitService {
      */
     public AttachmentVideoUnit updateAttachmentVideoUnit(AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentVideoUnitDTO updateUnitDTO, Attachment updateAttachment,
             MultipartFile updateFile, boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder, Set<Long> originalCompetencyIds) {
-        String previousLectureUnitName = existingAttachmentVideoUnit.getName();
+        int payloadFingerprintBeforeUpdate = buildIngestionPayloadFingerprint(existingAttachmentVideoUnit);
         existingAttachmentVideoUnit.setDescription(updateUnitDTO.description());
         existingAttachmentVideoUnit.setName(updateUnitDTO.name());
         existingAttachmentVideoUnit.setReleaseDate(updateUnitDTO.releaseDate());
         existingAttachmentVideoUnit.setVideoSource(updateUnitDTO.videoSource());
         boolean hasUploadedFile = updateFile != null && !updateFile.isEmpty();
-        boolean ingestionPayloadMetadataChanged = !Objects.equals(previousLectureUnitName, updateUnitDTO.name());
         // Note: competency links are updated by the resource layer using lectureUnitService.updateCompetencyLinks
 
         Attachment existingAttachment = existingAttachmentVideoUnit.getAttachment();
@@ -121,15 +120,7 @@ public class AttachmentVideoUnitService {
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, savedAttachmentVideoUnit));
 
         if (updateAttachment == null) {
-            // Trigger processing for video-only updates (video source change detection is done inside the service)
-            contentProcessingService.ifPresent(api -> {
-                if (ingestionPayloadMetadataChanged) {
-                    api.triggerProcessingForMetadataChange(savedAttachmentVideoUnit);
-                }
-                else {
-                    api.triggerProcessing(savedAttachmentVideoUnit);
-                }
-            });
+            triggerContentProcessingBasedOnPayloadChange(payloadFingerprintBeforeUpdate, savedAttachmentVideoUnit);
             prepareAttachmentVideoUnitForClient(existingAttachmentVideoUnit);
             return existingAttachmentVideoUnit;
         }
@@ -139,8 +130,7 @@ public class AttachmentVideoUnitService {
             if (hasUploadedFile && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
                 slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
             }
-            // Trigger processing for newly added attachment
-            contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
+            triggerContentProcessingBasedOnPayloadChange(payloadFingerprintBeforeUpdate, savedAttachmentVideoUnit);
         }
         else if (existingAttachment != null) {
             updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages);
@@ -168,19 +158,36 @@ public class AttachmentVideoUnitService {
                 }
             }
 
-            contentProcessingService.ifPresent(api -> {
-                if (ingestionPayloadMetadataChanged) {
-                    api.triggerProcessingForMetadataChange(savedAttachmentVideoUnit);
-                }
-                else {
-                    api.triggerProcessing(savedAttachmentVideoUnit);
-                }
-            });
+            triggerContentProcessingBasedOnPayloadChange(payloadFingerprintBeforeUpdate, savedAttachmentVideoUnit);
         }
 
         prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
 
         return savedAttachmentVideoUnit;
+    }
+
+    private void triggerContentProcessingBasedOnPayloadChange(int payloadFingerprintBeforeUpdate, AttachmentVideoUnit savedAttachmentVideoUnit) {
+        int payloadFingerprintAfterUpdate = buildIngestionPayloadFingerprint(savedAttachmentVideoUnit);
+        boolean ingestionPayloadChanged = payloadFingerprintBeforeUpdate != payloadFingerprintAfterUpdate;
+
+        if (!ingestionPayloadChanged) {
+            // No changes in the ingestion payload - skip processing entirely
+            return;
+        }
+
+        // Something changed in the payload (could be metadata or content)
+        // Use triggerProcessingForMetadataChange to force reprocessing even if only metadata changed
+        contentProcessingService.ifPresent(api -> api.triggerProcessingForMetadataChange(savedAttachmentVideoUnit));
+    }
+
+    private int buildIngestionPayloadFingerprint(AttachmentVideoUnit unit) {
+        var lecture = unit.getLecture();
+        var course = lecture != null ? lecture.getCourse() : null;
+        var attachment = unit.getAttachment();
+        return Objects.hash(unit.getId(), unit.getName(), lecture != null ? lecture.getId() : null, lecture != null ? lecture.getTitle() : null,
+                course != null ? course.getId() : null, course != null ? course.getTitle() : null, course != null && course.getDescription() != null ? course.getDescription() : "",
+                attachment != null ? attachment.getVersion() : -1, attachment != null && attachment.getLink() != null ? attachment.getLink() : "",
+                unit.getVideoSource() != null && !unit.getVideoSource().isBlank() ? unit.getVideoSource() : null);
     }
 
     private void createAttachment(Attachment attachment, AttachmentVideoUnit attachmentVideoUnit, MultipartFile file, boolean keepFilename) {
