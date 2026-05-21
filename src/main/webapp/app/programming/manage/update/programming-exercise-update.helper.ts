@@ -51,7 +51,7 @@ export enum ProgrammingExerciseInputField {
     PLAGIARISM_CONTROL = 'plagiarismControl',
 }
 
-export const INPUT_FIELD_IS_DISPLAYED_IN_SIMPLE_MODE_RECORD: Record<ProgrammingExerciseInputField, boolean> = {
+export const IS_DISPLAYED_IN_SIMPLE_MODE: Record<ProgrammingExerciseInputField, boolean> = {
     // General section
     title: true,
     channelName: false,

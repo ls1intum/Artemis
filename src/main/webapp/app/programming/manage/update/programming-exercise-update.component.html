@@ -19,7 +19,7 @@
                 [isImport]="isImportFromExistingExercise || isImportFromFile || isImportFromSharing"
                 [importOptions]="importOptions"
                 [isSimpleMode]="isSimpleMode()"
-                [isEditFieldDisplayedRecord]="isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()"
+                [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
                 [courseId]="courseId"
                 [(isAuxiliaryRepositoryInputValid)]="isAuxiliaryRepositoryInputValid"
             />
@@ -30,7 +30,7 @@
                 <jhi-programming-exercise-mode
                     [programmingExercise]="programmingExercise"
                     [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
-                    [isEditFieldDisplayedRecord]="isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()"
+                    [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
                     (triggerValidation)="calculateFormStatusSections()"
                 />
                 <hr class="mb-5" />
@@ -38,20 +38,17 @@
             <jhi-programming-exercise-language
                 [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
-                [isEditFieldDisplayedRecord]="isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()"
+                [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
             />
             <hr class="mb-5" />
             @if (!isSimpleMode()) {
-                <jhi-programming-exercise-version-control
-                    [programmingExercise]="programmingExercise"
-                    [isEditFieldDisplayedRecord]="isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()"
-                />
+                <jhi-programming-exercise-version-control [programmingExercise]="programmingExercise" [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()" />
                 <hr class="mb-5" />
             }
             <jhi-programming-exercise-problem
                 [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
-                [isEditFieldDisplayedRecord]="isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()"
+                [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
                 (problemStatementChange)="calculateFormStatusSections()"
                 (programmingExerciseChange)="programmingExercise = $event"
             />
@@ -61,9 +58,9 @@
                 [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [importOptions]="importOptions"
-                [isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord]="isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()"
+                [isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord]="isEditFieldDisplayedRecord()"
             />
-            @if (isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord().plagiarismControl && !isExamMode) {
+            @if (isEditFieldDisplayedRecord().plagiarismControl && !isExamMode) {
                 <jhi-feature-overlay [enabled]="plagiarismEnabled" placement="right">
                     <jhi-exercise-update-plagiarism [(exercise)]="programmingExercise" />
                 </jhi-feature-overlay>
