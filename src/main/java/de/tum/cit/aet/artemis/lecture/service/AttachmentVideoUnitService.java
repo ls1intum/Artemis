@@ -119,48 +119,44 @@ public class AttachmentVideoUnitService {
 
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, savedAttachmentVideoUnit));
 
-        if (updateAttachment == null) {
-            triggerContentProcessingBasedOnPayloadChange(payloadFingerprintBeforeUpdate, savedAttachmentVideoUnit);
-            prepareAttachmentVideoUnitForClient(existingAttachmentVideoUnit);
-            return existingAttachmentVideoUnit;
-        }
-
-        if (createdNewAttachment) {
-            // Split the new file into single slides if it is a PDF
-            if (hasUploadedFile && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
-                slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
+        // Process attachment if provided
+        if (updateAttachment != null) {
+            if (createdNewAttachment) {
+                // Split PDF files into individual slides for easier navigation
+                if (hasUploadedFile && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
+                    slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
+                }
             }
-            triggerContentProcessingBasedOnPayloadChange(payloadFingerprintBeforeUpdate, savedAttachmentVideoUnit);
-        }
-        else if (existingAttachment != null) {
-            updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages);
+            else if (existingAttachment != null) {
+                updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages);
 
-            // Only increment version and update file if a new file is uploaded
-            if (hasUploadedFile) {
-                handleFile(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
-                final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
-                existingAttachment.setVersion(revision);
-            }
+                // Update file and increment version number when a file is uploaded
+                if (hasUploadedFile) {
+                    handleFile(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
+                    final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
+                    existingAttachment.setVersion(revision);
+                }
 
-            Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
-            savedAttachmentVideoUnit.setAttachment(savedAttachment);
-            evictCache(updateFile, savedAttachmentVideoUnit);
+                Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
+                savedAttachmentVideoUnit.setAttachment(savedAttachment);
+                evictCache(updateFile, savedAttachmentVideoUnit);
 
-            if (hasUploadedFile) {
-                // Split the updated file into single slides only if it is a pdf
-                if ("pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
-                    if (pageOrder == null) {
-                        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
-                    }
-                    else {
-                        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit, hiddenPages, pageOrder);
+                if (hasUploadedFile) {
+                    // Split PDF into slides, respecting custom page order if provided
+                    if ("pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
+                        if (pageOrder == null) {
+                            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
+                        }
+                        else {
+                            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit, hiddenPages, pageOrder);
+                        }
                     }
                 }
             }
-
-            triggerContentProcessingBasedOnPayloadChange(payloadFingerprintBeforeUpdate, savedAttachmentVideoUnit);
         }
 
+        // Trigger content processing if the ingestion payload changed and prepare unit for client response
+        triggerContentProcessingBasedOnPayloadChange(payloadFingerprintBeforeUpdate, savedAttachmentVideoUnit);
         prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
 
         return savedAttachmentVideoUnit;
