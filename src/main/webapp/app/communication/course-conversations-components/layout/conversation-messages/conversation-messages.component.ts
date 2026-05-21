@@ -686,6 +686,13 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             if (isOpenThread) {
                 this.openThread.emit(element.post());
             }
+            if (this.focusOnPostId) {
+                const postDiv = element.elementRef.nativeElement.querySelector('.post');
+                if (postDiv) {
+                    postDiv.classList.add('highlight-post');
+                    setTimeout(() => postDiv.classList.remove('highlight-post'), 2000);
+                }
+            }
             this.focusOnPostId = undefined;
             this.isOpenThreadOnFocus = false;
         }
