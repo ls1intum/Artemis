@@ -1,15 +1,15 @@
 import { Component, ElementRef, computed, inject, input, output, viewChild } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faSearch } from '@fortawesome/free-solid-svg-icons';
-import { ChipModule } from 'primeng/chip';
+import { faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-global-search-input',
     standalone: true,
-    imports: [FaIconComponent, ChipModule, ArtemisTranslatePipe],
+    imports: [FaIconComponent, ArtemisTranslatePipe],
     templateUrl: './search-input.component.html',
+    styleUrls: ['./search-input.component.scss'],
 })
 export class SearchInputComponent {
     /**
@@ -25,6 +25,7 @@ export class SearchInputComponent {
 
     private readonly translateService = inject(TranslateService);
     protected readonly faSearch = faSearch;
+    protected readonly faTimes = faTimes;
 
     searchQuery = input.required<string>();
     activeFilters = input.required<string[]>();
@@ -35,6 +36,8 @@ export class SearchInputComponent {
     searchKeyDown = output<KeyboardEvent>();
     filterRemoved = output<string>();
     courseFilterRemoved = output<void>();
+    /** Emitted when Backspace is pressed while the input is empty. */
+    backspaceOnEmpty = output<void>();
 
     protected searchInputElement = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
@@ -52,6 +55,11 @@ export class SearchInputComponent {
     }
 
     protected onKeyDown(event: KeyboardEvent) {
+        // Detect backspace on empty input directly from the DOM element,
+        // which is always up-to-date (unlike the signal that may lag during keydown).
+        if (event.key === 'Backspace' && this.searchInputElement()?.nativeElement.value === '') {
+            this.backspaceOnEmpty.emit();
+        }
         this.searchKeyDown.emit(event);
     }
 

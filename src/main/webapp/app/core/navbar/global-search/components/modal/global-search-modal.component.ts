@@ -219,15 +219,19 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.activeCourseLabel.set(courseLabel);
 
         // Set type filter based on the active tab
+        const newFilters: string[] = [];
         if (tabSegment) {
             const filterTag = GlobalSearchModalComponent.ROUTE_TO_FILTER_TAG[tabSegment];
             if (filterTag) {
-                this.activeFilters.set([filterTag]);
+                newFilters.push(filterTag);
             }
         }
+        this.activeFilters.set(newFilters);
 
-        // Trigger search so context filters are reflected in the UI immediately
-        this.searchSubject.next({ query: '', filters: this.activeFilters() });
+        // Use local variable instead of reading the signal to avoid making activeFilters
+        // a reactive dependency of the enclosing effect — which would cause the effect to
+        // re-run (and re-apply context filters) every time the user removes a filter chip.
+        this.searchSubject.next({ query: '', filters: newFilters });
     }
 
     protected onSearchInput(query: string): void {
@@ -246,16 +250,18 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
     protected onSearchKeyDown(event: KeyboardEvent) {
         this.onInputKeydown(event);
-        // If backspace is pressed and input is empty, remove the rightmost filter
-        if (event.key === 'Backspace' && this.searchQuery() === '') {
-            const filters = this.activeFilters();
-            if (filters.length > 0) {
-                // Remove the rightmost (last) type filter
-                this.removeFilter(filters[filters.length - 1]);
-            } else if (this.activeCourseId() !== undefined) {
-                // No type filters left — remove the course filter
-                this.removeCourseFilter();
-            }
+    }
+
+    /**
+     * Called by the search-input component when Backspace is pressed on an empty input.
+     * Removes filters in reverse order: type filters first, then course filter.
+     */
+    protected onBackspaceRemoveFilter() {
+        const filters = this.activeFilters();
+        if (filters.length > 0) {
+            this.removeFilter(filters[filters.length - 1]);
+        } else if (this.activeCourseId() !== undefined) {
+            this.removeCourseFilter();
         }
     }
 

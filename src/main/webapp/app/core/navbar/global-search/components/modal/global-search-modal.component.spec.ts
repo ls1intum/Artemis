@@ -282,24 +282,23 @@ describe('GlobalSearchModalComponent', () => {
             vi.useRealTimers();
         });
 
-        it('should remove rightmost filter when Backspace is pressed and query is empty', () => {
+        it('should remove rightmost filter when backspaceOnEmpty fires', () => {
             component['activeFilters'].set(['exercise', 'lecture']);
-            component['searchQuery'].set('');
 
-            const event = new KeyboardEvent('keydown', { key: 'Backspace' });
-            component['onSearchKeyDown'](event);
+            component['onBackspaceRemoveFilter']();
 
             expect(component['activeFilters']()).toEqual(['exercise']);
         });
 
-        it('should not remove filter when Backspace is pressed but query is not empty', () => {
-            component['activeFilters'].set(['exercise']);
-            component['searchQuery'].set('a');
+        it('should remove course filter when backspaceOnEmpty fires and no type filters remain', () => {
+            component['activeCourseId'].set(42);
+            component['activeCourseLabel'].set('Test Course');
+            component['activeFilters'].set([]);
 
-            const event = new KeyboardEvent('keydown', { key: 'Backspace' });
-            component['onSearchKeyDown'](event);
+            component['onBackspaceRemoveFilter']();
 
-            expect(component['activeFilters']()).toEqual(['exercise']);
+            expect(component['activeCourseId']()).toBeUndefined();
+            expect(component['activeCourseLabel']()).toBeUndefined();
         });
 
         it('should re-trigger search when filter changes even if query stays the same', () => {
@@ -807,13 +806,12 @@ describe('GlobalSearchModalComponent', () => {
             expect(component['activeFilters']()).toEqual(['exercise']);
 
             // First backspace removes the type filter
-            component['searchQuery'].set('');
-            component['onSearchKeyDown'](new KeyboardEvent('keydown', { key: 'Backspace' }));
+            component['onBackspaceRemoveFilter']();
             expect(component['activeFilters']()).toEqual([]);
             expect(component['activeCourseId']()).toBe(42);
 
             // Second backspace removes the course filter
-            component['onSearchKeyDown'](new KeyboardEvent('keydown', { key: 'Backspace' }));
+            component['onBackspaceRemoveFilter']();
             expect(component['activeCourseId']()).toBeUndefined();
             expect(component['activeCourseLabel']()).toBeUndefined();
         });

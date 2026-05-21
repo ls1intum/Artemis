@@ -24,6 +24,7 @@
         (searchKeyDown)="onSearchKeyDown($event)"
         (filterRemoved)="removeFilter($event)"
         (courseFilterRemoved)="removeCourseFilter()"
+        (backspaceOnEmpty)="onBackspaceRemoveFilter()"
     />
     <!-- Results Area -->
     <div class="results-container" [class.results-container--split]="currentView() === SearchView.Iris">

@@ -6,7 +6,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { ChipModule } from 'primeng/chip';
 
 describe('SearchInputComponent', () => {
     setupTestBed({ zoneless: true });
@@ -16,7 +15,7 @@ describe('SearchInputComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [SearchInputComponent, ChipModule, MockPipe(ArtemisTranslatePipe)],
+            imports: [SearchInputComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
@@ -83,5 +82,24 @@ describe('SearchInputComponent', () => {
         const spy = vi.spyOn(component.courseFilterRemoved, 'emit');
         component['onCourseFilterRemove']();
         expect(spy).toHaveBeenCalled();
+    });
+
+    it('should emit backspaceOnEmpty when Backspace is pressed on empty input', () => {
+        const spy = vi.spyOn(component.backspaceOnEmpty, 'emit');
+        // Input is empty (searchQuery was set to '' in beforeEach)
+        fixture.detectChanges();
+        const event = new KeyboardEvent('keydown', { key: 'Backspace' });
+        component['onKeyDown'](event);
+        expect(spy).toHaveBeenCalled();
+    });
+
+    it('should not emit backspaceOnEmpty when Backspace is pressed on non-empty input', () => {
+        const spy = vi.spyOn(component.backspaceOnEmpty, 'emit');
+        // Type something into the DOM input
+        const inputEl = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+        inputEl.value = 'a';
+        const event = new KeyboardEvent('keydown', { key: 'Backspace' });
+        component['onKeyDown'](event);
+        expect(spy).not.toHaveBeenCalled();
     });
 });
