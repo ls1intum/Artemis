@@ -14,12 +14,6 @@ export interface CourseCreateDTO {
     description?: string;
     semester?: string;
 
-    // Group names
-    studentGroupName?: string;
-    teachingAssistantGroupName?: string;
-    editorGroupName?: string;
-    instructorGroupName?: string;
-
     // Dates (as ISO strings for server)
     startDate?: string;
     endDate?: string;
@@ -71,12 +65,6 @@ export function toCourseCreateDTO(course: Course): CourseCreateDTO {
         shortName: course.shortName!,
         description: course.description,
         semester: course.semester,
-
-        // Group names
-        studentGroupName: course.studentGroupName,
-        teachingAssistantGroupName: course.teachingAssistantGroupName,
-        editorGroupName: course.editorGroupName,
-        instructorGroupName: course.instructorGroupName,
 
         // Dates (converted to ISO strings)
         startDate: convertDateFromClient(course.startDate),
@@ -130,12 +118,6 @@ export interface CourseUpdateDTO {
     shortName: string;
     description?: string;
     semester?: string;
-
-    // Group names
-    studentGroupName?: string;
-    teachingAssistantGroupName?: string;
-    editorGroupName?: string;
-    instructorGroupName?: string;
 
     // Dates (as ISO strings for server)
     startDate?: string;
@@ -194,12 +176,6 @@ export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
         shortName: course.shortName!,
         description: course.description,
         semester: course.semester,
-
-        // Group names
-        studentGroupName: course.studentGroupName,
-        teachingAssistantGroupName: course.teachingAssistantGroupName,
-        editorGroupName: course.editorGroupName,
-        instructorGroupName: course.instructorGroupName,
 
         // Dates (converted to ISO strings)
         startDate: convertDateFromClient(course.startDate),

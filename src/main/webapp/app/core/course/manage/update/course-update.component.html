@@ -214,47 +214,6 @@
                         }
                     </select>
                 </div>
-                <div *jhiHasAnyAuthority="IS_AT_LEAST_ADMIN">
-                    <div class="form-check nested-form-group-head">
-                        <input
-                            type="checkbox"
-                            [checked]="customizeGroupNames"
-                            (change)="changeCustomizeGroupNames()"
-                            class="form-check-input"
-                            name="customizeGroupNamesEnabled"
-                            id="field_customizeGroupNamesEnabled"
-                            formControlName="customizeGroupNames"
-                        />
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.customizeGroupNames.title" for="field_customizeGroupNamesEnabled"></label>
-                        <fa-icon [icon]="faExclamationTriangle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.customizeGroupNames.description' | artemisTranslate }}" />
-                    </div>
-                    @if (customizeGroupNames) {
-                        <div>
-                            <div class="nested-form-group">
-                                <label class="form-control-label" jhiTranslate="artemisApp.course.studentGroupName" for="field_studentGroupName"></label>
-                                <input type="text" class="form-control" name="studentGroupName" id="field_studentGroupName" formControlName="studentGroupName" />
-                            </div>
-                            <div class="nested-form-group">
-                                <label class="form-control-label" jhiTranslate="artemisApp.course.teachingAssistantGroupName" for="field_teachingAssistantGroupName"></label>
-                                <input
-                                    type="text"
-                                    class="form-control"
-                                    name="teachingAssistantGroupName"
-                                    id="field_teachingAssistantGroupName"
-                                    formControlName="teachingAssistantGroupName"
-                                />
-                            </div>
-                            <div class="nested-form-group">
-                                <label class="form-control-label" jhiTranslate="artemisApp.course.editorGroupName" for="field_editorGroupName"></label>
-                                <input type="text" class="form-control" name="editorGroupName" id="field_editorGroupName" formControlName="editorGroupName" />
-                            </div>
-                            <div class="nested-form-group last">
-                                <label class="form-control-label" jhiTranslate="artemisApp.course.instructorGroupName" for="field_instructorGroupName"></label>
-                                <input type="text" class="form-control" name="instructorGroupName" id="field_instructorGroupName" formControlName="instructorGroupName" />
-                            </div>
-                        </div>
-                    }
-                </div>
                 <div class="form-check nested-form-group-head">
                     <input
                         type="checkbox"

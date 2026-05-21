@@ -178,7 +178,7 @@ public class PublicAccountResource {
 
         Optional<String> loginOptional = SecurityUtils.getCurrentUserLogin();
         if (loginOptional.isPresent()) {
-            userOptional = userRepository.findOneWithGroupsAndAuthoritiesByLogin(loginOptional.get());
+            userOptional = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(loginOptional.get());
         }
 
         if (userOptional.isEmpty()) {

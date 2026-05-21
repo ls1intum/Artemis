@@ -8,7 +8,6 @@ import { UserService } from 'app/core/user/shared/user.service';
 import { Subscription } from 'rxjs';
 import { capitalize } from 'lodash-es';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { captureException } from '@sentry/angular';
 import { CourseGroupComponent } from 'app/core/course/shared/course-group/course-group.component';
 
 @Component({
@@ -32,30 +31,6 @@ export class CourseGroupMembershipComponent implements OnInit {
     filteredUsersSize = signal(0);
 
     readonly capitalize = capitalize;
-
-    /**
-     * Property that returns the course group name, e.g. "artemis-test-students"
-     */
-    courseGroupName = computed(() => {
-        const course = this.course();
-        const courseGroup = this.courseGroup();
-        if (!course || !courseGroup) {
-            return undefined;
-        }
-        switch (courseGroup) {
-            case CourseGroup.STUDENTS:
-                return course.studentGroupName;
-            case CourseGroup.TUTORS:
-                return course.teachingAssistantGroupName;
-            case CourseGroup.EDITORS:
-                return course.editorGroupName;
-            case CourseGroup.INSTRUCTORS:
-                return course.instructorGroupName;
-            default:
-                captureException('Unknown course group: ' + courseGroup);
-                return undefined;
-        }
-    });
 
     /**
      * Property that returns the course group entity name, e.g. "students" or "tutors".

@@ -328,8 +328,6 @@ public class CourseRequestService {
             log.warn("Could not load code of conduct template from path: {}", templatePath, e);
         }
 
-        courseAccessService.setDefaultGroupsIfNotSet(course);
-
         course.validateShortName();
         course.validateStartAndEndDate();
         course.validateEnrollmentStartAndEndDate();

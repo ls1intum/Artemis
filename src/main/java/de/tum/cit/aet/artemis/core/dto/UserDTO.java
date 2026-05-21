@@ -3,9 +3,9 @@ package de.tum.cit.aet.artemis.core.dto;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
 
-import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 
 /**
  * A DTO representing a user, with their authorities.
@@ -68,7 +69,7 @@ public class UserDTO extends AuditingEntityDTO {
 
     private Set<String> authorities = new HashSet<>();
 
-    private Set<String> groups = new HashSet<>();
+    private List<CourseAccessRightsDTO> courseRoles;
 
     private Set<Organization> organizations;
 
@@ -101,45 +102,38 @@ public class UserDTO extends AuditingEntityDTO {
     }
 
     public UserDTO(User user) {
-        this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getVisibleRegistrationNumber(), user.getActivated(),
-                user.getImageUrl(), user.getLangKey(), user.isInternal(), DEFAULT_IS_LOGGED_IN_WITH_PASSKEY, DEFAULT_IS_SUPER_ADMIN_APPROVED, user.getCreatedBy(),
-                user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(), user.getAuthorities(), user.getGroups(), user.getOrganizations(),
-                user.getSelectedLLMUsage(), user.getSelectedLLMUsageTimestamp(), user.isMemirisEnabled());
-    }
-
-    public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
-            String langKey, boolean internal, boolean isLoggedInWithPasskey, boolean isPasskeySuperAdminApproved, String createdBy, Instant createdDate, String lastModifiedBy,
-            Instant lastModifiedDate, Set<Authority> authorities, Set<String> groups, Set<Organization> organizations, AiSelectionDecision selectedLLMUsage,
-            ZonedDateTime selectedLLMUsageTimestamp, boolean memirisEnabled) {
-        this.id = id;
-        this.login = login;
-        this.name = name;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-        this.visibleRegistrationNumber = visibleRegistrationNumber;
-        this.activated = activated;
-        this.imageUrl = imageUrl;
-        this.langKey = langKey;
-        this.internal = internal;
-        this.setCreatedBy(createdBy);
-        this.setCreatedDate(createdDate);
-        this.setLastModifiedBy(lastModifiedBy);
-        this.setLastModifiedDate(lastModifiedDate);
+        this.id = user.getId();
+        this.login = user.getLogin();
+        this.name = user.getName();
+        this.firstName = user.getFirstName();
+        this.lastName = user.getLastName();
+        this.email = user.getEmail();
+        this.visibleRegistrationNumber = user.getVisibleRegistrationNumber();
+        this.activated = user.getActivated();
+        this.imageUrl = user.getImageUrl();
+        this.langKey = user.getLangKey();
+        this.internal = user.isInternal();
+        this.setCreatedBy(user.getCreatedBy());
+        this.setCreatedDate(user.getCreatedDate());
+        this.setLastModifiedBy(user.getLastModifiedBy());
+        this.setLastModifiedDate(user.getLastModifiedDate());
+        Set<Authority> authorities = user.getAuthorities();
         if (authorities != null && Hibernate.isInitialized(authorities)) {
             this.authorities = authorities.stream().map(Authority::getName).collect(Collectors.toSet());
         }
-        if (groups != null && Hibernate.isInitialized(groups)) {
-            this.groups = groups;
+        Set<UserCourseRole> userCourseRoles = user.getCourseRoles();
+        if (userCourseRoles != null && Hibernate.isInitialized(userCourseRoles)) {
+            this.courseRoles = userCourseRoles.stream()
+                    .collect(Collectors.groupingBy(ucr -> ucr.getCourse().getId(), Collectors.mapping(UserCourseRole::getRole, Collectors.toSet()))).entrySet().stream()
+                    .map(e -> new CourseAccessRightsDTO(e.getKey(), e.getValue())).toList();
         }
+        Set<Organization> organizations = user.getOrganizations();
         if (organizations != null && Hibernate.isInitialized(organizations)) {
             this.organizations = organizations;
         }
-        this.selectedLLMUsage = selectedLLMUsage;
-        this.selectedLLMUsageTimestamp = selectedLLMUsageTimestamp;
-        this.memirisEnabled = memirisEnabled;
-        this.isLoggedInWithPasskey = isLoggedInWithPasskey;
-        this.isPasskeySuperAdminApproved = isPasskeySuperAdminApproved;
+        this.selectedLLMUsage = user.getSelectedLLMUsage();
+        this.selectedLLMUsageTimestamp = user.getSelectedLLMUsageTimestamp();
+        this.memirisEnabled = user.isMemirisEnabled();
     }
 
     public Long getId() {
@@ -230,12 +224,12 @@ public class UserDTO extends AuditingEntityDTO {
         this.authorities = authorities;
     }
 
-    public Set<String> getGroups() {
-        return groups;
+    public List<CourseAccessRightsDTO> getCourseRoles() {
+        return courseRoles;
     }
 
-    public void setGroups(Set<String> groups) {
-        this.groups = groups;
+    public void setCourseRoles(List<CourseAccessRightsDTO> courseRoles) {
+        this.courseRoles = courseRoles;
     }
 
     public Set<Organization> getOrganizations() {

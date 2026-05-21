@@ -3,9 +3,14 @@ import dayjs from 'dayjs/esm';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
+export interface CourseRoleEntry {
+    courseId: number;
+    roles: string[];
+}
+
 export class User extends Account {
     public id?: number;
-    public groups?: string[];
+    public courseRoles?: CourseRoleEntry[];
     public organizations?: Organization[];
     public createdBy?: string;
     public createdDate?: Date;
@@ -43,7 +48,6 @@ export class User extends Account {
         activated?: boolean,
         langKey?: string,
         authorities?: string[],
-        groups?: string[],
         createdBy?: string,
         createdDate?: Date,
         lastModifiedBy?: string,
@@ -61,7 +65,6 @@ export class User extends Account {
     ) {
         super(activated, authorities, email, firstName, langKey, lastName, login, imageUrl);
         this.id = id;
-        this.groups = groups;
         this.createdBy = createdBy;
         this.createdDate = createdDate;
         this.lastModifiedBy = lastModifiedBy;

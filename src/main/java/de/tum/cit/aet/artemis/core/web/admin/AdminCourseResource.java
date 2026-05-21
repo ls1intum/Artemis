@@ -5,10 +5,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import jakarta.validation.Valid;
 
@@ -36,7 +34,6 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseCreateDTO;
-import de.tum.cit.aet.artemis.core.dto.CourseGroupsDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseOperationProgressDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseSummaryDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -130,26 +127,6 @@ public class AdminCourseResource {
     }
 
     /**
-     * GET /courses/groups : get all groups for all courses for administration purposes.
-     *
-     * @return the list of groups (the user has access to)
-     */
-    @GetMapping("courses/groups")
-    public ResponseEntity<Set<String>> getAllGroupsForAllCourses() {
-        log.debug("REST request to get all Groups for all Courses");
-        Set<CourseGroupsDTO> courseGroups = courseRepository.findAllCourseGroups();
-        Set<String> groups = new HashSet<>();
-        courseGroups.forEach(courseGroup -> {
-            groups.add(courseGroup.instructorGroupName());
-            groups.add(courseGroup.editorGroupName());
-            groups.add(courseGroup.teachingAssistantGroupName());
-            groups.add(courseGroup.studentGroupName());
-        });
-        groups.remove(null); // remove a potential null group
-        return ResponseEntity.ok().body(groups);
-    }
-
-    /**
      * POST /courses : Create a new course.
      * <p>
      * Creates a new course using the provided DTO, which ensures a clean, server-controlled
@@ -201,8 +178,6 @@ public class AdminCourseResource {
         if (course.isOnlineCourse() && ltiApi.isPresent()) {
             ltiApi.get().createOnlineCourseConfiguration(course);
         }
-
-        courseAccessService.setDefaultGroupsIfNotSet(course);
 
         Course createdCourse = courseRepository.save(course);
 

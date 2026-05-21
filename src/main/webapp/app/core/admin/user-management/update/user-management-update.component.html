@@ -125,42 +125,6 @@
                     </div>
                 }
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.userManagement.groups"></label>
-                    <mat-form-field appearance="outline" class="group-tag-list">
-                        <mat-chip-grid #groupList aria-label="Group selection">
-                            @for (group of user.groups; track group) {
-                                <mat-chip-row (removed)="onGroupRemove(user, group)" class="group-tag">
-                                    <div class="custom-tag">
-                                        {{ group }}
-                                        <button matChipRemove>
-                                            <fa-icon [icon]="faTimes" class="group-tag-remove" />
-                                        </button>
-                                    </div>
-                                </mat-chip-row>
-                            }
-                            <input
-                                #groups
-                                (matChipInputTokenEnd)="onGroupAdd(user, $event)"
-                                [formControl]="groupCtrl"
-                                [matAutocomplete]="auto"
-                                [matChipInputFor]="groupList"
-                                [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-                                [placeholder]="'artemisApp.userManagement.addGroup' | artemisTranslate"
-                                class="group-tag-input"
-                            />
-                        </mat-chip-grid>
-                        <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSelected($event); groups.value = ''" class="group-panel" classlist="group-panel">
-                            @for (group of filteredGroups | async; track group) {
-                                @if (!user.groups?.includes(group)) {
-                                    <mat-option [value]="group">
-                                        {{ group }}
-                                    </mat-option>
-                                }
-                            }
-                        </mat-autocomplete>
-                    </mat-form-field>
-                </div>
-                <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.userManagement.organizations"></label>
                     <div class="btn-group d-flex flex-wrap">
                         @for (organization of user.organizations; track organization) {

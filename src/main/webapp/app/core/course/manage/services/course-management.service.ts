@@ -350,15 +350,8 @@ export class CourseManagementService implements OnDestroy {
      * NB: the body is null, because the server can identify the user anyway
      * @param courseId - the id of the course
      */
-    registerForCourse(courseId: number): Observable<HttpResponse<string[]>> {
-        return this.http.post<string[]>(`${this.resourceUrl}/${courseId}/enroll`, null, { observe: 'response' }).pipe(
-            map((res: HttpResponse<string[]>) => {
-                if (res.body != undefined) {
-                    this.accountService.syncGroups(res.body);
-                }
-                return res;
-            }),
-        );
+    registerForCourse(courseId: number): Observable<HttpResponse<void>> {
+        return this.http.post<void>(`${this.resourceUrl}/${courseId}/enroll`, null, { observe: 'response' });
     }
 
     /**
@@ -366,15 +359,8 @@ export class CourseManagementService implements OnDestroy {
      * NB: the body is null, because the server can identify the user anyway
      * @param courseId - the id of the course
      */
-    unenrollFromCourse(courseId: number): Observable<HttpResponse<string[]>> {
-        return this.http.post<string[]>(`${this.resourceUrl}/${courseId}/unenroll`, null, { observe: 'response' }).pipe(
-            map((res: HttpResponse<string[]>) => {
-                if (res.body != undefined) {
-                    this.accountService.syncGroups(res.body);
-                }
-                return res;
-            }),
-        );
+    unenrollFromCourse(courseId: number): Observable<HttpResponse<void>> {
+        return this.http.post<void>(`${this.resourceUrl}/${courseId}/unenroll`, null, { observe: 'response' });
     }
 
     /**

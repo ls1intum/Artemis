@@ -36,9 +36,6 @@ public record CourseCreateDTO(
         // Basic info
         @NotBlank @Size(max = 255) String title, @NotBlank @Size(max = 255) String shortName, @Size(max = 2000) String description, String semester,
 
-        // Group names (optional - will use defaults if not set)
-        String studentGroupName, String teachingAssistantGroupName, String editorGroupName, String instructorGroupName,
-
         // Dates
         ZonedDateTime startDate, ZonedDateTime endDate, ZonedDateTime enrollmentStartDate, ZonedDateTime enrollmentEndDate, ZonedDateTime unenrollmentEndDate,
 
@@ -76,12 +73,6 @@ public record CourseCreateDTO(
         course.setShortName(shortName);
         course.setDescription(description);
         course.setSemester(semester);
-
-        // Group names
-        course.setStudentGroupName(studentGroupName);
-        course.setTeachingAssistantGroupName(teachingAssistantGroupName);
-        course.setEditorGroupName(editorGroupName);
-        course.setInstructorGroupName(instructorGroupName);
 
         // Dates
         course.setStartDate(startDate);

@@ -151,7 +151,7 @@ public class UserCreationService {
         catch (InvalidDataAccessApiUsageException | PatternSyntaxException pse) {
             log.warn("Could not retrieve matching organizations from pattern: {}", pse.getMessage());
         }
-        user.setGroups(userDTO.getGroups());
+        user.setGroups(new HashSet<>());
         user.setActivated(true);
         user.setInternal(true);
         // an empty string is considered as null to satisfy the unique constraint on registration number
@@ -159,8 +159,6 @@ public class UserCreationService {
             user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
         }
         saveUser(user);
-
-        addUserToGroupsInternal(user, userDTO.getGroups());
 
         log.debug("Created Information for User: {}", user);
         return user;
@@ -235,7 +233,6 @@ public class UserCreationService {
         }
         user.setActivated(updatedUserDTO.isActivated());
         user.setLangKey(updatedUserDTO.getLangKey());
-        user.setGroups(updatedUserDTO.getGroups());
         if (user.isInternal() && updatedUserDTO.getPassword() != null) {
             user.setPassword(passwordService.hashPassword(updatedUserDTO.getPassword()));
         }
@@ -296,27 +293,4 @@ public class UserCreationService {
         return newPassword;
     }
 
-    /**
-     * Adds a user to the specified set of groups.
-     *
-     * @param user   the user who should be added to the given groups
-     * @param groups the groups in which the user should be added
-     */
-    private void addUserToGroupsInternal(User user, @Nullable Set<String> groups) {
-        if (groups == null) {
-            return;
-        }
-        boolean userChanged = false;
-        for (String group : groups) {
-            if (!user.getGroups().contains(group)) {
-                userChanged = true;
-                user.getGroups().add(group);
-            }
-        }
-
-        if (userChanged) {
-            // we only save if this is needed
-            saveUser(user);
-        }
-    }
 }

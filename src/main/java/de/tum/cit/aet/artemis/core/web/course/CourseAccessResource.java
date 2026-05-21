@@ -91,39 +91,36 @@ public class CourseAccessResource {
 
     /**
      * POST /courses/{courseId}/enroll : Enroll in an existing course. This method enrolls the current user for the given course id in case the course has already started
-     * and not finished yet. The user is added to the course student group in the Authentication System and the course student group is added to the user's groups in the Artemis
-     * database.
+     * and not finished yet.
      *
      * @param courseId to find the course
-     * @return response entity for groups of user who has been enrolled in the course
+     * @return 200 OK on success
      */
     @PostMapping("courses/{courseId}/enroll")
     @EnforceAtLeastStudent
-    public ResponseEntity<Set<String>> enrollInCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Void> enrollInCourse(@PathVariable Long courseId) {
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
         Course course = courseRepository.findWithEagerOrganizationsAndCompetenciesAndPrerequisitesAndLearningPathsElseThrow(courseId);
         log.debug("REST request to enroll {} in Course {}", user.getName(), course.getTitle());
         courseAccessService.enrollUserForCourseOrThrow(user, course);
-        return ResponseEntity.ok(user.getGroups());
+        return ResponseEntity.ok().build();
     }
 
     /**
      * POST /courses/{courseId}/unenroll : Unenroll from an existing course. This method unenrolls the current user for the given course id in case the student is currently
      * enrolled.
-     * The user is removed from the course student group in the Authentication System and the course student group is removed from the user's groups in the Artemis
-     * database.
      *
      * @param courseId to find the course
-     * @return response entity for groups of user who has been unenrolled from the course
+     * @return 200 OK on success
      */
     @PostMapping("courses/{courseId}/unenroll")
     @EnforceAtLeastStudent
-    public ResponseEntity<Set<String>> unenrollFromCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Void> unenrollFromCourse(@PathVariable Long courseId) {
         Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
         log.debug("REST request to unenroll {} for Course {}", user.getName(), course.getTitle());
         courseAccessService.unenrollUserForCourseOrThrow(user, course);
-        return ResponseEntity.ok(user.getGroups());
+        return ResponseEntity.ok().build();
     }
 
     /**

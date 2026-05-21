@@ -19,7 +19,6 @@
             }
             {{ allCourseGroupUsers().length }}
             <span [jhiTranslate]="'artemisApp.course.' + courseGroupEntityName()">{{ capitalize(courseGroupEntityName()) }}</span>
-            <span class="text-body-secondary">({{ courseGroupName() }})</span>
         </span>
     </jhi-course-group>
 }

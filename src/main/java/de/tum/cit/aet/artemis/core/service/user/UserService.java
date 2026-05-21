@@ -208,7 +208,6 @@ public class UserService {
         userDto.setLastModifiedBy("system");
         // needs to be mutable --> new HashSet<>(Set.of(...))
         userDto.setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN.getAuthority(), STUDENT.getAuthority())));
-        userDto.setGroups(new HashSet<>());
         return userDto;
     }
 

@@ -47,8 +47,6 @@ import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/f
 import { FileService } from 'app/shared/service/file.service';
 import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
 
-const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
-
 @Component({
     selector: 'jhi-course-update',
     templateUrl: './course-update.component.html',
@@ -122,7 +120,6 @@ export class CourseUpdateComponent implements OnInit {
     croppedImage?: string;
     complaintsEnabled = true;
     requestMoreFeedbackEnabled = true;
-    customizeGroupNames = false;
     courseOrganizations: Organization[];
     isAdmin = false;
 
@@ -175,22 +172,6 @@ export class CourseUpdateComponent implements OnInit {
             }
         });
 
-        if (!this.profileService.isProduction()) {
-            // developers may want to customize the groups
-            this.customizeGroupNames = true;
-            if (!this.course.studentGroupName) {
-                this.course.studentGroupName = DEFAULT_CUSTOM_GROUP_NAME;
-            }
-            if (!this.course.teachingAssistantGroupName) {
-                this.course.teachingAssistantGroupName = DEFAULT_CUSTOM_GROUP_NAME;
-            }
-            if (!this.course.editorGroupName) {
-                this.course.editorGroupName = DEFAULT_CUSTOM_GROUP_NAME;
-            }
-            if (!this.course.instructorGroupName) {
-                this.course.instructorGroupName = DEFAULT_CUSTOM_GROUP_NAME;
-            }
-        }
         this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
         this.ltiEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI);
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
@@ -212,12 +193,6 @@ export class CourseUpdateComponent implements OnInit {
                         updateOn: 'blur',
                     },
                 ),
-                // note: we still reference them here so that they are used in the update method when the course is retrieved from the course form
-                customizeGroupNames: new FormControl(this.customizeGroupNames),
-                studentGroupName: new FormControl(this.course.studentGroupName),
-                teachingAssistantGroupName: new FormControl(this.course.teachingAssistantGroupName),
-                editorGroupName: new FormControl(this.course.editorGroupName),
-                instructorGroupName: new FormControl(this.course.instructorGroupName),
                 description: new FormControl(this.course.description),
                 courseInformationSharingMessagingCodeOfConduct: new FormControl(this.course.courseInformationSharingMessagingCodeOfConduct),
                 organizations: new FormControl(this.courseOrganizations),
@@ -526,42 +501,6 @@ export class CourseUpdateComponent implements OnInit {
             this.requestMoreFeedbackEnabled = false;
             this.courseForm.controls['maxRequestMoreFeedbackTimeDays'].setValue(0);
         }
-    }
-
-    /**
-     * Enable or disable the customization of groups
-     */
-    changeCustomizeGroupNames() {
-        if (!this.customizeGroupNames) {
-            this.customizeGroupNames = true;
-            this.setGroupNameValuesInCourseForm(
-                this.course.studentGroupName ?? DEFAULT_CUSTOM_GROUP_NAME,
-                this.course.teachingAssistantGroupName ?? DEFAULT_CUSTOM_GROUP_NAME,
-                this.course.editorGroupName ?? DEFAULT_CUSTOM_GROUP_NAME,
-                this.course.instructorGroupName ?? DEFAULT_CUSTOM_GROUP_NAME,
-            );
-        } else {
-            this.customizeGroupNames = false;
-            if (!this.course.id) {
-                // Creating: clear the values so groups are no longer customized
-                this.setGroupNameValuesInCourseForm(undefined, undefined, undefined, undefined);
-            } else {
-                // Editing: restore the old values -> no change.
-                this.setGroupNameValuesInCourseForm(
-                    this.course.studentGroupName,
-                    this.course.teachingAssistantGroupName,
-                    this.course.editorGroupName,
-                    this.course.instructorGroupName,
-                );
-            }
-        }
-    }
-
-    private setGroupNameValuesInCourseForm(studentGroupName?: string, teachingAssistantGroupName?: string, editorGroupName?: string, instructorGroupName?: string) {
-        this.courseForm.controls['studentGroupName'].setValue(studentGroupName);
-        this.courseForm.controls['teachingAssistantGroupName'].setValue(teachingAssistantGroupName);
-        this.courseForm.controls['editorGroupName'].setValue(editorGroupName);
-        this.courseForm.controls['instructorGroupName'].setValue(instructorGroupName);
     }
 
     /**
