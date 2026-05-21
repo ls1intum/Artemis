@@ -128,7 +128,11 @@ jobs:
         run: pnpm run clean-www && pnpm run prebuild && pnpm exec ng build --configuration production --optimization=false
       - name: Build .war
         # Skip the webapp Gradle task since the Angular client was already built above.
-        run: ./gradlew -Pprod -Pwar bootWar -x webapp
+        # Skip SBOM generation on short-lived PR builds for faster feedback; keep it on
+        # for all non-PR events where the artifact is used longer-lived.
+        env:
+          SKIP_SBOM: ${{ github.event_name == 'pull_request' && '-PskipSbom' || '' }}
+        run: ./gradlew -Pprod -Pwar bootWar -x webapp $SKIP_SBOM
       - name: Upload Artifact
         uses: actions/upload-artifact@v7
         with:

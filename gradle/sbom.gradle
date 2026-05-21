@@ -1,5 +1,6 @@
 // CycloneDX SBOM Configuration
 // Plugin "org.cyclonedx.bom" must be declared in build.gradle plugins block
+def skipSbom = project.hasProperty("skipSbom")
 
 // CycloneDX SBOM Configuration (v3.x API)
 tasks.cyclonedxDirectBom {
@@ -62,14 +63,30 @@ tasks.register("copySbomsToResources") {
     }
 }
 
-// Ensure copySbomsToResources runs after processResources
-tasks.named("processResources") {
-    finalizedBy "copySbomsToResources"
-}
-
-// For production builds, generate both server and client SBOMs before copying
-if (project.hasProperty("prod")) {
+if (skipSbom) {
+    tasks.named("cyclonedxDirectBom") {
+        enabled = false
+    }
+    tasks.named("cyclonedxBom") {
+        enabled = false
+    }
+    tasks.named("generateClientSbom") {
+        enabled = false
+    }
     tasks.named("copySbomsToResources") {
-        dependsOn "cyclonedxBom", "generateClientSbom"
+        enabled = false
+    }
+}
+else {
+    // Ensure copySbomsToResources runs after processResources
+    tasks.named("processResources") {
+        finalizedBy "copySbomsToResources"
+    }
+
+    // For production builds, generate both server and client SBOMs before copying
+    if (project.hasProperty("prod")) {
+        tasks.named("copySbomsToResources") {
+            dependsOn "cyclonedxBom", "generateClientSbom"
+        }
     }
 }
