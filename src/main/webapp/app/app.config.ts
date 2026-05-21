@@ -25,6 +25,9 @@ import { NotificationInterceptor } from 'app/core/interceptor/notification.inter
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
+import { TranslateService } from '@ngx-translate/core';
+import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { lastValueFrom } from 'rxjs';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -74,6 +77,9 @@ export const appConfig: ApplicationConfig = {
             const profileService = inject(ProfileService);
             const accountService = inject(AccountService);
             const authServerProvider = inject(AuthServerProvider);
+            const translateService = inject(TranslateService);
+            const sessionStorageService = inject(SessionStorageService);
+            const languageHelper = inject(JhiLanguageHelper);
             inject(TraceService);
             // Ensure the service is initialized before any routing happens
             inject(ArtemisNavigationUtilService);
@@ -100,9 +106,26 @@ export const appConfig: ApplicationConfig = {
                           document.cookie = 'SAML2flow=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax;';
                       })
                 : Promise.resolve();
-            // Load profile info and resolve user identity in parallel to minimize startup time.
+            // Block bootstrap on translation loading so the first render never shows raw
+            // `translation-not-found[...]` keys. `artemisTranslate` and `translate` pipes
+            // resolve synchronously via `instant()`, which falls back to the missing handler
+            // until the i18n JSON is in the store. Doing this in APP_INITIALIZER gates
+            // AppComponent rendering on the HTTP load instead of racing against it.
+            translateService.setFallbackLang('en');
+            const languageKey: string = sessionStorageService.retrieve('locale') || languageHelper.determinePreferredLanguage();
+            // The .catch is load-bearing: Promise.all below short-circuits on the first rejection,
+            // and a flaky i18n endpoint must degrade gracefully (missing-key placeholders, same as
+            // the previous fire-and-forget behavior) rather than block the SPA from booting at all.
+            const translationsLoaded = lastValueFrom(translateService.use(languageKey)).catch((error) => {
+                // eslint-disable-next-line no-undef
+                console.warn('Translation load failed during app initialization', error);
+                return undefined;
+            });
+            // Load profile info, resolve user identity, and fetch translations in parallel to minimize startup time.
             // Profile info is required for all components; identity resolution avoids a sequential HTTP call in route guards.
-            return Promise.all([profileService.loadProfileInfo(), completeSaml2.then(() => accountService.identity().catch(() => undefined))]).then(() => undefined);
+            return Promise.all([profileService.loadProfileInfo(), completeSaml2.then(() => accountService.identity().catch(() => undefined)), translationsLoaded]).then(
+                () => undefined,
+            );
         }),
         /**
          * @description Interceptor declarations:
