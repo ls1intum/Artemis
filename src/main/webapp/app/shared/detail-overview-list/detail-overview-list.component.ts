@@ -10,7 +10,6 @@ import { addPublicFilePrefix } from 'app/app.constants';
 import { DetailOverviewNavigationBarComponent } from '../detail-overview-navigation-bar/detail-overview-navigation-bar.component';
 import { HelpIconComponent } from '../components/help-icon/help-icon.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { ProgrammingExerciseTimelineComponent } from '../../programming/shared/timeline/programming-exercise-timeline.component';
 import { NgStyle, NgTemplateOutlet } from '@angular/common';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -19,6 +18,7 @@ import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/p
 import { ExerciseDetailDirective } from './exercise-detail.directive';
 import { NoDataComponent } from '../components/no-data/no-data-component';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
+import { ProgrammingExerciseTimeline } from 'app/programming/shared/programming-exercise-timeline/programming-exercise-timeline';
 
 export interface DetailOverviewSection {
     headline: string;
@@ -54,7 +54,6 @@ export enum DetailType {
         DetailOverviewNavigationBarComponent,
         HelpIconComponent,
         ProgrammingExerciseInstructionComponent,
-        ProgrammingExerciseTimelineComponent,
         NgTemplateOutlet,
         StructuredGradingInstructionsAssessmentLayoutComponent,
         TranslateDirective,
@@ -64,6 +63,7 @@ export enum DetailType {
         ExerciseDetailDirective,
         NoDataComponent,
         ArtemisTranslatePipe,
+        ProgrammingExerciseTimeline,
     ],
 })
 export class DetailOverviewListComponent implements OnInit {

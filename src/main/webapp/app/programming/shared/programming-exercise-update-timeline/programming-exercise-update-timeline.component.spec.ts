@@ -1,6 +1,6 @@
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ProgrammingExerciseTimelineComponent } from './programming-exercise-timeline.component';
+import { ProgrammingExerciseUpdateTimelineComponent } from './programming-exercise-update-timeline.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from './test-schedule-date-picker/programming-exercise-test-schedule-date-picker.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -21,8 +21,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('ProgrammingExerciseLifecycleComponent', () => {
-    let comp: ProgrammingExerciseTimelineComponent;
-    let fixture: ComponentFixture<ProgrammingExerciseTimelineComponent>;
+    let comp: ProgrammingExerciseUpdateTimelineComponent;
+    let fixture: ComponentFixture<ProgrammingExerciseUpdateTimelineComponent>;
 
     const startDate = dayjs().add(5, 'days');
     const nextDueDate = dayjs().add(6, 'days');
@@ -48,7 +48,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
                 provideHttpClientTesting(),
             ],
         }).compileComponents();
-        fixture = TestBed.createComponent(ProgrammingExerciseTimelineComponent);
+        fixture = TestBed.createComponent(ProgrammingExerciseUpdateTimelineComponent);
         comp = fixture.componentInstance;
 
         exercise = {
@@ -205,7 +205,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         expect(comp.exercise.dueDate).toEqual(oldRelease);
         expect(comp.exercise.exampleSolutionPublicationDate).toEqual(oldRelease);
 
-        comp.readOnly = true;
+        comp.readonly = true;
 
         const newRelease = dayjs().add(20, 'days');
         comp.updateReleaseDate(newRelease);
@@ -223,7 +223,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
         expect(comp.exercise.exampleSolutionPublicationDate).toEqual(oldDueDate);
 
-        comp.readOnly = true;
+        comp.readonly = true;
 
         const newDueDate = dayjs().add(20, 'days');
         exercise.dueDate = newDueDate;

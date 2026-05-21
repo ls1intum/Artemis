@@ -42,8 +42,12 @@
                     </div>
                     <form name="editForm" role="form" novalidate (ngSubmit)="saveAll()">
                         <div class="form-group-narrow mt-2">
-                            <jhi-programming-exercise-timeline
+                            <jhi-programming-exercise-update-timeline
                                 id="timeline"
+                                [isExamMode]="false"
+                                [exampleSolutionPublicationDateSet]="
+                                    !!newProgrammingExercise.exampleSolutionPublicationDate || !!newProgrammingExercise.exerciseGroup?.exam?.exampleSolutionPublicationDate
+                                "
                                 [(releaseDate)]="newProgrammingExercise.releaseDate"
                                 [(startDate)]="newProgrammingExercise.startDate"
                                 [(dueDate)]="newProgrammingExercise.dueDate"
@@ -52,8 +56,11 @@
                                 [(exampleSolutionPublicationDate)]="newProgrammingExercise.exampleSolutionPublicationDate"
                                 [(assessmentType)]="newProgrammingExercise.assessmentType"
                                 [(allowFeedbackRequests)]="newProgrammingExercise.allowFeedbackRequests"
+                                [(allowComplaintsForAutomaticAssessments)]="newProgrammingExercise.allowComplaintsForAutomaticAssessments"
+                                [(releaseTestsWithExampleSolution)]="newProgrammingExercise.releaseTestsWithExampleSolution"
+                                [(feedbackSuggestionModule)]="newProgrammingExercise.feedbackSuggestionModule"
+                                [(showTestNamesToStudents)]="newProgrammingExercise.showTestNamesToStudents"
                                 [exercise]="newProgrammingExercise"
-                                [isExamMode]="false"
                             />
                             <jhi-button class="text-center" id="save-entity" [icon]="faSave" [title]="'entity.action.save'" [isLoading]="isSaving">
                                 <fa-icon [icon]="faSave" />

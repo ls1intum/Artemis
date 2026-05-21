@@ -10,15 +10,14 @@ import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { ProgrammingExerciseTimelineComponent } from '../../shared/timeline/programming-exercise-timeline.component';
+import { ProgrammingExerciseUpdateTimelineComponent } from '../../shared/programming-exercise-update-timeline/programming-exercise-update-timeline.component';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-programming-exercise-edit-selected',
     templateUrl: './programming-exercise-edit-selected.component.html',
-    imports: [TranslateDirective, FormsModule, HelpIconComponent, ProgrammingExerciseTimelineComponent, ButtonComponent, FaIconComponent],
+    imports: [TranslateDirective, FormsModule, ProgrammingExerciseUpdateTimelineComponent, ButtonComponent, FaIconComponent],
 })
 export class ProgrammingExerciseEditSelectedComponent implements OnInit {
     private activeModal = inject(NgbActiveModal);

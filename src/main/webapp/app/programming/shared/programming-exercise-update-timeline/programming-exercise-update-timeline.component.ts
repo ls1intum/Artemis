@@ -1,38 +1,41 @@
-import { Component, OnDestroy, OnInit, computed, effect, inject, input, model, signal } from '@angular/core';
+import { Component, OnInit, Signal, computed, effect, inject, input, model, signal } from '@angular/core';
 import { PROFILE_ATHENA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { Dayjs } from 'dayjs/esm';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { faUserCheck } from '@fortawesome/free-solid-svg-icons';
-import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Subject, Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { tap } from 'rxjs/operators';
-import { ImportOptions } from 'app/programming/manage/programming-exercises';
+import { map } from 'rxjs/operators';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { NgStyle } from '@angular/common';
 import { ExerciseTimeline, ExerciseTimelineStatus, TimelineItem } from 'app/shared/exercise-timeline/exercise-timeline';
+import { toSignal } from '@angular/core/rxjs-interop';
 
+// TODO: decide whether to make exampleSolutionPublicationDate unavailable during import
 @Component({
-    selector: 'jhi-programming-exercise-timeline',
-    templateUrl: './programming-exercise-timeline.component.html',
-    styleUrls: ['./programming-exercise-timeline.component.scss'],
+    selector: 'jhi-programming-exercise-update-timeline',
+    templateUrl: './programming-exercise-update-timeline.component.html',
+    styleUrls: ['./programming-exercise-update-timeline.component.scss'],
     imports: [FormsModule, TranslateDirective, HelpIconComponent, NgStyle, ExerciseFeedbackSuggestionOptionsComponent, ExerciseTimeline],
 })
-export class ProgrammingExerciseTimelineComponent implements OnDestroy, OnInit {
+export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     private profileService = inject(ProfileService);
     private activatedRoute = inject(ActivatedRoute);
-    private urlSubscription: Subscription;
 
     protected readonly AssessmentType = AssessmentType;
-    protected readonly IncludedInOverallScore = IncludedInOverallScore;
-    protected readonly faUserCheck = faUserCheck;
-    protected readonly timelineItems = computed<TimelineItem[]>(() => this.computeTimelineItems());
+
+    isImport = this.getIsImportSignal();
+
+    isExamMode = input.required<boolean>();
+    complaintsInCourseDisabled = input(false);
+    exampleSolutionPublicationDateSet = input(true);
+    isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
+    exercise = input.required<ProgrammingExercise>();
 
     releaseDate = model<Dayjs | undefined>();
     startDate = model<Dayjs | undefined>();
@@ -42,20 +45,21 @@ export class ProgrammingExerciseTimelineComponent implements OnDestroy, OnInit {
     exampleSolutionPublicationDate = model<Dayjs | undefined>();
     assessmentType = model<AssessmentType>();
     allowFeedbackRequests = model<boolean>();
-    isExamMode = input.required<boolean>();
-    exercise = input.required<ProgrammingExercise>();
-    readOnly = input(false);
-    importOptions = input<ImportOptions>();
-    isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
+    setTestCaseVisibilityToAfterDueDate = model<boolean>();
+    allowComplaintsForAutomaticAssessments = model<boolean>();
+    releaseTestsWithExampleSolution = model<boolean>();
+    feedbackSuggestionModule = model<string>();
+    showTestNamesToStudents = model<boolean>();
 
     isDatePickableForRunningTestsAfterDueDate = signal(false);
-    isEnablingToRunTestsAfterDueDateToggleEnabled = computed(() => this.computeIsEnablingToRunTestsAfterDueDateToggleEnabled());
     isDatePickableForSemiAutomaticAssessmentDueDate = signal(false);
-    isSemiAutomaticAssessmentToggleEnabled = computed(() => this.computeIsSemiAutomaticAssessmentToggleEnabled());
     isDatePickableForExampleSolutionPublicationDate = signal(this.exampleSolutionPublicationDate() !== undefined);
-    isExampleSolutionPublicationDateToggleEnabled = computed(() => this.computeIsExampleSolutionPublicationDateToggleEnabled());
 
-    isImport = signal(false);
+    isEnablingToRunTestsAfterDueDateToggleEnabled = computed(() => this.computeIsEnablingToRunTestsAfterDueDateToggleEnabled());
+    isSemiAutomaticAssessmentToggleEnabled = computed(() => this.computeIsSemiAutomaticAssessmentToggleEnabled());
+    isExampleSolutionPublicationDateToggleEnabled = computed(() => this.computeIsExampleSolutionPublicationDateToggleEnabled());
+    timelineItems = computed<TimelineItem[]>(() => this.computeTimelineItems());
+
     formValid: boolean;
     formEmpty: boolean;
     formValidChanges = new Subject<boolean>();
@@ -82,9 +86,13 @@ export class ProgrammingExerciseTimelineComponent implements OnDestroy, OnInit {
         effect(() => {
             if (this.isDatePickableForSemiAutomaticAssessmentDueDate()) {
                 this.assessmentType.set(AssessmentType.SEMI_AUTOMATIC);
+                this.allowComplaintsForAutomaticAssessments.set(false);
+                this.allowFeedbackRequests.set(false);
             } else {
                 this.assessmentType.set(AssessmentType.AUTOMATIC);
                 this.assessmentDueDate.set(undefined);
+                this.allowComplaintsForAutomaticAssessments.set(false);
+                this.feedbackSuggestionModule.set(undefined);
             }
         });
         effect(() => {
@@ -98,69 +106,30 @@ export class ProgrammingExerciseTimelineComponent implements OnDestroy, OnInit {
                 this.exampleSolutionPublicationDate.set(undefined);
             }
         });
+        effect(() => {
+            if (this.allowFeedbackRequests()) {
+                this.assessmentDueDate.set(undefined);
+                this.buildAndTestStudentSubmissionsAfterDueDate.set(undefined);
+            }
+        });
     }
 
     ngOnInit(): void {
         this.isDatePickableForRunningTestsAfterDueDate.set(this.buildAndTestStudentSubmissionsAfterDueDate() !== undefined);
         this.isDatePickableForSemiAutomaticAssessmentDueDate.set(this.assessmentDueDate() !== undefined);
         this.isDatePickableForExampleSolutionPublicationDate.set(this.exampleSolutionPublicationDate() !== undefined);
-        this.updateIsImportBasedOnUrl();
 
-        const exercise = this.exercise();
-        if (!exercise.id && !this.isImport()) {
-            exercise.assessmentType = AssessmentType.AUTOMATIC;
+        if (!this.isImport() && this.assessmentType() === undefined) {
+            this.assessmentType.set(AssessmentType.AUTOMATIC);
         }
-        this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
-    }
 
-    ngOnDestroy() {
-        this.urlSubscription?.unsubscribe();
+        this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
     }
 
     handleTimelineStatusChange(timelineStatus: ExerciseTimelineStatus) {
         this.formValid = timelineStatus.valid;
         this.formEmpty = timelineStatus.empty;
         this.formValidChanges.next(this.formValid);
-    }
-
-    toggleSetTestCaseVisibilityToAfterDueDate() {
-        const importOptions = this.importOptions();
-        if (importOptions) {
-            importOptions.setTestCaseVisibilityToAfterDueDate = !importOptions.setTestCaseVisibilityToAfterDueDate;
-        }
-    }
-
-    toggleFeedbackRequests() {
-        const exercise = this.exercise();
-        exercise.allowFeedbackRequests = !exercise.allowFeedbackRequests;
-        if (exercise.allowFeedbackRequests) {
-            exercise.assessmentDueDate = undefined;
-            exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
-        }
-    }
-
-    toggleAssessmentType() {
-        const exercise = this.exercise();
-        if (exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
-            exercise.assessmentType = AssessmentType.AUTOMATIC;
-            exercise.assessmentDueDate = undefined;
-            exercise.allowComplaintsForAutomaticAssessments = false;
-            exercise.feedbackSuggestionModule = undefined;
-        } else {
-            exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-            exercise.allowComplaintsForAutomaticAssessments = false;
-            exercise.allowFeedbackRequests = false;
-        }
-    }
-
-    toggleComplaintsType() {
-        const exercise = this.exercise();
-        exercise.allowComplaintsForAutomaticAssessments = !exercise.allowComplaintsForAutomaticAssessments;
-    }
-
-    toggleReleaseTests() {
-        const exercise = this.exercise();
-        exercise.releaseTestsWithExampleSolution = !exercise.releaseTestsWithExampleSolution;
     }
 
     private computeTimelineItems(): TimelineItem[] {
@@ -222,18 +191,9 @@ export class ProgrammingExerciseTimelineComponent implements OnDestroy, OnInit {
         return (!isFieldDisplayed || isFieldDisplayed.exampleSolutionPublicationDate) && !this.isExamMode();
     }
 
-    private updateIsImportBasedOnUrl() {
-        let isImportFromExistingExercise = false;
-        let isImportFromFile = false;
-        this.urlSubscription = this.activatedRoute.url
-            .pipe(
-                tap((segments) => {
-                    isImportFromExistingExercise = segments.some((segment) => segment.path === 'import');
-                    isImportFromFile = segments.some((segment) => segment.path === 'import-from-file');
-                }),
-            )
-            .subscribe(() => {
-                this.isImport.set(isImportFromExistingExercise || isImportFromFile);
-            });
+    private getIsImportSignal(): Signal<boolean> {
+        return toSignal(this.activatedRoute.url.pipe(map((segments) => segments.some((segment) => ['import', 'import-from-file'].includes(segment.path)))), {
+            initialValue: false,
+        });
     }
 }

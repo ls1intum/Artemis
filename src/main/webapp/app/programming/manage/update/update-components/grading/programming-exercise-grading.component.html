@@ -110,8 +110,15 @@
     }
     @if (isFieldDisplayedRecord().timeline) {
         <div class="form-group">
-            <jhi-programming-exercise-timeline
+            <jhi-programming-exercise-update-timeline
                 id="timeline"
+                [isExamMode]="programmingExerciseCreationConfig.isExamMode"
+                [complaintsInCourseDisabled]="programmingExercise.course?.complaintsEnabled ?? false"
+                [exampleSolutionPublicationDateSet]="
+                    !!programmingExercise.exampleSolutionPublicationDate || !!programmingExercise.exerciseGroup?.exam?.exampleSolutionPublicationDate
+                "
+                [isEditFieldDisplayedRecord]="isFieldDisplayedRecord()"
+                [exercise]="programmingExercise"
                 [(releaseDate)]="programmingExercise.releaseDate"
                 [(startDate)]="programmingExercise.startDate"
                 [(dueDate)]="programmingExercise.dueDate"
@@ -120,11 +127,11 @@
                 [(exampleSolutionPublicationDate)]="programmingExercise.exampleSolutionPublicationDate"
                 [(assessmentType)]="programmingExercise.assessmentType"
                 [(allowFeedbackRequests)]="programmingExercise.allowFeedbackRequests"
-                [exercise]="programmingExercise"
-                [isExamMode]="programmingExerciseCreationConfig.isExamMode"
-                [readOnly]="false"
-                [importOptions]="importOptions"
-                [isEditFieldDisplayedRecord]="isFieldDisplayedRecord()"
+                [(setTestCaseVisibilityToAfterDueDate)]="importOptions.setTestCaseVisibilityToAfterDueDate"
+                [(allowComplaintsForAutomaticAssessments)]="programmingExercise.allowComplaintsForAutomaticAssessments"
+                [(releaseTestsWithExampleSolution)]="programmingExercise.releaseTestsWithExampleSolution"
+                [(feedbackSuggestionModule)]="programmingExercise.feedbackSuggestionModule"
+                [(showTestNamesToStudents)]="programmingExercise.showTestNamesToStudents"
             />
         </div>
     }
