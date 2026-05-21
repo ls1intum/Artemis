@@ -7,20 +7,20 @@
             },
             "modal": {
                 "title": {
-                    "course": "Run Malicious Participation Analysis for course",
-                    "exercise": "Run Malicious Participation Analysis for programming exercise"
+                    "course": "Run Malicious Participation Analysis for this Course",
+                    "exercise": "Run Malicious Participation Analysis for this Programming Exercise"
                 },
                 "from": "From",
                 "to": "To",
-                "costWarning": "A longer time range and more participations with activity in that window increase runtime and use more model and server resources. The run executes in the background and may take a long time. Prefer the narrowest range that still fits your review goal. The assessment is LLM-generated and can be wrong—verify important results yourself.",
+                "costWarning": "A longer time window and more participations with activity in that window increase runtime and place a greater strain on model and server resources. The analysis executes in the background and may take a long time. Choose the narrowest range that still fits your review goal. The assessment is LLM-generated and can be wrong — verify important results yourself.",
                 "validation": {
                     "required": "Please select both start and end date.",
-                    "order": "Start date must be before or equal to end date.",
-                    "window": "Selected date range exceeds the allowed window."
+                    "order": "The start date must be before or equal to the end date.",
+                    "window": "The selected time window exceeds the allowed window of 31 days."
                 }
             },
             "trigger": {
-                "success": "Malicious Participation Analysis started. You will receive a completion email when the run finishes.",
+                "success": "You have started Malicious Participation Analysis. You will receive a completion email when this run finishes.",
                 "error": "Could not start Malicious Participation Analysis. Please try again."
             }
         }

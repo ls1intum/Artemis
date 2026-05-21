@@ -7,20 +7,20 @@
             },
             "modal": {
                 "title": {
-                    "course": "Malicious Participation Analysis für den Kurs starten",
-                    "exercise": "Malicious Participation Analysis für die Programmieraufgabe starten"
+                    "course": "Malicious Participation Analysis für diesen Kurs starten",
+                    "exercise": "Malicious Participation Analysis für diese Programmieraufgabe Starten"
                 },
                 "from": "Von",
                 "to": "Bis",
-                "costWarning": "Ein längeres Zeitfenster und mehr Teilnahmen mit Aktivität in diesem Zeitraum verlängern die Laufzeit und belasten Modell- und Serverressourcen stärker. Die Analyse läuft im Hintergrund und kann lange dauern. Wähle den kleinstmöglichen Zeitraum, der für deine Überprüfung noch sinnvoll ist. Die Einschätzung entsteht per Sprachmodell (LLM) und kann unzutreffend sein—wichtige Ergebnisse bitte selbst prüfen.",
+                "costWarning": "Ein längeres Zeitfenster und mehr Teilnahmen mit Aktivität in diesem Zeitraum verlängern die Laufzeit und belasten Modell- und Serverressourcen stärker. Die Analyse läuft im Hintergrund und kann lange dauern. Wähle den kleinstmöglichen Zeitraum, der für deine Überprüfung noch sinnvoll ist. Die Einschätzung entsteht per Sprachmodell (LLM) und kann unzutreffend sein — wichtige Ergebnisse bitte selbst prüfen.",
                 "validation": {
                     "required": "Bitte wähle Start- und Enddatum aus.",
                     "order": "Das Startdatum muss vor oder gleich dem Enddatum liegen.",
-                    "window": "Der ausgewählte Zeitraum überschreitet das erlaubte Fenster."
+                    "window": "Der ausgewählte Zeitraum überschreitet das erlaubte Fenster von 31 Tagen."
                 }
             },
             "trigger": {
-                "success": "Malicious Participation Analysis wurde gestartet. Du erhältst eine E-Mail, wenn der Lauf abgeschlossen ist.",
+                "success": "Du hast die Malicious Participation Analysis gestartet. Du erhältst eine E-Mail, wenn dieser Lauf abgeschlossen ist.",
                 "error": "Die Malicious Participation Analysis konnte nicht gestartet werden. Bitte versuche es erneut."
             }
         }
