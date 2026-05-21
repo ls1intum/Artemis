@@ -1,8 +1,9 @@
-import { Page, test as baseTest, expect } from '@playwright/test';
+import { CDPSession, Page, test as baseTest, expect } from '@playwright/test';
 import { addCoverageReport } from 'monocart-reporter';
 
 const test = baseTest.extend<{
     autoTestFixture: string;
+    virtualAuthenticator: CDPSession;
 }>({
     autoTestFixture: [
         async ({ page }: { page: Page }, use: (fixture: string) => Promise<void>) => {
@@ -54,6 +55,22 @@ const test = baseTest.extend<{
             auto: true,
         },
     ],
+    virtualAuthenticator: async ({ page }, use) => {
+        const cdpSession = await page.context().newCDPSession(page);
+        await cdpSession.send('WebAuthn.enable');
+        await cdpSession.send('WebAuthn.addVirtualAuthenticator', {
+            options: {
+                protocol: 'ctap2',
+                transport: 'internal',
+                hasResidentKey: true,
+                hasUserVerification: true,
+                isUserVerified: true,
+                automaticPresenceSimulation: true,
+            },
+        });
+        await use(cdpSession);
+        await cdpSession.send('WebAuthn.disable');
+    },
 });
 
 export { test, expect };

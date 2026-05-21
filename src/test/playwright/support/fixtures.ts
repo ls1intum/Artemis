@@ -1,3 +1,4 @@
+import { CDPSession } from '@playwright/test';
 import { test as base } from './baseFixtures';
 import { LoginPage } from './pageobjects/LoginPage';
 import { UserCredentials } from './users';
@@ -155,6 +156,10 @@ export type ArtemisPageObjects = {
     exerciseTeams: ExerciseTeamsPage;
 };
 
+export type ArtemisInfrastructure = {
+    virtualAuthenticator: CDPSession;
+};
+
 export type ArtemisRequests = {
     accountManagementAPIRequests: AccountManagementAPIRequests;
     courseManagementAPIRequests: CourseManagementAPIRequests;
@@ -167,7 +172,7 @@ export type ArtemisRequests = {
 /**
  * Custom test object extended to use Artemis related fixtures.
  */
-export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRequests>({
+export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRequests & ArtemisInfrastructure>({
     loginPage: async ({ page }, use) => {
         await use(new LoginPage(page));
     },
@@ -398,5 +403,8 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     communicationAPIRequests: async ({ page }, use) => {
         await use(new CommunicationAPIRequests(page));
+    },
+    virtualAuthenticator: async ({ virtualAuthenticator }, use) => {
+        await use(virtualAuthenticator);
     },
 });
