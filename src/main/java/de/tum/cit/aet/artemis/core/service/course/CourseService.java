@@ -121,7 +121,7 @@ public class CourseService {
             coursePage = courseRepository.findByTitleIgnoreCaseContaining(searchTerm, pageable);
         }
         else {
-            coursePage = courseRepository.findByTitleInCoursesWhereInstructorOrEditor(searchTerm, user.getGroups(), pageable);
+            coursePage = courseRepository.findByTitleInCoursesWhereInstructorOrEditor(searchTerm, user.getId(), pageable);
         }
         return new SearchResultPageDTO<>(coursePage.getContent(), coursePage.getTotalPages());
     }

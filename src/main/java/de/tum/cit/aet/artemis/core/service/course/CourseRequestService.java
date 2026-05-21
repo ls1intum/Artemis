@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -454,10 +453,6 @@ public class CourseRequestService {
         if (requester == null) {
             return null;
         }
-        Set<String> groups = requester.getGroups();
-        if (groups == null || groups.isEmpty()) {
-            return 0;
-        }
-        return (int) courseRepository.countCoursesForInstructorWithGroups(groups);
+        return (int) courseRepository.countCoursesForInstructor(requester.getId());
     }
 }

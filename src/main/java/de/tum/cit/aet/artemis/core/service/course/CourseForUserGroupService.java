@@ -39,7 +39,7 @@ public class CourseForUserGroupService {
      * @return a list of courses that the user is associated with
      */
     public List<Course> getCoursesForTutors(User user, boolean onlyActive) {
-        List<Course> userCourses = courseRepository.findCoursesForAtLeastTutorWithGroups(user.getGroups(), authCheckService.isAdmin(user));
+        List<Course> userCourses = courseRepository.findCoursesForAtLeastTutor(user.getId(), authCheckService.isAdmin(user));
         if (onlyActive) {
             // only include courses that have NOT been finished
             final var now = ZonedDateTime.now();

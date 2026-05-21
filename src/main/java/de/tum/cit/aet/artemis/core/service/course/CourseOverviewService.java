@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.core.service.course;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.context.annotation.Lazy;
@@ -52,12 +51,10 @@ public class CourseOverviewService {
         if (isAdmin) {
             return courseRepository.findAllNotEnded(ZonedDateTime.now());
         }
-        var userGroups = new ArrayList<>(user.getGroups());
-
         if (onlyActive) {
-            return courseRepository.findAllNotEndedCoursesByManagementGroupNames(ZonedDateTime.now(), userGroups);
+            return courseRepository.findAllNotEndedCoursesByManagementRole(ZonedDateTime.now(), user.getId());
         }
 
-        return courseRepository.findAllCoursesByManagementGroupNames(userGroups);
+        return courseRepository.findAllCoursesByManagementRole(user.getId());
     }
 }

@@ -27,7 +27,6 @@ import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.ActiveCourseDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForArchiveDTO;
-import de.tum.cit.aet.artemis.core.dto.CourseGroupsDTO;
 import de.tum.cit.aet.artemis.core.dto.StatisticsEntry;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -44,24 +43,6 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @Lazy
 @Repository
 public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
-
-    @Query("""
-            SELECT DISTINCT course.instructorGroupName
-            FROM Course course
-            """)
-    Set<String> findAllInstructorGroupNames();
-
-    @Query("""
-            SELECT DISTINCT course.editorGroupName
-            FROM Course course
-            """)
-    Set<String> findAllEditorGroupNames();
-
-    @Query("""
-            SELECT DISTINCT course.teachingAssistantGroupName
-            FROM Course course
-            """)
-    Set<String> findAllTeachingAssistantGroupNames();
 
     @Query("""
             SELECT COUNT(c) > 0
@@ -88,10 +69,17 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             """)
     List<Course> findAllActiveForUserAndLearningPathsEnabled(@Param("now") ZonedDateTime now);
 
+    /**
+     * Returns all active non-test courses with the count of enrolled students in each.
+     *
+     * @param now the current time used to determine whether a course is active
+     * @return a set of active course DTOs including the student count per course
+     */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.ActiveCourseDTO(c.id, c.title, c.shortName, c.semester, COUNT(DISTINCT u))
+            SELECT new de.tum.cit.aet.artemis.core.dto.ActiveCourseDTO(c.id, c.title, c.shortName, c.semester, COUNT(DISTINCT ucr.user.id))
             FROM Course c
-                JOIN User u ON u.deleted = FALSE AND c.studentGroupName MEMBER OF u.groups
+                LEFT JOIN c.courseRoles ucr ON ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.STUDENT
+                    AND ucr.user.deleted = FALSE
             WHERE (c.startDate <= :now OR c.startDate IS NULL)
                 AND (c.endDate >= :now OR c.endDate IS NULL)
                 AND c.testCourse = FALSE
@@ -217,11 +205,16 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             """)
     String getCourseIconById(@Param("courseId") long courseId);
 
+    // TODO (Phase 9): Delete the 8 group-name getters below once the *GroupName columns are dropped from the course table.
+    // They are still used by CourseDeletionService and CourseResetService to manage legacy external groups.
+
     /**
      * Returns the student group name of the course with the given id.
+     * Used by {@link de.tum.cit.aet.artemis.core.service.course.CourseResetService} and
+     * {@link de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource} for legacy group management.
      *
      * @param courseId the id of the course
-     * @return the student group name or null if the course does not exist
+     * @return the student group name, or null if the course does not exist
      */
     @Query("""
             SELECT c.studentGroupName
@@ -232,9 +225,10 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
 
     /**
      * Returns the teaching assistant group name of the course with the given id.
+     * Used by {@link de.tum.cit.aet.artemis.core.service.course.CourseResetService} for legacy group management.
      *
      * @param courseId the id of the course
-     * @return the teaching assistant group name or null if the course does not exist
+     * @return the teaching assistant group name, or null if the course does not exist
      */
     @Query("""
             SELECT c.teachingAssistantGroupName
@@ -245,9 +239,10 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
 
     /**
      * Returns the editor group name of the course with the given id.
+     * Used by {@link de.tum.cit.aet.artemis.core.service.course.CourseResetService} for legacy group management.
      *
      * @param courseId the id of the course
-     * @return the editor group name or null if the course does not exist
+     * @return the editor group name, or null if the course does not exist
      */
     @Query("""
             SELECT c.editorGroupName
@@ -258,9 +253,10 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
 
     /**
      * Returns the instructor group name of the course with the given id.
+     * Used by {@link de.tum.cit.aet.artemis.core.service.course.CourseResetService} for legacy group management.
      *
      * @param courseId the id of the course
-     * @return the instructor group name or null if the course does not exist
+     * @return the instructor group name, or null if the course does not exist
      */
     @Query("""
             SELECT c.instructorGroupName
@@ -270,10 +266,12 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     String getInstructorGroupNameById(@Param("courseId") long courseId);
 
     /**
-     * Returns the default student group name of the course with the given id.
+     * Returns the default student group name (artemis-{shortName}-students) for the course with the given id.
+     * Used by {@link de.tum.cit.aet.artemis.core.service.course.CourseDeletionService} to decide whether
+     * to delete the default group when deleting a course.
      *
      * @param courseId the id of the course
-     * @return the default student group name or null if the course does not exist
+     * @return the default student group name, or null if the course does not exist
      */
     @Query("""
             SELECT CONCAT('artemis-', c.shortName, '-students')
@@ -283,10 +281,12 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     String getDefaultStudentGroupNameById(@Param("courseId") long courseId);
 
     /**
-     * Returns the default teaching assistant group name of the course with the given id.
+     * Returns the default teaching assistant group name (artemis-{shortName}-tutors) for the course with the given id.
+     * Used by {@link de.tum.cit.aet.artemis.core.service.course.CourseDeletionService} to decide whether
+     * to delete the default group when deleting a course.
      *
      * @param courseId the id of the course
-     * @return the default teaching assistant group name or null if the course does not exist
+     * @return the default teaching assistant group name, or null if the course does not exist
      */
     @Query("""
             SELECT CONCAT('artemis-', c.shortName, '-tutors')
@@ -296,10 +296,12 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     String getDefaultTeachingAssistantGroupNameById(@Param("courseId") long courseId);
 
     /**
-     * Returns the default editor group name of the course with the given id.
+     * Returns the default editor group name (artemis-{shortName}-editors) for the course with the given id.
+     * Used by {@link de.tum.cit.aet.artemis.core.service.course.CourseDeletionService} to decide whether
+     * to delete the default group when deleting a course.
      *
      * @param courseId the id of the course
-     * @return the default editor group name or null if the course does not exist
+     * @return the default editor group name, or null if the course does not exist
      */
     @Query("""
             SELECT CONCAT('artemis-', c.shortName, '-editors')
@@ -309,10 +311,12 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     String getDefaultEditorGroupNameById(@Param("courseId") long courseId);
 
     /**
-     * Returns the default instructor group name of the course with the given id.
+     * Returns the default instructor group name (artemis-{shortName}-instructors) for the course with the given id.
+     * Used by {@link de.tum.cit.aet.artemis.core.service.course.CourseDeletionService} to decide whether
+     * to delete the default group when deleting a course.
      *
      * @param courseId the id of the course
-     * @return the default instructor group name or null if the course does not exist
+     * @return the default instructor group name, or null if the course does not exist
      */
     @Query("""
             SELECT CONCAT('artemis-', c.shortName, '-instructors')
@@ -321,14 +325,25 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             """)
     String getDefaultInstructorGroupNameById(@Param("courseId") long courseId);
 
+    /**
+     * Returns all courses with quiz exercises for which the user has at least editor access.
+     *
+     * @param userId the id of the user
+     * @return a list of courses with quiz exercises where the user is an editor or instructor
+     */
     @Query("""
             SELECT DISTINCT c
             FROM Course c
                 LEFT JOIN FETCH c.exercises e
             WHERE TYPE(e) = QuizExercise
-                AND (c.instructorGroupName IN :userGroups OR c.editorGroupName IN :userGroups)
+                AND EXISTS (
+                    SELECT ucr FROM UserCourseRole ucr
+                    WHERE ucr.course.id = c.id AND ucr.user.id = :userId
+                    AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR,
+                                     de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
+                )
             """)
-    List<Course> getCoursesWithQuizExercisesForWhichUserHasAtLeastEditorAccess(@Param("userGroups") List<String> userGroups);
+    List<Course> getCoursesWithQuizExercisesForWhichUserHasAtLeastEditorAccess(@Param("userId") Long userId);
 
     @Query("""
             SELECT DISTINCT c
@@ -375,57 +390,56 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     List<Course> findAllNotEnded(@Param("now") ZonedDateTime now);
 
     /**
-     * Get all courses that use one of the given management group names. Management group names are groups names for TA, editor or instructor groups.
+     * Get all courses where the user has a management role (TA, editor, or instructor).
      *
-     * @param userGroups list of management group names
-     * @return a list of courses that use one of the given management group names
+     * @param userId the id of the user
+     * @return a list of courses where the user has a management role
      */
     @Query("""
             SELECT c
             FROM Course c
-            WHERE c.teachingAssistantGroupName IN :userGroups
-                OR c.editorGroupName IN :userGroups
-                OR c.instructorGroupName IN :userGroups
-            """)
-    List<Course> findAllCoursesByManagementGroupNames(@Param("userGroups") List<String> userGroups);
-
-    /**
-     * Get all courses that use one of the given management group names and are not ended yet or have no end date.
-     *
-     * @param now        the current time
-     * @param userGroups list of management group names
-     * @return a list of courses that use one of the given management group names and are not ended yet
-     */
-    @Query("""
-            SELECT c
-            FROM Course c
-            WHERE (
-                c.endDate IS NULL
-                OR c.endDate >= :now
-            ) AND (
-                c.teachingAssistantGroupName IN :userGroups
-                OR c.editorGroupName IN :userGroups
-                OR c.instructorGroupName IN :userGroups
+            WHERE EXISTS (
+                SELECT ucr FROM UserCourseRole ucr
+                WHERE ucr.course.id = c.id AND ucr.user.id = :userId
+                AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT,
+                                 de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR,
+                                 de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
             )
             """)
-    List<Course> findAllNotEndedCoursesByManagementGroupNames(@Param("now") ZonedDateTime now, @Param("userGroups") List<String> userGroups);
+    List<Course> findAllCoursesByManagementRole(@Param("userId") Long userId);
 
     /**
-     * Counts the number of members of a course, i.e. users that are a member of the course's student, tutor, editor or instructor group.
-     * Users that are part of multiple groups are NOT counted multiple times.
+     * Get all courses that are not ended yet where the user has a management role (TA, editor, or instructor).
+     *
+     * @param now    the current time
+     * @param userId the id of the user
+     * @return a list of active courses where the user has a management role
+     */
+    @Query("""
+            SELECT c
+            FROM Course c
+            WHERE (c.endDate IS NULL OR c.endDate >= :now)
+            AND EXISTS (
+                SELECT ucr FROM UserCourseRole ucr
+                WHERE ucr.course.id = c.id AND ucr.user.id = :userId
+                AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT,
+                                 de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR,
+                                 de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
+            )
+            """)
+    List<Course> findAllNotEndedCoursesByManagementRole(@Param("now") ZonedDateTime now, @Param("userId") Long userId);
+
+    /**
+     * Counts the number of members of a course across all roles.
+     * Users with multiple roles in the same course are counted once.
      *
      * @param courseId id of the course to count the members for
      * @return number of users in the course
      */
     @Query("""
-            SELECT COUNT(DISTINCT ug.userId)
-            FROM Course c
-                JOIN UserGroup ug
-                    ON c.studentGroupName = ug.group
-                        OR c.teachingAssistantGroupName = ug.group
-                        OR c.editorGroupName = ug.group
-                        OR c.instructorGroupName = ug.group
-            WHERE c.id = :courseId
+            SELECT COUNT(DISTINCT ucr.user.id)
+            FROM UserCourseRole ucr
+            WHERE ucr.course.id = :courseId
             """)
     Integer countCourseMembers(@Param("courseId") long courseId);
 
@@ -433,17 +447,22 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
      * Query which fetches all courses for which the user is editor or instructor and matching the search criteria.
      *
      * @param partialTitle title search term
-     * @param groups       user groups
+     * @param userId       the id of the user
      * @param pageable     Pageable
      * @return Page with course results
      */
     @Query("""
             SELECT c
             FROM Course c
-            WHERE (c.instructorGroupName IN :groups OR c.editorGroupName IN :groups)
-                AND (c.title LIKE %:partialTitle%)
+            WHERE (c.title LIKE %:partialTitle%)
+                AND EXISTS (
+                    SELECT ucr FROM UserCourseRole ucr
+                    WHERE ucr.course.id = c.id AND ucr.user.id = :userId
+                    AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR,
+                                     de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
+                )
             """)
-    Page<Course> findByTitleInCoursesWhereInstructorOrEditor(@Param("partialTitle") String partialTitle, @Param("groups") Set<String> groups, Pageable pageable);
+    Page<Course> findByTitleInCoursesWhereInstructorOrEditor(@Param("partialTitle") String partialTitle, @Param("userId") Long userId, Pageable pageable);
 
     default Course findByIdWithEagerExercisesElseThrow(long courseId) throws EntityNotFoundException {
         return getValueElseThrow(Optional.ofNullable(findWithEagerExercisesById(courseId)), courseId);
@@ -608,69 +627,67 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     boolean hasLearningPathsEnabled(@Param("courseId") long courseId);
 
     /**
-     * Retrieves all courses that the user has access to based on their role
-     * or if they are an admin. Filters out any courses that do not belong to
-     * a specific semester (i.e., have a null semester).
+     * Retrieves all inactive courses (end date in the past) with a non-null semester that the user has access to.
+     * Returns all such courses for admins, otherwise only courses where the user has any role.
      *
-     * @param isAdmin A boolean flag indicating whether the user is an admin
-     * @param groups  A set of groups that the user belongs to
-     * @param now     The current time to check if the course is still active
-     * @return A set of courses that the user has access to and belong to a specific semester
+     * @param isAdmin whether the user is an admin
+     * @param userId  the id of the user
+     * @param now     the current time used to determine whether a course is inactive
+     * @return a set of inactive courses belonging to a specific semester that the user can access
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.core.dto.CourseForArchiveDTO(c.id, c.title, c.semester, c.color, c.courseIcon)
             FROM Course c
             WHERE (:isAdmin = TRUE
-                   OR c.studentGroupName IN :groups
-                   OR c.teachingAssistantGroupName IN :groups
-                   OR c.editorGroupName IN :groups
-                   OR c.instructorGroupName IN :groups
-                   )
+                   OR EXISTS (
+                       SELECT ucr FROM UserCourseRole ucr
+                       WHERE ucr.course.id = c.id AND ucr.user.id = :userId
+                   ))
                 AND c.semester IS NOT NULL
                 AND c.endDate IS NOT NULL
                 AND c.endDate < :now
             """)
-    Set<CourseForArchiveDTO> findInactiveCoursesForUserRolesWithNonNullSemester(@Param("isAdmin") boolean isAdmin, @Param("groups") Set<String> groups,
-            @Param("now") ZonedDateTime now);
+    Set<CourseForArchiveDTO> findInactiveCoursesForUserRolesWithNonNullSemester(@Param("isAdmin") boolean isAdmin, @Param("userId") Long userId, @Param("now") ZonedDateTime now);
 
-    @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.CourseGroupsDTO(
-                c.instructorGroupName,
-                c.editorGroupName,
-                c.teachingAssistantGroupName,
-                c.studentGroupName
-            ) FROM Course c
-            """)
-    Set<CourseGroupsDTO> findAllCourseGroups();
-
+    /**
+     * Finds all courses where the user has at least a teaching assistant role (TA, editor, or instructor),
+     * or all courses if the user is an admin.
+     *
+     * @param userId  the id of the user
+     * @param isAdmin whether the user is an admin
+     * @return a list of courses where the user has at least TA access
+     */
     @Query("""
             SELECT c
             FROM Course c
-            WHERE c.teachingAssistantGroupName IN :userGroups
-               OR c.editorGroupName IN :userGroups
-               OR c.instructorGroupName IN :userGroups
-               OR :isAdmin = TRUE
+            WHERE :isAdmin = TRUE
+               OR EXISTS (
+                   SELECT ucr FROM UserCourseRole ucr
+                   WHERE ucr.course.id = c.id AND ucr.user.id = :userId
+                   AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT,
+                                    de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR,
+                                    de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
+               )
             """)
-    List<Course> findCoursesForAtLeastTutorWithGroups(@Param("userGroups") Set<String> userGroups, @Param("isAdmin") boolean isAdmin);
+    List<Course> findCoursesForAtLeastTutor(@Param("userId") Long userId, @Param("isAdmin") boolean isAdmin);
 
     /**
-     * Finds all courses where the user has at least student access based on their group memberships.
-     * This includes courses where the user is a student, TA, editor, or instructor.
+     * Finds all courses where the user has any role (student, TA, editor, or instructor).
      *
-     * @param userGroups the groups the user belongs to
-     * @param isAdmin    whether the user is an admin
+     * @param userId  the id of the user
+     * @param isAdmin whether the user is an admin
      * @return a list of courses accessible to the user
      */
     @Query("""
             SELECT c
             FROM Course c
-            WHERE c.studentGroupName IN :userGroups
-               OR c.teachingAssistantGroupName IN :userGroups
-               OR c.editorGroupName IN :userGroups
-               OR c.instructorGroupName IN :userGroups
-               OR :isAdmin = TRUE
+            WHERE :isAdmin = TRUE
+               OR EXISTS (
+                   SELECT ucr FROM UserCourseRole ucr
+                   WHERE ucr.course.id = c.id AND ucr.user.id = :userId
+               )
             """)
-    List<Course> findAllAccessibleCoursesForUser(@Param("userGroups") Set<String> userGroups, @Param("isAdmin") boolean isAdmin);
+    List<Course> findAllAccessibleCoursesForUser(@Param("userId") Long userId, @Param("isAdmin") boolean isAdmin);
 
     @Query("""
                 SELECT course.timeZone
@@ -680,15 +697,16 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     Optional<String> getTimeZoneOfCourseById(@Param("courseId") long courseId);
 
     /**
-     * Counts the number of courses where the user is an instructor based on their group memberships.
+     * Counts the number of courses where the user has the instructor role.
      *
-     * @param userGroups the groups the user belongs to
+     * @param userId the id of the user
      * @return the count of courses where the user is an instructor
      */
     @Query("""
-            SELECT COUNT(c)
-            FROM Course c
-            WHERE c.instructorGroupName IN :userGroups
+            SELECT COUNT(DISTINCT ucr.course.id)
+            FROM UserCourseRole ucr
+            WHERE ucr.user.id = :userId
+            AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR
             """)
-    long countCoursesForInstructorWithGroups(@Param("userGroups") Set<String> userGroups);
+    long countCoursesForInstructor(@Param("userId") Long userId);
 }

@@ -259,7 +259,7 @@ public class GlobalSearchResource {
             accessibleCourses = List.of(course);
         }
         else {
-            accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getGroups(), false);
+            accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getId(), false);
             if (accessibleCourses.isEmpty()) {
                 return new FilterBuildResult(null, false, null, null);
             }

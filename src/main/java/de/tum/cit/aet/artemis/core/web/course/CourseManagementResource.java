@@ -140,8 +140,7 @@ public class CourseManagementResource {
             return ResponseEntity.ok(courseRepository.findAllWithQuizExercisesWithEagerExercises());
         }
         else {
-            var userGroups = new ArrayList<>(user.getGroups());
-            return ResponseEntity.ok(courseRepository.getCoursesWithQuizExercisesForWhichUserHasAtLeastEditorAccess(userGroups));
+            return ResponseEntity.ok(courseRepository.getCoursesWithQuizExercisesForWhichUserHasAtLeastEditorAccess(user.getId()));
         }
     }
 
