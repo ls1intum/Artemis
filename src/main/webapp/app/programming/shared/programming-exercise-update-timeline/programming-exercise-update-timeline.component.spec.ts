@@ -17,7 +17,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { By } from '@angular/platform-browser';
 
 @Component({
     imports: [ProgrammingExerciseUpdateTimelineComponent],
@@ -44,22 +43,12 @@ class TestHostComponent {
     exercise = {} as ProgrammingExercise;
     isExamMode = false;
 
-    isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord: Record<ProgrammingExerciseInputField, boolean> | undefined = {
-        releaseDate: true,
-        startDate: true,
-        dueDate: true,
-        runTestsAfterDueDate: true,
-        assessmentDueDate: true,
-        exampleSolutionPublicationDate: true,
-        complaintOnAutomaticAssessment: true,
-        manualFeedbackRequests: true,
-        showTestNamesToStudents: true,
-        includeTestsIntoExampleSolution: true,
-    } as Record<ProgrammingExerciseInputField, boolean>;
+    isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord: Record<ProgrammingExerciseInputField, boolean> | undefined = undefined;
 }
 
 describe('ProgrammingExerciseLifecycleComponent', () => {
     let fixture: ComponentFixture<TestHostComponent>;
+    let component: ProgrammingExerciseUpdateTimelineComponent;
     let activatedRouteUrlSubject: BehaviorSubject<UrlSegment[]>;
 
     const startDate = dayjs().add(5, 'days');
@@ -97,15 +86,12 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         } as ProgrammingExercise;
     });
 
-    const createHostComponent = () => {
+    function createHostComponent() {
         fixture = TestBed.createComponent(TestHostComponent);
         fixture.componentInstance.exercise = exercise;
         fixture.detectChanges();
-    };
-
-    const getCheckbox = (id: string): HTMLInputElement => fixture.debugElement.nativeElement.querySelector(`#${id}`);
-    const getTimelineComponent = (): ProgrammingExerciseUpdateTimelineComponent =>
-        fixture.debugElement.query(By.directive(ProgrammingExerciseUpdateTimelineComponent)).componentInstance;
+        component = fixture.debugElement.children[0].componentInstance as ProgrammingExerciseUpdateTimelineComponent;
+    }
 
     afterEach(() => {
         jest.restoreAllMocks();
@@ -113,10 +99,6 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
     it('should show release date picker if not in exam mode and no current mode record is available', () => {
         createHostComponent();
-        fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = undefined;
-        fixture.detectChanges();
-
-        const component = getTimelineComponent();
 
         expect(component.isDatePickerForReleaseDateVisible()).toBeTrue();
         expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.releaseDate')).toBeTrue();
@@ -124,8 +106,8 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
     it('should show release date picker if not in exam mode and current mode record allows release date', () => {
         createHostComponent();
-
-        const component = getTimelineComponent();
+        fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = { releaseDate: true } as Record<ProgrammingExerciseInputField, boolean>;
+        fixture.detectChanges();
 
         expect(component.isDatePickerForReleaseDateVisible()).toBeTrue();
         expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.releaseDate')).toBeTrue();
@@ -133,13 +115,8 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
     it('should not show release date picker if current mode record prohibits release date', () => {
         createHostComponent();
-        fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = {
-            ...fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord!,
-            releaseDate: false,
-        };
+        fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = { releaseDate: false } as Record<ProgrammingExerciseInputField, boolean>;
         fixture.detectChanges();
-
-        const component = getTimelineComponent();
 
         expect(component.isDatePickerForReleaseDateVisible()).toBeFalse();
         expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.releaseDate')).toBeFalse();
@@ -147,10 +124,6 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
     it('should show start date picker if not in exam mode and no current mode record is available', () => {
         createHostComponent();
-        fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = undefined;
-        fixture.detectChanges();
-
-        const component = getTimelineComponent();
 
         expect(component.isDatePickerForStartDateVisible()).toBeTrue();
         expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.startDate')).toBeTrue();
@@ -158,8 +131,8 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
     it('should show start date picker if not in exam mode and current mode record allows start date', () => {
         createHostComponent();
-
-        const component = getTimelineComponent();
+        fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = { startDate: true } as Record<ProgrammingExerciseInputField, boolean>;
+        fixture.detectChanges();
 
         expect(component.isDatePickerForStartDateVisible()).toBeTrue();
         expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.startDate')).toBeTrue();
@@ -167,13 +140,8 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
     it('should not show start date picker if current mode record prohibits start date', () => {
         createHostComponent();
-        fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = {
-            ...fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord!,
-            startDate: false,
-        };
+        fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = { startDate: false } as Record<ProgrammingExerciseInputField, boolean>;
         fixture.detectChanges();
-
-        const component = getTimelineComponent();
 
         expect(component.isDatePickerForStartDateVisible()).toBeFalse();
         expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.startDate')).toBeFalse();
@@ -181,10 +149,6 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
     it('should show due date picker if not in exam mode and no current mode record is available', () => {
         createHostComponent();
-        fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = undefined;
-        fixture.detectChanges();
-
-        const component = getTimelineComponent();
 
         expect(component.isDatePickerForDueDateVisible()).toBeTrue();
         expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.dueDate')).toBeTrue();
@@ -192,8 +156,8 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
     it('should show due date picker if not in exam mode and current mode record allows due date', () => {
         createHostComponent();
-
-        const component = getTimelineComponent();
+        fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = { dueDate: true } as Record<ProgrammingExerciseInputField, boolean>;
+        fixture.detectChanges();
 
         expect(component.isDatePickerForDueDateVisible()).toBeTrue();
         expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.dueDate')).toBeTrue();
@@ -201,13 +165,8 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
     it('should not show due date picker if current mode record prohibits due date', () => {
         createHostComponent();
-        fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = {
-            ...fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord!,
-            dueDate: false,
-        };
+        fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = { dueDate: false } as Record<ProgrammingExerciseInputField, boolean>;
         fixture.detectChanges();
-
-        const component = getTimelineComponent();
 
         expect(component.isDatePickerForDueDateVisible()).toBeFalse();
         expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.dueDate')).toBeFalse();
@@ -217,61 +176,50 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         exercise.dueDate = undefined;
         createHostComponent();
         fixture.componentInstance.isExamMode = true;
-        fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = undefined;
         fixture.detectChanges();
 
-        const component = getTimelineComponent();
-
         expect(component.isEnablingToRunTestsAfterDueDateToggleVisible()).toBeTrue();
-        expect(getCheckbox('defineDateForRunningTestsAfterDueDate')).not.toBeNull();
+        expect(fixture.debugElement.nativeElement.querySelector('#defineDateForRunningTestsAfterDueDate')).not.toBeNull();
     });
 
     it('should display enabling to run tests after due date toggle if in exam mode and current mode record allows it', () => {
         exercise.dueDate = undefined;
         createHostComponent();
         fixture.componentInstance.isExamMode = true;
+        fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = { runTestsAfterDueDate: true } as Record<ProgrammingExerciseInputField, boolean>;
         fixture.detectChanges();
 
-        const component = getTimelineComponent();
-
         expect(component.isEnablingToRunTestsAfterDueDateToggleVisible()).toBeTrue();
-        expect(getCheckbox('defineDateForRunningTestsAfterDueDate')).not.toBeNull();
+        expect(fixture.debugElement.nativeElement.querySelector('#defineDateForRunningTestsAfterDueDate')).not.toBeNull();
     });
 
     it('should display enabling to run tests after due date toggle if due date is available and no current mode record is available', () => {
         createHostComponent();
-        fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = undefined;
-        fixture.detectChanges();
-
-        const component = getTimelineComponent();
 
         expect(component.isEnablingToRunTestsAfterDueDateToggleVisible()).toBeTrue();
-        expect(getCheckbox('defineDateForRunningTestsAfterDueDate')).not.toBeNull();
+        expect(fixture.debugElement.nativeElement.querySelector('#defineDateForRunningTestsAfterDueDate')).not.toBeNull();
     });
 
     it('should display enabling to run tests after due date toggle if due date is available and current mode record allows it', () => {
         createHostComponent();
-
-        const component = getTimelineComponent();
+        fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = { runTestsAfterDueDate: true } as Record<ProgrammingExerciseInputField, boolean>;
+        fixture.detectChanges();
 
         expect(component.isEnablingToRunTestsAfterDueDateToggleVisible()).toBeTrue();
-        expect(getCheckbox('defineDateForRunningTestsAfterDueDate')).not.toBeNull();
+        expect(fixture.debugElement.nativeElement.querySelector('#defineDateForRunningTestsAfterDueDate')).not.toBeNull();
     });
 
     it('should not display enabling to run tests after due date toggle if not in exam mode and due date is unavailable', () => {
         exercise.dueDate = undefined;
         createHostComponent();
 
-        const component = getTimelineComponent();
-
         expect(component.isEnablingToRunTestsAfterDueDateToggleVisible()).toBeFalse();
-        expect(getCheckbox('defineDateForRunningTestsAfterDueDate')).toBeNull();
+        expect(fixture.debugElement.nativeElement.querySelector('#defineDateForRunningTestsAfterDueDate')).toBeNull();
     });
 
     it('should hide running tests after due date picker and clear its date if enabling toggle becomes unavailable', () => {
         exercise.buildAndTestStudentSubmissionsAfterDueDate = afterDueDate;
         createHostComponent();
-        const component = getTimelineComponent();
 
         expect(component.isDatePickerForRunningTestsAfterDueDateVisible()).toBeTrue();
         expect(exercise.buildAndTestStudentSubmissionsAfterDueDate).toEqual(afterDueDate);
@@ -287,12 +235,11 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     it('should show and hide running tests after due date picker when toggling it', async () => {
         exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
         createHostComponent();
-        const component = getTimelineComponent();
         expect(component.isEnablingToRunTestsAfterDueDateToggleVisible()).toBeTrue();
         expect(component.isDatePickerForRunningTestsAfterDueDateVisible()).toBeFalse();
         expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.dateForRunningTestsAfterDueDate')).toBeFalse();
 
-        getCheckbox('defineDateForRunningTestsAfterDueDate').click();
+        fixture.debugElement.nativeElement.querySelector('#defineDateForRunningTestsAfterDueDate').click();
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();
@@ -300,7 +247,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         expect(component.isDatePickerForRunningTestsAfterDueDateVisible()).toBeTrue();
         expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.dateForRunningTestsAfterDueDate')).toBeTrue();
 
-        const enabledCheckbox = getCheckbox('defineDateForRunningTestsAfterDueDate');
+        const enabledCheckbox = fixture.debugElement.nativeElement.querySelector('#defineDateForRunningTestsAfterDueDate');
         enabledCheckbox.checked = true;
         enabledCheckbox.click();
         fixture.detectChanges();
@@ -311,27 +258,25 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
     it('should display example solution publication date toggle if not in exam mode and no current mode record is available', () => {
         createHostComponent();
-        fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = undefined;
-        fixture.detectChanges();
-
-        const component = getTimelineComponent();
 
         expect(component.isExampleSolutionPublicationDateToggleVisible()).toBeTrue();
-        expect(getCheckbox('exampleSolutionPublicationDateEnabled')).not.toBeNull();
+        expect(fixture.debugElement.nativeElement.querySelector('#exampleSolutionPublicationDateEnabled')).not.toBeNull();
     });
 
     it('should display example solution publication date toggle if not in exam mode and current mode record allows example solution publication date', () => {
         createHostComponent();
-
-        const component = getTimelineComponent();
+        fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = { exampleSolutionPublicationDate: true } as Record<
+            ProgrammingExerciseInputField,
+            boolean
+        >;
+        fixture.detectChanges();
 
         expect(component.isExampleSolutionPublicationDateToggleVisible()).toBeTrue();
-        expect(getCheckbox('exampleSolutionPublicationDateEnabled')).not.toBeNull();
+        expect(fixture.debugElement.nativeElement.querySelector('#exampleSolutionPublicationDateEnabled')).not.toBeNull();
     });
 
     it('should hide example solution publication date picker and clear its date if example solution publication date toggle becomes unavailable', () => {
         createHostComponent();
-        const component = getTimelineComponent();
 
         expect(component.isDatePickerForExampleSolutionPublicationDateVisible()).toBeTrue();
         expect(exercise.exampleSolutionPublicationDate).toEqual(exampleSolutionPublicationDate);
@@ -347,13 +292,12 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     it('should show and hide example solution publication date picker when toggling it', async () => {
         exercise.exampleSolutionPublicationDate = undefined;
         createHostComponent();
-        const component = getTimelineComponent();
 
         expect(component.isExampleSolutionPublicationDateToggleVisible()).toBeTrue();
         expect(component.isDatePickerForExampleSolutionPublicationDateVisible()).toBeFalse();
         expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.exampleSolutionPublicationDate')).toBeFalse();
 
-        getCheckbox('exampleSolutionPublicationDateEnabled').click();
+        fixture.debugElement.nativeElement.querySelector('#exampleSolutionPublicationDateEnabled').click();
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();
@@ -361,7 +305,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         expect(component.isDatePickerForExampleSolutionPublicationDateVisible()).toBeTrue();
         expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.exampleSolutionPublicationDate')).toBeTrue();
 
-        const enabledCheckbox = getCheckbox('exampleSolutionPublicationDateEnabled');
+        const enabledCheckbox = fixture.debugElement.nativeElement.querySelector('#exampleSolutionPublicationDateEnabled');
         enabledCheckbox.checked = true;
         enabledCheckbox.click();
         fixture.detectChanges();
@@ -374,87 +318,71 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         exercise.dueDate = undefined;
         createHostComponent();
         fixture.componentInstance.isExamMode = true;
-        fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = undefined;
         fixture.detectChanges();
 
-        const component = getTimelineComponent();
-
         expect(component.isSemiAutomaticAssessmentToggleVisible()).toBeTrue();
-        expect(getCheckbox('manualAssessmentEnabled')).not.toBeNull();
+        expect(fixture.debugElement.nativeElement.querySelector('#manualAssessmentEnabled')).not.toBeNull();
     });
 
     it('should display semi-automatic assessment toggle if in exam mode and current mode record allows assessment due date', () => {
         exercise.dueDate = undefined;
         createHostComponent();
         fixture.componentInstance.isExamMode = true;
+        fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = { assessmentDueDate: true } as Record<ProgrammingExerciseInputField, boolean>;
         fixture.detectChanges();
 
-        const component = getTimelineComponent();
-
         expect(component.isSemiAutomaticAssessmentToggleVisible()).toBeTrue();
-        expect(getCheckbox('manualAssessmentEnabled')).not.toBeNull();
+        expect(fixture.debugElement.nativeElement.querySelector('#manualAssessmentEnabled')).not.toBeNull();
     });
 
     it('should display semi-automatic assessment toggle if importing and no current mode record is available', () => {
         exercise.dueDate = undefined;
         activatedRouteUrlSubject.next([{ path: 'import' }] as UrlSegment[]);
         createHostComponent();
-        fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = undefined;
-        fixture.detectChanges();
-
-        const component = getTimelineComponent();
 
         expect(component.isSemiAutomaticAssessmentToggleVisible()).toBeTrue();
-        expect(getCheckbox('manualAssessmentEnabled')).not.toBeNull();
+        expect(fixture.debugElement.nativeElement.querySelector('#manualAssessmentEnabled')).not.toBeNull();
     });
 
     it('should display semi-automatic assessment toggle if importing and current mode record allows assessment due date', () => {
         exercise.dueDate = undefined;
         activatedRouteUrlSubject.next([{ path: 'import' }] as UrlSegment[]);
         createHostComponent();
-
-        const component = getTimelineComponent();
+        fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = { assessmentDueDate: true } as Record<ProgrammingExerciseInputField, boolean>;
+        fixture.detectChanges();
 
         expect(component.isSemiAutomaticAssessmentToggleVisible()).toBeTrue();
-        expect(getCheckbox('manualAssessmentEnabled')).not.toBeNull();
+        expect(fixture.debugElement.nativeElement.querySelector('#manualAssessmentEnabled')).not.toBeNull();
     });
 
     it('should display semi-automatic assessment toggle if due date is available and no current mode record is available', () => {
         createHostComponent();
-        fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = undefined;
-        fixture.detectChanges();
-
-        const component = getTimelineComponent();
 
         expect(component.isSemiAutomaticAssessmentToggleVisible()).toBeTrue();
-        expect(getCheckbox('manualAssessmentEnabled')).not.toBeNull();
+        expect(fixture.debugElement.nativeElement.querySelector('#manualAssessmentEnabled')).not.toBeNull();
     });
 
     it('should display semi-automatic assessment toggle if due date is available and current mode record allows assessment due date', () => {
         createHostComponent();
-
-        const component = getTimelineComponent();
+        fixture.componentInstance.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = { assessmentDueDate: true } as Record<ProgrammingExerciseInputField, boolean>;
+        fixture.detectChanges();
 
         expect(component.isSemiAutomaticAssessmentToggleVisible()).toBeTrue();
-        expect(getCheckbox('manualAssessmentEnabled')).not.toBeNull();
+        expect(fixture.debugElement.nativeElement.querySelector('#manualAssessmentEnabled')).not.toBeNull();
     });
 
     it('should not display semi-automatic assessment toggle if not in exam mode, not importing, and due date is unavailable', () => {
         exercise.dueDate = undefined;
         createHostComponent();
 
-        const component = getTimelineComponent();
-
         expect(component.isSemiAutomaticAssessmentToggleVisible()).toBeFalse();
-        expect(getCheckbox('manualAssessmentEnabled')).toBeNull();
+        expect(fixture.debugElement.nativeElement.querySelector('#manualAssessmentEnabled')).toBeNull();
     });
 
     it('should show semi-automatic assessment due date picker if semi-automatic assessment is enabled for a course exercise without feedback requests', () => {
         exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
         exercise.allowFeedbackRequests = false;
         createHostComponent();
-
-        const component = getTimelineComponent();
 
         expect(component.isSemiAutomaticAssessmentToggleVisible()).toBeTrue();
         expect(component.isDatePickerForSemiAutomaticAssessmentDueDateVisible()).toBeTrue();
@@ -467,8 +395,6 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         fixture.componentInstance.isExamMode = true;
         fixture.detectChanges();
 
-        const component = getTimelineComponent();
-
         expect(component.isSemiAutomaticAssessmentToggleVisible()).toBeTrue();
         expect(component.isDatePickerForSemiAutomaticAssessmentDueDateVisible()).toBeFalse();
         expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.assessmentDueDate')).toBeFalse();
@@ -478,7 +404,6 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
         exercise.assessmentDueDate = afterDueDate;
         createHostComponent();
-        const component = getTimelineComponent();
 
         expect(component.isDatePickerForSemiAutomaticAssessmentDueDateVisible()).toBeTrue();
         expect(exercise.assessmentDueDate).toEqual(afterDueDate);
@@ -496,7 +421,6 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         exercise.assessmentDueDate = afterDueDate;
         exercise.buildAndTestStudentSubmissionsAfterDueDate = afterDueDate;
         createHostComponent();
-        const component = getTimelineComponent();
 
         expect(exercise.assessmentDueDate).toEqual(afterDueDate);
         expect(exercise.buildAndTestStudentSubmissionsAfterDueDate).toEqual(afterDueDate);
@@ -511,7 +435,6 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     it('should update dependent fields when assessment type changes', () => {
         exercise.assessmentType = undefined;
         createHostComponent();
-        const component = getTimelineComponent();
 
         component.allowComplaintsForAutomaticAssessments.set(true);
         component.allowFeedbackRequests.set(true);
@@ -538,7 +461,6 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
     it('should update form validation status when timeline status changes', () => {
         createHostComponent();
-        const component = getTimelineComponent();
         const formValidChangesSpy = jest.fn();
         component.formValidChanges.subscribe(formValidChangesSpy);
 
@@ -554,8 +476,6 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         expect(component.formEmpty).toBeTrue();
         expect(formValidChangesSpy).toHaveBeenLastCalledWith(false);
     });
-
-    // end new tests
 
     it('should change the value for allowing complaints for exercise with automatic assessment', () => {
         exercise.allowComplaintsForAutomaticAssessments = false;
@@ -658,7 +578,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         fixture.componentInstance.isExamMode = true;
         fixture.detectChanges();
 
-        expect(getCheckbox('allowComplaintsForAutomaticAssessment').disabled).toBeFalse();
+        expect(fixture.debugElement.nativeElement.querySelector('#allowComplaintsForAutomaticAssessment').disabled).toBeFalse();
     });
 
     it.each([true, false])('should disable checkbox for complaints on automatic assessments for exercises without automatic assessment', async (examMode: boolean) => {
@@ -672,7 +592,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         await fixture.whenStable();
         fixture.detectChanges();
 
-        expect(getCheckbox('allowComplaintsForAutomaticAssessment').disabled).toBeTrue();
+        expect(fixture.debugElement.nativeElement.querySelector('#allowComplaintsForAutomaticAssessment').disabled).toBeTrue();
     });
 
     it('should disable checkbox for complaints on automatic assessments for course exercises with automatic assessment but without due date', async () => {
@@ -686,7 +606,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         await fixture.whenStable();
         fixture.detectChanges();
 
-        expect(getCheckbox('allowComplaintsForAutomaticAssessment').disabled).toBeTrue();
+        expect(fixture.debugElement.nativeElement.querySelector('#allowComplaintsForAutomaticAssessment').disabled).toBeTrue();
     });
 
     it.each([true, false])('should enable checkbox to include tests in example solution', (examMode: boolean) => {
@@ -701,7 +621,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         fixture.componentInstance.isExamMode = examMode;
         fixture.detectChanges();
 
-        expect(getCheckbox('releaseTestsWithExampleSolution').disabled).toBeFalse();
+        expect(fixture.debugElement.nativeElement.querySelector('#releaseTestsWithExampleSolution').disabled).toBeFalse();
     });
 
     it('should disable checkbox to include tests in example solution without example solution publication date', async () => {
@@ -710,6 +630,6 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         await fixture.whenStable();
         fixture.detectChanges();
 
-        expect(getCheckbox('releaseTestsWithExampleSolution').disabled).toBeTrue();
+        expect(fixture.debugElement.nativeElement.querySelector('#releaseTestsWithExampleSolution').disabled).toBeTrue();
     });
 });
