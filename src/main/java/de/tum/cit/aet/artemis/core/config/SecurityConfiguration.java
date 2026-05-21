@@ -305,7 +305,7 @@ public class SecurityConfiguration {
                     .requestMatchers(("/api-docs")).permitAll()
                     .requestMatchers(("/api-docs.yaml")).permitAll()
                     .requestMatchers("/swagger-ui/**").permitAll()
-                    .requestMatchers("/api/core/calendar/courses/*/calendar-events-ics").permitAll()
+                    .requestMatchers("/api/core/calendar/courses/*/calendar-events-ics").permitAll() // Deprecated, to be removed Oct 2026
                     .requestMatchers("/api/calendar/courses/*/calendar-events-ics").permitAll()
                     // `/git/**` endpoints (JGit servlet + LocalVC filters) are only registered under the `localvc` profile
                     // LocalVCFetchFilter/LocalVCPushFilter handle auth

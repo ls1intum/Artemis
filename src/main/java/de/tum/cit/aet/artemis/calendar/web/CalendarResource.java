@@ -116,7 +116,7 @@ public class CalendarResource {
     }
 
     /**
-     * GET api/calendar/course/:courseId/calendar-events-ics : gets all {@link CalendarEventDTO}s associated to the given course
+     * GET api/calendar/courses/:courseId/calendar-events-ics : gets all {@link CalendarEventDTO}s associated to the given course
      * that are visible to the user and returns them as an .ics file.
      *
      * @param courseId      the id of the course for which the events should be fetched
@@ -190,7 +190,7 @@ public class CalendarResource {
     }
 
     /**
-     * GET api/calendar/course/:courseId/calendar-events : gets all {@link CalendarEventDTO}s associated to the given course falling into the requested month
+     * GET api/calendar/courses/:courseId/calendar-events : gets all {@link CalendarEventDTO}s associated to the given course falling into the requested month
      * that are visible to the logged-in user.
      *
      * @param courseId  the id of the course for which the events should be fetched

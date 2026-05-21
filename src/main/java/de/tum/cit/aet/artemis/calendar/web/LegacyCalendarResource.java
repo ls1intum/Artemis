@@ -24,8 +24,10 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
  * Moved from /api/core/calendar to /api/calendar.
  * Can be removed after October 2026 as most subscriptions should no longer be valid by then.
  * <b>When removing this class</b>, also remove the exceptions for this file in ArchitectureTest.java and in SecurityConfiguration.java
+ *
+ * @deprecated Functionality moved to {@link CalendarResource}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 @Lazy
 @Profile(PROFILE_CORE)
 @RestController
@@ -39,7 +41,7 @@ public class LegacyCalendarResource {
     }
 
     /**
-     * GET api/core/calendar/course/:courseId/calendar-events-ics : gets all {@link CalendarEventDTO}s associated to the given course
+     * GET api/core/calendar/courses/:courseId/calendar-events-ics : gets all {@link CalendarEventDTO}s associated to the given course
      * that are visible to the user and returns them as an .ics file.
      *
      * @param courseId      the id of the course for which the events should be fetched
