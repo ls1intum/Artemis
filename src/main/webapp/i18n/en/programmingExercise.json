@@ -894,6 +894,7 @@
                 "analyze": "Analyze Problem Statement",
                 "analyzing": "Analyzing...",
                 "defaultMessage": "Click \"Analyze Problem Statement\" to check for competencies, difficulty, and quality issues.",
+                "problemStatementTooLong": "The problem statement is too long for the instructor checklist. Please reduce it to at most {{ max }} characters and try again.",
                 "competencies": {
                     "title": "Estimated Learning Goals",
                     "empty": "No competencies inferred.",
@@ -956,6 +957,12 @@
                 "outdated": "Outdated",
                 "reanalyze": "Re-analyze"
             }
+        },
+        "checklistAnalysisRequest": {
+            "problemStatementMarkdown": "Problem statement"
+        },
+        "checklistActionRequest": {
+            "problemStatementMarkdown": "Problem statement"
         },
         "error": {
             "noparticipations": "No existing user was specified or no submission exists.",

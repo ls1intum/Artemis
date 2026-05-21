@@ -894,6 +894,7 @@
                 "analyze": "Problemstellung analysieren",
                 "analyzing": "Analysiere...",
                 "defaultMessage": "Klicke auf \"Problemstellung analysieren\", um nach Kompetenzbereichen, Schwierigkeitsbewertung und Qualitätsproblemen zu suchen.",
+                "problemStatementTooLong": "Die Problemstellung ist zu lang für die Checkliste. Bitte kürze sie auf höchstens {{ max }} Zeichen und versuche es erneut.",
                 "competencies": {
                     "title": "Geschätzte Lernziele",
                     "empty": "Keine Kompetenzen abgeleitet.",
@@ -956,6 +957,12 @@
                 "outdated": "Veraltet",
                 "reanalyze": "Erneut analysieren"
             }
+        },
+        "checklistAnalysisRequest": {
+            "problemStatementMarkdown": "Problemstellung"
+        },
+        "checklistActionRequest": {
+            "problemStatementMarkdown": "Problemstellung"
         },
         "error": {
             "noparticipations": "Nutzer:in existiert nicht oder es gibt keine Abgaben.",

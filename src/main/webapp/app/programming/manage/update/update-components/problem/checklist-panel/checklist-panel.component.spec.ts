@@ -29,6 +29,7 @@ import {
     LOW_COMPETENCY_LINK_WEIGHT,
     MEDIUM_COMPETENCY_LINK_WEIGHT,
 } from 'app/atlas/shared/entities/competency.model';
+import { MAX_PROBLEM_STATEMENT_LENGTH } from 'app/programming/manage/shared/problem-statement.utils';
 
 describe('ChecklistPanelComponent', () => {
     setupTestBed({ zoneless: true });
@@ -118,6 +119,19 @@ describe('ChecklistPanelComponent', () => {
         expect(component.isLoading()).toBeFalsy();
         expect(errorSpy).toHaveBeenCalled();
         expect(component.analysisResult()).toBeUndefined();
+    });
+
+    it('should show a friendly error and not analyze when the problem statement is too long', () => {
+        fixture.componentRef.setInput('problemStatement', 'x'.repeat(MAX_PROBLEM_STATEMENT_LENGTH + 1));
+        fixture.detectChanges();
+        const analyzeSpy = vi.spyOn(apiService, 'analyzeChecklist');
+        const errorSpy = vi.spyOn(alertService, 'error');
+
+        component.analyze();
+
+        expect(analyzeSpy).not.toHaveBeenCalled();
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.instructorChecklist.problemStatementTooLong', { max: MAX_PROBLEM_STATEMENT_LENGTH });
+        expect(component.isLoading()).toBeFalsy();
     });
 
     it('should display results when available', () => {
@@ -215,6 +229,20 @@ describe('ChecklistPanelComponent', () => {
             component.fixQualityIssue({ description: 'Test', category: QualityIssue.CategoryEnum.Clarity }, 0);
 
             expect(errorSpy).toHaveBeenCalled();
+            expect(component.isApplyingAction()).toBeFalsy();
+            expect(component.actionLoadingKey()).toBeUndefined();
+        });
+
+        it('should show a friendly error and not apply an action when the problem statement is too long', () => {
+            fixture.componentRef.setInput('problemStatement', 'x'.repeat(MAX_PROBLEM_STATEMENT_LENGTH + 1));
+            fixture.detectChanges();
+            const actionSpy = vi.spyOn(apiService, 'applyChecklistAction');
+            const errorSpy = vi.spyOn(alertService, 'error');
+
+            component.fixQualityIssue({ description: 'Test', category: QualityIssue.CategoryEnum.Clarity }, 0);
+
+            expect(actionSpy).not.toHaveBeenCalled();
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.instructorChecklist.problemStatementTooLong', { max: MAX_PROBLEM_STATEMENT_LENGTH });
             expect(component.isApplyingAction()).toBeFalsy();
             expect(component.actionLoadingKey()).toBeUndefined();
         });
