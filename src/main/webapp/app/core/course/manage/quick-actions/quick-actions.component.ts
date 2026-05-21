@@ -55,6 +55,12 @@ export enum CourseManagementSection {
             .stat-value {
                 font-weight: 600;
                 font-size: 1.1rem;
+                color: inherit;
+                text-decoration: none;
+
+                &:hover {
+                    text-decoration: underline;
+                }
             }
 
             .header-actions {
@@ -81,7 +87,7 @@ export enum CourseManagementSection {
                 white-space: nowrap;
 
                 &:hover {
-                    background: var(--bs-tertiary-bg);
+                    background: var(--overview-card-hover-bg, var(--bs-tertiary-bg));
                     border-color: var(--bs-secondary-border-subtle);
                     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
                 }

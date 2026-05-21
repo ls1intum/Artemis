@@ -43,7 +43,7 @@
         flex-shrink: 0;
 
         &:hover {
-            background: var(--bs-tertiary-bg);
+            background: var(--overview-card-hover-bg, var(--bs-tertiary-bg));
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         }
     }
