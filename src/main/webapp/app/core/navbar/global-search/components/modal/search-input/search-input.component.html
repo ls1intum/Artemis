@@ -6,7 +6,7 @@
         @if (courseFilterLabel()) {
             <span class="filter-chip course-filter-chip me-2" [attr.aria-label]="'global.search.filterChipAriaLabel' | artemisTranslate: { filter: courseFilterLabel()! }">
                 <span class="filter-chip-label">{{ courseFilterLabel() }}</span>
-                <button type="button" class="filter-chip-remove" (click)="onCourseFilterRemove()" aria-label="Remove">
+                <button type="button" class="filter-chip-remove" (click)="onCourseFilterRemove()" aria-label="Remove" tabindex="-1">
                     <fa-icon [icon]="faTimes" />
                 </button>
             </span>
@@ -14,7 +14,7 @@
         @for (filter of activeFilters(); track filter) {
             <span class="filter-chip search-filter-chip me-2" [attr.aria-label]="'global.search.filterChipAriaLabel' | artemisTranslate: { filter: getFilterLabel(filter) }">
                 <span class="filter-chip-label">{{ getFilterLabel(filter) }}</span>
-                <button type="button" class="filter-chip-remove" (click)="onFilterRemove(filter)" aria-label="Remove">
+                <button type="button" class="filter-chip-remove" (click)="onFilterRemove(filter)" aria-label="Remove" tabindex="-1">
                     <fa-icon [icon]="faTimes" />
                 </button>
             </span>

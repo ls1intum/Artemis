@@ -176,11 +176,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
             });
 
         // Reset state when modal is closed; apply context filters when opened.
-        // Read isOpen() outside untracked() so the effect re-runs on open/close.
-        // Everything else (applyContextFilters/resetSearch and the signals they touch)
-        // is wrapped in untracked() to prevent those signals from becoming reactive
-        // dependencies of this effect — otherwise removing a filter would re-trigger
-        // applyContextFilters() and restore the previously applied filters.
+        // untracked() prevents signals read inside applyContextFilters/resetSearch
+        // (e.g. activeCourseId, activeFilters) from becoming reactive dependencies
+        // of this effect — only overlay.isOpen() should trigger it.
         effect(() => {
             const isOpen = this.overlay.isOpen();
             untracked(() => {
