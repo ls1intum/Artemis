@@ -124,7 +124,7 @@ describe('Exercise Update Warning Service', () => {
         exercise.gradingCriteria = [criterion];
         backupExercise.gradingCriteria = [backupCriterion];
         updateWarningService.loadExercise(exercise, backupExercise);
-        expect(updateWarningService.creditChanged).toBeTrue();
+        expect(updateWarningService.creditChanged).toBe(true);
     });
 
     it('should set usageCountChanged as true when only an earlier instruction has changed usage count', () => {
@@ -138,7 +138,7 @@ describe('Exercise Update Warning Service', () => {
         exercise.gradingCriteria = [criterion];
         backupExercise.gradingCriteria = [backupCriterion];
         updateWarningService.loadExercise(exercise, backupExercise);
-        expect(updateWarningService.usageCountChanged).toBeTrue();
+        expect(updateWarningService.usageCountChanged).toBe(true);
     });
 
     it('should not check releaseDate but grading criteria in exam', () => {

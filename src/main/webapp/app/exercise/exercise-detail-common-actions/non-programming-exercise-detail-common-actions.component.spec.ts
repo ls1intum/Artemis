@@ -130,7 +130,7 @@ describe('Exercise detail common actions Component', () => {
             fixture.componentRef.setInput('course', course);
             fixture.componentRef.setInput('isExamExercise', false);
 
-            expect(comp.canAccessParticipationsAndScores()).toBeTrue();
+            expect(comp.canAccessParticipationsAndScores()).toBe(true);
         });
 
         it('should return false for course exercise when user is not at least tutor', () => {
@@ -143,7 +143,7 @@ describe('Exercise detail common actions Component', () => {
             fixture.componentRef.setInput('course', course);
             fixture.componentRef.setInput('isExamExercise', false);
 
-            expect(comp.canAccessParticipationsAndScores()).toBeFalse();
+            expect(comp.canAccessParticipationsAndScores()).toBe(false);
         });
 
         it('should return false for exam exercise when user is only tutor', () => {
@@ -158,7 +158,7 @@ describe('Exercise detail common actions Component', () => {
             fixture.componentRef.setInput('course', course);
             fixture.componentRef.setInput('isExamExercise', true);
 
-            expect(comp.canAccessParticipationsAndScores()).toBeFalse();
+            expect(comp.canAccessParticipationsAndScores()).toBe(false);
         });
 
         it('should return true for exam exercise when user is at least instructor', () => {
@@ -173,7 +173,7 @@ describe('Exercise detail common actions Component', () => {
             fixture.componentRef.setInput('course', course);
             fixture.componentRef.setInput('isExamExercise', true);
 
-            expect(comp.canAccessParticipationsAndScores()).toBeTrue();
+            expect(comp.canAccessParticipationsAndScores()).toBe(true);
         });
     });
 

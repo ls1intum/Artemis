@@ -1,5 +1,5 @@
 import { expect, vi } from 'vitest';
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
@@ -87,35 +87,33 @@ describe('TeamComponent', () => {
         it('should call alert service error when exercise service fails', () => {
             const exerciseStub = vi.spyOn(exerciseService, 'find').mockReturnValue(throwError(() => ({ status: 404 })));
             alertServiceStub = vi.spyOn(alertService, 'error');
-            waitForAsync(() => {
-                comp.ngOnInit();
-                expect(exerciseStub).toHaveBeenCalledOnce();
-                expect(alertServiceStub).toHaveBeenCalledOnce();
-                expect(comp.isLoading).toBe(false);
-            });
+            comp.ngOnInit();
+            expect(exerciseStub).toHaveBeenCalledOnce();
+            expect(alertServiceStub).toHaveBeenCalledOnce();
+            expect(comp.isLoading).toBe(false);
         });
 
         it('should call alert service error when team service fails', () => {
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse<Exercise>({ body: mockExercise })));
             const teamStub = vi.spyOn(teamService, 'find').mockReturnValue(throwError(() => ({ status: 404 })));
             alertServiceStub = vi.spyOn(alertService, 'error');
-            waitForAsync(() => {
-                comp.ngOnInit();
-                expect(teamStub).toHaveBeenCalledOnce();
-                expect(alertServiceStub).toHaveBeenCalledOnce();
-                expect(comp.isLoading).toBe(false);
-            });
+            comp.ngOnInit();
+            expect(teamStub).toHaveBeenCalledOnce();
+            expect(alertServiceStub).toHaveBeenCalledOnce();
+            expect(comp.isLoading).toBe(false);
         });
     });
 
     describe('ngOnInit with team owner', () => {
-        it('should set team owner true if user is team owner', () => {
-            waitForAsync(() => {
-                identityStub.mockReturnValue(Promise.resolve({ ...user, id: 1 }));
-                fixture = TestBed.createComponent(TeamComponent);
-                comp = fixture.componentInstance;
-                comp.ngOnInit();
-                expect(comp.isTeamOwner).toBe(true);
-            });
+        it('should set team owner true if user is team owner', async () => {
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse<Exercise>({ body: mockExercise })));
+            vi.spyOn(teamService, 'find').mockReturnValue(of(new HttpResponse<Team>({ body: mockTeam })));
+            identityStub.mockReturnValue(Promise.resolve({ ...user, id: 1 }));
+            fixture = TestBed.createComponent(TeamComponent);
+            comp = fixture.componentInstance;
+            await fixture.whenStable();
+            comp.ngOnInit();
+            expect(comp.isTeamOwner).toBe(true);
         });
     });
 
