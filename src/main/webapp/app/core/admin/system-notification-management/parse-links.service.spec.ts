@@ -56,7 +56,8 @@ describe('ParseLinks Service', () => {
             '<https://localhost/api/communication/system-notifications' +
                 '?sort=notificationDate,desc&sort=id&page=0&size=50>; rel="last",' +
                 '<https://localhost/api/communication/system-notifications' +
-                '?sort=notificationDate,desc&sort=id&page=1&size=50>; rel="first"');
+                '?sort=notificationDate,desc&sort=id&page=1&size=50>; rel="first"',
+        );
         expect(parsedLinks).toEqual(expectedLinks);
     });
     // Precaution for cases where matrix parameters are used
@@ -66,7 +67,8 @@ describe('ParseLinks Service', () => {
             '<https://localhost/api/communication' +
                 ';a=b/system-notifications?sort=notificationDate,desc&sort=id&page=0&size=50>; rel="last",' +
                 '<https://localhost/api/communication/system-notifications' +
-                '?sort=notificationDate,desc&sort=id&page=1&size=50>; rel="first"');
+                '?sort=notificationDate,desc&sort=id&page=1&size=50>; rel="first"',
+        );
         expect(parsedLinks).toEqual(expectedLinks);
     });
 });
