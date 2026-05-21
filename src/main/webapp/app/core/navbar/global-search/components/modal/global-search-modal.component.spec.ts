@@ -21,6 +21,7 @@ import { GlobalSearchApiService } from 'app/openapi/api/globalSearchApi.service'
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { Router } from '@angular/router';
 
 describe('GlobalSearchModalComponent', () => {
@@ -47,7 +48,7 @@ describe('GlobalSearchModalComponent', () => {
     };
 
     const mockCourseStorageService = {
-        getCourse: vi.fn<(courseId: number) => { id: number; title: string } | undefined>().mockReturnValue(undefined),
+        getCourse: vi.fn<(courseId: number) => Course | undefined>().mockReturnValue(undefined),
     };
 
     beforeEach(() => {
