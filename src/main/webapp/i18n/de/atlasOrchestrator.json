@@ -1,0 +1,13 @@
+{
+    "artemisApp": {
+        "atlasOrchestrator": {
+            "tooltip": "Den Atlas-Kompetenz-Orchestrator für diese Aufgabe ausführen",
+            "error": "Atlas-Orchestrator-Durchlauf fehlgeschlagen. Bitte versuche es später erneut.",
+            "inProgress": "Für diesen Kurs läuft bereits ein Atlas-Orchestrator-Durchlauf. Bitte warte, bis dieser abgeschlossen ist.",
+            "resultDialog": {
+                "title": "Ergebnis des Atlas-Orchestrators",
+                "empty": "Der Orchestrator hat keine Zusammenfassung zurückgegeben."
+            }
+        }
+    }
+}
