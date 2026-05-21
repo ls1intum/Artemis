@@ -80,4 +80,23 @@ describe('ExerciseTimeline', () => {
         expect(component.timelineStatus()).toEqual({ valid: false, empty: true });
         expect(emittedStatuses.at(-1)).toEqual({ valid: false, empty: true });
     });
+
+    it('should update timeline item date', () => {
+        const initialDate = dayjs('2026-01-01T10:00:00Z');
+        const newDate = new Date('2026-01-02T10:00:00Z');
+        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(initialDate) };
+        const setSpy = jest.spyOn(item.date, 'set');
+
+        component.updateDate(item, initialDate.toDate());
+
+        expect(setSpy).not.toHaveBeenCalled();
+
+        component.updateDate(item, newDate);
+
+        expect(item.date()?.isSame(dayjs(newDate))).toBeTrue();
+
+        component.updateDate(item, null);
+
+        expect(item.date()).toBeUndefined();
+    });
 });
