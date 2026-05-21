@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, computed, effect, inject, signal, viewChild, viewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, computed, effect, inject, signal, untracked, viewChild, viewChildren } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EMPTY, Subject, catchError, filter, of, switchMap, tap, timer } from 'rxjs';
@@ -175,13 +175,21 @@ export class GlobalSearchModalComponent implements OnDestroy {
                 }
             });
 
-        // Reset state when modal is closed; apply context filters when opened
+        // Reset state when modal is closed; apply context filters when opened.
+        // Read isOpen() outside untracked() so the effect re-runs on open/close.
+        // Everything else (applyContextFilters/resetSearch and the signals they touch)
+        // is wrapped in untracked() to prevent those signals from becoming reactive
+        // dependencies of this effect — otherwise removing a filter would re-trigger
+        // applyContextFilters() and restore the previously applied filters.
         effect(() => {
-            if (this.overlay.isOpen()) {
-                this.applyContextFilters();
-            } else {
-                this.resetSearch();
-            }
+            const isOpen = this.overlay.isOpen();
+            untracked(() => {
+                if (isOpen) {
+                    this.applyContextFilters();
+                } else {
+                    this.resetSearch();
+                }
+            });
         });
     }
 
