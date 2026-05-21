@@ -14,11 +14,11 @@
         }
         @for (filter of activeFilters(); track filter) {
             <p-chip
-                [label]="filter"
+                [label]="getFilterLabel(filter)"
                 [removable]="true"
                 (onRemove)="onFilterRemove(filter)"
                 styleClass="me-2 search-filter-chip"
-                [attr.aria-label]="'global.search.filterChipAriaLabel' | artemisTranslate: { filter: filter }"
+                [attr.aria-label]="'global.search.filterChipAriaLabel' | artemisTranslate: { filter: getFilterLabel(filter) }"
             />
         }
     }

@@ -1,8 +1,9 @@
-import { Component, ElementRef, computed, input, output, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, inject, input, output, viewChild } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import { ChipModule } from 'primeng/chip';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-global-search-input',
@@ -11,6 +12,18 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     templateUrl: './search-input.component.html',
 })
 export class SearchInputComponent {
+    /**
+     * Maps API filter tags to translation keys for display in filter chips.
+     */
+    private static readonly FILTER_TAG_LABELS: Record<string, string> = {
+        exercise: 'global.search.entities.exercisesTitle',
+        lecture: 'global.search.entities.lecturesTitle',
+        channel: 'global.search.entities.communicationTitle',
+        faq: 'global.search.entities.faqsTitle',
+        exam: 'global.search.entities.examsTitle',
+    };
+
+    private readonly translateService = inject(TranslateService);
     protected readonly faSearch = faSearch;
 
     searchQuery = input.required<string>();
@@ -48,5 +61,13 @@ export class SearchInputComponent {
 
     protected onCourseFilterRemove() {
         this.courseFilterRemoved.emit();
+    }
+
+    protected getFilterLabel(filterTag: string): string {
+        const translationKey = SearchInputComponent.FILTER_TAG_LABELS[filterTag];
+        if (translationKey) {
+            return this.translateService.instant(translationKey);
+        }
+        return filterTag;
     }
 }

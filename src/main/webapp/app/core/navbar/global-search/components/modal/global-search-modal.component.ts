@@ -198,7 +198,8 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
     /**
      * Parses the current URL to detect course context and tab,
-     * then pre-populates the course filter and type filter accordingly.
+     * then pre-populates the course filter and type filter accordingly
+     * and triggers a search so results are displayed immediately.
      */
     private applyContextFilters(): void {
         const url = this.router.url;
@@ -224,6 +225,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
                 this.activeFilters.set([filterTag]);
             }
         }
+
+        // Trigger search so context filters are reflected in the UI immediately
+        this.searchSubject.next({ query: '', filters: this.activeFilters() });
     }
 
     protected onSearchInput(query: string): void {
