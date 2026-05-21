@@ -33,7 +33,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     isExamMode = input.required<boolean>();
     complaintsInCourseDisabled = input(false);
     exampleSolutionPublicationDateSet = input(true);
-    isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
+    isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
     exercise = input.required<ProgrammingExercise>();
 
     releaseDate = model<Dayjs | undefined>();
@@ -50,13 +50,16 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     feedbackSuggestionModule = model<string>();
     showTestNamesToStudents = model<boolean>();
 
-    isDatePickableForRunningTestsAfterDueDate = signal(false);
-    isDatePickableForSemiAutomaticAssessmentDueDate = signal(false);
-    isDatePickableForExampleSolutionPublicationDate = signal(this.exampleSolutionPublicationDate() !== undefined);
+    isDatePickerForReleaseDateVisible = computed(() => !this.isExamMode() && (this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()?.releaseDate ?? true));
+    isDatePickerForStartDateVisible = computed(() => !this.isExamMode() && (this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()?.startDate ?? true));
+    isDatePickerForDueDateVisible = computed(() => !this.isExamMode() && (this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()?.dueDate ?? true));
+    isEnablingToRunTestsAfterDueDateToggleVisible = computed(() => this.computeIsEnablingToRunTestsAfterDueDateToggleVisible());
+    isDatePickerForRunningTestsAfterDueDateVisible = signal(false);
+    isSemiAutomaticAssessmentToggleVisible = computed(() => this.computeIsSemiAutomaticAssessmentToggleVisible());
+    isDatePickerForSemiAutomaticAssessmentDueDateVisible = computed<boolean>(() => this.computeIfDatePickableForSemiAutomaticAssessmentDueDateVisible());
+    isExampleSolutionPublicationDateToggleVisible = computed(() => this.computeIsExampleSolutionPublicationDateToggleVisible());
+    isDatePickerForExampleSolutionPublicationDateVisible = signal(false);
 
-    isEnablingToRunTestsAfterDueDateToggleEnabled = computed(() => this.computeIsEnablingToRunTestsAfterDueDateToggleEnabled());
-    isSemiAutomaticAssessmentToggleEnabled = computed(() => this.computeIsSemiAutomaticAssessmentToggleEnabled());
-    isExampleSolutionPublicationDateToggleEnabled = computed(() => this.computeIsExampleSolutionPublicationDateToggleEnabled());
     timelineItems = computed<TimelineItem[]>(() => this.computeTimelineItems());
 
     formValid: boolean;
@@ -66,43 +69,30 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
 
     constructor() {
         effect(() => {
-            if (!this.isEnablingToRunTestsAfterDueDateToggleEnabled()) {
-                this.isDatePickableForRunningTestsAfterDueDate.set(false);
+            if (!this.isEnablingToRunTestsAfterDueDateToggleVisible()) {
+                this.isDatePickerForRunningTestsAfterDueDateVisible.set(false);
                 this.buildAndTestStudentSubmissionsAfterDueDate.set(undefined);
             }
         });
         effect(() => {
-            if (!this.isDatePickableForRunningTestsAfterDueDate()) {
-                this.buildAndTestStudentSubmissionsAfterDueDate.set(undefined);
-            }
-        });
-        effect(() => {
-            if (!this.isSemiAutomaticAssessmentToggleEnabled()) {
-                this.isDatePickableForSemiAutomaticAssessmentDueDate.set(false);
+            if (!this.isDatePickerForSemiAutomaticAssessmentDueDateVisible()) {
                 this.assessmentDueDate.set(undefined);
             }
         });
         effect(() => {
-            if (this.isDatePickableForSemiAutomaticAssessmentDueDate()) {
-                this.assessmentType.set(AssessmentType.SEMI_AUTOMATIC);
+            if (!this.isExampleSolutionPublicationDateToggleVisible()) {
+                this.isDatePickerForExampleSolutionPublicationDateVisible.set(false);
+                this.exampleSolutionPublicationDate.set(undefined);
+            }
+        });
+        effect(() => {
+            if (this.assessmentType() === AssessmentType.SEMI_AUTOMATIC) {
                 this.allowComplaintsForAutomaticAssessments.set(false);
                 this.allowFeedbackRequests.set(false);
-            } else {
-                this.assessmentType.set(AssessmentType.AUTOMATIC);
+            } else if (this.assessmentType() === AssessmentType.AUTOMATIC) {
                 this.assessmentDueDate.set(undefined);
                 this.allowComplaintsForAutomaticAssessments.set(false);
                 this.feedbackSuggestionModule.set(undefined);
-            }
-        });
-        effect(() => {
-            if (!this.isExampleSolutionPublicationDateToggleEnabled()) {
-                this.isDatePickableForExampleSolutionPublicationDate.set(false);
-                this.exampleSolutionPublicationDate.set(undefined);
-            }
-        });
-        effect(() => {
-            if (!this.isDatePickableForExampleSolutionPublicationDate()) {
-                this.exampleSolutionPublicationDate.set(undefined);
             }
         });
         effect(() => {
@@ -114,15 +104,18 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.isDatePickableForRunningTestsAfterDueDate.set(this.buildAndTestStudentSubmissionsAfterDueDate() !== undefined);
-        this.isDatePickableForSemiAutomaticAssessmentDueDate.set(this.assessmentDueDate() !== undefined);
-        this.isDatePickableForExampleSolutionPublicationDate.set(this.exampleSolutionPublicationDate() !== undefined);
+        this.isDatePickerForRunningTestsAfterDueDateVisible.set(this.buildAndTestStudentSubmissionsAfterDueDate() !== undefined);
+        this.isDatePickerForExampleSolutionPublicationDateVisible.set(this.exampleSolutionPublicationDate() !== undefined);
 
         if (!this.isImport() && this.assessmentType() === undefined) {
             this.assessmentType.set(AssessmentType.AUTOMATIC);
         }
 
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+    }
+
+    toggleAssessmentType() {
+        this.assessmentType.update((assessmentType) => (assessmentType === AssessmentType.AUTOMATIC ? AssessmentType.SEMI_AUTOMATIC : AssessmentType.AUTOMATIC));
     }
 
     handleTimelineStatusChange(timelineStatus: ExerciseTimelineStatus) {
@@ -132,39 +125,43 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     }
 
     private computeTimelineItems(): TimelineItem[] {
-        const timelineItems: TimelineItem[] = [
-            {
+        const timelineItems: TimelineItem[] = [];
+        if (this.isDatePickerForReleaseDateVisible()) {
+            timelineItems.push({
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.releaseDate',
                 date: this.releaseDate,
-            },
-            {
+            });
+        }
+        if (this.isDatePickerForStartDateVisible()) {
+            timelineItems.push({
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.startDate',
                 date: this.startDate,
-            },
-            {
+            });
+        }
+        if (this.isDatePickerForDueDateVisible()) {
+            timelineItems.push({
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.dueDate',
                 date: this.dueDate,
-            },
-        ];
-
-        if (this.isDatePickableForRunningTestsAfterDueDate()) {
+            });
+        }
+        if (this.isDatePickerForRunningTestsAfterDueDateVisible()) {
             timelineItems.push({
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.dateForRunningTestsAfterDueDate',
                 date: this.buildAndTestStudentSubmissionsAfterDueDate,
             });
         }
-        if (this.isDatePickableForSemiAutomaticAssessmentDueDate()) {
+        if (this.isDatePickerForSemiAutomaticAssessmentDueDateVisible()) {
             timelineItems.push({
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.assessmentDueDate',
                 date: this.assessmentDueDate,
             });
         }
-        if (this.isDatePickableForExampleSolutionPublicationDate()) {
+        if (this.isDatePickerForExampleSolutionPublicationDateVisible()) {
             timelineItems.push({
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.exampleSolutionPublicationDate',
@@ -175,19 +172,28 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
         return timelineItems;
     }
 
-    private computeIsEnablingToRunTestsAfterDueDateToggleEnabled(): boolean {
-        const isFieldDisplayed = this.isEditFieldDisplayedRecord();
-        return (!isFieldDisplayed || isFieldDisplayed.runTestsAfterDueDate) && (this.isExamMode() || !!this.dueDate());
+    private computeIsEnablingToRunTestsAfterDueDateToggleVisible(): boolean {
+        const isInputDisplayedAccordingToCurrentModeRecord = this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord();
+        const isInputDisplayedAccordingToCurrentMode = !isInputDisplayedAccordingToCurrentModeRecord || isInputDisplayedAccordingToCurrentModeRecord.runTestsAfterDueDate;
+        return isInputDisplayedAccordingToCurrentMode && (this.isExamMode() || !!this.dueDate());
     }
 
-    private computeIsSemiAutomaticAssessmentToggleEnabled(): boolean {
-        const isFieldDisplayed = this.isEditFieldDisplayedRecord();
-        return (!isFieldDisplayed || isFieldDisplayed.assessmentDueDate) && (this.isImport() || !!this.dueDate() || this.isExamMode());
+    private computeIsSemiAutomaticAssessmentToggleVisible(): boolean {
+        const isInputDisplayedAccordingToCurrentModeRecord = this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord();
+        const isInputDisplayedAccordingToCurrentMode = !isInputDisplayedAccordingToCurrentModeRecord || isInputDisplayedAccordingToCurrentModeRecord.assessmentDueDate;
+        return isInputDisplayedAccordingToCurrentMode && (this.isExamMode() || this.isImport() || !!this.dueDate());
     }
 
-    private computeIsExampleSolutionPublicationDateToggleEnabled(): boolean {
-        const isFieldDisplayed = this.isEditFieldDisplayedRecord();
-        return (!isFieldDisplayed || isFieldDisplayed.exampleSolutionPublicationDate) && !this.isExamMode() && !this.isImport();
+    private computeIfDatePickableForSemiAutomaticAssessmentDueDateVisible(): boolean {
+        const isSemiAutomaticAssessmentToggleVisible = this.isSemiAutomaticAssessmentToggleVisible();
+        const assessmentTypeIsSemiAutomatic = this.assessmentType() === AssessmentType.SEMI_AUTOMATIC;
+        return isSemiAutomaticAssessmentToggleVisible && assessmentTypeIsSemiAutomatic && !this.isExamMode() && !this.allowFeedbackRequests();
+    }
+
+    private computeIsExampleSolutionPublicationDateToggleVisible(): boolean {
+        const isInputDisplayedAccordingToCurrentModeRecord = this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord();
+        const isInputDisplayedAccordingToCurrentMode = !isInputDisplayedAccordingToCurrentModeRecord || isInputDisplayedAccordingToCurrentModeRecord.exampleSolutionPublicationDate;
+        return isInputDisplayedAccordingToCurrentMode && !this.isExamMode() && !this.isImport();
     }
 
     private getIsImportSignal(): Signal<boolean> {

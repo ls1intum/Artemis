@@ -4,64 +4,72 @@
         <jhi-exercise-timeline [timelineItems]="timelineItems()" (timelineStatusChange)="handleTimelineStatusChange($event)" />
     </div>
     <div class="section">
-        @let isFieldDisplayed = isEditFieldDisplayedRecord();
+        @let isInputDisplayedAccordingToCurrentModeRecord = isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord();
         <h6 jhiTranslate="artemisApp.assessment.assessment"></h6>
-        <div class="form-check">
-            <input
-                type="checkbox"
-                class="form-check-input"
-                name="defineDateForRunningTestsAfterDueDate"
-                [(ngModel)]="isDatePickableForRunningTestsAfterDueDate"
-                [disabled]="!isEnablingToRunTestsAfterDueDateToggleEnabled()"
-                id="defineDateForRunningTestsAfterDueDate"
-            />
-            <label
-                [ngStyle]="!isEnablingToRunTestsAfterDueDateToggleEnabled() ? { color: 'grey' } : {}"
-                class="form-control-label"
-                for="defineDateForRunningTestsAfterDueDate"
-                jhiTranslate="artemisApp.programmingExercise.timeline.enableRunningTestsAfterDueDate"
-            ></label>
-        </div>
-        <div class="form-check">
-            <input
-                type="checkbox"
-                class="form-check-input"
-                name="manualAssessmentEnabled"
-                [(ngModel)]="isDatePickableForSemiAutomaticAssessmentDueDate"
-                [disabled]="!isSemiAutomaticAssessmentToggleEnabled()"
-                id="manualAssessmentEnabled"
-            />
-            <label
-                [ngStyle]="!isSemiAutomaticAssessmentToggleEnabled() ? { color: 'grey' } : {}"
-                class="form-control-label"
-                for="manualAssessmentEnabled"
-                jhiTranslate="artemisApp.programmingExercise.timeline.enableManualAssessment"
-            ></label>
-        </div>
-        <div class="form-check">
-            <input
-                type="checkbox"
-                class="form-check-input"
-                name="exampleSolutionPublicationDateEnabled"
-                [(ngModel)]="isDatePickableForExampleSolutionPublicationDate"
-                [disabled]="!isExampleSolutionPublicationDateToggleEnabled()"
-                id="exampleSolutionPublicationDateEnabled"
-            />
-            <label
-                [ngStyle]="!isExampleSolutionPublicationDateToggleEnabled() ? { color: 'grey' } : {}"
-                class="form-control-label"
-                for="exampleSolutionPublicationDateEnabled"
-                jhiTranslate="artemisApp.programmingExercise.timeline.enableExampleSolutionPublication"
-            ></label>
-        </div>
+        @if (isEnablingToRunTestsAfterDueDateToggleVisible()) {
+            <div class="form-check">
+                <input
+                    type="checkbox"
+                    class="form-check-input"
+                    name="defineDateForRunningTestsAfterDueDate"
+                    [(ngModel)]="isDatePickerForRunningTestsAfterDueDateVisible"
+                    id="defineDateForRunningTestsAfterDueDate"
+                />
+                <label
+                    [ngStyle]="!isEnablingToRunTestsAfterDueDateToggleVisible() ? { color: 'grey' } : {}"
+                    class="form-control-label"
+                    for="defineDateForRunningTestsAfterDueDate"
+                    jhiTranslate="artemisApp.programmingExercise.timeline.configureDateForRunningTestsAfterDueDate"
+                ></label>
+            </div>
+        }
+        @if (isSemiAutomaticAssessmentToggleVisible()) {
+            <div class="form-check">
+                <input
+                    type="checkbox"
+                    class="form-check-input"
+                    name="manualAssessmentEnabled"
+                    [ngModel]="assessmentType() === AssessmentType.SEMI_AUTOMATIC"
+                    (ngModelChange)="toggleAssessmentType()"
+                    id="manualAssessmentEnabled"
+                />
+                <label
+                    [ngStyle]="!isSemiAutomaticAssessmentToggleVisible() ? { color: 'grey' } : {}"
+                    class="form-control-label"
+                    for="manualAssessmentEnabled"
+                    jhiTranslate="artemisApp.programmingExercise.timeline.enableManualAssessment"
+                ></label>
+            </div>
+        }
+        @if (isExampleSolutionPublicationDateToggleVisible()) {
+            <div class="form-check">
+                <input
+                    type="checkbox"
+                    class="form-check-input"
+                    name="exampleSolutionPublicationDateEnabled"
+                    [(ngModel)]="isDatePickerForExampleSolutionPublicationDateVisible"
+                    [disabled]="!isExampleSolutionPublicationDateToggleVisible()"
+                    id="exampleSolutionPublicationDateEnabled"
+                />
+                <label
+                    [ngStyle]="!isExampleSolutionPublicationDateToggleVisible() ? { color: 'grey' } : {}"
+                    class="form-control-label"
+                    for="exampleSolutionPublicationDateEnabled"
+                    jhiTranslate="artemisApp.programmingExercise.timeline.configureExampleSolutionPublication"
+                ></label>
+            </div>
+        }
         @if (
-            !isFieldDisplayed ||
-            isFieldDisplayed.complaintOnAutomaticAssessment ||
-            isFieldDisplayed.manualFeedbackRequests ||
-            isFieldDisplayed.showTestNamesToStudents ||
-            isFieldDisplayed.includeTestsIntoExampleSolution
+            !isInputDisplayedAccordingToCurrentModeRecord ||
+            isInputDisplayedAccordingToCurrentModeRecord.complaintOnAutomaticAssessment ||
+            isInputDisplayedAccordingToCurrentModeRecord.manualFeedbackRequests ||
+            isInputDisplayedAccordingToCurrentModeRecord.showTestNamesToStudents ||
+            isInputDisplayedAccordingToCurrentModeRecord.includeTestsIntoExampleSolution
         ) {
-            @if ((!isFieldDisplayed || isFieldDisplayed.complaintOnAutomaticAssessment) && (isExamMode() || complaintsInCourseDisabled())) {
+            @if (
+                (!isInputDisplayedAccordingToCurrentModeRecord || isInputDisplayedAccordingToCurrentModeRecord.complaintOnAutomaticAssessment) &&
+                (isExamMode() || complaintsInCourseDisabled())
+            ) {
                 <div class="form-check">
                     <input
                         type="checkbox"
@@ -97,7 +105,7 @@
                     <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip'" />
                 </div>
             }
-            @if ((!isFieldDisplayed || isFieldDisplayed.manualFeedbackRequests) && !isExamMode()) {
+            @if ((!isInputDisplayedAccordingToCurrentModeRecord || isInputDisplayedAccordingToCurrentModeRecord.manualFeedbackRequests) && !isExamMode()) {
                 <div class="form-check">
                     <input
                         type="checkbox"
@@ -126,7 +134,7 @@
                     }
                 </div>
             }
-            @if (!isFieldDisplayed || isFieldDisplayed.showTestNamesToStudents) {
+            @if (!isInputDisplayedAccordingToCurrentModeRecord || isInputDisplayedAccordingToCurrentModeRecord.showTestNamesToStudents) {
                 <div class="form-check">
                     <input
                         class="form-check-input"
@@ -140,7 +148,7 @@
                     <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.showTestNamesToStudentsTooltip'" />
                 </div>
             }
-            @if (!isFieldDisplayed || isFieldDisplayed.includeTestsIntoExampleSolution) {
+            @if (!isInputDisplayedAccordingToCurrentModeRecord || isInputDisplayedAccordingToCurrentModeRecord.includeTestsIntoExampleSolution) {
                 <div class="form-check">
                     <input
                         type="checkbox"

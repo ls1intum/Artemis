@@ -1,7 +1,7 @@
 <section class="mb-5">
     <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle" id="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle"></h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepMessage"></p>
-    @if (isFieldDisplayedRecord().includeExerciseInCourseScoreCalculation) {
+    @if (isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord().includeExerciseInCourseScoreCalculation) {
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ programmingExercise.course ? 'Course' : 'Exam' }}Label"></label>
             <div>
@@ -10,7 +10,7 @@
         </div>
     }
     <div class="row">
-        @if (isFieldDisplayedRecord().points) {
+        @if (isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord().points) {
             <div class="col">
                 <div class="form-group">
                     <label class="label-narrow" jhiTranslate="artemisApp.exercise.points" for="field_points"></label>
@@ -31,7 +31,7 @@
                 </div>
             </div>
         }
-        @if (isFieldDisplayedRecord().bonusPoints) {
+        @if (isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord().bonusPoints) {
             <div class="col">
                 <div class="form-group" [hidden]="programmingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
                     <label class="label-narrow" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints"></label>
@@ -91,7 +91,7 @@
             }
         </div>
     }
-    @if (isFieldDisplayedRecord().submissionPolicy) {
+    @if (isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord().submissionPolicy) {
         <div class="form-group">
             <jhi-submission-policy-update
                 [editable]="!programmingExerciseCreationConfig.isEdit"
@@ -108,16 +108,16 @@
             }
         </div>
     }
-    @if (isFieldDisplayedRecord().timeline) {
+    @if (isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord().timeline) {
         <div class="form-group">
+            @let exampleSolutionPublicationDateSet =
+                !!programmingExercise.exampleSolutionPublicationDate || !!programmingExercise.exerciseGroup?.exam?.exampleSolutionPublicationDate;
             <jhi-programming-exercise-update-timeline
                 id="timeline"
                 [isExamMode]="programmingExerciseCreationConfig.isExamMode"
                 [complaintsInCourseDisabled]="programmingExercise.course?.complaintsEnabled ?? false"
-                [exampleSolutionPublicationDateSet]="
-                    !!programmingExercise.exampleSolutionPublicationDate || !!programmingExercise.exerciseGroup?.exam?.exampleSolutionPublicationDate
-                "
-                [isEditFieldDisplayedRecord]="isFieldDisplayedRecord()"
+                [exampleSolutionPublicationDateSet]="exampleSolutionPublicationDateSet"
+                [isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord]="isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()"
                 [exercise]="programmingExercise"
                 [(releaseDate)]="programmingExercise.releaseDate"
                 [(startDate)]="programmingExercise.startDate"
@@ -135,13 +135,13 @@
             />
         </div>
     }
-    @if (isFieldDisplayedRecord().assessmentInstructions && programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
+    @if (isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord().assessmentInstructions && programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions"></label>
             <jhi-grading-instructions-details id="gradingInstructions" [exercise]="programmingExercise" />
         </div>
     }
-    @if (isFieldDisplayedRecord().presentationScore) {
+    @if (isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord().presentationScore) {
         <jhi-presentation-score-checkbox [exercise]="programmingExercise" />
     }
     @if (programmingExerciseCreationConfig.showSummary) {

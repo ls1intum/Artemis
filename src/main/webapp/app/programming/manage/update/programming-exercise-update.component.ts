@@ -129,8 +129,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     isSimpleMode = signal<boolean>(true);
     isAuxiliaryRepositoryInputValid = signal<boolean>(true);
 
-    isFieldDisplayedRecord = computed(() => {
-        const isFieldDisplayedMapping: Record<ProgrammingExerciseInputField, boolean> = {} as Record<ProgrammingExerciseInputField, boolean>;
+    isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = computed(() => {
+        const isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord: Record<ProgrammingExerciseInputField, boolean> = {} as Record<ProgrammingExerciseInputField, boolean>;
 
         Object.keys(INPUT_FIELD_IS_DISPLAYED_IN_SIMPLE_MODE_RECORD).forEach((key) => {
             let isDisplayed = true;
@@ -138,15 +138,15 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 isDisplayed = INPUT_FIELD_IS_DISPLAYED_IN_SIMPLE_MODE_RECORD[key as ProgrammingExerciseInputField];
             }
 
-            isFieldDisplayedMapping[key as ProgrammingExerciseInputField] = isDisplayed;
+            isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord[key as ProgrammingExerciseInputField] = isDisplayed;
         });
 
         // show the SHORT_NAME field when importing from the sharing platform
         if (this.isImportFromSharing) {
-            isFieldDisplayedMapping[ProgrammingExerciseInputField.SHORT_NAME] = true;
+            isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord[ProgrammingExerciseInputField.SHORT_NAME] = true;
         }
 
-        return isFieldDisplayedMapping;
+        return isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord;
     });
 
     private readonly translationBasePath = 'artemisApp.programmingExercise.';
@@ -685,7 +685,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle',
                 valid: Boolean(
                     this.exerciseGradingComponent?.formValid &&
-                    (this.isExamMode || !this.isFieldDisplayedRecord().plagiarismControl || this.exercisePlagiarismComponent()?.isFormValid()),
+                    (this.isExamMode ||
+                        !this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord().plagiarismControl ||
+                        this.exercisePlagiarismComponent()?.isFormValid()),
                 ),
                 empty: this.exerciseGradingComponent?.formEmpty,
             },
