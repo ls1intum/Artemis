@@ -23,18 +23,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
-import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
-import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
-import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
-import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
-import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
+import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
@@ -77,10 +73,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
-    private ConversationTestRepository conversationRepository;
-
-    @Autowired
-    private ConversationParticipantRepository conversationParticipantRepository;
+    private ConversationUtilService conversationUtilService;
 
     private Course course;
 
@@ -129,31 +122,6 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         answerPost.setPost(post);
         answerPost.setCreationDate(ZonedDateTime.now());
         return answerPostRepository.save(answerPost);
-    }
-
-    private Conversation createOneToOneChat() {
-        Conversation chat = new OneToOneChat();
-        chat.setCourse(course);
-        chat = conversationRepository.save(chat);
-        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        addParticipant(chat, instructor);
-        addParticipant(chat, tutor);
-        return chat;
-    }
-
-    private Conversation createGroupChat() {
-        Conversation chat = new GroupChat();
-        chat.setCourse(course);
-        chat = conversationRepository.save(chat);
-        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        addParticipant(chat, instructor);
-        addParticipant(chat, tutor);
-        return chat;
-    }
-
-    private void addParticipant(Conversation conversation, User user) {
-        var participant = ConversationParticipant.createWithDefaultValues(user, conversation);
-        conversationParticipantRepository.save(participant);
     }
 
     private Post createPostViaApi(Conversation conversation) throws Exception {
@@ -377,7 +345,8 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
             Post sentinelPost = createPostViaApi(publicChannel);
 
             // Create post in one-to-one chat via API
-            Conversation oneToOneChat = createOneToOneChat();
+            User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+            Conversation oneToOneChat = conversationUtilService.createOneToOneChat(course, instructor, tutor);
             Post dmPost = createPostViaApi(oneToOneChat);
 
             // Wait for sentinel to appear, proving async Weaviate operations have been processed
@@ -395,7 +364,8 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
             Post sentinelPost = createPostViaApi(publicChannel);
 
             // Create post in group chat via API
-            Conversation groupChat = createGroupChat();
+            User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+            Conversation groupChat = conversationUtilService.createGroupChat(course, instructor, tutor);
             Post gcPost = createPostViaApi(groupChat);
 
             // Wait for sentinel to appear, proving async Weaviate operations have been processed
