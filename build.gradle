@@ -97,9 +97,10 @@ gitProperties {
 
 // Override Spring Boot BOM versions to patched releases addressing known CVEs
 // thymeleaf 3.1.5.RELEASE: GHSA-7rgv-g3jm-rvv4, GHSA-vjp2-6m4m-cv5q, GHSA-c9ph-gxww-7744
-// tomcat 11.0.21: GHSA-h9fx-5mv3-gmh6, GHSA-6q54-28g2-vpgm, GHSA-55j7-cm8x-wvmh
+// tomcat 11.0.22: GHSA-5m62-pw8w-7w9f, GHSA-h6fc-48rj-7qqh, GHSA-r29c-68gh-xp6x,
+//                 GHSA-5mp6-jrq3-r938, GHSA-fv25-8xcx-gqjc, GHSA-gx5v-xp9w-j4cg, GHSA-9m89-8frq-c98c
 ext["thymeleaf.version"] = "3.1.5.RELEASE"
-ext["tomcat.version"] = "11.0.21"
+ext["tomcat.version"] = "11.0.22"
 
 configurations {
     mockitoAgent
