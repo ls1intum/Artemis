@@ -2,7 +2,6 @@ import { Component, WritableSignal, computed, effect, inject, input, output } fr
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DatePickerModule } from 'primeng/datepicker';
-import { InputMaskModule } from 'primeng/inputmask';
 import { TooltipModule } from 'primeng/tooltip';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
@@ -26,7 +25,7 @@ type InternalTimelineItem = TimelineItem & {
 
 @Component({
     selector: 'jhi-exercise-timeline',
-    imports: [DatePickerModule, FormsModule, InputMaskModule, TooltipModule, TranslateDirective],
+    imports: [DatePickerModule, FormsModule, TooltipModule, TranslateDirective],
     templateUrl: './exercise-timeline.html',
     styleUrl: './exercise-timeline.scss',
 })
@@ -48,33 +47,11 @@ export class ExerciseTimeline {
 
     updateDate(item: TimelineItem, newInternalDate: Date | string | null): void {
         const currentDate = item.date();
-        let newDate: Dayjs | undefined;
-        if (newInternalDate instanceof Date) {
-            newDate = dayjs(newInternalDate);
-        } else {
-            const parsedDate = typeof newInternalDate === 'string' ? this.parseMaskedDate(newInternalDate) : undefined;
-            newDate = parsedDate ? dayjs(parsedDate) : undefined;
-        }
-
+        const newDate = newInternalDate instanceof Date ? dayjs(newInternalDate) : undefined;
         const oldAndNewDateUndefined = currentDate === undefined && newDate === undefined;
         const oldAndNewDatesAreTheSame = currentDate !== undefined && newDate !== undefined && currentDate.isSame(newDate);
         if (oldAndNewDateUndefined || oldAndNewDatesAreTheSame) return;
-
         item.date.set(newDate);
-    }
-
-    private parseMaskedDate(value: string): Date | undefined {
-        const match = /^(\d{2}) \. (\d{2}) \. (\d{4}) \| (\d{2}) : (\d{2})$/.exec(value);
-        if (!match) {
-            return undefined;
-        }
-
-        const [, day, month, year, hour, minute] = match.map(Number);
-        const date = new Date(year, month - 1, day, hour, minute);
-        if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day || date.getHours() !== hour || date.getMinutes() !== minute) {
-            return undefined;
-        }
-        return date;
     }
 
     private computeInternalTimelineItems(): InternalTimelineItem[] {
