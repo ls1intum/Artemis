@@ -136,12 +136,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         Object.keys(inputFieldEditModeMapping).forEach((key) => {
             let isDisplayed = true;
             if (this.isSimpleMode() && !(this.isImportFromFile || this.isImportFromExistingExercise)) {
-                isDisplayed = IS_DISPLAYED_IN_SIMPLE_MODE[key as ProgrammingExerciseInputField];
+                isDisplayed = inputFieldEditModeMapping[key as ProgrammingExerciseInputField];
             }
 
             isEditFieldDisplayedMapping[key as ProgrammingExerciseInputField] = isDisplayed;
         });
-
         // show the SHORT_NAME field when importing from the sharing platform
         if (this.isImportFromSharing) {
             isEditFieldDisplayedMapping[ProgrammingExerciseInputField.SHORT_NAME] = true;
