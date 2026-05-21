@@ -65,11 +65,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     const course = { id: courseId } as Course;
     const route = {
         snapshot: { paramMap: convertToParamMap({ courseId: '123' }) },
-        url: {
-            pipe: () => ({
-                subscribe: () => {},
-            }),
-        },
+        url: of([{ path: 'programming-exercises' }] as UrlSegment[]),
     } as ActivatedRoute;
     let comp: ProgrammingExerciseUpdateComponent;
     let fixture: ComponentFixture<ProgrammingExerciseUpdateComponent>;
@@ -305,7 +301,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
                 comp.programmingExercise = programmingExercise;
                 comp.backupExercise = {} as ProgrammingExercise;
-                comp.isCreate = true;
+                route.url = of([{ path: 'new' }] as UrlSegment[]);
                 fixture.detectChanges();
             });
 
