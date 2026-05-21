@@ -130,23 +130,24 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     isAuxiliaryRepositoryInputValid = signal<boolean>(true);
 
     isEditFieldDisplayedRecord = computed(() => {
-        const inputFieldEditModeMapping: Record<ProgrammingExerciseInputField, boolean> = {} as Record<ProgrammingExerciseInputField, boolean>;
+        const inputFieldEditModeMapping = IS_DISPLAYED_IN_SIMPLE_MODE;
 
-        Object.keys(IS_DISPLAYED_IN_SIMPLE_MODE).forEach((key) => {
+        const isEditFieldDisplayedMapping: Record<ProgrammingExerciseInputField, boolean> = {} as Record<ProgrammingExerciseInputField, boolean>;
+        Object.keys(inputFieldEditModeMapping).forEach((key) => {
             let isDisplayed = true;
             if (this.isSimpleMode() && !(this.isImportFromFile || this.isImportFromExistingExercise)) {
                 isDisplayed = IS_DISPLAYED_IN_SIMPLE_MODE[key as ProgrammingExerciseInputField];
             }
 
-            inputFieldEditModeMapping[key as ProgrammingExerciseInputField] = isDisplayed;
+            isEditFieldDisplayedMapping[key as ProgrammingExerciseInputField] = isDisplayed;
         });
 
         // show the SHORT_NAME field when importing from the sharing platform
         if (this.isImportFromSharing) {
-            inputFieldEditModeMapping[ProgrammingExerciseInputField.SHORT_NAME] = true;
+            isEditFieldDisplayedMapping[ProgrammingExerciseInputField.SHORT_NAME] = true;
         }
 
-        return inputFieldEditModeMapping;
+        return isEditFieldDisplayedMapping;
     });
 
     private readonly translationBasePath = 'artemisApp.programmingExercise.';
