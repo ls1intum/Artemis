@@ -89,7 +89,19 @@ public class LectureContentProcessingService {
     @Async
     public void triggerProcessing(AttachmentVideoUnit unit) {
         SecurityUtils.setAuthorizationObject();
-        doTriggerProcessing(unit, Optional.empty());
+        doTriggerProcessing(unit, Optional.empty(), false);
+    }
+
+    /**
+     * Trigger processing for metadata-only updates that are part of the ingestion payload
+     * (e.g. lecture unit name), even when video/PDF content hashes did not change.
+     *
+     * @param unit the attachment video unit to process
+     */
+    @Async
+    public void triggerProcessingForMetadataChange(AttachmentVideoUnit unit) {
+        SecurityUtils.setAuthorizationObject();
+        doTriggerProcessing(unit, Optional.empty(), true);
     }
 
     /**
@@ -104,7 +116,7 @@ public class LectureContentProcessingService {
      * @param stateToDelete if present, delete this state after preflight checks pass (used by retryProcessing)
      * @return true if preflight checks passed, false if preflight failed
      */
-    private boolean doTriggerProcessing(AttachmentVideoUnit unit, Optional<LectureUnitProcessingState> stateToDelete) {
+    private boolean doTriggerProcessing(AttachmentVideoUnit unit, Optional<LectureUnitProcessingState> stateToDelete, boolean forceReprocessing) {
         if (unit == null || unit.getId() == null) {
             log.warn("Cannot process null or unsaved lecture unit");
             return false;
@@ -139,7 +151,11 @@ public class LectureContentProcessingService {
 
         // Detect content changes
         boolean contentChanged = handleContentChanges(unit, state, hasVideo, hasPdf);
-        if (contentChanged) {
+        boolean shouldReprocess = contentChanged || forceReprocessing;
+        if (shouldReprocess) {
+            if (forceReprocessing && !contentChanged) {
+                log.info("Forcing reprocessing for unit {} due metadata change in ingestion payload", unit.getId());
+            }
             state.resetRetryCount();
             state.setPhase(ProcessingPhase.IDLE);
             state.setStartedAt(null); // Back to queue
@@ -232,7 +248,7 @@ public class LectureContentProcessingService {
         // Run processing, passing the FAILED state to delete after preflight passes
         // If preflight fails, the FAILED state is preserved (nothing deleted)
         // If preflight passes, the FAILED state is deleted and fresh state created
-        boolean preflightPassed = doTriggerProcessing(lectureUnit, existingState);
+        boolean preflightPassed = doTriggerProcessing(lectureUnit, existingState, false);
         if (!preflightPassed) {
             // Services unavailable - FAILED state was NOT deleted, return null
             return null;
@@ -276,9 +292,15 @@ public class LectureContentProcessingService {
         String currentVideoHash = computeHash(unit.getVideoSource());
         Integer currentAttachmentVersion = unit.getAttachment() != null ? unit.getAttachment().getVersion() : null;
 
-        // Only consider it a "change" if there was previous content (hash/version was set)
-        boolean videoChanged = hasVideo && state.getVideoSourceHash() != null && !currentVideoHash.equals(state.getVideoSourceHash());
-        boolean attachmentChanged = hasPdf && state.getAttachmentVersion() != null && !state.getAttachmentVersion().equals(currentAttachmentVersion);
+        boolean hasPersistedState = state.getId() != null;
+        boolean previousVideoKnown = state.getVideoSourceHash() != null && !state.getVideoSourceHash().isBlank();
+        boolean previousAttachmentKnown = state.getAttachmentVersion() != null;
+        boolean videoAdded = hasPersistedState && hasVideo && !previousVideoKnown;
+        boolean videoRemoved = hasPersistedState && !hasVideo && previousVideoKnown;
+        boolean videoChanged = hasVideo && previousVideoKnown && !currentVideoHash.equals(state.getVideoSourceHash());
+        boolean attachmentAdded = hasPersistedState && hasPdf && !previousAttachmentKnown;
+        boolean attachmentRemoved = hasPersistedState && !hasPdf && previousAttachmentKnown;
+        boolean attachmentChanged = hasPdf && previousAttachmentKnown && !state.getAttachmentVersion().equals(currentAttachmentVersion);
 
         // For new units, just set the hash/version without triggering cleanup
         if (hasVideo && state.getVideoSourceHash() == null) {
@@ -288,23 +310,24 @@ public class LectureContentProcessingService {
             state.setAttachmentVersion(currentAttachmentVersion);
         }
 
-        if (videoChanged || attachmentChanged) {
-            log.info("Content changed for unit {}, video: {}, attachment: {}", unit.getId(), videoChanged, attachmentChanged);
+        if (videoAdded || videoRemoved || videoChanged || attachmentAdded || attachmentRemoved || attachmentChanged) {
+            log.info("Content changed for unit {}, videoAdded: {}, videoRemoved: {}, videoChanged: {}, attachmentAdded: {}, attachmentRemoved: {}, attachmentChanged: {}",
+                    unit.getId(), videoAdded, videoRemoved, videoChanged, attachmentAdded, attachmentRemoved, attachmentChanged);
 
-            if (videoChanged) {
+            if (videoAdded || videoRemoved || videoChanged) {
                 // Delete stored transcription before Iris cleanup: dispatchPendingJobs() checks
                 // for a COMPLETED transcription to decide whether to skip straight to INGESTING.
                 // Leaving the old record would cause stale text from the previous video to be ingested.
                 processingStateCallbackService.deleteTranscriptionForUnit(unit.getId());
                 cleanupForReprocessing(unit);
-                state.setVideoSourceHash(currentVideoHash);
+                state.setVideoSourceHash(hasVideo ? currentVideoHash : null);
             }
 
-            if (attachmentChanged && !videoChanged) {
+            if ((attachmentAdded || attachmentRemoved || attachmentChanged) && !(videoAdded || videoRemoved || videoChanged)) {
                 cleanupForReprocessing(unit);
             }
 
-            state.setAttachmentVersion(currentAttachmentVersion);
+            state.setAttachmentVersion(hasPdf ? currentAttachmentVersion : null);
             return true;
         }
 

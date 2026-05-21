@@ -4,6 +4,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -98,11 +99,13 @@ public class AttachmentVideoUnitService {
      */
     public AttachmentVideoUnit updateAttachmentVideoUnit(AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentVideoUnitDTO updateUnitDTO, Attachment updateAttachment,
             MultipartFile updateFile, boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder, Set<Long> originalCompetencyIds) {
+        String previousLectureUnitName = existingAttachmentVideoUnit.getName();
         existingAttachmentVideoUnit.setDescription(updateUnitDTO.description());
         existingAttachmentVideoUnit.setName(updateUnitDTO.name());
         existingAttachmentVideoUnit.setReleaseDate(updateUnitDTO.releaseDate());
         existingAttachmentVideoUnit.setVideoSource(updateUnitDTO.videoSource());
         boolean hasUploadedFile = updateFile != null && !updateFile.isEmpty();
+        boolean ingestionPayloadMetadataChanged = !Objects.equals(previousLectureUnitName, updateUnitDTO.name());
         // Note: competency links are updated by the resource layer using lectureUnitService.updateCompetencyLinks
 
         Attachment existingAttachment = existingAttachmentVideoUnit.getAttachment();
@@ -119,7 +122,14 @@ public class AttachmentVideoUnitService {
 
         if (updateAttachment == null) {
             // Trigger processing for video-only updates (video source change detection is done inside the service)
-            contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
+            contentProcessingService.ifPresent(api -> {
+                if (ingestionPayloadMetadataChanged) {
+                    api.triggerProcessingForMetadataChange(savedAttachmentVideoUnit);
+                }
+                else {
+                    api.triggerProcessing(savedAttachmentVideoUnit);
+                }
+            });
             prepareAttachmentVideoUnitForClient(existingAttachmentVideoUnit);
             return existingAttachmentVideoUnit;
         }
@@ -158,10 +168,14 @@ public class AttachmentVideoUnitService {
                 }
             }
 
-            // Only trigger processing if file was uploaded or if unit has video (video change detection happens inside service)
-            if (hasUploadedFile || savedAttachmentVideoUnit.getVideoSource() != null) {
-                contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
-            }
+            contentProcessingService.ifPresent(api -> {
+                if (ingestionPayloadMetadataChanged) {
+                    api.triggerProcessingForMetadataChange(savedAttachmentVideoUnit);
+                }
+                else {
+                    api.triggerProcessing(savedAttachmentVideoUnit);
+                }
+            });
         }
 
         prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);

@@ -581,6 +581,118 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
+        void shouldResetToIdleWhenVideoIsAddedToExistingState() {
+            // Given: Existing persisted DONE state without previous video hash
+            testState.setId(42L);
+            testState.setVideoSourceHash(null);
+            testState.setPhase(ProcessingPhase.DONE);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+
+            service.triggerProcessing(testUnit);
+
+            // Then: Video add is treated as content change and re-queued
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            assertThat(testState.getStartedAt()).isNull();
+            verify(irisLectureApi).deleteLectureFromPyrisDB(any());
+        }
+
+        @Test
+        void shouldResetToIdleWhenAttachmentIsAddedToExistingState() {
+            // Given: Existing persisted DONE state, known video, but no previous attachment
+            Attachment pdfAttachment = new Attachment();
+            pdfAttachment.setLink("/path/to/slides.pdf");
+            pdfAttachment.setVersion(1);
+            testUnit.setAttachment(pdfAttachment);
+
+            testState.setId(43L);
+            testState.setVideoSourceHash(computeTestHash(testUnit.getVideoSource()));
+            testState.setAttachmentVersion(null);
+            testState.setPhase(ProcessingPhase.DONE);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+
+            service.triggerProcessing(testUnit);
+
+            // Then: Attachment add is treated as content change and re-queued
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            assertThat(testState.getStartedAt()).isNull();
+            assertThat(testState.getAttachmentVersion()).isEqualTo(1);
+            verify(irisLectureApi).deleteLectureFromPyrisDB(any());
+        }
+
+        @Test
+        void shouldResetToIdleWhenVideoIsRemovedFromExistingState() {
+            // Given: Existing persisted DONE state with known video hash, video removed in update while PDF remains
+            testUnit.setVideoSource(null);
+            Attachment pdfAttachment = new Attachment();
+            pdfAttachment.setLink("/path/to/slides.pdf");
+            pdfAttachment.setVersion(3);
+            testUnit.setAttachment(pdfAttachment);
+            testState.setId(44L);
+            testState.setVideoSourceHash("old-video-hash");
+            testState.setAttachmentVersion(3);
+            testState.setPhase(ProcessingPhase.DONE);
+
+            LectureTranscription existingTranscription = new LectureTranscription();
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(existingTranscription));
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+
+            service.triggerProcessing(testUnit);
+
+            // Then: Video removal is treated as content change and re-queued
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            assertThat(testState.getStartedAt()).isNull();
+            assertThat(testState.getVideoSourceHash()).isNull();
+            verify(transcriptionRepository).delete(existingTranscription);
+            verify(irisLectureApi).deleteLectureFromPyrisDB(any());
+        }
+
+        @Test
+        void shouldResetToIdleWhenAttachmentIsRemovedFromExistingState() {
+            // Given: Existing persisted DONE state with known attachment version, attachment removed in update
+            testState.setId(45L);
+            testState.setVideoSourceHash(computeTestHash(testUnit.getVideoSource()));
+            testState.setAttachmentVersion(3);
+            testState.setPhase(ProcessingPhase.DONE);
+            testUnit.setAttachment(null);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+
+            service.triggerProcessing(testUnit);
+
+            // Then: Attachment removal is treated as content change and re-queued
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            assertThat(testState.getStartedAt()).isNull();
+            assertThat(testState.getAttachmentVersion()).isNull();
+            verify(irisLectureApi).deleteLectureFromPyrisDB(any());
+        }
+
+        @Test
+        void shouldResetToIdleWhenForcedReprocessAndContentUnchanged() {
+            testState.setVideoSourceHash(computeTestHash(testUnit.getVideoSource()));
+            testState.setPhase(ProcessingPhase.DONE);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+
+            service.triggerProcessingForMetadataChange(testUnit);
+
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            assertThat(testState.getStartedAt()).isNull();
+            verify(irisLectureApi, never()).deleteLectureFromPyrisDB(any());
+        }
+
+        @Test
         void shouldNotReprocessIfContentUnchanged() {
             testUnit.setVideoSource("https://live.rbg.tum.de/w/course/12345");
             testState.setVideoSourceHash(computeTestHash("https://live.rbg.tum.de/w/course/12345"));
