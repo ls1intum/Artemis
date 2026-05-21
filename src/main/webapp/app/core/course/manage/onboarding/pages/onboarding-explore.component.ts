@@ -27,7 +27,7 @@ import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LECTURE, MODU
 
             .explore-card {
                 border: 1px solid var(--bs-border-color);
-                border-radius: 0.5rem;
+                border-radius: var(--bs-border-radius-lg, 0.5rem);
                 text-align: center;
                 padding: 1.75rem 1.25rem;
                 transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -99,7 +99,7 @@ import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LECTURE, MODU
             .explore-icon-wrapper {
                 width: 56px;
                 height: 56px;
-                border-radius: 0.5rem;
+                border-radius: var(--bs-border-radius-lg, 0.5rem);
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
