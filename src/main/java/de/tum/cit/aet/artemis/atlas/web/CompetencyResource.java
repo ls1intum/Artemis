@@ -41,7 +41,9 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyAtlasMLNotificationService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyService;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyValidationService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyWithTailRelation;
 import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -86,9 +88,14 @@ public class CompetencyResource {
 
     private final Optional<AtlasMLApi> atlasMLApi;
 
+    private final CompetencyValidationService competencyValidator;
+
+    private final CompetencyAtlasMLNotificationService atlasMLNotificationService;
+
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyService competencyService, CourseCompetencyRepository courseCompetencyRepository,
-            CourseCompetencyService courseCompetencyService, Optional<AtlasMLApi> atlasMLApi) {
+            CourseCompetencyService courseCompetencyService, Optional<AtlasMLApi> atlasMLApi, CompetencyValidationService competencyValidator,
+            CompetencyAtlasMLNotificationService atlasMLNotificationService) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
@@ -97,6 +104,8 @@ public class CompetencyResource {
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.courseCompetencyService = courseCompetencyService;
         this.atlasMLApi = atlasMLApi;
+        this.competencyValidator = competencyValidator;
+        this.atlasMLNotificationService = atlasMLNotificationService;
     }
 
     /**
@@ -150,14 +159,14 @@ public class CompetencyResource {
             throws URISyntaxException {
         log.debug("REST request to create Competency : {}", competencyRequest);
         Competency competency = toCompetency(competencyRequest);
-        checkCompetencyAttributesForCreation(competency);
+        competencyValidator.checkForCreation(competency);
 
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
 
         final var persistedCompetency = competencyService.createCourseCompetency(competency, course);
 
         // Notify AtlasML about the new competency
-        notifyAtlasML(List.of(persistedCompetency), OperationTypeDTO.UPDATE, "competency creation");
+        atlasMLNotificationService.notifyAtlasML(List.of(persistedCompetency), OperationTypeDTO.UPDATE, "competency creation");
 
         return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/" + persistedCompetency.getId()))
                 .body(CourseCompetencyResponseDTO.of(persistedCompetency));
@@ -178,14 +187,14 @@ public class CompetencyResource {
         log.debug("REST request to create Competencies : {}", competencies);
         var competencyEntities = competencies.stream().map(this::toCompetency).toList();
         for (Competency competency : competencyEntities) {
-            checkCompetencyAttributesForCreation(competency);
+            competencyValidator.checkForCreation(competency);
         }
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
 
         var createdCompetencies = competencyService.createCompetencies(competencyEntities, course);
 
         // Notify AtlasML about the new competencies
-        notifyAtlasML(createdCompetencies, OperationTypeDTO.UPDATE, "competency creation for " + createdCompetencies.size() + " competencies");
+        atlasMLNotificationService.notifyAtlasML(createdCompetencies, OperationTypeDTO.UPDATE, "competency creation for " + createdCompetencies.size() + " competencies");
 
         return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/"))
                 .body(createdCompetencies.stream().map(CourseCompetencyResponseDTO::of).toList());
@@ -325,7 +334,7 @@ public class CompetencyResource {
     public ResponseEntity<CourseCompetencyResponseDTO> updateCompetency(@PathVariable long courseId, @Valid @RequestBody CourseCompetencyRequestDTO competencyRequest) {
         log.debug("REST request to update Competency : {}", competencyRequest);
         Competency competency = toCompetency(competencyRequest);
-        checkCompetencyAttributesForUpdate(competency);
+        competencyValidator.checkForUpdate(competency);
 
         var course = courseRepository.findByIdElseThrow(courseId);
         var existingCompetency = competencyRepository.findByIdWithLectureUnitsElseThrow(competency.getId());
@@ -334,7 +343,7 @@ public class CompetencyResource {
         var persistedCompetency = competencyService.updateCourseCompetency(existingCompetency, competency);
 
         // Notify AtlasML about the competency update
-        notifyAtlasML(List.of(persistedCompetency), OperationTypeDTO.UPDATE, "competency update");
+        atlasMLNotificationService.notifyAtlasML(List.of(persistedCompetency), OperationTypeDTO.UPDATE, "competency update");
 
         return ResponseEntity.ok(CourseCompetencyResponseDTO.of(persistedCompetency));
     }
@@ -358,7 +367,7 @@ public class CompetencyResource {
         // Notify AtlasML about the competency deletion before actual deletion
         Competency competencyForAtlasMl = new Competency(competency);
         competencyForAtlasMl.setId(competency.getId());
-        notifyAtlasML(List.of(competencyForAtlasMl), OperationTypeDTO.DELETE, "competency deletion");
+        atlasMLNotificationService.notifyAtlasML(List.of(competencyForAtlasMl), OperationTypeDTO.DELETE, "competency deletion");
 
         courseCompetencyService.deleteCourseCompetency(competency, course);
 
@@ -409,48 +418,8 @@ public class CompetencyResource {
         }
     }
 
-    private void checkCompetencyAttributesForCreation(Competency competency) {
-        if (competency.getId() != null) {
-            throw new BadRequestAlertException("A new competency should not have an id", ENTITY_NAME, "existingCompetencyId");
-        }
-        checkCompetencyAttributes(competency);
-    }
-
-    private void checkCompetencyAttributesForUpdate(Competency competency) {
-        if (competency.getId() == null) {
-            throw new BadRequestAlertException("An updated competency should have an id", ENTITY_NAME, "missingCompetencyId");
-        }
-        checkCompetencyAttributes(competency);
-    }
-
-    private void checkCompetencyAttributes(Competency competency) {
-        if (competency.getTitle() == null || competency.getTitle().trim().isEmpty()) {
-            throw new BadRequestAlertException("The title of a competency is invalid!", ENTITY_NAME, "invalidCompetencyTitle");
-        }
-        if (competency.getMasteryThreshold() < 1 || competency.getMasteryThreshold() > 100) {
-            throw new BadRequestAlertException("The mastery threshold of the competency '" + competency.getTitle() + "' is invalid!", ENTITY_NAME,
-                    "invalidCompetencyMasteryThreshold");
-        }
-    }
-
     private Competency toCompetency(CourseCompetencyRequestDTO competencyRequest) {
         return CourseCompetencyRequestDTO.toEntity(competencyRequest, Competency::new);
-    }
-
-    /**
-     * Helper method to notify AtlasML about competency changes with consistent error handling.
-     *
-     * @param competencies         the competencies to save
-     * @param operationType        the operation type (UPDATE or DELETE)
-     * @param operationDescription the description of the operation for logging purposes
-     */
-    private void notifyAtlasML(List<Competency> competencies, @NonNull OperationTypeDTO operationType, String operationDescription) {
-        try {
-            atlasMLApi.ifPresent(api -> api.saveCompetencies(competencies, operationType));
-        }
-        catch (Exception e) {
-            log.warn("Failed to notify AtlasML about {}: {}", operationDescription, e.getMessage());
-        }
     }
 
     /**
