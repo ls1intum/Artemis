@@ -162,7 +162,6 @@ async function prewarmBackend(adminJwt: string): Promise<void> {
         const examMgmt = SEED_COURSES.examManagement.id;
         const programmingMgmt = SEED_COURSES.programmingManagement.id;
         const quizPart = SEED_COURSES.quizParticipation.id;
-        const channel1 = SEED_COURSES.channel1.id;
         const exerciseMgmt = SEED_COURSES.exerciseManagement.id;
         const lectureMgmt = SEED_COURSES.lectureManagement.id;
         const endpoints = [
@@ -176,8 +175,6 @@ async function prewarmBackend(adminJwt: string): Promise<void> {
             `api/text/courses/${exerciseMgmt}/text-exercises`,
             `api/modeling/courses/${exerciseMgmt}/modeling-exercises`,
             `api/lecture/courses/${lectureMgmt}/lectures`,
-            `api/communication/courses/${channel1}/posts`,
-            `api/communication/courses/${channel1}/messages`,
         ];
 
         console.log(`[prewarm] warming ${endpoints.length} endpoints in parallel...`);
