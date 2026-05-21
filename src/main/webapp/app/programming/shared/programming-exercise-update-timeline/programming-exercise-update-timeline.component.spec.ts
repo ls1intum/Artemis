@@ -1,14 +1,10 @@
+import { Component } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseUpdateTimelineComponent } from './programming-exercise-update-timeline.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { ProgrammingExerciseTestScheduleDatePickerComponent } from './test-schedule-date-picker/programming-exercise-test-schedule-date-picker.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { QueryList, SimpleChange } from '@angular/core';
-import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { expectElementToBeDisabled, expectElementToBeEnabled } from 'test/helpers/utils/general-test.utils';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { Subject, of } from 'rxjs';
+import { of } from 'rxjs';
 import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -19,10 +15,49 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { By } from '@angular/platform-browser';
+
+@Component({
+    imports: [ProgrammingExerciseUpdateTimelineComponent],
+    template: `
+        <jhi-programming-exercise-update-timeline
+            [exercise]="exercise"
+            [isExamMode]="isExamMode"
+            [complaintsInCourseDisabled]="true"
+            [exampleSolutionPublicationDateSet]="!!exercise.exampleSolutionPublicationDate"
+            [isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord]="isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord"
+            [(dueDate)]="exercise.dueDate"
+            [(assessmentDueDate)]="exercise.assessmentDueDate"
+            [(assessmentType)]="exercise.assessmentType"
+            [(allowComplaintsForAutomaticAssessments)]="exercise.allowComplaintsForAutomaticAssessments"
+            [(allowFeedbackRequests)]="exercise.allowFeedbackRequests"
+            [(feedbackSuggestionModule)]="exercise.feedbackSuggestionModule"
+            [(releaseTestsWithExampleSolution)]="exercise.releaseTestsWithExampleSolution"
+        />
+    `,
+})
+class TestHostComponent {
+    exercise = {} as ProgrammingExercise;
+    isExamMode = false;
+
+    isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = {
+        releaseDate: true,
+        startDate: true,
+        dueDate: true,
+        runTestsAfterDueDate: true,
+        assessmentDueDate: true,
+        exampleSolutionPublicationDate: true,
+        complaintOnAutomaticAssessment: true,
+        manualFeedbackRequests: true,
+        showTestNamesToStudents: true,
+        includeTestsIntoExampleSolution: true,
+    } as Record<ProgrammingExerciseInputField, boolean>;
+}
 
 describe('ProgrammingExerciseLifecycleComponent', () => {
-    let comp: ProgrammingExerciseUpdateTimelineComponent;
-    let fixture: ComponentFixture<ProgrammingExerciseUpdateTimelineComponent>;
+    let fixture: ComponentFixture<TestHostComponent>;
 
     const startDate = dayjs().add(5, 'days');
     const nextDueDate = dayjs().add(6, 'days');
@@ -32,7 +67,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule],
+            imports: [OwlNativeDateTimeModule, TestHostComponent],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -48,8 +83,6 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
                 provideHttpClientTesting(),
             ],
         }).compileComponents();
-        fixture = TestBed.createComponent(ProgrammingExerciseUpdateTimelineComponent);
-        comp = fixture.componentInstance;
 
         exercise = {
             id: 42,
@@ -58,306 +91,192 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
             buildAndTestStudentSubmissionsAfterDueDate: afterDueDate,
             exampleSolutionPublicationDate,
         } as ProgrammingExercise;
-
-        fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
-            releaseDate: true,
-            startDate: true,
-            dueDate: true,
-            runTestsAfterDueDate: true,
-            assessmentDueDate: true,
-            exampleSolutionPublicationDate: true,
-            complaintOnAutomaticAssessment: true,
-            manualFeedbackRequests: true,
-            showTestNamesToStudents: true,
-            includeTestsIntoExampleSolution: true,
-        });
     });
+
+    const createHostComponent = () => {
+        fixture = TestBed.createComponent(TestHostComponent);
+        fixture.componentInstance.exercise = exercise;
+        fixture.detectChanges();
+    };
+
+    const getCheckbox = (id: string): HTMLInputElement => fixture.debugElement.nativeElement.querySelector(`#${id}`);
 
     afterEach(() => {
         jest.restoreAllMocks();
     });
 
-    it('should do nothing if the release date is set to null', () => {
-        comp.exercise = exercise;
-        comp.updateReleaseDate(undefined);
+    it('should change the value for allowing complaints for exercise with automatic assessment', () => {
+        exercise.allowComplaintsForAutomaticAssessments = false;
+        exercise.assessmentType = AssessmentType.AUTOMATIC;
+        createHostComponent();
 
-        expect(comp.exercise.startDate).toEqual(startDate);
-        expect(comp.exercise.dueDate).toEqual(nextDueDate);
-        expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).toEqual(afterDueDate);
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(exampleSolutionPublicationDate);
+        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowComplaintsForAutomaticAssessment');
+
+        expect(exercise.allowComplaintsForAutomaticAssessments).toBeFalse();
+        expect(checkbox.checked).toBeFalse();
+
+        checkbox.click();
+        fixture.detectChanges();
+
+        expect(exercise.allowComplaintsForAutomaticAssessments).toBeTrue();
     });
 
-    it('should only reset the due date if the release date is between the due date and the after due date', () => {
-        comp.exercise = exercise;
-        const newRelease = dayjs().add(6, 'days');
-        comp.updateReleaseDate(newRelease);
+    it('should change feedback request allowed', () => {
+        exercise.allowFeedbackRequests = false;
+        exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+        createHostComponent();
 
-        expect(comp.exercise.startDate).toEqual(newRelease);
-        expect(comp.exercise.dueDate).toEqual(newRelease);
-        expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).toEqual(afterDueDate);
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(exampleSolutionPublicationDate);
+        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowFeedbackRequests');
+
+        expect(exercise.allowFeedbackRequests).toBeFalse();
+        expect(checkbox.checked).toBeFalse();
+
+        checkbox.click();
+        fixture.detectChanges();
+
+        expect(exercise.allowFeedbackRequests).toBeTrue();
     });
 
-    it('should reset the due date, the after due date and the example solution publication date if the new release is after all dates', () => {
-        comp.exercise = exercise;
-        const newRelease = dayjs().add(10, 'days');
-        comp.updateReleaseDate(newRelease);
+    it('should change assessment type from automatic to semi-automatic', () => {
+        exercise.assessmentType = AssessmentType.AUTOMATIC;
+        createHostComponent();
 
-        expect(comp.exercise.releaseDate).toEqual(newRelease);
-        expect(comp.exercise.startDate).toEqual(newRelease);
-        expect(comp.exercise.dueDate).toEqual(newRelease);
-        expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).toEqual(newRelease);
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(newRelease);
+        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#manualAssessmentEnabled');
+
+        expect(exercise.assessmentType).toBe(AssessmentType.AUTOMATIC);
+        expect(checkbox.checked).toBeFalse();
+
+        checkbox.click();
+        fixture.detectChanges();
+
+        expect(exercise.assessmentType).toBe(AssessmentType.SEMI_AUTOMATIC);
     });
 
-    it('should only reset the due date if the start date is between the due date and the after due date', () => {
-        comp.exercise = exercise;
-        const newStart = dayjs().add(6, 'days');
-        comp.updateStartDate(newStart);
+    it('should change assessment type from semi-automatic to automatic', () => {
+        exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+        exercise.assessmentDueDate = afterDueDate;
+        createHostComponent();
 
-        expect(comp.exercise.dueDate).toEqual(newStart);
-        expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).toEqual(afterDueDate);
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(exampleSolutionPublicationDate);
-    });
+        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#manualAssessmentEnabled');
 
-    it('should reset the due date, the after due date and the example solution publication date if the new start date is after all dates', () => {
-        comp.exercise = exercise;
-        const newStart = dayjs().add(10, 'days');
-        comp.updateStartDate(newStart);
+        expect(exercise.assessmentType).toBe(AssessmentType.SEMI_AUTOMATIC);
+        expect(checkbox.checked).toBeTrue();
 
-        expect(comp.exercise.dueDate).toEqual(newStart);
-        expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).toEqual(newStart);
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(newStart);
-    });
+        checkbox.click();
+        fixture.detectChanges();
 
-    it('should reset the example solution publication date if the new due date is later', () => {
-        const newDueDate = dayjs().add(10, 'days');
-        comp.exercise = exercise;
-        exercise.dueDate = newDueDate;
-        comp.updateExampleSolutionPublicationDate(newDueDate);
-
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(newDueDate);
-    });
-
-    it('should change the value for allowing complaints for exercise with automatic assessment after toggling', () => {
-        comp.exercise = exercise;
-        comp.exercise.allowComplaintsForAutomaticAssessments = false;
-        comp.exercise.assessmentType = AssessmentType.AUTOMATIC;
-        comp.toggleComplaintsType();
-
-        expect(comp.exercise.allowComplaintsForAutomaticAssessments).toBeTrue();
-    });
-
-    it('should change feedback request allowed after toggling', () => {
-        comp.exercise = { ...exercise, allowFeedbackRequests: false };
-        expect(comp.exercise.allowFeedbackRequests).toBeFalse();
-
-        comp.toggleFeedbackRequests();
-
-        expect(comp.exercise.allowFeedbackRequests).toBeTrue();
-    });
-
-    it('should change assessment type from automatic to semi-automatic after toggling', () => {
-        comp.exercise = exercise;
-        comp.exercise.assessmentType = AssessmentType.AUTOMATIC;
-        comp.toggleAssessmentType();
-
-        expect(comp.exercise.assessmentType).toBe(AssessmentType.SEMI_AUTOMATIC);
-        expect(comp.exercise.allowComplaintsForAutomaticAssessments).toBeFalse();
-    });
-
-    it('should change assessment type from semi-automatic to automatic after toggling', () => {
-        comp.exercise = exercise;
-        comp.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-        comp.toggleAssessmentType();
-
-        expect(comp.exercise.assessmentType).toBe(AssessmentType.AUTOMATIC);
-        expect(comp.exercise.assessmentDueDate).toBeUndefined();
+        expect(exercise.assessmentType).toBe(AssessmentType.AUTOMATIC);
+        expect(exercise.assessmentDueDate).toBeUndefined();
     });
 
     it('should disable feedback suggestions when changing the assessment type to automatic', () => {
-        comp.exercise = exercise;
-        comp.exercise.id = undefined;
-        comp.ngOnInit();
+        exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+        exercise.feedbackSuggestionModule = 'programming_module';
+        createHostComponent();
 
-        expect(comp.exercise.assessmentType).toBe(AssessmentType.AUTOMATIC);
+        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#manualAssessmentEnabled');
 
-        comp.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-        comp.exercise.feedbackSuggestionModule = 'programming_module';
-        comp.toggleAssessmentType(); // toggle to AUTOMATIC
-
-        expect(comp.exercise.feedbackSuggestionModule).toBeUndefined();
-    });
-
-    it('should change publication of tests for programming exercise with published solution', () => {
-        comp.exercise = { ...exercise, exampleSolutionPublicationDate: dayjs() };
-        expect(comp.exercise.releaseTestsWithExampleSolution).toBeFalsy();
-        comp.toggleReleaseTests();
-        expect(comp.exercise.releaseTestsWithExampleSolution).toBeTrue();
-    });
-
-    it('should not cascade date changes when updateReleaseDate is called when readOnly is true', () => {
-        comp.exercise = exercise;
-        const oldRelease = dayjs().add(10, 'days');
-        comp.updateReleaseDate(oldRelease);
-
-        expect(comp.exercise.releaseDate).toEqual(oldRelease);
-        expect(comp.exercise.dueDate).toEqual(oldRelease);
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(oldRelease);
-
-        comp.readonly = true;
-
-        const newRelease = dayjs().add(20, 'days');
-        comp.updateReleaseDate(newRelease);
-
-        expect(comp.exercise.releaseDate).toEqual(newRelease);
-        expect(comp.exercise.dueDate).toEqual(oldRelease);
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(oldRelease);
-    });
-
-    it('should not cascade date changes when updateExampleSolutionPublicationDate is called when readOnly is true', () => {
-        const oldDueDate = dayjs().add(10, 'days');
-        comp.exercise = exercise;
-        exercise.dueDate = oldDueDate;
-        comp.updateExampleSolutionPublicationDate(oldDueDate);
-
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(oldDueDate);
-
-        comp.readonly = true;
-
-        const newDueDate = dayjs().add(20, 'days');
-        exercise.dueDate = newDueDate;
-        comp.updateExampleSolutionPublicationDate(newDueDate);
-
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(oldDueDate);
-    });
-
-    it('should alert correct date when exampleSolutionPublicationDate is updated automatically', () => {
-        const alertSpy = jest.spyOn(window, 'alert');
-
-        const now = dayjs();
-        exercise.dueDate = now.add(10, 'days');
-        exercise.releaseDate = now.add(20, 'days');
-        comp.exercise = exercise;
-
-        comp.updateExampleSolutionPublicationDate(exercise.releaseDate);
-
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(exercise.releaseDate);
-        expect(alertSpy).toHaveBeenCalledOnce();
-        expect(alertSpy).toHaveBeenLastCalledWith('artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsReleaseDate');
-
-        exercise.dueDate = now.add(40, 'days');
-        exercise.releaseDate = now.add(30, 'days');
-        comp.updateExampleSolutionPublicationDate(exercise.dueDate);
-
-        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(exercise.dueDate);
-        expect(alertSpy).toHaveBeenCalledTimes(2);
-        expect(alertSpy).toHaveBeenLastCalledWith('artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate');
-    });
-
-    it('should alert each distinct string only once', () => {
-        const alertSpy = jest.spyOn(window, 'alert');
-
-        const newExercise = { ...exercise, includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY };
-
-        const now = dayjs();
-        newExercise.dueDate = now.add(10, 'days');
-        newExercise.releaseDate = now.add(20, 'days');
-        newExercise.startDate = now.add(21, 'days');
-        comp.exercise = newExercise;
-
-        comp.ngOnChanges({ exercise: { currentValue: newExercise } as SimpleChange });
-
-        expect(alertSpy).toHaveBeenCalledTimes(3);
-        let nthCall = 0;
-        expect(alertSpy).toHaveBeenNthCalledWith(++nthCall, 'artemisApp.programmingExercise.timeline.alertNewDueDate');
-        expect(alertSpy).toHaveBeenNthCalledWith(++nthCall, 'artemisApp.programmingExercise.timeline.alertNewAfterDueDate');
-        expect(alertSpy).toHaveBeenNthCalledWith(++nthCall, 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate');
-
-        const newerExercise = { ...newExercise };
-        newerExercise.dueDate = now.add(40, 'days');
-        comp.exercise = newerExercise;
-        comp.ngOnChanges({ exercise: { currentValue: newerExercise } as SimpleChange });
-
-        expect(alertSpy).toHaveBeenCalledTimes(nthCall + 1);
-        expect(alertSpy).toHaveBeenNthCalledWith(++nthCall, 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate');
-    });
-
-    it('should enable checkbox for complaints on automatic assessments for automatically assessed exam exercises', () => {
-        comp.exercise = exercise;
-        comp.exercise.assessmentType = AssessmentType.AUTOMATIC;
-        comp.isExamMode = true;
-        exercise.dueDate = undefined;
+        checkbox.click();
         fixture.detectChanges();
-        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowComplaintsForAutomaticAssessment');
-        expectElementToBeEnabled(checkbox);
+
+        expect(exercise.assessmentType).toBe(AssessmentType.AUTOMATIC);
+        expect(exercise.feedbackSuggestionModule).toBeUndefined();
     });
 
-    it.each([true, false])('should disable checkbox for complaints on automatic assessments for exercises without automatic assessment', (examMode: boolean) => {
-        comp.exercise = exercise;
-        comp.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-        comp.isExamMode = examMode;
+    it('should enable release tests with example solution', () => {
+        exercise.exampleSolutionPublicationDate = dayjs();
+        exercise.releaseTestsWithExampleSolution = false;
+        createHostComponent();
+
+        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#releaseTestsWithExampleSolution');
+
+        expect(exercise.releaseTestsWithExampleSolution).toBeFalse();
+        expect(checkbox.checked).toBeFalse();
+
+        checkbox.click();
+        fixture.detectChanges();
+
+        expect(exercise.releaseTestsWithExampleSolution).toBeTrue();
+    });
+
+    it('should enable checkbox for complaints on automatic assessments for exam exercises with automatic assessment', () => {
+        exercise.assessmentType = AssessmentType.AUTOMATIC;
+        exercise.dueDate = undefined;
+        createHostComponent();
+        fixture.componentInstance.isExamMode = true;
+        fixture.detectChanges();
+
+        expect(getCheckbox('allowComplaintsForAutomaticAssessment').disabled).toBeFalse();
+    });
+
+    it.each([true, false])('should disable checkbox for complaints on automatic assessments for exercises without automatic assessment', async (examMode: boolean) => {
+        exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
         if (!examMode) {
             exercise.course = new Course();
             exercise.course.complaintsEnabled = true;
         }
+        createHostComponent();
+        fixture.componentInstance.isExamMode = examMode;
+        await fixture.whenStable();
         fixture.detectChanges();
-        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowComplaintsForAutomaticAssessment');
-        expectElementToBeDisabled(checkbox);
+
+        expect(getCheckbox('allowComplaintsForAutomaticAssessment').disabled).toBeTrue();
     });
 
-    it('should disable checkbox for complaints on automatic assessments for automatically assessed course exercises without due date', () => {
-        comp.exercise = exercise;
-        comp.exercise.assessmentType = AssessmentType.AUTOMATIC;
-        comp.isExamMode = false;
+    it('should disable checkbox for complaints on automatic assessments for course exercises with automatic assessment but without due date', async () => {
+        exercise.assessmentType = AssessmentType.AUTOMATIC;
         exercise.dueDate = undefined;
         exercise.course = new Course();
         exercise.course.complaintsEnabled = true;
+        createHostComponent();
+
+        fixture.componentInstance.isExamMode = false;
+        await fixture.whenStable();
         fixture.detectChanges();
-        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowComplaintsForAutomaticAssessment');
-        expectElementToBeDisabled(checkbox);
+
+        expect(getCheckbox('allowComplaintsForAutomaticAssessment').disabled).toBeTrue();
     });
 
     it.each([true, false])('should enable checkbox to include tests in example solution', (examMode: boolean) => {
-        comp.exercise = exercise;
-        comp.isExamMode = examMode;
         if (!examMode) {
             exercise.course = new Course();
             exercise.course.complaintsEnabled = true;
         } else {
-            comp.exercise.exampleSolutionPublicationDate = undefined;
-            comp.exercise.exerciseGroup = { exam: { exampleSolutionPublicationDate } };
+            exercise.exampleSolutionPublicationDate = undefined;
+            exercise.exerciseGroup = { exam: { exampleSolutionPublicationDate } };
         }
+        createHostComponent();
+        fixture.componentInstance.isExamMode = examMode;
         fixture.detectChanges();
-        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#releaseTestsWithExampleSolution');
-        expectElementToBeEnabled(checkbox);
+
+        expect(getCheckbox('releaseTestsWithExampleSolution').disabled).toBeFalse();
     });
 
-    it('should disable checkbox to include tests in example solution without example solution publication date', () => {
-        comp.exercise = exercise;
-        comp.exercise.exampleSolutionPublicationDate = undefined;
+    it('should disable checkbox to include tests in example solution without example solution publication date', async () => {
+        exercise.exampleSolutionPublicationDate = undefined;
+        createHostComponent();
+        await fixture.whenStable();
         fixture.detectChanges();
-        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#releaseTestsWithExampleSolution');
-        expectElementToBeDisabled(checkbox);
+
+        expect(getCheckbox('releaseTestsWithExampleSolution').disabled).toBeTrue();
     });
 
-    it('should calculate form validation status', fakeAsync(() => {
-        const datePicker = {
-            dateInput: {
-                valueChanges: new Subject(),
-                valid: true,
-                value: new Date(),
-            },
-        } as any as ProgrammingExerciseTestScheduleDatePickerComponent;
-        comp.datePickerComponents = {
-            changes: new Subject(),
-            toArray: () => [datePicker],
-        } as any as QueryList<ProgrammingExerciseTestScheduleDatePickerComponent>;
-        comp.ngAfterViewInit();
-        (comp.datePickerComponents.changes as Subject<any>).next({ toArray: () => [datePicker] });
-        (datePicker.dateInput.valueChanges as Subject<boolean>).next(true);
-        tick();
-        expect(comp.formValid).toBeTrue();
-        expect(comp.formEmpty).toBeTrue();
-    }));
+    it('should update form validation status when timeline status changes', () => {
+        createHostComponent();
+        const component: ProgrammingExerciseUpdateTimelineComponent = fixture.debugElement.query(By.directive(ProgrammingExerciseUpdateTimelineComponent)).componentInstance;
+        const formValidChangesSpy = jest.fn();
+        component.formValidChanges.subscribe(formValidChangesSpy);
+
+        component.handleTimelineStatusChange({ valid: true, empty: false });
+
+        expect(component.formValid).toBeTrue();
+        expect(component.formEmpty).toBeFalse();
+        expect(formValidChangesSpy).toHaveBeenCalledWith(true);
+
+        component.handleTimelineStatusChange({ valid: false, empty: true });
+
+        expect(component.formValid).toBeFalse();
+        expect(component.formEmpty).toBeTrue();
+        expect(formValidChangesSpy).toHaveBeenLastCalledWith(false);
+    });
 });

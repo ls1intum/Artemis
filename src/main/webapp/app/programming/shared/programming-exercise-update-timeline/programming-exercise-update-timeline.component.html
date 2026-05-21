@@ -29,8 +29,8 @@
                     type="checkbox"
                     class="form-check-input"
                     name="manualAssessmentEnabled"
-                    [ngModel]="assessmentType() === AssessmentType.SEMI_AUTOMATIC"
-                    (ngModelChange)="toggleAssessmentType()"
+                    [checked]="assessmentType() === AssessmentType.SEMI_AUTOMATIC"
+                    (change)="toggleAssessmentType()"
                     id="manualAssessmentEnabled"
                 />
                 <label
