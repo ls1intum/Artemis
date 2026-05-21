@@ -1,0 +1,15 @@
+<p-dialog [(visible)]="visible" [modal]="true" [closable]="true" [draggable]="false" [dismissableMask]="true" [style]="{ width: '640px', maxWidth: '95vw' }">
+    <ng-template pTemplate="header">
+        <h4 class="m-0" jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.title"></h4>
+    </ng-template>
+
+    @if (summary()) {
+        <div class="summary-box">{{ summary() }}</div>
+    } @else {
+        <p jhiTranslate="artemisApp.atlasOrchestrator.resultDialog.empty"></p>
+    }
+
+    <ng-template pTemplate="footer">
+        <p-button (onClick)="close()" [label]="'entity.action.close' | artemisTranslate" severity="secondary" />
+    </ng-template>
+</p-dialog>
