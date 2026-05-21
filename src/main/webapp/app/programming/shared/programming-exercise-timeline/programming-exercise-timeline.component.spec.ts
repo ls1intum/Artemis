@@ -1,24 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { beforeEach, describe, expect, it } from 'vitest';
 import dayjs from 'dayjs/esm';
 
-import { ProgrammingExerciseTimeline } from './programming-exercise-timeline';
+import { ProgrammingExerciseTimelineComponent } from './programming-exercise-timeline.component';
 
-describe('ProgrammingExerciseTimeline', () => {
-    setupTestBed({ zoneless: true });
-
-    let component: ProgrammingExerciseTimeline;
-    let fixture: ComponentFixture<ProgrammingExerciseTimeline>;
+describe('ProgrammingExerciseTimelineComponent', () => {
+    let component: ProgrammingExerciseTimelineComponent;
+    let fixture: ComponentFixture<ProgrammingExerciseTimelineComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ProgrammingExerciseTimeline],
+            imports: [ProgrammingExerciseTimelineComponent],
         })
-            .overrideComponent(ProgrammingExerciseTimeline, { set: { template: '' } })
+            .overrideComponent(ProgrammingExerciseTimelineComponent, { set: { template: '' } })
             .compileComponents();
 
-        fixture = TestBed.createComponent(ProgrammingExerciseTimeline);
+        fixture = TestBed.createComponent(ProgrammingExerciseTimelineComponent);
         component = fixture.componentInstance;
     });
 
@@ -43,6 +39,6 @@ describe('ProgrammingExerciseTimeline', () => {
             'artemisApp.exercise.assessmentDueDate',
         ]);
         expect(timelineItems.map((item) => item.date())).toEqual([startDate, buildAndTestAfterDueDate, assessmentDueDate]);
-        expect(timelineItems.every((item) => item.kind === 'optional')).toBe(true);
+        expect(timelineItems.every((item) => item.kind === 'optional')).toBeTrue();
     });
 });

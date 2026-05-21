@@ -1,14 +1,14 @@
 import { Component, computed, model } from '@angular/core';
 import { Dayjs } from 'dayjs/esm';
-import { ExerciseTimeline, TimelineItem } from 'app/shared/exercise-timeline/exercise-timeline';
+import { ExerciseTimelineComponent, TimelineItem } from '../../../shared/exercise-timeline/exercise-timeline.component';
 
 @Component({
     selector: 'jhi-programming-exercise-timeline',
-    imports: [ExerciseTimeline],
-    templateUrl: './programming-exercise-timeline.html',
-    styleUrl: './programming-exercise-timeline.scss',
+    imports: [ExerciseTimelineComponent],
+    templateUrl: './programming-exercise-timeline.component.html',
+    styleUrl: './programming-exercise-timeline.component.scss',
 })
-export class ProgrammingExerciseTimeline {
+export class ProgrammingExerciseTimelineComponent {
     releaseDate = model<Dayjs | undefined>();
     startDate = model<Dayjs | undefined>();
     dueDate = model<Dayjs | undefined>();

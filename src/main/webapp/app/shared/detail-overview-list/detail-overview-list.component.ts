@@ -18,7 +18,7 @@ import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/p
 import { ExerciseDetailDirective } from './exercise-detail.directive';
 import { NoDataComponent } from '../components/no-data/no-data-component';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
-import { ProgrammingExerciseTimeline } from 'app/programming/shared/programming-exercise-timeline/programming-exercise-timeline';
+import { ProgrammingExerciseTimelineComponent } from '../../programming/shared/programming-exercise-timeline/programming-exercise-timeline.component';
 
 export interface DetailOverviewSection {
     headline: string;
@@ -63,7 +63,7 @@ export enum DetailType {
         ExerciseDetailDirective,
         NoDataComponent,
         ArtemisTranslatePipe,
-        ProgrammingExerciseTimeline,
+        ProgrammingExerciseTimelineComponent,
     ],
 })
 export class DetailOverviewListComponent implements OnInit {

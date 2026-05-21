@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ExerciseTimeline } from './exercise-timeline';
+import { ExerciseTimelineComponent } from './exercise-timeline.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ExerciseTimeline', () => {
-    let component: ExerciseTimeline;
-    let fixture: ComponentFixture<ExerciseTimeline>;
+    let component: ExerciseTimelineComponent;
+    let fixture: ComponentFixture<ExerciseTimelineComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ExerciseTimeline],
+            imports: [ExerciseTimelineComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(ExerciseTimeline);
+        fixture = TestBed.createComponent(ExerciseTimelineComponent);
         component = fixture.componentInstance;
         await fixture.whenStable();
     });

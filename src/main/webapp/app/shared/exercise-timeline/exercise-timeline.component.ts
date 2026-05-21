@@ -26,10 +26,10 @@ type InternalTimelineItem = TimelineItem & {
 @Component({
     selector: 'jhi-exercise-timeline',
     imports: [DatePickerModule, FormsModule, TooltipModule, TranslateDirective],
-    templateUrl: './exercise-timeline.html',
-    styleUrl: './exercise-timeline.scss',
+    templateUrl: './exercise-timeline.component.html',
+    styleUrl: './exercise-timeline.component.scss',
 })
-export class ExerciseTimeline {
+export class ExerciseTimelineComponent {
     private translateService = inject(TranslateService);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
     timelineItems = input.required<TimelineItem[]>();
