@@ -103,51 +103,23 @@ export class ExamParticipationPage extends ExamParticipationActions {
         // A bare waitForURL then consumes the whole test budget. Re-issue the navigation
         // up to two extra times on URL miss; pre-warm alone doesn't address this because
         // exam routes have a no-navbar configuration that bypasses the navbar reload check.
-
-        // Diagnostic capture: record every /api/* response so that on URL-miss we can
-        // see whether a 401/403/5xx triggered the auth-guard fallback to /courses.
-        const apiResponses: Array<{ status: number; url: string; t: number }> = [];
-        const t0 = Date.now();
-        const onResponse = (response: import('@playwright/test').Response) => {
-            const url = response.url();
-            if (url.includes('/api/')) {
-                apiResponses.push({ status: response.status(), url, t: Date.now() - t0 });
-            }
-        };
-        this.page.on('response', onResponse);
-        const logFailure = (stage: string, attempt: number) => {
-            const recent = apiResponses.slice(-15);
-            const nonOk = apiResponses.filter((r) => r.status >= 400);
-            console.warn(
-                `[openExam ${stage}] student=${student.username} attempt=${attempt} ` +
-                    `landed=${this.page.url()} expected=${urlPattern} ` +
-                    `non2xx_api=${JSON.stringify(nonOk)} last15_api=${JSON.stringify(recent)}`,
-            );
-        };
-        try {
-            await Commands.login(this.page, student, examUrl);
-            const urlSettles = async (timeoutMs: number): Promise<boolean> =>
-                this.page
-                    .waitForURL(urlPattern, { timeout: timeoutMs })
-                    .then(() => true)
-                    .catch(() => false);
-            if (await urlSettles(30_000)) {
+        await Commands.login(this.page, student, examUrl);
+        const urlSettles = async (timeoutMs: number): Promise<boolean> =>
+            this.page
+                .waitForURL(urlPattern, { timeout: timeoutMs })
+                .then(() => true)
+                .catch(() => false);
+        if (await urlSettles(30_000)) {
+            return;
+        }
+        for (let attempt = 0; attempt < 2; attempt++) {
+            await this.page.goto(examUrl);
+            await this.page.waitForLoadState('load');
+            if (await urlSettles(20_000)) {
                 return;
             }
-            logFailure('post-login miss', 0);
-            for (let attempt = 0; attempt < 2; attempt++) {
-                await this.page.goto(examUrl);
-                await this.page.waitForLoadState('load');
-                if (await urlSettles(20_000)) {
-                    console.warn(`[openExam recovered] student=${student.username} on retry attempt=${attempt + 1}`);
-                    return;
-                }
-                logFailure('retry miss', attempt + 1);
-            }
-            throw new Error(`openExam: expected URL matching ${urlPattern} but landed at ${this.page.url()} for student ${student.username}`);
-        } finally {
-            this.page.off('response', onResponse);
         }
+        throw new Error(`openExam: expected URL matching ${urlPattern} but landed at ${this.page.url()} for student ${student.username}`);
     }
 
     async startParticipation(student: UserCredentials, course: Course, exam: Exam) {
