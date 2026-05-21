@@ -25,7 +25,7 @@ import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iri
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { SearchableEntity } from 'app/core/navbar/global-search/models/searchable-entity.model';
+import { SearchEntityType, SearchableEntity } from 'app/core/navbar/global-search/models/searchable-entity.model';
 import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
 import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
 import { SearchResultItemComponent } from 'app/core/navbar/global-search/components/modal/search-result-item/search-result-item.component';
@@ -57,7 +57,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     readonly showResults = input<boolean>(false);
     readonly isLoading = input<boolean>(false);
     readonly searchError = input<string | undefined>(undefined);
-    readonly activeFilters = input<string[]>([]);
+    readonly activeFilters = input<SearchEntityType[]>([]);
     readonly irisOpen = input<boolean>(false);
 
     // Skeleton placeholder array for loading animation
@@ -123,7 +123,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             icon: faGraduationCap,
             type: 'filter',
             enabled: true,
-            filterTag: 'course',
+            filterTags: ['course'],
         },
         {
             id: 'exercises',
@@ -132,7 +132,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             icon: faCube,
             type: 'filter',
             enabled: true,
-            filterTag: 'exercise',
+            filterTags: ['exercise'],
         },
         {
             id: 'lectures',
@@ -141,7 +141,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             icon: faBook,
             type: 'filter',
             enabled: true,
-            filterTag: 'lecture',
+            filterTags: ['lecture'],
         },
         {
             id: 'communication',
@@ -150,7 +150,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             icon: faComments,
             type: 'filter',
             enabled: true,
-            filterTag: 'channel',
+            filterTags: ['channel'],
         },
         {
             id: 'messages',
@@ -159,7 +159,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             icon: faComment,
             type: 'filter',
             enabled: true,
-            filterTag: 'post,answer_post',
+            filterTags: ['post', 'answer_post'],
         },
         {
             id: 'faqs',
@@ -168,7 +168,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             icon: faQuestionCircle,
             type: 'filter',
             enabled: true,
-            filterTag: 'faq',
+            filterTags: ['faq'],
         },
         {
             id: 'exams',
@@ -177,7 +177,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             icon: faCalendarCheck,
             type: 'filter',
             enabled: true,
-            filterTag: 'exam',
+            filterTags: ['exam'],
         },
     ];
 
