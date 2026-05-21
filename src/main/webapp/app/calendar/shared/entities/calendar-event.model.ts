@@ -15,7 +15,7 @@ export class IdentifiableCalendarEvent {
         this.id = window.crypto.randomUUID().toString();
     }
 
-    isOfType(type: CalendarEvent.TypeEnum) {
+    isOfType(type: CalendarEvent.TypeEnum): boolean {
         return this.type === type;
     }
 
