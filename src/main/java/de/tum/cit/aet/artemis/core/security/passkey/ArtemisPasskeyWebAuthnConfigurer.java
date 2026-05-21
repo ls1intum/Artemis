@@ -135,12 +135,16 @@ public class ArtemisPasskeyWebAuthnConfigurer {
 
         try {
             URL clientUrlToRegisterPasskey = new URI(serverUrl).toURL();
-            URL clientUrlToAuthenticateWithPasskey = new URI(serverUrl + ":" + port).toURL();
 
             relyingPartyId = clientUrlToRegisterPasskey.getHost();
 
             allowedOrigins.add(clientUrlToRegisterPasskey.toString());
-            allowedOrigins.add(clientUrlToAuthenticateWithPasskey.toString());
+
+            // Only append the client port if the server URL does not already contain one
+            if (clientUrlToRegisterPasskey.getPort() == -1) {
+                URL clientUrlToAuthenticateWithPasskey = new URI(serverUrl + ":" + port).toURL();
+                allowedOrigins.add(clientUrlToAuthenticateWithPasskey.toString());
+            }
 
             addAndroidApkKeyHashesToAllowedOrigins();
 
