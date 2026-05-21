@@ -138,8 +138,33 @@ public class AthenaModuleService {
      * @return the resolved module name, or {@code null} if none is configured
      */
     private String resolveModuleForMode(Exercise exercise, AthenaModuleMode moduleMode) {
+        // Check transient field first (explicitly set by resource layer for access checks and responses)
         String module = moduleMode == AthenaModuleMode.PRELIMINARY ? exercise.getPreliminaryFeedbackModule() : exercise.getGradedFeedbackModule();
-        return module != null ? module : exercise.getFeedbackSuggestionModule();
+        if (module != null) {
+            return module;
+        }
+        // athenaConfig is @Transient and not loaded from DB; fetch on demand
+        if (exercise.getId() != null) {
+            var config = exerciseAthenaConfigRepository.findByExerciseId(exercise.getId());
+            if (config.isPresent()) {
+                module = moduleMode == AthenaModuleMode.PRELIMINARY ? config.get().getPreliminaryFeedbackModule() : config.get().getGradedFeedbackModule();
+                if (module != null) {
+                    return module;
+                }
+            }
+        }
+        return exercise.getFeedbackSuggestionModule();
+    }
+
+    /**
+     * Returns true if a module is configured for the given exercise and mode.
+     *
+     * @param exercise   the exercise
+     * @param moduleMode the mode (PRELIMINARY or GRADED)
+     * @return true if a module is configured
+     */
+    public boolean hasModuleConfigured(Exercise exercise, AthenaModuleMode moduleMode) {
+        return resolveModuleForMode(exercise, moduleMode) != null;
     }
 
     /**

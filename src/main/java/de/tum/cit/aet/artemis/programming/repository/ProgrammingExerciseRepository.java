@@ -64,11 +64,11 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencyLinks.competency",
-            "auxiliaryRepositories", "submissionPolicy", "buildConfig", "athenaConfig" })
+            "auxiliaryRepositories", "submissionPolicy", "buildConfig" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencyLinks.competency",
-            "auxiliaryRepositories", "submissionPolicy", "plagiarismDetectionConfig", "buildConfig", "athenaConfig" })
+            "auxiliaryRepositories", "submissionPolicy", "plagiarismDetectionConfig", "buildConfig" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigById(
             long exerciseId);
 
@@ -98,7 +98,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     Optional<ProgrammingExercise> findWithAuxiliaryRepositoriesById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories", "competencyLinks.competency", "buildConfig",
-            "categories", "plagiarismDetectionConfig", "gradingCriteria", "gradingCriteria.structuredGradingInstructions", "exampleSubmissions", "athenaConfig" })
+            "categories", "plagiarismDetectionConfig", "gradingCriteria", "gradingCriteria.structuredGradingInstructions", "exampleSubmissions" })
     Optional<ProgrammingExercise> findForUpdateById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")

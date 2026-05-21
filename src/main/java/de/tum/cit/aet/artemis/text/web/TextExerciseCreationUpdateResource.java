@@ -259,6 +259,16 @@ public class TextExerciseCreationUpdateResource {
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(updatedExercise, ENTITY_NAME);
 
+        // Set the requested athena config so checkHasAccessToAthenaModule validates the new values, not the stale DB-loaded ones
+        if (updateTextExerciseDTO.athenaConfig() != null) {
+            ExerciseAthenaConfig requestedConfig = new ExerciseAthenaConfig();
+            requestedConfig.setPreliminaryFeedbackModule(updateTextExerciseDTO.athenaConfig().preliminaryFeedbackModule());
+            requestedConfig.setGradedFeedbackModule(updateTextExerciseDTO.athenaConfig().gradedFeedbackModule());
+            updatedExercise.setAthenaConfig(requestedConfig);
+        }
+        else {
+            updatedExercise.setAthenaConfig(null);
+        }
         // Check that only allowed athena modules are used
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(originalExercise);
         athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(updatedExercise, course, ENTITY_NAME), () -> updatedExercise.setFeedbackSuggestionModule(null));

@@ -138,10 +138,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Column(name = "feedback_suggestion_module") // Athena module name (Athena enabled) or null
     private String feedbackSuggestionModule;
 
-    // @JsonIgnore: Hibernate fires one extra query per exercise for this optional mappedBy OneToOne,
-    // which causes N+1 queries during exercise list serialization (e.g. course dashboard). Access via
-    // getAthenaConfig() in service code, or expose derived fields via @Transient getters if needed by clients.
-    @OneToOne(mappedBy = "exercise", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    // @Transient: avoids the N+1 query that a mappedBy @OneToOne(LAZY) would fire for every loaded exercise.
+    // Resources populate this explicitly after saving and before returning the response. The DB-level
+    // onDelete="CASCADE" on exercise_athena_config handles deletion; the repository handles reads/writes.
+    @Transient
     @JsonIgnore
     private ExerciseAthenaConfig athenaConfig;
 

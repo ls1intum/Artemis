@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -109,11 +110,13 @@ public class TextExerciseResource {
 
     private final Optional<AtlasMLApi> atlasMLApi;
 
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, UserRepository userRepository, AuthorizationCheckService authCheckService,
             StudentParticipationRepository studentParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, CourseRepository courseRepository, ChannelRepository channelRepository,
-            Optional<ExamAccessApi> examAccessApi, Optional<AtlasMLApi> atlasMLApi) {
+            Optional<ExamAccessApi> examAccessApi, Optional<AtlasMLApi> atlasMLApi, ExerciseAthenaConfigService exerciseAthenaConfigService) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.textBlockRepository = textBlockRepository;
@@ -129,6 +132,7 @@ public class TextExerciseResource {
         this.channelRepository = channelRepository;
         this.examAccessApi = examAccessApi;
         this.atlasMLApi = atlasMLApi;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
     }
 
     /**
@@ -192,6 +196,7 @@ public class TextExerciseResource {
             }
         }
 
+        exerciseAthenaConfigService.findByExerciseId(exerciseId).ifPresent(textExercise::setAthenaConfig);
         Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithResultByExerciseId(exerciseId);
         Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         textExercise.setGradingCriteria(gradingCriteria);

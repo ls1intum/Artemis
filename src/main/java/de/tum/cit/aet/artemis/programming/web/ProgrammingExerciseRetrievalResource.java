@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseAthenaConfigService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
@@ -94,13 +95,16 @@ public class ProgrammingExerciseRetrievalResource {
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
+    private final ExerciseAthenaConfigService exerciseAthenaConfigService;
+
     public ProgrammingExerciseRetrievalResource(ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseRepository programmingExerciseRepository,
             CourseRepository courseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ExerciseService exerciseService,
             StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             GradingCriterionRepository gradingCriterionRepository, ChannelRepository channelRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, RepositoryCheckoutService repositoryCheckoutService) {
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, RepositoryCheckoutService repositoryCheckoutService,
+            ExerciseAthenaConfigService exerciseAthenaConfigService) {
         this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.courseRepository = courseRepository;
@@ -115,6 +119,7 @@ public class ProgrammingExerciseRetrievalResource {
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.repositoryCheckoutService = repositoryCheckoutService;
+        this.exerciseAthenaConfigService = exerciseAthenaConfigService;
     }
 
     /**
@@ -160,6 +165,7 @@ public class ProgrammingExerciseRetrievalResource {
     public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId, @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
         log.debug("REST request to get ProgrammingExercise : {}", exerciseId);
         var programmingExercise = findProgrammingExercise(exerciseId, withPlagiarismDetectionConfig);
+        exerciseAthenaConfigService.findByExerciseId(exerciseId).ifPresent(programmingExercise::setAthenaConfig);
         // Fetch grading criterion into exercise of participation
         Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(programmingExercise.getId());
         programmingExercise.setGradingCriteria(gradingCriteria);

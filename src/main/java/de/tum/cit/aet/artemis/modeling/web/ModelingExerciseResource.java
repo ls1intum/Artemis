@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
@@ -136,13 +137,16 @@ public class ModelingExerciseResource {
 
     private final ExerciseAthenaConfigService exerciseAthenaConfigService;
 
+    private final Optional<AthenaApi> athenaApi;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, ModelingExerciseImportService modelingExerciseImportService,
             SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService, GroupNotificationScheduleService groupNotificationScheduleService,
             GradingCriterionRepository gradingCriterionRepository, ChannelService channelService, ChannelRepository channelRepository,
             ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi,
-            Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService, ExerciseAthenaConfigService exerciseAthenaConfigService) {
+            Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService, ExerciseAthenaConfigService exerciseAthenaConfigService,
+            Optional<AthenaApi> athenaApi) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -165,6 +169,7 @@ public class ModelingExerciseResource {
         this.atlasMLApi = atlasMLApi;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
         this.exerciseAthenaConfigService = exerciseAthenaConfigService;
+        this.athenaApi = athenaApi;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -201,7 +206,10 @@ public class ModelingExerciseResource {
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(modelingExercise, ENTITY_NAME);
 
-        // Detach athenaConfig before save to prevent cascade-persist with null exercise FK
+        // Check that only allowed athena modules are used
+        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(modelingExercise, course, ENTITY_NAME), () -> modelingExercise.setFeedbackSuggestionModule(null));
+
+        // Detach athenaConfig before save (field is @Transient; clear explicitly to avoid accidental reuse)
         var requestedAthenaConfig = modelingExercise.getAthenaConfig();
         modelingExercise.setAthenaConfig(null);
 
@@ -308,6 +316,21 @@ public class ModelingExerciseResource {
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(updatedExercise, ENTITY_NAME);
 
+        // Set the requested athena config so checkHasAccessToAthenaModule validates the new values, not stale DB-loaded ones
+        if (updateModelingExerciseDTO.athenaConfig() != null) {
+            ExerciseAthenaConfig requestedConfig = new ExerciseAthenaConfig();
+            requestedConfig.setPreliminaryFeedbackModule(updateModelingExerciseDTO.athenaConfig().preliminaryFeedbackModule());
+            requestedConfig.setGradedFeedbackModule(updateModelingExerciseDTO.athenaConfig().gradedFeedbackModule());
+            updatedExercise.setAthenaConfig(requestedConfig);
+        }
+        else {
+            updatedExercise.setAthenaConfig(null);
+        }
+        // Check that only allowed athena modules are used
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(originalExercise);
+        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(updatedExercise, course, ENTITY_NAME), () -> updatedExercise.setFeedbackSuggestionModule(null));
+        updatedExercise.setAthenaConfig(null);
+
         channelService.updateExerciseChannel(originalExercise, updatedExercise);
 
         ModelingExercise persistedExercise = modelingExerciseRepository.save(updatedExercise);
@@ -384,6 +407,7 @@ public class ModelingExerciseResource {
         log.debug("REST request to get ModelingExercise : {}", exerciseId);
         var modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
+        exerciseAthenaConfigService.findByExerciseId(exerciseId).ifPresent(modelingExercise::setAthenaConfig);
         Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         modelingExercise.setGradingCriteria(gradingCriteria);
 

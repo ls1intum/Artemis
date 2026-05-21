@@ -204,11 +204,7 @@ public class AthenaFeedbackSuggestionsService {
         AthenaModuleMode moduleMode = isGraded ? AthenaModuleMode.GRADED : AthenaModuleMode.PRELIMINARY;
         log.debug("Start Athena '{}' Feedback Suggestions Service for Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
-        String resolvedModule = isGraded ? exercise.getGradedFeedbackModule() : exercise.getPreliminaryFeedbackModule();
-        if (resolvedModule == null) {
-            resolvedModule = exercise.getFeedbackSuggestionModule();
-        }
-        if (resolvedModule == null) {
+        if (!athenaModuleService.hasModuleConfigured(exercise, moduleMode)) {
             log.warn("Exercise '{}' (#{}) does not have a feedback suggestion module configured. Returning empty list.", exercise.getTitle(), exercise.getId());
             return List.of();
         }
@@ -245,11 +241,7 @@ public class AthenaFeedbackSuggestionsService {
         AthenaModuleMode moduleMode = isGraded ? AthenaModuleMode.GRADED : AthenaModuleMode.PRELIMINARY;
         log.debug("Start Athena '{}' Feedback Suggestions Service for Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
-        String resolvedModule = isGraded ? exercise.getGradedFeedbackModule() : exercise.getPreliminaryFeedbackModule();
-        if (resolvedModule == null) {
-            resolvedModule = exercise.getFeedbackSuggestionModule();
-        }
-        if (resolvedModule == null) {
+        if (!athenaModuleService.hasModuleConfigured(exercise, moduleMode)) {
             log.warn("Exercise '{}' (#{}) does not have a feedback suggestion module configured. Returning empty list.", exercise.getTitle(), exercise.getId());
             return List.of();
         }
@@ -277,11 +269,7 @@ public class AthenaFeedbackSuggestionsService {
         AthenaModuleMode moduleMode = isGraded ? AthenaModuleMode.GRADED : AthenaModuleMode.PRELIMINARY;
         log.debug("Start Athena '{}' Feedback Suggestions Service for Modeling Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
-        String resolvedModule = isGraded ? exercise.getGradedFeedbackModule() : exercise.getPreliminaryFeedbackModule();
-        if (resolvedModule == null) {
-            resolvedModule = exercise.getFeedbackSuggestionModule();
-        }
-        if (resolvedModule == null) {
+        if (!athenaModuleService.hasModuleConfigured(exercise, moduleMode)) {
             log.warn("Exercise '{}' (#{}) does not have a feedback suggestion module configured. Returning empty list.", exercise.getTitle(), exercise.getId());
             return List.of();
         }

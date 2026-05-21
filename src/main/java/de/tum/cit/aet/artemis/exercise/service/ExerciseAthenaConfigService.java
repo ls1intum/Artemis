@@ -24,6 +24,10 @@ public class ExerciseAthenaConfigService {
         this.configRepository = configRepository;
     }
 
+    public Optional<ExerciseAthenaConfig> findByExerciseId(Long exerciseId) {
+        return configRepository.findByExerciseId(exerciseId);
+    }
+
     public void deleteByExerciseId(Long exerciseId) {
         configRepository.deleteByExerciseId(exerciseId);
     }

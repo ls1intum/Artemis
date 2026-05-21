@@ -268,6 +268,16 @@ public class ProgrammingExerciseUpdateResource {
         // Note: conversion between exam/course exercise is already validated above (lines 148-154)
         // by comparing courseId and exerciseGroupId before the entity is mutated.
 
+        // Set the requested athena config so checkHasAccessToAthenaModule validates the new values, not the stale DB-loaded ones
+        if (updateDTO.athenaConfig() != null) {
+            ExerciseAthenaConfig requestedConfig = new ExerciseAthenaConfig();
+            requestedConfig.setPreliminaryFeedbackModule(updateDTO.athenaConfig().preliminaryFeedbackModule());
+            requestedConfig.setGradedFeedbackModule(updateDTO.athenaConfig().gradedFeedbackModule());
+            updatedProgrammingExercise.setAthenaConfig(requestedConfig);
+        }
+        else {
+            updatedProgrammingExercise.setAthenaConfig(null);
+        }
         // Check that only allowed Athena modules are used
         athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ENTITY_NAME),
                 () -> updatedProgrammingExercise.setFeedbackSuggestionModule(null));
