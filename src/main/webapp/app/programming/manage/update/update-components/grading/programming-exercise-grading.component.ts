@@ -52,7 +52,7 @@ export class ProgrammingExerciseGradingComponent implements AfterContentInit, Af
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
     @Input() importOptions: ImportOptions;
-    isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
+    isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
 
     @ViewChild(SubmissionPolicyUpdateComponent) submissionPolicyUpdateComponent?: SubmissionPolicyUpdateComponent;
     @ViewChild(ProgrammingExerciseUpdateTimelineComponent) lifecycleComponent?: ProgrammingExerciseUpdateTimelineComponent;

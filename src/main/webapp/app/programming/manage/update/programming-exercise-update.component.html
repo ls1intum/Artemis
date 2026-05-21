@@ -58,7 +58,7 @@
                 [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [importOptions]="importOptions"
-                [isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord]="isEditFieldDisplayedRecord()"
+                [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
             />
             @if (isEditFieldDisplayedRecord().plagiarismControl && !isExamMode) {
                 <jhi-feature-overlay [enabled]="plagiarismEnabled" placement="right">
