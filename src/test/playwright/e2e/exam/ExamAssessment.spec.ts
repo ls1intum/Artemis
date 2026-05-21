@@ -261,10 +261,8 @@ test.describe('Exam grading', { tag: '@slow' }, () => {
 test.describe('Exam statistics', { tag: '@slow' }, () => {
     // This test creates an exam, has 4 students participate, waits for the exam to end,
     // assesses all submissions, and then checks statistics — all within the test timeout.
-    // 4 students × (startParticipation + makeSubmission + handInEarly) plus the 60s
-    // wait-for-exam-to-end plus per-student assessment routinely overruns 180s under
-    // heavy multi-node load. Use 360s.
-    test.describe.configure({ timeout: 360_000 });
+    // A generous timeout is needed because the exam must end before assessment can begin.
+    test.describe.configure({ timeout: 180_000 });
 
     let exam: Exam;
     let exercise: Exercise;
