@@ -16,7 +16,6 @@ import { NgStyle } from '@angular/common';
 import { ExerciseTimeline, ExerciseTimelineStatus, TimelineItem } from 'app/shared/exercise-timeline/exercise-timeline';
 import { toSignal } from '@angular/core/rxjs-interop';
 
-// TODO: decide whether to make exampleSolutionPublicationDate unavailable during import
 @Component({
     selector: 'jhi-programming-exercise-update-timeline',
     templateUrl: './programming-exercise-update-timeline.component.html',
@@ -188,7 +187,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
 
     private computeIsExampleSolutionPublicationDateToggleEnabled(): boolean {
         const isFieldDisplayed = this.isEditFieldDisplayedRecord();
-        return (!isFieldDisplayed || isFieldDisplayed.exampleSolutionPublicationDate) && !this.isExamMode();
+        return (!isFieldDisplayed || isFieldDisplayed.exampleSolutionPublicationDate) && !this.isExamMode() && !this.isImport();
     }
 
     private getIsImportSignal(): Signal<boolean> {
