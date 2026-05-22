@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
  * @param exercise the exercise DTO, the participation belongs to
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ParticipationWithExerciseDTO(Long id, ExerciseDTO exercise) {
+public record ParticipationWithExerciseDTO(long id, ExerciseDTO exercise) {
 
     /**
      * Converts a participation to a participation DTO.

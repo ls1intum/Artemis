@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
  * @param participation the participation DTO, the submission belongs to
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record SubmissionWithParticipationDTO(Long id, ParticipationWithExerciseDTO participation) {
+public record SubmissionWithParticipationDTO(long id, ParticipationWithExerciseDTO participation) {
 
     /**
      * Converts a submission to a submission DTO.
