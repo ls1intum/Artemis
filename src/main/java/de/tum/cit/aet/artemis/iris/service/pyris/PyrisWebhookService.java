@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisSupportLevel;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
@@ -211,7 +212,7 @@ public class PyrisWebhookService {
      */
     private String executeLectureDeletionWebhook(List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentVideoUnits) {
         String jobToken = pyrisJobService.addLectureIngestionWebhookJob(0, 0, 0);
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, null, artemisBaseUrl, "default", "moderate");
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, null, artemisBaseUrl, "default", IrisSupportLevel.MODERATE.jsonValue());
         PyrisWebhookLectureDeletionExecutionDTO executionDTO = new PyrisWebhookLectureDeletionExecutionDTO(toUpdateAttachmentVideoUnits, settingsDTO, List.of());
         pyrisConnectorService.executeLectureDeletionWebhook(executionDTO);
         return jobToken;
@@ -303,7 +304,7 @@ public class PyrisWebhookService {
      */
     private String executeFaqDeletionWebhook(PyrisFaqWebhookDTO toUpdateFaqs) {
         String jobToken = pyrisJobService.addFaqIngestionWebhookJob(0, 0);
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, null, artemisBaseUrl, "default", "moderate");
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, null, artemisBaseUrl, "default", IrisSupportLevel.MODERATE.jsonValue());
         PyrisWebhookFaqDeletionExecutionDTO executionDTO = new PyrisWebhookFaqDeletionExecutionDTO(toUpdateFaqs, settingsDTO, List.of());
         pyrisConnectorService.executeFaqDeletionWebhook(executionDTO);
         return jobToken;

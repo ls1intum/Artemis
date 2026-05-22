@@ -256,7 +256,7 @@
                             </div>
 
                             <!-- Effective Rate Limit Display (live preview) -->
-                            <div class="alert alert-info">
+                            <p-message severity="info" styleClass="w-100">
                                 <strong jhiTranslate="artemisApp.iris.settings.effectiveRateLimit"></strong>:
                                 <span>
                                     @if (isEffectiveRateLimitUnlimited()) {
@@ -277,7 +277,7 @@
                                         }
                                     }
                                 </span>
-                            </div>
+                            </p-message>
 
                             <!-- Save Changes button (admin tab) -->
                             @if (isDirty()) {
@@ -303,8 +303,6 @@
 
 @if (isLoading()) {
     <div class="d-flex justify-content-center my-5">
-        <div class="spinner-border" role="status">
-            <span class="visually-hidden" jhiTranslate="artemisApp.iris.settings.loading"></span>
-        </div>
+        <p-progressSpinner [ariaLabel]="'artemisApp.iris.settings.loading' | artemisTranslate" strokeWidth="4" />
     </div>
 }

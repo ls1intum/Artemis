@@ -377,6 +377,28 @@ describe('IrisSettingsUpdateComponent', () => {
             component['originalSettings'].set(undefined);
             expect(() => component.setEnabled(true)).not.toThrow();
         });
+
+        it('should preserve unsaved support-level edits when toggling enabled', async () => {
+            await initComponent();
+
+            // Stage an unsaved support-level edit, then toggle the enable switch.
+            component.onSupportLevelSliderChange(100);
+            expect(component.settings()!.supportLevel).toBe('high');
+
+            const updateSpy = irisSettingsService.updateCourseSettings as ReturnType<typeof vi.fn>;
+            updateSpy.mockClear();
+            updateSpy.mockImplementation((_courseId: number, settings: IrisCourseSettingsDTO) => of(new HttpResponse({ body: { ...mockResponse, settings } })));
+
+            component.setEnabled(false);
+            await fixture.whenStable();
+
+            // The in-progress support-level edit must be carried into the auto-save payload,
+            // not silently discarded in favour of the original value.
+            const savedSettings = updateSpy.mock.calls[0][1] as IrisCourseSettingsDTO;
+            expect(savedSettings.supportLevel).toBe('high');
+            expect(savedSettings.enabled).toBe(false);
+            expect(component.settings()!.supportLevel).toBe('high');
+        });
     });
 
     describe('getCustomInstructionsLength', () => {
@@ -524,6 +546,29 @@ describe('IrisSettingsUpdateComponent', () => {
             component.settings.set(undefined);
 
             expect(() => component.resetToDefault()).not.toThrow();
+            expect(updateSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not persist when the General-tab fields are already at their defaults', async () => {
+            await initComponent();
+            const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings');
+            // Both General-tab fields already hold their default values
+            component.settings.set({ ...component.settings()!, supportLevel: 'moderate', customInstructions: undefined });
+
+            component.resetToDefault();
+
+            // Idempotent click — no unnecessary network request
+            expect(updateSpy).not.toHaveBeenCalled();
+        });
+
+        it('should treat empty-string custom instructions as already default', async () => {
+            await initComponent();
+            const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings');
+            // Empty string normalizes to undefined, matching the default
+            component.settings.set({ ...component.settings()!, supportLevel: 'moderate', customInstructions: '' });
+
+            component.resetToDefault();
+
             expect(updateSpy).not.toHaveBeenCalled();
         });
     });

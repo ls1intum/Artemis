@@ -1,13 +1,54 @@
+// ── Shared values ──
+// File-scoped variables, placeholders and mixins for the recurring literals and
+// declaration groups used across the Iris course settings page. Keeping these in
+// one place removes duplication without changing any computed value.
+
+$iris-radius: 0.5rem;
+$iris-card-padding: 1.5rem;
+$iris-text-sm: 0.875rem;
+$iris-text-xs: 0.75rem;
+$iris-label: var(--iris-label-color);
+$iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+// Card-like surface shared by the content cards and the enable/disable toggle row.
+%iris-surface {
+    background: var(--iris-secondary-background);
+    border: 1px solid var(--iris-accent-background);
+    border-radius: $iris-radius;
+}
+
+// A white dot with a coloured ring, centred on its host. Used for both the small
+// clickable slider ticks and (scaled up) the slider handle.
+@mixin iris-dot($size, $ring-color) {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: $size;
+    height: $size;
+    border-radius: 50%;
+    background: var(--white);
+    border: 2px solid $ring-color;
+    transform: translate(-50%, -50%);
+}
+
+// Chat bubble shared between the user and Iris example messages.
+%iris-bubble {
+    border-radius: 1rem;
+    color: var(--body-color);
+    padding: 0.5rem 0.75rem;
+    font-size: $iris-text-sm;
+}
+
 .iris-settings-content {
     max-width: 800px;
     margin: 0 auto;
 }
 
 .iris-card {
-    background: var(--iris-secondary-background);
-    border: 1px solid var(--iris-accent-background);
-    border-radius: 0.5rem;
-    padding: 1.5rem;
+    @extend %iris-surface;
+
+    padding: $iris-card-padding;
     margin-bottom: 1rem;
 }
 
@@ -17,26 +58,25 @@
 
 // On a <small> this also overrides the element's default 0.875em shrink
 .iris-card-subtitle {
-    color: var(--iris-label-color) !important;
-    font-size: 0.875rem;
+    color: $iris-label !important;
+    font-size: $iris-text-sm;
 }
 
 .iris-toggle-row {
-    background: var(--iris-secondary-background);
-    border: 1px solid var(--iris-accent-background);
-    border-radius: 0.5rem;
+    @extend %iris-surface;
+
     margin-bottom: 1rem;
     display: flex;
     align-items: flex-start;
     gap: 0.75rem;
-    padding: 1.25rem 1.5rem;
+    padding: 1.25rem $iris-card-padding;
 }
 
 // Group of cards revealed when the Iris toggle is switched on. Each direct
 // child slides down and fades in, staggered so they cascade out from under
 // the toggle row.
 .iris-enabled-cards > * {
-    animation: iris-card-slide-in 0.32s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+    animation: iris-card-slide-in 0.32s $iris-card-easing both;
 
     @for $i from 1 through 4 {
         &:nth-child(#{$i}) {
@@ -106,16 +146,8 @@
 
         // The visible dot: white fill with a border-coloured ring
         &::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: var(--white);
-            border: 2px solid var(--iris-accent-border-color);
-            transform: translate(-50%, -50%) scale(1);
+            @include iris-dot(10px, var(--iris-accent-border-color));
+
             transition:
                 border-color 0.15s ease,
                 opacity 0.15s ease,
@@ -153,16 +185,7 @@
 
         // The visible dot — same look as the small ticks, scaled up.
         &::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: var(--white);
-            border: 2px solid var(--primary);
-            transform: translate(-50%, -50%);
+            @include iris-dot(20px, var(--primary));
         }
 
         // Expanding ring for the "pop" micro animation. A separate
@@ -219,7 +242,7 @@
     // Reserve room for the absolutely positioned labels
     height: 1.5em;
     color: var(--body-color);
-    font-size: 0.75rem;
+    font-size: $iris-text-xs;
 
     .iris-slider-label {
         position: absolute;
@@ -233,11 +256,11 @@
 
 .iris-support-description {
     background: var(--iris-primary-background);
-    border-radius: 0.5rem;
+    border-radius: $iris-radius;
     padding: 1.25rem;
     margin-top: 1rem;
-    font-size: 14px;
-    color: var(--iris-label-color) !important;
+    font-size: $iris-text-sm;
+    color: $iris-label !important;
 
     strong {
         color: var(--body-color);
@@ -246,8 +269,8 @@
 
     // "Best suited for" line — cancel the <small> shrink to match the body text
     > small {
-        font-size: 14px;
-        color: var(--iris-label-color) !important;
+        font-size: $iris-text-sm;
+        color: $iris-label !important;
 
         // The "Best suited for:" label is wrapped in <em>; render it upright
         em {
@@ -258,13 +281,13 @@
 
 .iris-example-conversation {
     background: var(--iris-secondary-background);
-    border-radius: 0.5rem;
+    border-radius: $iris-radius;
     padding: 1rem;
     margin-top: 1rem;
 
     // "Example conversation at this level" label
     > small {
-        font-size: 0.875rem;
+        font-size: $iris-text-sm;
     }
 }
 
@@ -277,7 +300,7 @@
     height: 36px;
     border-radius: 50%;
     background: var(--iris-tertiary-background);
-    color: var(--iris-label-color);
+    color: $iris-label;
     font-size: 1rem;
 }
 
@@ -289,13 +312,11 @@
     margin-bottom: 0.75rem;
 
     .bubble {
+        @extend %iris-bubble;
+
         background: var(--iris-tertiary-background);
-        border-radius: 1rem;
         border-bottom-right-radius: 0.25rem;
-        color: var(--body-color);
-        padding: 0.5rem 0.75rem;
         max-width: 55%;
-        font-size: 0.875rem;
     }
 }
 
@@ -309,13 +330,11 @@
     }
 
     .bubble {
+        @extend %iris-bubble;
+
         background: var(--iris-primary-background);
-        border-radius: 1rem;
         border-bottom-left-radius: 0.25rem;
-        color: var(--body-color);
-        padding: 0.5rem 0.75rem;
         max-width: 80%;
-        font-size: 0.875rem;
 
         // Soft drop shadow to lift the bubble off the conversation background
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -336,9 +355,9 @@
 .iris-info-banner {
     background: var(--iris-blue-background);
     border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
-    border-radius: 0.5rem;
+    border-radius: $iris-radius;
     padding: 1rem;
-    font-size: 0.875rem;
+    font-size: $iris-text-sm;
     font-weight: 500;
     color: var(--primary);
     display: flex;
@@ -353,7 +372,7 @@
     margin-top: 1.5rem;
 
     button {
-        font-size: 0.875rem;
+        font-size: $iris-text-sm;
     }
 }
 
@@ -361,8 +380,8 @@
 // [autoResize]) it grows with the content. The growth is capped at max-height,
 // past which the textarea becomes scrollable instead of expanding further.
 .iris-guidelines-textarea {
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
+    border-radius: $iris-radius;
+    font-size: $iris-text-sm;
 
     // Disable the manual drag handle — height is driven by autoResize
     resize: none;

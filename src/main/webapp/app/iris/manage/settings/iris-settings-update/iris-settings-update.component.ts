@@ -35,6 +35,8 @@ import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ButtonDirective } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 
 /**
@@ -59,6 +61,8 @@ import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.compone
         SelectModule,
         InputNumberModule,
         ButtonDirective,
+        MessageModule,
+        ProgressSpinnerModule,
         IrisLogoComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -281,10 +285,9 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         if (!settings) {
             return undefined;
         }
-        return {
-            ...settings,
+        return Object.assign({}, settings, {
             customInstructions: this.normalizeEmpty(settings.customInstructions) as string | undefined,
-        };
+        });
     }
 
     canDeactivateWarning?: string;
@@ -342,15 +345,14 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         }
 
         // Normalize empty strings to undefined before saving
-        const settingsToSave: IrisCourseSettingsDTO = {
-            ...currentSettings,
+        const settingsToSave: IrisCourseSettingsDTO = Object.assign({}, currentSettings, {
             customInstructions: this.normalizeEmpty(currentSettings.customInstructions) as string | undefined,
-        };
+        });
 
         const originalSettingsValue = this.originalSettings();
         if (!this.isAdmin()) {
-            // Non-admins can only change enabled and customInstructions
-            // Restore original variant and rate limits to prevent unauthorized changes
+            // Non-admins can only change enabled, supportLevel and customInstructions.
+            // Restore original variant and rate limits to prevent unauthorized changes.
             if (originalSettingsValue) {
                 settingsToSave.variant = originalSettingsValue.variant;
                 settingsToSave.rateLimit = originalSettingsValue.rateLimit;
@@ -399,29 +401,47 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     setEnabled(enabled: boolean): void {
         const currentSettings = this.settings();
         if (currentSettings && currentSettings.enabled !== enabled) {
-            this.settings.set({ ...currentSettings, enabled });
+            this.settings.set(Object.assign({}, currentSettings, { enabled }));
             // Auto-save enabled/disabled changes immediately
             this.saveEnabledOnly(enabled);
         }
     }
 
     /**
-     * Save only the enabled state without requiring manual save
+     * Save the enabled-state toggle without requiring a manual save.
+     *
+     * The payload is built from the current `settings()` signal — not from
+     * `originalSettings()` — so that any in-progress edits to `supportLevel` or
+     * `customInstructions` are preserved rather than silently discarded when the
+     * user flips the toggle. Admin-restricted fields (`variant`, `rateLimit`) are
+     * still restored from the original values for non-admins, matching the server's
+     * authorization rules in `saveSettings()`.
      */
     private saveEnabledOnly(enabled: boolean): void {
+        const currentSettings = this.settings();
         const originalSettingsValue = this.originalSettings();
-        if (!this.courseId || !originalSettingsValue) {
+        if (!this.courseId || !currentSettings || !originalSettingsValue) {
             return;
         }
 
         // Prevent dirty flash during auto-save
         this.isAutoSaving.set(true);
 
-        // Create settings object with only enabled changed from original
-        const settingsToSave: IrisCourseSettingsDTO = {
-            ...originalSettingsValue,
+        // Persist the current edits together with the new enabled state, normalizing
+        // empty custom instructions the same way saveSettings() does.
+        const settingsToSave: IrisCourseSettingsDTO = Object.assign({}, currentSettings, {
             enabled,
-        };
+            customInstructions: this.normalizeEmpty(currentSettings.customInstructions) as string | undefined,
+        });
+
+        if (!this.isAdmin()) {
+            // Non-admins cannot change variant or rate limits — restore the originals.
+            settingsToSave.variant = originalSettingsValue.variant;
+            settingsToSave.rateLimit = originalSettingsValue.rateLimit;
+        } else {
+            // Admin: reconstruct rateLimit from the current form fields.
+            settingsToSave.rateLimit = this.buildRateLimitForSave();
+        }
 
         this.irisSettingsService
             .updateCourseSettings(this.courseId, settingsToSave)
@@ -448,7 +468,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
                     // Revert on error
                     const currentSettings = this.settings();
                     if (currentSettings) {
-                        this.settings.set({ ...currentSettings, enabled: !enabled });
+                        this.settings.set(Object.assign({}, currentSettings, { enabled: !enabled }));
                     }
                 },
             });
@@ -469,6 +489,9 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
      * Only the General-tab editable fields are reset: `supportLevel` and
      * `customInstructions`. The `enabled` toggle (auto-saved separately) and the
      * admin-only `variant` / `rateLimit` fields are left as they are.
+     *
+     * No-ops if the General-tab fields already hold their default values, so an
+     * idempotent click does not trigger an unnecessary network request.
      */
     resetToDefault(): void {
         const currentSettings = this.settings();
@@ -476,11 +499,12 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
             return;
         }
         const defaults = createDefaultCourseSettings();
-        this.settings.set({
-            ...currentSettings,
-            supportLevel: defaults.supportLevel,
-            customInstructions: defaults.customInstructions,
-        });
+        const sameSupportLevel = currentSettings.supportLevel === defaults.supportLevel;
+        const sameCustomInstructions = this.normalizeEmpty(currentSettings.customInstructions) === this.normalizeEmpty(defaults.customInstructions);
+        if (sameSupportLevel && sameCustomInstructions) {
+            return;
+        }
+        this.settings.set(Object.assign({}, currentSettings, { supportLevel: defaults.supportLevel, customInstructions: defaults.customInstructions }));
         this.saveSettings();
     }
 
@@ -490,7 +514,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     updateCustomInstructions(value: string): void {
         const currentSettings = this.settings();
         if (currentSettings) {
-            this.settings.set({ ...currentSettings, customInstructions: value });
+            this.settings.set(Object.assign({}, currentSettings, { customInstructions: value }));
         }
     }
 
@@ -501,7 +525,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         const level = SLIDER_VALUE_TO_SUPPORT_LEVEL[value] ?? 'moderate';
         const currentSettings = this.settings();
         if (currentSettings) {
-            this.settings.set({ ...currentSettings, supportLevel: level });
+            this.settings.set(Object.assign({}, currentSettings, { supportLevel: level }));
         }
         this.playHandlePop();
     }
@@ -522,7 +546,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     updateVariant(value: IrisPipelineVariant): void {
         const currentSettings = this.settings();
         if (currentSettings) {
-            this.settings.set({ ...currentSettings, variant: value });
+            this.settings.set(Object.assign({}, currentSettings, { variant: value }));
         }
     }
 
