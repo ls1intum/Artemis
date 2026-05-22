@@ -26,7 +26,7 @@
                     <jhi-course-title-bar [hasSidebar]="hasSidebar()" [isSidebarCollapsed]="isSidebarCollapsed()" [pageTitle]="pageTitle()" (toggleSidebar)="toggleSidebar()">
                         @if (studentViewLink().length) {
                             <div id="student-view-button">
-                                <a class="btn btn-sm btn-outline-secondary" [routerLink]="studentViewLink()" jhiTranslate="artemisApp.courseOverview.studentView"></a>
+                                <a pButton outlined severity="secondary" size="small" [routerLink]="studentViewLink()" jhiTranslate="artemisApp.courseOverview.studentView"></a>
                             </div>
                         }
                         <div class="controls">

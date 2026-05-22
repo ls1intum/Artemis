@@ -60,6 +60,7 @@ import { CourseSummaryDTO } from 'app/core/course/shared/entities/course-summary
 import { CourseOperationProgressDTO, CourseOperationType } from 'app/core/course/shared/entities/course-operation-progress.model';
 import { CourseOperationProgressComponent } from 'app/core/course/manage/course-operation-progress/course-operation-progress.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ButtonDirective } from 'primeng/button';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
 import { Subscription } from 'rxjs';
@@ -85,6 +86,7 @@ import { convertDateFromServer } from 'app/shared/util/date.utils';
         DeleteButtonDirective,
         HasAnyAuthorityDirective,
         FaIconComponent,
+        ButtonDirective,
         CourseOperationProgressComponent,
         ArtemisTranslatePipe,
     ],
