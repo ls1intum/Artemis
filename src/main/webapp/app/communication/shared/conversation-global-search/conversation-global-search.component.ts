@@ -373,7 +373,7 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
 
     @HostListener('document:keydown', ['$event'])
     handleSearchShortcut(event: KeyboardEvent) {
-        if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+        if ((event.metaKey || event.ctrlKey) && event.key === 's') {
             event.preventDefault();
             this.focusInput();
         }

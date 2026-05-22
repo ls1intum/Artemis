@@ -423,6 +423,50 @@ public class ConversationUtilService {
     }
 
     /**
+     * Creates and saves a OneToOneChat for the given Course with the specified participants.
+     *
+     * @param course The Course the OneToOneChat belongs to
+     * @param user1  The first participant
+     * @param user2  The second participant
+     * @return The created OneToOneChat
+     */
+    public Conversation createOneToOneChat(Course course, User user1, User user2) {
+        Conversation conversation = new OneToOneChat();
+        conversation.setCourse(course);
+        conversation = conversationRepository.save(conversation);
+
+        var participant1 = ConversationParticipant.createWithDefaultValues(user1, conversation);
+        var participant2 = ConversationParticipant.createWithDefaultValues(user2, conversation);
+        conversationParticipantRepository.save(participant1);
+        conversationParticipantRepository.save(participant2);
+
+        conversation.setConversationParticipants(new HashSet<>(List.of(participant1, participant2)));
+        return conversationRepository.save(conversation);
+    }
+
+    /**
+     * Creates and saves a GroupChat for the given Course with the specified participants.
+     *
+     * @param course       The Course the GroupChat belongs to
+     * @param participants The users to add as participants
+     * @return The created GroupChat
+     */
+    public Conversation createGroupChat(Course course, User... participants) {
+        Conversation conversation = new GroupChat();
+        conversation.setCourse(course);
+        conversation = conversationRepository.save(conversation);
+
+        var savedParticipants = new HashSet<ConversationParticipant>();
+        for (User user : participants) {
+            var participant = ConversationParticipant.createWithDefaultValues(user, conversation);
+            savedParticipants.add(conversationParticipantRepository.save(participant));
+        }
+
+        conversation.setConversationParticipants(savedParticipants);
+        return conversationRepository.save(conversation);
+    }
+
+    /**
      * Creates and saves a Channel for the given Course. The Channel is course wide.
      *
      * @param course      The Course the Channel belongs to

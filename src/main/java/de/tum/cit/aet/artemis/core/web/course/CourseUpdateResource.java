@@ -41,6 +41,8 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
 
@@ -77,10 +79,12 @@ public class CourseUpdateResource {
 
     private final UserRepository userRepository;
 
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
+
     public CourseUpdateResource(Optional<LtiApi> ltiApi, AuthorizationCheckService authCheckService, FileService fileService,
             Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, Optional<LearningPathApi> learningPathApi,
             ConductAgreementService conductAgreementService, Optional<AthenaApi> athenaApi, Optional<LearnerProfileApi> learnerProfileApi, CourseRepository courseRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         this.ltiApi = ltiApi;
         this.authCheckService = authCheckService;
         this.fileService = fileService;
@@ -91,6 +95,7 @@ public class CourseUpdateResource {
         this.learnerProfileApi = learnerProfileApi;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateService;
     }
 
     private static Set<String> getChangedGroupNames(CourseUpdateDTO courseUpdateDTO, Course existingCourse) {
@@ -207,6 +212,8 @@ public class CourseUpdateResource {
         }
 
         Course result = courseRepository.save(existingCourse);
+
+        searchableEntityWeaviateService.ifPresent(service -> service.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(result)));
 
         // if learning paths got enabled, generate learning paths for students
         if (!oldLearningPathsEnabled && courseUpdateDTO.learningPathsEnabled() && learningPathApi.isPresent()) {

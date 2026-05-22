@@ -342,12 +342,12 @@ describe('ConversationGlobalSearchComponent', () => {
         expect(focusSpy).toHaveBeenCalled();
     });
 
-    it('should focus the input when Ctrl+K or Cmd+K is pressed', () => {
+    it('should focus the input when Ctrl+S or Cmd+S is pressed', () => {
         const focusInputSpy = vi.spyOn(component, 'focusInput');
         const mockEvent = {
             metaKey: true, // Simulate Cmd key on macOS
             ctrlKey: false,
-            key: 'k',
+            key: 's',
             preventDefault: vi.fn(),
         } as unknown as KeyboardEvent;
 
@@ -356,11 +356,11 @@ describe('ConversationGlobalSearchComponent', () => {
         expect(mockEvent.preventDefault).toHaveBeenCalled();
         expect(focusInputSpy).toHaveBeenCalled();
 
-        // Test for Ctrl+K (non-macOS)
+        // Test for Ctrl+S (non-macOS)
         const mockEventCtrl = {
             metaKey: false,
             ctrlKey: true, // Simulate Ctrl key on non-macOS
-            key: 'k',
+            key: 's',
             preventDefault: vi.fn(),
         } as unknown as KeyboardEvent;
 
