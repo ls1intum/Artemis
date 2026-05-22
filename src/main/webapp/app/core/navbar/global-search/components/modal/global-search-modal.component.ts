@@ -19,6 +19,7 @@ import { SearchableEntity } from '../../models/searchable-entity.model';
 import { GlobalSearchLectureResultsComponent } from 'app/core/navbar/global-search/components/views/lecture-results/global-search-lecture-results.component';
 import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/components/views/iris-answer/global-search-iris-answer.component';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { TranslateService } from '@ngx-translate/core';
 
 interface SearchState {
     query: string;
@@ -48,6 +49,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     private readonly router = inject(Router);
     private readonly searchService = inject(GlobalSearchApiService);
     private readonly courseStorageService = inject(CourseStorageService);
+    private readonly translateService = inject(TranslateService);
     protected readonly faArrowUp = faArrowUp;
     protected readonly faArrowDown = faArrowDown;
     protected readonly searchInputComponent = viewChild<SearchInputComponent>(SearchInputComponent);
@@ -220,7 +222,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
         // Set course filter
         const course = this.courseStorageService.getCourse(courseId);
-        const courseLabel = course?.title ?? `Course ${courseId}`;
+        const courseLabel = course?.title ?? this.translateService.instant('global.search.courseFallbackLabel', { id: courseId });
         this.activeCourseId.set(courseId);
         this.activeCourseLabel.set(courseLabel);
 

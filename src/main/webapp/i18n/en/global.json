@@ -84,6 +84,7 @@
             },
             "comingSoon": "Coming soon",
             "enterToActivate": "Press Enter to activate",
+            "courseFallbackLabel": "Course {{ id }}",
             "searchFailed": "Search failed. Please try again.",
             "askIris": "Ask Iris AI",
             "askIrisDescription": "Get an AI-generated answer from your lecture content",

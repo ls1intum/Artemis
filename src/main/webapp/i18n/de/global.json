@@ -84,6 +84,7 @@
             },
             "comingSoon": "Demnächst verfügbar",
             "enterToActivate": "Eingabetaste drücken zum Aktivieren",
+            "courseFallbackLabel": "Kurs {{ id }}",
             "searchFailed": "Suche fehlgeschlagen. Bitte versuche es erneut.",
             "askIris": "Iris KI fragen",
             "askIrisDescription": "KI-generierte Antwort aus deinen Vorlesungsinhalten",
