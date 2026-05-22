@@ -5,9 +5,8 @@ import { BASE_API } from '../support/constants';
 
 const passkeyTestUser = { username: 'passkey_test_user', password: 'passkey_test_user' };
 
-test.describe('Passkey registration', () => {
+test.describe('Passkey', () => {
     test.beforeEach(async ({ page, login }) => {
-        // Create a dedicated user for passkey tests (logged in as admin via API)
         await login(admin, '/courses');
         await page.request.post(`${BASE_API}/core/admin/users`, {
             data: {
@@ -23,29 +22,174 @@ test.describe('Passkey registration', () => {
     });
 
     test.afterEach(async ({ page, login }) => {
-        // Clean up: delete the test user (as admin)
         await login(admin, '/courses');
         await page.request.delete(`${BASE_API}/core/admin/users/${passkeyTestUser.username}`);
     });
 
-    test('registers a passkey via the setup modal after login', async ({ page, loginPage, virtualAuthenticator }) => {
+    test('registers a passkey via the setup modal and displays it in user settings', async ({ page, loginPage, navigationBar, virtualAuthenticator }) => {
         await page.goto('/sign-in');
-        // Clear the passkey modal suppression so the modal appears for this test
         await page.evaluate(() => localStorage.removeItem('earliestSetupPasskeyReminderDate'));
         await loginPage.login(passkeyTestUser);
 
-        // The passkey setup modal appears after login for users without a passkey
+        // Register passkey via the modal
         await page.getByRole('button', { name: 'Set Up Passkey' }).click();
 
-        // Verify no registration error alert is shown
-        const errorAlert = page.locator('.alert-inner').getByText('The passkey could not be registered. Please try again.');
-        await expect(errorAlert).not.toBeVisible();
-
-        // Verify success alert is shown
-        const successAlert = page.locator('.alert-inner').getByText('Your passkey has been successfully registered. You can manage your passkeys in the user settings');
+        const successAlert = page.locator('.alert-inner').getByText('Your passkey has been successfully registered.');
         await expect(successAlert).toBeVisible();
+        await page.waitForURL('**/courses**');
 
-        // Modal should close and navigate to courses
+        // Navigate to passkey settings and verify the passkey is listed
+        await page.goto('/user-settings/passkeys');
+        await expect(page.getByText('Your passkeys')).toBeVisible();
+        await expect(page.getByText('passkey_test_user@example.com')).toBeVisible();
+    });
+
+    test('renames a passkey in user settings', async ({ page, login, virtualAuthenticator }) => {
+        // Register passkey programmatically via API + virtual authenticator
+        await registerPasskeyViaApi(page, passkeyTestUser);
+
+        // Login and navigate to passkey settings
+        await login(passkeyTestUser, '/user-settings/passkeys');
+        await expect(page.getByText('Your passkeys')).toBeVisible();
+
+        // Click Edit on the passkey
+        await page.getByRole('button', { name: 'Edit' }).click();
+        const labelInput = page.getByRole('textbox');
+        await labelInput.clear();
+        await labelInput.fill('My Renamed Passkey');
+        await page.getByRole('button', { name: 'Save' }).click();
+
+        // Verify the renamed label is displayed
+        await expect(page.getByText('My Renamed Passkey')).toBeVisible();
+    });
+
+    test('deletes a passkey in user settings', async ({ page, login, virtualAuthenticator }) => {
+        await registerPasskeyViaApi(page, passkeyTestUser);
+
+        await login(passkeyTestUser, '/user-settings/passkeys');
+        await expect(page.getByText('Your passkeys')).toBeVisible();
+        await expect(page.getByText('passkey_test_user@example.com')).toBeVisible();
+
+        // Delete the passkey
+        await page.getByRole('button', { name: 'Delete' }).click();
+        await page.getByTestId('delete-dialog-confirm-button').click();
+
+        // Verify passkey is removed
+        await expect(page.getByText('You have not registered any passkeys with Artemis yet.')).toBeVisible();
+    });
+
+    test('logs in with a registered passkey', async ({ page, loginPage, virtualAuthenticator }) => {
+        await registerPasskeyViaApi(page, passkeyTestUser);
+
+        // Logout and go to sign-in page
+        await page.goto('/sign-in');
+        await page.evaluate(() => localStorage.removeItem('earliestSetupPasskeyReminderDate'));
+
+        // Click "Sign in with a passkey" — the virtual authenticator handles the prompt
+        await page.locator('#passkey-login-button').click();
+
+        // Verify login succeeded by checking navigation to courses
         await page.waitForURL('**/courses**');
     });
+
+    test('cannot login with a passkey after it was deleted', async ({ page, login, loginPage, virtualAuthenticator }) => {
+        await registerPasskeyViaApi(page, passkeyTestUser);
+
+        // Delete the passkey via API
+        await login(passkeyTestUser, '/courses');
+        const passkeysResponse = await page.request.get(`${BASE_API}/core/passkey/user`);
+        const passkeys = await passkeysResponse.json();
+        for (const passkey of passkeys) {
+            await page.request.delete(`${BASE_API}/core/passkey/${passkey.credentialId}`);
+        }
+
+        // Logout and try to login with passkey
+        await page.goto('/sign-in');
+        await page.evaluate(() => localStorage.removeItem('earliestSetupPasskeyReminderDate'));
+        await page.locator('#passkey-login-button').click();
+
+        // Verify login fails with an error
+        const errorAlert = page.locator('.alert-inner').getByText('No passkey was found for Artemis.');
+        await expect(errorAlert).toBeVisible();
+
+        // Verify user is still on the sign-in page
+        await expect(page).toHaveURL(/sign-in/);
+    });
 });
+
+/**
+ * Registers a passkey for a user by authenticating and calling the WebAuthn API directly
+ * from the browser context, using the CDP virtual authenticator.
+ * This avoids navigating through the UI modal.
+ */
+async function registerPasskeyViaApi(page: import('@playwright/test').Page, user: { username: string; password: string }) {
+    // Authenticate as the user to get JWT cookie
+    const authResponse = await page.request.post('api/core/public/authenticate', {
+        data: { username: user.username, password: user.password, rememberMe: true },
+    });
+    expect(authResponse.status()).toBe(200);
+
+    // Navigate to app so navigator.credentials and fetch are available on the correct origin
+    await page.goto('/');
+
+    // Get account info for the credential label
+    const accountResponse = await page.request.get(`${BASE_API}/core/public/account`);
+    const account = await accountResponse.json();
+
+    // Perform the full WebAuthn registration inside the browser context
+    const result = await page.evaluate(
+        async ({ userId, email }: { userId: number; email: string }) => {
+            function base64urlToBuffer(base64url: string): ArrayBuffer {
+                const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+                const padding = '='.repeat((4 - (base64.length % 4)) % 4);
+                const binary = atob(base64 + padding);
+                return Uint8Array.from(binary, (c) => c.charCodeAt(0)).buffer;
+            }
+
+            // 1. Get registration options from the server
+            const optionsResponse = await fetch('/webauthn/register/options', { method: 'POST' });
+            if (!optionsResponse.ok) {
+                return `options-failed: ${optionsResponse.status}`;
+            }
+            const options = await optionsResponse.json();
+
+            // 2. Create credential via the virtual authenticator
+            const credential = (await navigator.credentials.create({
+                publicKey: {
+                    ...options,
+                    challenge: base64urlToBuffer(options.challenge),
+                    user: {
+                        id: new TextEncoder().encode(userId.toString()),
+                        name: email,
+                        displayName: email,
+                    },
+                    excludeCredentials: options.excludeCredentials?.map((c: { id: string; type: string }) => ({
+                        ...c,
+                        id: base64urlToBuffer(c.id),
+                    })),
+                },
+            })) as PublicKeyCredential | null;
+
+            if (!credential) {
+                return 'credential-null';
+            }
+
+            // 3. Register the credential with the server
+            const registerResponse = await fetch('/webauthn/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    publicKey: {
+                        credential: credential.toJSON(),
+                        label: `${email} - E2E Test`,
+                    },
+                }),
+            });
+
+            return registerResponse.ok ? 'success' : `register-failed: ${registerResponse.status}`;
+        },
+        { userId: account.id, email: account.email },
+    );
+
+    expect(result).toBe('success');
+}
