@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -54,10 +53,10 @@ public class AthenaModuleService {
 
     private final ExerciseRepository exerciseRepository;
 
-    public AthenaModuleService(@Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
+    public AthenaModuleService(@Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper objectMapper,
             ExerciseRepository exerciseRepository) {
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
-        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
+        this.objectMapper = objectMapper;
         this.exerciseRepository = exerciseRepository;
     }
 
@@ -142,7 +141,7 @@ public class AthenaModuleService {
      * @throws BadRequestAlertException when the exercise has no access to the exercise's provided module.
      */
     public void checkHasAccessToAthenaModule(Exercise exercise, Course course, String entityName) throws BadRequestAlertException {
-        if (exercise.isExamExercise() && exercise.getFeedbackSuggestionModule() != null) {
+        if (exercise.isExamExercise() && !exercise.isTestExamExercise() && exercise.getFeedbackSuggestionModule() != null) {
             throw new BadRequestAlertException("The exam exercise has no access to Athena", entityName, "examExerciseNoAccessToAthena");
         }
         if (!course.getRestrictedAthenaModulesAccess() && restrictedModules.contains(exercise.getFeedbackSuggestionModule())) {

@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
 import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -66,6 +67,47 @@ public class ModelingExerciseFeedbackService {
         this.resultWebsocketService = resultWebsocketService;
         this.participationService = participationService;
         this.userRepository = userRepository;
+    }
+
+    /**
+     * Asynchronously triggers non-graded Athena feedback for a modeling submission in a test exam.
+     *
+     * @param participation    the student participation associated with the exercise
+     * @param modelingExercise the modeling exercise
+     */
+    public void generateAutomaticFeedbackForTestExamAsync(StudentParticipation participation, ModelingExercise modelingExercise) {
+        if (this.athenaFeedbackApi.isEmpty()) {
+            return;
+        }
+        Optional<Submission> submissionOptional;
+        try {
+            submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId()).findLatestSubmission();
+        }
+        catch (EntityNotFoundException e) {
+            log.warn("Skipping Athena feedback for modeling participation {}: {}", participation.getId(), e.getMessage());
+            return;
+        }
+        if (submissionOptional.isEmpty()) {
+            return;
+        }
+        if (!(submissionOptional.get() instanceof ModelingSubmission modelingSubmission)) {
+            log.warn("Skipping Athena feedback for participation {} on modeling exercise {}: latest submission {} is not a ModelingSubmission", participation.getId(),
+                    modelingExercise.getId(), submissionOptional.get().getId());
+            return;
+        }
+        if (modelingSubmission.isEmpty()) {
+            return;
+        }
+        try {
+            athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA))
+                    .checkLatestSubmissionHasNoAthenaResultOrThrow(modelingSubmission);
+        }
+        catch (BadRequestAlertException ignored) {
+            return;
+        }
+        // Capture the user on the calling (request) thread — SecurityContext is not propagated into the async executor.
+        User requestingUser = userRepository.getUser();
+        CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(modelingSubmission, participation, modelingExercise, requestingUser));
     }
 
     /**

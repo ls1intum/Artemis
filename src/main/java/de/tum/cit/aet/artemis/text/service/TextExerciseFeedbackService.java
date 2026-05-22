@@ -28,6 +28,8 @@ import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
@@ -70,6 +72,47 @@ public class TextExerciseFeedbackService {
         this.participationService = participationService;
         this.textBlockService = textBlockService;
         this.userRepository = userRepository;
+    }
+
+    /**
+     * Asynchronously triggers non-graded Athena feedback for a text submission in a test exam.
+     *
+     * @param participation the student participation associated with the exercise
+     * @param textExercise  the text exercise
+     */
+    public void generateAutomaticFeedbackForTestExamAsync(StudentParticipation participation, TextExercise textExercise) {
+        if (this.athenaFeedbackApi.isEmpty()) {
+            return;
+        }
+        Optional<Submission> submissionOptional;
+        try {
+            submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId()).findLatestSubmission();
+        }
+        catch (EntityNotFoundException e) {
+            log.warn("Skipping Athena feedback for text participation {}: {}", participation.getId(), e.getMessage());
+            return;
+        }
+        if (submissionOptional.isEmpty()) {
+            return;
+        }
+        if (!(submissionOptional.get() instanceof TextSubmission textSubmission)) {
+            log.warn("Skipping Athena feedback for participation {} on text exercise {}: latest submission {} is not a TextSubmission", participation.getId(), textExercise.getId(),
+                    submissionOptional.get().getId());
+            return;
+        }
+        if (textSubmission.isEmpty()) {
+            return;
+        }
+        try {
+            athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA))
+                    .checkLatestSubmissionHasNoAthenaResultOrThrow(textSubmission);
+        }
+        catch (BadRequestAlertException ignored) {
+            return;
+        }
+        // Capture the user on the calling (request) thread — SecurityContext is not propagated into the async executor.
+        User requestingUser = userRepository.getUser();
+        CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(textSubmission, participation, textExercise, requestingUser));
     }
 
     /**

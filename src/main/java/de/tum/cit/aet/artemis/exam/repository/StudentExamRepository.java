@@ -345,6 +345,31 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     List<StudentExam> findStudentExamsForTestExamsByUserIdAndExamId(@Param("userId") Long userId, @Param("examId") Long examId);
 
+    /**
+     * Counts the number of test-exam attempts in which the user has a successful Athena feedback result. Because one
+     * feedback request fans out to every text/modeling submission in the attempt, each attempt counts as one request
+     * regardless of how many exercises the exam contains. Used to enforce the cross-attempt feedback request limit
+     * configured via {@code artemis.athena.allowed-feedback-requests}.
+     *
+     * @param userId the id of the user
+     * @param examId the id of the test exam
+     * @return the number of distinct test-exam attempts that produced at least one successful Athena result
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT se.id)
+            FROM StudentExam se
+                JOIN se.studentParticipations p
+                JOIN p.submissions s
+                JOIN s.results r
+            WHERE se.user.id = :userId
+                AND se.exam.id = :examId
+                AND se.exam.testExam = TRUE
+                AND se.testRun = FALSE
+                AND r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
+                AND r.successful = TRUE
+            """)
+    long countTestExamAttemptsWithAthenaResultByUserIdAndExamId(@Param("userId") Long userId, @Param("examId") Long examId);
+
     @Query("""
             SELECT DISTINCT se
             FROM StudentExam se
