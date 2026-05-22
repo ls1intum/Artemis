@@ -72,9 +72,30 @@ jobs:
         # memory without competing with the Gradle JVM (which reserves up to 4g).
         # --optimization=false works around an esbuild crash during script optimization.
         run: pnpm run clean-www && pnpm run prebuild && pnpm exec ng build --configuration production --optimization=false
+      - name: Decide whether to include the SBOM
+        # SBOM generation (cdxgen + cyclonedxBom) adds ~60s to a cold WAR build and is only
+        # needed for release-eligible artifacts. Opt in via -Psbom on develop/main/release/*
+        # pushes, version tags, and published releases. PRs and feature branches ship a WAR
+        # without SBOM — AdminSbomResource returns 404 and the admin UI shows an info banner.
+        # The multi-arch docker-release image always builds with -Psbom (see the Dockerfile);
+        # docker-pr reuses this WAR via external_builder and so inherits the no-SBOM PR build.
+        id: sbom
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+        run: |
+          set -Eeuo pipefail
+          case "$EVENT_NAME:$REF" in
+            release:*|push:refs/heads/develop|push:refs/heads/main|push:refs/heads/release/*|push:refs/tags/*)
+              echo "flag=-Psbom" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "flag=" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
       - name: Build .war
         # Skip the webapp Gradle task since the Angular client was already built above.
-        run: ./gradlew -Pprod -Pwar bootWar -x webapp
+        run: ./gradlew -Pprod -Pwar bootWar -x webapp ${{ steps.sbom.outputs.flag }}
       - name: Upload Artifact
         uses: actions/upload-artifact@v7
         with:
