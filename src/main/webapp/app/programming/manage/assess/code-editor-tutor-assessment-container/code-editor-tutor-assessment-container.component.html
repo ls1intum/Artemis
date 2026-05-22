@@ -52,6 +52,15 @@
             [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled"
         />
         @if (submission) {
+            <jhi-feedback-suggestions-banner
+                [isLoading]="loadingFeedbackSuggestions"
+                [hasAutomaticFeedback]="hasAutomaticFeedback"
+                [isAssessor]="isAssessor"
+                [resultCompletionDate]="manualResult?.completionDate"
+                [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled"
+            />
+        }
+        @if (submission) {
             <ng-container *ngTemplateOutlet="assessment" />
         } @else {
             <ng-container *ngTemplateOutlet="noSubmission" />

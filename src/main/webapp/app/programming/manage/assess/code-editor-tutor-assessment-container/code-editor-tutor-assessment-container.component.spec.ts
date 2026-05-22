@@ -910,4 +910,18 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         expect(comp.loadingFeedbackSuggestions).toBeFalse();
     });
+
+    it('should render the feedback suggestions banner when submission is set', async () => {
+        const { FeedbackSuggestionsBannerComponent } = await import('app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component');
+        jest.spyOn(repositoryFileService, 'getFilesWithContent').mockReturnValue(of(templateFileSessionReturn));
+        jest.spyOn(repositoryFileService, 'getFile').mockReturnValue(new BehaviorSubject({ fileContent: '' }));
+
+        const feedbackLoaded = firstValueFrom(comp.onFeedbackLoaded);
+        fixture.detectChanges();
+        await feedbackLoaded;
+        fixture.changeDetectorRef.detectChanges();
+
+        const banner = fixture.debugElement.query(By.directive(FeedbackSuggestionsBannerComponent));
+        expect(banner).not.toBeNull();
+    });
 });
