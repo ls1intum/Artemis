@@ -86,9 +86,8 @@
     },
     "patchedDependencies": {
         "@angular-builders/jest@21.0.3": "patches/@angular-builders+jest+21.0.3.patch",
-        "@eslint/eslintrc@3.3.5": "patches/@eslint+eslintrc+3.3.5.patch",
         "@swimlane/ngx-graph@11.0.0": "patches/@swimlane+ngx-graph+11.0.0.patch",
-        "eslint@9.39.4": "patches/eslint+9.39.4.patch"
+        "eslint@10.4.0": "patches/eslint+10.4.0.patch"
     },
     "trustedDependencies": [
         "@parcel/watcher",
