@@ -10,7 +10,7 @@ CI pipeline (pull requests, pushes to `develop` / `main` / `release/*`, publishe
 releases, merge-queue runs, and a manual `workflow_dispatch`) so that the answer to "what
 runs on event X?" is in exactly one file.
 
-```
+```text
 ci.yml                                                            (single entry workflow)
 ├── detect-changes               (dorny/paths-filter, emits per-area booleans)
 ├── build           ── uses ci-build.yml                          (workflow_call)
