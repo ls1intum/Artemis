@@ -238,7 +238,7 @@ export class Commands {
                 try {
                     await page.reload();
                 } catch (reloadError) {
-                    throw new Error(`Failed to reload page while waiting for element: ${reloadError}`);
+                    throw new Error(`Failed to reload page while waiting for element: ${reloadError}`, { cause: reloadError });
                 }
             }
         }
@@ -270,7 +270,7 @@ export class Commands {
             try {
                 await page.reload();
             } catch (reloadError) {
-                throw new Error(`Failed to reload page while waiting for text "${expectedText}": ${reloadError}`);
+                throw new Error(`Failed to reload page while waiting for text "${expectedText}": ${reloadError}`, { cause: reloadError });
             }
         }
 
