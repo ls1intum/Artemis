@@ -1,19 +1,16 @@
 import { Component, Input, OnChanges, SimpleChanges, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
+import { TitleChannelNamePrimengComponent } from 'app/shared/form/title-channel-name-primeng/title-channel-name-primeng.component';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 
-/**
- * @deprecated Use {@link ExerciseTitleChannelNamePrimengComponent} instead.
- */
 @Component({
-    selector: 'jhi-exercise-title-channel-name',
-    templateUrl: './exercise-title-channel-name.component.html',
-    imports: [TitleChannelNameComponent],
+    selector: 'jhi-exercise-title-channel-name-primeng',
+    templateUrl: './exercise-title-channel-name-primeng.component.html',
+    imports: [TitleChannelNamePrimengComponent],
 })
-export class ExerciseTitleChannelNameComponent implements OnChanges {
+export class ExerciseTitleChannelNamePrimengComponent implements OnChanges {
     course = input<Course>();
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
     courseId = input<number>();
@@ -28,7 +25,7 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
     @Input() titleHelpIconText: string;
     @Input() channelNameHelpIconText: string;
 
-    readonly titleChannelNameComponent = viewChild.required(TitleChannelNameComponent);
+    readonly titleChannelNameComponent = viewChild.required(TitleChannelNamePrimengComponent);
 
     onTitleChange = output<string>();
     onChannelNameChange = output<string>();
