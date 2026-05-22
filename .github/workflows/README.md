@@ -41,9 +41,10 @@ Its only permission is `actions: read` (the timeline reads the jobs API).
 
 The single required check is `CI / All required CI Passed`. It gates on every job that is
 **fast and deterministic** — `build`, `test`, `quality`, `gradle-wrapper`, `translation`,
-`docs`, `workflows`. The static checks (`quality`, the area gates) each run in ≤3 min, well
-under `test`'s ~28 min, so requiring them adds no merge latency. Path-skipped jobs report
-`skipped`, which the gate accepts — so a job only blocks merge when it is *relevant and red*.
+`docs`, `workflows`. They run in parallel and finish within `test`'s window (the lightweight
+area checks in a minute or two; `quality`'s slowest job, the ArchUnit run, still under `test`),
+so requiring them adds no merge latency. Path-skipped jobs report `skipped`, which the gate
+accepts — so a job only blocks merge when it is *relevant and red*.
 
 `quality` (`ci-quality.yml`) is where all static analysis lives, for **both** server and
 client — Java/TypeScript style, lint, type-check, architecture, plus the Java-only analyses

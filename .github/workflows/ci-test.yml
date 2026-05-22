@@ -184,8 +184,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.commit_sha }}
-      # Some client tests OOM with the project-wide --max-old-space-size in .npmrc.
-      # We strip that single line as a workaround; the rest of .npmrc stays.
+      # Some client tests OOM under the project-wide --max-old-space-size in .npmrc; drop only that line.
       - name: Remove project-wide node options set in .npmrc just for this test
         # `sed` with no match exits 0; missing .npmrc would fail loudly (intended).
         run: sed -i '/^node-options=/d' .npmrc

@@ -729,6 +729,9 @@ jobs:
 
   # Aggregates the phase results into a single commit status — a human-readable progress
   # signal for the long E2E run. The required merge gate is `all-required-ci-passed` in ci.yml.
+  # This job never fails on a test outcome (test steps are continue-on-error); the honest
+  # result is exposed via the `status` output (→ ci-e2e's `e2e_result`). Only infra failures,
+  # which fail a phase job upstream, turn the run red.
   report-results:
     name: Report E2E Overall Status
     needs: [determine-tests, run-e2e-relevant, run-e2e-remaining, run-e2e-all-pr, run-e2e-all-non-pr]
@@ -870,15 +873,3 @@ jobs:
                 issue_number: prNumber, body,
               });
             }
-
-      - name: Report aggregated status (advisory — does not fail the run)
-        # E2E is advisory at the run-conclusion level: a failed TEST must not fail this job
-        # (which would fail the reusable → the `e2e` caller → the ci.yml run conclusion that
-        # Helios's pre-deploy gate keys on). The real status is published via the `status` job
-        # output and the commit status above. Infra/setup/teardown failures already fail their
-        # phase job (no continue-on-error there), so they still turn the run red on their own.
-        if: always()
-        env:
-          STATUS: ${{ steps.overall-status.outputs.status }}
-        run: |
-          echo "E2E aggregate status (advisory): $STATUS"

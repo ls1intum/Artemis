@@ -1,7 +1,7 @@
 name: Quality
 
 # Static checks (server + client): style, lint, type-check, architecture, Java analyses.
-# Split from ci-test.yml; rationale in README.
+# Kept separate from ci-test.yml (test suites); rationale in README.
 
 on:
   workflow_call:

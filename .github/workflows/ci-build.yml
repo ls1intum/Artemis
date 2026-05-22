@@ -119,13 +119,9 @@ jobs:
           mv "build/libs/Artemis-${RELEASE_TAG}.war" /tmp/Artemis.war
           gh release upload "$RELEASE_TAG" /tmp/Artemis.war --clobber --repo "${GITHUB_REPOSITORY}"
 
-  # Fast PR path: single-arch (linux/amd64) image that reuses the .war produced by
-  # `build-war` via the Dockerfile's `external_builder` stage. Skips the duplicate
-  # Angular + Gradle build that the reusable multi-arch workflow would otherwise
-  # run inside the image.
-  #
-  # Fork PRs are skipped because they cannot push to ghcr.io/ls1intum/artemis.
-  # E2E is consequently skipped for fork PRs (ci.yml's e2e job needs this image).
+  # Fast PR path: single-arch (linux/amd64) image that reuses the .war from `build-war` via the
+  # Dockerfile's `external_builder` stage, skipping the duplicate Angular + Gradle build the
+  # multi-arch reusable would run in-image. Internal PRs only — fork PRs can't push to GHCR.
   docker-pr:
     name: Build and Push Docker Image (PR, amd64)
     needs: build-war
