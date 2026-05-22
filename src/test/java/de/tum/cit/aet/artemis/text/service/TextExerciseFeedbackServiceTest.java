@@ -24,6 +24,8 @@ import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
@@ -60,6 +62,9 @@ class TextExerciseFeedbackServiceTest {
     @Mock
     private TextBlockService textBlockService;
 
+    @Mock
+    private UserRepository userRepository;
+
     private TextExercise textExercise;
 
     private StudentParticipation participation;
@@ -76,7 +81,8 @@ class TextExerciseFeedbackServiceTest {
     }
 
     private TextExerciseFeedbackService newService(Optional<AthenaFeedbackApi> api) {
-        return new TextExerciseFeedbackService(api, submissionService, resultService, resultRepository, resultWebsocketService, participationService, textBlockService);
+        return new TextExerciseFeedbackService(api, submissionService, resultService, resultRepository, resultWebsocketService, participationService, textBlockService,
+                userRepository);
     }
 
     @Test
@@ -101,7 +107,7 @@ class TextExerciseFeedbackServiceTest {
 
         // No submission → no websocket broadcast, no athena call, no result saved.
         verifyNoInteractions(resultWebsocketService, resultRepository);
-        verify(athenaFeedbackApi, never()).getTextFeedbackSuggestions(any(), any(), eq(false));
+        verify(athenaFeedbackApi, never()).getTextFeedbackSuggestions(any(), any(), eq(false), any());
     }
 
     @Test
@@ -121,7 +127,7 @@ class TextExerciseFeedbackServiceTest {
         service.generateAutomaticFeedbackForTestExamAsync(participation, textExercise);
 
         verifyNoInteractions(resultWebsocketService, resultRepository);
-        verify(athenaFeedbackApi, never()).getTextFeedbackSuggestions(any(), any(), eq(false));
+        verify(athenaFeedbackApi, never()).getTextFeedbackSuggestions(any(), any(), eq(false), any());
     }
 
     @Test
@@ -146,7 +152,7 @@ class TextExerciseFeedbackServiceTest {
 
         // Already rated by Athena → do not re-trigger to avoid duplicate results and extra Athena traffic.
         verifyNoInteractions(resultWebsocketService, resultRepository);
-        verify(athenaFeedbackApi, never()).getTextFeedbackSuggestions(any(), any(), eq(false));
+        verify(athenaFeedbackApi, never()).getTextFeedbackSuggestions(any(), any(), eq(false), any());
     }
 
     @Test
@@ -161,9 +167,10 @@ class TextExerciseFeedbackServiceTest {
         validParticipation.setExercise(textExercise);
         validParticipation.addSubmission(submission);
         when(participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(PARTICIPATION_ID)).thenReturn(validParticipation);
+        when(userRepository.getUser()).thenReturn(new User());
         // Stub the Athena call so the async path can complete without network I/O. An empty list is enough to
         // exercise the success branch end-to-end without relying on feedback content.
-        when(athenaFeedbackApi.getTextFeedbackSuggestions(eq(textExercise), any(TextSubmission.class), eq(false))).thenReturn(List.of());
+        when(athenaFeedbackApi.getTextFeedbackSuggestions(eq(textExercise), any(TextSubmission.class), eq(false), any())).thenReturn(List.of());
         // The downstream resultRepository.save happens inside the async task after the Athena call. We do not
         // stub it here: the async task may or may not reach the save before Mockito cleans up the mock, and an
         // unstubbed save() simply returns null (any resulting NPE is swallowed by the try/catch in the service).
@@ -176,6 +183,7 @@ class TextExerciseFeedbackServiceTest {
         // happens at the very start of generateAutomaticNonGradedFeedback.
         await().atMost(Duration.ofSeconds(2)).untilAsserted(() -> verify(resultWebsocketService).broadcastNewResult(eq(validParticipation), any(Result.class)));
         // And the Athena call must actually reach the stub.
-        await().atMost(Duration.ofSeconds(2)).untilAsserted(() -> verify(athenaFeedbackApi).getTextFeedbackSuggestions(eq(textExercise), any(TextSubmission.class), eq(false)));
+        await().atMost(Duration.ofSeconds(2))
+                .untilAsserted(() -> verify(athenaFeedbackApi).getTextFeedbackSuggestions(eq(textExercise), any(TextSubmission.class), eq(false), any()));
     }
 }

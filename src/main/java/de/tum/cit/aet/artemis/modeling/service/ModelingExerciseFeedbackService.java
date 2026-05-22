@@ -105,7 +105,9 @@ public class ModelingExerciseFeedbackService {
         catch (BadRequestAlertException ignored) {
             return;
         }
-        CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(modelingSubmission, participation, modelingExercise));
+        // Capture the user on the calling (request) thread — SecurityContext is not propagated into the async executor.
+        User requestingUser = userRepository.getUser();
+        CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(modelingSubmission, participation, modelingExercise, requestingUser));
     }
 
     /**

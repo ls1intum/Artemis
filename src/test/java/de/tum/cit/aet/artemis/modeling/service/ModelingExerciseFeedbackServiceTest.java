@@ -25,6 +25,8 @@ import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
@@ -61,6 +63,9 @@ class ModelingExerciseFeedbackServiceTest {
     @Mock
     private ParticipationService participationService;
 
+    @Mock
+    private UserRepository userRepository;
+
     private ModelingExercise modelingExercise;
 
     private StudentParticipation participation;
@@ -77,7 +82,7 @@ class ModelingExerciseFeedbackServiceTest {
     }
 
     private ModelingExerciseFeedbackService newService(Optional<AthenaFeedbackApi> api) {
-        return new ModelingExerciseFeedbackService(api, submissionService, resultService, resultRepository, resultWebsocketService, participationService);
+        return new ModelingExerciseFeedbackService(api, submissionService, resultService, resultRepository, resultWebsocketService, participationService, userRepository);
     }
 
     @Test
@@ -100,7 +105,7 @@ class ModelingExerciseFeedbackServiceTest {
         service.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise);
 
         verifyNoInteractions(resultWebsocketService, resultRepository);
-        verify(athenaFeedbackApi, never()).getModelingFeedbackSuggestions(any(), any(), eq(false));
+        verify(athenaFeedbackApi, never()).getModelingFeedbackSuggestions(any(), any(), eq(false), any());
     }
 
     @Test
@@ -121,7 +126,7 @@ class ModelingExerciseFeedbackServiceTest {
         service.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise);
 
         verifyNoInteractions(resultWebsocketService, resultRepository);
-        verify(athenaFeedbackApi, never()).getModelingFeedbackSuggestions(any(), any(), eq(false));
+        verify(athenaFeedbackApi, never()).getModelingFeedbackSuggestions(any(), any(), eq(false), any());
     }
 
     @Test
@@ -145,7 +150,7 @@ class ModelingExerciseFeedbackServiceTest {
         service.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise);
 
         verifyNoInteractions(resultWebsocketService, resultRepository);
-        verify(athenaFeedbackApi, never()).getModelingFeedbackSuggestions(any(), any(), eq(false));
+        verify(athenaFeedbackApi, never()).getModelingFeedbackSuggestions(any(), any(), eq(false), any());
     }
 
     @Test
@@ -160,7 +165,8 @@ class ModelingExerciseFeedbackServiceTest {
         validParticipation.setExercise(modelingExercise);
         validParticipation.addSubmission(submission);
         when(participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(PARTICIPATION_ID)).thenReturn(validParticipation);
-        when(athenaFeedbackApi.getModelingFeedbackSuggestions(eq(modelingExercise), any(ModelingSubmission.class), eq(false))).thenReturn(List.of());
+        when(userRepository.getUser()).thenReturn(new User());
+        when(athenaFeedbackApi.getModelingFeedbackSuggestions(eq(modelingExercise), any(ModelingSubmission.class), eq(false), any())).thenReturn(List.of());
         // The downstream resultRepository.save happens inside the async task after the Athena call. We do not
         // stub it here: the async task may or may not reach the save before Mockito cleans up the mock, and an
         // unstubbed save() simply returns null (any resulting NPE is swallowed by the try/catch in the service).
@@ -173,6 +179,6 @@ class ModelingExerciseFeedbackServiceTest {
         // generateAutomaticNonGradedFeedback and the actual Athena call to confirm we entered the success path.
         await().atMost(Duration.ofSeconds(2)).untilAsserted(() -> verify(resultWebsocketService).broadcastNewResult(eq(validParticipation), any(Result.class)));
         await().atMost(Duration.ofSeconds(2))
-                .untilAsserted(() -> verify(athenaFeedbackApi).getModelingFeedbackSuggestions(eq(modelingExercise), any(ModelingSubmission.class), eq(false)));
+                .untilAsserted(() -> verify(athenaFeedbackApi).getModelingFeedbackSuggestions(eq(modelingExercise), any(ModelingSubmission.class), eq(false), any()));
     }
 }
