@@ -18,6 +18,12 @@
                         {{ 'global.search.results.examExercise' | artemisTranslate }}
                     </span>
                 }
+                @if (isReply()) {
+                    <span class="badge badge-reply d-inline-flex align-items-center gap-1 px-2 py-1 small">
+                        <fa-icon [icon]="faReply" size="xs" aria-hidden="true" />
+                        {{ 'global.search.results.reply' | artemisTranslate }}
+                    </span>
+                }
             </div>
 
             <!-- Metadata Row -->
@@ -27,6 +33,15 @@
                         <span class="d-flex align-items-center gap-1">
                             <fa-icon [icon]="faBook" size="sm" aria-hidden="true" />
                             <span>{{ courseName() }}</span>
+                        </span>
+                    }
+                    @if (channelName()) {
+                        @if (courseName()) {
+                            <span>•</span>
+                        }
+                        <span class="d-flex align-items-center gap-1">
+                            <fa-icon [icon]="faHashtag" size="sm" aria-hidden="true" />
+                            <span>{{ channelName() }}</span>
                         </span>
                     }
                     @if (showCourseSeparator()) {
