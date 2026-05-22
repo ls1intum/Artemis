@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -115,10 +116,8 @@ public class ParticipantScoreService {
         }
 
         // we want the score for everybody who can perform exercises in the course (students, tutors and instructors)
-        Set<User> usersOfCourse = new HashSet<>();
-        usersOfCourse.addAll(userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getStudentGroupName()));
-        usersOfCourse.addAll(userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()));
-        usersOfCourse.addAll(userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()));
+        Set<User> usersOfCourse = userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(),
+                Set.of(CourseRole.STUDENT, CourseRole.TEACHING_ASSISTANT, CourseRole.INSTRUCTOR));
 
         // we only consider released exercises that are not optional
         Set<Exercise> exercisesToConsider = course.getExercises().stream().filter(Exercise::isCourseExercise)

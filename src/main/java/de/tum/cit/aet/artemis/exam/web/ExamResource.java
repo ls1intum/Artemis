@@ -947,10 +947,10 @@ public class ExamResource {
             throw new BadRequestAlertException("Add student to exam is only allowed for real exams", ENTITY_NAME, "addStudentOnlyForRealExams");
         }
 
-        var student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin)
+        var student = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(studentLogin)
                 .orElseThrow(() -> new EntityNotFoundException("User with login: \"" + studentLogin + "\" does not exist"));
 
-        if (student.getGroups().contains(exam.getCourse().getInstructorGroupName()) || authCheckService.isAdmin(student)) {
+        if (authCheckService.isAtLeastInstructorInCourse(exam.getCourse(), student)) {
             throw new AccessForbiddenAlertException("You cannot register instructors or administrators to exams.", ENTITY_NAME, "cannotRegisterInstructor");
         }
 

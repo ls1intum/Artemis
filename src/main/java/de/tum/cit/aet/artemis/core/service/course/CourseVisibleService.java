@@ -39,7 +39,7 @@ public class CourseVisibleService {
             return true;
         }
         // Students see all courses that have already started (and not yet finished)
-        if (user.getGroups().contains(course.getStudentGroupName())) {
+        if (authCheckService.isStudentInCourse(course, user)) {
             return course.getStartDate() == null || course.getStartDate().isBefore(ZonedDateTime.now());
         }
 

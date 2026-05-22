@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.atlas.service.profile.CourseLearnerProfileService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -307,7 +308,7 @@ public class LearningPathService {
     }
 
     private Long checkMissingLearningPaths(@NonNull Course course, @NonNull Set<LearningPathHealthDTO.HealthStatus> status) {
-        long numberOfStudents = userRepository.countUserInGroup(course.getStudentGroupName());
+        long numberOfStudents = userRepository.countByCourseIdAndRole(course.getId(), CourseRole.STUDENT);
         long numberOfLearningPaths = learningPathRepository.countLearningPathsOfEnrolledStudentsInCourse(course.getId());
         Long numberOfMissingLearningPaths = numberOfStudents - numberOfLearningPaths;
 

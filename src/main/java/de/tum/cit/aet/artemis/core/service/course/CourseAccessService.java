@@ -84,7 +84,7 @@ public class CourseAccessService {
      */
     public Set<Course> findAllEnrollableForUser(User user) {
         return courseRepository.findAllEnrollmentActiveWithOrganizationsAndPrerequisites(ZonedDateTime.now()).stream()
-                .filter(course -> !user.getGroups().contains(course.getStudentGroupName())).collect(Collectors.toSet());
+                .filter(course -> !authCheckService.isStudentInCourse(course, user)).collect(Collectors.toSet());
     }
 
     /**

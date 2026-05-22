@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.course.CourseAtlasService;
 
 @Conditional(AtlasEnabled.class)
@@ -48,12 +49,15 @@ public class CourseLearnerProfileResource {
 
     private final CourseLearnerProfileService courseLearnerProfileService;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
     public CourseLearnerProfileResource(UserRepository userRepository, CourseLearnerProfileRepository courseLearnerProfileRepository, CourseAtlasService courseAtlasService,
-            CourseLearnerProfileService courseLearnerProfileService) {
+            CourseLearnerProfileService courseLearnerProfileService, AuthorizationCheckService authorizationCheckService) {
         this.userRepository = userRepository;
         this.courseLearnerProfileRepository = courseLearnerProfileRepository;
         this.courseAtlasService = courseAtlasService;
         this.courseLearnerProfileService = courseLearnerProfileService;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -65,10 +69,10 @@ public class CourseLearnerProfileResource {
     @GetMapping("course-learner-profiles")
     @EnforceAtLeastStudent
     public ResponseEntity<Set<CourseLearnerProfileDTO>> getCourseLearnerProfiles() {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         log.debug("REST request to get all CourseLearnerProfiles of user {}", user.getLogin());
         Set<CourseLearnerProfile> courseLearnerProfiles = courseLearnerProfileRepository.findAllByLoginAndCourseActive(user.getLogin(), ZonedDateTime.now()).stream()
-                .filter(profile -> user.getGroups().contains(profile.getCourse().getStudentGroupName())).collect(Collectors.toSet());
+                .filter(profile -> authorizationCheckService.isStudentInCourse(profile.getCourse(), user)).collect(Collectors.toSet());
 
         Set<Course> coursesWithLearningPaths = courseAtlasService.findAllActiveForUserAndLearningPathsEnabled(user);
 

@@ -511,18 +511,21 @@ public class ConversationService {
      * @return the set of users found in the database
      */
     public Set<User> findUsersInDatabase(Course course, boolean findAllStudents, boolean findAllTutors, boolean findAllInstructors) {
-        Set<User> users = new HashSet<>();
+        Set<CourseRole> roles = new HashSet<>();
         if (findAllStudents) {
-            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getStudentGroupName()));
+            roles.add(CourseRole.STUDENT);
         }
         if (findAllTutors) {
-            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()));
-            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getEditorGroupName()));
+            roles.add(CourseRole.TEACHING_ASSISTANT);
+            roles.add(CourseRole.EDITOR);
         }
         if (findAllInstructors) {
-            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()));
+            roles.add(CourseRole.INSTRUCTOR);
         }
-        return users;
+        if (roles.isEmpty()) {
+            return new HashSet<>();
+        }
+        return userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), roles);
     }
 
     /**
@@ -537,7 +540,7 @@ public class ConversationService {
             if (userLogin == null || userLogin.isEmpty()) {
                 continue;
             }
-            var userToRegister = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userLogin);
+            var userToRegister = userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(userLogin);
             userToRegister.ifPresent(users::add);
         }
         return users;

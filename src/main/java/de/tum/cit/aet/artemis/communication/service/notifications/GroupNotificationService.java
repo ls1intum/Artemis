@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.communication.domain.course_notifications.Programm
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ProgrammingTestCasesChangedNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.QuizExerciseStartedNotification;
 import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -129,15 +130,13 @@ public class GroupNotificationService {
      * @param courseId          the id of the course the quiz belongs to
      * @param courseTitle       the human-readable course title used in the notification body
      * @param courseIcon        the course icon URL used in the notification body (may be {@code null})
-     * @param studentGroupName  the group name used to resolve the recipients via {@link UserRepository}
      * @param quizExerciseId    the id of the quiz that was just started
      * @param notificationTitle the exercise-specific title used in the notification body
      */
     @Async
-    public void notifyStudentGroupAboutQuizExerciseStartAsync(long courseId, String courseTitle, String courseIcon, String studentGroupName, long quizExerciseId,
-            String notificationTitle) {
+    public void notifyStudentsAboutQuizExerciseStartAsync(long courseId, String courseTitle, String courseIcon, long quizExerciseId, String notificationTitle) {
         try {
-            var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(studentGroupName);
+            var recipients = userRepository.findAllByCourseIdAndCourseRolesIn(courseId, Set.of(CourseRole.STUDENT));
             var quizExerciseStartedNotification = new QuizExerciseStartedNotification(courseId, courseTitle, courseIcon, quizExerciseId, notificationTitle);
             courseNotificationService.sendCourseNotification(quizExerciseStartedNotification, recipients.stream().toList());
         }
@@ -167,8 +166,7 @@ public class GroupNotificationService {
         }
 
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(
-                Set.of(course.getEditorGroupName(), course.getInstructorGroupName(), course.getStudentGroupName()));
+        var recipients = userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR, CourseRole.STUDENT));
 
         var exerciseUpdatedNotification = new ExerciseUpdatedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
                 exercise.getExerciseNotificationTitle(), null, null, exercise.getType());
@@ -206,7 +204,7 @@ public class GroupNotificationService {
      */
     public void notifyEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise) {
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(Set.of(course.getEditorGroupName(), course.getInstructorGroupName()));
+        var recipients = userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR));
 
         ExerciseGroup exerciseGroup = exercise.isExamExercise() ? exercise.getExerciseGroup() : null;
         var exerciseUpdatedNotification = new ExerciseUpdatedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
@@ -223,7 +221,7 @@ public class GroupNotificationService {
      */
     public void notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(ProgrammingExercise exercise) {
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(Set.of(course.getEditorGroupName(), course.getInstructorGroupName()));
+        var recipients = userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR));
 
         ExerciseGroup exerciseGroup = exercise.isExamExercise() ? exercise.getExerciseGroup() : null;
         var programmingTestCasesChangedNotification = new ProgrammingTestCasesChangedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
@@ -239,7 +237,7 @@ public class GroupNotificationService {
      */
     public void notifyEditorAndInstructorGroupsAboutBuildRunUpdate(ProgrammingExercise exercise) {
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(Set.of(course.getEditorGroupName(), course.getInstructorGroupName()));
+        var recipients = userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR));
 
         ExerciseGroup exerciseGroup = exercise.isExamExercise() ? exercise.getExerciseGroup() : null;
         var programmingBuildRunUpdateNotification = new ProgrammingBuildRunUpdateNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
@@ -255,7 +253,7 @@ public class GroupNotificationService {
      */
     public void notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(Exercise exercise) {
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(Set.of(course.getEditorGroupName(), course.getInstructorGroupName()));
+        var recipients = userRepository.findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR, CourseRole.INSTRUCTOR));
         var formattedReleaseDate = exercise.getReleaseDate() != null ? exercise.getReleaseDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) : "-";
         var formattedDueDate = exercise.getDueDate() != null ? exercise.getDueDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) : "-";
 

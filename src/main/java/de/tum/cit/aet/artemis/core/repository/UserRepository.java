@@ -485,6 +485,32 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Set<User> findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndLoginIn(Set<String> logins);
 
+    /**
+     * Fetches all non-deleted users enrolled in a course with any of the given roles.
+     *
+     * @param courseId the ID of the course
+     * @param roles    the set of {@link CourseRole} values to filter by
+     * @return set of matching users
+     */
+    @Query("""
+            SELECT DISTINCT user
+            FROM User user
+                JOIN user.courseRoles ucr
+            WHERE ucr.course.id = :courseId
+                AND ucr.role IN :roles
+                AND user.deleted = FALSE
+            """)
+    Set<User> findAllByCourseIdAndCourseRolesIn(@Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles);
+
+    @Query("""
+            SELECT COUNT(DISTINCT ucr.user)
+            FROM UserCourseRole ucr
+            WHERE ucr.course.id = :courseId
+                AND ucr.role = :role
+                AND ucr.user.deleted = FALSE
+            """)
+    long countByCourseIdAndRole(@Param("courseId") long courseId, @Param("role") CourseRole role);
+
     List<User> findAllByIdIn(Collection<Long> ids);
 
     @Query("""
@@ -991,9 +1017,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndOrganizationsById(userId), userId);
     }
 
-    // TODO (Phase 9): getStudents/getTutors/getEditors/getInstructors/getUsersInCourse all use group name strings.
-    // Replace with UserCourseRole-based queries once group name columns are dropped.
-
     /**
      * Get students by given course
      *
@@ -1001,7 +1024,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return students for given course
      */
     default Set<User> getStudents(Course course) {
-        return findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getStudentGroupName());
+        return findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.STUDENT));
     }
 
     /**
@@ -1010,6 +1033,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param course object
      * @return students for given course
      */
+    // TODO (Phase 9): replace with a UCR-based query that also fetches learnerProfile once user_groups table is dropped
     default Set<User> getStudentsWithLearnerProfile(Course course) {
         return findAllWithGroupsAndAuthoritiesAndLearnerProfileByDeletedIsFalseAndGroupsContains(course.getStudentGroupName());
     }
@@ -1021,7 +1045,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return tutors for given course
      */
     default Set<User> getTutors(Course course) {
-        return findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName());
+        return findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.TEACHING_ASSISTANT));
     }
 
     /**
@@ -1031,7 +1055,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return editors for given course
      */
     default Set<User> getEditors(Course course) {
-        return findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getEditorGroupName());
+        return findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR));
     }
 
     /**
@@ -1041,7 +1065,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return instructors for the given course
      */
     default Set<User> getInstructors(Course course) {
-        return findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getInstructorGroupName());
+        return findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.INSTRUCTOR));
     }
 
     /**
@@ -1051,13 +1075,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return all users in the course
      */
     default Set<User> getUsersInCourse(Course course) {
-        // NOTE: we cannot use Set.of(), because the group names might be identical and then the ImmutableCollections$SetN would throw an exception
-        Set<String> groupNames = new HashSet<>();
-        groupNames.add(course.getStudentGroupName());
-        groupNames.add(course.getTeachingAssistantGroupName());
-        groupNames.add(course.getEditorGroupName());
-        groupNames.add(course.getInstructorGroupName());
-        return findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(groupNames);
+        return findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.STUDENT, CourseRole.TEACHING_ASSISTANT, CourseRole.EDITOR, CourseRole.INSTRUCTOR));
     }
 
     // TODO (Phase 9): remove once user_groups table is dropped; replace with UserCourseRole-based count
