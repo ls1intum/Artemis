@@ -236,6 +236,7 @@
             "submissionCount": "Submissions",
             "score": "Points",
             "duration": "Duration",
+            "filter": "Filter",
             "scoresFilter": "Filter: {{ filter }}",
             "showBuildFailed": "Build Failed",
             "showUnsuccessful": "Unsuccessful",
@@ -244,9 +245,9 @@
             "showAutomatic": "Automatic",
             "showLocked": "Locked Assessments",
             "showAll": "All",
-            "showFailed": "Show Latest Submission without Result",
-            "showNoSubmissions": "Show No Submissions",
-            "showNoPracticeMode": "Show only graded participations",
+            "showFailed": "Latest Submission without Result",
+            "showNoSubmissions": "No Submissions",
+            "showNoPracticeMode": "Only graded participations",
             "showingOnlyInRange": "Showing only results in range: {{ range }}",
             "showingOfResults": "Showing {{ filtered }} of {{ total }} ({{ percent }}%) scores",
             "tagPlaceholder": "+ Category",
@@ -321,6 +322,7 @@
                     "undefined": "You need to specify a short name.",
                     "pattern": "The short name must begin with a letter and must not contain any special characters!",
                     "minlength": "The short name must be at least 3 characters long!",
+                    "maxlength": "The short name must not exceed 36 characters!",
                     "disallowedValue": "The short name is already used for another exercise!"
                 },
                 "packageName": {

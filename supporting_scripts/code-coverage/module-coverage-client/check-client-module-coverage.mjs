@@ -39,7 +39,7 @@ if (fs.existsSync(vitestSummaryPath)) {
     }
 } else if (VITEST_MODULES.size > 0) {
     console.error('❌ Vitest coverage-summary.json not found at', vitestSummaryPath);
-    console.error('   Vitest modules require coverage. Run "npm run vitest:coverage" first.');
+    console.error('   Vitest modules require coverage. Run "pnpm run vitest:coverage" first.');
     process.exit(1);
 }
 

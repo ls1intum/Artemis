@@ -145,7 +145,7 @@ public class GradeStepResource {
      */
     @GetMapping("courses/{courseId}/grading-scale/grade-steps/{gradeStepId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<GradeStep> getGradeStepsByIdForCourse(@PathVariable Long courseId, @PathVariable Long gradeStepId) {
+    public ResponseEntity<GradeStepDTO> getGradeStepsByIdForCourse(@PathVariable Long courseId, @PathVariable Long gradeStepId) {
         // TODO: no client usages found, is it even used anymore?
 
         log.debug("REST request to get grade step {} for course: {}", gradeStepId, courseId);
@@ -153,7 +153,7 @@ public class GradeStepResource {
         gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         var gradeStep = gradeStepRepository.findByIdElseThrow(gradeStepId);
-        return ResponseEntity.ok(gradeStep);
+        return ResponseEntity.ok(GradeStepDTO.of(gradeStep));
     }
 
     /**
@@ -166,7 +166,7 @@ public class GradeStepResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/grading-scale/grade-steps/{gradeStepId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<GradeStep> getGradeStepsByIdForExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long gradeStepId) {
+    public ResponseEntity<GradeStepDTO> getGradeStepsByIdForExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long gradeStepId) {
         // TODO: no client usages found, is it even used anymore?
 
         log.debug("REST request to get grade step {} for exam: {}", gradeStepId, examId);
@@ -174,7 +174,7 @@ public class GradeStepResource {
         gradingScaleRepository.findByExamIdOrElseThrow(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         var gradeStep = gradeStepRepository.findByIdElseThrow(gradeStepId);
-        return ResponseEntity.ok(gradeStep);
+        return ResponseEntity.ok(GradeStepDTO.of(gradeStep));
     }
 
     /**

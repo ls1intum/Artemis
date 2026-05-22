@@ -139,7 +139,6 @@
             "buildPlanEditor": "Build Plan Editor",
             "buildPlanFetchError": "Could not find a build plan for this exercise. This is expected for older exercises. Edit the build plan in the CI system or reset the build plan in Artemis to create a new one that is editable here.",
             "customizeBuildPlan": "Customize Build Configuration",
-            "customizeBuildPlanWithAeolus": "Customize Build Configuration",
             "revertToTemplateBuildPlan": "Artemis executes the following build script for each submission in a Docker container. You can customize the build script and reset it to its default value by using the Reset button above.",
             "runActionAlways": "Always run, even if other actions fail",
             "workdir": "Working Directory",
@@ -269,6 +268,9 @@
             "solutionResult": "Solution Result",
             "structureTestOracle": "Update Structure Test Oracle",
             "structureTestOracleWarning": "This action extracts all structural tests from the test repository and saves them in the test.json file. ATTENTION: All uncommitted changes from the online editor will be lost!",
+            "atlasOrchestrator": {
+                "button": "Suggest competencies"
+            },
             "checkPlagiarism": "Plagiarism",
             "checkPlagiarismSuccess": "Plagiarism check finished. Results are included in the zip file.",
             "repositoryFilesError": "Repository files could not be retrieved.",
@@ -606,6 +608,7 @@
             "resubmitOnFailedSubmission": "An automatic assessment for this participant's last submission could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
             "resubmit": "Resubmit the last submission. This will execute a build run on the participant's repository without making a commit.",
             "resubmitSingle": "Trigger new build for this participant",
+            "resubmitSingleLabel": "Trigger build",
             "resubmitConfirmManualResultOverride": "The latest result for this participant is manual, which means the submission was assessed by a tutor. If you trigger the build for this submission again, the newly generated automatic result will be shown to the student instead.",
             "resubmitAllConfirmAfterDueDate": "The due date has passed, some of the student submissions may already have been assessed by tutors. Newly generated automatic results would replace these manual assessments as the latest results.",
             "resubmitUnsuccessful": "Resubmitting the last submission failed. Please contact your tutor.",
@@ -818,8 +821,7 @@
             },
             "withDependencies": "With exemplary dependency",
             "withDependenciesTooltip": "Adds an external Apache commons-lang dependency to the generated project as an example how Maven dependencies should be used with Artemis exercises.",
-            "customizeBuildPlansWithAeolusTooltip": "Activate this option to customize the docker image and build plan which is executed on Artemis for each submission in a Docker container.",
-            "customizeBuildPlansTooltip": "Activate this option to customize the docker image and build plan which is executed on Artemis for each submission in a Docker container.",
+            "customizeBuildPlanTooltip": "Activate this option to customize the docker image and build plan which is executed on Artemis for each submission in a Docker container.",
             "coveredLineRatio": "Ratio Test-Covered Lines",
             "studentDownloadTestsTooltip": "Here you can download the tests. The example solution is automatically inserted in the place where you have to put your submission for testing.",
             "commitInfo": {

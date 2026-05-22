@@ -3,13 +3,14 @@
     <package-json value="$PROJECT_DIR$/package.json" />
     <command value="start" />
     <node-interpreter value="project" />
-    <package-manager value="npm" />
+    <package-manager value="pnpm" />
     <envs />
     <method v="2">
       <option name="NpmBeforeRunTask" enabled="true">
         <package-json value="$PROJECT_DIR$/package.json" />
         <command value="install" />
         <node-interpreter value="project" />
+        <package-manager value="pnpm" />
         <envs />
       </option>
     </method>

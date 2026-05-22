@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.domain;
 import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 import static de.tum.cit.aet.artemis.core.config.Constants.COMPLAINT_RESPONSE_TEXT_LIMIT;
 import static de.tum.cit.aet.artemis.core.config.Constants.COMPLAINT_TEXT_LIMIT;
+import static de.tum.cit.aet.artemis.core.config.Constants.COURSE_SHORT_NAME_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHORT_NAME_PATTERN;
 
 import java.time.ZonedDateTime;
@@ -834,13 +835,20 @@ public class Course extends DomainObject {
     }
 
     /**
-     * Validates that the short name of the course follows SHORT_NAME_PATTERN
+     * Validates that the short name of the course follows SHORT_NAME_PATTERN and (for new courses) does not exceed
+     * {@link de.tum.cit.aet.artemis.core.config.Constants#COURSE_SHORT_NAME_MAX_LENGTH}.
+     * Course short names are immutable after creation, but the update path re-runs this validator with the persisted
+     * value — so the max-length check is gated on a missing id to avoid breaking edits of legacy courses whose
+     * shortName predates the limit.
      */
     public void validateShortName() {
         // Check if the course shortname matches regex
         Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(getShortName());
         if (!shortNameMatcher.matches()) {
             throw new BadRequestAlertException("The shortname is invalid", ENTITY_NAME, "shortnameInvalid", true);
+        }
+        if (getId() == null && getShortName().length() > COURSE_SHORT_NAME_MAX_LENGTH) {
+            throw new BadRequestAlertException("The shortname must not exceed " + COURSE_SHORT_NAME_MAX_LENGTH + " characters", ENTITY_NAME, "shortnameTooLong", true);
         }
     }
 

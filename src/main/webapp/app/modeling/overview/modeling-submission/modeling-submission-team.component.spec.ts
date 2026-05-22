@@ -78,6 +78,8 @@ class StubModelingEditorComponent {
     }
 
     importPatch = vi.fn();
+
+    broadcastFullState = vi.fn();
 }
 
 describe('ModelingSubmissionComponent', () => {
@@ -151,6 +153,7 @@ describe('ModelingSubmissionComponent', () => {
             isApollonEditorMounted: false,
             onModelPatch: new EventEmitter() as any,
             importPatch: vi.fn(),
+            broadcastFullState: vi.fn(),
         };
 
         // Mock the viewChild signal to return our mock editor

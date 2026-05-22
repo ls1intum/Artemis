@@ -29,6 +29,10 @@ export class Commands {
 
         expect(response.status()).toBe(200);
 
+        // The previous user's JWT cookie has been cleared and a new one set for `username`.
+        // Verify by re-reading: the cookie jar must contain exactly one jwt that is non-empty.
+        // We do not look up the cookie by value (we only have the token after auth) — finding any
+        // jwt cookie after clearCookies + this auth POST is sufficient.
         await expect
             .poll(
                 async () =>
@@ -41,9 +45,62 @@ export class Commands {
             .toBeTruthy();
 
         if (url) {
+            // page.goto triggers a full document navigation, which re-bootstraps Angular and the
+            // APP_INITIALIZER fetches /api/core/public/account with the freshly-set JWT cookie.
+            // Even so, under heavy parallel load we have observed Angular components occasionally
+            // rendering with the previous user's cached identity (the AccountService userIdentity
+            // signal is initialized from APP_INITIALIZER but a stale Angular state from the prior
+            // route can persist briefly). Verify the navbar shows the expected user before letting
+            // the test interact with the page; if not, force a hard reload to discard any cached
+            // SPA state and re-bootstrap from scratch.
             await page.goto(url);
             await page.waitForLoadState('load');
+            await Commands.verifyAuthenticatedAs(page, credentials);
         }
+    };
+
+    /**
+     * After page.goto, the navbar must render the just-authenticated user. Wait for
+     * #account-menu to show the expected login. If a stale identity persists past the first
+     * verification window, force a full page reload to rebuild Angular from scratch — this is
+     * cheaper than retrying the whole login and reliably recovers from the rare race.
+     * <p>
+     * Skipped silently when the route does not include a navbar (exam mode, problem-statement
+     * standalone, LTI iframe) — there is nothing observable to verify against.
+     */
+    private static verifyAuthenticatedAs = async (page: Page, credentials: UserCredentials): Promise<void> => {
+        const accountMenu = page.locator('#account-menu');
+        const showsNavbar = await accountMenu
+            .waitFor({ state: 'attached', timeout: 5000 })
+            .then(() => true)
+            .catch(() => false);
+        if (!showsNavbar) {
+            return;
+        }
+        // Use a word-boundary regex rather than `toContainText(username)`. Plain substring
+        // matching silently passes on the exact race this helper exists to catch: in the
+        // instructor→studentOne transition the navbar still showing `artemis_test_user_16`
+        // contains `artemis_test_user_1` as a prefix, so the substring assertion would pass
+        // against the stale identity. `\b` after the user index (digit/underscore are word
+        // chars) anchors the match to the full token.
+        const escaped = credentials.username.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const expectedUser = new RegExp(`\\b${escaped}\\b`);
+        const containsExpectedUser = async () => {
+            try {
+                await expect(accountMenu).toContainText(expectedUser, { timeout: 15000 });
+                return true;
+            } catch {
+                return false;
+            }
+        };
+        if (await containsExpectedUser()) {
+            return;
+        }
+        // Mismatch — the SPA bootstrapped before the new JWT was committed to Angular's
+        // AccountService cache. Hard-reload to rebuild against the now-current cookie.
+        await page.reload();
+        await page.waitForLoadState('load');
+        await expect(accountMenu).toContainText(expectedUser, { timeout: 30000 });
     };
 
     static logout = async (page: Page): Promise<void> => {
@@ -70,7 +127,7 @@ export class Commands {
                 try {
                     await page.reload();
                 } catch (reloadError) {
-                    throw new Error(`Failed to reload page while waiting for element: ${reloadError}`);
+                    throw new Error(`Failed to reload page while waiting for element: ${reloadError}`, { cause: reloadError });
                 }
             }
         }
@@ -102,7 +159,7 @@ export class Commands {
             try {
                 await page.reload();
             } catch (reloadError) {
-                throw new Error(`Failed to reload page while waiting for text "${expectedText}": ${reloadError}`);
+                throw new Error(`Failed to reload page while waiting for text "${expectedText}": ${reloadError}`, { cause: reloadError });
             }
         }
 
@@ -127,26 +184,22 @@ export class Commands {
         minResults?: number,
     ) => {
         let exerciseParticipation: StudentParticipation | undefined;
+        let participationId: number | undefined;
         const startTime = Date.now();
 
-        const getParticipation = async (): Promise<StudentParticipation | undefined> => {
-            try {
-                return await exerciseAPIRequests.getProgrammingExerciseParticipation(exerciseId);
-            } catch {
-                return undefined;
-            }
-        };
-
-        // Wait for participation to be available
+        // Wait for a participation to become available and capture its ID once.
         while (Date.now() - startTime < timeout) {
-            exerciseParticipation = await getParticipation();
-            if (exerciseParticipation) {
+            try {
+                exerciseParticipation = await exerciseAPIRequests.getProgrammingExerciseParticipation(exerciseId);
+                participationId = exerciseParticipation.id;
                 break;
+            } catch {
+                // no participation yet — keep polling
             }
             await new Promise((resolve) => setTimeout(resolve, interval));
         }
 
-        if (!exerciseParticipation) {
+        if (!exerciseParticipation || participationId === undefined) {
             throw new Error(`Timed out waiting for participation for exercise ${exerciseId}`);
         }
 
@@ -159,12 +212,15 @@ export class Commands {
         // Otherwise, wait for the result count to increase by at least 1.
         const targetCount = minResults ?? numberOfBuildResults + 1;
 
+        // Poll with a single API call per iteration now that we have the participation ID.
         while (Date.now() - startTime < timeout) {
-            exerciseParticipation = await getParticipation();
-            const currentBuildResultsCount = countResults(exerciseParticipation);
-
-            if (currentBuildResultsCount >= targetCount) {
-                return exerciseParticipation;
+            try {
+                exerciseParticipation = await exerciseAPIRequests.getParticipationWithLatestResult(participationId);
+                if (countResults(exerciseParticipation) >= targetCount) {
+                    return exerciseParticipation;
+                }
+            } catch {
+                // ignore transient errors
             }
 
             await new Promise((resolve) => setTimeout(resolve, interval));

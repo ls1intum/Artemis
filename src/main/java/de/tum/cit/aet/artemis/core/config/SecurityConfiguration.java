@@ -287,9 +287,9 @@ public class SecurityConfiguration {
                     .requestMatchers("/", "/index.html", "/public/**").permitAll()
                     .requestMatchers("/*.js", "/*.css", "/*.map", "/*.json").permitAll()
                     .requestMatchers("/manifest.webapp", "/robots.txt").permitAll()
-                    .requestMatchers("/content/**", "/i18n/*.json", "/logo/*").permitAll()
+                    .requestMatchers("/content/**", "/i18n/*.json", "/logo/*", "/webjars/katex/**").permitAll()
                     // Information and health endpoints do not need authentication
-                    .requestMatchers("/management/info", "/management/health").permitAll()
+                    .requestMatchers("/management/info", "/management/health", "/management/health/readiness", "/management/health/liveness").permitAll()
                     // Admin area requires specific authority.
                     .requestMatchers("/api/*/admin/**").hasAuthority(Role.ADMIN.getAuthority())
                     // Publicly accessible API endpoints (allowed for everyone, potentially with secret authentication).
