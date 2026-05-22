@@ -60,30 +60,19 @@ jobs:
           # On push/merge_group: diff against the previous commit. On PR: against base.ref.
           base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || '' }}
           filters: |
+            # build_relevant gates the REQUIRED build + test jobs. It uses ignore-semantics
+            # (run unless every changed file is clearly irrelevant) rather than an allow-list,
+            # so a forgotten path can never silently skip a required check. Last matching
+            # pattern wins per file (picomatch): a file counts unless its last match is negated.
             build_relevant:
-              - 'src/main/**'
-              - 'src/test/**'
-              - 'build.gradle'
-              - 'settings.gradle'
-              - 'gradle.properties'
-              - 'gradle/**'
-              - 'gradlew'
-              - 'gradlew.bat'
-              - 'package.json'
-              - 'package-lock.json'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
-              - 'tsconfig*.json'
-              - 'angular.json'
-              - 'jest.config.js'
-              - 'vite.config.*'
-              - 'webpack.config.*'
-              - 'docker/**'
-              - '.ci/**'
+              - '**'
+              - '!**/*.md'
+              - '!LICENSE'
+              - '!documentation/**'
+              - '!.github/**'
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-*.yml'
               - '.github/actions/**'
-              - '.github/scripts/**'
             has_java:
               - 'src/main/java/**'
               - 'src/test/java/**'
@@ -210,17 +199,17 @@ jobs:
     permissions:
       contents: read
 
+  # Advisory (not required for merge — matches today, where E2E is decoupled via
+  # workflow_run and posts only a commit status). Depends on `build` for the Docker image,
+  # NOT on `test` (today E2E triggers on Build completion, independent of unit tests), so
+  # E2E starts as early as possible and a flaky unit-test run never blocks it.
   e2e:
     name: E2E
-    needs: [detect-changes, build, test]
-    # E2E consumes the Docker image from `build` and the artifacts from `test`. Skips when
-    # either upstream skipped (no source change) or failed — the gate reports the upstream
-    # failure directly.
+    needs: [detect-changes, build]
     if: |
       always() &&
       needs.detect-changes.outputs.build_relevant == 'true' &&
-      needs.build.result == 'success' &&
-      needs.test.result == 'success'
+      needs.build.result == 'success'
     uses: ./.github/workflows/ci-e2e.yml
     permissions:
       contents: read
@@ -239,21 +228,20 @@ jobs:
       PLAYWRIGHT_REPORT_TOKEN: ${{ secrets.PLAYWRIGHT_REPORT_TOKEN }}
       HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
 
-  # Single required status check. `detect-changes` is in `needs:` so its own failure
-  # fails the gate even when downstream children cascade to `skipped`.
-  all-ci-passed:
-    name: All CI Passed
+  # The single required status check. It depends ONLY on the jobs that gate merges today
+  # (Build .war + the four server/client test jobs, here as the `build` and `test`
+  # reusables). Advisory jobs — e2e, java-analysis, gradle-wrapper, docs, translation,
+  # workflows — run in parallel, post their own checks, and are deliberately NOT in `needs:`
+  # so a flaky or slow advisory suite never blocks merging. `detect-changes` is included so
+  # a change-detection failure fails the gate closed. To promote an advisory job to required,
+  # add it here and to the branch-protection ruleset.
+  all-required-ci-passed:
+    name: All required CI Passed
     if: always()
     needs:
       - detect-changes
       - build
       - test
-      - java-analysis
-      - gradle-wrapper
-      - workflows
-      - docs
-      - translation
-      - e2e
     runs-on: ubuntu-latest
     permissions: {}
     timeout-minutes: 5

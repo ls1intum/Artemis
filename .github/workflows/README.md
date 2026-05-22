@@ -13,37 +13,60 @@ runs on event X?" is in exactly one file.
 ```text
 ci.yml                                                            (single entry workflow)
 ├── detect-changes               (dorny/paths-filter, emits per-area booleans)
-├── build           ── uses ci-build.yml                          (workflow_call)
-├── test            ── uses ci-test.yml                           (workflow_call)
-├── java-analysis   ── uses ci-java-analysis.yml                  (workflow_call, if has_java)
-├── gradle-wrapper  ── uses ci-gradle-wrapper.yml                 (workflow_call, if has_gradle)
-├── docs            ── uses ci-docs.yml                           (workflow_call, if has_docs)
-├── translation     ── uses ci-translation.yml                    (workflow_call, if has_i18n)
-├── workflows       ── uses ci-workflows.yml                      (workflow_call, if has_workflows — actionlint)
-├── e2e             ── uses ci-e2e.yml                            (workflow_call, after build + test)
-└── all-ci-passed                (jq-based gate — the single required status check)
+│
+│   REQUIRED — gated by `All required CI Passed`:
+├── build           ── uses ci-build.yml          (workflow_call; the .war + Docker image)
+├── test            ── uses ci-test.yml           (workflow_call; server + client tests/style)
+│
+│   ADVISORY — run for signal, never block merge:
+├── java-analysis   ── uses ci-java-analysis.yml  (if has_java)
+├── gradle-wrapper  ── uses ci-gradle-wrapper.yml (if has_gradle)
+├── docs            ── uses ci-docs.yml           (if has_docs)
+├── translation     ── uses ci-translation.yml    (if has_i18n)
+├── workflows       ── uses ci-workflows.yml      (if .github changed; actionlint)
+├── e2e             ── uses ci-e2e.yml            (after build; advisory)
+│
+└── all-required-ci-passed       (jq gate over build + test — the single required check)
 ```
+
+### Required vs. advisory
+
+Branch protection on `develop` today requires exactly five checks — `Build .war artifact`,
+`server-tests`, `server-style`, `client-tests`, `client-style` — all produced by the
+`build` and `test` reusables. This PR keeps that surface and nothing more: the single
+required check is `CI / All required CI Passed`, which depends only on `build` and `test`.
+
+Everything else (`e2e`, `java-analysis`, `gradle-wrapper`, `docs`, `translation`,
+`workflows`) runs in parallel, posts its own status, and is **advisory** — exactly as it is
+on `develop` today, where E2E and Java quality are not required. Keeping them out of the
+gate is deliberate:
+
+- **Speed.** The gate (and therefore merge) is unblocked the moment `build` + `test` finish.
+  It does not wait on the up-to-2-hour E2E suite.
+- **Reliability.** E2E and other suites are known to be flaky; if they were required, a flaky
+  run would block an otherwise-good PR. Advisory keeps flakiness off the merge path.
+
+To promote an advisory job to required, add it to `all-required-ci-passed`'s `needs:` and to
+the branch-protection ruleset — both, or branch protection blocks on a check the gate ignores.
 
 ### Why one entry point and not many
 
 - **One trigger surface.** Path filters, branch filters, and concurrency live in one place.
-- **No `workflow_run` chain.** E2E is invoked directly with `needs: [build, test]`. The old
+- **No `workflow_run` chain.** E2E is invoked directly via `needs: [build]`. The old
   `workflow_run` listener (a) ran from the default-branch copy of the workflow file, so PRs
   modifying E2E never tested their own changes, and (b) needed a hand-rolled cancellation
   workaround for queue-stacking on the self-hosted runner pool.
-- **Stable required check.** Branch protection requires exactly one job: `CI / All CI Passed`.
-  Renaming or adding child jobs does not require updating branch protection.
+- **Stable required check.** Branch protection requires exactly one job:
+  `CI / All required CI Passed`. Renaming or adding child jobs does not require updating it.
 
-### Why one required status check and not many
+### Why `build_relevant` uses ignore-semantics
 
-The community consensus pattern in 2026 (TypeScript, Vite, Ruff) is: require a single
-umbrella job, evaluate every child's `result` via `jq`, and accept both `success` and
-`skipped`. Listing every child as required is fragile — every rename or refactor breaks
-branch protection, and path-filtered children leave required checks stuck on "pending".
-
-Cascading skips don't bypass the gate because `detect-changes` (the gating job) is itself
-in `needs:` — if it fails, its own `failure` result fails the gate, even when downstream
-children all show `skipped`.
+`detect-changes` decides whether the required `build`/`test` jobs run. It uses
+**ignore-semantics** (`'**'` minus a small set of clearly-irrelevant paths — docs, markdown,
+non-CI `.github` files) rather than an allow-list. A forgotten path therefore causes an
+*over-run* (safe), never a silent skip of a required check (which would be a false green).
+Cascading skips don't bypass the gate either: `detect-changes` is in the gate's `needs:`, so
+a change-detection failure fails the gate closed.
 
 ## Action pinning policy
 
@@ -89,38 +112,38 @@ These workflows are intentionally NOT folded into the umbrella:
 
 ## Branch protection migration
 
-When this PR lands, branch protection (or the corresponding ruleset) must be updated
-from per-workflow checks to one umbrella check.
+`develop` uses **legacy branch protection** (not a ruleset) for required status checks.
+As verified at the time of this PR, it requires exactly these five contexts, all produced
+by the now-deleted `build.yml` / `test.yml`:
 
-Recommended path — **GitHub Rulesets** (not legacy branch protection):
+```text
+Build .war artifact   server-tests   server-style   client-tests   client-style
+```
 
-1. **Before merging**: dump the current required checks.
+After merge, these five must be replaced with the single `CI / All required CI Passed`:
+
+1. **Before merging**, snapshot the current state for rollback:
    ```bash
-   gh api repos/ls1intum/Artemis/branches/develop/protection/required_status_checks/contexts
+   gh api repos/ls1intum/Artemis/branches/develop/protection/required_status_checks \
+     --jq '{strict, contexts}'
    ```
-   Keep the output in a runbook in case rollback is needed.
 
-2. **Merge this PR**. The new `CI` workflow runs in parallel with the dropped checks
-   (since the dropped checks no longer exist, branch protection will allow PRs to merge
-   once those required checks are removed from the rule — proceed to step 3 immediately).
+2. **Merge this PR.** The five legacy contexts can no longer report (their workflows are
+   deleted), so update branch protection in the same change window:
+   ```bash
+   gh api -X PATCH repos/ls1intum/Artemis/branches/develop/protection/required_status_checks \
+     -F strict=true -f 'checks[][context]=All required CI Passed'
+   ```
+   Repeat for `main` and each active `release/*`.
 
-3. **Replace the required checks** for `develop`, `main`, and `release/*`:
-   - Remove: every per-workflow check that used to come from the deleted files (`Build /
-     Build .war artifact`, `Test / server-tests`, `Test / client-tests`, `Test / server-style`,
-     `Test / client-style`, `Test / client-compilation`, `Java Code Quality Analysis /
-     code-quality-analysis`, `Query Quality Check / query-quality-check`, `Build
-     Documentation / build`, `Validate Gradle Wrapper / Gradle Wrapper Validation`, `Check
-     if German and English translations are consistent / build`, `End-to-End (E2E) Tests`).
-   - Add: **`CI / All CI Passed`** (the only required check from `ci.yml`).
-   - Keep: checks coming from retained workflows (e.g. `CodeQL / Analyse`, `Android E2E
-     Tests / Android E2E Tests`, `Validate PR Title / validate-pr-title`, `Validate PR
-     Description / validate-pr-description`).
+3. **Verify** by opening a fresh PR; wait for `CI / All required CI Passed` to turn green.
 
-4. **Verify** by opening a fresh PR. Wait for `CI / All CI Passed` to turn green.
+4. **Rollback** (if merges get blocked): re-PUT the five contexts from the step-1 snapshot
+   and restore the deleted workflows from git history. This PR keeps the deletions in one
+   commit so `git revert` is clean.
 
-5. **Rollback path** (only if something blocks merges): re-add the old required-check
-   contexts from the dump in step 1 — the deleted files would need to be restored from
-   git history. Keep this PR's deletions in a single commit to make `git revert` easy.
+> The advisory checks (`CodeQL / Analyse`, `Android E2E Tests`, `Validate PR Title/Description`)
+> are not part of this migration — they were never in the required set and keep reporting as before.
 
 ## Helios re-mapping (operations / Helios admin)
 
@@ -184,6 +207,6 @@ parent's concurrency lock applies transitively. **Never** add a `concurrency:` b
      if: needs.detect-changes.outputs.<flag> == 'true'
      uses: ./.github/workflows/ci-<name>.yml
    ```
-3. Add `<name>` to the `needs:` list of `all-ci-passed`. The gate accepts `success`
+3. Add `<name>` to the `needs:` list of `all-required-ci-passed`. The gate accepts `success`
    and `skipped`, so path-filtered skips pass naturally. No branch-protection change
    is needed — the gate's `name:` field is what's required.
