@@ -88,6 +88,14 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void generateCompetencies_withNullCurrentCompetency_shouldReturnBadRequest() throws Exception {
+        String requestBody = "{\"courseDescription\":\"Cool course description\",\"currentCompetencies\":[null]}";
+
+        request.postStringWithoutLocation("/api/atlas/courses/" + course.getId() + "/course-competencies/generate-from-description", requestBody, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testAll_asStudent_shouldReturnForbidden() throws Exception {
         testAllPreAuthorize();

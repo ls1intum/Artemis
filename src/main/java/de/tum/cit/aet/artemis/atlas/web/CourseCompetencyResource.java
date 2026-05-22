@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.atlas.web;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -363,7 +364,11 @@ public class CourseCompetencyResource {
         var api = irisCompetencyApi.orElseThrow();
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
-        var currentCompetencies = Optional.ofNullable(input.currentCompetencies()).orElse(List.of()).stream()
+        var currentCompetencyDTOs = Optional.ofNullable(input.currentCompetencies()).orElse(List.of());
+        if (currentCompetencyDTOs.stream().anyMatch(Objects::isNull)) {
+            throw new BadRequestAlertException("currentCompetencies must not contain null elements", ENTITY_NAME, "nullCurrentCompetency");
+        }
+        var currentCompetencies = currentCompetencyDTOs.stream()
                 .map(competency -> new IrisCompetencyRecommendationDTO(competency.title(), competency.description(), competency.taxonomy())).toList();
 
         // Start the Iris competency generation pipeline for the given course.
