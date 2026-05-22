@@ -17,10 +17,13 @@ Artemis is an interactive learning platform for programming exercises, quizzes, 
 
 ### Server
 ```bash
-./gradlew bootRun                    # Start dev server (includes Angular build)
-./gradlew bootRun -x webapp          # Server only (use with pnpm start)
-./gradlew -Pprod -Pwar clean bootWar # Production WAR artifact
+./gradlew bootRun                          # Start dev server (includes Angular build)
+./gradlew bootRun -x webapp                # Server only (use with pnpm start)
+./gradlew -Pprod -Pwar clean bootWar       # Production WAR (no SBOM, fast)
+./gradlew -Pprod -Pwar -Psbom clean bootWar # Production WAR including server + client SBOM
 ```
+
+SBOM generation (`cyclonedxBom` + `generateClientSbom`) is gated behind the `-Psbom` Gradle property. CI release-eligible jobs (pushes to `develop`/`main`/`release/*`, version tags, and published releases) set it automatically in `.github/workflows/build.yml`. Local builds and PR CI ship a WAR without the SBOM — `AdminSbomResource` returns 404 and the admin UI renders an informational banner in that case.
 
 ### Client
 ```bash

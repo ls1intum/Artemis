@@ -115,6 +115,20 @@
                                 <fa-icon [icon]="faCheckDouble" />
                                 <span jhiTranslate="artemisApp.consistencyCheck.button"></span>
                             </button>
+                            @if (atlasModuleActive && programmingExercise.isAtLeastInstructor && !isExamExercise) {
+                                <button
+                                    type="button"
+                                    [jhiFeatureToggleHide]="FeatureToggle.AtlasAgent"
+                                    (click)="triggerAtlasOrchestrator()"
+                                    [disabled]="orchestrationRunning()"
+                                    pTooltip="{{ 'artemisApp.atlasOrchestrator.tooltip' | artemisTranslate }}"
+                                    class="btn btn-outline-primary btn-sm me-1 mb-2"
+                                >
+                                    <fa-icon [icon]="faWandMagicSparkles" />
+                                    <span jhiTranslate="artemisApp.programmingExercise.atlasOrchestrator.button"></span>
+                                </button>
+                                <jhi-orchestration-result-dialog [(visible)]="orchestrationDialogVisible" [summary]="orchestrationDialogSummary()" />
+                            }
                             <button
                                 [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                                 jhiProgrammingExerciseResetButton

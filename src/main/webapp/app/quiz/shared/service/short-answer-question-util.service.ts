@@ -404,7 +404,7 @@ export class ShortAnswerQuestionUtil {
     addIndentationToTextParts(originalTextParts: string[][], formattedTextParts: string[][]): string[][] {
         for (let i = 0; i < formattedTextParts.length; i++) {
             const element = formattedTextParts[i][0];
-            let firstWord = '';
+            let firstWord: string;
             // check if first word is a spot (first array element will be an empty string)
             if (originalTextParts[i].length > 1) {
                 firstWord =
