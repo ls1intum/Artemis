@@ -31,12 +31,13 @@ tasks.register("generateAllSbom") {
 
 // Copy SBOMs to resources for runtime access (if they exist).
 //
-// Behaviour is tied to the `-Psbom` property rather than the on-disk presence of the SBOM
-// files. Without `-Psbom` we proactively delete any stale `build/resources/main/sbom/` left
-// over from a previous `-Psbom` run, so an incremental rebuild (no `clean`) cannot leak
-// SBOM artefacts from a prior build into the new WAR.
+// Behaviour is tied to the `-Pprod -Psbom` properties rather than the on-disk presence of
+// the SBOM files. Without both flags we proactively delete any stale `build/resources/main/sbom/`
+// left over from a previous run; the broader cleanup that prevents SBOM leakage into the WAR
+// itself lives in the `bootJar`/`bootWar` `doFirst` below (see the long comment near the
+// disable block for the rationale).
 tasks.register("copySbomsToResources") {
-    description = "Copy SBOM files into the WAR resources when -Psbom is set"
+    description = "Copy SBOM files into the WAR resources when -Pprod -Psbom is set"
     group = "build"
 
     // If cyclonedxBom runs, it must run before this task
@@ -46,7 +47,6 @@ tasks.register("copySbomsToResources") {
         def sbomDir = file("build/resources/main/sbom")
 
         if (!(project.hasProperty("prod") && project.hasProperty("sbom"))) {
-            // Ensure the build is reliably SBOM-free even after a prior -Pprod -Psbom run.
             if (sbomDir.exists()) {
                 sbomDir.deleteDir()
                 logger.lifecycle("Removed stale SBOM resources (-Pprod -Psbom not both set)")
@@ -100,16 +100,38 @@ if (project.hasProperty("prod") && project.hasProperty("sbom")) {
 // Unless BOTH -Pprod and -Psbom are set, fully suppress SBOM generation and bundling. The
 // CycloneDX Gradle plugin is applied unconditionally in build.gradle (so its tasks remain
 // referenceable for the release path), and the Spring Boot Gradle plugin auto-wires
-// cyclonedxBom into bootJar/bootWar, copying the output to `META-INF/sbom/application.cdx.json`
-// inside the artefact. Disabling the SBOM tasks alone is not enough: bootWar still picks up
-// any leftover `META-INF/sbom/` resources from a previous -Pprod -Psbom build, so we also
-// exclude that path from the final archive. The combined `prod && sbom` predicate matches the
-// dependency-hook gate above so the two paths cannot diverge.
+// `cyclonedxBom` into `bootJar`/`bootWar`, copying its output to `META-INF/sbom/application.cdx.json`
+// inside the artefact. Disabling the SBOM tasks alone is not enough on incremental rebuilds:
+//
+//   1. `processResources` may stay UP-TO-DATE and re-stage a stale
+//      `build/reports/cyclonedx/application.cdx.json` into `build/resources/main/META-INF/sbom/`.
+//   2. A task-level `exclude "META-INF/sbom/**"` on `bootWar` is a no-op for `WEB-INF/classes`
+//      content — the War task only applies excludes to the webapp root spec, not classpath
+//      resources. (Verified: build `-Pprod -Pwar -Psbom bootWar`, then rebuild `-Pprod -Pwar
+//      bootWar` without `clean`; the WAR still contains `WEB-INF/classes/META-INF/sbom/...`.)
+//   3. Without an input that captures the SBOM mode, `bootWar` can be UP-TO-DATE after a
+//      `-Psbom` run and not re-run at all on the subsequent non-`-Psbom` build, leaving the
+//      previously-built WAR (which contains the SBOM) in place.
+//
+// Reliable knockout: delete the SBOM at its source (the report directories that feed both the
+// resource-staging and Spring Boot auto-wiring paths) right before `bootJar`/`bootWar` runs,
+// and declare the SBOM mode as a task input so `bootWar` invalidates when the mode flips.
 if (!(project.hasProperty("prod") && project.hasProperty("sbom"))) {
     tasks.named("cyclonedxBom").configure { enabled = false }
     tasks.named("cyclonedxDirectBom").configure { enabled = false }
     tasks.matching { it.name == "generateClientSbom" }.configureEach { enabled = false }
-    tasks.matching { it.name == "bootWar" || it.name == "bootJar" }.configureEach {
-        exclude "META-INF/sbom/**"
+    tasks.matching { it.name == "bootWar" || it.name == "bootJar" }.configureEach { archiveTask ->
+        archiveTask.inputs.property("sbomEnabled", false)
+        archiveTask.doFirst {
+            def staleDirs = [
+                file("build/resources/main/META-INF/sbom"),
+                file("build/reports/cyclonedx"),
+                file("build/reports/sbom"),
+            ]
+            staleDirs.findAll { it.exists() }.each {
+                it.deleteDir()
+                logger.lifecycle("Removed stale SBOM directory before ${archiveTask.name}: ${it}")
+            }
+        }
     }
 }
