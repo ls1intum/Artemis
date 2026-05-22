@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
  * channels (and {@code OneToOneChat} / {@code GroupChat}) are not searchable in this PR. The description
  * is composed from {@link Channel#getTopic() topic} and {@link Channel#getDescription() description}.
  */
-public record ChannelSearchableEntityDTO(Long channelId, Long courseId, String courseTitle, String name, String description, boolean isCourseWide, boolean isPublic) {
+public record ChannelSearchableEntityDTO(Long channelId, Long courseId, String name, String description, boolean isCourseWide, boolean isPublic) {
 
     /**
      * Extracts all required data from a {@link Channel} entity.
@@ -24,8 +24,8 @@ public record ChannelSearchableEntityDTO(Long channelId, Long courseId, String c
      * @throws org.hibernate.LazyInitializationException if required relationships are not loaded
      */
     public static ChannelSearchableEntityDTO fromChannel(Channel channel) {
-        return new ChannelSearchableEntityDTO(channel.getId(), channel.getCourse().getId(), channel.getCourse().getTitle(), channel.getName(), buildDescription(channel),
-                channel.getIsCourseWide(), channel.getIsPublic());
+        return new ChannelSearchableEntityDTO(channel.getId(), channel.getCourse().getId(), channel.getName(), buildDescription(channel), channel.getIsCourseWide(),
+                channel.getIsPublic());
     }
 
     /**
@@ -65,9 +65,6 @@ public record ChannelSearchableEntityDTO(Long channelId, Long courseId, String c
         properties.put(SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.TypeValues.CHANNEL);
         properties.put(SearchableEntitySchema.Properties.ENTITY_ID, channelId);
         properties.put(SearchableEntitySchema.Properties.COURSE_ID, courseId);
-        if (courseTitle != null) {
-            properties.put(SearchableEntitySchema.Properties.COURSE_NAME, courseTitle);
-        }
         properties.put(SearchableEntitySchema.Properties.TITLE, name);
         properties.put(SearchableEntitySchema.Properties.CHANNEL_IS_COURSE_WIDE, isCourseWide);
         properties.put(SearchableEntitySchema.Properties.CHANNEL_IS_PUBLIC, isPublic);

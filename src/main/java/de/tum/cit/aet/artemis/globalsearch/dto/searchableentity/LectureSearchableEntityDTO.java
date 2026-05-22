@@ -15,8 +15,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
  * Extracted before the async boundary so the Weaviate write runs outside the Hibernate session
  * without touching lazy relationships.
  */
-public record LectureSearchableEntityDTO(Long lectureId, Long courseId, String courseTitle, String lectureTitle, String description, ZonedDateTime startDate,
-        ZonedDateTime endDate) {
+public record LectureSearchableEntityDTO(Long lectureId, Long courseId, String lectureTitle, String description, ZonedDateTime startDate, ZonedDateTime endDate) {
 
     /**
      * Extracts all required data from a {@link Lecture} entity.
@@ -26,8 +25,8 @@ public record LectureSearchableEntityDTO(Long lectureId, Long courseId, String c
      * @throws org.hibernate.LazyInitializationException if required relationships are not loaded
      */
     public static LectureSearchableEntityDTO fromLecture(Lecture lecture) {
-        return new LectureSearchableEntityDTO(lecture.getId(), lecture.getCourse().getId(), lecture.getCourse().getTitle(), lecture.getTitle(), lecture.getDescription(),
-                lecture.getStartDate(), lecture.getEndDate());
+        return new LectureSearchableEntityDTO(lecture.getId(), lecture.getCourse().getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(),
+                lecture.getEndDate());
     }
 
     /**
@@ -40,9 +39,6 @@ public record LectureSearchableEntityDTO(Long lectureId, Long courseId, String c
         properties.put(SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.TypeValues.LECTURE);
         properties.put(SearchableEntitySchema.Properties.ENTITY_ID, lectureId);
         properties.put(SearchableEntitySchema.Properties.COURSE_ID, courseId);
-        if (courseTitle != null) {
-            properties.put(SearchableEntitySchema.Properties.COURSE_NAME, courseTitle);
-        }
         properties.put(SearchableEntitySchema.Properties.TITLE, lectureTitle);
         if (description != null) {
             properties.put(SearchableEntitySchema.Properties.DESCRIPTION, description);

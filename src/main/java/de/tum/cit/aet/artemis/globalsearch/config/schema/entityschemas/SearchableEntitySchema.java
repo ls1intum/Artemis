@@ -136,8 +136,6 @@ public final class SearchableEntitySchema {
 
         public static final String UNIT_TYPE = "unit_type";
 
-        public static final String COURSE_NAME = "course_name";
-
         private Properties() {
         }
     }
@@ -184,6 +182,5 @@ public final class SearchableEntitySchema {
             nonSearchable(Properties.START_DATE, DATE, "The start date (exercises, lectures, exams)"), nonSearchable(Properties.END_DATE, DATE, "The end date (lectures, exams)"),
             nonSearchable(Properties.DUE_DATE, DATE, "The due date (exercises only)"),
             filterable(Properties.LECTURE_ID, INT, "The ID of the parent lecture (lecture_unit rows only, used for bulk delete on lecture deletion)"),
-            nonSearchable(Properties.UNIT_TYPE, TEXT, "The lecture unit type: text, attachment_video, online (lecture_unit rows only)"),
-            nonSearchable(Properties.COURSE_NAME, TEXT, "The display name of the course — stored for LLM context display, not indexed for search")));
+            nonSearchable(Properties.UNIT_TYPE, TEXT, "The lecture unit type: text, attachment_video, online (lecture_unit rows only)")));
 }

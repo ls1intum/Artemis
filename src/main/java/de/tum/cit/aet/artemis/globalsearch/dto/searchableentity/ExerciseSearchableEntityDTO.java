@@ -22,10 +22,10 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
  * when the async Weaviate write runs outside the original Hibernate session. All fields are
  * primitives, strings, enums, or other immutable types safe to pass across thread boundaries.
  */
-public record ExerciseSearchableEntityDTO(Long exerciseId, Long courseId, String courseTitle, String exerciseTitle, String exerciseType, Double maxPoints, String shortName,
-        String problemStatement, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, String difficulty, boolean isExamExercise, Long examId,
-        Boolean isTestExam, ZonedDateTime examVisibleDate, ZonedDateTime examStartDate, ZonedDateTime examEndDate, String programmingLanguage, String projectType,
-        String diagramType, String quizMode, Integer quizDuration, String filePattern) {
+public record ExerciseSearchableEntityDTO(Long exerciseId, Long courseId, String exerciseTitle, String exerciseType, Double maxPoints, String shortName, String problemStatement,
+        ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, String difficulty, boolean isExamExercise, Long examId, Boolean isTestExam,
+        ZonedDateTime examVisibleDate, ZonedDateTime examStartDate, ZonedDateTime examEndDate, String programmingLanguage, String projectType, String diagramType, String quizMode,
+        Integer quizDuration, String filePattern) {
 
     /**
      * Extracts all required data from an {@link Exercise} entity. Must be called while the Hibernate
@@ -58,8 +58,8 @@ public record ExerciseSearchableEntityDTO(Long exerciseId, Long courseId, String
     }
 
     private static ExerciseSearchableEntityDTO buildDto(Exercise exercise, Course course, Exam exam) {
-        return new ExerciseSearchableEntityDTO(exercise.getId(), course.getId(), course.getTitle(), exercise.getTitle(), exercise.getExerciseType().getValue(),
-                exercise.getMaxPoints(), exercise.getShortName(), exercise.getProblemStatement(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(),
+        return new ExerciseSearchableEntityDTO(exercise.getId(), course.getId(), exercise.getTitle(), exercise.getExerciseType().getValue(), exercise.getMaxPoints(),
+                exercise.getShortName(), exercise.getProblemStatement(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(),
                 exercise.getDifficulty() != null ? exercise.getDifficulty().name() : null, exercise.isExamExercise(), exam != null ? exam.getId() : null,
                 exam != null ? exam.isTestExam() : null, exam != null ? exam.getVisibleDate() : null, exam != null ? exam.getStartDate() : null,
                 exam != null ? exam.getEndDate() : null,
@@ -81,7 +81,6 @@ public record ExerciseSearchableEntityDTO(Long exerciseId, Long courseId, String
         properties.put(SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.TypeValues.EXERCISE);
         properties.put(SearchableEntitySchema.Properties.ENTITY_ID, exerciseId);
         properties.put(SearchableEntitySchema.Properties.COURSE_ID, courseId);
-        putIfNotNull(properties, SearchableEntitySchema.Properties.COURSE_NAME, courseTitle);
         putIfNotNull(properties, SearchableEntitySchema.Properties.TITLE, exerciseTitle);
         putIfNotNull(properties, SearchableEntitySchema.Properties.EXERCISE_TYPE, exerciseType);
         putIfNotNull(properties, SearchableEntitySchema.Properties.MAX_POINTS, maxPoints);

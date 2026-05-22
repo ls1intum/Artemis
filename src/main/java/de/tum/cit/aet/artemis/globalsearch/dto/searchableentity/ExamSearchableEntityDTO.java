@@ -16,8 +16,8 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
  * students before / after the exam — concatenated with a blank line separator. Both are typically
  * short or empty.
  */
-public record ExamSearchableEntityDTO(Long examId, Long courseId, String courseTitle, String examTitle, String description, ZonedDateTime visibleDate, ZonedDateTime startDate,
-        ZonedDateTime endDate, boolean isTestExam) {
+public record ExamSearchableEntityDTO(Long examId, Long courseId, String examTitle, String description, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate,
+        boolean isTestExam) {
 
     /**
      * Extracts all required data from an {@link Exam} entity.
@@ -27,8 +27,8 @@ public record ExamSearchableEntityDTO(Long examId, Long courseId, String courseT
      * @throws org.hibernate.LazyInitializationException if required relationships are not loaded
      */
     public static ExamSearchableEntityDTO fromExam(Exam exam) {
-        return new ExamSearchableEntityDTO(exam.getId(), exam.getCourse().getId(), exam.getCourse().getTitle(), exam.getTitle(), buildDescription(exam), exam.getVisibleDate(),
-                exam.getStartDate(), exam.getEndDate(), exam.isTestExam());
+        return new ExamSearchableEntityDTO(exam.getId(), exam.getCourse().getId(), exam.getTitle(), buildDescription(exam), exam.getVisibleDate(), exam.getStartDate(),
+                exam.getEndDate(), exam.isTestExam());
     }
 
     private static String buildDescription(Exam exam) {
@@ -58,9 +58,6 @@ public record ExamSearchableEntityDTO(Long examId, Long courseId, String courseT
         properties.put(SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.TypeValues.EXAM);
         properties.put(SearchableEntitySchema.Properties.ENTITY_ID, examId);
         properties.put(SearchableEntitySchema.Properties.COURSE_ID, courseId);
-        if (courseTitle != null) {
-            properties.put(SearchableEntitySchema.Properties.COURSE_NAME, courseTitle);
-        }
         properties.put(SearchableEntitySchema.Properties.TITLE, examTitle);
         properties.put(SearchableEntitySchema.Properties.TEST_EXAM, isTestExam);
         if (description != null) {

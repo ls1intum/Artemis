@@ -24,8 +24,7 @@ import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
  * storing a pre-computed boolean, so that visibility changes take effect immediately without
  * re-indexing.
  */
-public record LectureUnitSearchableEntityDTO(Long lectureUnitId, Long courseId, String courseTitle, Long lectureId, String unitName, String description, String unitType,
-        ZonedDateTime releaseDate) {
+public record LectureUnitSearchableEntityDTO(Long lectureUnitId, Long courseId, Long lectureId, String unitName, String description, String unitType, ZonedDateTime releaseDate) {
 
     /**
      * Extracts all required data from a supported {@link LectureUnit} subtype.
@@ -39,7 +38,6 @@ public record LectureUnitSearchableEntityDTO(Long lectureUnitId, Long courseId, 
     public static LectureUnitSearchableEntityDTO fromLectureUnit(LectureUnit unit) {
         Lecture lecture = unit.getLecture();
         Long courseId = lecture.getCourse().getId();
-        String courseTitle = lecture.getCourse().getTitle();
         Long lectureId = lecture.getId();
 
         String description;
@@ -60,7 +58,7 @@ public record LectureUnitSearchableEntityDTO(Long lectureUnitId, Long courseId, 
             throw new IllegalArgumentException("Unsupported lecture unit type for Weaviate indexing: " + unit.getClass().getSimpleName());
         }
 
-        return new LectureUnitSearchableEntityDTO(unit.getId(), courseId, courseTitle, lectureId, unit.getName(), description, unitType, unit.getReleaseDate());
+        return new LectureUnitSearchableEntityDTO(unit.getId(), courseId, lectureId, unit.getName(), description, unitType, unit.getReleaseDate());
     }
 
     /**
@@ -84,9 +82,6 @@ public record LectureUnitSearchableEntityDTO(Long lectureUnitId, Long courseId, 
         properties.put(SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.TypeValues.LECTURE_UNIT);
         properties.put(SearchableEntitySchema.Properties.ENTITY_ID, lectureUnitId);
         properties.put(SearchableEntitySchema.Properties.COURSE_ID, courseId);
-        if (courseTitle != null) {
-            properties.put(SearchableEntitySchema.Properties.COURSE_NAME, courseTitle);
-        }
         properties.put(SearchableEntitySchema.Properties.LECTURE_ID, lectureId);
         properties.put(SearchableEntitySchema.Properties.TITLE, unitName);
         properties.put(SearchableEntitySchema.Properties.UNIT_TYPE, unitType);
