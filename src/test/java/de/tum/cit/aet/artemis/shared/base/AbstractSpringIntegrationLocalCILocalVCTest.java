@@ -84,9 +84,10 @@ import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
 // NOTE: in a "single node" environment, PROFILE_BUILDAGENT must be before PROFILE_CORE to avoid issues
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_BUILDAGENT, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_LOCALCI, PROFILE_LOCALVC })
 // Note: the server.port property must correspond to the port used in the artemis.version-control.url property.
-@TestPropertySource(properties = { LDAP_ENABLED_PROPERTY_NAME + "=true", "artemis.athena.enabled=true", "artemis.user-management.use-external=false",
-        "artemis.sharing.enabled=true", "artemis.continuous-integration.specify-concurrent-builds=true", "artemis.continuous-integration.concurrent-build-size=1",
-        "artemis.continuous-integration.asynchronous=false", "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
+@TestPropertySource(properties = { LDAP_ENABLED_PROPERTY_NAME + "=true", "artemis.athena.enabled=true", "artemis.apollon.enabled=false",
+        "artemis.user-management.use-external=false", "artemis.sharing.enabled=true", "artemis.continuous-integration.specify-concurrent-builds=true",
+        "artemis.continuous-integration.concurrent-build-size=1", "artemis.continuous-integration.asynchronous=false",
+        "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
         "artemis.continuous-integration.build.images.c.default=ls1tum/artemis-c-minimal-docker:1.0.0",
         "artemis.continuous-integration.build.images.c.fact=ls1tum/artemis-fact-minimal-docker:1.1.0", "artemis.continuous-integration.image-cleanup.enabled=true",
         "artemis.continuous-integration.image-cleanup.disk-space-threshold-mb=1000000000", "spring.liquibase.enabled=true", "artemis.iris.enabled=true",
