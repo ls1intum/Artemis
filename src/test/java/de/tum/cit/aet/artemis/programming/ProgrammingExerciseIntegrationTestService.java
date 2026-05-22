@@ -1177,7 +1177,9 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setId(null);
         programmingExercise.setShortName("testShortName");
         programmingExercise.setPackageName("a".repeat(MAX_PACKAGE_NAME_LENGTH + 1));
-        request.post("/api/programming/programming-exercises/setup", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.performMvcRequest(MockMvcRequestBuilders.post(new URI("/api/programming/programming-exercises/setup")).contentType(MediaType.APPLICATION_JSON)
+                .content(request.getObjectMapper().writeValueAsString(programmingExercise))).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorKey").value("packagenameTooLong"));
     }
 
     void createProgrammingExercise_maxScoreIsNull_badRequest() throws Exception {
