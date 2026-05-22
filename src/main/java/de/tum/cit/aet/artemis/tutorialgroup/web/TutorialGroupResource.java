@@ -459,8 +459,7 @@ public class TutorialGroupResource {
             throw new AccessForbiddenException("Only the tutor of the group, editors and instructors are allowed to access unregistered students of a tutorial group.");
         }
 
-        String studentGroupName = courseRepository.getStudentGroupNameById(courseId);
-        List<TutorialGroupStudentDTO> foundStudents = tutorialGroupRegistrationRepository.searchUnregisteredStudents(tutorialGroupId, studentGroupName, loginOrName,
+        List<TutorialGroupStudentDTO> foundStudents = tutorialGroupRegistrationRepository.searchUnregisteredStudents(tutorialGroupId, courseId, loginOrName,
                 PageRequest.of(pageIndex, pageSize));
 
         return ResponseEntity.ok().body(foundStudents);

@@ -187,7 +187,7 @@ public class CourseService {
         course.setExercises(exerciseRepository.findByCourseIdWithCategories(courseId));
         course.setExercises(exerciseService.filterExercisesForCourse(course, user, true));
         exerciseService.loadExerciseDetailsIfNecessary(course, user, true);
-        examRepositoryApi.ifPresent(api -> course.setExams(api.findByCourseIdForUser(courseId, user.getId(), user.getGroups(), ZonedDateTime.now())));
+        examRepositoryApi.ifPresent(api -> course.setExams(api.findByCourseIdForUser(courseId, user.getId(), ZonedDateTime.now())));
         // TODO: in the future, we only want to know if lectures exist, the actual lectures will be loaded when the user navigates into the lecture
         lectureApi.ifPresent(api -> course.setLectures(api.filterLecturesWithActiveAttachments(course, course.getLectures(), user)));
         // NOTE: in this call we only want to know if competencies exist in the course, we will load them when the user navigates into them

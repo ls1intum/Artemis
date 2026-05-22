@@ -183,8 +183,8 @@ public class CourseCompetencyService {
         final String semester = StringUtils.isEmpty(search.getSemester()) ? null : search.getSemester();
 
         final Page<CourseCompetency> competencyPage;
-        competencyPage = courseCompetencyRepository.findForImportAndUserHasAccessToCourse(title, description, courseTitle, semester, user.getGroups(),
-                authCheckService.isAdmin(user), pageable);
+        competencyPage = courseCompetencyRepository.findForImportAndUserHasAccessToCourse(title, description, courseTitle, semester, user.getId(), authCheckService.isAdmin(user),
+                pageable);
         return new SearchResultPageDTO<>(competencyPage.getContent(), competencyPage.getTotalPages());
     }
 

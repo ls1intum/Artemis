@@ -72,7 +72,7 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
             FROM LearningPath learningPath
             WHERE learningPath.course.id = :courseId
                 AND learningPath.user.deleted = FALSE
-                AND learningPath.course.studentGroupName MEMBER OF learningPath.user.groups
+                AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = learningPath.user AND ucr.course.id = learningPath.course.id AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.STUDENT)
             """)
     long countLearningPathsOfEnrolledStudentsInCourse(@Param("courseId") long courseId);
 
@@ -92,7 +92,7 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
             FROM LearningPath lp
             WHERE lp.course.id = :courseId
                 AND lp.user.deleted = FALSE
-                AND lp.course.studentGroupName MEMBER OF lp.user.groups
+                AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = lp.user AND ucr.course.id = lp.course.id AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.STUDENT)
             """)
     List<LearningPath> findAllByCourseIdForEnrolledStudents(@Param("courseId") long courseId);
 }

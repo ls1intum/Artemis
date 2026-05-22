@@ -230,7 +230,7 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
      * @param partialDescription course competency description search term
      * @param partialCourseTitle course title search term
      * @param semester           semester search term
-     * @param groups             user groups
+     * @param userId             id of the user
      * @param isAdmin            if the user is an admin
      * @param pageable           Pageable
      * @return Page with search results
@@ -238,14 +238,14 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
     @Query("""
             SELECT c
             FROM CourseCompetency c
-            WHERE (:isAdmin = TRUE OR c.course.instructorGroupName IN :groups OR c.course.editorGroupName IN :groups)
+            WHERE (:isAdmin = TRUE OR EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = c.course.id AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR, de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR)))
                 AND (:partialTitle IS NULL OR c.title LIKE %:partialTitle%)
                 AND (:partialDescription IS NULL OR c.description LIKE %:partialDescription%)
                 AND (:partialCourseTitle IS NULL OR c.course.title LIKE %:partialCourseTitle%)
                 AND (:semester IS NULL OR c.course.semester = :semester)
             """)
     Page<CourseCompetency> findForImportAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialDescription") String partialDescription,
-            @Param("partialCourseTitle") String partialCourseTitle, @Param("semester") String semester, @Param("groups") Set<String> groups, @Param("isAdmin") boolean isAdmin,
+            @Param("partialCourseTitle") String partialCourseTitle, @Param("semester") String semester, @Param("userId") long userId, @Param("isAdmin") boolean isAdmin,
             Pageable pageable);
 
     @Query("""

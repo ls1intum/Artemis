@@ -33,10 +33,11 @@ public interface MaintenanceEmailRecipientRepository extends ArtemisJpaRepositor
                 AND u.activated = TRUE
                 AND u.email IS NOT NULL
                 AND EXISTS (
-                    SELECT 1 FROM Course c
-                    WHERE c.instructorGroupName MEMBER OF u.groups
-                        AND (c.startDate IS NULL OR c.startDate <= :now)
-                        AND (c.endDate IS NULL OR c.endDate >= :now)
+                    SELECT ucr FROM UserCourseRole ucr
+                    WHERE ucr.user = u
+                        AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR
+                        AND (ucr.course.startDate IS NULL OR ucr.course.startDate <= :now)
+                        AND (ucr.course.endDate IS NULL OR ucr.course.endDate >= :now)
                 )
                 AND NOT EXISTS (
                     SELECT 1 FROM GlobalNotificationSetting s
@@ -54,10 +55,11 @@ public interface MaintenanceEmailRecipientRepository extends ArtemisJpaRepositor
                 AND u.activated = TRUE
                 AND u.email IS NOT NULL
                 AND EXISTS (
-                    SELECT 1 FROM Course c
-                    WHERE c.instructorGroupName MEMBER OF u.groups
-                        AND (c.startDate IS NULL OR c.startDate <= :now)
-                        AND (c.endDate IS NULL OR c.endDate >= :now)
+                    SELECT ucr FROM UserCourseRole ucr
+                    WHERE ucr.user = u
+                        AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR
+                        AND (ucr.course.startDate IS NULL OR ucr.course.startDate <= :now)
+                        AND (ucr.course.endDate IS NULL OR ucr.course.endDate >= :now)
                 )
                 AND NOT EXISTS (
                     SELECT 1 FROM GlobalNotificationSetting s

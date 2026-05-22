@@ -178,10 +178,10 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry(
                 TYPE(e),
-                COUNT(DISTINCT user.id)
+                COUNT(DISTINCT ucr.user.id)
             )
             FROM Exercise e
-                JOIN User user ON e.course.studentGroupName MEMBER OF user.groups
+                JOIN UserCourseRole ucr ON ucr.course.id = e.course.id AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.STUDENT
             WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :minDate
             	AND e.dueDate <= :maxDate
@@ -190,6 +190,10 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     Set<ExerciseTypeMetricsEntry> countStudentsInExercisesWithDueDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     /**
+     * TODO (Phase 9): replace ExerciseTypeStudentGroupDTO with an (exerciseType, courseId) DTO and rewrite
+     * ExerciseMetricsService.aggregateActiveStudentsByExerciseType to count students via UserCourseRole by courseId
+     * instead of by studentGroupName. Also remove countUsersByStudentGroupNamesAndUserIds from UserRepository.
+     *
      * Return the distinct exercise types and their course's student group names for exercises with release dates in the given range.
      * This is used as the first step in an optimized two-query approach to count active students.
      *
@@ -207,6 +211,8 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     Set<ExerciseTypeStudentGroupDTO> findExerciseTypesAndStudentGroupsWithReleaseDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     /**
+     * TODO (Phase 9): same as above — replace studentGroupName with courseId in DTO and migrate the service.
+     *
      * Return the distinct exercise types and their course's student group names for exercises with due dates in the given range.
      * This is used as the first step in an optimized two-query approach to count active students.
      *
@@ -256,10 +262,10 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry(
                 TYPE(e),
-                COUNT(DISTINCT user.id)
+                COUNT(DISTINCT ucr.user.id)
             )
             FROM Exercise e
-                JOIN User user ON e.course.studentGroupName MEMBER OF user.groups
+                JOIN UserCourseRole ucr ON ucr.course.id = e.course.id AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.STUDENT
             WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :minDate
             	AND e.releaseDate <= :maxDate
@@ -518,19 +524,17 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     /**
      * Fetches the number of student participations in the given exercise
      *
-     * @param exerciseId       the id of the exercise to get the amount for
-     * @param studentGroupName the student group name of the exercise's course
+     * @param exerciseId the id of the exercise to get the amount for
      * @return The number of student participations as <code>Long</code>
      */
     @Query("""
             SELECT COUNT(DISTINCT p.student.id)
             FROM Exercise e
                 JOIN e.studentParticipations p
-                JOIN p.student.groups g
             WHERE e.id = :exerciseId
-                 AND g = :studentGroupName
+                AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = p.student.id AND ucr.course.id = e.course.id AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.STUDENT)
             """)
-    Long getStudentParticipationCountById(@Param("exerciseId") Long exerciseId, @Param("studentGroupName") String studentGroupName);
+    Long getStudentParticipationCountById(@Param("exerciseId") Long exerciseId);
 
     /**
      * Fetches the number of team participations in the given exercise

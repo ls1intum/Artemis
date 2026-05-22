@@ -41,8 +41,8 @@ public class ExamRepositoryApi extends AbstractExamApi {
         return examRepository.findByCourseId(courseId);
     }
 
-    public Set<Exam> findByCourseIdForUser(Long courseId, long userId, Set<String> groupNames, ZonedDateTime now) {
-        return examRepository.findByCourseIdForUser(courseId, userId, groupNames, now);
+    public Set<Exam> findByCourseIdForUser(Long courseId, long userId, ZonedDateTime now) {
+        return examRepository.findByCourseIdForUser(courseId, userId, now);
     }
 
     public Exam findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(long examId) {

@@ -630,8 +630,7 @@ public class ExerciseService {
                 exerciseStatisticsDTO.setParticipationRateInPercent(teams == null || teams == 0 ? 0.0 : Math.round(participations * 1000.0 / teams) / 10.0);
             }
             else {
-                Long studentParticipations = exerciseRepository.getStudentParticipationCountById(exercise.getId(),
-                        exercise.getCourseViaExerciseGroupOrCourseMember().getStudentGroupName());
+                Long studentParticipations = exerciseRepository.getStudentParticipationCountById(exercise.getId());
                 var participations = studentParticipations == null ? 0 : Math.toIntExact(studentParticipations);
                 exerciseStatisticsDTO.setNoOfParticipatingStudentsOrTeams(participations);
 

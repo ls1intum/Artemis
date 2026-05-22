@@ -1475,10 +1475,10 @@ public class ExamService {
         }
         else {
             if (withExercises) {
-                examPage = examRepository.queryNonEmptyBySearchTermInCoursesWhereInstructor(searchTerm, user.getGroups(), pageable);
+                examPage = examRepository.queryNonEmptyBySearchTermInCoursesWhereInstructor(searchTerm, user.getId(), pageable);
             }
             else {
-                examPage = examRepository.queryBySearchTermInCoursesWhereInstructor(searchTerm, user.getGroups(), pageable);
+                examPage = examRepository.queryBySearchTermInCoursesWhereInstructor(searchTerm, user.getId(), pageable);
             }
         }
         return new SearchResultPageDTO<>(examPage.getContent(), examPage.getTotalPages());
@@ -1511,7 +1511,7 @@ public class ExamService {
         var now = ZonedDateTime.now();
         var fromDate = now.minusDays(EXAM_ACTIVE_DAYS);
         var toDate = now.plusDays(EXAM_ACTIVE_DAYS);
-        return examRepository.findAllActiveExamsInCoursesWhereAtLeastTutor(user.getGroups(), pageable, fromDate, now, toDate);
+        return examRepository.findAllActiveExamsInCoursesWhereAtLeastTutor(user.getId(), pageable, fromDate, now, toDate);
     }
 
     /**

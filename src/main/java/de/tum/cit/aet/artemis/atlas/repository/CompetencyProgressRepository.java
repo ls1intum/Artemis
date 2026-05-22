@@ -106,7 +106,7 @@ public interface CompetencyProgressRepository extends ArtemisJpaRepository<Compe
                 LEFT JOIN cp.user u
             WHERE com.id = :competencyId
                 AND cp.progress > 0
-                AND c.studentGroupName MEMBER OF u.groups
+                AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user.id = u.id AND ucr.course.id = c.id AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.STUDENT)
             """)
     double findAverageOfAllNonZeroStudentProgressByCompetencyId(@Param("competencyId") long competencyId);
 

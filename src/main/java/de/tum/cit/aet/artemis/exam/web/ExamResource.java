@@ -11,7 +11,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -843,15 +842,14 @@ public class ExamResource {
     @GetMapping("courses/{courseId}/exams-for-user")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<Exam>> getExamsWithQuizExercisesForUser(@PathVariable Long courseId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         if (authCheckService.isAdmin(user)) {
             return ResponseEntity.ok(examRepository.findAllWithQuizExercisesWithEagerExerciseGroupsAndExercises());
         }
         else {
             Course course = courseRepository.findByIdElseThrow(courseId);
             authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
-            var userGroups = new ArrayList<>(user.getGroups());
-            return ResponseEntity.ok(examRepository.getExamsWithQuizExercisesForWhichUserHasInstructorAccess(userGroups));
+            return ResponseEntity.ok(examRepository.getExamsWithQuizExercisesForWhichUserHasInstructorAccess(user.getId()));
         }
     }
 
