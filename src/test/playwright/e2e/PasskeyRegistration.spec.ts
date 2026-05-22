@@ -1,26 +1,37 @@
-import { test } from '../support/fixtures';
 import { expect } from '@playwright/test';
+import { test } from '../support/fixtures';
+import { admin } from '../support/users';
+import { BASE_API } from '../support/constants';
 
-test('Passkey registration via virtual authenticator', async ({ page, virtualAuthenticator }) => {
-    // Login
-    await page.goto('http://localhost:9000/');
-    await page.getByRole('button', { name: 'Log in' }).click();
-    await page.getByRole('textbox', { name: 'Login or email' }).fill('artemis_admin');
-    await page.getByRole('textbox', { name: 'Login or email' }).press('Tab');
-    await page.getByRole('textbox', { name: 'Password' }).fill('artemis_admin');
-    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+test.describe('Passkey registration', () => {
+    test.afterEach(async ({ page }) => {
+        // Clean up any passkeys registered during the test to keep tests idempotent.
+        // This ensures the passkey setup modal still appears on the next run.
+        const response = await page.request.get(`${BASE_API}/core/passkey/user`);
+        if (response.ok()) {
+            const passkeys = await response.json();
+            for (const passkey of passkeys) {
+                await page.request.delete(`${BASE_API}/core/passkey/${passkey.credentialId}`);
+            }
+        }
+    });
 
-    // Click "Set Up Passkey" in the modal — the virtual authenticator handles the prompt
-    await page.getByRole('button', { name: 'Set Up Passkey' }).click();
+    test('registers a passkey via the setup modal after login', async ({ page, loginPage, virtualAuthenticator }) => {
+        await page.goto('/sign-in');
+        await loginPage.login(admin);
 
-    // Verify no registration error alert is shown
-    const errorAlert = page.locator('.alert-inner').getByText('The passkey could not be registered. Please try again.');
-    await expect(errorAlert).not.toBeVisible();
+        // The passkey setup modal appears after login for users without a passkey
+        await page.getByRole('button', { name: 'Set Up Passkey' }).click();
 
-    // Verify success alert is shown
-    const successAlert = page.locator('.alert-inner').getByText('Your passkey has been successfully registered. You can manage your passkeys in the user settings');
-    await expect(successAlert).toBeVisible();
+        // Verify no registration error alert is shown
+        const errorAlert = page.locator('.alert-inner').getByText('The passkey could not be registered. Please try again.');
+        await expect(errorAlert).not.toBeVisible();
 
-    // Verify passkey was registered (modal should close, navigate to courses)
-    await page.waitForURL('**/courses**');
+        // Verify success alert is shown
+        const successAlert = page.locator('.alert-inner').getByText('Your passkey has been successfully registered. You can manage your passkeys in the user settings');
+        await expect(successAlert).toBeVisible();
+
+        // Modal should close and navigate to courses
+        await page.waitForURL('**/courses**');
+    });
 });
