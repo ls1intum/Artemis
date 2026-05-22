@@ -78,6 +78,7 @@ public class ChannelService {
                 }
                 else {
                     service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
+                    service.deleteAllPostsForChannelAsync(channel.getId());
                 }
             });
         }
@@ -218,8 +219,11 @@ public class ChannelService {
      */
     public void deleteChannel(@Nullable Channel channel) {
         if (channel != null) {
+            searchableEntityWeaviateService.ifPresent(service -> {
+                service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
+                service.deleteAllPostsForChannelAsync(channel.getId());
+            });
             conversationService.deleteConversation(channel.getId());
-            searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId()));
         }
     }
 
@@ -540,8 +544,11 @@ public class ChannelService {
     public void deleteChannelForExerciseId(long exerciseId) {
         Long exerciseChannelId = channelRepository.findChannelIdByExerciseId(exerciseId);
         if (exerciseChannelId != null) {
+            searchableEntityWeaviateService.ifPresent(service -> {
+                service.deleteAllPostsForChannelAsync(exerciseChannelId);
+                service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, exerciseChannelId);
+            });
             conversationService.deleteConversation(exerciseChannelId);
-            searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, exerciseChannelId));
         }
     }
 
