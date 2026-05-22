@@ -54,8 +54,10 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     isDatePickerForStartDateVisible = computed(() => !this.isExamMode() && (this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()?.startDate ?? true));
     isDatePickerForDueDateVisible = computed(() => !this.isExamMode() && (this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()?.dueDate ?? true));
     isEnablingToRunTestsAfterDueDateToggleVisible = computed(() => this.computeIsEnablingToRunTestsAfterDueDateToggleVisible());
+    isEnablingToRunTestsAfterDueDateToggleEnabled = computed(() => this.isExamMode() || !!this.dueDate());
     isDatePickerForRunningTestsAfterDueDateVisible = signal(false);
     isSemiAutomaticAssessmentToggleVisible = computed(() => this.computeIsSemiAutomaticAssessmentToggleVisible());
+    isSemiAutomaticAssessmentToggleEnabled = computed(() => this.isExamMode() || this.isImport() || !!this.dueDate());
     isDatePickerForSemiAutomaticAssessmentDueDateVisible = computed<boolean>(() => this.computeIfDatePickableForSemiAutomaticAssessmentDueDateVisible());
     isExampleSolutionPublicationDateToggleVisible = computed(() => this.computeIsExampleSolutionPublicationDateToggleVisible());
     isDatePickerForExampleSolutionPublicationDateVisible = signal(false);
@@ -70,6 +72,10 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     constructor() {
         effect(() => {
             if (!this.isEnablingToRunTestsAfterDueDateToggleVisible()) {
+                this.isDatePickerForRunningTestsAfterDueDateVisible.set(false);
+                this.buildAndTestStudentSubmissionsAfterDueDate.set(undefined);
+            }
+            if (!this.isEnablingToRunTestsAfterDueDateToggleEnabled()) {
                 this.isDatePickerForRunningTestsAfterDueDateVisible.set(false);
                 this.buildAndTestStudentSubmissionsAfterDueDate.set(undefined);
             }
@@ -174,20 +180,21 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
 
     private computeIsEnablingToRunTestsAfterDueDateToggleVisible(): boolean {
         const isInputDisplayedAccordingToCurrentModeRecord = this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord();
-        const isInputDisplayedAccordingToCurrentMode = !isInputDisplayedAccordingToCurrentModeRecord || isInputDisplayedAccordingToCurrentModeRecord.runTestsAfterDueDate;
-        return isInputDisplayedAccordingToCurrentMode && (this.isExamMode() || !!this.dueDate());
+        return !isInputDisplayedAccordingToCurrentModeRecord || isInputDisplayedAccordingToCurrentModeRecord.runTestsAfterDueDate;
     }
 
     private computeIsSemiAutomaticAssessmentToggleVisible(): boolean {
         const isInputDisplayedAccordingToCurrentModeRecord = this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord();
-        const isInputDisplayedAccordingToCurrentMode = !isInputDisplayedAccordingToCurrentModeRecord || isInputDisplayedAccordingToCurrentModeRecord.assessmentDueDate;
-        return isInputDisplayedAccordingToCurrentMode && (this.isExamMode() || this.isImport() || !!this.dueDate());
+        return !isInputDisplayedAccordingToCurrentModeRecord || isInputDisplayedAccordingToCurrentModeRecord.assessmentDueDate;
     }
 
     private computeIfDatePickableForSemiAutomaticAssessmentDueDateVisible(): boolean {
         const isSemiAutomaticAssessmentToggleVisible = this.isSemiAutomaticAssessmentToggleVisible();
+        const isSemiAutomaticAssessmentToggleEnabled = this.isSemiAutomaticAssessmentToggleEnabled();
         const assessmentTypeIsSemiAutomatic = this.assessmentType() === AssessmentType.SEMI_AUTOMATIC;
-        return isSemiAutomaticAssessmentToggleVisible && assessmentTypeIsSemiAutomatic && !this.isExamMode() && !this.allowFeedbackRequests();
+        return (
+            isSemiAutomaticAssessmentToggleVisible && isSemiAutomaticAssessmentToggleEnabled && assessmentTypeIsSemiAutomatic && !this.isExamMode() && !this.allowFeedbackRequests()
+        );
     }
 
     private computeIsExampleSolutionPublicationDateToggleVisible(): boolean {

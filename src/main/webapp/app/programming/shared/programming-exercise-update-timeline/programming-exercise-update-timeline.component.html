@@ -13,10 +13,11 @@
                     class="form-check-input"
                     name="defineDateForRunningTestsAfterDueDate"
                     [(ngModel)]="isDatePickerForRunningTestsAfterDueDateVisible"
+                    [disabled]="!isEnablingToRunTestsAfterDueDateToggleEnabled()"
                     id="defineDateForRunningTestsAfterDueDate"
                 />
                 <label
-                    [ngStyle]="!isEnablingToRunTestsAfterDueDateToggleVisible() ? { color: 'grey' } : {}"
+                    [ngStyle]="!isEnablingToRunTestsAfterDueDateToggleEnabled() ? { color: 'grey' } : {}"
                     class="form-control-label"
                     for="defineDateForRunningTestsAfterDueDate"
                     jhiTranslate="artemisApp.programmingExercise.timeline.configureDateForRunningTestsAfterDueDate"
@@ -31,10 +32,11 @@
                     name="manualAssessmentEnabled"
                     [checked]="assessmentType() === AssessmentType.SEMI_AUTOMATIC"
                     (change)="toggleAssessmentType()"
+                    [disabled]="!isSemiAutomaticAssessmentToggleEnabled()"
                     id="manualAssessmentEnabled"
                 />
                 <label
-                    [ngStyle]="!isSemiAutomaticAssessmentToggleVisible() ? { color: 'grey' } : {}"
+                    [ngStyle]="!isSemiAutomaticAssessmentToggleEnabled() ? { color: 'grey' } : {}"
                     class="form-control-label"
                     for="manualAssessmentEnabled"
                     jhiTranslate="artemisApp.programmingExercise.timeline.enableManualAssessment"
@@ -48,11 +50,9 @@
                     class="form-check-input"
                     name="exampleSolutionPublicationDateEnabled"
                     [(ngModel)]="isDatePickerForExampleSolutionPublicationDateVisible"
-                    [disabled]="!isExampleSolutionPublicationDateToggleVisible()"
                     id="exampleSolutionPublicationDateEnabled"
                 />
                 <label
-                    [ngStyle]="!isExampleSolutionPublicationDateToggleVisible() ? { color: 'grey' } : {}"
                     class="form-control-label"
                     for="exampleSolutionPublicationDateEnabled"
                     jhiTranslate="artemisApp.programmingExercise.timeline.configureExampleSolutionPublication"
