@@ -8,7 +8,7 @@ inputs:
 
 outputs:
   pr-number:
-    description: 'The PR number, echoed for caller convenience (empty string if pr-number is 0)'
+    description: 'The PR number normalised to empty string when not a PR (input is "0"), so callers can short-circuit.'
     value: ${{ inputs.pr-number != '0' && inputs.pr-number || '' }}
   comment-id:
     description: 'The existing E2E comment ID (empty string if not found)'

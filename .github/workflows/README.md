@@ -33,11 +33,11 @@ ci.yml                                                            (single entry 
 `ci-summary` is a second terminal job: it `needs:` every job with `if: always()` and writes to
 the run's **Summary** page:
 
-- a **Gantt timeline** of every job and step (`Kesin11/actions-timeline`), which surfaces the
-  critical-path bottleneck at a glance — it reads the run's jobs API, so it captures the
-  reusable children (`Build / …`, `Test / …`, `E2E / …`), not just the umbrella jobs;
-- a **per-job table** (job · required/advisory · result);
-- on failure only, a small **local-fix** table (the one thing the Checks UI never shows).
+- a **per-job table** (job · required/advisory · result), and on failure only a small
+  **local-fix** table (the one thing the Checks UI never shows);
+- a **Gantt timeline** of every job and step (`Kesin11/actions-timeline`, rendered last as a
+  post-action), which surfaces the critical-path bottleneck — it reads the run's jobs API, so
+  it captures the reusable children (`Build / …`, `Test / …`, `E2E / …`), not just the umbrella jobs.
 
 It is informational — never required, never in another job's `needs:` — so it never blocks
 merging even though it waits for the long E2E run to report. It holds only `actions: read`
@@ -45,10 +45,10 @@ merging even though it waits for the long E2E run to report. It holds only `acti
 
 ### Required vs. advisory
 
-Branch protection on `develop` today requires exactly five checks — `Build .war artifact`,
-`server-tests`, `server-style`, `client-tests`, `client-style` — all produced by the
-`build` and `test` reusables. This PR keeps that surface and nothing more: the single
-required check is `CI / All required CI Passed`, which depends only on `build` and `test`.
+Branch protection on `develop` requires the `build`- and `test`-produced checks (as of this
+PR's merge: `Build .war artifact`, `server-tests`, `server-style`, `client-tests`,
+`client-style`). This PR keeps that surface and nothing more: the single required check is
+`CI / All required CI Passed`, which depends only on `build` and `test`.
 
 Everything else (`e2e`, `java-analysis`, `gradle-wrapper`, `docs`, `translation`,
 `workflows`) runs in parallel, posts its own status, and is **advisory** — exactly as it is
@@ -129,9 +129,8 @@ These workflows are intentionally NOT folded into the umbrella:
 
 ## Branch protection migration
 
-`develop` uses **legacy branch protection** (not a ruleset) for required status checks.
-As verified at the time of this PR, it requires exactly these five contexts, all produced
-by the now-deleted `build.yml` / `test.yml`:
+`develop` uses **legacy branch protection** (not a ruleset) for required status checks. It
+requires the five contexts produced by the now-deleted `build.yml` / `test.yml`:
 
 ```text
 Build .war artifact   server-tests   server-style   client-tests   client-style

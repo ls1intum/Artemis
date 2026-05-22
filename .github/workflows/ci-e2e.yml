@@ -34,6 +34,8 @@ on:
       HELIOS_REPO_SECRET:
         required: false
 
+permissions: {}  # default-deny; each job grants only what it needs
+
 env:
   # Commit-status context shown on the PR. Advisory only — branch protection requires the
   # `All required CI Passed` gate, not this status.

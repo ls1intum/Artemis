@@ -3,8 +3,8 @@ name: Build
 on:
   workflow_call:
     inputs:
-      ref_name:
-        description: 'Human-readable branch/ref the build represents (used for cache keys, logs).'
+      branch_name:
+        description: 'Head branch/ref the build represents (used for the release-image checkout ref).'
         required: true
         type: string
       commit_sha:
@@ -199,7 +199,7 @@ jobs:
       packages: write
     uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@v1.2.0
     with:
-      ref: ${{ inputs.ref_name }}
+      ref: ${{ inputs.branch_name }}
       image-name: ls1intum/artemis
       docker-file: ./docker/artemis/Dockerfile
       # `type=ref,event=tag` is the release tag (e.g. "1.2.3"); `event=branch` covers

@@ -135,7 +135,7 @@ jobs:
       contents: write
       packages: write
     with:
-      ref_name: ${{ github.event.pull_request.head.ref || github.ref_name }}
+      branch_name: ${{ github.event.pull_request.head.ref || github.ref_name }}
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
       is_pr: ${{ github.event_name == 'pull_request' }}
       is_internal_pr: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
@@ -260,10 +260,8 @@ jobs:
             exit 1
           fi
 
-  # One consolidated table of every job (required + advisory) on the run's Summary page, so
-  # the whole pipeline's status is visible without clicking into each job. Informational only:
-  # not in any `needs:`, never required, and `always()` so it reports even when a job fails.
-  # It waits for all jobs (incl. the long E2E run) purely to show their final result.
+  # Informational Summary-page report (timeline + per-job table); never required, never in
+  # another job's `needs:`, so it cannot block merging.
   ci-summary:
     name: CI Summary
     if: always()
@@ -282,7 +280,6 @@ jobs:
       actions: read  # actions-timeline reads the run's jobs API
     timeout-minutes: 5
     steps:
-      # Mermaid Gantt of every job/step (reusable children included) on the Summary page.
       - name: Render run timeline
         uses: Kesin11/actions-timeline@44c9c178ffb2fb1d9859614a3ffa79ccfb77565e  # v3.1.0
         with:
@@ -318,8 +315,7 @@ jobs:
               printf '| `%s` | %s | %s %s |\n' "$job" "$role" "$(icon "$result")" "$result"
             done < <(jq -r 'to_entries[] | "\(.key)\t\(.value.result)"' <<< "$NEEDS")
 
-            # Local-fix hints — the one thing the Checks UI never shows. Failure-gated so it
-            # stays invisible on green runs. Commands are the canonical ones from CLAUDE.md.
+            # Failure-only local-fix hints; commands mirror CLAUDE.md.
             if [ "$any_failure" = "true" ]; then
               echo
               echo "<details><summary>💡 Common local fixes</summary>"
@@ -328,7 +324,6 @@ jobs:
               echo "|---------|---------|"
               echo "| Server formatting (Spotless) | \`./gradlew spotlessApply\` |"
               echo "| Client lint / formatting | \`pnpm run lint:fix && pnpm run prettier:write\` |"
-              echo "| Client tests (changed files) | \`pnpm run test-diff\` |"
               echo "| Java code quality | \`./gradlew checkstyleMain modernizer\` |"
               echo
               echo "Failed test details are in the **Test** and **E2E** checks above."

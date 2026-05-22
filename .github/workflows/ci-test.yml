@@ -28,6 +28,8 @@ on:
         description: 'Coverage upload token. Optional — coverage is uploaded only on internal PRs by non-bot authors.'
         required: false
 
+permissions: {}  # default-deny; each job grants only what it needs
+
 # Workflow-level node/java pins are drift-checked by ci-workflows.yml.
 env:
   CI: true
@@ -135,7 +137,7 @@ jobs:
           fi
       - name: 'Codacy: Report coverage'
         # Coverage upload runs only on internal PRs by non-bot authors; fork PRs lack the secret.
-        uses: codacy/codacy-coverage-reporter-action@a38818475bb21847788496e9f0fddaa4e84955ba  # v1.3.0
+        uses: codacy/codacy-coverage-reporter-action@89d6c85cfafaec52c72b6c5e8b2878d33104c699  # v1.3.0
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           coverage-reports: build/reports/jacoco/aggregated/jacocoTestReport.xml
