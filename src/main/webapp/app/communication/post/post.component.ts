@@ -353,7 +353,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
                 this.changeDetector.markForCheck();
             }
         } catch (error) {
-            throw new Error(error.toString());
+            throw new Error(error.toString(), { cause: error });
         }
     }
 

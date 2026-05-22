@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.ArtemisVersionService;
 import de.tum.cit.aet.artemis.core.service.PasskeyAuthenticationService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.core.service.SbomService;
 import de.tum.cit.aet.artemis.core.service.VulnerabilityService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
@@ -134,6 +135,9 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @MockitoSpyBean
     protected ProfileService profileService;
 
+    @MockitoSpyBean
+    protected SbomService sbomService;
+
     @BeforeEach
     protected void setupSpringAIMocks() {
         if (chatModel != null) {
@@ -142,13 +146,16 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
         // Mock passkey authentication to always return true for super admin operations in tests
         // Use doReturn instead of when().thenReturn() because the method throws an exception
         doReturn(true).when(passkeyAuthenticationService).isAuthenticatedWithSuperAdminApprovedPasskey();
+        // Default to SBOM-available in tests; individual tests can override to exercise the missing-SBOM path.
+        // VulnerabilityScanScheduleService short-circuits with no email when isSbomAvailable() returns false.
+        doReturn(true).when(sbomService).isSbomAvailable();
     }
 
     @AfterEach
     @Override
     protected void resetSpyBeans() {
         Mockito.reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, competencyProgressService, competencyProgressApi);
-        Mockito.reset(artemisVersionService, vulnerabilityService, profileService);
+        Mockito.reset(artemisVersionService, vulnerabilityService, profileService, sbomService);
         if (chatModel != null) {
             Mockito.reset(chatModel);
         }
