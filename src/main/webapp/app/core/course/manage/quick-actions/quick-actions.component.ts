@@ -55,10 +55,19 @@ export enum CourseManagementSection {
             .stat-value {
                 font-weight: 600;
                 font-size: 1.1rem;
-                color: inherit;
+            }
+
+            // The instructor view renders .stat-value as an <a>; give it a persistent
+            // link colour so it's distinguishable from the plain <div> variant used for
+            // students, but skip the default underline (per reviewer feedback). The
+            // underline returns on :hover and :focus-visible so keyboard / touch users
+            // still get a clear interactive cue.
+            a.stat-value {
+                color: var(--bs-link-color);
                 text-decoration: none;
 
-                &:hover {
+                &:hover,
+                &:focus-visible {
                     text-decoration: underline;
                 }
             }
