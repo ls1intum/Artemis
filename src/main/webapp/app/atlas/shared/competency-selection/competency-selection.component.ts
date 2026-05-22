@@ -26,6 +26,9 @@ import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-to
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 
+/**
+ * @deprecated Use {@link CompetencySelectionPrimengComponent} instead.
+ */
 @Component({
     selector: 'jhi-competency-selection',
     templateUrl: './competency-selection.component.html',

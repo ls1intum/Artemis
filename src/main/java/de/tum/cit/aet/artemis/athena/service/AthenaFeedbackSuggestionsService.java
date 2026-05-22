@@ -172,22 +172,17 @@ public class AthenaFeedbackSuggestionsService {
     /**
      * Extract the student's LLM selection for preliminary Athena feedback requests.
      *
-     * @param submission the submission to extract the selection from
-     * @param isGraded   whether the Athena request is for graded feedback
+     * @param user     the user who triggered the feedback generation
+     * @param isGraded whether the Athena request is for graded feedback
      * @return the student's LLM selection or null if it should not be forwarded
      */
     @Nullable
-    private AiSelectionDecision extractSelectedLLMUsage(Submission submission, boolean isGraded) {
+    private AiSelectionDecision extractSelectedLLMUsage(@Nullable User user, boolean isGraded) {
         if (isGraded) {
             return null;
         }
 
-        if (!(submission.getParticipation() instanceof StudentParticipation studentParticipation)) {
-            log.debug("Cannot extract LLM selection: submission is not from a student participation");
-            return null;
-        }
-
-        var selection = studentParticipation.getStudent().map(User::getSelectedLLMUsage).orElse(null);
+        var selection = Optional.ofNullable(user).map(User::getSelectedLLMUsage).orElse(null);
         if (selection == null || selection == AiSelectionDecision.NO_AI) {
             throw new BadRequestAlertException("AI feedback requires an accepted LLM selection", "submission", "llmSelectionRequired", true);
         }
@@ -200,9 +195,10 @@ public class AthenaFeedbackSuggestionsService {
      * @param exercise   the {@link TextExercise} the suggestions are fetched for
      * @param submission the {@link TextSubmission} the suggestions are fetched for
      * @param isGraded   the {@link Boolean} should Athena generate grade suggestions or not
+     * @param user       the user who triggered the feedback generation
      * @return a list of feedback suggestions
      */
-    public List<TextFeedbackDTO> getTextFeedbackSuggestions(TextExercise exercise, TextSubmission submission, boolean isGraded) throws NetworkingException {
+    public List<TextFeedbackDTO> getTextFeedbackSuggestions(TextExercise exercise, TextSubmission submission, boolean isGraded, @Nullable User user) throws NetworkingException {
         log.debug("Start Athena '{}' Feedback Suggestions Service for Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
         if (exercise.getFeedbackSuggestionModule() == null) {
@@ -221,7 +217,7 @@ public class AthenaFeedbackSuggestionsService {
         List<CourseCompetencyDTO> competencies = courseCompetencyApi.map(api -> api.findAllByExerciseId(exercise.getId()).stream().map(CourseCompetencyDTO::of).toList())
                 .orElse(null);
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
-                LearnerProfileDTO.of(extractLearnerProfile(submission)), isGraded, extractSelectedLLMUsage(submission, isGraded), latestSubmissionDTO, competencies);
+                LearnerProfileDTO.of(extractLearnerProfile(submission)), isGraded, extractSelectedLLMUsage(user, isGraded), latestSubmissionDTO, competencies);
         ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isGraded);
@@ -234,9 +230,10 @@ public class AthenaFeedbackSuggestionsService {
      * @param exercise   the {@link ProgrammingExercise} the suggestions are fetched for
      * @param submission the {@link ProgrammingSubmission} the suggestions are fetched for
      * @param isGraded   the {@link Boolean} should Athena generate grade suggestions or not
+     * @param user       the user who triggered the feedback generation
      * @return a list of feedback suggestions
      */
-    public List<ProgrammingFeedbackDTO> getProgrammingFeedbackSuggestions(ProgrammingExercise exercise, ProgrammingSubmission submission, boolean isGraded)
+    public List<ProgrammingFeedbackDTO> getProgrammingFeedbackSuggestions(ProgrammingExercise exercise, ProgrammingSubmission submission, boolean isGraded, @Nullable User user)
             throws NetworkingException {
         log.debug("Start Athena '{}' Feedback Suggestions Service for Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
@@ -246,7 +243,7 @@ public class AthenaFeedbackSuggestionsService {
         }
 
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
-                isGraded, extractSelectedLLMUsage(submission, isGraded), null, null);
+                isGraded, extractSelectedLLMUsage(user, isGraded), null, null);
         ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isGraded);
@@ -259,9 +256,11 @@ public class AthenaFeedbackSuggestionsService {
      * @param exercise   the {@link ModelingExercise} the suggestions are fetched for
      * @param submission the {@link ModelingSubmission} the suggestions are fetched for
      * @param isGraded   the {@link Boolean} should Athena generate grade suggestions or not
+     * @param user       the user who triggered the feedback generation
      * @return a list of feedback suggestions generated by Athena
      */
-    public List<ModelingFeedbackDTO> getModelingFeedbackSuggestions(ModelingExercise exercise, ModelingSubmission submission, boolean isGraded) throws NetworkingException {
+    public List<ModelingFeedbackDTO> getModelingFeedbackSuggestions(ModelingExercise exercise, ModelingSubmission submission, boolean isGraded, @Nullable User user)
+            throws NetworkingException {
         log.debug("Start Athena '{}' Feedback Suggestions Service for Modeling Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
         if (exercise.getFeedbackSuggestionModule() == null) {
@@ -275,7 +274,7 @@ public class AthenaFeedbackSuggestionsService {
         }
 
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
-                isGraded, extractSelectedLLMUsage(submission, isGraded), null, null);
+                isGraded, extractSelectedLLMUsage(user, isGraded), null, null);
         ResponseDTOModeling response = modelingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isGraded);

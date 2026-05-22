@@ -22,9 +22,11 @@ import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.service.AthenaFeedbackSuggestionsService;
 import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
@@ -55,6 +57,8 @@ public class AthenaResource {
 
     private final CourseRepository courseRepository;
 
+    private final UserRepository userRepository;
+
     private final Optional<TextRepositoryApi> textRepositoryApi;
 
     private final Optional<TextSubmissionApi> textSubmissionApi;
@@ -76,11 +80,13 @@ public class AthenaResource {
     /**
      * The AthenaResource provides an endpoint for the client to fetch feedback suggestions from Athena.
      */
-    public AthenaResource(CourseRepository courseRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<TextSubmissionApi> textSubmissionApi,
-            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            Optional<ModelingRepositoryApi> modelingRepositoryApi, Optional<ModelingSubmissionApi> modelingSubmissionApi, AuthorizationCheckService authCheckService,
-            AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, AthenaModuleService athenaModuleService) {
+    public AthenaResource(CourseRepository courseRepository, UserRepository userRepository, Optional<TextRepositoryApi> textRepositoryApi,
+            Optional<TextSubmissionApi> textSubmissionApi, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<ModelingRepositoryApi> modelingRepositoryApi,
+            Optional<ModelingSubmissionApi> modelingSubmissionApi, AuthorizationCheckService authCheckService, AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService,
+            AthenaModuleService athenaModuleService) {
         this.courseRepository = courseRepository;
+        this.userRepository = userRepository;
         this.textRepositoryApi = textRepositoryApi;
         this.textSubmissionApi = textSubmissionApi;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -99,7 +105,7 @@ public class AthenaResource {
          * Method to apply the (graded) feedback provider. Examples: AthenaFeedbackSuggestionsService::getTextFeedbackSuggestions,
          * AthenaFeedbackSuggestionsService::getProgrammingFeedbackSuggestions
          */
-        List<OutputType> apply(ExerciseType exercise, SubmissionType submission, Boolean isGraded) throws NetworkingException;
+        List<OutputType> apply(ExerciseType exercise, SubmissionType submission, boolean isGraded, User user) throws NetworkingException;
     }
 
     private <ExerciseT extends Exercise, SubmissionT extends Submission, OutputT> ResponseEntity<List<OutputT>> getFeedbackSuggestions(long exerciseId, long submissionId,
@@ -116,9 +122,10 @@ public class AthenaResource {
         }
 
         final var submission = submissionFetcher.apply(submissionId);
+        final var user = userRepository.getUser();
 
         try {
-            return ResponseEntity.ok(feedbackProvider.apply(exercise, submission, true));
+            return ResponseEntity.ok(feedbackProvider.apply(exercise, submission, true, user));
         }
         catch (NetworkingException e) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
