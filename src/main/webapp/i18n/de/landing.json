@@ -37,8 +37,10 @@
                 "slide": "Folie {{ n }}"
             }
         },
+        "skipToMain": "Zum Hauptinhalt springen",
         "socialProof": {
-            "title": "Im Einsatz an führenden Bildungseinrichtungen"
+            "title": "Im Einsatz an führenden Bildungseinrichtungen",
+            "universitiesAria": "Universitäten, die Artemis nutzen"
         },
         "features": {
             "title": "Ein vollständiges Lern-Ökosystem",

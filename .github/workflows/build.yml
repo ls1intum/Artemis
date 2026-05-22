@@ -125,9 +125,28 @@ jobs:
         # memory without competing with the Gradle JVM (which reserves up to 4g).
         # Use --optimization=false to work around esbuild crash during script optimization.
         run: bun run clean-www && bun run prebuild && bunx ng build --configuration production --optimization=false
+      - name: Decide whether to include the SBOM
+        # SBOM generation (cdxgen + cyclonedxBom + copySbomsToResources) adds ~60 s to a cold
+        # WAR build and is only needed for release-eligible artifacts. Opt in via `-Psbom` on
+        # pushes to develop, main, release/*, version tags, and published releases. All other
+        # builds (PRs, feature branches) ship a WAR without SBOM — AdminSbomResource handles
+        # this gracefully by returning 404, and the admin UI renders an info banner.
+        id: sbom
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+        run: |
+          case "$EVENT_NAME:$REF" in
+            release:*|push:refs/heads/develop|push:refs/heads/main|push:refs/heads/release/*|push:refs/tags/*)
+              echo "flag=-Psbom" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "flag=" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
       - name: Build .war
         # Skip the webapp Gradle task since the Angular client was already built above.
-        run: ./gradlew -Pprod -Pwar bootWar -x webapp
+        run: ./gradlew -Pprod -Pwar bootWar -x webapp ${{ steps.sbom.outputs.flag }}
       - name: Upload Artifact
         uses: actions/upload-artifact@v7
         with:

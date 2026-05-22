@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-landing-hero',
     standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [ArtemisTranslatePipe],
     styles: `
         :host {
@@ -38,9 +39,11 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
             justify-content: center;
             padding: 8px 16px;
             border-radius: 24px;
-            background: color-mix(in srgb, var(--primary) 8%, transparent);
-            color: var(--primary);
+            /* Increase background opacity + use --primary-dark for text so contrast stays ≥ 4.5:1 on light bg (fixes Lighthouse contrast audit). */
+            background: color-mix(in srgb, var(--primary) 18%, transparent);
+            color: var(--primary-dark, var(--primary));
             font-size: 14px;
+            font-weight: 500;
             line-height: 1.5;
         }
 
