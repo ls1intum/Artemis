@@ -21,6 +21,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
@@ -51,9 +54,12 @@ public class AdminStandardizedCompetencyResource {
 
     private final KnowledgeAreaService knowledgeAreaService;
 
-    public AdminStandardizedCompetencyResource(StandardizedCompetencyService standardizedCompetencyService, KnowledgeAreaService knowledgeAreaService) {
+    private final ObjectMapper objectMapper;
+
+    public AdminStandardizedCompetencyResource(StandardizedCompetencyService standardizedCompetencyService, KnowledgeAreaService knowledgeAreaService, ObjectMapper objectMapper) {
         this.standardizedCompetencyService = standardizedCompetencyService;
         this.knowledgeAreaService = knowledgeAreaService;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -171,17 +177,19 @@ public class AdminStandardizedCompetencyResource {
      * GET admin/standardized-competencies/export : Exports the catalog of standardized competencies, knowledge areas and sources of this Artemis instance
      *
      * @return the ResponseEntity with status 200 (OK) and the body containing the standardized competency catalog
+     * @throws JsonProcessingException if the catalog cannot be serialized
      */
     @GetMapping("standardized-competencies/export")
-    public ResponseEntity<StandardizedCompetencyCatalogDTO> exportStandardizedCompetencyCatalog() {
+    public ResponseEntity<byte[]> exportStandardizedCompetencyCatalog() throws JsonProcessingException {
         log.debug("REST request to export standardized competency catalog");
 
         var catalog = standardizedCompetencyService.exportStandardizedCompetencyCatalog();
+        var catalogJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(catalog);
 
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.setContentType(MediaType.APPLICATION_JSON);
         responseHeaders.setContentDispositionFormData("attachment", "competencies.json");
 
-        return ResponseEntity.ok().headers(responseHeaders).body(catalog);
+        return ResponseEntity.ok().headers(responseHeaders).body(catalogJson);
     }
 }
