@@ -12,7 +12,11 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import {
+    DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT,
+    RequestFeedbackButtonComponent,
+    countSuccessfulAthenaFeedbackRequests,
+} from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -479,7 +483,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
         await initAndTick();
 
-        const initialCount = component.currentFeedbackRequestCount;
+        const initialCount = component.currentFeedbackRequestCount();
 
         // Simulate receiving an Athena assessment result
         const athenaResult: Result = {
@@ -492,7 +496,7 @@ describe('RequestFeedbackButtonComponent', () => {
         // Call the private method directly
         (component as any).handleAthenaAssessment(athenaResult);
 
-        expect(component.currentFeedbackRequestCount).toBe(initialCount + 1);
+        expect(component.currentFeedbackRequestCount()).toBe(initialCount + 1);
     });
 
     it('should not increment feedback count for unsuccessful Athena assessment', async () => {
@@ -504,7 +508,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
         await initAndTick();
 
-        const initialCount = component.currentFeedbackRequestCount;
+        const initialCount = component.currentFeedbackRequestCount();
 
         const athenaResult: Result = {
             id: 1,
@@ -515,7 +519,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
         (component as any).handleAthenaAssessment(athenaResult);
 
-        expect(component.currentFeedbackRequestCount).toBe(initialCount);
+        expect(component.currentFeedbackRequestCount()).toBe(initialCount);
     });
 
     it('should subscribe to result updates when participation has id', async () => {
@@ -681,7 +685,86 @@ describe('RequestFeedbackButtonComponent', () => {
 
         await initAndTick();
 
-        expect(component.currentFeedbackRequestCount).toBe(2);
+        expect(component.currentFeedbackRequestCount()).toBe(2);
+    });
+
+    describe('feedback request limit', () => {
+        it('isFeedbackLimitReached should be true when count is at or above the limit', () => {
+            component.currentFeedbackRequestCount.set(component.feedbackRequestLimit);
+            expect(component.isFeedbackLimitReached()).toBe(true);
+
+            component.currentFeedbackRequestCount.set(component.feedbackRequestLimit + 5);
+            expect(component.isFeedbackLimitReached()).toBe(true);
+        });
+
+        it('isFeedbackLimitReached should be false when count is below the limit', () => {
+            component.currentFeedbackRequestCount.set(0);
+            expect(component.isFeedbackLimitReached()).toBe(false);
+
+            component.currentFeedbackRequestCount.set(component.feedbackRequestLimit - 1);
+            expect(component.isFeedbackLimitReached()).toBe(false);
+        });
+
+        it('requestAIFeedback should short-circuit when the limit is reached, skipping the modal and the feedback call', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const participation = createParticipation();
+            const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+            setupComponentInputs(exercise, true, false);
+            component.hasUserAcceptedLLMUsage = false;
+            component.currentFeedbackRequestCount.set(component.feedbackRequestLimit);
+
+            mockLLMModalService.open.mockClear();
+            const requestSpy = vi.spyOn(courseExerciseService, 'requestFeedback');
+
+            await component.requestAIFeedback();
+            await vi.advanceTimersByTimeAsync(0);
+
+            expect(mockLLMModalService.open).not.toHaveBeenCalled();
+            expect(requestSpy).not.toHaveBeenCalled();
+        });
+
+        it('DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT should match the component default', () => {
+            expect(component.feedbackRequestLimit).toBe(DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT);
+        });
+    });
+
+    describe('countSuccessfulAthenaFeedbackRequests', () => {
+        it('returns 0 when the participation is undefined', () => {
+            expect(countSuccessfulAthenaFeedbackRequests(undefined)).toBe(0);
+        });
+
+        it('returns 0 when there are no submissions', () => {
+            expect(countSuccessfulAthenaFeedbackRequests({ submissions: [] } as any)).toBe(0);
+        });
+
+        it('counts only successful Athena results and ignores unsuccessful or manual results', () => {
+            const participation = {
+                submissions: [
+                    {
+                        results: [
+                            { assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true } as Result,
+                            { assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true } as Result,
+                            { assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: false } as Result,
+                            { assessmentType: AssessmentType.MANUAL, successful: true } as Result,
+                        ],
+                    },
+                ],
+            } as unknown as StudentParticipation;
+
+            expect(countSuccessfulAthenaFeedbackRequests(participation)).toBe(2);
+        });
+
+        it('sums successful Athena results across multiple submissions', () => {
+            const participation = {
+                submissions: [
+                    { results: [{ assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true } as Result] },
+                    { results: [{ assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true } as Result] },
+                ],
+            } as unknown as StudentParticipation;
+
+            expect(countSuccessfulAthenaFeedbackRequests(participation)).toBe(2);
+        });
     });
 
     it('should not subscribe to result updates when participation has no id', async () => {

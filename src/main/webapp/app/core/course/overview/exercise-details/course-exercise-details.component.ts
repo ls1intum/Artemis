@@ -381,7 +381,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                         getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last()?.successful !== undefined
                     ) {
                         if (getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last()?.successful === true) {
-                            this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
+                            this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.exercise?.title ?? '' });
                         } else {
                             this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                         }
