@@ -90,22 +90,19 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
         await this.createDragAndDropItem('Rick Astley');
         const dragLocator = this.page.locator('#drag-item-0');
 
-        await dropLocator.scrollIntoViewIfNeeded();
+        // Hover first — Playwright's hover() calls scrollIntoViewIfNeeded() internally,
+        // so any targetBox computed before this point would have stale viewport coordinates.
+        await dragLocator.hover();
 
+        // Recalculate target coordinates after hover's implicit scroll.
         const targetBox = await dropLocator.boundingBox();
-        const sourceBox = await dragLocator.boundingBox();
-        if (!targetBox || !sourceBox) {
-            throw new Error('Could not determine element bounding boxes for drag operation.');
+        if (!targetBox) {
+            throw new Error('Could not determine drop location bounding box for drag operation.');
         }
 
-        const targetX = targetBox.x + targetBox.width / 2;
-        const targetY = targetBox.y + targetBox.height / 2;
-
-        // Move mouse to center of dragLocator
-        await dragLocator.hover();
         await this.page.mouse.down();
         // Move to center of dropLocator
-        await this.page.mouse.move(targetX, targetY, { steps: 8 });
+        await this.page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2, { steps: 8 });
         await this.page.mouse.up();
 
         const fileContent = await Fixtures.get('exercise/quiz/drag_and_drop/question.txt');
