@@ -1,5 +1,8 @@
 .card {
-    height: 450px;
+    height: auto;
+    min-height: 450px;
+    border-radius: 0.75rem;
+    overflow: hidden;
     transition: transform 0.2s linear;
 
     &:hover {
@@ -146,13 +149,64 @@
     }
 
     .card-footer {
-        height: 50px;
         display: flex;
+        flex-wrap: wrap;
+        row-gap: 0.4rem;
+        column-gap: 0.4rem;
         align-items: center;
-        flex-direction: row;
-        padding-left: 15px;
-        padding-bottom: 0;
-        padding-top: 5px;
+        padding: 0.5rem 0.75rem;
+        background: transparent;
+        border-top: 1px solid var(--bs-border-color);
+
+        .btn {
+            border-radius: 0.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.35rem 0.6rem;
+            margin: 0;
+            line-height: 1.2;
+        }
+    }
+
+    .course-action-btn {
+        color: #fff;
+        background: var(--course-action-accent, var(--bs-primary));
+        border: 1px solid transparent;
+        transition:
+            filter 0.15s ease,
+            transform 0.15s ease;
+
+        &:hover,
+        &:focus {
+            color: #fff;
+            filter: brightness(1.08);
+            transform: translateY(-1px);
+        }
+    }
+
+    .course-action-btn--exercises {
+        --course-action-accent: #6366f1;
+    }
+
+    .course-action-btn--lectures {
+        --course-action-accent: #0ea5e9;
+    }
+
+    .course-action-btn--tutorial {
+        --course-action-accent: #8b5cf6;
+    }
+
+    .course-action-btn--exams {
+        --course-action-accent: #f59e0b;
+    }
+
+    .course-action-btn--competencies {
+        --course-action-accent: #10b981;
+    }
+
+    .course-action-btn--faqs {
+        --course-action-accent: #ec4899;
     }
 
     .header-right {
@@ -269,6 +323,8 @@ HACK: Something is bogus with the scss of top-level pages
 .btn-info,
 .btn-info:hover,
 .btn-success,
-.btn-success:hover {
+.btn-success:hover,
+.course-action-btn,
+.course-action-btn:hover {
     color: #fff !important;
 }
