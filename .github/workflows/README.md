@@ -106,6 +106,9 @@ second step. Cascading skips don't bypass the gate either: `detect-changes` is i
   (`@v6`, `@v9`) because they are governed by GitHub's own release process.
   `actionlint`'s install script is pinned to a release tag because the script itself
   is the third party, not the binary it downloads.
+- **Don't hand-bump the SHAs.** Renovate (`renovate.json`) reads the `@<sha> # vX.Y.Z`
+  format and opens PRs that update both the SHA and the comment together — keep the comment
+  in that exact shape so it stays auto-maintained.
 
 ## Reusable workflows — `ci-*.yml`
 
@@ -138,80 +141,12 @@ These workflows are intentionally NOT folded into the umbrella:
 | `pullrequest-coverage-reporter.yml` | `workflow_run` consumer of CI artifacts. Listens for `CI`. |
 | All `pull_request_target` / `issues` / `schedule` workflows | Need elevated tokens or run on different trigger surfaces. |
 
-## Branch protection migration
+## Post-merge operations
 
-`develop` uses **legacy branch protection** (not a ruleset) for required status checks. It
-requires the five contexts produced by the now-deleted `build.yml` / `test.yml`:
-
-```text
-Build .war artifact   server-tests   server-style   client-tests   client-style
-```
-
-After merge, these five must be replaced with the single gate. Note the context string:
-the PR-checks UI shows it as **`CI / All required CI Passed`**, but the branch-protection
-API stores the bare job name — pass **`All required CI Passed`** (no `CI / ` prefix) to the
-`required_status_checks` API, exactly as the legacy contexts were stored as `server-tests`
-rather than `Test / server-tests`.
-
-1. **Before merging**, snapshot the current state for rollback:
-   ```bash
-   gh api repos/ls1intum/Artemis/branches/develop/protection/required_status_checks \
-     --jq '{strict, contexts}'
-   ```
-
-2. **Merge this PR.** The five legacy contexts can no longer report (their workflows are
-   deleted), so update branch protection in the same change window:
-   ```bash
-   gh api -X PATCH repos/ls1intum/Artemis/branches/develop/protection/required_status_checks \
-     -F strict=true -f 'checks[][context]=All required CI Passed'
-   ```
-   Repeat for `main` and each active `release/*`.
-
-3. **Verify** by opening a fresh PR; wait for `CI / All required CI Passed` to turn green.
-
-4. **Rollback** (if merges get blocked): re-PUT the five contexts from the step-1 snapshot
-   and restore the deleted workflows from git history. This PR keeps the deletions in one
-   commit so `git revert` is clean.
-
-> The advisory checks (`CodeQL / Analyse`, `Android E2E Tests`, `Validate PR Title/Description`)
-> are not part of this migration — they were never in the required set and keep reporting as before.
-
-## Helios re-mapping (operations / Helios admin)
-
-Helios (`helios.aet.cit.tum.de`) keys deployment-readiness gates on GitHub workflow IDs.
-Deleting the eight legacy workflows leaves any
-`environment_required_pre_deployment_workflow` row that referenced them unsatisfiable —
-Helios will report `MISSING_RUN` and block deployment to the affected environment.
-
-Run on the Helios DB (or read-replica) post-merge:
-
-```sql
--- Audit: any Artemis env gated on a deleted workflow?
-SELECT e.id          AS environment_id,
-       e.name        AS environment_name,
-       w.id          AS workflow_id,
-       w.path
-  FROM environment_required_pre_deployment_workflow erpw
-  JOIN environment e ON e.id = erpw.environment_id
-  JOIN workflow    w ON w.id = erpw.workflow_id
- WHERE w.path IN (
-   '.github/workflows/build.yml',
-   '.github/workflows/test.yml',
-   '.github/workflows/test-e2e.yml',
-   '.github/workflows/quality.yml',
-   '.github/workflows/query-quality.yml',
-   '.github/workflows/gradle-wrapper-validation.yml',
-   '.github/workflows/check-translation-keys.yml',
-   '.github/workflows/build-documentation.yml');
-```
-
-For each row returned, re-point the gate to `ci.yml` via the Helios environment-edit UI
-(Settings → Environments → Required pre-deployment workflows → select `CI`).
-
-Empty result set = no action required. Other Helios-tracked fields stay stable: workflow
-rows for the deleted files persist with `state=DELETED` (so historical runs are still
-queryable), and the flakiness API contract (`HELIOS_REPO_SECRET`, `POST /api/tests/flakiness-scores`)
-is unchanged.
+Two one-time operations follow the merge — swapping branch protection to the single
+`All required CI Passed` context, and re-pointing Helios's deployment gates off the
+deleted workflow IDs. The exact commands live in the PR description (they're run once,
+at merge); they are intentionally not duplicated here as permanent docs.
 
 ## Concurrency model
 
