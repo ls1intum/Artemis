@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 
 import {
     faArrowUp,
@@ -75,6 +76,10 @@ export class AdminSbomComponent implements OnInit {
     readonly loading = signal<boolean>(false);
     readonly loadingVulnerabilities = signal<boolean>(false);
     readonly sendingEmail = signal<boolean>(false);
+    // True when the server responded 404 to /admin/sbom. PR / feature-branch builds
+    // ship a WAR without the SBOM (gated behind `-Psbom`); the page should render an
+    // informational banner instead of a red error toast in that case.
+    readonly sbomUnavailable = signal<boolean>(false);
     readonly combinedSbom = signal<CombinedSbom | undefined>(undefined);
     readonly vulnerabilities = signal<ComponentVulnerabilities | undefined>(undefined);
     readonly versionInfo = signal<ArtemisVersion | undefined>(undefined);
@@ -250,13 +255,19 @@ export class AdminSbomComponent implements OnInit {
         this.loading.set(true);
         this.sbomService.getCombinedSbom().subscribe({
             next: (sbom) => {
+                this.sbomUnavailable.set(false);
                 this.combinedSbom.set(sbom);
                 this.loading.set(false);
                 // Load vulnerabilities after SBOM is loaded
                 this.loadVulnerabilities();
             },
-            error: () => {
-                this.alertService.error('artemisApp.dependencies.loadError');
+            error: (err: HttpErrorResponse) => {
+                if (err.status === 404) {
+                    // Build did not include the SBOM — render the info banner, no toast.
+                    this.sbomUnavailable.set(true);
+                } else {
+                    this.alertService.error('artemisApp.dependencies.loadError');
+                }
                 this.loading.set(false);
             },
         });
@@ -266,14 +277,19 @@ export class AdminSbomComponent implements OnInit {
      * Loads vulnerability data for all components.
      */
     loadVulnerabilities(): void {
+        if (this.sbomUnavailable()) {
+            return;
+        }
         this.loadingVulnerabilities.set(true);
         this.sbomService.getVulnerabilities().subscribe({
             next: (vulnData) => {
                 this.vulnerabilities.set(vulnData);
                 this.loadingVulnerabilities.set(false);
             },
-            error: () => {
-                this.alertService.error('artemisApp.dependencies.vulnerabilityLoadError');
+            error: (err: HttpErrorResponse) => {
+                if (err.status !== 404) {
+                    this.alertService.error('artemisApp.dependencies.vulnerabilityLoadError');
+                }
                 this.loadingVulnerabilities.set(false);
             },
         });
