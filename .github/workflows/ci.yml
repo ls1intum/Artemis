@@ -160,18 +160,21 @@ jobs:
     secrets:
       CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
 
-  java-analysis:
-    name: Java Analysis
+  quality:
+    name: Quality
     needs: detect-changes
-    if: needs.detect-changes.outputs.has_java == 'true'
-    uses: ./.github/workflows/ci-java-analysis.yml
+    if: needs.detect-changes.outputs.build_relevant == 'true'
+    uses: ./.github/workflows/ci-quality.yml
     permissions:
       contents: read
+      checks: write  # server-style's architecture-test reporter posts a check-run
     with:
+      commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
       base_branch: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
+      has_java: ${{ needs.detect-changes.outputs.has_java == 'true' }}
 
   gradle-wrapper:
-    name: Gradle Wrapper
+    name: Validate Gradle Wrapper
     needs: detect-changes
     if: needs.detect-changes.outputs.has_gradle == 'true'
     uses: ./.github/workflows/ci-gradle-wrapper.yml
@@ -179,7 +182,7 @@ jobs:
       contents: read
 
   workflows:
-    name: Workflow Lint
+    name: Lint Workflows
     needs: detect-changes
     if: needs.detect-changes.outputs.has_workflows == 'true'
     uses: ./.github/workflows/ci-workflows.yml
@@ -187,7 +190,7 @@ jobs:
       contents: read
 
   docs:
-    name: Documentation
+    name: Build Documentation
     needs: detect-changes
     if: needs.detect-changes.outputs.has_docs == 'true'
     uses: ./.github/workflows/ci-docs.yml
@@ -195,7 +198,7 @@ jobs:
       contents: read
 
   translation:
-    name: Translation Keys
+    name: Check Translation Keys
     needs: detect-changes
     if: needs.detect-changes.outputs.has_i18n == 'true'
     uses: ./.github/workflows/ci-translation.yml
@@ -243,7 +246,7 @@ jobs:
       - detect-changes
       - build
       - test
-      - java-analysis
+      - quality
       - gradle-wrapper
       - translation
       - docs
@@ -276,7 +279,7 @@ jobs:
       - detect-changes
       - build
       - test
-      - java-analysis
+      - quality
       - gradle-wrapper
       - workflows
       - docs

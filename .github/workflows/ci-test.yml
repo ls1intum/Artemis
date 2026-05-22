@@ -174,39 +174,6 @@ jobs:
           python3 ./supporting_scripts/code-coverage/per_module_cov_report/parse_module_coverage.py build/reports/jacoco "$AGGREGATED_REPORT_FILE"
           cat "$AGGREGATED_REPORT_FILE" > "$GITHUB_STEP_SUMMARY"
 
-  server-style:
-    name: Server Style
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: read
-      checks: write
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ inputs.commit_sha }}
-      - name: Setup Java
-        uses: actions/setup-java@v5
-        with:
-          distribution: 'temurin'
-          java-version: '${{ env.java }}'
-          cache: 'gradle'
-      - name: Java Code Style
-        run: ./gradlew spotlessCheck
-      - name: Java Documentation
-        run: ./gradlew checkstyleMain -x webapp
-        if: ${{ !cancelled() }}
-      - name: Java Architecture Tests
-        run: ./gradlew test -DincludeTags='ArchitectureTest' -x webapp
-        if: ${{ !cancelled() }}
-      - name: Test Report
-        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2  # v3.0.0
-        if: ${{ !cancelled() }}
-        with:
-          name: Java Architecture Tests
-          path: build/test-results/test/*.xml
-          reporter: java-junit
-
   client-tests:
     name: Client Tests
     runs-on: aet-large-ubuntu
@@ -270,62 +237,3 @@ jobs:
         with:
           name: Vitest JUnit Test Results
           path: build/test-results/vitest/junit.xml
-
-  client-style:
-    name: Client Style
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ inputs.commit_sha }}
-      - name: Setup pnpm
-        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093  # v6.0.8
-        with:
-          run_install: false
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '${{ env.node }}'
-          cache: 'pnpm'
-      - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
-      - name: TypeScript Formatting
-        run: pnpm run prettier:check
-      - name: TypeScript Code Style
-        run: pnpm run lint
-        if: ${{ !cancelled() }}
-      - name: Install Playwright Dependencies
-        run: pnpm install --frozen-lockfile
-        working-directory: src/test/playwright
-        if: ${{ !cancelled() }}
-      - name: Playwright Code Style
-        run: pnpm run lint
-        working-directory: src/test/playwright
-        if: ${{ !cancelled() }}
-
-  client-compilation:
-    name: Client Compilation
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ inputs.commit_sha }}
-      - name: Setup pnpm
-        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093  # v6.0.8
-        with:
-          run_install: false
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '${{ env.node }}'
-          cache: 'pnpm'
-      - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Compile TypeScript Files With Typechecking
-        run: pnpm run compile

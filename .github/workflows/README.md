@@ -15,9 +15,9 @@ ci.yml                                                            (single entry 
 ├── detect-changes               (dorny/paths-filter, emits per-area booleans)
 │
 │   REQUIRED — gated by `All required CI Passed` (fast + deterministic, run when relevant):
-├── build           ── uses ci-build.yml          (workflow_call; the .war + Docker image)
-├── test            ── uses ci-test.yml           (workflow_call; server + client tests/style)
-├── java-analysis   ── uses ci-java-analysis.yml  (if has_java; code quality + query quality)
+├── build           ── uses ci-build.yml          (the .war + Docker image)
+├── test            ── uses ci-test.yml           (server + client test suites)
+├── quality         ── uses ci-quality.yml        (server + client style/lint/type-check, Java analyses)
 ├── gradle-wrapper  ── uses ci-gradle-wrapper.yml (if has_gradle; wrapper-jar integrity)
 ├── docs            ── uses ci-docs.yml           (if has_docs)
 ├── translation     ── uses ci-translation.yml    (if has_i18n)
@@ -46,10 +46,17 @@ merging even though it waits for the long E2E run to report. It holds only `acti
 ### Required vs. advisory
 
 The single required check is `CI / All required CI Passed`. It gates on every job that is
-**fast and deterministic** — `build`, `test`, and the quality gates `java-analysis`,
-`gradle-wrapper`, `translation`, `docs`, `workflows`. Each quality gate runs in ≤3 min, well
+**fast and deterministic** — `build`, `test`, `quality`, `gradle-wrapper`, `translation`,
+`docs`, `workflows`. The static checks (`quality`, the area gates) each run in ≤3 min, well
 under `test`'s ~28 min, so requiring them adds no merge latency. Path-skipped jobs report
 `skipped`, which the gate accepts — so a job only blocks merge when it is *relevant and red*.
+
+`quality` (`ci-quality.yml`) is where all static analysis lives, for **both** server and
+client — Java/TypeScript style, lint, type-check, architecture, plus the Java-only analyses
+(class-dependency caps, query over-fetching). `test` (`ci-test.yml`) runs only the server and
+client test suites. This split (mirroring Angular/TypeScript/Vite) keeps a 30-second style
+failure from being buried behind the multi-minute test jobs, and means there is no lone
+"Java analysis" gate — the Java checks are simply the server half of a symmetric `quality` stage.
 
 `e2e` is the deliberate exception: it is **advisory** (not in the gate's `needs:`). It runs
 for signal and posts its own status, but never blocks merge.

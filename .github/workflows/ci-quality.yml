@@ -1,0 +1,206 @@
+name: Quality
+
+# Static code checks for both server and client: style/formatting, lint, type-check,
+# architecture, and the Java-specific analyses (class-dependency caps, query over-fetching).
+# Kept separate from `ci-test.yml` (which runs the actual test suites) so a 30-second style
+# failure isn't buried behind the multi-minute test jobs.
+
+on:
+  workflow_call:
+    inputs:
+      commit_sha:
+        description: 'SHA to check. PR builds use the PR head SHA (matching ci-build.yml).'
+        required: true
+        type: string
+      base_branch:
+        description: 'Base branch used by analyze_java_files.py for diff context.'
+        required: true
+        type: string
+      has_java:
+        description: 'Whether Java sources changed — gates the Java-specific analyses.'
+        required: true
+        type: boolean
+
+permissions: {}  # default-deny; each job grants only what it needs
+
+# Workflow-level node/java pins are drift-checked by ci-workflows.yml.
+env:
+  CI: true
+  node: 24
+  java: 25
+
+jobs:
+  server-style:
+    name: Server Code Style
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '${{ env.java }}'
+          cache: 'gradle'
+      - name: Java Code Style
+        run: ./gradlew spotlessCheck
+      - name: Java Documentation
+        run: ./gradlew checkstyleMain -x webapp
+        if: ${{ !cancelled() }}
+      - name: Java Architecture Tests
+        run: ./gradlew test -DincludeTags='ArchitectureTest' -x webapp
+        if: ${{ !cancelled() }}
+      - name: Test Report
+        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2  # v3.0.0
+        if: ${{ !cancelled() }}
+        with:
+          name: Java Architecture Tests
+          path: build/test-results/test/*.xml
+          reporter: java-junit
+
+  client-style:
+    name: Client Code Style
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093  # v6.0.8
+        with:
+          run_install: false
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '${{ env.node }}'
+          cache: 'pnpm'
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+      - name: TypeScript Formatting
+        run: pnpm run prettier:check
+      - name: TypeScript Code Style
+        run: pnpm run lint
+        if: ${{ !cancelled() }}
+      - name: Install Playwright Dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: src/test/playwright
+        if: ${{ !cancelled() }}
+      - name: Playwright Code Style
+        run: pnpm run lint
+        working-directory: src/test/playwright
+        if: ${{ !cancelled() }}
+
+  client-compilation:
+    name: Client Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093  # v6.0.8
+        with:
+          run_install: false
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '${{ env.node }}'
+          cache: 'pnpm'
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Compile TypeScript Files With Typechecking
+        run: pnpm run compile
+
+  code-quality:
+    name: Server Code Quality
+    # Java-specific: only runs when Java sources changed.
+    if: ${{ inputs.has_java }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+      - name: Check LOC and number of class dependencies
+        env:
+          EVENT_TYPE: ${{ github.event_name }}
+          BASE_BRANCH: ${{ inputs.base_branch }}
+        run: |
+          set -Eeuo pipefail
+          # Thresholds are technical debt; lower them as violations are fixed.
+          max_large_classes=17
+          max_complex_beans=17
+
+          python supporting_scripts/analyze_java_files.py \
+            --max-large-classes "$max_large_classes" \
+            --max-complex-beans "$max_complex_beans" \
+            --event-type "$EVENT_TYPE" \
+            --base-branch "$BASE_BRANCH"
+
+  query-quality:
+    name: Query Performance Check
+    # Java-specific: only runs when Java sources changed.
+    if: ${{ inputs.has_java }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+      - name: Query quality check
+        run: |
+          set -Eeuo pipefail
+          output=$(python supporting_scripts/find_slow_queries.py)
+          echo "$output"
+          echo ""
+
+          entitygraph_violations=$(echo "$output" | grep -c "\[EntityGraph\] Potential over-fetch" || echo "0")
+          query_violations=$(echo "$output" | grep -c "\[@Query\] Potential over-fetch" || echo "0")
+          total_violations=$((entitygraph_violations + query_violations))
+
+          # Thresholds are technical debt; lower as violations are fixed.
+          max_entitygraph=11
+          max_query=25
+          max_total=$((max_entitygraph + max_query))
+
+          fail=false
+          if [ "$entitygraph_violations" -gt "$max_entitygraph" ]; then
+            echo "::error::EntityGraph violations: $entitygraph_violations > $max_entitygraph"
+            fail=true
+          fi
+          if [ "$query_violations" -gt "$max_query" ]; then
+            echo "::error::@Query violations: $query_violations > $max_query"
+            fail=true
+          fi
+          if [ "$total_violations" -gt "$max_total" ]; then
+            echo "::error::Total over-fetch violations: $total_violations > $max_total"
+            fail=true
+          fi
+
+          if [ "$fail" = "true" ]; then
+            echo "::error::Query Quality failed. See https://docs.artemis.tum.de/developer/guidelines/performance and https://docs.artemis.tum.de/developer/guidelines/database."
+            exit 1
+          fi
