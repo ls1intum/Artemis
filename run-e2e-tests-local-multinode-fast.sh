@@ -188,7 +188,7 @@ echo -e "${GREEN}Prerequisites OK${NC}"
 # =============================================================================
 # Parallelise the two long legs of a -Pprod WAR build that touch disjoint output
 # directories:
-#   pnpm run webapp:prod      -> build/resources/main/static/   (Angular bundle)
+#   bun run webapp:prod       -> build/resources/main/static/   (Angular bundle)
 #   ./gradlew compileJava     -> build/classes/                  (.class files)
 # Then re-enter Gradle for the assembly step with `-x webapp` so Gradle just runs
 # processResources + bootWar against the Angular bundle already on disk.
@@ -204,7 +204,7 @@ if [ "$SKIP_BUILD" = false ]; then
     SERVER_LOG="$LOCAL_DIR/build-server.log"
     : > "$CLIENT_LOG"; : > "$SERVER_LOG"
 
-    pnpm run webapp:prod >"$CLIENT_LOG" 2>&1 &
+    bun run webapp:prod >"$CLIENT_LOG" 2>&1 &
     CLIENT_PID=$!
     echo -e "${YELLOW}  • client build started (pid $CLIENT_PID, log: $CLIENT_LOG)${NC}"
 

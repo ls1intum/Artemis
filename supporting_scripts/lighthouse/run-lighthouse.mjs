@@ -234,15 +234,15 @@ async function waitForServer(url, timeoutMs = 10_000) {
 async function main() {
     if (!skipBuild) {
         if (!existsSync(join(staticRoot, 'index.html'))) {
-            console.log('> No production build found — running `pnpm run webapp:prod` …');
+            console.log('> No production build found — running `bun run webapp:prod` …');
         } else {
-            console.log('> Refreshing production build via `pnpm run webapp:prod` (use --skip-build to reuse an existing build)');
+            console.log('> Refreshing production build via `bun run webapp:prod` (use --skip-build to reuse an existing build)');
         }
-        await runCommand('pnpm', ['run', 'webapp:prod']);
+        await runCommand('bun', ['run', 'webapp:prod']);
     }
 
     if (!existsSync(join(staticRoot, 'index.html'))) {
-        throw new Error(`Expected built index.html at ${staticRoot}. Run \`pnpm run webapp:prod\` first, or drop --skip-build.`);
+        throw new Error(`Expected built index.html at ${staticRoot}. Run \`bun run webapp:prod\` first, or drop --skip-build.`);
     }
 
     mkdirSync(reportsDir, { recursive: true });
@@ -256,7 +256,7 @@ async function main() {
 
         const lighthouseBin = join(repoRoot, 'node_modules', '.bin', 'lighthouse');
         if (!existsSync(lighthouseBin)) {
-            throw new Error(`lighthouse is not installed. Run: pnpm add --save-dev lighthouse`);
+            throw new Error(`lighthouse is not installed. Run: bun add --dev lighthouse`);
         }
 
         const lighthouseArgs = [
