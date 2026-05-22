@@ -721,6 +721,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.modelingEditor()?.importPatch(submissionPatch.patch);
     }
 
+    onTeamSyncReconnected() {
+        this.modelingEditor()?.broadcastFullState();
+    }
+
     private isModelEmpty(model?: string): boolean {
         if (!model) {
             return true;

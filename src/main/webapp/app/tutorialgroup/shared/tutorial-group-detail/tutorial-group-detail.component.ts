@@ -382,7 +382,7 @@ export class TutorialGroupDetailComponent {
                 domain: [GraphColors.LIGHT_GREY],
             } as Color;
         } else {
-            let color: string | undefined = undefined;
+            let color: string;
             if (averageAttendanceRatio >= 0.9) {
                 color = 'var(--red)';
             } else if (averageAttendanceRatio >= 0.8) {

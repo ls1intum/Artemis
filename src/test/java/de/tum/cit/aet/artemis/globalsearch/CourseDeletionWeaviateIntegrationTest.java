@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.globalsearch;
 
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertChannelExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertChannelNotInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertCourseExistsInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertCourseNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExamExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExamNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseExistsInWeaviate;
@@ -37,6 +39,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.FaqSearchableEntityDTO;
@@ -196,5 +199,17 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
         request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
 
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertChannelNotInWeaviate(weaviateService, channelId));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testDeleteCourse_removesCourseFromWeaviate() throws Exception {
+        searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertCourseExistsInWeaviate(weaviateService, course));
+
+        long courseId = course.getId();
+        request.delete("/api/core/admin/courses/" + courseId, HttpStatus.OK);
+
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertCourseNotInWeaviate(weaviateService, courseId));
     }
 }

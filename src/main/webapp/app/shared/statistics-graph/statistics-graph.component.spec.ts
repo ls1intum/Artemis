@@ -35,7 +35,7 @@ describe('StatisticsGraphComponent', () => {
     });
 
     it('should initialize', () => {
-        let graphData: number[] = [];
+        let graphData: number[];
         component.graphType = Graphs.SUBMISSIONS;
         component.statisticsView = StatisticsView.ARTEMIS;
         let arrayLength = 0;

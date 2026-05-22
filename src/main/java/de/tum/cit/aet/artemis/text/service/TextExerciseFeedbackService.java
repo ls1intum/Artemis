@@ -24,9 +24,11 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
@@ -57,8 +59,11 @@ public class TextExerciseFeedbackService {
 
     private final TextBlockService textBlockService;
 
+    private final UserRepository userRepository;
+
     public TextExerciseFeedbackService(Optional<AthenaFeedbackApi> athenaFeedbackApi, SubmissionService submissionService, ResultService resultService,
-            ResultRepository resultRepository, ResultWebsocketService resultWebsocketService, ParticipationService participationService, TextBlockService textBlockService) {
+            ResultRepository resultRepository, ResultWebsocketService resultWebsocketService, ParticipationService participationService, TextBlockService textBlockService,
+            UserRepository userRepository) {
         this.athenaFeedbackApi = athenaFeedbackApi;
         this.submissionService = submissionService;
         this.resultService = resultService;
@@ -66,6 +71,7 @@ public class TextExerciseFeedbackService {
         this.resultWebsocketService = resultWebsocketService;
         this.participationService = participationService;
         this.textBlockService = textBlockService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -132,7 +138,8 @@ public class TextExerciseFeedbackService {
                 throw new BadRequestAlertException("Submission can not be empty for an AI feedback request", "submission", "noAthenaFeedbackOnEmptySubmission", true);
             }
 
-            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(textSubmission, participation, textExercise));
+            User requestingUser = userRepository.getUser();
+            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(textSubmission, participation, textExercise, requestingUser));
         }
         return participation;
     }
@@ -144,8 +151,9 @@ public class TextExerciseFeedbackService {
      * @param textSubmission the text submission associated with the student participation.
      * @param participation  the student participation associated with the exercise.
      * @param textExercise   the text exercise object.
+     * @param requestingUser the user that requested the feedback generation
      */
-    public void generateAutomaticNonGradedFeedback(TextSubmission textSubmission, StudentParticipation participation, TextExercise textExercise) {
+    public void generateAutomaticNonGradedFeedback(TextSubmission textSubmission, StudentParticipation participation, TextExercise textExercise, User requestingUser) {
         log.debug("Using athena to generate (text exercise) feedback request: {}", textExercise.getId());
 
         // athena takes over the control here
@@ -163,7 +171,7 @@ public class TextExerciseFeedbackService {
             log.debug("Submission id: {}", textSubmission.getId());
 
             AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA));
-            var athenaResponse = api.getTextFeedbackSuggestions(textExercise, textSubmission, false);
+            var athenaResponse = api.getTextFeedbackSuggestions(textExercise, textSubmission, false, requestingUser);
 
             Set<TextBlock> textBlocks = new HashSet<>();
             List<Feedback> feedbacks = new ArrayList<>();

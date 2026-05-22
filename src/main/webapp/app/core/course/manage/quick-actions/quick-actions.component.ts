@@ -57,6 +57,21 @@ export enum CourseManagementSection {
                 font-size: 1.1rem;
             }
 
+            // The instructor view renders .stat-value as an <a>; give it a persistent
+            // link colour so it's distinguishable from the plain <div> variant used for
+            // students, but skip the default underline (per reviewer feedback). The
+            // underline returns on :hover and :focus-visible so keyboard / touch users
+            // still get a clear interactive cue.
+            a.stat-value {
+                color: var(--bs-link-color);
+                text-decoration: none;
+
+                &:hover,
+                &:focus-visible {
+                    text-decoration: underline;
+                }
+            }
+
             .header-actions {
                 display: flex;
                 align-items: center;
@@ -70,7 +85,7 @@ export enum CourseManagementSection {
                 gap: 0.5rem;
                 padding: 0.5rem 0.875rem;
                 border: 1px solid var(--bs-border-color);
-                border-radius: 0.625rem;
+                border-radius: 0.5rem;
                 background: var(--overview-card-nested-bg, var(--bs-body-bg));
                 color: var(--bs-body-color);
                 font-weight: 500;
@@ -81,7 +96,7 @@ export enum CourseManagementSection {
                 white-space: nowrap;
 
                 &:hover {
-                    background: var(--bs-tertiary-bg);
+                    background: var(--overview-card-hover-bg, var(--bs-tertiary-bg));
                     border-color: var(--bs-secondary-border-subtle);
                     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
                 }
@@ -104,7 +119,7 @@ export enum CourseManagementSection {
                 gap: 0.5rem;
                 padding: 0.4rem 0.75rem;
                 border: 1px solid var(--bs-border-color);
-                border-radius: 0.75rem;
+                border-radius: 0.5rem;
                 background: var(--overview-card-nested-bg, var(--bs-body-bg));
                 cursor: pointer;
                 transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
