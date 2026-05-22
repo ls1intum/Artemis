@@ -158,6 +158,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.isAssessor = false;
         this.assessmentsAreValid = false;
         this.noNewSubmissions = false;
+        this.hasAutomaticFeedback = false;
         this.highlightDifferences = false;
     }
 
