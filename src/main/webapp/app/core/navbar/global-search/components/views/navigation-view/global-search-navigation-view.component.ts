@@ -38,6 +38,9 @@ import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/c
 // Increment this constant when adding a new action button.
 export const NAV_ACTION_COUNT = 1;
 
+/** Keyboard-navigation index of the Iris inline-answer action button. */
+export const IRIS_ANSWER_ACTION_INDEX = 0;
+
 @Component({
     selector: 'jhi-global-search-navigation-view',
     standalone: true,
@@ -79,6 +82,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     private readonly overlay = inject(SearchOverlayService);
 
     protected readonly NAV_ACTION_COUNT = NAV_ACTION_COUNT;
+    protected readonly IRIS_ANSWER_ACTION_INDEX = IRIS_ANSWER_ACTION_INDEX;
 
     // Query all selectable items for auto-scroll functionality
     private readonly selectableItems = viewChildren<ElementRef<HTMLElement>>('selectableItem');
@@ -355,7 +359,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         const buttonCount = this.actionButtonCount();
 
         // Lecture search button at index 0 when iris is enabled and no filter active
-        if (this.showLectureButton() && this.irisEnabled && idx === 0) {
+        if (this.showLectureButton() && this.irisEnabled && idx === IRIS_ANSWER_ACTION_INDEX) {
             event.preventDefault();
             this.viewSelected.emit(SearchView.Lecture);
             return;

@@ -9,7 +9,7 @@
         <jhi-global-search-action-item
             [title]="'global.search.actions.lectureSearchTitle' | artemisTranslate"
             [description]="'global.search.actions.lectureSearchDescription' | artemisTranslate"
-            [selected]="selectedIndex() === 0"
+            [selected]="selectedIndex() === IRIS_ANSWER_ACTION_INDEX"
             accentColor="var(--global-search-lecture-accent)"
             secondaryAccentColor="var(--bs-primary)"
             (clicked)="viewSelected.emit(SearchView.Lecture)"

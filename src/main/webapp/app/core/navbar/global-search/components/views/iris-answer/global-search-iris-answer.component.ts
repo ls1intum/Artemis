@@ -55,6 +55,7 @@ export class GlobalSearchIrisAnswerComponent {
     protected readonly sources = computed(() => this.irisResult()?.sources ?? []);
 
     protected readonly IrisLogoSize = IrisLogoSize;
+    protected readonly INITIAL_VISIBLE_SOURCE_COUNT = 2;
     protected readonly faChevronUp = faChevronUp;
 
     private readonly SOURCE_ICONS: Record<string, IconDefinition> = {
