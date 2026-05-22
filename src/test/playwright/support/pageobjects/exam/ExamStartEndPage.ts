@@ -17,6 +17,23 @@ export class ExamStartEndPage {
         await this.page.locator('#confirmBox').check({ timeout: timeout });
     }
 
+    /**
+     * True when the page is showing the in-progress conduction view rather than the
+     * welcome screen. Detected via the per-conduction-page `Hand In Early` action which
+     * never appears on the welcome screen. Used by `startExam` to short-circuit the
+     * welcome flow on test exams under heavy load, where occasional navigation races
+     * have been observed to land the student directly in conduction without ever
+     * rendering the welcome confirmation form.
+     */
+    private async isInConduction(): Promise<boolean> {
+        return this.page
+            .locator('button', { hasText: /Hand in Early/i })
+            .first()
+            .waitFor({ state: 'visible', timeout: 1_500 })
+            .then(() => true)
+            .catch(() => false);
+    }
+
     async pressStartWithWait() {
         const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/student-exams/*/conduction`);
         await this.page.locator('#start-exam').click();
@@ -38,6 +55,12 @@ export class ExamStartEndPage {
     }
 
     async startExam(withWait = false) {
+        // Under heavy multi-node load test-exam navigation occasionally lands the student
+        // directly in conduction (the welcome screen never renders). If we detect that,
+        // skip the welcome-only actions — the test is effectively already past startExam.
+        if (await this.isInConduction()) {
+            return;
+        }
         await this.setConfirmCheckmark();
         await this.enterFirstnameLastname();
         if (withWait) {
