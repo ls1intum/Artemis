@@ -119,7 +119,7 @@ describe('ModelingSubmissionComponent', () => {
         // Override the component to use stubs/mocks instead of real components
         TestBed.overrideComponent(ModelingSubmissionComponent, {
             remove: {
-                imports: [ModelingEditorComponent, HeaderParticipationPageComponent, TeamParticipateInfoBoxComponent, RatingComponent],
+                imports: [ModelingEditorComponent, HeaderParticipationPageComponent, TeamParticipateInfoBoxComponent, RatingComponent, ComplaintsStudentViewComponent],
             },
             add: {
                 imports: [
@@ -127,6 +127,7 @@ describe('ModelingSubmissionComponent', () => {
                     MockComponent(HeaderParticipationPageComponent),
                     MockComponent(TeamParticipateInfoBoxComponent),
                     MockComponent(RatingComponent),
+                    MockComponent(ComplaintsStudentViewComponent),
                 ],
             },
         });
@@ -580,7 +581,7 @@ describe('ModelingSubmissionComponent', () => {
 
         // Verify Athena result handling
         expect(comp.assessmentResult).toEqual(athenaResult);
-        expect(alterServiceSuccessSpy).toHaveBeenCalledWith('artemisApp.exercise.athenaFeedbackSuccessful');
+        expect(alterServiceSuccessSpy).toHaveBeenCalledWith('artemisApp.exercise.athenaFeedbackSuccessful', { title: comp.modelingExercise?.title ?? '' });
     });
 
     it('should set result when new result comes in from websocket', async () => {
