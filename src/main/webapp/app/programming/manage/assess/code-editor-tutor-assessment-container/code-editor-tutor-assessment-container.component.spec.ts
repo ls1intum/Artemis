@@ -3,7 +3,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { BehaviorSubject, firstValueFrom, of, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, firstValueFrom, of, throwError } from 'rxjs';
 import { outputToObservable } from '@angular/core/rxjs-interop';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -897,7 +897,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     });
 
     it('should set loadingFeedbackSuggestions to true while fetching and false after', async () => {
-        const { Subject } = await import('rxjs');
         const subject = new Subject<Feedback[]>();
         jest.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(subject.asObservable());
         comp['submission'] = { id: 42 } as ProgrammingSubmission;
