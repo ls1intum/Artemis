@@ -1,8 +1,10 @@
 <div class="frame">
-    <div class="section">
-        <h6 jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel"></h6>
-        <jhi-exercise-timeline [timelineItems]="timelineItems()" (timelineStatusChange)="handleTimelineStatusChange($event)" />
-    </div>
+    @if (timelineItems().length > 0) {
+        <div class="section">
+            <h6 jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel"></h6>
+            <jhi-exercise-timeline [timelineItems]="timelineItems()" (timelineStatusChange)="handleTimelineStatusChange($event)" />
+        </div>
+    }
     <div class="section">
         @let isInputDisplayedAccordingToCurrentModeRecord = isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord();
         <h6 jhiTranslate="artemisApp.assessment.assessment"></h6>
@@ -22,6 +24,9 @@
                     for="defineDateForRunningTestsAfterDueDate"
                     jhiTranslate="artemisApp.programmingExercise.timeline.configureDateForRunningTestsAfterDueDate"
                 ></label>
+                @if (!isExamMode()) {
+                    <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.defineDateForRunningTestsAfterDueDateTooltip'" />
+                }
             </div>
         }
         @if (isSemiAutomaticAssessmentToggleVisible()) {
@@ -41,6 +46,9 @@
                     for="manualAssessmentEnabled"
                     jhiTranslate="artemisApp.programmingExercise.timeline.enableManualAssessment"
                 ></label>
+                @if (!isExamMode() && !isImport()) {
+                    <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.enableManualAssessmentTooltip'" />
+                }
             </div>
         }
         @if (isExampleSolutionPublicationDateToggleVisible()) {
@@ -85,7 +93,11 @@
                         for="allowComplaintsForAutomaticAssessment"
                         jhiTranslate="artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment"
                     ></label>
-                    <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessmentTooltip'" />
+                    @if (!isExamMode()) {
+                        <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessmentTooltip'" />
+                    } @else {
+                        <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessmentExamModeTooltip'" />
+                    }
                 </div>
             }
             @if (isExamMode() && isImport()) {
@@ -120,9 +132,9 @@
                             [ngStyle]="assessmentType() !== AssessmentType.SEMI_AUTOMATIC ? { color: 'grey' } : {}"
                             class="form-control-label"
                             for="allowFeedbackRequests"
-                            jhiTranslate="artemisApp.programmingExercise.timeline.allowFeedbackRequests"
+                            jhiTranslate="artemisApp.programmingExercise.timeline.athenaFeedbackRequests"
                         ></label>
-                        <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.allowFeedbackRequestsTooltip'" />
+                        <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.athenaFeedbackRequestsTooltip'" />
                     } @else {
                         <label
                             [ngStyle]="assessmentType() !== AssessmentType.SEMI_AUTOMATIC ? { color: 'grey' } : {}"
@@ -162,9 +174,9 @@
                         [ngStyle]="!exampleSolutionPublicationDateSet() ? { color: 'grey' } : {}"
                         class="form-control-label"
                         for="releaseTestsWithExampleSolution"
-                        jhiTranslate="artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolution"
+                        jhiTranslate="artemisApp.programmingExercise.timeline.includeTestsIntoExampleSolution"
                     ></label>
-                    <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolutionTooltip'" />
+                    <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.includeTestsIntoExampleSolutionTooltip'" />
                 </div>
             }
             @if (!isExamMode()) {

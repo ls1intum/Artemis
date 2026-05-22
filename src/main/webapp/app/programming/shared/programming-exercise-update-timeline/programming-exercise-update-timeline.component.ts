@@ -73,10 +73,11 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
         effect(() => {
             if (!this.isEnablingToRunTestsAfterDueDateToggleVisible()) {
                 this.isDatePickerForRunningTestsAfterDueDateVisible.set(false);
-                this.buildAndTestStudentSubmissionsAfterDueDate.set(undefined);
             }
             if (!this.isEnablingToRunTestsAfterDueDateToggleEnabled()) {
                 this.isDatePickerForRunningTestsAfterDueDateVisible.set(false);
+            }
+            if (!this.isDatePickerForRunningTestsAfterDueDateVisible()) {
                 this.buildAndTestStudentSubmissionsAfterDueDate.set(undefined);
             }
         });
@@ -88,6 +89,8 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
         effect(() => {
             if (!this.isExampleSolutionPublicationDateToggleVisible()) {
                 this.isDatePickerForExampleSolutionPublicationDateVisible.set(false);
+            }
+            if (!this.isDatePickerForExampleSolutionPublicationDateVisible()) {
                 this.exampleSolutionPublicationDate.set(undefined);
             }
         });
