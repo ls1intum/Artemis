@@ -21,6 +21,9 @@
             "created": "Created new Programming Exercise with title {{ param }}",
             "updated": "Updated Programming Exercise with title {{ param }}",
             "deleted": "Deleted Programming Exercise with title {{ param }}",
+            "gradingSection": {
+                "invalidReason": "The grading section contains invalid values."
+            },
             "delete": {
                 "question": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong> of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>?",
                 "questionLocalVC": {

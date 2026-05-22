@@ -21,6 +21,9 @@
             "created": "Programmieraufgabe erstellt mit Titel {{ param }}",
             "updated": "Programmieraufgabe aktualisiert mit Titel {{ param }}",
             "deleted": "Programmieraufgabe gelöscht mit Titel {{ param }}",
+            "gradingSection": {
+                "invalidReason": "Der Bewertungsbereich enthält ungültige Werte."
+            },
             "delete": {
                 "question": "Soll die Programmieraufgabe <strong>{{ title }}</strong> des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden?",
                 "questionLocalVC": {

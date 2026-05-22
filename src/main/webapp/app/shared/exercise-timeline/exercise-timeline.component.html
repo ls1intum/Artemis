@@ -44,6 +44,7 @@
                         iconDisplay="input"
                         appendTo="body"
                         showOnFocus="false"
+                        [baseZIndex]="1050"
                         [invalid]="internalItem.isBeforePreviousDate || (dateModel.touched && internalItem.isInputRequiredButUndefined)"
                         [disabled]="readonly()"
                     />
