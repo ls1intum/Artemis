@@ -245,4 +245,11 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     importPatch(patch: string) {
         this.apollonEditor?.receiveBroadcastedMessage(patch);
     }
+
+    // Re-announce the full Yjs document state to peers. Needed on (re)connect because Apollon
+    // broadcasts only incremental updates; a peer that missed a window of edits would otherwise
+    // stay out of sync until the next local edit.
+    broadcastFullState(): void {
+        this.apollonEditor?.broadcastFullState();
+    }
 }

@@ -148,8 +148,8 @@ export class CropperPositionService {
     }
 
     checkAspectRatio(position: string, cropperPosition: CropperPosition, maxSize: Dimensions, settings: CropperSettings): void {
-        let overflowX = 0;
-        let overflowY = 0;
+        let overflowX: number;
+        let overflowY: number;
 
         switch (position) {
             case 'top':
