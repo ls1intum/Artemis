@@ -64,6 +64,9 @@ export default defineConfig({
             size: { width: 1920, height: 1080 },
         },
         ignoreHTTPSErrors: true,
+        launchOptions: {
+            args: ['--disable-features=WebAuthnICloudKeychain,WebAuthnEnclaveAuthenticator'],
+        },
     },
 
     /* Configure projects for fast, slow, and multi-node tests */
