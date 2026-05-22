@@ -1,4 +1,4 @@
-name: Gradle Wrapper
+name: Validate Gradle Wrapper
 
 on:
   workflow_call: {}

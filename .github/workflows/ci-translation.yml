@@ -1,4 +1,4 @@
-name: Translation Keys
+name: Check Translation Keys
 
 on:
   workflow_call: {}

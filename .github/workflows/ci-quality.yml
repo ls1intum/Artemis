@@ -1,9 +1,7 @@
 name: Quality
 
-# Static code checks for both server and client: style/formatting, lint, type-check,
-# architecture, and the Java-specific analyses (class-dependency caps, query over-fetching).
-# Kept separate from `ci-test.yml` (which runs the actual test suites) so a 30-second style
-# failure isn't buried behind the multi-minute test jobs.
+# Static checks (server + client): style, lint, type-check, architecture, Java analyses.
+# Split from ci-test.yml; rationale in README.
 
 on:
   workflow_call:
@@ -99,7 +97,7 @@ jobs:
         if: ${{ !cancelled() }}
 
   client-compilation:
-    name: Client Type Check
+    name: Client Compilation
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -124,8 +122,7 @@ jobs:
 
   code-quality:
     name: Server Code Quality
-    # Java-specific: only runs when Java sources changed.
-    if: ${{ inputs.has_java }}
+    if: ${{ inputs.has_java }}  # Java-specific
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -156,9 +153,8 @@ jobs:
             --base-branch "$BASE_BRANCH"
 
   query-quality:
-    name: Query Performance Check
-    # Java-specific: only runs when Java sources changed.
-    if: ${{ inputs.has_java }}
+    name: Query Quality Check
+    if: ${{ inputs.has_java }}  # Java-specific
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

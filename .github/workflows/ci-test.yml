@@ -141,11 +141,11 @@ jobs:
         with:
           project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           coverage-reports: build/reports/jacoco/aggregated/jacocoTestReport.xml
-        if: ${{ (success() || failure()) && inputs.is_internal_pr && inputs.pr_author != 'dependabot[bot]' }}
+        if: ${{ !cancelled() && inputs.is_internal_pr && inputs.pr_author != 'dependabot[bot]' }}
       - name: Test Report
         # Renders JUnit results as a check-run with diff annotations.
         uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2  # v3.0.0
-        if: ${{ (success() || failure()) && inputs.pr_author != 'dependabot[bot]' }}
+        if: ${{ !cancelled() && inputs.pr_author != 'dependabot[bot]' }}
         with:
           name: Server Tests (PostgreSQL)
           path: build/test-results/test/*.xml

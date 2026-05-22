@@ -1,4 +1,4 @@
-name: Workflow Lint
+name: Lint Workflows
 
 # Reusable workflow called by ci.yml when files under .github/ change.
 # Runs actionlint (configured via .github/actionlint.yaml) and the node/java version

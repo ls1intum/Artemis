@@ -259,6 +259,8 @@ jobs:
         env:
           NEEDS: ${{ toJSON(needs) }}
         run: |
+          # Fail closed: a jq error must not leave `failing` empty and pass the gate green.
+          set -Eeuo pipefail
           failing=$(jq -r '
             to_entries[]
             | select(.value.result != "success" and .value.result != "skipped")
@@ -339,7 +341,7 @@ jobs:
               echo "|---------|---------|"
               echo "| Server formatting (Spotless) | \`./gradlew spotlessApply\` |"
               echo "| Client lint / formatting | \`pnpm run lint:fix && pnpm run prettier:write\` |"
-              echo "| Java code quality | \`./gradlew checkstyleMain modernizer\` |"
+              echo "| Java checkstyle | \`./gradlew checkstyleMain\` |"
               echo
               echo "Failed test details are in the **Test** and **E2E** checks above."
               echo "</details>"
