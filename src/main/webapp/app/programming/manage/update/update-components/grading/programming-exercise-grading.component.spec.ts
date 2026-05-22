@@ -49,7 +49,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
 
         comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
         comp.importOptions = { recreateBuildPlans: false, updateTemplate: false, setTestCaseVisibilityToAfterDueDate: false };
-        fixture.componentRef.setInput('isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord', {
+        fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
             includeExerciseInCourseScoreCalculation: true,
             points: true,
             bonusPoints: true,
