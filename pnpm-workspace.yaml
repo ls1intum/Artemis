@@ -30,8 +30,9 @@ enablePrePostScripts: true
 peerDependencyRules:
     allowedVersions:
         # eslint-plugin-jest-extended still declares "^7 || ^8 || ^9"; the plugin works fine on
-        # ESLint 10. Drop this entry once upstream publishes a release that lists ESLint 10.
-        eslint: '10'
+        # ESLint 10. Scoped to that one package so we don't silence legitimate ESLint-version
+        # warnings from other plugins. Drop this entry once upstream lists ESLint 10.
+        'eslint-plugin-jest-extended>eslint': '10'
         '@angular/animations': '21'
         '@angular/cdk': '21'
         '@angular/common': '21'
