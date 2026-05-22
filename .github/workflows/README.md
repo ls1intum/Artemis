@@ -14,19 +14,19 @@ runs on event X?" is in exactly one file.
 ci.yml                                                            (single entry workflow)
 ├── detect-changes               (dorny/paths-filter, emits per-area booleans)
 │
-│   REQUIRED — gated by `All required CI Passed`:
+│   REQUIRED — gated by `All required CI Passed` (fast + deterministic, run when relevant):
 ├── build           ── uses ci-build.yml          (workflow_call; the .war + Docker image)
 ├── test            ── uses ci-test.yml           (workflow_call; server + client tests/style)
-│
-│   ADVISORY — run for signal, never block merge:
-├── java-analysis   ── uses ci-java-analysis.yml  (if has_java)
-├── gradle-wrapper  ── uses ci-gradle-wrapper.yml (if has_gradle)
+├── java-analysis   ── uses ci-java-analysis.yml  (if has_java; code quality + query quality)
+├── gradle-wrapper  ── uses ci-gradle-wrapper.yml (if has_gradle; wrapper-jar integrity)
 ├── docs            ── uses ci-docs.yml           (if has_docs)
 ├── translation     ── uses ci-translation.yml    (if has_i18n)
 ├── workflows       ── uses ci-workflows.yml      (if .github changed; actionlint)
-├── e2e             ── uses ci-e2e.yml            (after build; advisory)
 │
-├── all-required-ci-passed       (jq gate over build + test — the single required check)
+│   ADVISORY — runs for signal, never blocks merge:
+├── e2e             ── uses ci-e2e.yml            (after build; slow + flaky → not gated)
+│
+├── all-required-ci-passed       (jq gate over all of the above except e2e — the required check)
 └── ci-summary                   (Gantt timeline + per-job table; informational)
 ```
 
@@ -45,23 +45,27 @@ merging even though it waits for the long E2E run to report. It holds only `acti
 
 ### Required vs. advisory
 
-Branch protection on `develop` requires the `build`- and `test`-produced checks (as of this
-PR's merge: `Build .war artifact`, `server-tests`, `server-style`, `client-tests`,
-`client-style`). This PR keeps that surface and nothing more: the single required check is
-`CI / All required CI Passed`, which depends only on `build` and `test`.
+The single required check is `CI / All required CI Passed`. It gates on every job that is
+**fast and deterministic** — `build`, `test`, and the quality gates `java-analysis`,
+`gradle-wrapper`, `translation`, `docs`, `workflows`. Each quality gate runs in ≤3 min, well
+under `test`'s ~28 min, so requiring them adds no merge latency. Path-skipped jobs report
+`skipped`, which the gate accepts — so a job only blocks merge when it is *relevant and red*.
 
-Everything else (`e2e`, `java-analysis`, `gradle-wrapper`, `docs`, `translation`,
-`workflows`) runs in parallel, posts its own status, and is **advisory** — exactly as it is
-on `develop` today, where E2E and Java quality are not required. Keeping them out of the
-gate is deliberate:
+`e2e` is the deliberate exception: it is **advisory** (not in the gate's `needs:`). It runs
+for signal and posts its own status, but never blocks merge.
 
-- **Speed.** The gate (and therefore merge) is unblocked the moment `build` + `test` finish.
-  It does not wait on the up-to-2-hour E2E suite.
-- **Reliability.** E2E and other suites are known to be flaky; if they were required, a flaky
-  run would block an otherwise-good PR. Advisory keeps flakiness off the merge path.
+- **Speed.** E2E takes up to ~2 hours; the gate must not wait on it.
+- **Reliability.** E2E is currently red/flaky on the majority of `develop` runs; requiring it
+  would block nearly every PR. It belongs behind a merge queue (the `merge_group` trigger is
+  already wired) before it can become required.
 
-To promote an advisory job to required, add it to `all-required-ci-passed`'s `needs:` and to
-the branch-protection ruleset — both, or branch protection blocks on a check the gate ignores.
+> Note: this elevates the quality gates from advisory (their state on `develop` before this
+> PR) to required. They are 15/15 green on recent `develop`, so the change blocks only genuine
+> regressions, not existing failures.
+
+To change the required set, edit `all-required-ci-passed`'s `needs:` (and mirror it in
+`ci-summary`'s `ADVISORY` env, which labels the table). Branch protection still references one
+context, so it never needs touching again.
 
 ### Why one entry point and not many
 

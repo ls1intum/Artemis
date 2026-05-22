@@ -231,9 +231,11 @@ jobs:
       PLAYWRIGHT_REPORT_TOKEN: ${{ secrets.PLAYWRIGHT_REPORT_TOKEN }}
       HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
 
-  # The single required status check. Depends ONLY on `build` + `test` (today's required
-  # surface). The advisory jobs are deliberately not in `needs:`, so a flaky or slow suite
-  # never blocks merging; `detect-changes` is, so a change-detection failure fails it closed.
+  # The single required status check. Depends on every job that is fast and deterministic —
+  # build, test, and the quality gates (each ≤3 min, so no added merge latency over `test`).
+  # `e2e` is the one exclusion: it is slow and flaky, so it stays advisory (out of `needs:`)
+  # and never blocks merging. `detect-changes` is included so a change-detection failure fails
+  # the gate closed. Path-skipped jobs report `skipped`, which the gate accepts as a pass.
   all-required-ci-passed:
     name: All required CI Passed
     if: always()
@@ -241,6 +243,11 @@ jobs:
       - detect-changes
       - build
       - test
+      - java-analysis
+      - gradle-wrapper
+      - translation
+      - docs
+      - workflows
     runs-on: ubuntu-latest
     permissions: {}
     timeout-minutes: 5
@@ -287,8 +294,8 @@ jobs:
       - name: Render summary
         env:
           NEEDS: ${{ toJSON(needs) }}
-          # Must match all-required-ci-passed's needs (minus detect-changes).
-          REQUIRED: build test
+          # Everything except these is required (i.e. in all-required-ci-passed's needs).
+          ADVISORY: e2e
         run: |
           set -Eeuo pipefail
           icon() {
@@ -300,7 +307,12 @@ jobs:
               *)         printf '❔' ;;
             esac
           }
-          any_failure=$(jq -r 'any(.[]; .result == "failure")' <<< "$NEEDS")
+          # Only a REQUIRED job's failure is locally fixable + merge-blocking; an advisory
+          # (e2e) failure is not, so it must not trigger the fix hints.
+          required_failure=$(jq -r --arg adv "$ADVISORY" '
+            ($adv | split(" ")) as $a
+            | any(to_entries[]; .value.result == "failure" and (.key as $k | $a | index($k) | not))
+          ' <<< "$NEEDS")
           {
             echo "## CI Summary"
             echo
@@ -308,15 +320,15 @@ jobs:
             echo "|-----|------|--------|"
             while IFS=$'\t' read -r job result; do
               if [ "$job" = "detect-changes" ]; then continue; fi
-              case " $REQUIRED " in
-                *" $job "*) role='**required**' ;;
-                *)          role='advisory' ;;
+              case " $ADVISORY " in
+                *" $job "*) role='advisory' ;;
+                *)          role='**required**' ;;
               esac
               printf '| `%s` | %s | %s %s |\n' "$job" "$role" "$(icon "$result")" "$result"
             done < <(jq -r 'to_entries[] | "\(.key)\t\(.value.result)"' <<< "$NEEDS")
 
-            # Failure-only local-fix hints; commands mirror CLAUDE.md.
-            if [ "$any_failure" = "true" ]; then
+            # Local-fix hints, shown only when a required job failed; commands mirror CLAUDE.md.
+            if [ "$required_failure" = "true" ]; then
               echo
               echo "<details><summary>💡 Common local fixes</summary>"
               echo
