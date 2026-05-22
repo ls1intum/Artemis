@@ -30,18 +30,12 @@ ci.yml                                                            (single entry 
 └── ci-summary                   (Gantt timeline + per-job table; informational)
 ```
 
-`ci-summary` is a second terminal job: it `needs:` every job with `if: always()` and writes to
-the run's **Summary** page:
-
-- a **per-job table** (job · required/advisory · result), and on failure only a small
-  **local-fix** table (the one thing the Checks UI never shows);
-- a **Gantt timeline** of every job and step (`Kesin11/actions-timeline`, rendered last as a
-  post-action), which surfaces the critical-path bottleneck — it reads the run's jobs API, so
-  it captures the reusable children (`Build / …`, `Test / …`, `E2E / …`), not just the umbrella jobs.
-
-It is informational — never required, never in another job's `needs:` — so it never blocks
-merging even though it waits for the long E2E run to report. It holds only `actions: read`
-(needed by the timeline to read the jobs API); everything else is pure bash over `needs`.
+`ci-summary` is a second terminal job (`needs:` every job, `if: always()`). On the run's
+**Summary** page it renders a per-job table (job · required/advisory · result), a failure-only
+local-fix table, and a Gantt timeline (`Kesin11/actions-timeline`) covering the reusable
+children (`Build / …`, `Test / …`), so the critical-path bottleneck is visible at a glance. It
+is informational — never required, never in another job's `needs:` — so it never blocks merging.
+Its only permission is `actions: read` (the timeline reads the jobs API).
 
 ### Required vs. advisory
 
@@ -55,20 +49,16 @@ under `test`'s ~28 min, so requiring them adds no merge latency. Path-skipped jo
 client — Java/TypeScript style, lint, type-check, architecture, plus the Java-only analyses
 (class-dependency caps, query over-fetching). `test` (`ci-test.yml`) runs only the server and
 client test suites. This split (mirroring Angular/TypeScript/Vite) keeps a 30-second style
-failure from being buried behind the multi-minute test jobs, and means there is no lone
-"Java analysis" gate — the Java checks are simply the server half of a symmetric `quality` stage.
+failure from being buried behind the multi-minute test jobs; the Java analyses are the server
+half of a symmetric `quality` stage, alongside the client checks.
 
 `e2e` is the deliberate exception: it is **advisory** (not in the gate's `needs:`). It runs
 for signal and posts its own status, but never blocks merge.
 
 - **Speed.** E2E takes up to ~2 hours; the gate must not wait on it.
-- **Reliability.** E2E is currently red/flaky on the majority of `develop` runs; requiring it
-  would block nearly every PR. It belongs behind a merge queue (the `merge_group` trigger is
-  already wired) before it can become required.
-
-> Note: this elevates the quality gates from advisory (their state on `develop` before this
-> PR) to required. They are 15/15 green on recent `develop`, so the change blocks only genuine
-> regressions, not existing failures.
+- **Reliability.** E2E is flaky enough that requiring it would block good PRs on noise. Once it
+  is stabilised behind a merge queue (the `merge_group` trigger is already wired), it can move
+  into the gate.
 
 To change the required set, edit `all-required-ci-passed`'s `needs:` (and mirror it in
 `ci-summary`'s `ADVISORY` env, which labels the table). Branch protection still references one
@@ -77,17 +67,17 @@ context, so it never needs touching again.
 ### Why one entry point and not many
 
 - **One trigger surface.** Path filters, branch filters, and concurrency live in one place.
-- **No `workflow_run` chain.** E2E is invoked directly via `needs: [build]`. The old
-  `workflow_run` listener (a) ran from the default-branch copy of the workflow file, so PRs
-  modifying E2E never tested their own changes, and (b) needed a hand-rolled cancellation
-  workaround for queue-stacking on the self-hosted runner pool.
+- **No `workflow_run` chain.** E2E is a direct `needs: [build]` dependency, never a separate
+  `workflow_run`-triggered workflow. A `workflow_run` listener executes the *default-branch*
+  copy of the workflow file — so a PR editing E2E couldn't test its own changes — and needs a
+  hand-rolled cancellation workaround for queue-stacking. Keep E2E a direct `needs:` edge.
 - **Stable required check.** Branch protection requires exactly one job:
   `CI / All required CI Passed`. Renaming or adding child jobs does not require updating it.
 
 ### Why `build_relevant` uses ignore-semantics
 
-`detect-changes` decides whether the required `build`/`test` jobs run. It uses
-**ignore-semantics**: build/test run unless *every* changed file is clearly irrelevant
+`detect-changes` decides whether the required `build`, `test`, and `quality` jobs run. It uses
+**ignore-semantics**: they run unless *every* changed file is clearly irrelevant
 (markdown, `LICENSE`, or under `documentation/`). A new code or config path therefore causes
 an *over-run* (safe), never a silent skip of a required check (which would merge unbuilt
 code). This is implemented as a dedicated `dorny/paths-filter` step with
@@ -134,19 +124,12 @@ These workflows are intentionally NOT folded into the umbrella:
 | `codeql-analysis.yml` | Security/compliance scan. Independent schedule, default-branch only. |
 | `test-android.yml` | Different self-hosted runner pool, clones a separate repo, 60-minute job. |
 | `test-mysql.yml` | Manual-only (`workflow_dispatch`). Sibling DB engine to PostgreSQL. |
-| `bean-instantiations.yml` | Java-source-only, independent. Out of scope for this consolidation. |
+| `bean-instantiations.yml` | Java-source-only; independent, niche path filter. |
 | `version-consistency.yml` | Trivial, fires on a tiny path set. |
 | `deploy-documentation.yml` | Owns the `pages` concurrency slot. |
 | `testserver-deployment.yml`, `prod-like-deployment.yml` | Manual deploy workflows. |
 | `pullrequest-coverage-reporter.yml` | `workflow_run` consumer of CI artifacts. Listens for `CI`. |
 | All `pull_request_target` / `issues` / `schedule` workflows | Need elevated tokens or run on different trigger surfaces. |
-
-## Post-merge operations
-
-Two one-time operations follow the merge — swapping branch protection to the single
-`All required CI Passed` context, and re-pointing Helios's deployment gates off the
-deleted workflow IDs. The exact commands live in the PR description (they're run once,
-at merge); they are intentionally not duplicated here as permanent docs.
 
 ## Concurrency model
 
