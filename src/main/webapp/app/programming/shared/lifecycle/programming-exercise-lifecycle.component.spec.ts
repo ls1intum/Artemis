@@ -280,7 +280,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         comp.ngOnChanges({ exercise: { currentValue: newerExercise } as SimpleChange });
 
         expect(alertSpy).toHaveBeenCalledTimes(nthCall + 1);
-        expect(alertSpy).toHaveBeenNthCalledWith(++nthCall, 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate');
+        expect(alertSpy).toHaveBeenNthCalledWith(nthCall + 1, 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate');
     });
 
     it('should enable checkbox for complaints on automatic assessments for automatically assessed exam exercises', () => {
