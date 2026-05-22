@@ -330,7 +330,7 @@ jobs:
                 *)          role='**required**' ;;
               esac
               printf '| `%s` | %s | %s %s |\n' "$job" "$role" "$(icon "$result")" "$result"
-            done < <(jq -r 'to_entries[] | "\(.key)\t\(.value.result)"' <<< "$NEEDS")
+            done < <(jq -r 'to_entries[] | "\(.key)\t\(.value.outputs.e2e_result // .value.result)"' <<< "$NEEDS")
 
             # Local-fix hints, shown only when a required job failed; commands mirror CLAUDE.md.
             if [ "$required_failure" = "true" ]; then

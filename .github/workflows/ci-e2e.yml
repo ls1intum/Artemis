@@ -33,6 +33,12 @@ on:
         required: false
       HELIOS_REPO_SECRET:
         required: false
+    outputs:
+      e2e_result:
+        description: 'Aggregated REAL E2E status (success|failure|error). The caller `e2e` job
+          result is always success on a test-only failure (E2E is advisory); read this output
+          for the honest outcome.'
+        value: ${{ jobs.report-results.outputs.status }}
 
 permissions: {}  # default-deny; each job grants only what it needs
 
@@ -109,6 +115,7 @@ jobs:
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
     outputs:
       reporter_failed: ${{ steps.run-tests-phase1.outputs.reporter_failed }}
+      tests: ${{ steps.run-tests-phase1.outcome }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -139,6 +146,11 @@ jobs:
 
       - name: Run E2E Playwright tests (Phase 1 - Relevant Tests)
         id: run-tests-phase1
+        # Advisory: a failed test must not fail the phase job (so ci.yml's run conclusion stays
+        # green for Helios's pre-deploy gate). The real outcome is surfaced via the `tests`
+        # output (steps.<id>.outcome = failure while .conclusion = success). Setup/teardown
+        # steps have no continue-on-error, so genuine infra failures still fail the job.
+        continue-on-error: true
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
           RELEVANT_TESTS: ${{ needs.determine-tests.outputs.relevant_tests }}
@@ -292,6 +304,7 @@ jobs:
     outputs:
       reporter_failed: ${{ steps.run-tests-phase2.outputs.reporter_failed }}
       phase2_notes: ${{ steps.update-comment.outputs.phase2_notes }}
+      tests: ${{ steps.run-tests-phase2.outcome }}
     env:
       PLAYWRIGHT_REPORT_PHASE: phase2
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
@@ -325,6 +338,8 @@ jobs:
 
       - name: Run E2E Playwright tests (Phase 2 - Remaining Tests)
         id: run-tests-phase2
+        # Advisory: a failed test must not fail the phase job. Real outcome via the `tests` output.
+        continue-on-error: true
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
           REMAINING_TESTS: ${{ needs.determine-tests.outputs.remaining_tests }}
@@ -478,6 +493,7 @@ jobs:
       actions: read
     outputs:
       reporter_failed: ${{ steps.run-tests-all-pr.outputs.reporter_failed }}
+      tests: ${{ steps.run-tests-all-pr.outcome }}
     env:
       PLAYWRIGHT_REPORT_PHASE: all
       PLAYWRIGHT_REPORT_PR_NUMBER: ${{ inputs.pr_number }}
@@ -511,6 +527,8 @@ jobs:
 
       - name: Run E2E Playwright tests (PostgreSQL, Local)
         id: run-tests-all-pr
+        # Advisory: a failed test must not fail the phase job. Real outcome via the `tests` output.
+        continue-on-error: true
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
         run: .ci/E2E-tests/execute.sh postgres-localci playwright
@@ -649,6 +667,8 @@ jobs:
       contents: read
       statuses: write
       actions: read
+    outputs:
+      tests: ${{ steps.run-tests-all-non-pr.outcome }}
     env:
       PLAYWRIGHT_REPORT_PHASE: all
     steps:
@@ -675,6 +695,8 @@ jobs:
 
       - name: Run E2E Playwright tests (PostgreSQL, Local, Multi-Node)
         id: run-tests-all-non-pr
+        # Advisory: a failed test must not fail the phase job. Real outcome via the `tests` output.
+        continue-on-error: true
         env:
           FAST_TEST_TIMEOUT_SECONDS: 75
         run: .ci/E2E-tests/execute.sh multi-node playwright
@@ -717,14 +739,19 @@ jobs:
       contents: read
       statuses: write
       pull-requests: write
+    outputs:
+      status: ${{ steps.overall-status.outputs.status }}
     steps:
       - name: Determine overall status
         id: overall-status
         env:
-          RELEVANT_RESULT: ${{ needs.run-e2e-relevant.result }}
-          REMAINING_RESULT: ${{ needs.run-e2e-remaining.result }}
-          ALL_PR_RESULT: ${{ needs.run-e2e-all-pr.result }}
-          ALL_NON_PR_RESULT: ${{ needs.run-e2e-all-non-pr.result }}
+          # Read the REAL test outcome (job output set from steps.<id>.outcome), not the job
+          # `result`: with continue-on-error on the test step, the result is always `success`
+          # on a test-only failure. A skipped phase emits an empty string (handled below).
+          RELEVANT_RESULT: ${{ needs.run-e2e-relevant.outputs.tests }}
+          REMAINING_RESULT: ${{ needs.run-e2e-remaining.outputs.tests }}
+          ALL_PR_RESULT: ${{ needs.run-e2e-all-pr.outputs.tests }}
+          ALL_NON_PR_RESULT: ${{ needs.run-e2e-all-non-pr.outputs.tests }}
         run: |
           set -Eeuo pipefail
           # Pick the first non-skipped result across the four E2E variants. Any
@@ -844,13 +871,14 @@ jobs:
               });
             }
 
-      - name: Fail job on aggregated failure
-        # Make the E2E job result reflect the aggregated outcome instead of always-success,
-        # so the job log isn't misleading.
+      - name: Report aggregated status (advisory — does not fail the run)
+        # E2E is advisory at the run-conclusion level: a failed TEST must not fail this job
+        # (which would fail the reusable → the `e2e` caller → the ci.yml run conclusion that
+        # Helios's pre-deploy gate keys on). The real status is published via the `status` job
+        # output and the commit status above. Infra/setup/teardown failures already fail their
+        # phase job (no continue-on-error there), so they still turn the run red on their own.
         if: always()
         env:
           STATUS: ${{ steps.overall-status.outputs.status }}
         run: |
-          if [ "$STATUS" = "success" ]; then exit 0; fi
-          echo "::error::E2E aggregate status: $STATUS"
-          exit 1
+          echo "E2E aggregate status (advisory): $STATUS"
