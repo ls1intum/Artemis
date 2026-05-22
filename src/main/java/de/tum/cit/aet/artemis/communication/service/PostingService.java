@@ -166,8 +166,7 @@ public abstract class PostingService {
     protected Stream<ConversationNotificationRecipientSummary> getNotificationRecipients(Conversation conversation) {
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
             Course course = conversation.getCourse();
-            return userRepository.findAllNotificationRecipientsInCourseForConversation(conversation.getId(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),
-                    course.getEditorGroupName(), course.getInstructorGroupName()).stream();
+            return userRepository.findAllNotificationRecipientsInCourseForConversation(conversation.getId(), course.getId()).stream();
         }
 
         return conversationParticipantRepository.findConversationParticipantsWithUserGroupsByConversationId(conversation.getId()).stream()

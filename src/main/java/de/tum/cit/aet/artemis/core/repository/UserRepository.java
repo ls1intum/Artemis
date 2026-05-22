@@ -81,6 +81,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     String FILTER_WITHOUT_REG_NO = "WITHOUT_REG_NO";
 
+    // TODO (Phase 9): the following findOneWithGroups* EntityGraph methods eagerly load user.groups for dual-write compatibility.
+    // Remove once user_groups table is dropped; use findOneWithCourseRolesAndAuthorities* variants instead.
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     Optional<User> findOneWithGroupsByActivationKey(String activationKey);
 
@@ -194,24 +196,28 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                    CASE
                        WHEN :#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities THEN 'INSTRUCTOR'
                        WHEN :#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities THEN 'INSTRUCTOR'
-                       WHEN course.instructorGroupName MEMBER OF user.groups THEN 'INSTRUCTOR'
-                       WHEN course.editorGroupName MEMBER OF user.groups THEN 'TUTOR'
-                       WHEN course.teachingAssistantGroupName MEMBER OF user.groups THEN 'TUTOR'
-                       WHEN course.studentGroupName MEMBER OF user.groups THEN 'USER'
+                       WHEN EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course.id = :courseId
+                           AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR) THEN 'INSTRUCTOR'
+                       WHEN EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course.id = :courseId
+                           AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR,
+                               de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT)) THEN 'TUTOR'
+                       WHEN EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course.id = :courseId
+                           AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.STUDENT) THEN 'USER'
                    END)
             FROM User user
-            INNER JOIN Course course
-            ON course.id = :courseId
             WHERE user.id IN :userIds
             """)
     Set<UserRoleDTO> findUserRolesInCourse(@Param("userIds") Collection<Long> userIds, @Param("courseId") long courseId);
 
+    // TODO (Phase 9): remove once user_groups table is dropped; use findOneWithCourseRolesAndAuthoritiesAndOrganizationsById instead
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "organizations" })
     Optional<User> findOneWithGroupsAndAuthoritiesAndOrganizationsById(Long id);
 
+    // TODO (Phase 9): remove once user_groups table is dropped; use findOneWithCourseRolesAndAuthoritiesAndOrganizationsByLogin instead
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "organizations" })
     Optional<User> findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(String userLogin);
 
+    // TODO (Phase 9): remove once user_groups table is dropped; replace with UserCourseRole-based count
     Long countByDeletedIsFalseAndGroupsContains(String groupName);
 
     @Query("""
@@ -225,6 +231,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     List<User> findAllByEmailOrUsernameIgnoreCase(@Param("searchInput") String searchInput);
 
+    // TODO (Phase 9): the following findAllWithGroups* and findAllByDeletedIsFalseAndGroupsContains methods use user_groups.
+    // Remove once user_groups table is dropped; replace with UserCourseRole-based queries.
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Set<User> findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(String groupName);
 
@@ -244,7 +252,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     Set<User> findAllByDeletedIsFalseAndGroupsContains(String groupName);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary (
+            SELECT DISTINCT new de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary (
                 user.id,
                 user.login,
                 user.firstName,
@@ -253,25 +261,40 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 user.email,
                 CASE WHEN cp.isMuted = TRUE THEN TRUE ELSE FALSE END,
                 CASE WHEN cp.isHidden = TRUE THEN TRUE ELSE FALSE END,
-                CASE WHEN ug.group = :teachingAssistantGroupName
-                    OR ug.group = :editorGroupName
-                    OR ug.group = :instructorGroupName
-                THEN TRUE ELSE FALSE END
+                CASE WHEN EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course.id = :courseId
+                    AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT,
+                        de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR,
+                        de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)) THEN TRUE ELSE FALSE END
             )
             FROM User user
-                JOIN UserGroup ug ON ug.userId = user.id
+                JOIN user.courseRoles memberRole ON memberRole.course.id = :courseId
                 LEFT JOIN ConversationParticipant cp ON cp.user = user AND cp.conversation.id = :conversationId
             WHERE user.deleted = FALSE
-                AND (
-                    ug.group = :studentGroupName
-                    OR ug.group = :teachingAssistantGroupName
-                    OR ug.group = :editorGroupName
-                    OR ug.group = :instructorGroupName
-                )
             """)
     Set<ConversationNotificationRecipientSummary> findAllNotificationRecipientsInCourseForConversation(@Param("conversationId") long conversationId,
-            @Param("studentGroupName") String studentGroupName, @Param("teachingAssistantGroupName") String teachingAssistantGroupName,
-            @Param("editorGroupName") String editorGroupName, @Param("instructorGroupName") String instructorGroupName);
+            @Param("courseId") long courseId);
+
+    /**
+     * Searches for users in a course with a specific role by their login or full name.
+     *
+     * @param courseId    ID of the course to search within
+     * @param role        the {@link CourseRole} to filter by
+     * @param loginOrName Either a login (e.g. ga12abc) or name (e.g. Max Mustermann) by which to search
+     * @return list of found users that match the search criteria
+     */
+    @Query("""
+            SELECT DISTINCT user
+            FROM User user
+            JOIN UserCourseRole ucr ON ucr.user.id = user.id
+                AND ucr.course.id = :courseId
+                AND ucr.role = :role
+            WHERE user.deleted = FALSE
+                AND (
+                    user.login LIKE :#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                )
+            """)
+    List<User> searchByLoginOrNameInCourseWithRole(@Param("courseId") long courseId, @Param("role") CourseRole role, @Param("loginOrName") String loginOrName);
 
     /**
      * Searches for users in a group by their login or full name.
@@ -280,6 +303,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param loginOrName Either a login (e.g. ga12abc) or name (e.g. Max Mustermann) by which to search
      * @return list of found users that match the search criteria
      */
+    // TODO (Phase 8): delete once test callers (ProgrammingExerciseTestService, TeamIntegrationTest) are migrated
     @Query("""
             SELECT DISTINCT user
             FROM User user
@@ -294,168 +318,24 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     List<User> searchByLoginOrNameInGroup(@Param("groupName") String groupName, @Param("loginOrName") String loginOrName);
 
     /**
-     * Searches for users in groups by their full name.
+     * Searches for users by their full name in a course (any role).
      *
-     * @param groupNames List of names of groups in which to search for users
-     * @param nameOfUser Name (e.g. Max Mustermann) by which to search
+     * @param courseId   ID of the course in which to search
+     * @param nameOfUser name (e.g. Max Mustermann) by which to search
      * @return list of found users that match the search criteria
      */
     @Query("""
             SELECT user
             FROM User user
-                LEFT JOIN user.groups userGroup
             WHERE user.deleted = FALSE
-                AND (
-                    userGroup IN :groupNames
-                    AND CONCAT(user.firstName, ' ', user.lastName) LIKE %:nameOfUser%
-                 )
+                AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course.id = :courseId)
+                AND CONCAT(user.firstName, ' ', user.lastName) LIKE %:nameOfUser%
             ORDER BY CONCAT(user.firstName, ' ', user.lastName)
             """)
-    List<User> searchByNameInGroups(@Param("groupNames") Set<String> groupNames, @Param("nameOfUser") String nameOfUser);
-
-    @Query("""
-            SELECT user.id
-            FROM User user
-                LEFT JOIN user.groups userGroup
-            WHERE user.deleted = FALSE
-                AND :groupName = userGroup
-                AND (
-                    user.login LIKE %:loginOrName%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
-                )
-            """)
-    List<Long> findUserIdsByLoginOrNameInGroup(@Param("loginOrName") String loginOrName, @Param("groupName") String groupName, Pageable pageable);
+    List<User> searchByNameInCourse(@Param("courseId") long courseId, @Param("nameOfUser") String nameOfUser);
 
     @EntityGraph(type = LOAD, attributePaths = "groups")
     List<User> findUsersWithGroupsByIdIn(List<Long> ids);
-
-    @Query("""
-            SELECT COUNT(user)
-            FROM User user
-                LEFT JOIN user.groups userGroup
-            WHERE user.deleted = FALSE
-                AND :groupName = userGroup
-                AND (
-                    user.login LIKE %:loginOrName%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
-                )
-            """)
-    long countUsersByLoginOrNameInGroup(@Param("loginOrName") String loginOrName, @Param("groupName") String groupName);
-
-    /**
-     * Search for all users by login or name in a group
-     *
-     * @param pageable    Pageable configuring paginated access (e.g. to limit the number of records returned)
-     * @param loginOrName Search query that will be searched for in login and name field
-     * @param groupName   Name of group in which to search for users
-     * @return all users matching search criteria in the group converted to DTOs
-     */
-    default Page<User> searchAllWithGroupsByLoginOrNameInGroup(Pageable pageable, String loginOrName, String groupName) {
-        List<Long> ids = findUserIdsByLoginOrNameInGroup(loginOrName, groupName, pageable);
-        if (ids.isEmpty()) {
-            return Page.empty(pageable);
-        }
-        List<User> users = findUsersWithGroupsByIdIn(ids);
-        return new PageImpl<>(users, pageable, countUsersByLoginOrNameInGroup(loginOrName, groupName));
-    }
-
-    @Query("""
-            SELECT user.id
-            FROM User user
-                LEFT JOIN user.groups userGroup
-            WHERE user.deleted = FALSE
-                AND userGroup IN :groupNames
-                AND (
-                    user.login LIKE %:loginOrName%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
-                ) AND user.id <> :idOfUser
-            """)
-    List<Long> findUserIdsByLoginOrNameInGroupsNotUserId(@Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames, @Param("idOfUser") long idOfUser,
-            Pageable pageable);
-
-    @Query("""
-            SELECT user
-            FROM User user
-                LEFT JOIN FETCH user.groups userGroup
-            WHERE user.id IN :ids
-            ORDER BY CONCAT(user.firstName, ' ', user.lastName)
-            """)
-    List<User> findUsersByIdsWithGroupsOrdered(@Param("ids") List<Long> ids);
-
-    @Query("""
-            SELECT COUNT(user)
-            FROM User user
-                LEFT JOIN user.groups userGroup
-            WHERE user.deleted = FALSE
-                AND userGroup IN :groupNames
-                AND (
-                    user.login LIKE %:loginOrName%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
-                ) AND user.id <> :idOfUser
-            """)
-    long countUsersByLoginOrNameInGroupsNotUserId(@Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames, @Param("idOfUser") long idOfUser);
-
-    /**
-     * Searches for {@link User} entities by login or name within specified groups, excluding a specific user ID.
-     * The results are paginated.
-     *
-     * @param pageable    the pagination information.
-     * @param loginOrName the login or name to search for.
-     * @param groupNames  the set of group names to limit the search within.
-     * @param idOfUser    the ID of the user to exclude from the search results.
-     * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
-     */
-    default Page<User> searchAllWithGroupsByLoginOrNameInGroupsNotUserId(Pageable pageable, String loginOrName, Set<String> groupNames, long idOfUser) {
-        List<Long> ids = findUserIdsByLoginOrNameInGroupsNotUserId(loginOrName, groupNames, idOfUser, pageable);
-        if (ids.isEmpty()) {
-            return Page.empty(pageable);
-        }
-        List<User> users = findUsersByIdsWithGroupsOrdered(ids);
-        return new PageImpl<>(users, pageable, countUsersByLoginOrNameInGroupsNotUserId(loginOrName, groupNames, idOfUser));
-    }
-
-    @Query("""
-            SELECT user.id
-            FROM User user
-                LEFT JOIN user.groups userGroup
-            WHERE user.deleted = FALSE
-                AND userGroup IN :groupNames
-                AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                )
-            """)
-    List<Long> findUserIdsByLoginOrNameInGroups(@Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames, Pageable pageable);
-
-    @Query("""
-            SELECT COUNT(user)
-            FROM User user
-                LEFT JOIN user.groups userGroup
-            WHERE user.deleted = FALSE
-                AND userGroup IN :groupNames
-                AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                )
-            """)
-    long countUsersByLoginOrNameInGroups(@Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames);
-
-    /**
-     * Search for all users by login or name within the provided groups
-     *
-     * @param pageable    Pageable configuring paginated access (e.g. to limit the number of records returned)
-     * @param loginOrName Search query that will be searched for in login and name field
-     * @param groupNames  Names of groups in which to search for users
-     * @return All users matching search criteria
-     */
-    default Page<User> searchAllWithGroupsByLoginOrNameInGroups(Pageable pageable, String loginOrName, Set<String> groupNames) {
-        List<Long> ids = findUserIdsByLoginOrNameInGroups(loginOrName, groupNames, pageable);
-        if (ids.isEmpty()) {
-            return Page.empty(pageable);
-        }
-        List<User> users = findUsersWithGroupsByIdIn(ids);
-        return new PageImpl<>(users, pageable, countUsersByLoginOrNameInGroups(loginOrName, groupNames));
-    }
 
     @Query("""
             SELECT DISTINCT user
@@ -507,60 +387,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     }
 
     @Query("""
-            SELECT DISTINCT user
-            FROM User user
-                JOIN user.groups userGroup
-                JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
-                JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
-            WHERE user.deleted = FALSE
-                AND conversation.id = :conversationId
-                AND (
-                    :loginOrName = ''
-                    OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                ) AND userGroup IN :groupNames
-            """)
-    List<User> findUsersByLoginOrNameInConversationWithCourseGroups(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
-            @Param("groupNames") Set<String> groupNames, Pageable pageable);
-
-    @Query("""
-            SELECT COUNT(DISTINCT user)
-            FROM User user
-                JOIN user.groups userGroup
-                JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
-                JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
-            WHERE user.deleted = FALSE
-                AND conversation.id = :conversationId
-                AND (
-                    :loginOrName = ''
-                    OR user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                ) AND userGroup IN :groupNames
-            """)
-    long countUsersByLoginOrNameInConversationWithCourseGroups(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
-            @Param("groupNames") Set<String> groupNames);
-
-    /**
-     * Searches for {@link User} entities by login or name within a specific conversation and course groups.
-     * The results are paginated.
-     *
-     * @param pageable       the pagination information.
-     * @param loginOrName    the login or name to search for.
-     * @param conversationId the ID of the conversation to limit the search within.
-     * @param groupNames     the set of course group names to limit the search within.
-     * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
-     */
-    default Page<User> searchAllWithCourseGroupsByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId, Set<String> groupNames) {
-        List<Long> ids = findUsersByLoginOrNameInConversationWithCourseGroups(loginOrName, conversationId, groupNames, pageable).stream().map(DomainObject::getId).toList();
-        if (ids.isEmpty()) {
-            return Page.empty(pageable);
-        }
-        List<User> users = findUsersWithGroupsByIdIn(ids);
-        long total = countUsersByLoginOrNameInConversationWithCourseGroups(loginOrName, conversationId, groupNames);
-        return new PageImpl<>(users, pageable, total);
-    }
-
-    @Query("""
             SELECT DISTINCT user.id
             FROM User user
                 JOIN ConversationParticipant cp ON cp.user.id = user.id AND cp.conversation.id = :conversationId
@@ -603,7 +429,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT DISTINCT user
             FROM User user
-                JOIN user.groups userGroup
                 JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
                 JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
             WHERE user.deleted = FALSE
@@ -619,7 +444,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT COUNT(DISTINCT user)
             FROM User user
-                JOIN user.groups userGroup
                 JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
                 JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
             WHERE user.deleted = FALSE
@@ -651,19 +475,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return new PageImpl<>(users, pageable, total);
     }
 
-    /**
-     * Search for all users by login or name in a group and convert them to {@link UserDTO}
-     *
-     * @param pageable    Pageable configuring paginated access (e.g. to limit the number of records returned)
-     * @param loginOrName Search query that will be searched for in login and name field
-     * @param groupName   Name of group in which to search for users
-     * @return all users matching search criteria in the group converted to {@link UserDTO}
-     */
-    default Page<UserDTO> searchAllUsersByLoginOrNameInGroupAndConvertToDTO(Pageable pageable, String loginOrName, String groupName) {
-        Page<User> users = searchAllWithGroupsByLoginOrNameInGroup(pageable, loginOrName, groupName);
-        return users.map(UserDTO::new);
-    }
-
+    // TODO (Phase 9): remove once user_groups table is dropped; replace with UserCourseRole-based lookups
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     List<User> findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndRegistrationNumberIn(String groupName, Set<String> registrationNumbers);
 
@@ -699,24 +511,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 )
             """)
     Page<User> searchAllByLoginOrName(Pageable page, @Param("loginOrName") String loginOrName);
-
-    @Query("""
-            SELECT DISTINCT user
-            FROM User user
-                JOIN user.groups userGroup
-                JOIN Course course ON course.id = :courseId
-            WHERE user.deleted = FALSE
-                AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                )
-                AND (course.studentGroupName = userGroup
-                    OR course.teachingAssistantGroupName = userGroup
-                    OR course.editorGroupName = userGroup
-                    OR course.instructorGroupName = userGroup
-               )
-            """)
-    List<User> findUsersByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, Pageable pageable);
 
     @Query("""
             SELECT DISTINCT user.id
@@ -756,65 +550,73 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     List<User> findDistinctUsersWithGroupsByIdIn(List<Long> ids);
 
     @Query("""
-            SELECT COUNT(DISTINCT user)
+            SELECT DISTINCT user.id
             FROM User user
-                JOIN user.groups userGroup
-                JOIN Course course ON course.id = :courseId
+            JOIN UserCourseRole ucr ON ucr.user.id = user.id
+                AND ucr.course.id = :courseId
+                AND ucr.role IN :roles
             WHERE user.deleted = FALSE
                 AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                )
-                AND (course.studentGroupName = userGroup
-                    OR course.teachingAssistantGroupName = userGroup
-                    OR course.editorGroupName = userGroup
-                    OR course.instructorGroupName = userGroup
+                    user.login LIKE %:loginOrName%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
                 )
             """)
-    long countUsersByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
+    List<Long> findUserIdsByLoginOrNameInCourseWithRoles(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles,
+            Pageable pageable);
+
+    @Query("""
+            SELECT COUNT(DISTINCT user)
+            FROM User user
+            JOIN UserCourseRole ucr ON ucr.user.id = user.id
+                AND ucr.course.id = :courseId
+                AND ucr.role IN :roles
+            WHERE user.deleted = FALSE
+                AND (
+                    user.login LIKE %:loginOrName%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
+                )
+            """)
+    long countUsersByLoginOrNameInCourseWithRoles(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles);
 
     /**
-     * Searches for users by login or name within a course and returns a list of distinct users along with their groups.
-     * This method avoids in-memory paging by retrieving the user IDs directly from the database.
+     * Searches for users by login or name within a course filtered by specific roles.
      *
      * @param pageable    the pagination information
-     * @param loginOrName the login or name of the users to search for
+     * @param loginOrName the login or name to search for
      * @param courseId    the ID of the course to search within
-     * @return a list of distinct users with their groups, or an empty list if no users are found
+     * @param roles       the set of {@link CourseRole} values to filter by
+     * @return a paginated list of matching {@link User} entities, or an empty page if none found
      */
-    default List<User> searchAllWithGroupsByLoginOrNameInCourseAndReturnList(Pageable pageable, String loginOrName, long courseId) {
-        List<Long> userIds = findUsersByLoginOrNameInCourse(loginOrName, courseId, pageable).stream().map(DomainObject::getId).toList();
-
-        if (userIds.isEmpty()) {
-            return Collections.emptyList();
+    default Page<User> searchAllWithCourseRolesByLoginOrNameInCourse(Pageable pageable, String loginOrName, long courseId, Set<CourseRole> roles) {
+        List<Long> ids = findUserIdsByLoginOrNameInCourseWithRoles(loginOrName, courseId, roles, pageable);
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
         }
-
-        return findDistinctUsersWithGroupsByIdIn(userIds);
-    }
-
-    /**
-     * Searches for users by login or name within a course and returns a paginated list of distinct users along with their groups.
-     * This method avoids in-memory paging by retrieving the user IDs directly from the database.
-     *
-     * @param pageable    the pagination information
-     * @param loginOrName the login or name of the users to search for
-     * @param courseId    the ID of the course to search within
-     * @return a {@code Page} containing a list of distinct users with their groups, or an empty page if no users are found
-     */
-    default Page<User> searchAllWithGroupsByLoginOrNameInCourseAndReturnPage(Pageable pageable, String loginOrName, long courseId) {
-        List<Long> userIds = findUsersByLoginOrNameInCourse(loginOrName, courseId, pageable).stream().map(DomainObject::getId).toList();
-
-        if (userIds.isEmpty()) {
-            return new PageImpl<>(Collections.emptyList(), pageable, 0);
-        }
-
-        List<User> users = findDistinctUsersWithGroupsByIdIn(userIds);
-        long total = countUsersByLoginOrNameInCourse(loginOrName, courseId);
-
+        List<User> users = findUsersByIdsWithCourseRolesOrdered(ids);
+        long total = countUsersByLoginOrNameInCourseWithRoles(loginOrName, courseId, roles);
         return new PageImpl<>(users, pageable, total);
     }
 
-    // --- courseRoles-based search variants (replacing group-name searches) ---
+    /**
+     * Searches for users by login or name within a course filtered by specific roles and converts results to {@link UserDTO}.
+     *
+     * @param pageable    the pagination information
+     * @param loginOrName the login or name to search for
+     * @param courseId    the ID of the course to search within
+     * @param roles       the set of {@link CourseRole} values to filter by
+     * @return a paginated list of matching users as {@link UserDTO}, or an empty page if none found
+     */
+    default Page<UserDTO> searchUsersByLoginOrNameInCourseWithRolesAndConvertToDTO(Pageable pageable, String loginOrName, long courseId, Set<CourseRole> roles) {
+        List<Long> ids = findUserIdsByLoginOrNameInCourseWithRoles(loginOrName, courseId, roles, pageable);
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<User> users = findUsersByIdsWithCourseRolesOrdered(ids);
+        long total = countUsersByLoginOrNameInCourseWithRoles(loginOrName, courseId, roles);
+        return new PageImpl<>(users, pageable, total).map(UserDTO::new);
+    }
+
+    // --- courseRoles-based search variants ---
 
     @Query("""
             SELECT DISTINCT user.id
@@ -933,7 +735,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT user.login
             FROM User user
-            WHERE user.groups IS EMPTY AND NOT user.deleted
+            WHERE NOT user.deleted
+                AND NOT EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user)
                 AND NOT :#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
                 AND NOT :#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
             ORDER BY user.login
@@ -1049,6 +852,9 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return getValueElseThrow(findOneByEmailIgnoreCase(email));
     }
 
+    // TODO (Phase 9): the following getUserWithGroupsAndAuthorities* convenience methods wrap group-based EntityGraph fetches.
+    // Replace with getUserWithCourseRolesAndAuthorities* variants and remove once user_groups table is dropped.
+
     /**
      * Get user with user groups and authorities of currently logged-in user
      *
@@ -1120,6 +926,9 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return getValueElseThrow(findOneWithCourseRolesAndAuthoritiesByLogin(username));
     }
 
+    // TODO (Phase 9): the following findUserWithGroupsAndAuthoritiesBy* wrappers call group-based EntityGraph fetches.
+    // Remove once user_groups table is dropped.
+
     /**
      * Finds a single user with groups and authorities using the registration number
      *
@@ -1159,6 +968,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return findOneWithGroupsAndAuthoritiesByEmail(email);
     }
 
+    // TODO (Phase 9): remove once user_groups table is dropped; use findByIdWithCourseRolesAndAuthoritiesElseThrow instead
     @NonNull
     default User findByIdWithGroupsAndAuthoritiesElseThrow(long userId) {
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesById(userId), userId);
@@ -1175,10 +985,14 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param userId the id of the user to find
      * @return the user with groups, authorities and organizations if it exists, else throw exception
      */
+    // TODO (Phase 9): remove once user_groups table is dropped; use findOneWithCourseRolesAndAuthoritiesAndOrganizationsById instead
     @NonNull
     default User findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(long userId) {
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndOrganizationsById(userId), userId);
     }
+
+    // TODO (Phase 9): getStudents/getTutors/getEditors/getInstructors/getUsersInCourse all use group name strings.
+    // Replace with UserCourseRole-based queries once group name columns are dropped.
 
     /**
      * Get students by given course
@@ -1246,9 +1060,13 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(groupNames);
     }
 
+    // TODO (Phase 9): remove once user_groups table is dropped; replace with UserCourseRole-based count
     default Long countUserInGroup(String groupName) {
         return countByDeletedIsFalseAndGroupsContains(groupName);
     }
+
+    // TODO (Phase 9): countUsersInGroups, setUserCountsForCourse/Courses, countUsersByStudentGroupNamesAndUserIds
+    // all use group name strings tied to the course.*_group_name columns. Replace once those columns are dropped.
 
     /**
      * Counts non-deleted users in multiple groups with a single query.
@@ -1454,14 +1272,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 INNER JOIN Exercise exercise ON user.login = :login AND exercise.id = :exerciseId
                 LEFT JOIN exercise.course course
                 LEFT JOIN exercise.exerciseGroup.exam.course examCourse
-            WHERE (course.studentGroupName MEMBER OF user.groups)
-                OR (course.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
-                OR (examCourse.studentGroupName MEMBER OF user.groups)
-                OR (examCourse.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (examCourse.editorGroupName MEMBER OF user.groups)
-                OR (examCourse.instructorGroupName MEMBER OF user.groups)
+            WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course))
+                OR (examCourse IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = examCourse))
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
@@ -1473,12 +1285,12 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 INNER JOIN Exercise exercise ON user.login = :login AND exercise.id = :exerciseId
                 LEFT JOIN exercise.course course
                 LEFT JOIN exercise.exerciseGroup.exam.course examCourse
-            WHERE (course.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
-                OR (examCourse.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (examCourse.editorGroupName MEMBER OF user.groups)
-                OR (examCourse.instructorGroupName MEMBER OF user.groups)
+            WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course
+                    AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT,
+                        de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR, de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)))
+                OR (examCourse IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = examCourse
+                    AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT,
+                        de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR, de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)))
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
@@ -1490,10 +1302,12 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 INNER JOIN Exercise exercise ON user.login = :login AND exercise.id = :exerciseId
                 LEFT JOIN exercise.course course
                 LEFT JOIN exercise.exerciseGroup.exam.course examCourse
-            WHERE (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
-                OR (examCourse.editorGroupName MEMBER OF user.groups)
-                OR (examCourse.instructorGroupName MEMBER OF user.groups)
+            WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course
+                    AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR,
+                        de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)))
+                OR (examCourse IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = examCourse
+                    AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR,
+                        de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)))
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
@@ -1505,8 +1319,10 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 INNER JOIN Exercise exercise ON user.login = :login AND exercise.id = :exerciseId
                 LEFT JOIN exercise.course course
                 LEFT JOIN exercise.exerciseGroup.exam.course examCourse
-            WHERE (course.instructorGroupName MEMBER OF user.groups)
-                OR (examCourse.instructorGroupName MEMBER OF user.groups)
+            WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course
+                    AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR))
+                OR (examCourse IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = examCourse
+                    AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR))
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
@@ -1519,14 +1335,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 LEFT JOIN participation.exercise exercise
                 LEFT JOIN exercise.course course
                 LEFT JOIN exercise.exerciseGroup.exam.course examCourse
-            WHERE (course.studentGroupName MEMBER OF user.groups)
-                OR (course.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
-                OR (examCourse.studentGroupName MEMBER OF user.groups)
-                OR (examCourse.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (examCourse.editorGroupName MEMBER OF user.groups)
-                OR (examCourse.instructorGroupName MEMBER OF user.groups)
+            WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course))
+                OR (examCourse IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = examCourse))
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
@@ -1539,12 +1349,12 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 LEFT JOIN participation.exercise exercise
                 LEFT JOIN exercise.course course
                 LEFT JOIN exercise.exerciseGroup.exam.course examCourse
-            WHERE (course.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
-                OR (examCourse.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (examCourse.editorGroupName MEMBER OF user.groups)
-                OR (examCourse.instructorGroupName MEMBER OF user.groups)
+            WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course
+                    AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT,
+                        de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR, de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)))
+                OR (examCourse IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = examCourse
+                    AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT,
+                        de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR, de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)))
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
@@ -1557,10 +1367,12 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 LEFT JOIN participation.exercise exercise
                 LEFT JOIN exercise.course course
                 LEFT JOIN exercise.exerciseGroup.exam.course examCourse
-            WHERE (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
-                OR (examCourse.editorGroupName MEMBER OF user.groups)
-                OR (examCourse.instructorGroupName MEMBER OF user.groups)
+            WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course
+                    AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR,
+                        de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)))
+                OR (examCourse IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = examCourse
+                    AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR,
+                        de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)))
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
@@ -1573,8 +1385,10 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 LEFT JOIN participation.exercise exercise
                 LEFT JOIN exercise.course course
                 LEFT JOIN exercise.exerciseGroup.exam.course examCourse
-            WHERE (course.instructorGroupName MEMBER OF user.groups)
-                OR (examCourse.instructorGroupName MEMBER OF user.groups)
+            WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course
+                    AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR))
+                OR (examCourse IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = examCourse
+                    AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR))
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
@@ -1585,10 +1399,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
                 INNER JOIN LectureUnit lectureUnit ON user.login = :login AND lectureUnit.id = :lectureUnitId
                 LEFT JOIN lectureUnit.lecture.course course
-            WHERE (course.studentGroupName MEMBER OF user.groups)
-                OR (course.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
+            WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course))
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
@@ -1599,9 +1410,9 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
                 INNER JOIN LectureUnit lectureUnit ON user.login = :login AND lectureUnit.id = :lectureUnitId
                 LEFT JOIN lectureUnit.lecture.course course
-            WHERE (course.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
+            WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course
+                    AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT,
+                        de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR, de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)))
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
@@ -1612,8 +1423,9 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
                 INNER JOIN LectureUnit lectureUnit ON user.login = :login AND lectureUnit.id = :lectureUnitId
                 LEFT JOIN lectureUnit.lecture.course course
-            WHERE (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
+            WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course
+                    AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR,
+                        de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)))
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
@@ -1624,7 +1436,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
                 INNER JOIN LectureUnit lectureUnit ON user.login = :login AND lectureUnit.id = :lectureUnitId
                 LEFT JOIN lectureUnit.lecture.course course
-            WHERE (course.instructorGroupName MEMBER OF user.groups)
+            WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course
+                    AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR))
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
@@ -1635,10 +1448,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
                 INNER JOIN Lecture lecture ON user.login = :login AND lecture.id = :lectureId
                 LEFT JOIN lecture.course course
-            WHERE (course.studentGroupName MEMBER OF user.groups)
-                OR (course.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
+            WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course))
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
@@ -1649,9 +1459,9 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
                 INNER JOIN Lecture lecture ON user.login = :login AND lecture.id = :lectureId
                 LEFT JOIN lecture.course course
-            WHERE (course.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
+            WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course
+                    AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT,
+                        de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR, de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)))
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
@@ -1662,8 +1472,9 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
                 INNER JOIN Lecture lecture ON user.login = :login AND lecture.id = :lectureId
                 LEFT JOIN lecture.course course
-            WHERE (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
+            WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course
+                    AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR,
+                        de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)))
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
@@ -1674,12 +1485,14 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
                 INNER JOIN Lecture lecture ON user.login = :login AND lecture.id = :lectureId
                 LEFT JOIN lecture.course course
-            WHERE (course.instructorGroupName MEMBER OF user.groups)
+            WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course
+                    AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR))
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastInstructorInLecture(@Param("login") String login, @Param("lectureId") long lectureId);
 
+    // TODO (Phase 9): rewrite to use courseRoles fetch instead of groups once user_groups table is dropped
     @Query("""
             SELECT jhiUser
             FROM CalendarSubscriptionTokenStore store
@@ -1697,6 +1510,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param groupName the name of the group to remove from all users
      * @return the number of rows deleted
      */
+    // TODO (Phase 9): delete once user_groups table is dropped (CourseDeletionService will use UserCourseRoleRepository.deleteByCourse_Id instead)
     @Modifying
     @Transactional // ok because of modifying query
     @Query(value = """

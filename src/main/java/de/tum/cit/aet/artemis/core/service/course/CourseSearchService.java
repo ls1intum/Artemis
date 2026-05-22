@@ -3,9 +3,7 @@ package de.tum.cit.aet.artemis.core.service.course;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.service.course.CourseServiceUtil.removeUserVariables;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -37,13 +35,7 @@ public class CourseSearchService {
      * @return users whose login matched
      */
     public List<User> searchOtherUsersNameInCourse(Course course, String nameOfUser) {
-        Set<String> groupNames = new HashSet<>();
-        groupNames.add(course.getStudentGroupName());
-        groupNames.add(course.getTeachingAssistantGroupName());
-        groupNames.add(course.getEditorGroupName());
-        groupNames.add(course.getInstructorGroupName());
-
-        List<User> searchResult = userRepository.searchByNameInGroups(groupNames, nameOfUser);
+        List<User> searchResult = userRepository.searchByNameInCourse(course.getId(), nameOfUser);
         removeUserVariables(searchResult);
 
         // users should not find themselves

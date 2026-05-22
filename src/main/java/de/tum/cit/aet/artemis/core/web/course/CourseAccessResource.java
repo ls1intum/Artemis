@@ -188,7 +188,8 @@ public class CourseAccessResource {
         if (loginOrName.length() < 3) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'loginOrName' must be three characters or longer.");
         }
-        final Page<UserDTO> page = userRepository.searchAllUsersByLoginOrNameInGroupAndConvertToDTO(PageRequest.of(0, 25), loginOrName, course.getStudentGroupName());
+        final Page<UserDTO> page = userRepository.searchUsersByLoginOrNameInCourseWithRolesAndConvertToDTO(PageRequest.of(0, 25), loginOrName, courseId,
+                Set.of(CourseRole.STUDENT));
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
@@ -326,8 +327,8 @@ public class CourseAccessResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         var searchTerm = loginOrName != null ? loginOrName.toLowerCase().trim() : "";
-        List<UserNameAndLoginDTO> searchResults = userRepository.searchAllWithGroupsByLoginOrNameInCourseAndReturnList(Pageable.ofSize(10), searchTerm, course.getId()).stream()
-                .map(UserNameAndLoginDTO::of).toList();
+        List<UserNameAndLoginDTO> searchResults = userRepository.searchAllWithCourseRolesByLoginOrNameInCourseAndReturnPage(Pageable.ofSize(10), searchTerm, course.getId())
+                .getContent().stream().map(UserNameAndLoginDTO::of).toList();
 
         return ResponseEntity.ok().body(searchResults);
     }

@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationSer
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
@@ -270,7 +271,7 @@ public class ConversationResource extends ConversationManagementResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
 
-        var responsibleUsers = userRepository.searchAllWithGroupsByLoginOrNameInGroups(Pageable.unpaged(), "", Set.of(course.getInstructorGroupName()))
+        var responsibleUsers = userRepository.searchAllWithCourseRolesByLoginOrNameInCourse(Pageable.unpaged(), "", course.getId(), Set.of(CourseRole.INSTRUCTOR))
                 .map((user) -> new ResponsibleUserDTO(user.getName(), user.getEmail())).toList();
 
         return ResponseEntity.ok(responsibleUsers);

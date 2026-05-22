@@ -157,8 +157,7 @@ public class AutonomousTutorService {
 
     private Set<ConversationNotificationRecipientSummary> getNotificationRecipients(Conversation conversation, Course course) {
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-            return userRepository.findAllNotificationRecipientsInCourseForConversation(conversation.getId(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),
-                    course.getEditorGroupName(), course.getInstructorGroupName());
+            return userRepository.findAllNotificationRecipientsInCourseForConversation(conversation.getId(), course.getId());
         }
         return conversationParticipantRepository.findConversationParticipantsByConversationId(conversation.getId()).stream()
                 .map(participant -> new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsMuted(),

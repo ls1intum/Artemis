@@ -17,6 +17,7 @@ import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.StudentsAppearMultipleTimesException;
@@ -56,7 +57,7 @@ public class TeamService {
      * @return users whose login matched
      */
     public List<TeamSearchUserDTO> searchByLoginOrNameInCourseForExerciseTeam(Course course, Exercise exercise, String loginOrName) {
-        List<User> users = userRepository.searchByLoginOrNameInGroup(course.getStudentGroupName(), loginOrName);
+        List<User> users = userRepository.searchByLoginOrNameInCourseWithRole(course.getId(), CourseRole.STUDENT, loginOrName);
         List<Long> userIds = users.stream().map(User::getId).toList();
 
         // Get list of all students (with id of assigned team) that are already assigned to a team for the exercise
