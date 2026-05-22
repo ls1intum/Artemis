@@ -78,8 +78,9 @@ function deepMerge(target, source) {
     }
 
     for (const key in source) {
-        // prevent prototype pollution
-        if (!source.hasOwnProperty(key)) continue;
+        // prevent prototype pollution; use Object.prototype.hasOwnProperty.call so a JSON-supplied
+        // "hasOwnProperty" key can't shadow the method and break the check.
+        if (!Object.prototype.hasOwnProperty.call(source, key)) continue;
         if (key === '__proto__' || key === 'constructor') continue;
 
         const targetValue = target[key];

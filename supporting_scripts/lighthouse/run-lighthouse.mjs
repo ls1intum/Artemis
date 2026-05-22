@@ -184,9 +184,21 @@ function startStaticServer() {
                 return;
             }
 
-            // SPA fallback: serve index.html for any path without a file extension
+            // SPA fallback: serve index.html for any path without a file extension.
+            // Requests with an extension (e.g. .js, .css, .png) must resolve to a real file —
+            // returning index.html for a missing asset would mask broken references with a 200.
             const hasExtension = extname(urlPath) !== '';
-            const filePath = hasExtension && existsSync(safePath) && statSync(safePath).isFile() ? safePath : indexHtmlPath;
+            const fileExists = existsSync(safePath) && statSync(safePath).isFile();
+            let filePath;
+            if (hasExtension) {
+                if (!fileExists) {
+                    res.writeHead(404).end();
+                    return;
+                }
+                filePath = safePath;
+            } else {
+                filePath = fileExists ? safePath : indexHtmlPath;
+            }
 
             const ext = extname(filePath).toLowerCase();
             // index.html must not be cached so Lighthouse sees the current build; fingerprinted
@@ -222,15 +234,15 @@ async function waitForServer(url, timeoutMs = 10_000) {
 async function main() {
     if (!skipBuild) {
         if (!existsSync(join(staticRoot, 'index.html'))) {
-            console.log('> No production build found — running `npm run webapp:prod` …');
+            console.log('> No production build found — running `pnpm run webapp:prod` …');
         } else {
-            console.log('> Refreshing production build via `npm run webapp:prod` (use --skip-build to reuse an existing build)');
+            console.log('> Refreshing production build via `pnpm run webapp:prod` (use --skip-build to reuse an existing build)');
         }
-        await runCommand('npm', ['run', 'webapp:prod']);
+        await runCommand('pnpm', ['run', 'webapp:prod']);
     }
 
     if (!existsSync(join(staticRoot, 'index.html'))) {
-        throw new Error(`Expected built index.html at ${staticRoot}. Run \`npm run webapp:prod\` first, or drop --skip-build.`);
+        throw new Error(`Expected built index.html at ${staticRoot}. Run \`pnpm run webapp:prod\` first, or drop --skip-build.`);
     }
 
     mkdirSync(reportsDir, { recursive: true });
@@ -244,7 +256,7 @@ async function main() {
 
         const lighthouseBin = join(repoRoot, 'node_modules', '.bin', 'lighthouse');
         if (!existsSync(lighthouseBin)) {
-            throw new Error(`lighthouse is not installed. Run: npm install --save-dev lighthouse`);
+            throw new Error(`lighthouse is not installed. Run: pnpm add --save-dev lighthouse`);
         }
 
         const lighthouseArgs = [

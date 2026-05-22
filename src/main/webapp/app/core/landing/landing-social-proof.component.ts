@@ -86,10 +86,10 @@ import { UNIVERSITY_LOGOS } from 'app/core/landing/landing-data';
         }
     `,
     template: `
-        <section class="social-proof">
+        <section class="social-proof" [attr.aria-label]="'landing.socialProof.universitiesAria' | artemisTranslate">
             <p class="social-proof-title">{{ 'landing.socialProof.title' | artemisTranslate }}</p>
             <div class="marquee-container">
-                <div class="marquee-track" [attr.aria-label]="'landing.socialProof.universitiesAria' | artemisTranslate">
+                <div class="marquee-track">
                     @for (logo of logos; track logo.name) {
                         <img
                             class="logo-item"
