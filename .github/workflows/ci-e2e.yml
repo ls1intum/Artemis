@@ -35,7 +35,8 @@ on:
         required: false
 
 env:
-  # Stable commit-status context. Do not rename — historical statuses are looked up by this string.
+  # Commit-status context shown on the PR. Advisory only — branch protection requires the
+  # `All required CI Passed` gate, not this status.
   STATUS_CONTEXT: 'End-to-End (E2E) Tests'
   STATUSES_REQUEST_URL: "https://api.github.com/repos/${{ github.repository }}/statuses/${{ inputs.commit_sha }}"
   TARGET_URL: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"

@@ -53,26 +53,34 @@ jobs:
 
       # dorny/paths-filter handles the edge cases hand-rolled `git diff` does not:
       # initial commits, force-pushes, missing merge-base, and `merge_group` events.
-      - id: filter
+      # Two filter passes, because dorny's `predicate-quantifier` is a per-step setting and
+      # the two passes need opposite logic:
+      #   relevant (`every`): a file counts only if it matches ALL patterns — i.e. it is NOT
+      #     markdown, NOT LICENSE, NOT under documentation/. So `build` + `test` (the REQUIRED
+      #     jobs) run unless every changed file is pure docs. A new code or config path is
+      #     therefore never silently skipped (over-run is safe; a false-negative would merge
+      #     unbuilt code). Negation patterns only subtract under `every`; with the default
+      #     `some` they are dead, so this MUST stay its own step. dorny runs picomatch with
+      #     dot:true, so dotfiles (.npmrc, .github/...) match normally.
+      - id: relevant
         if: github.event_name != 'workflow_dispatch' || !inputs.force_build
         uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d  # v4.0.1
         with:
           # On push/merge_group: diff against the previous commit. On PR: against base.ref.
           base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || '' }}
+          predicate-quantifier: every
           filters: |
-            # build_relevant gates the REQUIRED build + test jobs. It uses ignore-semantics
-            # (run unless every changed file is clearly irrelevant) rather than an allow-list,
-            # so a forgotten path can never silently skip a required check. Last matching
-            # pattern wins per file (picomatch): a file counts unless its last match is negated.
-            build_relevant:
-              - '**'
+            build:
               - '!**/*.md'
               - '!LICENSE'
               - '!documentation/**'
-              - '!.github/**'
-              - '.github/workflows/ci.yml'
-              - '.github/workflows/ci-*.yml'
-              - '.github/actions/**'
+      #   area (default `some`): positive allow-lists (OR logic) that gate the advisory jobs.
+      - id: area
+        if: github.event_name != 'workflow_dispatch' || !inputs.force_build
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d  # v4.0.1
+        with:
+          base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || '' }}
+          filters: |
             has_java:
               - 'src/main/java/**'
               - 'src/test/java/**'
@@ -99,12 +107,12 @@ jobs:
             ${{ (github.event_name == 'workflow_dispatch' && inputs.force_build)
              || github.event_name == 'release'
              || github.event_name == 'merge_group' }}
-          F_BUILD: ${{ steps.filter.outputs.build_relevant }}
-          F_JAVA: ${{ steps.filter.outputs.has_java }}
-          F_DOCS: ${{ steps.filter.outputs.has_docs }}
-          F_I18N: ${{ steps.filter.outputs.has_i18n }}
-          F_GRADLE: ${{ steps.filter.outputs.has_gradle }}
-          F_WORKFLOWS: ${{ steps.filter.outputs.has_workflows }}
+          F_BUILD: ${{ steps.relevant.outputs.build }}
+          F_JAVA: ${{ steps.area.outputs.has_java }}
+          F_DOCS: ${{ steps.area.outputs.has_docs }}
+          F_I18N: ${{ steps.area.outputs.has_i18n }}
+          F_GRADLE: ${{ steps.area.outputs.has_gradle }}
+          F_WORKFLOWS: ${{ steps.area.outputs.has_workflows }}
         run: |
           set -Eeuo pipefail
           if [ "$FORCE" = "true" ]; then
@@ -199,17 +207,17 @@ jobs:
     permissions:
       contents: read
 
-  # Advisory (not required for merge — matches today, where E2E is decoupled via
-  # workflow_run and posts only a commit status). Depends on `build` for the Docker image,
-  # NOT on `test` (today E2E triggers on Build completion, independent of unit tests), so
-  # E2E starts as early as possible and a flaky unit-test run never blocks it.
+  # Advisory — not in the required gate. Depends on `build` for the Docker image, not on
+  # `test`, so a flaky unit-test run never blocks it; runs only when `build` succeeded
+  # (enforced implicitly by `needs:` without `always()`). Fork PRs are excluded: they cannot
+  # push the image to GHCR (ci-build.yml's docker-pr is internal-PR-only), so E2E would only
+  # fail at setup with no image to pull.
   e2e:
     name: E2E
     needs: [detect-changes, build]
-    if: |
-      always() &&
-      needs.detect-changes.outputs.build_relevant == 'true' &&
-      needs.build.result == 'success'
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name == github.repository
     uses: ./.github/workflows/ci-e2e.yml
     permissions:
       contents: read

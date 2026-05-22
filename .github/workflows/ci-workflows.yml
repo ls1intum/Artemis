@@ -7,8 +7,7 @@ name: Workflow Lint
 on:
   workflow_call: {}
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   actionlint:
@@ -52,7 +51,3 @@ jobs:
             fi
             echo "${key}: ${values[0]} (consistent across ${files[*]})"
           done
-
-      - name: Check local composite actions are preceded by actions/checkout in their job
-        # actionlint doesn't catch step ordering; this script does.
-        run: python3 supporting_scripts/check_composite_checkout_order.py

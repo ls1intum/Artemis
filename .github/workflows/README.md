@@ -62,11 +62,14 @@ the branch-protection ruleset — both, or branch protection blocks on a check t
 ### Why `build_relevant` uses ignore-semantics
 
 `detect-changes` decides whether the required `build`/`test` jobs run. It uses
-**ignore-semantics** (`'**'` minus a small set of clearly-irrelevant paths — docs, markdown,
-non-CI `.github` files) rather than an allow-list. A forgotten path therefore causes an
-*over-run* (safe), never a silent skip of a required check (which would be a false green).
-Cascading skips don't bypass the gate either: `detect-changes` is in the gate's `needs:`, so
-a change-detection failure fails the gate closed.
+**ignore-semantics**: build/test run unless *every* changed file is clearly irrelevant
+(markdown, `LICENSE`, or under `documentation/`). A new code or config path therefore causes
+an *over-run* (safe), never a silent skip of a required check (which would merge unbuilt
+code). This is implemented as a dedicated `dorny/paths-filter` step with
+`predicate-quantifier: every` and negation patterns — under the action's default `some`
+quantifier the negations are inert, so the area filters (positive allow-lists) live in a
+second step. Cascading skips don't bypass the gate either: `detect-changes` is in the gate's
+`needs:`, so a change-detection failure fails the gate closed.
 
 ## Action pinning policy
 
@@ -120,7 +123,11 @@ by the now-deleted `build.yml` / `test.yml`:
 Build .war artifact   server-tests   server-style   client-tests   client-style
 ```
 
-After merge, these five must be replaced with the single `CI / All required CI Passed`:
+After merge, these five must be replaced with the single gate. Note the context string:
+the PR-checks UI shows it as **`CI / All required CI Passed`**, but the branch-protection
+API stores the bare job name — pass **`All required CI Passed`** (no `CI / ` prefix) to the
+`required_status_checks` API, exactly as the legacy contexts were stored as `server-tests`
+rather than `Test / server-tests`.
 
 1. **Before merging**, snapshot the current state for rollback:
    ```bash
