@@ -26,8 +26,14 @@ ci.yml                                                            (single entry 
 ├── workflows       ── uses ci-workflows.yml      (if .github changed; actionlint)
 ├── e2e             ── uses ci-e2e.yml            (after build; advisory)
 │
-└── all-required-ci-passed       (jq gate over build + test — the single required check)
+├── all-required-ci-passed       (jq gate over build + test — the single required check)
+└── ci-summary                   (renders a table of every job's result; informational)
 ```
+
+`ci-summary` is a second terminal job: it `needs:` every job with `if: always()` and writes a
+markdown table (job · required/advisory · result) to the run's **Summary** page, so the whole
+pipeline's status is visible at a glance. It is informational — never required, never in another
+job's `needs:` — so it never blocks merging even though it waits for the long E2E run to report.
 
 ### Required vs. advisory
 

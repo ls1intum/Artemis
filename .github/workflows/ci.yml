@@ -259,3 +259,55 @@ jobs:
             echo "$failing"
             exit 1
           fi
+
+  # One consolidated table of every job (required + advisory) on the run's Summary page, so
+  # the whole pipeline's status is visible without clicking into each job. Informational only:
+  # not in any `needs:`, never required, and `always()` so it reports even when a job fails.
+  # It waits for all jobs (incl. the long E2E run) purely to show their final result.
+  ci-summary:
+    name: CI Summary
+    if: always()
+    needs:
+      - detect-changes
+      - build
+      - test
+      - java-analysis
+      - gradle-wrapper
+      - workflows
+      - docs
+      - translation
+      - e2e
+    runs-on: ubuntu-latest
+    permissions: {}
+    timeout-minutes: 5
+    steps:
+      - name: Render summary
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+          # Must match all-required-ci-passed's needs (minus detect-changes).
+          REQUIRED: build test
+        run: |
+          set -Eeuo pipefail
+          icon() {
+            case "$1" in
+              success)   printf '✅' ;;
+              failure)   printf '❌' ;;
+              skipped)   printf '⏭️' ;;
+              cancelled) printf '🚫' ;;
+              *)         printf '❔' ;;
+            esac
+          }
+          {
+            echo "## CI Summary"
+            echo
+            echo "| Job | Role | Result |"
+            echo "|-----|------|--------|"
+            while IFS=$'\t' read -r job result; do
+              if [ "$job" = "detect-changes" ]; then continue; fi
+              case " $REQUIRED " in
+                *" $job "*) role='**required**' ;;
+                *)          role='advisory' ;;
+              esac
+              printf '| `%s` | %s | %s %s |\n' "$job" "$role" "$(icon "$result")" "$result"
+            done < <(jq -r 'to_entries[] | "\(.key)\t\(.value.result)"' <<< "$NEEDS")
+          } >> "$GITHUB_STEP_SUMMARY"
