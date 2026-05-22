@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import { MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
@@ -148,6 +149,41 @@ describe('AdminSbomComponent', () => {
 
             expect(errorSpy).toHaveBeenCalledWith('artemisApp.dependencies.loadError');
             expect(component.loading()).toBe(false);
+            expect(component.sbomUnavailable()).toBe(false);
+        });
+
+        it('should set sbomUnavailable without showing a toast on 404', () => {
+            vi.spyOn(sbomService, 'getCombinedSbom').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+            const errorSpy = vi.spyOn(alertService, 'error');
+
+            component.loadSbom();
+
+            expect(component.sbomUnavailable()).toBe(true);
+            expect(component.loading()).toBe(false);
+            expect(errorSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not trigger loadVulnerabilities when the SBOM is unavailable', () => {
+            vi.spyOn(sbomService, 'getCombinedSbom').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+            const vulnSpy = vi.spyOn(sbomService, 'getVulnerabilities');
+
+            component.loadSbom();
+            component.loadVulnerabilities();
+
+            expect(vulnSpy).not.toHaveBeenCalled();
+        });
+
+        it('should clear sbomUnavailable on a subsequent successful load', () => {
+            vi.spyOn(sbomService, 'getCombinedSbom').mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 404 })));
+            component.loadSbom();
+            expect(component.sbomUnavailable()).toBe(true);
+
+            vi.spyOn(sbomService, 'getCombinedSbom').mockReturnValue(of(mockCombinedSbom));
+            vi.spyOn(sbomService, 'getVulnerabilities').mockReturnValue(of(mockVulnerabilities));
+            component.loadSbom();
+
+            expect(component.sbomUnavailable()).toBe(false);
+            expect(component.combinedSbom()).toEqual(mockCombinedSbom);
         });
     });
 
@@ -169,6 +205,16 @@ describe('AdminSbomComponent', () => {
             component.loadVulnerabilities();
 
             expect(errorSpy).toHaveBeenCalledWith('artemisApp.dependencies.vulnerabilityLoadError');
+            expect(component.loadingVulnerabilities()).toBe(false);
+        });
+
+        it('should suppress the toast when vulnerability load returns 404', () => {
+            vi.spyOn(sbomService, 'getVulnerabilities').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+            const errorSpy = vi.spyOn(alertService, 'error');
+
+            component.loadVulnerabilities();
+
+            expect(errorSpy).not.toHaveBeenCalled();
             expect(component.loadingVulnerabilities()).toBe(false);
         });
     });

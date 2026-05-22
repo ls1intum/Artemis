@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewEncapsulation, computed, effect, inject, output, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewEncapsulation, computed, effect, inject, input, output, viewChild } from '@angular/core';
+import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -17,11 +18,15 @@ import { MultipleChoiceVisualQuestionComponent } from 'app/quiz/shared/questions
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
 import { QuizScoringInfoModalComponent } from '../quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { OnInit, input } from '@angular/core';
 import { cloneDeep } from 'lodash-es';
 import { NgClass } from '@angular/common';
+import { SelectModule } from 'primeng/select';
+import { CheckboxModule } from 'primeng/checkbox';
+import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
 
 @Component({
     selector: 'jhi-multiple-choice-question-edit',
@@ -41,11 +46,26 @@ import { NgClass } from '@angular/common';
         MultipleChoiceVisualQuestionComponent,
         ArtemisTranslatePipe,
         NgClass,
+        SelectModule,
+        CheckboxModule,
+        InputTextModule,
+        InputNumberModule,
     ],
 })
 export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, OnInit {
     private modalService = inject(NgbModal);
     private changeDetector = inject(ChangeDetectorRef);
+    private translateService = inject(TranslateService);
+    private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
+
+    readonly scoringTypeOptions = computed(() => {
+        this.currentLocale();
+        return [
+            { label: this.translateService.instant('artemisApp.quizExercise.scoringType.all_or_nothing'), value: ScoringType.ALL_OR_NOTHING },
+            { label: this.translateService.instant('artemisApp.quizExercise.scoringType.proportional_with_penalty'), value: ScoringType.PROPORTIONAL_WITH_PENALTY },
+            { label: this.translateService.instant('artemisApp.quizExercise.scoringType.proportional_without_penalty'), value: ScoringType.PROPORTIONAL_WITHOUT_PENALTY },
+        ];
+    });
 
     readonly markdownEditor = viewChild<MarkdownEditorMonacoComponent>('markdownEditor');
 
@@ -264,6 +284,14 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
     toggleCollapse(): void {
         this.isQuestionCollapsed = !this.isQuestionCollapsed;
         this.collapseChanged.emit(this.isQuestionCollapsed);
+    }
+
+    refineAndExpand(): void {
+        if (this.isQuestionCollapsed) {
+            this.isQuestionCollapsed = false;
+            this.collapseChanged.emit(false);
+        }
+        this.refineRequested.emit();
     }
 
     /**

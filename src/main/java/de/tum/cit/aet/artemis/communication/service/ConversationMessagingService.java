@@ -57,6 +57,9 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.iris.api.AutonomousTutorApi;
 
 @Profile(PROFILE_CORE)
@@ -80,11 +83,14 @@ public class ConversationMessagingService extends PostingService {
 
     private final Optional<AutonomousTutorApi> autonomousTutorApi;
 
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
+
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, ConversationMessageRepository conversationMessageRepository,
             AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService, UserRepository userRepository,
             ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository, ChannelAuthorizationService channelAuthorizationService,
             SavedPostRepository savedPostRepository, CourseNotificationService courseNotificationService, PostRepository postRepository,
-            SingleUserNotificationService singleUserNotificationService, Optional<AutonomousTutorApi> autonomousTutorApi) {
+            SingleUserNotificationService singleUserNotificationService, Optional<AutonomousTutorApi> autonomousTutorApi,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         super(courseRepository, userRepository, exerciseRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository, savedPostRepository);
         this.conversationService = conversationService;
         this.conversationMessageRepository = conversationMessageRepository;
@@ -93,6 +99,7 @@ public class ConversationMessagingService extends PostingService {
         this.postRepository = postRepository;
         this.singleUserNotificationService = singleUserNotificationService;
         this.autonomousTutorApi = autonomousTutorApi;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateService;
     }
 
     /**
@@ -143,6 +150,8 @@ public class ConversationMessagingService extends PostingService {
 
         createdMessage.setAuthor(author);
         setAuthorRoleForPosting(createdMessage, course);
+
+        syncPostWithWeaviate(createdMessage, conversation);
 
         return new CreatedConversationMessage(createdMessage, conversation, mentionedUsers);
     }
@@ -343,6 +352,8 @@ public class ConversationMessagingService extends PostingService {
         Post updatedPost = conversationMessageRepository.save(existingMessage);
         updatedPost.setConversation(conversation);
 
+        syncPostWithWeaviate(updatedPost, conversation);
+
         // emit a post update via websocket
         preparePostForBroadcast(updatedPost);
         broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null);
@@ -368,6 +379,10 @@ public class ConversationMessagingService extends PostingService {
 
         // delete
         conversationMessageRepository.deleteById(postId);
+        searchableEntityWeaviateService.ifPresent(service -> {
+            service.deleteEntityAsync(SearchableEntitySchema.TypeValues.POST, postId);
+            service.deleteAllAnswerPostsForPostAsync(postId);
+        });
         conversationParticipantRepository.decrementUnreadMessagesCountOfParticipants(conversation.getId(), user.getId());
         conversation = conversationService.getConversationById(conversation.getId());
 
@@ -436,6 +451,20 @@ public class ConversationMessagingService extends PostingService {
         else {
             throw new AccessForbiddenException("You are not allowed to edit or delete this message");
         }
+    }
+
+    /**
+     * Synchronizes a post with Weaviate. Only posts in public, non-archived channels are indexed.
+     */
+    private void syncPostWithWeaviate(Post post, Conversation conversation) {
+        if (!(conversation instanceof Channel channel)) {
+            return;
+        }
+        searchableEntityWeaviateService.ifPresent(service -> {
+            if (PostSearchableEntityDTO.isIndexable(channel)) {
+                service.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, channel));
+            }
+        });
     }
 
     @Override
