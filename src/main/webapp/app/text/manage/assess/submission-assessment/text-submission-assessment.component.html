@@ -26,25 +26,14 @@
     (useAsExampleSubmission)="useStudentSubmissionAsExampleSubmission()"
 >
     @if (submission) {
-        <!--        TODO: The two if statements below are not displayed yet as hasAutomaticFeedback is currently always false -->
-        @if (hasAutomaticFeedback && isAssessor && !result?.completionDate && !isFeedbackSuggestionsEnabled) {
-            <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentAvailable"></div>
-        }
-        @if (hasAutomaticFeedback && isAssessor && !result?.completionDate && isFeedbackSuggestionsEnabled) {
-            <div class="alert alert-info">
-                <span jhiTranslate="artemisApp.modelingAssessmentEditor.generativeAIAssessmentAvailable"></span>
-                <span style="float: right" [ngbTooltip]="'artemisApp.modelingAssessmentEditor.generativeAIAssessmentInfo' | artemisTranslate" tooltipClass="tooltip-wide">
-                    <fa-icon [icon]="faQuestionCircle" size="lg" />
-                </span>
-            </div>
-        }
-        <!--        TODO: The line below is working, the translate key needs to be generalized-->
-        @if (isLoading() && isFeedbackSuggestionsEnabled) {
-            <div class="alert">
-                <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
-                <span jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentLoading"></span>
-            </div>
-        }
+        <!--        TODO: hasAutomaticFeedback is currently always false; the banner will not be shown until the feedback type detection is fixed -->
+        <jhi-feedback-suggestions-banner
+            [isLoading]="isLoading()"
+            [hasAutomaticFeedback]="hasAutomaticFeedback"
+            [isAssessor]="isAssessor"
+            [resultCompletionDate]="result?.completionDate"
+            [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled"
+        />
         <div class="row">
             <jhi-resizeable-container class="col-12">
                 <!--region Left Panel-->

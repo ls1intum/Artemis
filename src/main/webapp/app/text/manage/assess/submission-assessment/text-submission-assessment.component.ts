@@ -44,9 +44,7 @@ import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessm
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
-import { faCircleNotch, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -62,8 +60,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
         AssessmentInstructionsComponent,
         UnreferencedFeedbackComponent,
         RouterLink,
-        ArtemisTranslatePipe,
-        NgbTooltip,
+        FeedbackSuggestionsBannerComponent,
     ],
 })
 export class TextSubmissionAssessmentComponent extends TextAssessmentBaseComponent implements OnInit, OnDestroy {
@@ -82,10 +79,6 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * All properties must be initialized with a default value (or null) in the resetComponent() method.
      * For traceability: Keep order in resetComponent() consistent with declaration.
      */
-
-    // Icons
-    protected readonly faCircleNotch = faCircleNotch;
-    protected readonly faQuestionCircle = faQuestionCircle;
 
     participation?: StudentParticipation;
     result?: Result;

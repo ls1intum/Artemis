@@ -24,23 +24,13 @@
         (useAsExampleSubmission)="useStudentSubmissionAsExampleSubmission()"
     >
         @if (submission) {
-            @if (hasAutomaticFeedback && isAssessor && !result?.completionDate && !isFeedbackSuggestionsEnabled) {
-                <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentAvailable"></div>
-            }
-            @if (hasAutomaticFeedback && isAssessor && !result?.completionDate && isFeedbackSuggestionsEnabled) {
-                <div class="alert alert-info">
-                    <span jhiTranslate="artemisApp.modelingAssessmentEditor.generativeAIAssessmentAvailable"></span>
-                    <span style="float: right" [ngbTooltip]="'artemisApp.modelingAssessmentEditor.generativeAIAssessmentInfo' | artemisTranslate" tooltipClass="tooltip-wide">
-                        <fa-icon [icon]="faQuestionCircle" size="lg" />
-                    </span>
-                </div>
-            }
-            @if (isLoading && isFeedbackSuggestionsEnabled) {
-                <div class="alert">
-                    <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
-                    <span jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentLoading"></span>
-                </div>
-            }
+            <jhi-feedback-suggestions-banner
+                [isLoading]="isLoading"
+                [hasAutomaticFeedback]="hasAutomaticFeedback"
+                [isAssessor]="isAssessor"
+                [resultCompletionDate]="result?.completionDate"
+                [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled"
+            />
             <div class="editor-container flex-grow-1">
                 @if (submission) {
                     <jhi-modeling-assessment
@@ -107,73 +97,3 @@
         }
     </jhi-assessment-layout>
 </div>
-<ng-template #assessment>
-    @if (hasAutomaticFeedback && isAssessor && !result?.completionDate && !isFeedbackSuggestionsEnabled) {
-        <div class="alert alert-info" jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentAvailable"></div>
-    }
-    @if (hasAutomaticFeedback && isAssessor && !result?.completionDate && isFeedbackSuggestionsEnabled) {
-        <div class="alert alert-info">
-            <span jhiTranslate="artemisApp.modelingAssessmentEditor.generativeAIAssessmentAvailable"></span>
-            <span style="float: right" [ngbTooltip]="'artemisApp.modelingAssessmentEditor.generativeAIAssessmentInfo' | artemisTranslate" tooltipClass="tooltip-wide">
-                <fa-icon [icon]="faQuestionCircle" size="lg" />
-            </span>
-        </div>
-    }
-    @if (isLoading && isFeedbackSuggestionsEnabled) {
-        <div class="alert">
-            <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
-            <span jhiTranslate="artemisApp.modelingAssessmentEditor.automaticAssessmentLoading"></span>
-        </div>
-    }
-    <div class="editor-container flex-grow-1">
-        @if (submission) {
-            <jhi-modeling-assessment
-                [diagramType]="modelingExercise?.diagramType"
-                [maxScore]="modelingExercise?.maxPoints || 0"
-                [maxBonusPoints]="modelingExercise?.bonusPoints || 0"
-                [totalScore]="totalScore"
-                [umlModel]="model!"
-                [readOnly]="readOnly"
-                [resultFeedbacks]="result?.feedbacks || []"
-                [highlightedElements]="highlightedElements"
-                (feedbackChanged)="onFeedbackChanged($event)"
-                [explanation]="submission?.explanationText || ''"
-                [highlightDifferences]="highlightDifferences"
-                [elementCounts]="submission && submission.similarElements"
-                [resizeOptions]="resizeOptions"
-                [course]="course"
-            />
-        }
-        @if (modelingExercise) {
-            <jhi-collapsable-assessment-instructions [readOnly]="false" [exercise]="modelingExercise" [collapsed]="false" />
-        }
-    </div>
-    <div class="row mt-3">
-        @if (result && result.id) {
-            <jhi-unreferenced-feedback
-                [(feedbacks)]="unreferencedFeedback"
-                (feedbacksChange)="validateFeedback()"
-                [readOnly]="readOnly"
-                [highlightDifferences]="highlightDifferences"
-                [resultId]="result.id"
-            />
-        }
-        @if ((hasAutomaticFeedback || highlightMissingFeedback) && !result?.completionDate) {
-            <div class="col-md-6">
-                <h4 jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.title"></h4>
-                @if (hasAutomaticFeedback) {
-                    <div class="row">
-                        <div class="mx-3 mb-2 highlighting-item color-cyan"></div>
-                        <span jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.automaticAssessment"></span>
-                    </div>
-                }
-                @if (highlightMissingFeedback) {
-                    <div class="row">
-                        <div class="mx-3 mb-2 highlighting-item color-red"></div>
-                        <span jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.missingAssessment"></span>
-                    </div>
-                }
-            </div>
-        }
-    </div>
-</ng-template>

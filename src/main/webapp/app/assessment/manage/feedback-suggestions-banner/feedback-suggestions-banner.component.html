@@ -1,0 +1,27 @@
+@if (hasAutomaticFeedback() && isAssessor() && !resultCompletionDate() && !isFeedbackSuggestionsEnabled()) {
+    <p-message severity="info" styleClass="w-100 mb-2" [closable]="false">
+        <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.automaticAssessmentAvailable"></span>
+    </p-message>
+}
+@if (hasAutomaticFeedback() && isAssessor() && !resultCompletionDate() && isFeedbackSuggestionsEnabled()) {
+    <p-message severity="info" styleClass="w-100 mb-2" [closable]="false">
+        <div class="d-flex justify-content-between align-items-center w-100">
+            <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentAvailable"></span>
+            <fa-icon
+                [icon]="faQuestionCircle"
+                size="lg"
+                class="ms-2 cursor-pointer"
+                [pTooltip]="'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentInfo' | artemisTranslate"
+                tooltipPosition="left"
+            />
+        </div>
+    </p-message>
+}
+@if (isLoading() && isFeedbackSuggestionsEnabled()) {
+    <p-message severity="secondary" styleClass="w-100 mb-2" [closable]="false">
+        <div class="d-flex align-items-center">
+            <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
+            <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"></span>
+        </div>
+    </p-message>
+}

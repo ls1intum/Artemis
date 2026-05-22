@@ -31,14 +31,11 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
-import { faCircleNotch, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ModelingAssessmentComponent } from '../modeling-assessment.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -47,13 +44,11 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     imports: [
         AssessmentLayoutComponent,
         TranslateDirective,
-        NgbTooltip,
-        FaIconComponent,
         ModelingAssessmentComponent,
         CollapsableAssessmentInstructionsComponent,
         UnreferencedFeedbackComponent,
         RouterLink,
-        ArtemisTranslatePipe,
+        FeedbackSuggestionsBannerComponent,
     ],
 })
 export class ModelingAssessmentEditorComponent implements OnInit {
@@ -107,9 +102,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     isApollonModelLoaded = false;
 
     private cancelConfirmationText: string;
-
-    protected readonly faCircleNotch = faCircleNotch;
-    protected readonly faQuestionCircle = faQuestionCircle;
 
     constructor() {
         const translateService = this.translateService;
