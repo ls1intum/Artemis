@@ -80,6 +80,7 @@ export class ExerciseTeamsPage {
 
         const courseIdMatch = this.page.url().match(/\/course-management\/(\d+)/);
         const courseId = courseIdMatch?.[1];
+        const tutorsUrlSubstring = courseId ? `/api/core/courses/${courseId}/tutors` : undefined;
         const routePattern = courseId ? `**/api/core/courses/${courseId}/tutors` : undefined;
         let routeInstalled = false;
 
@@ -104,17 +105,41 @@ export class ExerciseTeamsPage {
         try {
             await inputLocator.waitFor({ state: 'visible', timeout: 30_000 });
 
+            // Settle for any pending change detection from the previous fields (most
+            // importantly the team-shortname `existsByShortName` 500 ms-debounced HTTP)
+            // before touching the tutor typeahead. Under heavy parallel multi-node load the
+            // ngbTypeahead directive's `_valueChanges$` listener occasionally needs a tick
+            // to fully wire up to the host input — a short settle reliably moves the
+            // typeahead's setup out of the contended window where the very first interaction
+            // would otherwise be missed.
+            await this.page.waitForTimeout(800);
+
             // The listbox timeout per attempt is large enough to absorb real-network latency
             // when the route mock is not installed (prefetch failed), but short enough that
             // four retries still fit comfortably inside the per-test budget.
             const listboxTimeoutMs = routeInstalled ? 15_000 : 45_000;
             for (let attempt = 0; attempt < 4; attempt++) {
-                if (attempt > 0) {
-                    await this.page.waitForTimeout(500);
-                    await inputLocator.clear();
-                }
+                const tutorResponsePromise = tutorsUrlSubstring
+                    ? this.page.waitForResponse((resp) => resp.url().includes(tutorsUrlSubstring) && resp.ok(), { timeout: listboxTimeoutMs }).catch(() => undefined)
+                    : Promise.resolve(undefined);
+
+                // pressSequentially against the locator: auto-focuses the input, fires real
+                // keyboard input events that ngbTypeahead's `fromEvent(_, 'input')` listener
+                // reliably receives — matching the proven `searchStudent` pattern. After
+                // typing we wait briefly to honour the typeahead's `debounceTime(200)` on
+                // text$ so the final value lands as a single trailing emission rather than
+                // a burst that switchMap's still-resolving inner HTTP cancels.
                 await inputLocator.click();
-                await this.page.keyboard.type(username, { delay: 30 });
+                await inputLocator.fill('');
+                await this.page.waitForTimeout(300);
+                await inputLocator.pressSequentially(username, { delay: 100 });
+
+                // Wait for the tutors HTTP to complete (mock or real). The route mock returns
+                // instantly; the real network can take a few seconds under load. If the wait
+                // times out we still proceed to the visibility check — the typeahead may have
+                // emitted from a previously-cached list without re-issuing the HTTP.
+                await tutorResponsePromise;
+
                 try {
                     await listbox.waitFor({ state: 'visible', timeout: listboxTimeoutMs });
                     const option = listbox.getByText(new RegExp(escapeRegExp(username), 'i')).first();
@@ -123,6 +148,17 @@ export class ExerciseTeamsPage {
                     return;
                 } catch {
                     if (attempt === 3) throw new Error(`Tutor search autocomplete did not appear after 4 attempts for '${username}'`);
+                    // On retry: re-trigger the typeahead by dispatching a synthetic input
+                    // event with the value (in addition to the natural pressSequentially
+                    // chain above). Under heavy multi-node load the first natural input
+                    // event from a brand-new ngbTypeahead host occasionally reaches the
+                    // listener before the directive has subscribed to its result observable;
+                    // a follow-up dispatch lands after the subscription is established.
+                    await inputLocator.evaluate((el: HTMLInputElement, value: string) => {
+                        el.value = value;
+                        el.dispatchEvent(new Event('input', { bubbles: true }));
+                    }, username);
+                    await this.page.waitForTimeout(500);
                 }
             }
         } finally {
