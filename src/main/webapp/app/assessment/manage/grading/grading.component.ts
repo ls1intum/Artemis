@@ -902,7 +902,7 @@ export class GradingComponent implements OnInit {
     }
 
     private async readGradingStepsFromCSVFile(csvFile: File) {
-        let csvGradeSteps: CsvGradeStep[] = [];
+        let csvGradeSteps: CsvGradeStep[];
         try {
             csvGradeSteps = await this.parseCSVFile(csvFile);
         } catch (error) {
