@@ -37,8 +37,10 @@
                 "slide": "Slide {{ n }}"
             }
         },
+        "skipToMain": "Skip to main content",
         "socialProof": {
-            "title": "Adopted across leading educational institutions"
+            "title": "Adopted across leading educational institutions",
+            "universitiesAria": "Universities using Artemis"
         },
         "features": {
             "title": "A complete learning ecosystem",

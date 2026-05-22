@@ -569,7 +569,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
 
                             // Create new conversation if necessary
                             if (userLogins.length > 0) {
-                                let newConversation: Conversation | undefined = undefined;
+                                let newConversation: Conversation | undefined;
 
                                 if (userLogins.length === 1) {
                                     // Direct message
