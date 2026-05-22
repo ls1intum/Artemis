@@ -304,7 +304,12 @@
             </a>
         }
         @if (isCommunicationEnabled(course()) && course().isAtLeastTutor) {
-            <a [routerLink]="['/courses', course().id, 'communication']" class="btn btn-primary" [ngbTooltip]="'artemisApp.courseOverview.menu.communication' | artemisTranslate">
+            <a
+                [routerLink]="['/courses', course().id, 'communication']"
+                class="btn btn-primary"
+                [ngbTooltip]="'artemisApp.courseOverview.menu.communication' | artemisTranslate"
+                id="course-card-open-communication"
+            >
                 <fa-icon [icon]="faComments" />
                 <span class="d-none d-xl-inline" jhiTranslate="artemisApp.metis.communication.label"></span>
             </a>
