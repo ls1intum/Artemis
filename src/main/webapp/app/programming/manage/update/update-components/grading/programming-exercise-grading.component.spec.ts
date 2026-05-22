@@ -169,7 +169,6 @@ describe('ProgrammingExerciseGradingComponent', () => {
         comp.submissionPolicyUpdateComponent = { form: { valueChanges: new Subject() } } as any as SubmissionPolicyUpdateComponent;
         comp.lifecycleComponent = { formValidChanges: new Subject() } as any as ProgrammingExerciseUpdateTimelineComponent;
 
-        comp.ngAfterContentInit();
         comp.ngAfterViewInit();
 
         (comp.submissionPolicyUpdateComponent.form.valueChanges as Subject<boolean>).next(false);
