@@ -27,13 +27,21 @@ ci.yml                                                            (single entry 
 ├── e2e             ── uses ci-e2e.yml            (after build; advisory)
 │
 ├── all-required-ci-passed       (jq gate over build + test — the single required check)
-└── ci-summary                   (renders a table of every job's result; informational)
+└── ci-summary                   (Gantt timeline + per-job table; informational)
 ```
 
-`ci-summary` is a second terminal job: it `needs:` every job with `if: always()` and writes a
-markdown table (job · required/advisory · result) to the run's **Summary** page, so the whole
-pipeline's status is visible at a glance. It is informational — never required, never in another
-job's `needs:` — so it never blocks merging even though it waits for the long E2E run to report.
+`ci-summary` is a second terminal job: it `needs:` every job with `if: always()` and writes to
+the run's **Summary** page:
+
+- a **Gantt timeline** of every job and step (`Kesin11/actions-timeline`), which surfaces the
+  critical-path bottleneck at a glance — it reads the run's jobs API, so it captures the
+  reusable children (`Build / …`, `Test / …`, `E2E / …`), not just the umbrella jobs;
+- a **per-job table** (job · required/advisory · result);
+- on failure only, a small **local-fix** table (the one thing the Checks UI never shows).
+
+It is informational — never required, never in another job's `needs:` — so it never blocks
+merging even though it waits for the long E2E run to report. It holds only `actions: read`
+(needed by the timeline to read the jobs API); everything else is pure bash over `needs`.
 
 ### Required vs. advisory
 

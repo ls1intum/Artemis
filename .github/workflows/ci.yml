@@ -278,9 +278,15 @@ jobs:
       - translation
       - e2e
     runs-on: ubuntu-latest
-    permissions: {}
+    permissions:
+      actions: read  # actions-timeline reads the run's jobs API
     timeout-minutes: 5
     steps:
+      # Mermaid Gantt of every job/step (reusable children included) on the Summary page.
+      - name: Render run timeline
+        uses: Kesin11/actions-timeline@44c9c178ffb2fb1d9859614a3ffa79ccfb77565e  # v3.1.0
+        with:
+          show-waiting-runner: true
       - name: Render summary
         env:
           NEEDS: ${{ toJSON(needs) }}
@@ -297,6 +303,7 @@ jobs:
               *)         printf '❔' ;;
             esac
           }
+          any_failure=$(jq -r 'any(.[]; .result == "failure")' <<< "$NEEDS")
           {
             echo "## CI Summary"
             echo
@@ -310,4 +317,21 @@ jobs:
               esac
               printf '| `%s` | %s | %s %s |\n' "$job" "$role" "$(icon "$result")" "$result"
             done < <(jq -r 'to_entries[] | "\(.key)\t\(.value.result)"' <<< "$NEEDS")
+
+            # Local-fix hints — the one thing the Checks UI never shows. Failure-gated so it
+            # stays invisible on green runs. Commands are the canonical ones from CLAUDE.md.
+            if [ "$any_failure" = "true" ]; then
+              echo
+              echo "<details><summary>💡 Common local fixes</summary>"
+              echo
+              echo "| Symptom | Command |"
+              echo "|---------|---------|"
+              echo "| Server formatting (Spotless) | \`./gradlew spotlessApply\` |"
+              echo "| Client lint / formatting | \`pnpm run lint:fix && pnpm run prettier:write\` |"
+              echo "| Client tests (changed files) | \`pnpm run test-diff\` |"
+              echo "| Java code quality | \`./gradlew checkstyleMain modernizer\` |"
+              echo
+              echo "Failed test details are in the **Test** and **E2E** checks above."
+              echo "</details>"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
