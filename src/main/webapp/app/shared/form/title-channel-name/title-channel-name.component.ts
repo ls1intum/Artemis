@@ -6,6 +6,9 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CustomNotIncludedInValidatorDirective } from '../../validators/custom-not-included-in-validator.directive';
 import { HelpIconComponent } from '../../components/help-icon/help-icon.component';
 
+/**
+ * @deprecated Use {@link TitleChannelNamePrimengComponent} instead.
+ */
 @Component({
     selector: 'jhi-title-channel-name',
     templateUrl: './title-channel-name.component.html',
