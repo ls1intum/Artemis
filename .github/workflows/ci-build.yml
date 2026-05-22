@@ -28,6 +28,9 @@ on:
         required: true
         type: string
 
+# Default-deny at workflow level; each job grants only what it needs.
+permissions: {}
+
 # Workflow-level node/java pins are drift-checked by ci-workflows.yml.
 env:
   CI: true
@@ -192,6 +195,10 @@ jobs:
   docker-release:
     name: Build and Push Docker Image
     if: ${{ !inputs.is_pr }}
+    # The reusable only checks out and pushes to GHCR via GITHUB_TOKEN (no attestation/release).
+    permissions:
+      contents: read
+      packages: write
     uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@v1.2.0
     with:
       ref: ${{ inputs.ref_name }}
