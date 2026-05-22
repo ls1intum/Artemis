@@ -99,4 +99,36 @@ describe('ExerciseTimeline', () => {
 
         expect(item.date()).toBeUndefined();
     });
+
+    it('should not update timeline item date for partial manual input', () => {
+        const initialDate = dayjs('2026-01-01T11:11:00');
+        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(initialDate) };
+        const input = { value: '01.01.2026 11:1' } as HTMLInputElement;
+        fixture.componentRef.setInput('timelineItems', [item]);
+
+        component.handleManualInput(item, { target: input } as unknown as Event);
+
+        expect(item.date()).toBe(initialDate);
+        expect(component.internalTimelineItems()[0].internalDate).toEqual(initialDate.toDate());
+    });
+
+    it('should update timeline item date for complete valid manual input', () => {
+        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(dayjs('2026-01-01T11:11:00')) };
+        fixture.componentRef.setInput('timelineItems', [item]);
+
+        component.handleManualInput(item, { target: { value: '02.01.2026 12:30' } } as unknown as Event);
+
+        expect(item.date()?.isSame(dayjs('2026-01-02T12:30:00'))).toBeTrue();
+        expect(component.internalTimelineItems()[0].internalDate).toEqual(item.date()?.toDate());
+    });
+
+    it('should clear timeline item date for empty manual input', () => {
+        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(dayjs('2026-01-01T11:11:00')) };
+        fixture.componentRef.setInput('timelineItems', [item]);
+
+        component.handleManualInput(item, { target: { value: '' } } as unknown as Event);
+
+        expect(item.date()).toBeUndefined();
+        expect(component.internalTimelineItems()[0].internalDate).toBeUndefined();
+    });
 });

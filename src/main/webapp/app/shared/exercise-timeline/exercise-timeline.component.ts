@@ -32,6 +32,9 @@ type InternalTimelineItem = TimelineItem & {
 export class ExerciseTimelineComponent {
     private translateService = inject(TranslateService);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
+    private readonly fullDateTimePattern = /^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}$/;
+    private readonly dateTimeFormat = 'DD.MM.YYYY HH:mm';
+
     timelineItems = input.required<TimelineItem[]>();
     readonly = input<boolean>(false);
     internalTimelineItems = computed<InternalTimelineItem[]>(() => this.computeInternalTimelineItems());
@@ -51,6 +54,37 @@ export class ExerciseTimelineComponent {
         const oldAndNewDateUndefined = currentDate === undefined && newDate === undefined;
         const oldAndNewDatesAreTheSame = currentDate !== undefined && newDate !== undefined && currentDate.isSame(newDate);
         if (oldAndNewDateUndefined || oldAndNewDatesAreTheSame) return;
+        item.date.set(newDate);
+    }
+
+    handleManualInput(item: TimelineItem, event: Event): void {
+        const value = (event.target as HTMLInputElement).value;
+        if (value.trim() === '') {
+            this.updateDate(item, null);
+            return;
+        }
+
+        if (!this.fullDateTimePattern.test(value)) {
+            return;
+        }
+
+        const parsedDate = dayjs(value, this.dateTimeFormat, true);
+        if (parsedDate.isValid()) {
+            this.setDateIfChanged(item, parsedDate);
+        }
+    }
+
+    commitSelectedDate(item: TimelineItem, value: Date | Date[] | null): void {
+        this.updateDate(item, value instanceof Date ? value : null);
+    }
+
+    clearDate(item: TimelineItem): void {
+        this.updateDate(item, null);
+    }
+
+    private setDateIfChanged(item: TimelineItem, newDate: Dayjs): void {
+        const currentDate = item.date();
+        if (currentDate?.isSame(newDate)) return;
         item.date.set(newDate);
     }
 
