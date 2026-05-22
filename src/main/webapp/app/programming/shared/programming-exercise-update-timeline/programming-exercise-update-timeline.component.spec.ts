@@ -46,7 +46,7 @@ class TestHostComponent {
     isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord: Record<ProgrammingExerciseInputField, boolean> | undefined = undefined;
 }
 
-describe('ProgrammingExerciseLifecycleComponent', () => {
+describe('ProgrammingExerciseUpdateTimelineComponent', () => {
     let fixture: ComponentFixture<TestHostComponent>;
     let component: ProgrammingExerciseUpdateTimelineComponent;
     let activatedRouteUrlSubject: BehaviorSubject<UrlSegment[]>;
@@ -193,11 +193,15 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         expect(fixture.debugElement.nativeElement.querySelector('#defineDateForRunningTestsAfterDueDate')).not.toBeNull();
     });
 
-    it('should display enabling to run tests after due date toggle if due date is available and no current mode record is available', () => {
+    it('should display enabled enabling to run tests after due date toggle if due date is available and no current mode record is available', () => {
         createHostComponent();
 
+        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#defineDateForRunningTestsAfterDueDate');
+
         expect(component.isEnablingToRunTestsAfterDueDateToggleVisible()).toBeTrue();
-        expect(fixture.debugElement.nativeElement.querySelector('#defineDateForRunningTestsAfterDueDate')).not.toBeNull();
+        expect(component.isEnablingToRunTestsAfterDueDateToggleEnabled()).toBeTrue();
+        expect(checkbox).not.toBeNull();
+        expect(checkbox.disabled).toBeFalse();
     });
 
     it('should display enabling to run tests after due date toggle if due date is available and current mode record allows it', () => {
@@ -209,15 +213,21 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         expect(fixture.debugElement.nativeElement.querySelector('#defineDateForRunningTestsAfterDueDate')).not.toBeNull();
     });
 
-    it('should not display enabling to run tests after due date toggle if not in exam mode and due date is unavailable', () => {
+    it('should display disabled enabling to run tests after due date toggle if not in exam mode and due date is unavailable', async () => {
         exercise.dueDate = undefined;
         createHostComponent();
+        await fixture.whenStable();
+        fixture.detectChanges();
 
-        expect(component.isEnablingToRunTestsAfterDueDateToggleVisible()).toBeFalse();
-        expect(fixture.debugElement.nativeElement.querySelector('#defineDateForRunningTestsAfterDueDate')).toBeNull();
+        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#defineDateForRunningTestsAfterDueDate');
+
+        expect(component.isEnablingToRunTestsAfterDueDateToggleVisible()).toBeTrue();
+        expect(component.isEnablingToRunTestsAfterDueDateToggleEnabled()).toBeFalse();
+        expect(checkbox).not.toBeNull();
+        expect(checkbox.disabled).toBeTrue();
     });
 
-    it('should hide running tests after due date picker and clear its date if enabling toggle becomes unavailable', () => {
+    it('should hide running tests after due date picker and clear its date if enabling toggle becomes disabled', () => {
         exercise.buildAndTestStudentSubmissionsAfterDueDate = afterDueDate;
         createHostComponent();
 
@@ -227,7 +237,8 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         exercise.dueDate = undefined;
         fixture.detectChanges();
 
-        expect(component.isEnablingToRunTestsAfterDueDateToggleVisible()).toBeFalse();
+        expect(component.isEnablingToRunTestsAfterDueDateToggleVisible()).toBeTrue();
+        expect(component.isEnablingToRunTestsAfterDueDateToggleEnabled()).toBeFalse();
         expect(component.isDatePickerForRunningTestsAfterDueDateVisible()).toBeFalse();
         expect(exercise.buildAndTestStudentSubmissionsAfterDueDate).toBeUndefined();
     });
@@ -355,11 +366,15 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         expect(fixture.debugElement.nativeElement.querySelector('#manualAssessmentEnabled')).not.toBeNull();
     });
 
-    it('should display semi-automatic assessment toggle if due date is available and no current mode record is available', () => {
+    it('should display enabled semi-automatic assessment toggle if due date is available and no current mode record is available', () => {
         createHostComponent();
 
+        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#manualAssessmentEnabled');
+
         expect(component.isSemiAutomaticAssessmentToggleVisible()).toBeTrue();
-        expect(fixture.debugElement.nativeElement.querySelector('#manualAssessmentEnabled')).not.toBeNull();
+        expect(component.isSemiAutomaticAssessmentToggleEnabled()).toBeTrue();
+        expect(checkbox).not.toBeNull();
+        expect(checkbox.disabled).toBeFalse();
     });
 
     it('should display semi-automatic assessment toggle if due date is available and current mode record allows assessment due date', () => {
@@ -371,12 +386,16 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         expect(fixture.debugElement.nativeElement.querySelector('#manualAssessmentEnabled')).not.toBeNull();
     });
 
-    it('should not display semi-automatic assessment toggle if not in exam mode, not importing, and due date is unavailable', () => {
+    it('should display disabled semi-automatic assessment toggle if not in exam mode, not importing, and due date is unavailable', () => {
         exercise.dueDate = undefined;
         createHostComponent();
 
-        expect(component.isSemiAutomaticAssessmentToggleVisible()).toBeFalse();
-        expect(fixture.debugElement.nativeElement.querySelector('#manualAssessmentEnabled')).toBeNull();
+        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#manualAssessmentEnabled');
+
+        expect(component.isSemiAutomaticAssessmentToggleVisible()).toBeTrue();
+        expect(component.isSemiAutomaticAssessmentToggleEnabled()).toBeFalse();
+        expect(checkbox).not.toBeNull();
+        expect(checkbox.disabled).toBeTrue();
     });
 
     it('should show semi-automatic assessment due date picker if semi-automatic assessment is enabled for a course exercise without feedback requests', () => {
