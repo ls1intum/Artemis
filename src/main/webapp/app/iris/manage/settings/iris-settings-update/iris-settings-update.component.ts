@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
-import { faCheck, faClock, faCog, faExclamationTriangle, faLightbulb } from '@fortawesome/free-solid-svg-icons';
+import { faCog, faExclamationTriangle, faLightbulb } from '@fortawesome/free-solid-svg-icons';
+import { faClock, faUser } from '@fortawesome/free-regular-svg-icons';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { cloneDeep, isEqual } from 'lodash-es';
 import { AccountService } from 'app/core/auth/account.service';
@@ -14,6 +15,7 @@ import { captureException } from '@sentry/angular';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import {
     IRIS_PIPELINE_VARIANTS,
+    IRIS_SUPPORT_LEVELS,
     IrisCourseSettingsDTO,
     IrisCourseSettingsWithRateLimitDTO,
     IrisPipelineVariant,
@@ -21,6 +23,7 @@ import {
     IrisSupportLevel,
     SLIDER_VALUE_TO_SUPPORT_LEVEL,
     SUPPORT_LEVEL_SLIDER_VALUES,
+    createDefaultCourseSettings,
 } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
@@ -28,8 +31,11 @@ import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/
 import { TabsModule } from 'primeng/tabs';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { SliderModule } from 'primeng/slider';
+import { TextareaModule } from 'primeng/textarea';
+import { SelectModule } from 'primeng/select';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { ButtonDirective } from 'primeng/button';
-import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
+import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 
 /**
  * Component for editing Iris course-level settings.
@@ -49,6 +55,9 @@ import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iri
         TabsModule,
         ToggleSwitchModule,
         SliderModule,
+        TextareaModule,
+        SelectModule,
+        InputNumberModule,
         ButtonDirective,
         IrisLogoComponent,
     ],
@@ -71,8 +80,10 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     // Original settings for dirty checking
     private readonly originalSettings = signal<IrisCourseSettingsDTO | undefined>(undefined);
 
-    // Available variants (expose constant for template)
-    protected readonly IRIS_PIPELINE_VARIANTS = IRIS_PIPELINE_VARIANTS;
+    // Available variants for the admin pipeline-variant select.
+    // A mutable copy of the readonly IRIS_PIPELINE_VARIANTS constant, since
+    // PrimeNG's p-select `options` input expects a mutable array.
+    protected readonly pipelineVariantOptions: IrisPipelineVariant[] = [...IRIS_PIPELINE_VARIANTS];
 
     // Local form fields for rate limit (separate from settings to preserve null semantics)
     // These are always safe to bind in the template, and we reconstruct rateLimit on save
@@ -147,17 +158,24 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     });
 
     // Icons
-    readonly faCheck = faCheck;
     readonly faExclamationTriangle = faExclamationTriangle;
     readonly faCog = faCog;
     readonly faClock = faClock;
     readonly faLightbulb = faLightbulb;
-
-    // Expose enum for template binding (iris logo size)
-    protected readonly IrisLogoSize = IrisLogoSize;
+    readonly faUser = faUser;
 
     // Active settings tab
     readonly activeTab = signal<string>('general');
+
+    /**
+     * Updates the active tab from the PrimeNG tabs valueChange event, which emits
+     * `string | number | undefined`. All tab values in this component are strings.
+     */
+    protected setActiveTab(value: string | number | undefined): void {
+        if (value !== undefined) {
+            this.activeTab.set(String(value));
+        }
+    }
 
     // Character limit for custom instructions
     readonly CUSTOM_INSTRUCTIONS_MAX_LENGTH = 2048;
@@ -172,8 +190,56 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
      */
     readonly supportLevelSliderValue = computed(() => SUPPORT_LEVEL_SLIDER_VALUES[this.currentSupportLevel()] ?? 50);
 
+    /**
+     * Clickable tick marks for the support-level slider, one per support level.
+     * Derived from the shared support-level constants so the slider stays in sync.
+     */
+    readonly supportLevelTicks: ReadonlyArray<{ level: IrisSupportLevel; value: number }> = IRIS_SUPPORT_LEVELS.map((level) => ({
+        level,
+        value: SUPPORT_LEVEL_SLIDER_VALUES[level],
+    }));
+
+    /** Drives the slider handle's "pop" micro animation; see playHandlePop(). */
+    readonly handlePopping = signal(false);
+
+    /**
+     * The Additional Guidelines textarea. PrimeNG's `[autoResize]` sizes the
+     * textarea from its `scrollHeight`, which is `0` while the General tab is
+     * hidden (the inactive tab panel is `display: none`). Returning to the tab
+     * does not re-trigger that calculation, so the textarea stays collapsed
+     * until the next `input` event. We hold a reference to recompute the
+     * height ourselves whenever the General tab becomes visible again.
+     */
+    private readonly customInstructionsTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('customInstructionsTextarea');
+
     constructor() {
         this.isAdmin.set(this.accountService.isAdmin());
+
+        // When the General tab becomes active again, re-run PrimeNG's autoResize
+        // height calculation, which would otherwise have been computed as 0 while
+        // the tab panel was hidden.
+        effect(() => {
+            if (this.activeTab() === 'general') {
+                this.resizeCustomInstructionsTextarea();
+            }
+        });
+    }
+
+    /**
+     * Recompute the Additional Guidelines textarea height to fit its content,
+     * mirroring PrimeNG's `autoResize` logic. Deferred to the next animation
+     * frame so the tab panel is visible (and thus has a valid `scrollHeight`)
+     * by the time the height is measured.
+     */
+    private resizeCustomInstructionsTextarea(): void {
+        requestAnimationFrame(() => {
+            const textarea = this.customInstructionsTextarea()?.nativeElement;
+            if (!textarea) {
+                return;
+            }
+            textarea.style.height = 'auto';
+            textarea.style.height = `${textarea.scrollHeight}px`;
+        });
     }
 
     ngOnInit(): void {
@@ -396,6 +462,29 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     }
 
     /**
+     * Reset the General-tab settings to their default values and persist immediately.
+     *
+     * Stages the defaults into the `settings` signal, then calls `saveSettings()` so
+     * the change is written to the server right away (no separate "Save Changes" step).
+     * Only the General-tab editable fields are reset: `supportLevel` and
+     * `customInstructions`. The `enabled` toggle (auto-saved separately) and the
+     * admin-only `variant` / `rateLimit` fields are left as they are.
+     */
+    resetToDefault(): void {
+        const currentSettings = this.settings();
+        if (!currentSettings) {
+            return;
+        }
+        const defaults = createDefaultCourseSettings();
+        this.settings.set({
+            ...currentSettings,
+            supportLevel: defaults.supportLevel,
+            customInstructions: defaults.customInstructions,
+        });
+        this.saveSettings();
+    }
+
+    /**
      * Update custom instructions in the settings signal
      */
     updateCustomInstructions(value: string): void {
@@ -414,6 +503,17 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         if (currentSettings) {
             this.settings.set({ ...currentSettings, supportLevel: level });
         }
+        this.playHandlePop();
+    }
+
+    /**
+     * Re-triggers the slider handle's "pop" micro animation. The CSS animation
+     * only plays once per element, so the driving class is toggled off and
+     * back on (via two animation frames) to restart it on every value change.
+     */
+    private playHandlePop(): void {
+        this.handlePopping.set(false);
+        requestAnimationFrame(() => requestAnimationFrame(() => this.handlePopping.set(true)));
     }
 
     /**

@@ -472,6 +472,82 @@ describe('IrisSettingsUpdateComponent', () => {
             component.onSupportLevelSliderChange(50);
             expect(component.isDirty()).toBe(false);
         });
+
+        it('should expose one tick per support level, in order', async () => {
+            await initComponent();
+
+            expect(component.supportLevelTicks).toEqual([
+                { level: 'low', value: 0 },
+                { level: 'moderate', value: 50 },
+                { level: 'high', value: 100 },
+            ]);
+        });
+    });
+
+    describe('reset to default', () => {
+        const initComponent = async () => {
+            (irisSettingsService.getCourseSettingsWithRateLimit as ReturnType<typeof vi.fn>).mockReturnValue(of(mockResponse));
+            routeParamsSubject.next({ courseId: '1' });
+            component.ngOnInit();
+            await fixture.whenStable();
+        };
+
+        it('should reset supportLevel and customInstructions to their defaults and persist', async () => {
+            await initComponent();
+            const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings');
+            // Move both General-tab fields away from their defaults
+            component.settings.set({ ...component.settings()!, supportLevel: 'low', customInstructions: 'some custom text' });
+
+            component.resetToDefault();
+
+            const saved = updateSpy.mock.calls[0][1];
+            expect(saved.supportLevel).toBe('moderate');
+            // createDefaultCourseSettings() omits customInstructions; saveSettings() normalizes empty -> undefined
+            expect(saved.customInstructions).toBeUndefined();
+        });
+
+        it('should leave the admin-only variant and rateLimit untouched on reset', async () => {
+            await initComponent();
+            const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings');
+
+            component.resetToDefault();
+
+            const saved = updateSpy.mock.calls[0][1];
+            // mockSettings: variant 'default', rateLimit {100, 24} — must survive the reset
+            expect(saved.variant).toBe('default');
+            expect(saved.rateLimit).toEqual({ requests: 100, timeframeHours: 24 });
+        });
+
+        it('should not throw or persist when settings are undefined', async () => {
+            await initComponent();
+            const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings');
+            component.settings.set(undefined);
+
+            expect(() => component.resetToDefault()).not.toThrow();
+            expect(updateSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('active tab', () => {
+        it('should default the active tab to general', () => {
+            expect(component.activeTab()).toBe('general');
+        });
+
+        it('should update the active tab from a string value', () => {
+            component['setActiveTab']('admin');
+            expect(component.activeTab()).toBe('admin');
+        });
+
+        it('should coerce a numeric tab value to a string', () => {
+            component['setActiveTab'](2);
+            expect(component.activeTab()).toBe('2');
+        });
+
+        it('should ignore an undefined tab value', () => {
+            component['setActiveTab']('admin');
+            component['setActiveTab'](undefined);
+            expect(component.activeTab()).toBe('admin');
+        });
     });
 
     describe('admin tab', () => {
