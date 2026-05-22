@@ -318,7 +318,7 @@ public class ChannelResource extends ConversationManagementResource {
 
         var usersToNotify = conversationParticipantRepository.findConversationParticipantsByConversationId(channel.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
-        conversationService.deleteConversation(channel.getId());
+        channelService.deleteChannel(channel);
 
         var course = channel.getCourse();
         var channelDeletedNotification = new ChannelDeletedNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(), channel.getName());
@@ -579,6 +579,7 @@ public class ChannelResource extends ConversationManagementResource {
             }
             else {
                 service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, updatedChannel.getId());
+                service.deleteAllPostsForChannelAsync(updatedChannel.getId());
             }
         });
         return ResponseEntity.ok(conversationDTOService.convertChannelToDTO(requestingUser, updatedChannel));
