@@ -779,7 +779,7 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
 
-            expect(component['activeCourseLabel']()).toBe('Course 99');
+            expect(component['activeCourseLabel']()).toBe('global.search.courseFallbackLabel');
         });
 
         it('should pass courseId to globalSearch API call', () => {
