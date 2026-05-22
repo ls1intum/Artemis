@@ -160,18 +160,16 @@ classDiagram
         +ZonedDateTime sharedDueDate
     }
     class CompetencyVariantGroupLink { +Double weight }
-    class ExerciseRelation { +ExerciseRelationType type }
     class Exercise { <<abstract>> }
-    class CourseCompetency { +Integer masteryThreshold }
     class CompetencyProgress { +Double progress }
+    class CourseCompetency { +Integer masteryThreshold }
 
     ExerciseVariantGroup "0..1" --> "*" Exercise
     ExerciseVariantGroup "1" --> "*" CompetencyVariantGroupLink
-    CourseCompetency "1" --> "*" CompetencyVariantGroupLink
+    CompetencyProgress "*" <-- "1" CourseCompetency
+    CompetencyVariantGroupLink "*" <-- "1" CourseCompetency
+    CompetencyExerciseLink "*" <-- "1" CourseCompetency
     Exercise "1" --> "*" CompetencyExerciseLink
-    CourseCompetency "1" --> "*" CompetencyProgress
-    Exercise "1" --> "*" ExerciseRelation : tail
-    Exercise "1" --> "*" ExerciseRelation : head
 ```
 
 - Pro: group-level competency targeting is real data.
