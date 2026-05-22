@@ -83,7 +83,7 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
     });
 
     it('should throw an error when date and alternativeDate are undefined', () => {
-        let undefinedDate: Date | undefined;
+        const undefinedDate: Date | undefined = undefined;
         const time = new Date('2023-12-31T12:00:00');
         expect(() => {
             CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(undefinedDate, time, undefinedDate);

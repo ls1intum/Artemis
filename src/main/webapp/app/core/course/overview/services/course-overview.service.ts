@@ -440,8 +440,8 @@ export class CourseOverviewService {
         if (capacity === undefined) {
             return [undefined, undefined];
         }
-        let averageAttendanceRatio: number | undefined = undefined;
-        let attendanceText: string | undefined = undefined;
+        let averageAttendanceRatio: number | undefined;
+        let attendanceText: string | undefined;
         const sessionsWithAttendance = tutorialGroup.tutorialGroupSessions?.filter((session) => session.attendanceCount !== undefined && session.attendanceCount !== null) ?? [];
         if (sessionsWithAttendance.length !== 0) {
             const averageAttendance = sessionsWithAttendance.reduce((sum, session) => sum + session.attendanceCount!, 0) / sessionsWithAttendance.length;
@@ -568,8 +568,6 @@ export class CourseOverviewService {
         const now = dayjs();
         const oneAndHalfWeekBefore = now.subtract(1.5, 'week');
         const oneAndHalfWeekLater = now.add(1.5, 'week');
-        let relevantDate = null;
-
         // Determine relevance of conversation based on associated exercise, lecture, or exam
         if (subTypeRefId && course.exercises && channelDTO?.subType === 'exercise') {
             const exercise = course.exercises.find((exercise) => exercise.id === subTypeRefId);
@@ -578,11 +576,11 @@ export class CourseOverviewService {
             isCurrent = relevantDates.some((date) => dayjs(date).isBetween(oneAndHalfWeekBefore, oneAndHalfWeekLater, 'day', '[]'));
         } else if (subTypeRefId && course.lectures && channelDTO?.subType === 'lecture') {
             const lecture = course.lectures.find((lecture) => lecture.id === subTypeRefId);
-            relevantDate = lecture?.startDate || null;
+            const relevantDate = lecture?.startDate;
             isCurrent = relevantDate ? dayjs(relevantDate).isBetween(oneAndHalfWeekBefore, oneAndHalfWeekLater, 'day', '[]') : false;
         } else if (subTypeRefId && course.exams && channelDTO?.subType === 'exam') {
             const exam = course.exams.find((exam) => exam.id === subTypeRefId);
-            relevantDate = exam?.startDate || null;
+            const relevantDate = exam?.startDate;
             isCurrent = relevantDate ? dayjs(relevantDate).isBetween(oneAndHalfWeekBefore, oneAndHalfWeekLater, 'day', '[]') : false;
         }
 
