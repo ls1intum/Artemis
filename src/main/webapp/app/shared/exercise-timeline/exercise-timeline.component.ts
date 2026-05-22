@@ -34,6 +34,7 @@ export class ExerciseTimelineComponent {
     private currentLocale = getCurrentLocaleSignal(this.translateService);
     private readonly fullDateTimePattern = /^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}$/;
     private readonly dateTimeFormat = 'DD.MM.YYYY HH:mm';
+    protected readonly Date = Date;
 
     timelineItems = input.required<TimelineItem[]>();
     readonly = input<boolean>(false);
@@ -72,14 +73,6 @@ export class ExerciseTimelineComponent {
         if (parsedDate.isValid()) {
             this.setDateIfChanged(item, parsedDate);
         }
-    }
-
-    commitSelectedDate(item: TimelineItem, value: Date | Date[] | null): void {
-        this.updateDate(item, value instanceof Date ? value : null);
-    }
-
-    clearDate(item: TimelineItem): void {
-        this.updateDate(item, null);
     }
 
     private setDateIfChanged(item: TimelineItem, newDate: Dayjs): void {
