@@ -294,7 +294,7 @@ public class TutorialGroupService {
         Set<User> foundStudents = new HashSet<>();
         List<TutorialGroupStudentImportDataDTO> notFoundStudentDTOs = new LinkedList<>();
         for (var studentDto : studentDTOs) {
-            findStudent(studentDto.login(), tutorialGroup.getCourse().getStudentGroupName()).ifPresentOrElse(foundStudents::add, () -> notFoundStudentDTOs.add(studentDto));
+            findStudent(studentDto.login(), tutorialGroup.getCourse().getId()).ifPresentOrElse(foundStudents::add, () -> notFoundStudentDTOs.add(studentDto));
         }
         registerMultipleStudentsToTutorialGroup(foundStudents, tutorialGroup, registrationType, responsibleUser, true);
         return notFoundStudentDTOs;
@@ -311,7 +311,7 @@ public class TutorialGroupService {
     public void registerMultipleStudentsViaLogin(TutorialGroup tutorialGroup, List<String> logins, TutorialGroupRegistrationType registrationType, User responsibleUser) {
         Set<User> students = new HashSet<>();
         for (var login : logins) {
-            var student = findStudent(login, tutorialGroup.getCourse().getStudentGroupName()).orElseThrow(() -> new BadRequestException("Some students do not exist!"));
+            var student = findStudent(login, tutorialGroup.getCourse().getId()).orElseThrow(() -> new BadRequestException("Some students do not exist!"));
             students.add(student);
         }
         registerMultipleStudentsToTutorialGroup(students, tutorialGroup, registrationType, responsibleUser, true);
@@ -636,9 +636,8 @@ public class TutorialGroupService {
         return (tutorialGroupToCheck.getTeachingAssistant() != null && tutorialGroupToCheck.getTeachingAssistant().equals(user));
     }
 
-    private Optional<User> findStudent(String login, String studentCourseGroupName) {
-        var userOptional = userRepository.findUserWithGroupsAndAuthoritiesByLogin(login);
-        return userOptional.isPresent() && userOptional.get().getGroups().contains(studentCourseGroupName) ? userOptional : Optional.empty();
+    private Optional<User> findStudent(String login, long courseId) {
+        return userRepository.findStudentByLoginAndCourseId(login, courseId);
     }
 
     /**

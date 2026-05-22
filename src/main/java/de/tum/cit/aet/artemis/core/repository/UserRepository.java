@@ -14,8 +14,8 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseRoleCountDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.StudentGroupCountDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
@@ -167,6 +168,16 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND clp.course.id = :courseId
             """)
     Optional<User> findOneWithCourseRolesAndAuthoritiesAndLearnerProfileByLogin(@Param("login") String login, @Param("courseId") long courseId);
+
+    @Query("""
+            SELECT u FROM User u
+                JOIN u.courseRoles ucr
+            WHERE u.login = :login
+                AND u.deleted = FALSE
+                AND ucr.course.id = :courseId
+                AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.STUDENT
+            """)
+    Optional<User> findStudentByLoginAndCourseId(@Param("login") String login, @Param("courseId") long courseId);
 
     /**
      * Retrieves a list of user roles within a specified course based on the provided user IDs. This method is highly optimized for performance.
@@ -1083,73 +1094,64 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return countByDeletedIsFalseAndGroupsContains(groupName);
     }
 
-    // TODO (Phase 9): countUsersInGroups, setUserCountsForCourse/Courses, countUsersByStudentGroupNamesAndUserIds
-    // all use group name strings tied to the course.*_group_name columns. Replace once those columns are dropped.
-
     /**
-     * Counts non-deleted users in multiple groups with a single query.
-     * This avoids the N+1 query problem when counting users for multiple groups.
+     * Batch-counts non-deleted users with the given role across multiple courses.
      *
-     * @param groupNames the set of group names to count users for
-     * @return a list of StudentGroupCountDTO with group name and count of users
+     * @param courseIds the course ids to count for
+     * @param role      the role to count
+     * @return list of (courseId, role, count) triples — courses with zero members are omitted
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.StudentGroupCountDTO(
-                g,
-                COUNT(DISTINCT user.id)
-            )
-            FROM User user
-                JOIN user.groups g
-            WHERE user.deleted = FALSE
-                AND g IN :groupNames
-            GROUP BY g
+            SELECT new de.tum.cit.aet.artemis.core.dto.CourseRoleCountDTO(ucr.course.id, ucr.role, COUNT(DISTINCT ucr.user))
+            FROM UserCourseRole ucr
+            WHERE ucr.course.id IN :courseIds
+                AND ucr.role = :role
+                AND ucr.user.deleted = FALSE
+            GROUP BY ucr.course.id, ucr.role
             """)
-    List<StudentGroupCountDTO> countUsersInGroups(@Param("groupNames") Set<String> groupNames);
+    List<CourseRoleCountDTO> countByCourseIdsAndRole(@Param("courseIds") Set<Long> courseIds, @Param("role") CourseRole role);
 
     /**
-     * Counts non-deleted users for all role groups of a course and sets the counts on the course object.
+     * Counts non-deleted users for every role across multiple courses in a single query.
+     *
+     * @param courseIds the course ids to count for
+     * @return list of (courseId, role, count) triples — courses/roles with zero members are omitted
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.core.dto.CourseRoleCountDTO(ucr.course.id, ucr.role, COUNT(DISTINCT ucr.user))
+            FROM UserCourseRole ucr
+            WHERE ucr.course.id IN :courseIds
+                AND ucr.user.deleted = FALSE
+            GROUP BY ucr.course.id, ucr.role
+            """)
+    List<CourseRoleCountDTO> countAllRolesByCourseIds(@Param("courseIds") Set<Long> courseIds);
+
+    /**
+     * Counts non-deleted users for all roles of a course and sets the counts on the course object.
      *
      * @param course the course to set user counts for
      */
     default void setUserCountsForCourse(Course course) {
-        Set<String> groupNames = new HashSet<>();
-        groupNames.add(course.getStudentGroupName());
-        groupNames.add(course.getTeachingAssistantGroupName());
-        groupNames.add(course.getEditorGroupName());
-        groupNames.add(course.getInstructorGroupName());
-
-        var counts = countUsersInGroups(groupNames);
-        var countMap = counts.stream().collect(Collectors.toMap(StudentGroupCountDTO::studentGroupName, StudentGroupCountDTO::count, Long::sum));
-
-        course.setNumberOfInstructors(countMap.getOrDefault(course.getInstructorGroupName(), 0L));
-        course.setNumberOfTeachingAssistants(countMap.getOrDefault(course.getTeachingAssistantGroupName(), 0L));
-        course.setNumberOfEditors(countMap.getOrDefault(course.getEditorGroupName(), 0L));
-        course.setNumberOfStudents(countMap.getOrDefault(course.getStudentGroupName(), 0L));
+        setUserCountsForCourses(List.of(course));
     }
 
     /**
-     * Counts non-deleted users for all role groups of multiple courses and sets the counts on each course object.
-     * Uses a single query for all courses combined.
+     * Counts non-deleted users for all roles of multiple courses and sets the counts on each course object.
+     * Uses a single query for all courses and all roles combined.
      *
      * @param courses the courses to set user counts for
      */
     default void setUserCountsForCourses(List<Course> courses) {
-        Set<String> allGroupNames = new HashSet<>();
-        for (Course course : courses) {
-            allGroupNames.add(course.getStudentGroupName());
-            allGroupNames.add(course.getTeachingAssistantGroupName());
-            allGroupNames.add(course.getEditorGroupName());
-            allGroupNames.add(course.getInstructorGroupName());
-        }
-
-        var counts = countUsersInGroups(allGroupNames);
-        var countMap = counts.stream().collect(Collectors.toMap(StudentGroupCountDTO::studentGroupName, StudentGroupCountDTO::count, Long::sum));
+        Set<Long> courseIds = courses.stream().map(Course::getId).collect(Collectors.toSet());
+        Map<Long, Map<CourseRole, Long>> countMap = countAllRolesByCourseIds(courseIds).stream()
+                .collect(Collectors.groupingBy(CourseRoleCountDTO::courseId, Collectors.toMap(CourseRoleCountDTO::role, CourseRoleCountDTO::count)));
 
         for (Course course : courses) {
-            course.setNumberOfInstructors(countMap.getOrDefault(course.getInstructorGroupName(), 0L));
-            course.setNumberOfTeachingAssistants(countMap.getOrDefault(course.getTeachingAssistantGroupName(), 0L));
-            course.setNumberOfEditors(countMap.getOrDefault(course.getEditorGroupName(), 0L));
-            course.setNumberOfStudents(countMap.getOrDefault(course.getStudentGroupName(), 0L));
+            var roleCounts = countMap.getOrDefault(course.getId(), Map.of());
+            course.setNumberOfStudents(roleCounts.getOrDefault(CourseRole.STUDENT, 0L));
+            course.setNumberOfTeachingAssistants(roleCounts.getOrDefault(CourseRole.TEACHING_ASSISTANT, 0L));
+            course.setNumberOfEditors(roleCounts.getOrDefault(CourseRole.EDITOR, 0L));
+            course.setNumberOfInstructors(roleCounts.getOrDefault(CourseRole.INSTRUCTOR, 0L));
         }
     }
 
@@ -1557,6 +1559,9 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND LOWER(u.login) NOT LIKE '%test%'
             """)
     Set<Long> findActiveUserIdsSince(@Param("activeSince") ZonedDateTime activeSince);
+
+    // TODO (Phase 9): countUsersByStudentGroupNamesAndUserIds uses group name strings tied to the
+    // course.*_group_name columns. Replace once those columns are dropped.
 
     /**
      * Count users per student group name, filtering to only the specified user IDs.

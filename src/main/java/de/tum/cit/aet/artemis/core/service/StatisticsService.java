@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.assessment.dto.ScoreDistributionDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.GraphType;
 import de.tum.cit.aet.artemis.core.domain.SpanType;
 import de.tum.cit.aet.artemis.core.domain.StatisticsView;
@@ -216,7 +217,7 @@ public class StatisticsService {
             Long studentParticipations = exerciseRepository.getStudentParticipationCountById(exercise.getId());
             numberOfParticipationsOfStudentsOrTeams = studentParticipations == null ? 0L : studentParticipations;
 
-            numberOfStudentsOrTeams = userRepository.countByDeletedIsFalseAndGroupsContains(course.getStudentGroupName());
+            numberOfStudentsOrTeams = userRepository.countByCourseIdAndRole(course.getId(), CourseRole.STUDENT);
         }
 
         // post stats

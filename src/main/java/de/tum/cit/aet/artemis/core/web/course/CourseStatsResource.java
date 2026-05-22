@@ -22,11 +22,12 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementDetailViewDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementOverviewStatisticsDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseRoleCountDTO;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
-import de.tum.cit.aet.artemis.core.dto.StudentGroupCountDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -133,15 +134,14 @@ public class CourseStatsResource {
         final List<CourseManagementOverviewStatisticsDTO> courseDTOs = new ArrayList<>();
         var courses = courseOverviewService.getAllCoursesForManagementOverview(onlyActive);
 
-        // Batch-fetch student group counts for all courses in a single query
-        Set<String> studentGroupNames = courses.stream().map(Course::getStudentGroupName).collect(Collectors.toSet());
-        var studentGroupCounts = userRepository.countUsersInGroups(studentGroupNames).stream()
-                .collect(Collectors.toMap(StudentGroupCountDTO::studentGroupName, StudentGroupCountDTO::count, Long::sum));
+        // Batch-fetch student counts for all courses in a single query
+        Set<Long> courseIds = courses.stream().map(Course::getId).collect(Collectors.toSet());
+        var studentCounts = userRepository.countByCourseIdsAndRole(courseIds, CourseRole.STUDENT).stream()
+                .collect(Collectors.toMap(CourseRoleCountDTO::courseId, CourseRoleCountDTO::count));
 
         for (final var course : courses) {
             final var courseId = course.getId();
-            var studentsGroup = course.getStudentGroupName();
-            var amountOfStudentsInCourse = Math.toIntExact(studentGroupCounts.getOrDefault(studentsGroup, 0L));
+            var amountOfStudentsInCourse = Math.toIntExact(studentCounts.getOrDefault(courseId, 0L));
             var exerciseStatistics = exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse);
 
             var exerciseIds = exerciseRepository.findExerciseIdsByCourseId(courseId);
