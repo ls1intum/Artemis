@@ -11,7 +11,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
-import { Feedback, FeedbackSuggestionType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { notUndefined } from 'app/foundation/util/string-pure.utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
@@ -356,24 +356,26 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         }
         this.isLoading.set(true);
 
-        this.feedbackSuggestionsObservable = this.athenaService.getTextFeedbackSuggestions(this.exercise!, this.submission!).subscribe((feedbackSuggestions) => {
-            feedbackSuggestions.forEach((suggestion) => {
-                if (suggestion instanceof TextBlockRef) {
-                    // referenced feedback suggestion - add to existing text blocks but avoid conflicts
-                    this.addAutomaticTextBlockRef(suggestion);
-                } else {
-                    // unreferenced feedback suggestion - we can just add it
-                    this.result!.feedbacks ??= [];
-                    this.result!.feedbacks = [...this.result!.feedbacks, suggestion];
-                    // the unreferencedFeedback variable does not auto-update and needs to be updated manually
-                    this.unreferencedFeedback = [...this.unreferencedFeedback, suggestion];
-                }
-            });
-            this.validateFeedback();
-            // TODO: The upcoming line to retrieve if there is automatic feedback or not does not work yet
-            // This is due to the fact that all incoming feedback suggestions are of type MANUAL
-            this.hasAutomaticFeedback = this.assessments.some((feedbackItem) => feedbackItem.text?.startsWith(FeedbackSuggestionType.SUGGESTED));
-            this.isLoading.set(false);
+        this.feedbackSuggestionsObservable = this.athenaService.getTextFeedbackSuggestions(this.exercise!, this.submission!).subscribe({
+            next: (feedbackSuggestions) => {
+                feedbackSuggestions.forEach((suggestion) => {
+                    if (suggestion instanceof TextBlockRef) {
+                        // referenced feedback suggestion - add to existing text blocks but avoid conflicts
+                        this.addAutomaticTextBlockRef(suggestion);
+                    } else {
+                        // unreferenced feedback suggestion - we can just add it
+                        this.result!.feedbacks ??= [];
+                        this.result!.feedbacks = [...this.result!.feedbacks, suggestion];
+                        // the unreferencedFeedback variable does not auto-update and needs to be updated manually
+                        this.unreferencedFeedback = [...this.unreferencedFeedback, suggestion];
+                    }
+                });
+                this.validateFeedback();
+                // TODO: always false until the backend sends FeedbackType.AUTOMATIC for Athena suggestions (currently always MANUAL)
+                this.hasAutomaticFeedback = this.assessments.some((feedbackItem) => feedbackItem.type === FeedbackType.AUTOMATIC);
+                this.isLoading.set(false);
+            },
+            error: () => this.isLoading.set(false),
         });
     }
 
