@@ -604,7 +604,7 @@ examples.forEach((activeConversation) => {
 
                 component.subscribeToQueryParameter();
 
-                expect(component['postInThread']).toEqual({ id: 789 });
+                expect(component['postInThread']).toEqual({ id: 789, conversation: { id: undefined } });
             });
 
             it('should clear postInThread when no messageId is present', () => {
@@ -630,7 +630,7 @@ examples.forEach((activeConversation) => {
                 expect(component['selectedSavedPostStatus']).toBe(SavedPostStatus.ARCHIVED);
                 expect(component['focusPostId']).toBe(456);
                 expect(component['openThreadOnFocus']).toBe('true');
-                expect(component['postInThread']).toEqual({ id: 789 });
+                expect(component['postInThread']).toEqual({ id: 789, conversation: { id: undefined } });
             });
         });
 

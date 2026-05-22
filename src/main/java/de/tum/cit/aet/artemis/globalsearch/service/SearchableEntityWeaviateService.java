@@ -18,12 +18,15 @@ import de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.WeaviateDateUtil;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.FaqSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import io.weaviate.client6.v1.api.WeaviateApiException;
 import io.weaviate.client6.v1.api.collections.CollectionHandle;
@@ -343,6 +346,152 @@ public class SearchableEntityWeaviateService {
         }
         catch (Exception e) {
             log.error("Failed to upsert channel {} in Weaviate: {}", dto.channelId(), e.getMessage(), e);
+        }
+    }
+
+    // ----- Course sync -----
+
+    /**
+     * Asynchronously upserts a course into the unified collection.
+     *
+     * @param dto the extracted course data
+     */
+    @Async
+    public void upsertCourseAsync(CourseSearchableEntityDTO dto) {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityUtils.setAuthorizationObject();
+        }
+        if (dto == null || dto.courseId() == null) {
+            log.warn("Cannot upsert course without an ID");
+            return;
+        }
+        try {
+            upsertRow(SearchableEntitySchema.TypeValues.COURSE, dto.courseId(), dto.toPropertyMap());
+            log.debug("Successfully upserted course {} '{}' in Weaviate", dto.courseId(), dto.title());
+        }
+        catch (Exception e) {
+            log.error("Failed to upsert course {} in Weaviate: {}", dto.courseId(), e.getMessage(), e);
+        }
+    }
+
+    // ----- Post sync -----
+
+    /**
+     * Asynchronously upserts a post (message) into the unified collection.
+     *
+     * @param dto the extracted post data
+     */
+    @Async
+    public void upsertPostAsync(PostSearchableEntityDTO dto) {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityUtils.setAuthorizationObject();
+        }
+        if (dto == null || dto.postId() == null) {
+            log.warn("Cannot upsert post without an ID");
+            return;
+        }
+        try {
+            upsertRow(SearchableEntitySchema.TypeValues.POST, dto.postId(), dto.toPropertyMap());
+            log.debug("Successfully upserted post {} in Weaviate", dto.postId());
+        }
+        catch (Exception e) {
+            log.error("Failed to upsert post {} in Weaviate: {}", dto.postId(), e.getMessage(), e);
+        }
+    }
+
+    // ----- Answer Post sync -----
+
+    /**
+     * Asynchronously upserts an answer post (reply) into the unified collection.
+     *
+     * @param dto the extracted answer post data
+     */
+    @Async
+    public void upsertAnswerPostAsync(AnswerPostSearchableEntityDTO dto) {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityUtils.setAuthorizationObject();
+        }
+        if (dto == null || dto.answerPostId() == null) {
+            log.warn("Cannot upsert answer post without an ID");
+            return;
+        }
+        try {
+            upsertRow(SearchableEntitySchema.TypeValues.ANSWER_POST, dto.answerPostId(), dto.toPropertyMap());
+            log.debug("Successfully upserted answer post {} in Weaviate", dto.answerPostId());
+        }
+        catch (Exception e) {
+            log.error("Failed to upsert answer post {} in Weaviate: {}", dto.answerPostId(), e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Asynchronously deletes every answer post row belonging to the given post. Invoked when
+     * a post is deleted so its cascade-deleted replies don't remain orphaned in Weaviate.
+     *
+     * @param postId the parent post id
+     */
+    @Async
+    public void deleteAllAnswerPostsForPostAsync(long postId) {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityUtils.setAuthorizationObject();
+        }
+        try {
+            var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+            var filter = Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.ANSWER_POST),
+                    Filter.property(SearchableEntitySchema.Properties.POST_ID).eq(postId));
+            var result = collection.data.deleteMany(filter);
+            log.debug("Deleted {} answer post rows for post {}", result.successful(), postId);
+        }
+        catch (Exception e) {
+            log.error("Failed to delete answer post rows for post {}: {}", postId, e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Asynchronously deletes every post row belonging to the given channel. Invoked when
+     * a channel is deleted or archived so posts don't remain searchable.
+     *
+     * @param channelId the channel id
+     */
+    @Async
+    public void deleteAllPostsForChannelAsync(long channelId) {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityUtils.setAuthorizationObject();
+        }
+        try {
+            var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+            var typeFilter = Filter.or(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.POST),
+                    Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.ANSWER_POST));
+            var filter = Filter.and(typeFilter, Filter.property(SearchableEntitySchema.Properties.CHANNEL_ID).eq(channelId));
+            var result = collection.data.deleteMany(filter);
+            log.debug("Deleted {} post/answer post rows for channel {}", result.successful(), channelId);
+        }
+        catch (Exception e) {
+            log.error("Failed to delete post/answer post rows for channel {}: {}", channelId, e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Asynchronously deletes every post row belonging to the given course. Invoked when
+     * a course is reset so deleted posts don't remain searchable.
+     *
+     * @param courseId the course id
+     */
+    @Async
+    public void deleteAllPostsForCourseAsync(long courseId) {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityUtils.setAuthorizationObject();
+        }
+        try {
+            var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+            var typeFilter = Filter.or(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.POST),
+                    Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.ANSWER_POST));
+            var filter = Filter.and(typeFilter, Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(courseId));
+            var result = collection.data.deleteMany(filter);
+            log.debug("Deleted {} post/answer post rows for course {}", result.successful(), courseId);
+        }
+        catch (Exception e) {
+            log.error("Failed to delete post/answer post rows for course {}: {}", courseId, e.getMessage(), e);
         }
     }
 
