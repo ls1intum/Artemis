@@ -104,7 +104,7 @@ public class TextExerciseFeedbackService {
             return;
         }
         try {
-            athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA))
+            athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, MODULE_FEATURE_ATHENA))
                     .checkLatestSubmissionHasNoAthenaResultOrThrow(textSubmission);
         }
         catch (BadRequestAlertException ignored) {
