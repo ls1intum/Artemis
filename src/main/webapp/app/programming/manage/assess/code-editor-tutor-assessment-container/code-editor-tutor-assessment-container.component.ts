@@ -120,6 +120,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     localRepositoryLink: string[];
     loadingInitialSubmission = true;
     highlightDifferences = false;
+    loadingFeedbackSuggestions = false;
 
     isAtLeastEditor = false;
 
@@ -151,6 +152,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     get unreferencedFeedbackSuggestions() {
         return this.feedbackSuggestions.filter((feedback) => !feedback.reference);
+    }
+
+    get hasAutomaticFeedback(): boolean {
+        return this.automaticFeedback.length > 0;
+    }
+
+    get isFeedbackSuggestionsEnabled(): boolean {
+        return Boolean(this.exercise?.feedbackSuggestionModule);
     }
 
     constructor() {
@@ -325,12 +334,16 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Load the feedback suggestions for the current submission from Athena.
      */
     private async loadFeedbackSuggestions(): Promise<void> {
-        this.feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise, this.submission!.id!))) ?? [];
-        const allFeedback = [...this.referencedFeedback, ...this.unreferencedFeedback]; // pre-compute to not have to do this in the loop
-        // Don't show feedback suggestions that have the same description and reference - probably it is coming from an earlier suggestion anyway
-        this.feedbackSuggestions = this.feedbackSuggestions.filter((suggestion) =>
-            allFeedback.every((feedback) => feedback.detailText !== suggestion.detailText || feedback.reference !== suggestion.reference),
-        );
+        this.loadingFeedbackSuggestions = true;
+        try {
+            this.feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise, this.submission!.id!))) ?? [];
+            const allFeedback = [...this.referencedFeedback, ...this.unreferencedFeedback];
+            this.feedbackSuggestions = this.feedbackSuggestions.filter((suggestion) =>
+                allFeedback.every((feedback) => feedback.detailText !== suggestion.detailText || feedback.reference !== suggestion.reference),
+            );
+        } finally {
+            this.loadingFeedbackSuggestions = false;
+        }
     }
 
     /**

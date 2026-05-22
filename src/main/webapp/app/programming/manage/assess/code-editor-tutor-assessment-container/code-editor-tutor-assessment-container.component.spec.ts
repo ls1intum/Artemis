@@ -875,4 +875,40 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         await comp.discardPendingSubmissionsWithConfirmation();
         expect(modalOpenStub).not.toHaveBeenCalled();
     });
+
+    it('should return true for hasAutomaticFeedback when automaticFeedback is non-empty', () => {
+        comp['automaticFeedback'] = [{ type: FeedbackType.AUTOMATIC, credits: 1 }];
+        expect(comp.hasAutomaticFeedback).toBeTrue();
+    });
+
+    it('should return false for hasAutomaticFeedback when automaticFeedback is empty', () => {
+        comp['automaticFeedback'] = [];
+        expect(comp.hasAutomaticFeedback).toBeFalse();
+    });
+
+    it('should return true for isFeedbackSuggestionsEnabled when feedbackSuggestionModule is set', () => {
+        comp['exercise'] = { ...exercise, feedbackSuggestionModule: 'module_text_programming' } as unknown as ProgrammingExercise;
+        expect(comp.isFeedbackSuggestionsEnabled).toBeTrue();
+    });
+
+    it('should return false for isFeedbackSuggestionsEnabled when feedbackSuggestionModule is absent', () => {
+        comp['exercise'] = { ...exercise, feedbackSuggestionModule: undefined } as unknown as ProgrammingExercise;
+        expect(comp.isFeedbackSuggestionsEnabled).toBeFalse();
+    });
+
+    it('should set loadingFeedbackSuggestions to true while fetching and false after', async () => {
+        const { Subject } = await import('rxjs');
+        const subject = new Subject<Feedback[]>();
+        jest.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(subject.asObservable());
+        comp['submission'] = { id: 42 } as ProgrammingSubmission;
+
+        const loadPromise = comp['loadFeedbackSuggestions']();
+        expect(comp.loadingFeedbackSuggestions).toBeTrue();
+
+        subject.next([]);
+        subject.complete();
+        await loadPromise;
+
+        expect(comp.loadingFeedbackSuggestions).toBeFalse();
+    });
 });
