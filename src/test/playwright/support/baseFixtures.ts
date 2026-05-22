@@ -20,6 +20,18 @@ const test = baseTest.extend<{
                 } else {
                     document.addEventListener('DOMContentLoaded', injectStyle);
                 }
+
+                // Suppress the passkey setup modal for all tests by setting a far-future reminder date.
+                // Tests that explicitly test passkey registration should clear this via
+                // page.evaluate(() => localStorage.removeItem('earliestSetupPasskeyReminderDate'))
+                // after navigation but before login.
+                try {
+                    const futureDate = new Date();
+                    futureDate.setFullYear(futureDate.getFullYear() + 10);
+                    localStorage.setItem('earliestSetupPasskeyReminderDate', JSON.stringify(futureDate));
+                } catch {
+                    // localStorage may not be available on about:blank — safe to ignore
+                }
             });
 
             const coverageEnabled = process.env.PLAYWRIGHT_COVERAGE !== 'off';

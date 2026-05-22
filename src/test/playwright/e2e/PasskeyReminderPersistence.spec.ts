@@ -6,6 +6,8 @@ test('Passkey reminder modal is not displayed on re-login after remind me in 30 
 
     // First login
     await page.goto('/');
+    // Clear the passkey modal suppression so the modal appears for this test
+    await page.evaluate(() => localStorage.removeItem('earliestSetupPasskeyReminderDate'));
     await loginPage.login(artemisAdmin);
 
     // Hide Modal for 30 days

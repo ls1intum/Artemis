@@ -3,22 +3,36 @@ import { test } from '../support/fixtures';
 import { admin } from '../support/users';
 import { BASE_API } from '../support/constants';
 
+const passkeyTestUser = { username: 'passkey_test_user', password: 'passkey_test_user' };
+
 test.describe('Passkey registration', () => {
-    test.afterEach(async ({ page }) => {
-        // Clean up any passkeys registered during the test to keep tests idempotent.
-        // This ensures the passkey setup modal still appears on the next run.
-        const response = await page.request.get(`${BASE_API}/core/passkey/user`);
-        if (response.ok()) {
-            const passkeys = await response.json();
-            for (const passkey of passkeys) {
-                await page.request.delete(`${BASE_API}/core/passkey/${passkey.credentialId}`);
-            }
-        }
+    test.beforeEach(async ({ page, login }) => {
+        // Create a dedicated user for passkey tests (logged in as admin via API)
+        await login(admin, '/courses');
+        await page.request.post(`${BASE_API}/core/admin/users`, {
+            data: {
+                login: passkeyTestUser.username,
+                password: passkeyTestUser.password,
+                firstName: 'Passkey',
+                lastName: 'TestUser',
+                email: 'passkey_test_user@example.com',
+                authorities: ['ROLE_USER'],
+            },
+            failOnStatusCode: false,
+        });
+    });
+
+    test.afterEach(async ({ page, login }) => {
+        // Clean up: delete the test user (as admin)
+        await login(admin, '/courses');
+        await page.request.delete(`${BASE_API}/core/admin/users/${passkeyTestUser.username}`);
     });
 
     test('registers a passkey via the setup modal after login', async ({ page, loginPage, virtualAuthenticator }) => {
         await page.goto('/sign-in');
-        await loginPage.login(admin);
+        // Clear the passkey modal suppression so the modal appears for this test
+        await page.evaluate(() => localStorage.removeItem('earliestSetupPasskeyReminderDate'));
+        await loginPage.login(passkeyTestUser);
 
         // The passkey setup modal appears after login for users without a passkey
         await page.getByRole('button', { name: 'Set Up Passkey' }).click();
