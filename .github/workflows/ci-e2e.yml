@@ -703,9 +703,8 @@ jobs:
           include_time_in_summary: true
           report_paths: 'all-test-results/results.xml'
 
-  # Aggregate results and report overall status as a commit status.
-  # The ci.yml `all-ci-passed` gate is what branch protection requires; this commit status
-  # remains as a human-readable progress signal for long-running E2E phases.
+  # Aggregates the phase results into a single commit status — a human-readable progress
+  # signal for the long E2E run. The required merge gate is `all-required-ci-passed` in ci.yml.
   report-results:
     name: Report E2E Overall Status
     needs: [determine-tests, run-e2e-relevant, run-e2e-remaining, run-e2e-all-pr, run-e2e-all-non-pr]
@@ -757,7 +756,7 @@ jobs:
 
       - name: Update status with results
         if: always()
-        # Informational only; the umbrella gate is the source of truth.
+        # An API blip must not fail the job.
         continue-on-error: true
         uses: ./.github/actions/e2e-set-commit-status
         with:
@@ -844,9 +843,8 @@ jobs:
             }
 
       - name: Fail job on aggregated failure
-        # The umbrella's all-ci-passed gate is the source of truth for branch protection,
-        # but this final step makes the E2E job result itself reflect the aggregated outcome
-        # rather than always-success (which would mislead anyone looking at the job log).
+        # Make the E2E job result reflect the aggregated outcome instead of always-success,
+        # so the job log isn't misleading.
         if: always()
         env:
           STATUS: ${{ steps.overall-status.outputs.status }}

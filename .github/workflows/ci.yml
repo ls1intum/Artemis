@@ -53,15 +53,10 @@ jobs:
 
       # dorny/paths-filter handles the edge cases hand-rolled `git diff` does not:
       # initial commits, force-pushes, missing merge-base, and `merge_group` events.
-      # Two filter passes, because dorny's `predicate-quantifier` is a per-step setting and
-      # the two passes need opposite logic:
-      #   relevant (`every`): a file counts only if it matches ALL patterns — i.e. it is NOT
-      #     markdown, NOT LICENSE, NOT under documentation/. So `build` + `test` (the REQUIRED
-      #     jobs) run unless every changed file is pure docs. A new code or config path is
-      #     therefore never silently skipped (over-run is safe; a false-negative would merge
-      #     unbuilt code). Negation patterns only subtract under `every`; with the default
-      #     `some` they are dead, so this MUST stay its own step. dorny runs picomatch with
-      #     dot:true, so dotfiles (.npmrc, .github/...) match normally.
+      # Two passes, because `predicate-quantifier` is per-step. The `relevant` pass uses
+      # `every` so the negations actually subtract — under the default `some` they are inert
+      # (every file matches via `**`), which would make build/test always-run. Result:
+      # build/test run unless every changed file is markdown, LICENSE, or under documentation/.
       - id: relevant
         if: github.event_name != 'workflow_dispatch' || !inputs.force_build
         uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d  # v4.0.1
@@ -236,13 +231,9 @@ jobs:
       PLAYWRIGHT_REPORT_TOKEN: ${{ secrets.PLAYWRIGHT_REPORT_TOKEN }}
       HELIOS_REPO_SECRET: ${{ secrets.HELIOS_REPO_SECRET }}
 
-  # The single required status check. It depends ONLY on the jobs that gate merges today
-  # (Build .war + the four server/client test jobs, here as the `build` and `test`
-  # reusables). Advisory jobs — e2e, java-analysis, gradle-wrapper, docs, translation,
-  # workflows — run in parallel, post their own checks, and are deliberately NOT in `needs:`
-  # so a flaky or slow advisory suite never blocks merging. `detect-changes` is included so
-  # a change-detection failure fails the gate closed. To promote an advisory job to required,
-  # add it here and to the branch-protection ruleset.
+  # The single required status check. Depends ONLY on `build` + `test` (today's required
+  # surface). The advisory jobs are deliberately not in `needs:`, so a flaky or slow suite
+  # never blocks merging; `detect-changes` is, so a change-detection failure fails it closed.
   all-required-ci-passed:
     name: All required CI Passed
     if: always()

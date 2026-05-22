@@ -43,8 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
-      # `contents: write` required by `gh release upload` in the release path; the rest
-      # of this job uses only `contents: read` access (gradle build, war upload).
+      # `contents: write` is for `gh release upload` in the release path.
       contents: write
     steps:
       - uses: actions/checkout@v6
@@ -106,8 +105,7 @@ jobs:
           path: build/libs/Artemis-*.war
           if-no-files-found: error
       - name: Upload Release Artifact
-        # Inputs are coming from a trusted caller (ci.yml) but we still go via env to keep
-        # the value out of shell-injection paths in case the caller is later refactored.
+        # Route the tag through env to keep it out of shell-injection paths.
         if: ${{ inputs.is_release }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
