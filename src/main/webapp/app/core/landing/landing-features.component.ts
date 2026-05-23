@@ -81,6 +81,7 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            gap: 0.5rem;
             position: relative;
         }
 
