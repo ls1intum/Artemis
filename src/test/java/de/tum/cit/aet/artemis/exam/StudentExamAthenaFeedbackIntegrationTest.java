@@ -157,6 +157,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
     class DispatchHappyPath {
 
         @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void requestAthenaFeedback_shouldDispatchForTextParticipation() {
             Exam testExam = examUtilService.addTestExam(course);
             testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
@@ -190,6 +191,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
         }
 
         @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void requestAthenaFeedback_shouldDispatchForModelingParticipation() {
             Exam testExam = examUtilService.addTestExam(course);
             testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
@@ -224,6 +226,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
         }
 
         @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void requestAthenaFeedback_shouldStillDispatchPeersWhenOneSubmissionAlreadyHasAthenaResult() {
             Exam testExam = examUtilService.addTestExam(course);
             testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
