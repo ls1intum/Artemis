@@ -438,12 +438,7 @@ pre {
         flex: 1;
         min-height: 0;
         align-items: stretch; // stretch children to full width
-        gap: 4px;
         margin: 0 16px;
-
-        &.not-accepted {
-            height: 100%;
-        }
 
         .messages-inner,
         .chat-input,
@@ -483,9 +478,9 @@ pre {
             .messages-inner {
                 display: flex;
                 flex-direction: column;
-                gap: 40px;
+                gap: 24px;
                 margin-inline: auto;
-                padding-bottom: 8px;
+                padding-bottom: 40px;
             }
         }
     }
@@ -750,7 +745,6 @@ pre {
 .scroll-to-bottom {
     position: absolute;
     bottom: calc(100% + 8px);
-    top: auto;
     left: 50%;
     transform: translateX(-50%);
     width: 30px;

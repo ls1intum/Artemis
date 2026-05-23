@@ -225,7 +225,7 @@
                 </div>
             </div>
         }
-        <div class="chat-body" [class.not-accepted]="!userAccepted()" [class.empty-state]="isEmptyState()" #chatBody>
+        <div class="chat-body" [class.empty-state]="isEmptyState()" #chatBody>
             @if (messages()?.length) {
                 <div class="messages" #messagesElement (scroll)="checkChatScroll()">
                     <div class="messages-inner">
@@ -346,6 +346,9 @@
                                 <jhi-iris-thinking-bubble [message]="activeChatMessage()!" />
                             </div>
                         }
+                        @if (shouldShowStatusBar()) {
+                            <jhi-chat-status-bar [stages]="stages()" />
+                        }
                     </div>
                 </div>
             }
@@ -354,9 +357,6 @@
                     <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
                     <h3 jhiTranslate="artemisApp.iris.chat.helpOffer"></h3>
                 </div>
-            }
-            @if (shouldShowStatusBar()) {
-                <jhi-chat-status-bar [stages]="stages()" />
             }
             @if (!userAccepted()) {
                 <div class="p-chat">
