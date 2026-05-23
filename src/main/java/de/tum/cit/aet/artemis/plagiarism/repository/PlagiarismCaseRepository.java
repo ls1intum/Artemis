@@ -26,8 +26,18 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
     @Query("""
             SELECT plagiarismCase
             FROM PlagiarismCase plagiarismCase
-                LEFT JOIN FETCH plagiarismCase.post
+                LEFT JOIN FETCH plagiarismCase.student
+                LEFT JOIN FETCH plagiarismCase.verdictBy
+                LEFT JOIN FETCH plagiarismCase.post post
+                LEFT JOIN FETCH post.answers answers
+                LEFT JOIN FETCH answers.author
+                LEFT JOIN FETCH plagiarismCase.exercise exercise
+                LEFT JOIN FETCH exercise.course
+                LEFT JOIN FETCH exercise.exerciseGroup exerciseGroup
+                LEFT JOIN FETCH exerciseGroup.exam exam
+                LEFT JOIN FETCH exam.course
                 LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmission
+                LEFT JOIN FETCH plagiarismSubmission.plagiarismComparison
             WHERE plagiarismCase.student.login = :studentLogin
                 AND plagiarismCase.exercise.id = :exerciseId
             """)
@@ -36,7 +46,16 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
     @Query("""
             SELECT DISTINCT plagiarismCase
             FROM PlagiarismCase plagiarismCase
-                LEFT JOIN FETCH plagiarismCase.post
+                LEFT JOIN FETCH plagiarismCase.student
+                LEFT JOIN FETCH plagiarismCase.verdictBy
+                LEFT JOIN FETCH plagiarismCase.exercise exercise
+                LEFT JOIN FETCH exercise.course
+                LEFT JOIN FETCH exercise.exerciseGroup exerciseGroup
+                LEFT JOIN FETCH exerciseGroup.exam exam
+                LEFT JOIN FETCH exam.course
+                LEFT JOIN FETCH plagiarismCase.post post
+                LEFT JOIN FETCH post.answers answers
+                LEFT JOIN FETCH answers.author
                 LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
                 LEFT JOIN FETCH plagiarismSubmissions.plagiarismComparison plagiarismComparison
             WHERE plagiarismCase.exercise.course.id = :courseId
@@ -46,7 +65,16 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
     @Query("""
             SELECT DISTINCT plagiarismCase
             FROM PlagiarismCase plagiarismCase
-                LEFT JOIN FETCH plagiarismCase.post
+                LEFT JOIN FETCH plagiarismCase.student
+                LEFT JOIN FETCH plagiarismCase.verdictBy
+                LEFT JOIN FETCH plagiarismCase.exercise exercise
+                LEFT JOIN FETCH exercise.course
+                LEFT JOIN FETCH exercise.exerciseGroup exerciseGroup
+                LEFT JOIN FETCH exerciseGroup.exam exam
+                LEFT JOIN FETCH exam.course
+                LEFT JOIN FETCH plagiarismCase.post post
+                LEFT JOIN FETCH post.answers answers
+                LEFT JOIN FETCH answers.author
                 LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
                 LEFT JOIN FETCH plagiarismSubmissions.plagiarismComparison plagiarismComparison
             WHERE plagiarismCase.exercise.exerciseGroup.exam.id = :examId
@@ -140,7 +168,18 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
     @Query("""
             SELECT plagiarismCase
             FROM PlagiarismCase plagiarismCase
+                LEFT JOIN FETCH plagiarismCase.student
+                LEFT JOIN FETCH plagiarismCase.verdictBy
+                LEFT JOIN FETCH plagiarismCase.post post
+                LEFT JOIN FETCH post.answers answers
+                LEFT JOIN FETCH answers.author
+                LEFT JOIN FETCH plagiarismCase.exercise exercise
+                LEFT JOIN FETCH exercise.course
+                LEFT JOIN FETCH exercise.exerciseGroup exerciseGroup
+                LEFT JOIN FETCH exerciseGroup.exam exam
+                LEFT JOIN FETCH exam.course
                 LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
+                LEFT JOIN FETCH plagiarismSubmissions.plagiarismComparison
             WHERE plagiarismCase.id = :plagiarismCaseId
             """)
     Optional<PlagiarismCase> findByIdWithPlagiarismSubmissions(@Param("plagiarismCaseId") long plagiarismCaseId);
@@ -148,9 +187,19 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
     @Query("""
             SELECT plagiarismCase
             FROM PlagiarismCase plagiarismCase
+                LEFT JOIN FETCH plagiarismCase.student
+                LEFT JOIN FETCH plagiarismCase.verdictBy
+                LEFT JOIN FETCH plagiarismCase.post post
+                LEFT JOIN FETCH post.answers answers
+                LEFT JOIN FETCH answers.author
                 LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
                 LEFT JOIN FETCH plagiarismCase.exercise e
                 LEFT JOIN FETCH e.plagiarismDetectionConfig
+                LEFT JOIN FETCH e.course
+                LEFT JOIN FETCH e.exerciseGroup exerciseGroup
+                LEFT JOIN FETCH exerciseGroup.exam exam
+                LEFT JOIN FETCH exam.course
+                LEFT JOIN FETCH plagiarismSubmissions.plagiarismComparison
             WHERE plagiarismCase.id = :plagiarismCaseId
             """)
     Optional<PlagiarismCase> findByIdWithPlagiarismSubmissionsAndPlagiarismDetectionConfig(@Param("plagiarismCaseId") long plagiarismCaseId);

@@ -35,6 +35,9 @@ public interface PlagiarismComparisonRepository extends ArtemisJpaRepository<Pla
                 LEFT JOIN FETCH comparison.plagiarismResult result
                 LEFT JOIN FETCH result.exercise exercise
                 LEFT JOIN FETCH exercise.course
+                LEFT JOIN FETCH exercise.exerciseGroup exerciseGroup
+                LEFT JOIN FETCH exerciseGroup.exam exam
+                LEFT JOIN FETCH exam.course
             WHERE comparison.id = :comparisonId
             """)
     Optional<PlagiarismComparison> findByIdWithSubmissions(@Param("comparisonId") long comparisonId);
@@ -51,6 +54,9 @@ public interface PlagiarismComparisonRepository extends ArtemisJpaRepository<Pla
                 LEFT JOIN FETCH comparison.plagiarismResult result
                 LEFT JOIN FETCH result.exercise exercise
                 LEFT JOIN FETCH exercise.course
+                LEFT JOIN FETCH exercise.exerciseGroup exerciseGroup
+                LEFT JOIN FETCH exerciseGroup.exam exam
+                LEFT JOIN FETCH exam.course
             WHERE comparison.id = :comparisonId
             """)
     Optional<PlagiarismComparison> findByIdWithSubmissionsAndElementsA(@Param("comparisonId") long comparisonId);
