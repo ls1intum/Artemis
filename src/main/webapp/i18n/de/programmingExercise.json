@@ -655,7 +655,7 @@
                 "defineDateForRunningTestsAfterDueDateTooltip": "Diese Option ist nur verfügbar, wenn eine Einreichungsfrist konfiguriert wurde.",
                 "enableManualAssessment": "Manuelle Bewertung aktivieren",
                 "enableManualAssessmentTooltip": "Diese Option ist nur verfügbar, wenn eine Einreichungsfrist konfiguriert wurde.",
-                "configureExampleSolutionPublication": "Konfiguriere Veröffentlichungdatum für Beispiellösung",
+                "configureExampleSolutionPublication": "Konfiguriere Veröffentlichungsdatum für Beispiellösung",
                 "notSet": "nicht gesetzt",
                 "athenaFeedbackRequests": "Automatische, nicht bewertete Feedbackanfragen/manuelle Feedbackanfragen erlauben.",
                 "athenaFeedbackRequestsTooltip": "Studierende können vor der Einreichungsfrist um Feedback bitten. Die Anfragen werden von Athena bearbeitet oder, falls Athena nicht erreicht werden kann, können Studierende manuelle Feedbackanfragen stellen. Diese Option ist nur verfügbar, wenn Manuelle Bewertung deaktiviert ist.",
