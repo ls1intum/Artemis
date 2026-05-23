@@ -20,7 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
@@ -64,7 +64,7 @@ class ModelingExerciseFeedbackServiceTest {
     private ParticipationService participationService;
 
     @Mock
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     private ModelingExercise modelingExercise;
 
