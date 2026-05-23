@@ -1,109 +1,114 @@
-<div class="p-3 border-bottom">
+<div class="p-3" [class.border-bottom]="!readonly() || !isLast()">
     <div class="d-flex align-items-center gap-2 mb-2">
         <p-badge [value]="displayedNumber()" />
         <span class="bold">{{ 'artemisApp.programmingExercise.buildPhasesEditor.phase' | artemisTranslate }}: {{ phase().name }}</span>
 
-        <div class="d-flex gap-1 ms-auto">
-            <button
-                [id]="'move-up-button-' + index()"
-                pButton
-                [pTooltip]="'artemisApp.programmingExercise.buildPhasesEditor.moveUp' | artemisTranslate"
-                tooltipPosition="bottom"
-                text
-                rounded
-                size="small"
-                severity="secondary"
-                [disabled]="isFirst()"
-                [hidden]="readonly()"
-                (click)="moveUp.emit()"
-            >
-                <fa-icon [icon]="faArrowUp" pButtonIcon />
-            </button>
+        @if (!readonly()) {
+            <div class="d-flex gap-1 ms-auto">
+                <button
+                    [id]="'move-up-button-' + index()"
+                    pButton
+                    [pTooltip]="'artemisApp.programmingExercise.buildPhasesEditor.moveUp' | artemisTranslate"
+                    tooltipPosition="bottom"
+                    text
+                    rounded
+                    size="small"
+                    severity="secondary"
+                    [disabled]="isFirst()"
+                    (click)="moveUp.emit()"
+                >
+                    <fa-icon [icon]="faArrowUp" pButtonIcon />
+                </button>
 
-            <button
-                [id]="'move-down-button-' + index()"
-                pButton
-                [pTooltip]="'artemisApp.programmingExercise.buildPhasesEditor.moveDown' | artemisTranslate"
-                tooltipPosition="bottom"
-                text
-                rounded
-                size="small"
-                severity="secondary"
-                [disabled]="isLast()"
-                [hidden]="readonly()"
-                (click)="moveDown.emit()"
-            >
-                <fa-icon [icon]="faArrowDown" pButtonIcon />
-            </button>
+                <button
+                    [id]="'move-down-button-' + index()"
+                    pButton
+                    [pTooltip]="'artemisApp.programmingExercise.buildPhasesEditor.moveDown' | artemisTranslate"
+                    tooltipPosition="bottom"
+                    text
+                    rounded
+                    size="small"
+                    severity="secondary"
+                    [disabled]="isLast()"
+                    (click)="moveDown.emit()"
+                >
+                    <fa-icon [icon]="faArrowDown" pButtonIcon />
+                </button>
 
-            <button
-                [id]="'delete-phase-button-' + index()"
-                class="ms-2"
-                pButton
-                [pTooltip]="'artemisApp.programmingExercise.buildPhasesEditor.delete' | artemisTranslate"
-                tooltipPosition="bottom"
-                text
-                rounded
-                size="small"
-                severity="danger"
-                [disabled]="isOnly()"
-                [hidden]="readonly()"
-                (click)="delete.emit()"
-            >
-                <fa-icon [icon]="faTrash" pButtonIcon />
-            </button>
-        </div>
+                <button
+                    [id]="'delete-phase-button-' + index()"
+                    class="ms-2"
+                    pButton
+                    [pTooltip]="'artemisApp.programmingExercise.buildPhasesEditor.delete' | artemisTranslate"
+                    tooltipPosition="bottom"
+                    text
+                    rounded
+                    size="small"
+                    severity="danger"
+                    [disabled]="isOnly()"
+                    (click)="delete.emit()"
+                >
+                    <fa-icon [icon]="faTrash" pButtonIcon />
+                </button>
+            </div>
+        }
     </div>
     <!-- Phase controls row -->
     <div class="d-flex align-items-start gap-2 mb-2">
-        <div class="d-flex flex-column gap-1">
-            <label [for]="'phase-name-input-' + index()" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.phaseName"></label>
-            <input
-                [id]="'phase-name-input-' + index()"
-                pInputText
-                pSize="small"
-                [ngModel]="phase().name"
-                (ngModelChange)="updateName($event)"
-                [placeholder]="'artemisApp.programmingExercise.buildPhasesEditor.phaseNamePlaceholder' | artemisTranslate"
-                [invalid]="shouldShowNameValidationError()"
-                [disabled]="readonly()"
-            />
-            @if (shouldShowNameValidationError()) {
-                <p-message severity="error" size="small" variant="simple">{{ nameValidationMessageKey() | artemisTranslate }}</p-message>
-            }
-        </div>
-
-        <div class="d-flex flex-column gap-1">
-            <div class="d-flex gap-1">
-                <label [for]="'phase-condition-input-' + index()" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.condition"></label>
+        @if (!readonly()) {
+            <div class="d-flex flex-column gap-1">
+                <label [for]="'phase-name-input-' + index()" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.phaseName"></label>
+                <input
+                    [id]="'phase-name-input-' + index()"
+                    pInputText
+                    pSize="small"
+                    [ngModel]="phase().name"
+                    (ngModelChange)="updateName($event)"
+                    [placeholder]="'artemisApp.programmingExercise.buildPhasesEditor.phaseNamePlaceholder' | artemisTranslate"
+                    [invalid]="shouldShowNameValidationError()"
+                    [disabled]="readonly()"
+                />
+                @if (shouldShowNameValidationError()) {
+                    <p-message severity="error" size="small" variant="simple">{{ nameValidationMessageKey() | artemisTranslate }}</p-message>
+                }
             </div>
-            <p-select
-                [inputId]="'phase-condition-input-' + index()"
-                size="small"
-                [options]="conditionOptions()"
-                optionLabel="label"
-                optionValue="value"
-                [ngModel]="phase().condition"
-                (ngModelChange)="updateCondition($event)"
-                [disabled]="readonly()"
-            />
-        </div>
+        }
+
+        @if (!readonly() || phase().condition !== 'ALWAYS') {
+            <div class="d-flex flex-column gap-1">
+                <div class="d-flex gap-1">
+                    <label [for]="'phase-condition-input-' + index()" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.condition"></label>
+                </div>
+                <p-select
+                    [inputId]="'phase-condition-input-' + index()"
+                    size="small"
+                    [options]="conditionOptions()"
+                    optionLabel="label"
+                    optionValue="value"
+                    [ngModel]="phase().condition"
+                    (ngModelChange)="updateCondition($event)"
+                    [disabled]="readonly()"
+                />
+            </div>
+        }
     </div>
 
-    <div class="d-flex gap-2 mb-2 align-items-center">
-        <p-checkbox
-            [inputId]="'phase-force-run-input-' + index()"
-            [binary]="true"
-            [ngModel]="phase().forceRun"
-            (ngModelChange)="updateForceRun($event)"
-            [disabled]="readonly()"
-            size="small"
-        />
-        <div class="d-flex gap-1">
-            <label [for]="'phase-force-run-input-' + index()" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.forceRun"></label>
-            <jhi-help-icon text="artemisApp.programmingExercise.buildPhasesEditor.forceRunHelp" />
+    @if (!readonly() || phase().forceRun) {
+        <div class="d-flex gap-2 mb-2 align-items-center">
+            <p-checkbox
+                [inputId]="'phase-force-run-input-' + index()"
+                [binary]="true"
+                [ngModel]="phase().forceRun"
+                (ngModelChange)="updateForceRun($event)"
+                [disabled]="readonly()"
+                size="small"
+            />
+            <div class="d-flex gap-1">
+                <label [for]="'phase-force-run-input-' + index()" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.forceRun"></label>
+                <jhi-help-icon text="artemisApp.programmingExercise.buildPhasesEditor.forceRunHelp" />
+            </div>
         </div>
-    </div>
+    }
 
     <!-- Script editor -->
     <div class="d-flex flex-column gap-1 mb-2">
@@ -112,26 +117,28 @@
             <jhi-help-icon text="artemisApp.programmingExercise.buildPhasesEditor.scriptHelp" />
         </div>
         @if (readonly()) {
-            <div class="markdown-preview" data-testid="readonly-script" [innerHTML]="readonlyScriptHtml()"></div>
+            <div class="markdown-preview border" data-testid="readonly-script" [innerHTML]="readonlyScriptHtml()"></div>
         } @else {
             <jhi-monaco-editor-fit-text data-testid="script-editor" [text]="phase().script" (textChange)="updateScript($event)" />
         }
     </div>
 
-    <div class="d-flex gap-2 align-items-center">
-        <p-checkbox
-            [inputId]="'phase-tests-expected-input-' + index()"
-            [binary]="true"
-            [ngModel]="!!phase().resultPaths?.length"
-            (ngModelChange)="updateTestsExpected($event)"
-            [disabled]="readonly()"
-            size="small"
-        />
-        <div class="d-flex gap-1">
-            <label [for]="'phase-tests-expected-input-' + index()" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.testsExpected"></label>
-            <jhi-help-icon text="artemisApp.programmingExercise.buildPhasesEditor.resultPathsHelp" />
+    @if (!readonly() || !!phase().resultPaths?.length) {
+        <div class="d-flex gap-2 align-items-center">
+            <p-checkbox
+                [inputId]="'phase-tests-expected-input-' + index()"
+                [binary]="true"
+                [ngModel]="!!phase().resultPaths?.length"
+                (ngModelChange)="updateTestsExpected($event)"
+                [disabled]="readonly()"
+                size="small"
+            />
+            <div class="d-flex gap-1">
+                <label [for]="'phase-tests-expected-input-' + index()" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.testsExpected"></label>
+                <jhi-help-icon text="artemisApp.programmingExercise.buildPhasesEditor.resultPathsHelp" />
+            </div>
         </div>
-    </div>
+    }
 
     @if (phase().resultPaths?.length) {
         <!-- Result paths -->

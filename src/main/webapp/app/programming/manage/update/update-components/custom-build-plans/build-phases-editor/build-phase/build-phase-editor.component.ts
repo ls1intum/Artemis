@@ -45,6 +45,13 @@ import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
         Message,
     ],
     templateUrl: './build-phase-editor.component.html',
+    styles: `
+        :host ::ng-deep .markdown-preview pre {
+            border: none;
+            padding: 0;
+            margin-bottom: 0;
+        }
+    `,
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 /**
