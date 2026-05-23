@@ -8,8 +8,7 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
-import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { PlagiarismCase, PlagiarismCaseExercise } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import dayjs from 'dayjs/esm';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -18,6 +17,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('Plagiarism Cases Student View Component', () => {
     setupTestBed({ zoneless: true });
@@ -38,8 +38,10 @@ describe('Plagiarism Cases Student View Component', () => {
     const exercise = {
         id: 1,
         title: 'Test Exercise',
-        course: { id: 1, title: 'Test Course' },
-    } as TextExercise;
+        type: ExerciseType.TEXT,
+        courseId: 1,
+        courseTitle: 'Test Course',
+    } as PlagiarismCaseExercise;
 
     const plagiarismCase = {
         id: 1,

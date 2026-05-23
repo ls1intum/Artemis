@@ -15,7 +15,6 @@ import dayjs from 'dayjs/esm';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { MockComponent } from 'ng-mocks';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ProgressBarComponent } from 'app/exercise/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
@@ -54,12 +53,6 @@ describe('Plagiarism Cases Instructor View Component', () => {
         type: ExerciseType.TEXT,
     } as TextExercise;
 
-    const studentLoginA = 'studentA';
-    const plagiarismSubmission1 = {
-        id: 1,
-        studentLogin: studentLoginA,
-    } as PlagiarismSubmission;
-
     const plagiarismCase1 = {
         id: 1,
         exercise: exercise1,
@@ -72,13 +65,9 @@ describe('Plagiarism Cases Instructor View Component', () => {
         verdictDate: date,
         post: {
             id: 1,
-            answers: [
-                {
-                    author: { id: 1 },
-                },
-            ],
+            answerAuthorIds: [1],
         },
-        plagiarismSubmissions: [plagiarismSubmission1],
+        plagiarismSubmissionCount: 1,
     } as PlagiarismCase;
     const plagiarismCase2 = {
         id: 2,
