@@ -7,10 +7,14 @@
  * applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * Modifications by the Artemis maintainers (TUM AET): replaced the single removed-in-Spring-7 call to
- * UriComponentsBuilder.fromHttpUrl(String) with UriComponentsBuilder.fromUriString(String). This matches upstream PR
- * oxctl/spring-security-lti13#60. Delete this file and revert the constructor call in CustomLti13Configurer once a
- * Spring 7-compatible release of the upstream library is published.
+ * Modifications by the Artemis maintainers (TUM AET):
+ * 1. Replaced the single removed-in-Spring-7 call to UriComponentsBuilder.fromHttpUrl(String) with
+ * UriComponentsBuilder.fromUriString(String). This matches upstream PR oxctl/spring-security-lti13#60.
+ * 2. Additionally rejected blank/whitespace iss / login_hint / target_link_uri (upstream only rejects null).
+ * The LTI 1.3 spec requires these to be non-empty strings.
+ * When the upstream library publishes a Spring 7-compatible release, delete this file and revert the constructor
+ * call in CustomLti13Configurer. If you also want to keep modification #2, contribute it upstream first or apply it
+ * on top of the upstream class — otherwise blank handling silently regresses to upstream behaviour.
  */
 package uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web;
 
@@ -98,18 +102,22 @@ public class Lti13InitiatingLoginRequestResolver implements OAuth2AuthorizationR
                     + ") for Client Registration with Id: " + clientRegistration.getRegistrationId());
         }
 
+        // Artemis modification on top of upstream: also reject blank/whitespace values. The LTI 1.3 spec requires
+        // iss / login_hint / target_link_uri to be non-empty strings; the upstream null-only check lets empty
+        // values through and they then either disappear silently (iss, target_link_uri) or propagate as an empty
+        // additional parameter to the platform (login_hint).
         String iss = request.getParameter("iss");
-        if (iss == null) {
+        if (iss == null || iss.isBlank()) {
             throw new InvalidInitiationRequestException("Required parameter iss was not supplied.");
         }
 
         String loginHint = request.getParameter("login_hint");
-        if (loginHint == null) {
+        if (loginHint == null || loginHint.isBlank()) {
             throw new InvalidInitiationRequestException("Required parameter login_hint was not supplied.");
         }
 
         String targetLinkUri = request.getParameter("target_link_uri");
-        if (targetLinkUri == null) {
+        if (targetLinkUri == null || targetLinkUri.isBlank()) {
             throw new InvalidInitiationRequestException("Required parameter target_link_uri was not supplied");
         }
 

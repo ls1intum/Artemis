@@ -82,6 +82,17 @@ class Lti13InitiationIntegrationTest extends AbstractLtiIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    @WithAnonymousUser
+    void initiateLoginWithBlankIssReturnsBadRequest() throws Exception {
+        // Stricter than upstream: blank/whitespace required parameters must be rejected (LTI 1.3 spec compliance).
+        String registrationId = "test-platform-" + UUID.randomUUID();
+        savePlatform(registrationId);
+
+        request.performMvcRequest(get("/api/lti/public/lti13/initiate-login/{registrationId}", registrationId).param("iss", "   ").param("login_hint", "user-42")
+                .param("target_link_uri", "http://localhost/courses/1")).andExpect(status().isBadRequest());
+    }
+
     private void savePlatform(String registrationId) {
         LtiPlatformConfiguration platform = new LtiPlatformConfiguration();
         platform.setRegistrationId(registrationId);

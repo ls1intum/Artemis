@@ -114,6 +114,40 @@ class Lti13InitiatingLoginRequestResolverTest {
         assertThatThrownBy(() -> resolver.resolve(request)).isInstanceOf(InvalidInitiationRequestException.class).hasMessageContaining("iss");
     }
 
+    /**
+     * Artemis-specific tightening on top of upstream (see class header in the resolver): blank / whitespace values
+     * for required initiation parameters must be rejected, not just nulls.
+     */
+    @Test
+    void resolveThrowsWhenIssParameterBlank() {
+        MockHttpServletRequest request = baseInitiationRequest(REGISTRATION_ID);
+        request.setParameter("iss", "   ");
+        request.setParameter("login_hint", "user-42");
+        request.setParameter("target_link_uri", "http://localhost/courses/1");
+
+        assertThatThrownBy(() -> resolver.resolve(request)).isInstanceOf(InvalidInitiationRequestException.class).hasMessageContaining("iss");
+    }
+
+    @Test
+    void resolveThrowsWhenLoginHintBlank() {
+        MockHttpServletRequest request = baseInitiationRequest(REGISTRATION_ID);
+        request.setParameter("iss", "https://platform.example.com");
+        request.setParameter("login_hint", "");
+        request.setParameter("target_link_uri", "http://localhost/courses/1");
+
+        assertThatThrownBy(() -> resolver.resolve(request)).isInstanceOf(InvalidInitiationRequestException.class).hasMessageContaining("login_hint");
+    }
+
+    @Test
+    void resolveThrowsWhenTargetLinkUriBlank() {
+        MockHttpServletRequest request = baseInitiationRequest(REGISTRATION_ID);
+        request.setParameter("iss", "https://platform.example.com");
+        request.setParameter("login_hint", "user-42");
+        request.setParameter("target_link_uri", "\t");
+
+        assertThatThrownBy(() -> resolver.resolve(request)).isInstanceOf(InvalidInitiationRequestException.class).hasMessageContaining("target_link_uri");
+    }
+
     private MockHttpServletRequest initiationRequest(String registrationId) {
         MockHttpServletRequest request = baseInitiationRequest(registrationId);
         request.setParameter("iss", "https://platform.example.com");
