@@ -5,12 +5,11 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { BuildPhase } from 'app/programming/shared/entities/build-plan-phases.model';
 import { BuildPhaseEditorComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phase/build-phase-editor.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-build-phases-editor',
-    imports: [ButtonModule, FaIconComponent, BuildPhaseEditorComponent, HelpIconComponent, TranslateDirective],
+    imports: [ButtonModule, FaIconComponent, BuildPhaseEditorComponent, TranslateDirective],
     templateUrl: './build-phases-editor.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -12,6 +12,8 @@
             [timeout]="programmingExercise.buildConfig!.timeoutSeconds === 0 ? 120 : programmingExercise.buildConfig!.timeoutSeconds!"
             (timeoutChange)="setTimeout($event)"
         />
+        <label jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.title"></label>
+        <jhi-help-icon text="artemisApp.programmingExercise.buildPhasesEditor.help" />
         <jhi-build-phases-editor [phases]="phases()" (phasesChange)="onPhasesChange($event)" />
     }
 </div>

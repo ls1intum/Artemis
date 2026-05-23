@@ -1,7 +1,4 @@
-<div class="p-3 border rounded">
-    <label class="mb-3" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.title"></label>
-    <jhi-help-icon text="artemisApp.programmingExercise.buildPhasesEditor.help" />
-
+<div class="border rounded-4">
     @for (phase of phases(); track $index) {
         <jhi-build-phase
             [phase]="phase"
@@ -16,7 +13,7 @@
         />
     }
 
-    <button id="add-phase-button" pButton [text]="true" size="small" severity="secondary" [hidden]="readonly()" (click)="addPhase()">
+    <button id="add-phase-button" class="m-1" pButton [text]="true" size="small" severity="secondary" [hidden]="readonly()" (click)="addPhase()">
         <fa-icon [icon]="faPlus" pButtonIcon />
         <span pButtonLabel jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.addPhase"></span>
     </button>

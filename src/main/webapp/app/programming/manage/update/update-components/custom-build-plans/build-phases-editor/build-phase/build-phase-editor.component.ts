@@ -15,7 +15,6 @@ import { InputText } from 'primeng/inputtext';
 import { ButtonDirective, ButtonIcon, ButtonLabel } from 'primeng/button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MonacoEditorFitTextComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/monaco-editor-auto-size/monaco-editor-fit-text.component';
-import { Card } from 'primeng/card';
 import { Badge } from 'primeng/badge';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { Tooltip } from 'primeng/tooltip';
@@ -37,7 +36,6 @@ import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
         FaIconComponent,
         MonacoEditorFitTextComponent,
         ButtonLabel,
-        Card,
         Badge,
         HelpIconComponent,
         Tooltip,
