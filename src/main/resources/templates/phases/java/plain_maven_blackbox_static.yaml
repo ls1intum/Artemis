@@ -89,3 +89,7 @@
   forceRun: true
   resultPaths:
     - 'target/checkstyle-result.xml'
+- name: sanitize_feedback
+  script: |-
+    sed -i 's/[^[:print:]\t]/�/g' customFeedbacks/*.json || true
+  forceRun: true

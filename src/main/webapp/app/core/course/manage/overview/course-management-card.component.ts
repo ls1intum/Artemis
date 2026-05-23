@@ -9,19 +9,19 @@ import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/core/cou
 import {
     faAngleDown,
     faAngleUp,
+    faBullseye,
+    faChalkboardTeacher,
     faChartBar,
     faClipboard,
+    faCode,
     faComments,
-    faFilePdf,
-    faFlag,
-    faGraduationCap,
-    faListAlt,
+    faFileAlt,
     faNetworkWired,
-    faPersonChalkboard,
     faQuestion,
     faSpinner,
     faTable,
     faUserCheck,
+    faUsers,
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -98,17 +98,17 @@ export class CourseManagementCardComponent {
     // Icons
     readonly faTable = faTable;
     readonly faUserCheck = faUserCheck;
-    readonly faFlag = faFlag;
+    readonly faBullseye = faBullseye;
     readonly faNetworkWired = faNetworkWired;
-    readonly faListAlt = faListAlt;
+    readonly faCode = faCode;
     readonly faChartBar = faChartBar;
-    readonly faFilePdf = faFilePdf;
+    readonly faChalkboardTeacher = faChalkboardTeacher;
     readonly faComments = faComments;
     readonly faClipboard = faClipboard;
-    readonly faGraduationCap = faGraduationCap;
+    readonly faFileAlt = faFileAlt;
     readonly faAngleDown = faAngleDown;
     readonly faAngleUp = faAngleUp;
-    readonly faPersonChalkboard = faPersonChalkboard;
+    readonly faUsers = faUsers;
     readonly faSpinner = faSpinner;
     readonly faQuestion = faQuestion;
 

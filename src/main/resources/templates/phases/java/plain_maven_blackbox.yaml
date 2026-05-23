@@ -81,3 +81,7 @@
     pipeline-helper -o customFeedbacks dejagnu -n "dejagnu[${step}]" -l testsuite/${tool}.log
   resultPaths:
     - '**/customFeedbacks/TEST-*.json'
+- name: sanitize_feedback
+  script: |-
+    sed -i 's/[^[:print:]\t]/�/g' customFeedbacks/*.json || true
+  forceRun: true
