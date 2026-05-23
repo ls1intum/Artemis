@@ -101,6 +101,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
             } else if (this.assessmentType() === AssessmentType.AUTOMATIC) {
                 this.assessmentDueDate.set(undefined);
                 this.allowComplaintsForAutomaticAssessments.set(false);
+                this.allowFeedbackRequests.set(false);
                 this.feedbackSuggestionModule.set(undefined);
             }
         });
