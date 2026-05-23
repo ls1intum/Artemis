@@ -660,10 +660,13 @@ public class OrchestratorToolsService {
             log.warn("deleteCompetency failed for competency {}: {}", competencyId, ex.getMessage());
             return errorJson("Failed to delete competency.");
         }
+        // Append before the external Atlas ML notification — consistent with the other four
+        // tools and ensures the audit DTO is in the buffer even if the downstream notify call
+        // throws (the DB delete has already committed).
+        appendAction(toolContext, AppliedActionDTO.delete(competencyId, title, "Deleted competency " + title + ".", justification.trim()));
         if (competencyForAtlasMl != null) {
             atlasMLNotificationService.notifyAtlasML(List.of(competencyForAtlasMl), OperationTypeDTO.DELETE, "orchestrator competency deletion");
         }
-        appendAction(toolContext, AppliedActionDTO.delete(competencyId, title, "Deleted competency " + title + ".", justification.trim()));
         return toJson(Map.of("status", "ok", "deletedId", competencyId));
     }
 
@@ -842,13 +845,14 @@ public class OrchestratorToolsService {
         }
 
         boolean tryReserveSlot(int cap) {
-            // Both completed appends (actions.size()) and in-flight reservations count toward
-            // the cap so concurrent callers cannot collectively exceed it. Reads of actions.size()
-            // are stable because the underlying list is synchronized and only grows via
-            // appendAction, which is invoked after a successful reservation.
+            // reservedSlots is the only counter against the cap; it is incremented once per
+            // attempted write (before persistence) and never decremented, so a hallucinating model
+            // cannot retry past the cap by failing a mutation. A previous version also added
+            // actions.size() to this check, which double-counted successful writes and halved the
+            // effective cap.
             while (true) {
                 int current = reservedSlots.get();
-                if (actions.size() + current >= cap) {
+                if (current >= cap) {
                     return false;
                 }
                 if (reservedSlots.compareAndSet(current, current + 1)) {
