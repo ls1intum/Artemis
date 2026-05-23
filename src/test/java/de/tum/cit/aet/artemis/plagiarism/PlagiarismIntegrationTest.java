@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismComparisonDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismComparisonStatusDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
@@ -165,9 +166,9 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPlagiarismComparisonsForSplitView_student() throws Exception {
         var comparison = request.get("/api/plagiarism/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view", HttpStatus.OK,
-                plagiarismComparison1.getClass());
-        assertThat(comparison.getSubmissionA().getStudentLogin()).as("should anonymize plagiarism comparison").isIn("Your submission", "Other submission");
-        assertThat(comparison.getSubmissionB().getStudentLogin()).as("should anonymize plagiarism comparison").isIn("Your submission", "Other submission");
+                PlagiarismComparisonDTO.class);
+        assertThat(comparison.submissionA().studentLogin()).as("should anonymize plagiarism comparison").isIn("Your submission", "Other submission");
+        assertThat(comparison.submissionB().studentLogin()).as("should anonymize plagiarism comparison").isIn("Your submission", "Other submission");
     }
 
     @Test
@@ -181,19 +182,15 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetPlagiarismComparisonsForSplitView_editor() throws Exception {
-        PlagiarismComparison comparison = request.get("/api/plagiarism/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view",
-                HttpStatus.OK, plagiarismComparison1.getClass());
-        assertThat(comparison).isEqualTo(plagiarismComparison1);
-        assertThat(comparison.getPlagiarismResult()).isNull();
-        assertThat(comparison.getSubmissionA()).isEqualTo(plagiarismComparison1.getSubmissionA());
-        assertThat(comparison.getSubmissionB()).isEqualTo(plagiarismComparison1.getSubmissionB());
-        assertThat(comparison.getSimilarity()).isEqualTo(plagiarismComparison1.getSimilarity());
-        assertThat(comparison.getStatus()).isEqualTo(plagiarismComparison1.getStatus());
-        assertThat(comparison.getMatches()).isEqualTo(plagiarismComparison1.getMatches());
-
-        // Important: make sure those additional information is hidden
-        assertThat(comparison.getSubmissionA().getPlagiarismCase()).isNull();
-        assertThat(comparison.getSubmissionB().getPlagiarismCase()).isNull();
+        PlagiarismComparisonDTO comparison = request.get(
+                "/api/plagiarism/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view", HttpStatus.OK,
+                PlagiarismComparisonDTO.class);
+        assertThat(comparison.id()).isEqualTo(plagiarismComparison1.getId());
+        assertThat(comparison.submissionA().id()).isEqualTo(plagiarismComparison1.getSubmissionA().getId());
+        assertThat(comparison.submissionB().id()).isEqualTo(plagiarismComparison1.getSubmissionB().getId());
+        assertThat(comparison.similarity()).isEqualTo(plagiarismComparison1.getSimilarity());
+        assertThat(comparison.status()).isEqualTo(plagiarismComparison1.getStatus());
+        assertThat(comparison.matches()).hasSameSizeAs(plagiarismComparison1.getMatches());
     }
 
     @Test

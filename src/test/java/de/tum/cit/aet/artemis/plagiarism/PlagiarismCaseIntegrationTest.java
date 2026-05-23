@@ -29,7 +29,10 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseDetailDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseInfoDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseOverviewDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseVerdictResponseDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismVerdictDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
@@ -142,13 +145,12 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetPlagiarismCasesForCourseForInstructor() throws Exception {
-        var plagiarismCasesResponse = request.getList("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/for-instructor", HttpStatus.OK, PlagiarismCase.class);
-        assertThat(plagiarismCasesResponse).as("should get course plagiarism cases for instructor").containsExactlyInAnyOrderElementsOf(coursePlagiarismCases);
-        for (var submission : plagiarismCasesResponse.getFirst().getPlagiarismSubmissions()) {
-            assertThat(submission.getPlagiarismComparison().getPlagiarismResult().getExercise()).as("should prepare plagiarism case response entity").isNull();
-            assertThat(submission.getPlagiarismComparison().getSubmissionA()).as("should prepare plagiarism case response entity").isNull();
-            assertThat(submission.getPlagiarismComparison().getSubmissionB()).as("should prepare plagiarism case response entity").isNull();
-        }
+        var plagiarismCasesResponse = request.getList("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/for-instructor", HttpStatus.OK,
+                PlagiarismCaseOverviewDTO.class);
+        assertThat(plagiarismCasesResponse).as("should get course plagiarism cases for instructor").extracting(PlagiarismCaseOverviewDTO::id)
+                .containsExactlyInAnyOrderElementsOf(coursePlagiarismCases.stream().map(PlagiarismCase::getId).toList());
+        assertThat(plagiarismCasesResponse.getFirst().plagiarismSubmissionCount()).as("should include the number of submissions").isEqualTo(2);
+        assertThat(plagiarismCasesResponse.getFirst().exercise().id()).as("should include exercise summary").isEqualTo(textExercise.getId());
     }
 
     @Test
@@ -173,8 +175,10 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetPlagiarismCaseForInstructor() throws Exception {
         var plagiarismCase = request.get("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/for-instructor", HttpStatus.OK,
-                PlagiarismCase.class);
-        assertThat(plagiarismCase).as("should get plagiarism case for instructor").isEqualTo(plagiarismCase1);
+                PlagiarismCaseDetailDTO.class);
+        assertThat(plagiarismCase.id()).as("should get plagiarism case for instructor").isEqualTo(plagiarismCase1.getId());
+        assertThat(plagiarismCase.plagiarismSubmissions()).as("should include plagiarism submissions").hasSize(2);
+        assertThat(plagiarismCase.plagiarismSubmissions().getFirst().plagiarismComparison()).as("should include comparison summaries").isNotNull();
     }
 
     @Test
@@ -202,13 +206,10 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
         Course examCourse = examTextExercise.getCourseViaExerciseGroupOrCourseMember();
         Exam exam = examTextExercise.getExerciseGroup().getExam();
         var plagiarismCasesResponse = request.getList("/api/plagiarism/courses/" + examCourse.getId() + "/exams/" + exam.getId() + "/plagiarism-cases/for-instructor",
-                HttpStatus.OK, PlagiarismCase.class);
-        assertThat(plagiarismCasesResponse).as("should get exam plagiarism cases for instructor").containsExactlyInAnyOrderElementsOf(examPlagiarismCases);
-        for (var submission : plagiarismCasesResponse.getFirst().getPlagiarismSubmissions()) {
-            assertThat(submission.getPlagiarismComparison().getPlagiarismResult().getExercise()).as("should remove unneeded elements from the response").isNull();
-            assertThat(submission.getPlagiarismComparison().getSubmissionA()).as("should filter out submission A").isNull();
-            assertThat(submission.getPlagiarismComparison().getSubmissionB()).as("should filter out submission B").isNull();
-        }
+                HttpStatus.OK, PlagiarismCaseOverviewDTO.class);
+        assertThat(plagiarismCasesResponse).as("should get exam plagiarism cases for instructor").extracting(PlagiarismCaseOverviewDTO::id)
+                .containsExactlyInAnyOrderElementsOf(examPlagiarismCases.stream().map(PlagiarismCase::getId).toList());
+        assertThat(plagiarismCasesResponse.getFirst().exercise().examId()).as("should include exam summary").isEqualTo(exam.getId());
     }
 
     @Test
@@ -244,7 +245,10 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSavePlagiarismCaseVerdict_warning() throws Exception {
         var plagiarismVerdictDTO = new PlagiarismVerdictDTO(WARNING, "This is a warning!", 0);
-        request.put("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/verdict", plagiarismVerdictDTO, HttpStatus.OK);
+        var response = request.putWithResponseBody("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/verdict", plagiarismVerdictDTO,
+                PlagiarismCaseVerdictResponseDTO.class, HttpStatus.OK);
+        assertThat(response.verdict()).as("should return updated plagiarism case verdict warning").isEqualTo(PlagiarismVerdict.WARNING);
+        assertThat(response.verdictMessage()).as("should return updated plagiarism case verdict message").isEqualTo("This is a warning!");
         var updatedPlagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(plagiarismCase1.getId());
         assertThat(updatedPlagiarismCase.getVerdict()).as("should update plagiarism case verdict warning").isEqualTo(PlagiarismVerdict.WARNING);
         assertThat(updatedPlagiarismCase.getVerdictMessage()).as("should update plagiarism case verdict message").isEqualTo("This is a warning!");
@@ -254,7 +258,10 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSavePlagiarismCaseVerdict_pointDeduction() throws Exception {
         var plagiarismVerdictDTO = new PlagiarismVerdictDTO(POINT_DEDUCTION, "", 90);
-        request.put("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/verdict", plagiarismVerdictDTO, HttpStatus.OK);
+        var response = request.putWithResponseBody("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/verdict", plagiarismVerdictDTO,
+                PlagiarismCaseVerdictResponseDTO.class, HttpStatus.OK);
+        assertThat(response.verdict()).as("should return updated plagiarism case verdict point deduction").isEqualTo(PlagiarismVerdict.POINT_DEDUCTION);
+        assertThat(response.verdictPointDeduction()).as("should return updated plagiarism case verdict point deduction").isEqualTo(90);
         var updatedPlagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(plagiarismCase1.getId());
         assertThat(updatedPlagiarismCase.getVerdict()).as("should update plagiarism case verdict point deduction").isEqualTo(PlagiarismVerdict.POINT_DEDUCTION);
         assertThat(updatedPlagiarismCase.getVerdictPointDeduction()).as("should update plagiarism case verdict point deduction").isEqualTo(90);
@@ -352,13 +359,10 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPlagiarismCaseForStudent() throws Exception {
         var plagiarismCase = request.get("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/for-student", HttpStatus.OK,
-                PlagiarismCase.class);
-        assertThat(plagiarismCase).as("should get plagiarism case for student").isEqualTo(plagiarismCase1);
-        for (var submission : plagiarismCase.getPlagiarismSubmissions()) {
-            assertThat(submission.getPlagiarismComparison().getPlagiarismResult().getExercise()).as("should prepare plagiarism case response entity").isNull();
-            assertThat(submission.getPlagiarismComparison().getSubmissionA()).as("should prepare plagiarism case response entity").isNull();
-            assertThat(submission.getPlagiarismComparison().getSubmissionB()).as("should prepare plagiarism case response entity").isNull();
-        }
+                PlagiarismCaseDetailDTO.class);
+        assertThat(plagiarismCase.id()).as("should get plagiarism case for student").isEqualTo(plagiarismCase1.getId());
+        assertThat(plagiarismCase.plagiarismSubmissions()).as("should include plagiarism submissions").hasSize(2);
+        assertThat(plagiarismCase.plagiarismSubmissions().getFirst().plagiarismComparison()).as("should include comparison summaries").isNotNull();
     }
 
     @Test
