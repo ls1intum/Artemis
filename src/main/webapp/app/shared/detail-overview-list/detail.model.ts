@@ -145,7 +145,7 @@ interface ProgrammingCheckoutDirectoriesDetail extends DetailBase {
 
 interface ProgrammingBuildPhasesDetail extends DetailBase {
     type: DetailType.ProgrammingBuildPhases;
-    data: { phases: BuildPhase[] };
+    data: { phases: BuildPhase[]; isExamMode?: boolean };
 }
 
 export interface ExerciseCategoriesDetail extends DetailBase {

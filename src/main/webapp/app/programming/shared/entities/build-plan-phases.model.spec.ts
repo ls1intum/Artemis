@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { BUILD_PHASE_NAME_PATTERN, BUILD_PHASE_RESERVED_NAMES, parseBuildPlanPhases } from './build-plan-phases.model';
+import { BUILD_PHASE_NAME_PATTERN, BUILD_PHASE_RESERVED_NAMES, hasExpectedTestsBeforeDueDate, parseBuildPlanPhases } from './build-plan-phases.model';
 
 describe('build-plan-phases.model', () => {
     it('parses a valid build plan phases json', () => {
@@ -183,5 +183,26 @@ describe('build-plan-phases.model', () => {
                 }),
             ),
         ).toBeUndefined();
+    });
+
+    it('detects phases that expect tests before the due date', () => {
+        expect(
+            hasExpectedTestsBeforeDueDate({
+                name: 'test',
+                script: './gradlew test',
+                condition: 'ALWAYS',
+                forceRun: false,
+                resultPaths: ['build/test-results/**/*.xml'],
+            }),
+        ).toBe(true);
+        expect(
+            hasExpectedTestsBeforeDueDate({
+                name: 'after_due_date_test',
+                script: './gradlew test',
+                condition: 'AFTER_DUE_DATE',
+                forceRun: false,
+                resultPaths: ['build/test-results/**/*.xml'],
+            }),
+        ).toBe(false);
     });
 });

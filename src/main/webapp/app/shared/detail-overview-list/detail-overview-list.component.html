@@ -77,7 +77,7 @@
                     }
                     @case (DetailType.ProgrammingBuildPhases) {
                         <dd id="detail-value-{{ detail.title }}">
-                            <jhi-build-phases-editor [phases]="detail.data.phases" [readonly]="true" />
+                            <jhi-build-phases-editor [phases]="detail.data.phases" [readonly]="true" [isExamMode]="detail.data.isExamMode ?? false" />
                         </dd>
                     }
                     @case (DetailType.Image) {

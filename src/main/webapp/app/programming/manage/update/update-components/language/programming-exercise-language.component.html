@@ -212,6 +212,10 @@
         </div>
     }
     @if (isEditFieldDisplayedRecord().customizeBuildScript && programmingExerciseCreationConfig.customBuildPlansSupported === PROFILE_LOCALCI) {
-        <jhi-programming-exercise-custom-build-plan [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="this.programmingExerciseCreationConfig" />
+        <jhi-programming-exercise-custom-build-plan
+            [programmingExercise]="programmingExercise"
+            [programmingExerciseCreationConfig]="this.programmingExerciseCreationConfig"
+            [isExamMode]="programmingExerciseCreationConfig.isExamMode"
+        />
     }
 </section>

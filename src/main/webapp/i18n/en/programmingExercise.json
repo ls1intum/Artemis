@@ -163,6 +163,8 @@
                 "resultPaths": "Result Paths",
                 "resultPathsHelp": "Add glob patterns for test result files produced by this phase, for example JUnit XML reports.",
                 "testsExpected": "Tests expected",
+                "expectedTestsBeforeDueDateWarning": "In exam mode, phases that expect tests are recommended to only be included after the due date. To fix this, go to \"Edit\", switch to \"advanced mode\", check \"Customize build configuration\" and find \"Build Phases\".",
+                "expectedTestsBeforeDueDateEditorWarning": "In exam mode, phases that expect tests are recommended to only be included after the due date.",
                 "resultPathPlaceholder": "e.g. **/results/*.xml",
                 "addResultPath": "Add Result Path",
                 "moveUp": "Move up",

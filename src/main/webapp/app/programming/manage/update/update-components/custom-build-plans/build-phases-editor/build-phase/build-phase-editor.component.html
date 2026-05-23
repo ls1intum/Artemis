@@ -93,6 +93,21 @@
         }
     </div>
 
+    @if (shouldShowExamModeWarning()) {
+        <p-message severity="warn" size="small" styleClass="build-phase-warning-message mb-2">
+            <span class="d-inline-flex align-items-center gap-2">
+                <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+                <span
+                    [jhiTranslate]="
+                        readonly()
+                            ? 'artemisApp.programmingExercise.buildPhasesEditor.expectedTestsBeforeDueDateWarning'
+                            : 'artemisApp.programmingExercise.buildPhasesEditor.expectedTestsBeforeDueDateEditorWarning'
+                    "
+                ></span>
+            </span>
+        </p-message>
+    }
+
     @if (!readonly() || phase().forceRun) {
         <div class="d-flex gap-2 mb-2 align-items-center">
             <p-checkbox

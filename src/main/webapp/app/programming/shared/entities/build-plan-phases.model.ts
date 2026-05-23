@@ -33,6 +33,10 @@ export interface BuildPlanPhases {
 export const BUILD_PHASE_NAME_PATTERN = RegExp('^[A-Za-z_][A-Za-z0-9_]*$');
 export const BUILD_PHASE_RESERVED_NAMES = new Set(['main', 'final_force_run_post_action']);
 
+export function hasExpectedTestsBeforeDueDate(phase: BuildPhase | undefined): boolean {
+    return !!phase && (phase.resultPaths?.length ?? 0) > 0 && phase.condition !== 'AFTER_DUE_DATE';
+}
+
 export function parseBuildPlanPhases(json: string | undefined): BuildPlanPhases | undefined {
     if (json == undefined) {
         return undefined;

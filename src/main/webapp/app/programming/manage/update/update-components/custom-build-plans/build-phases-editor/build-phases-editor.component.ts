@@ -21,6 +21,7 @@ export class BuildPhasesEditorComponent {
 
     readonly phases = model.required<BuildPhase[]>();
     readonly readonly = input(false);
+    readonly isExamMode = input(false);
 
     readonly phaseCount = computed(() => this.phases().length);
     readonly phaseNames = computed(() => this.phases().map((phase) => phase.name));

@@ -6,6 +6,7 @@
             [phaseNames]="phaseNames()"
             [isLast]="$index === phaseCount() - 1"
             [readonly]="readonly()"
+            [isExamMode]="isExamMode()"
             (phaseChange)="updatePhase($index, $event)"
             (delete)="deletePhase($index)"
             (moveUp)="moveUp($index)"

@@ -14,6 +14,6 @@
         />
         <label jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.title"></label>
         <jhi-help-icon text="artemisApp.programmingExercise.buildPhasesEditor.help" />
-        <jhi-build-phases-editor [phases]="phases()" (phasesChange)="onPhasesChange($event)" />
+        <jhi-build-phases-editor [phases]="phases()" [isExamMode]="isExamMode()" (phasesChange)="onPhasesChange($event)" />
     }
 </div>

@@ -624,7 +624,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     !!buildPlanPhases?.phases?.length && {
                         type: DetailType.ProgrammingBuildPhases,
                         title: 'artemisApp.programmingExercise.buildPhasesEditor.title',
-                        data: { phases: buildPlanPhases.phases },
+                        data: { phases: buildPlanPhases.phases, isExamMode: this.isExamExercise },
                     },
                 {
                     type: DetailType.Text,

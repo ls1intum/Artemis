@@ -8,6 +8,7 @@ import {
     BUILD_PHASE_RESERVED_NAMES,
     BuildPhase,
     BuildPhaseCondition,
+    hasExpectedTestsBeforeDueDate,
 } from 'app/programming/shared/entities/build-plan-phases.model';
 import { FormsModule } from '@angular/forms';
 import { Select } from 'primeng/select';
@@ -76,6 +77,7 @@ export class BuildPhaseEditorComponent {
     readonly phaseNames = input.required<string[]>();
     readonly isLast = input.required<boolean>();
     readonly readonly = input(false);
+    readonly isExamMode = input(false);
 
     readonly displayedNumber = computed(() => this.index() + 1);
     readonly isFirst = computed(() => this.index() === 0);
@@ -102,6 +104,7 @@ export class BuildPhaseEditorComponent {
     );
 
     readonly shouldShowNameValidationError = computed(() => !this.isNameValid());
+    readonly shouldShowExamModeWarning = computed(() => this.isExamMode() && hasExpectedTestsBeforeDueDate(this.phase()));
     readonly readonlyScriptHtml = computed(() => this.artemisMarkdownService.safeHtmlForMarkdown(`\`\`\`bash\n${this.phase().script}\n\`\`\``));
 
     readonly conditionOptions = computed(() => {
