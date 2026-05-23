@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Organization;
@@ -54,6 +55,7 @@ public class JacksonDeserializerInitializationConfig {
 
         // Force eager deserializer construction for these entity types (and List<T>).
         // The same cache is shared with the ObjectMapper Spring MVC uses for HTTP body handling.
+        primeDeserializer(User.class);
         primeDeserializer(Organization.class);
         primeDeserializer(Course.class);
         primeDeserializer(Exam.class);
