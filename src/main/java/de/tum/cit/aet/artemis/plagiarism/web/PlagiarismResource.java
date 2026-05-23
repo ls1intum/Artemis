@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismComparisonDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismComparisonStatusDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
@@ -122,7 +123,7 @@ public class PlagiarismResource {
      */
     @GetMapping("courses/{courseId}/plagiarism-comparisons/{comparisonId}/for-split-view")
     @EnforceAtLeastStudent
-    public ResponseEntity<PlagiarismComparison> getPlagiarismComparisonForSplitView(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") Long comparisonId) {
+    public ResponseEntity<PlagiarismComparisonDTO> getPlagiarismComparisonForSplitView(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") Long comparisonId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
@@ -140,15 +141,7 @@ public class PlagiarismResource {
             checkStudentAccess(comparisonA, user.getLogin());
         }
 
-        // hide unnecessary details
-        comparisonA.getSubmissionA().setPlagiarismComparison(null);
-        comparisonA.getSubmissionA().setPlagiarismCase(null);
-        comparisonA.getSubmissionB().setPlagiarismComparison(null);
-        comparisonA.getSubmissionB().setPlagiarismCase(null);
-
-        // hide the chain to plagiarism result, exercise and course to avoid leaks and keep the response small
-        comparisonA.setPlagiarismResult(null);
-        return ResponseEntity.ok(comparisonA);
+        return ResponseEntity.ok(PlagiarismComparisonDTO.fromComparison(comparisonA));
     }
 
     /**
