@@ -5,11 +5,13 @@ import {
     faBook,
     faCalendarCheck,
     faCheckDouble,
+    faComment,
     faComments,
     faCube,
     faFileLines,
     faFileUpload,
     faFont,
+    faGraduationCap,
     faHashtag,
     faKeyboard,
     faProjectDiagram,
@@ -23,7 +25,7 @@ import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iri
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { SearchableEntity } from 'app/core/navbar/global-search/models/searchable-entity.model';
+import { SearchEntityType, SearchableEntity } from 'app/core/navbar/global-search/models/searchable-entity.model';
 import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
 import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
 import { SearchResultItemComponent } from 'app/core/navbar/global-search/components/modal/search-result-item/search-result-item.component';
@@ -55,7 +57,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     readonly showResults = input<boolean>(false);
     readonly isLoading = input<boolean>(false);
     readonly searchError = input<string | undefined>(undefined);
-    readonly activeFilters = input<string[]>([]);
+    readonly activeFilters = input<SearchEntityType[]>([]);
     readonly irisOpen = input<boolean>(false);
 
     // Skeleton placeholder array for loading animation
@@ -115,13 +117,22 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     // Searchable entities for initial view
     protected searchableEntities: SearchableEntity[] = [
         {
+            id: 'courses',
+            title: 'global.search.entities.coursesTitle',
+            description: 'global.search.entities.coursesDescription',
+            icon: faGraduationCap,
+            type: 'filter',
+            enabled: true,
+            filterTags: ['course'],
+        },
+        {
             id: 'exercises',
             title: 'global.search.entities.exercisesTitle',
             description: 'global.search.entities.exercisesDescription',
             icon: faCube,
             type: 'filter',
             enabled: true,
-            filterTag: 'exercise',
+            filterTags: ['exercise'],
         },
         {
             id: 'lectures',
@@ -130,7 +141,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             icon: faBook,
             type: 'filter',
             enabled: true,
-            filterTag: 'lecture',
+            filterTags: ['lecture'],
         },
         {
             id: 'communication',
@@ -139,7 +150,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             icon: faComments,
             type: 'filter',
             enabled: true,
-            filterTag: 'channel',
+            filterTags: ['channel', 'post', 'answer_post'],
         },
         {
             id: 'faqs',
@@ -148,7 +159,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             icon: faQuestionCircle,
             type: 'filter',
             enabled: true,
-            filterTag: 'faq',
+            filterTags: ['faq'],
         },
         {
             id: 'exams',
@@ -157,7 +168,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             icon: faCalendarCheck,
             type: 'filter',
             enabled: true,
-            filterTag: 'exam',
+            filterTags: ['exam'],
         },
     ];
 
@@ -197,11 +208,17 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         if (type === 'channel') {
             return faHashtag;
         }
+        if (type === 'post' || type === 'answer_post') {
+            return faComment;
+        }
         if (type === 'faq') {
             return faQuestionCircle;
         }
         if (type === 'exam') {
             return this.faCalendarCheck;
+        }
+        if (type === 'course') {
+            return faGraduationCap;
         }
         return this.faQuestion;
     }
@@ -214,6 +231,9 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         }
 
         switch (result.type) {
+            case 'course':
+                this.router.navigate(['/courses', courseId]);
+                break;
             case 'exercise':
                 if (result.id) this.navigateToExercise(result, courseId);
                 break;
@@ -231,6 +251,12 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
                 break;
             case 'channel':
                 if (result.id) this.navigateToChannel(courseId, result.id);
+                break;
+            case 'post':
+                this.navigateToPost(result, courseId);
+                break;
+            case 'answer_post':
+                this.navigateToAnswerPost(result, courseId);
                 break;
         }
 
@@ -289,6 +315,21 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
 
     private navigateToChannel(courseId: string, channelId: string) {
         this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId } });
+    }
+
+    private navigateToPost(result: GlobalSearchResult, courseId: string) {
+        const channelId = result.metadata?.['channelId'];
+        if (channelId) {
+            this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId, focusPostId: result.id } });
+        }
+    }
+
+    private navigateToAnswerPost(result: GlobalSearchResult, courseId: string) {
+        const channelId = result.metadata?.['channelId'];
+        const postId = result.metadata?.['postId'];
+        if (channelId && postId) {
+            this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId, messageId: postId, focusReplyId: result.id } });
+        }
     }
 
     @HostListener('window:keydown', ['$event'])

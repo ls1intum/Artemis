@@ -63,7 +63,7 @@ import { EventManager } from 'app/shared/service/event-manager.service';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/shared/types/sidebar';
 import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
-import { debounceTime, distinctUntilChanged, filter, map, takeUntil } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, map, take, takeUntil } from 'rxjs/operators';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
@@ -178,6 +178,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     isServiceSetUp = false;
     messagingEnabled = false;
     postInThread?: Post;
+    private pendingThreadPostId: number | undefined;
     activeConversation?: ConversationDTO = undefined;
     conversationsOfUser: ConversationDTO[] = [];
     previousConversationBeforeSearch?: ConversationDTO;
@@ -189,6 +190,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     sidebarConversations: SidebarCardElement[] = [];
     isCollapsed = false;
     focusPostId: number | undefined = undefined;
+    focusReplyId: number | undefined = undefined;
     openThreadOnFocus = false;
     selectedSavedPostStatus: undefined | SavedPostStatus = undefined;
     showOnlyPinned = false;
@@ -223,7 +225,13 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     private subscribeToMetis() {
         this.metisService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
-            if (this.postInThread?.id && posts) {
+            if (this.pendingThreadPostId && posts) {
+                const found = posts.find((post) => post.id === this.pendingThreadPostId);
+                if (found) {
+                    this.postInThread = found;
+                    this.pendingThreadPostId = undefined;
+                }
+            } else if (this.postInThread?.id && posts) {
                 this.postInThread = posts.find((post) => post.id === this.postInThread?.id);
             }
         });
@@ -344,6 +352,47 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     subscribeToQueryParameter() {
         this.activatedRoute.queryParams.pipe(takeUntil(this.ngUnsubscribe)).subscribe((queryParams) => {
+            if (queryParams.focusPostId) {
+                this.focusPostId = Number(queryParams.focusPostId);
+                this.scrollToAndHighlightPost(this.focusPostId);
+            }
+            if (queryParams.openThreadOnFocus) {
+                this.openThreadOnFocus = queryParams.openThreadOnFocus;
+            }
+
+            // Process messageId BEFORE setting the active conversation.
+            // setActiveConversation synchronously triggers updateQueryParameters (via subscribeToActiveConversation).
+            // postInThread must already be set at that point so that messageId is preserved in the URL;
+            // otherwise updateQueryParameters strips it, causing a cascading navigation loop.
+            if (queryParams.messageId) {
+                const messageId = Number(queryParams.messageId);
+                // Only create a bare post skeleton if we don't already have this post loaded.
+                // Re-setting postInThread to a bare object discards the full post data and
+                // causes updateQueryParameters to strip messageId from the URL.
+                if (this.postInThread?.id !== messageId) {
+                    const conversationId = queryParams.conversationId && !isNaN(Number(queryParams.conversationId)) ? Number(queryParams.conversationId) : undefined;
+                    this.pendingThreadPostId = messageId;
+                    this.postInThread = { id: messageId, conversation: { id: conversationId } } as Post;
+                    // Immediately try to resolve the full post from already-loaded posts
+                    this.metisService.posts.pipe(take(1)).subscribe((posts) => {
+                        if (posts) {
+                            const found = posts.find((post) => post.id === messageId);
+                            if (found) {
+                                this.postInThread = found;
+                                this.pendingThreadPostId = undefined;
+                            }
+                        }
+                    });
+                }
+                if (queryParams.focusReplyId) {
+                    this.focusReplyId = Number(queryParams.focusReplyId);
+                    this.scrollToAndHighlightReply(this.focusReplyId);
+                }
+                this.closeSidebarOnMobile();
+            } else {
+                this.postInThread = undefined;
+            }
+
             // NOTE: queryParams.conversationId can either be a number or a string according to SavedPostStatus
             if (queryParams.conversationId) {
                 if (
@@ -357,19 +406,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                     this.metisConversationService.setActiveConversation(Number(queryParams.conversationId));
                     this.closeSidebarOnMobile();
                 }
-            }
-            if (queryParams.focusPostId) {
-                this.focusPostId = Number(queryParams.focusPostId);
-            }
-            if (queryParams.openThreadOnFocus) {
-                this.openThreadOnFocus = queryParams.openThreadOnFocus;
-            }
-            if (queryParams.messageId) {
-                this.postInThread = { id: Number(queryParams.messageId) } as Post;
-
-                this.closeSidebarOnMobile();
-            } else {
-                this.postInThread = undefined;
             }
         });
     }
@@ -386,11 +422,16 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     updateQueryParameters() {
+        const queryParams: Record<string, string | number | undefined> = {
+            conversationId: this.activeConversation?.id ?? this.selectedSavedPostStatus?.toLowerCase(),
+        };
+        const threadBelongsToActiveConversation = this.postInThread?.id && this.postInThread.conversation?.id === this.activeConversation?.id;
+        if (threadBelongsToActiveConversation) {
+            queryParams.messageId = this.postInThread!.id;
+        }
         this.router.navigate([], {
             relativeTo: this.activatedRoute,
-            queryParams: {
-                conversationId: this.activeConversation?.id ?? this.selectedSavedPostStatus?.toLowerCase(),
-            },
+            queryParams,
             replaceUrl: true,
         });
     }
@@ -704,6 +745,74 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     openThread(postToOpen: Post | undefined) {
         this.selectionState.setOpenPostId(postToOpen?.id);
         this.postInThread = postToOpen;
+        this.pendingThreadPostId = undefined;
+    }
+
+    closeThread() {
+        this.postInThread = undefined;
+        this.pendingThreadPostId = undefined;
+        this.updateQueryParameters();
+    }
+
+    private scrollToAndHighlightPost(postId: number): void {
+        const elementId = 'item-' + postId;
+
+        const tryHighlight = () => {
+            const host = document.getElementById(elementId);
+            const postDiv = host?.querySelector('.post');
+            if (postDiv) {
+                postDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                postDiv.classList.add('highlight-post');
+                setTimeout(() => postDiv.classList.remove('highlight-post'), 2000);
+                return true;
+            }
+            return false;
+        };
+
+        if (tryHighlight()) return;
+
+        const observer = new MutationObserver(() => {
+            if (tryHighlight()) {
+                observer.disconnect();
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+        setTimeout(() => observer.disconnect(), 5000);
+    }
+
+    private scrollToAndHighlightReply(replyId: number): void {
+        const elementId = 'item-' + replyId;
+
+        // Check if element already exists
+        const existing = document.getElementById(elementId);
+        if (existing) {
+            this.highlightElement(existing);
+            return;
+        }
+
+        // Watch for the element to appear in the DOM
+        const observer = new MutationObserver(() => {
+            const element = document.getElementById(elementId);
+            if (element) {
+                observer.disconnect();
+                this.highlightElement(element);
+            }
+        });
+
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        // Clean up after 5 seconds if element never appears
+        setTimeout(() => {
+            observer.disconnect();
+            this.focusReplyId = undefined;
+        }, 5000);
+    }
+
+    private highlightElement(element: HTMLElement): void {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        element.classList.add('highlight-reply');
+        setTimeout(() => element.classList.remove('highlight-reply'), 2000);
+        this.focusReplyId = undefined;
     }
 
     /**
