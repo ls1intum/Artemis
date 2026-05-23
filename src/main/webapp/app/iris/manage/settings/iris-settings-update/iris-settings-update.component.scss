@@ -43,6 +43,15 @@ $iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
 .iris-settings-content {
     max-width: 800px;
     margin: 0 auto;
+
+    // PrimeNG's dark theme paints the tab list and panel area with its own
+    // surface token, which clashes with the page background here. The Iris
+    // cards already provide their own surfaces, so the tab chrome itself
+    // should be transparent in both themes.
+    ::ng-deep .p-tablist,
+    ::ng-deep .p-tabpanels {
+        background: transparent;
+    }
 }
 
 .iris-card {
