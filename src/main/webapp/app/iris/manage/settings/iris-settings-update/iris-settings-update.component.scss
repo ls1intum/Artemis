@@ -394,6 +394,16 @@ $iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
     gap: 0.5rem;
 }
 
+.admin-section {
+    ::ng-deep .p-message-content {
+        color: var(--primary);
+    }
+
+    .iris-save-row {
+        margin-top: 1rem;
+    }
+}
+
 .iris-save-row {
     display: flex;
     justify-content: flex-end;
