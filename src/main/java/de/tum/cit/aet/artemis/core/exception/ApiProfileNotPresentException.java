@@ -13,8 +13,7 @@ public class ApiProfileNotPresentException extends RuntimeException {
      * @param featureOrProfile name of the module feature (e.g. {@code MODULE_FEATURE_ATHENA}) or the legacy Spring profile that needs to be enabled.
      */
     public ApiProfileNotPresentException(Class<? extends AbstractApi> api, String featureOrProfile) {
-        super(String.format(
-                "Api %s is not enabled because '%s' is not active. Enable the module feature via artemis.%s.enabled=true, or activate the corresponding legacy Spring profile where applicable.",
-                api.getName(), featureOrProfile, featureOrProfile));
+        super(String.format("Api %s is not enabled because '%s' is not active. Enable the corresponding module feature or activate the required Spring profile.", api.getName(),
+                featureOrProfile));
     }
 }

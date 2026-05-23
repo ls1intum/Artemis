@@ -184,7 +184,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     /** Whether search input is invalid (less than 3 characters) */
     readonly searchInvalid = signal(false);
 
-    /** Whether LDAP profile is active */
+    /** Whether the LDAP module feature is enabled */
     readonly isLdapEnabled = signal(false);
 
     /** User filters */

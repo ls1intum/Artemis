@@ -60,11 +60,11 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     doughnutStats: ExerciseManagementStatisticsDto;
     isExamExercise: boolean;
 
-    isApollonProfileActive = false;
+    isApollonEnabled = false;
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe((params) => {
-            this.isApollonProfileActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_APOLLON);
+            this.isApollonEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_APOLLON);
             this.load(params['exerciseId']);
         });
         this.registerChangeInModelingExercises();
@@ -105,7 +105,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
                     {
                         type: DetailType.ModelingEditor,
                         title: 'artemisApp.exercise.sections.solution',
-                        data: { umlModel: this.exampleSolutionUML, diagramType: exercise.diagramType, title: exercise.title, isApollonProfileActive: this.isApollonProfileActive },
+                        data: { umlModel: this.exampleSolutionUML, diagramType: exercise.diagramType, title: exercise.title, isApollonEnabled: this.isApollonEnabled },
                     },
                     {
                         title: 'artemisApp.modelingExercise.exampleSolutionExplanation',

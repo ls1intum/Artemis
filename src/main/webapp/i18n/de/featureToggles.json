@@ -102,8 +102,8 @@
                     "description": "Aktiviert den Apollon-UML-Modellierungseditor zum Erstellen und Bearbeiten von Diagrammen in Modellierungsaufgaben."
                 },
                 "ldap": {
-                    "name": "LDAP-Synchronisation",
-                    "description": "Aktiviert die LDAP-basierte Benutzersynchronisation zum Laden von Benutzerdetails aus institutionellen Verzeichnisdiensten."
+                    "name": "LDAP-Authentifizierung & Synchronisation",
+                    "description": "Aktiviert die LDAP-basierte Authentifizierung und Benutzersynchronisation zur Überprüfung von Anmeldedaten und zum Laden von Benutzerdetails aus institutionellen Verzeichnisdiensten."
                 },
                 "saml2": {
                     "name": "SAML2-Authentifizierung",
