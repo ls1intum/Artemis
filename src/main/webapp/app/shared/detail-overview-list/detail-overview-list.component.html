@@ -29,12 +29,12 @@
                     @case (DetailType.ProgrammingTimeline) {
                         <dd id="detail-value-{{ detail.title }}">
                             <jhi-programming-exercise-timeline
-                                [(releaseDate)]="detail.data.exercise.releaseDate"
-                                [(startDate)]="detail.data.exercise.startDate"
-                                [(dueDate)]="detail.data.exercise.dueDate"
-                                [(buildAndTestStudentSubmissionsAfterDueDate)]="detail.data.exercise.buildAndTestStudentSubmissionsAfterDueDate"
-                                [(assessmentDueDate)]="detail.data.exercise.assessmentDueDate"
-                                [(exampleSolutionPublicationDate)]="detail.data.exercise.exampleSolutionPublicationDate"
+                                [releaseDate]="detail.data.exercise.releaseDate"
+                                [startDate]="detail.data.exercise.startDate"
+                                [dueDate]="detail.data.exercise.dueDate"
+                                [buildAndTestStudentSubmissionsAfterDueDate]="detail.data.exercise.buildAndTestStudentSubmissionsAfterDueDate"
+                                [assessmentDueDate]="detail.data.exercise.assessmentDueDate"
+                                [exampleSolutionPublicationDate]="detail.data.exercise.exampleSolutionPublicationDate"
                             />
                         </dd>
                     }
