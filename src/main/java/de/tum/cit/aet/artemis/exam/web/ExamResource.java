@@ -124,8 +124,6 @@ import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.localci.AutomaticAfterDueDateService;
 
 /**
@@ -191,10 +189,6 @@ public class ExamResource {
 
     private final ExamUserService examUserService;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
-    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
-
     private final Optional<AutomaticAfterDueDateService> automaticAfterDueDateService;
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
@@ -205,8 +199,7 @@ public class ExamResource {
             AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, ExamImportService examImportService,
             CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository, ExerciseRepository exerciseRepository,
             ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService, ExamUserService examUserService,
-            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
+            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -230,8 +223,6 @@ public class ExamResource {
         this.studentExamService = studentExamService;
         this.examUserService = examUserService;
         this.automaticAfterDueDateService = automaticAfterDueDateService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
-        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
     }
 

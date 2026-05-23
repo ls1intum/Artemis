@@ -32,7 +32,7 @@ export class ProgrammingExerciseTestScheduleDatePickerComponent implements Contr
     @Input() tooltipText: string;
     @Input() readOnly: boolean;
     @Output() onDateReset = new EventEmitter();
-    readonly canReset = input(false);
+    readonly canReset = input(true);
 
     // Icons
     faCalendarMinus = faCalendarMinus;

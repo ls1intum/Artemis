@@ -219,12 +219,14 @@ public class StudentExamResource {
         }
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
         var originalWorkingTime = studentExam.getWorkingTime();
+
+        final Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
+        final ZonedDateTime originalLatestExamEndDateWithGrace = automaticAfterDueDateService.map(service -> service.getLatestExamEndDateWithGrace(exam)).orElse(null);
+
         studentExam.setWorkingTime(workingTime);
         var savedStudentExam = studentExamRepository.save(studentExam);
 
         if (!savedStudentExam.isTestRun()) {
-            Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
-            final ZonedDateTime originalLatestExamEndDateWithGrace = automaticAfterDueDateService.map(service -> service.getLatestExamEndDateWithGrace(exam)).orElse(null);
             if (now.isAfter(exam.getVisibleDate())) {
                 examLiveEventsService.createAndSendWorkingTimeUpdateEvent(savedStudentExam, workingTime, originalWorkingTime, false);
             }

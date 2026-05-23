@@ -776,6 +776,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 this.programmingExercise.course = undefined;
             });
             this.isExamMode = true;
+            this.importOptions.setTestCaseVisibilityToAfterDueDate = true;
         } else if (courseId) {
             this.courseService.find(courseId).subscribe((res) => {
                 this.programmingExercise.course = res.body!;
@@ -783,6 +784,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 this.programmingExercise.exerciseGroup = undefined;
             });
             this.isExamMode = false;
+            this.importOptions.setTestCaseVisibilityToAfterDueDate = false;
 
             // Sync categories
             this.exerciseCategories = this.programmingExercise.categories ?? [];
