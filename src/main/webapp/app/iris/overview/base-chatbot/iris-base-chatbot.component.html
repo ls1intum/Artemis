@@ -375,15 +375,6 @@
                     </div>
                 </div>
             }
-            <button
-                type="button"
-                class="scroll-to-bottom"
-                [hidden]="isScrolledToBottom()"
-                (click)="scrollToBottom('smooth')"
-                [attr.aria-label]="'artemisApp.exerciseChatbot.scrollToBottom' | artemisTranslate"
-            >
-                <fa-icon [icon]="faArrowDown" />
-            </button>
             @if (error()) {
                 <div class="client-chat-error">
                     {{ error() | artemisTranslate: { hours: rateLimitInfo()?.rateLimitTimeframeHours } }}
@@ -398,6 +389,15 @@
             @if (isAIEnabled()) {
                 <div class="chat-input">
                     <div class="chat-input-inner">
+                        <button
+                            type="button"
+                            class="scroll-to-bottom"
+                            [hidden]="isScrolledToBottom()"
+                            (click)="scrollToBottom('smooth')"
+                            [attr.aria-label]="'artemisApp.exerciseChatbot.scrollToBottom' | artemisTranslate"
+                        >
+                            <fa-icon [icon]="faArrowDown" />
+                        </button>
                         <div class="textarea-wrapper">
                             <textarea
                                 [ngModel]="newMessageTextContent()"

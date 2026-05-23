@@ -533,6 +533,7 @@ pre {
     }
 
     &-inner {
+        position: relative;
         display: flex;
     }
 
@@ -748,7 +749,7 @@ pre {
 
 .scroll-to-bottom {
     position: absolute;
-    bottom: 100px;
+    bottom: calc(100% + 8px);
     top: auto;
     left: 50%;
     transform: translateX(-50%);
@@ -761,7 +762,6 @@ pre {
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    box-shadow: 0 0 50px rgba(0, 0, 0, 0.4);
     z-index: 1;
     border: 1px solid var(--bs-border-color);
 }
