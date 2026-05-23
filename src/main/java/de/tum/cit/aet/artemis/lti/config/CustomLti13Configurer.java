@@ -102,7 +102,7 @@ public class CustomLti13Configurer extends Lti13Configurer {
      * </ul>
      * Both replacements can be deleted and the upstream classes restored once
      * {@code uk.ac.ox.ctl:spring-security-lti13} releases a Spring 7-compatible version
-     * (tracked upstream in PR #60).
+     * (tracked upstream in <a href="https://github.com/oxctl/spring-security-lti13/pull/60">oxctl/spring-security-lti13#60</a>).
      */
     @Override
     protected OAuth2AuthorizationRequestRedirectFilter configureInitiationFilter(ClientRegistrationRepository clientRegistrationRepository,

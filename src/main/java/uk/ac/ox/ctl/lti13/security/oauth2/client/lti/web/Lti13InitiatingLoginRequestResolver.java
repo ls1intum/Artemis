@@ -1,3 +1,17 @@
+/*
+ * Adapted from spring-security-lti13 0.3.4 (https://github.com/oxctl/spring-security-lti13), originally:
+ * uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OIDCInitiatingLoginRequestResolver
+ * Copyright 2019-2026 University of Oxford and contributors.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0. Unless required by
+ * applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ * Modifications by the Artemis maintainers (TUM AET): replaced the single removed-in-Spring-7 call to
+ * UriComponentsBuilder.fromHttpUrl(String) with UriComponentsBuilder.fromUriString(String). This matches upstream PR
+ * oxctl/spring-security-lti13#60. Delete this file and revert the constructor call in CustomLti13Configurer once a
+ * Spring 7-compatible release of the upstream library is published.
+ */
 package uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web;
 
 import java.util.HashMap;
@@ -24,7 +38,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * The upstream resolver calls {@code UriComponentsBuilder.fromHttpUrl(String)} in its
  * {@code expandRedirectUri} method. That overload was deprecated in Spring Framework 6 and removed
  * in Spring Framework 7, so the upstream class throws {@link NoSuchMethodError} on every LTI 1.3
- * Step 1 (third-party initiated login) call once Artemis runs on Spring Boot 4. See issue #12739
+ * Step 1 (third-party initiated login) call once Artemis runs on Spring Boot 4. See Artemis issue #12739
  * and the open upstream PR <a href="https://github.com/oxctl/spring-security-lti13/pull/60">oxctl/spring-security-lti13#60</a>.
  * <p>
  * This class is a verbatim copy of {@code OIDCInitiatingLoginRequestResolver} with the single line
