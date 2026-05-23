@@ -88,15 +88,6 @@ import { FAQ_ITEMS } from 'app/core/landing/landing-data';
             font-family: inherit;
         }
 
-        :host ::ng-deep .p-collapsible-enter-active {
-            animation-delay: 0.2s !important;
-            animation-fill-mode: both !important;
-        }
-
-        :host ::ng-deep .p-accordioncontent .p-motion.p-collapsible-enter-active .p-accordioncontent-content {
-            animation: faq-slide-down 220ms ease-out 0.2s both;
-        }
-
         :host ::ng-deep .p-accordionpanel-active .p-accordionheader {
             color: var(--body-color) !important;
         }
@@ -104,15 +95,6 @@ import { FAQ_ITEMS } from 'app/core/landing/landing-data';
         .faq-answer {
             margin: 0;
             font-family: inherit;
-        }
-
-        @keyframes faq-slide-down {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
         }
 
         @media (max-width: 1200px) {
@@ -142,7 +124,7 @@ import { FAQ_ITEMS } from 'app/core/landing/landing-data';
                 <h2 class="faq-title">{{ 'landing.faq.title' | artemisTranslate }}</h2>
             </div>
             <div class="faq-content">
-                <p-accordion [multiple]="false">
+                <p-accordion [multiple]="false" transitionOptions="220ms cubic-bezier(0.4, 0, 0.2, 1)">
                     @for (item of faqItems; track item.questionKey) {
                         <p-accordionpanel [value]="item.questionKey">
                             <p-accordionheader>{{ item.questionKey | artemisTranslate }}</p-accordionheader>
