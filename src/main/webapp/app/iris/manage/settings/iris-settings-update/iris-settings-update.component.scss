@@ -54,11 +54,18 @@ $iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
     }
 }
 
+// Stacks the enable/disable toggle row and the revealed cards as flex children
+// so the spacing between them comes from a single `gap` instead of margins.
+.iris-general-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
 .iris-card {
     @extend %iris-surface;
 
     padding: $iris-card-padding;
-    margin-bottom: 1rem;
 }
 
 .iris-card-title {
@@ -74,22 +81,28 @@ $iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
 .iris-toggle-row {
     @extend %iris-surface;
 
-    margin-bottom: 1rem;
     display: flex;
     align-items: flex-start;
     gap: 0.75rem;
     padding: 1.25rem $iris-card-padding;
 }
 
-// Group of cards revealed when the Iris toggle is switched on. Each direct
-// child slides down and fades in, staggered so they cascade out from under
-// the toggle row.
-.iris-enabled-cards > * {
-    animation: iris-card-slide-in 0.32s $iris-card-easing both;
+// Group of cards revealed when the Iris toggle is switched on. Stacked as a
+// flex column so the inter-card spacing is a single `gap`, not stacked
+// margins. Each direct child also slides down and fades in, staggered so the
+// cards cascade out from under the toggle row.
+.iris-enabled-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 
-    @for $i from 1 through 4 {
-        &:nth-child(#{$i}) {
-            animation-delay: #{($i - 1) * 0.06}s;
+    > * {
+        animation: iris-card-slide-in 0.32s $iris-card-easing both;
+
+        @for $i from 1 through 4 {
+            &:nth-child(#{$i}) {
+                animation-delay: #{($i - 1) * 0.06}s;
+            }
         }
     }
 }
@@ -99,6 +112,14 @@ $iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
     .iris-enabled-cards > * {
         animation: none;
     }
+}
+
+// Stack the two example chat bubbles as flex children so the spacing between
+// them comes from `gap`, not from a margin on the user bubble.
+.iris-example-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
 }
 
 @keyframes iris-card-slide-in {
@@ -318,7 +339,6 @@ $iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
     align-items: flex-start;
     justify-content: flex-end;
     gap: 0.5rem;
-    margin-bottom: 0.75rem;
 
     .bubble {
         @extend %iris-bubble;
@@ -343,7 +363,7 @@ $iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
 
         background: var(--iris-primary-background);
         border-bottom-left-radius: 0.25rem;
-        max-width: 80%;
+        max-width: 55%;
 
         // Soft drop shadow to lift the bubble off the conversation background
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -378,10 +398,18 @@ $iris-card-easing: cubic-bezier(0.22, 0.61, 0.36, 1);
     display: flex;
     justify-content: flex-end;
     gap: 0.5rem;
-    margin-top: 1.5rem;
 
     button {
         font-size: $iris-text-sm;
+
+        // PrimeNG's pButton inserts a leading <span class="p-button-icon">
+        // for the loading spinner. With `.p-button { gap: ... }` that empty
+        // span pushes the label visibly to the right, even after loading
+        // ends. Collapse the slot so the label sits flush against the
+        // button's normal padding.
+        ::ng-deep .p-button-icon:empty {
+            display: none;
+        }
     }
 }
 

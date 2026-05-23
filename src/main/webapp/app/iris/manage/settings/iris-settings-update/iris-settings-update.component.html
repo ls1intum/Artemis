@@ -30,157 +30,169 @@
             <p-tabpanels>
                 <!-- ── GENERAL TAB ── -->
                 <p-tabpanel value="general">
-                    <!-- Enable/Disable toggle row (auto-saves) -->
-                    <div class="iris-toggle-row">
-                        <p-toggleswitch
-                            inputId="iris-enabled-toggle"
-                            [ngModel]="settingsValue.enabled"
-                            (ngModelChange)="setEnabled($event)"
-                            [ariaLabel]="(settingsValue.enabled ? 'artemisApp.iris.settings.irisEnabled' : 'artemisApp.iris.settings.irisDisabled') | artemisTranslate"
-                        />
-                        <label for="iris-enabled-toggle">
-                            @if (settingsValue.enabled) {
-                                <span jhiTranslate="artemisApp.iris.settings.irisEnabled"></span>
-                                <small class="iris-card-subtitle d-block text-muted" jhiTranslate="artemisApp.iris.settings.enableSubtext"></small>
-                            } @else {
-                                <span jhiTranslate="artemisApp.iris.settings.irisDisabled"></span>
-                                <small class="iris-card-subtitle d-block text-muted" jhiTranslate="artemisApp.iris.settings.disabledSubtext"></small>
-                            }
-                        </label>
-                    </div>
+                    <div class="iris-general-panel">
+                        <!-- Enable/Disable toggle row (auto-saves) -->
+                        <div class="iris-toggle-row">
+                            <p-toggleswitch
+                                inputId="iris-enabled-toggle"
+                                [ngModel]="settingsValue.enabled"
+                                (ngModelChange)="setEnabled($event)"
+                                [ariaLabel]="(settingsValue.enabled ? 'artemisApp.iris.settings.irisEnabled' : 'artemisApp.iris.settings.irisDisabled') | artemisTranslate"
+                            />
+                            <label for="iris-enabled-toggle">
+                                @if (settingsValue.enabled) {
+                                    <span jhiTranslate="artemisApp.iris.settings.irisEnabled"></span>
+                                    <small class="iris-card-subtitle d-block text-muted" jhiTranslate="artemisApp.iris.settings.enableSubtext"></small>
+                                } @else {
+                                    <span jhiTranslate="artemisApp.iris.settings.irisDisabled"></span>
+                                    <small class="iris-card-subtitle d-block text-muted" jhiTranslate="artemisApp.iris.settings.disabledSubtext"></small>
+                                }
+                            </label>
+                        </div>
 
-                    @if (settingsValue.enabled) {
-                        <!-- Cards revealed when Iris is enabled — slide/fade in as a group -->
-                        <div class="iris-enabled-cards">
-                            <!-- Support Level card -->
-                            <div class="iris-card">
-                                <h6 class="iris-card-title" jhiTranslate="artemisApp.iris.settings.supportLevel.title"></h6>
-                                <small class="iris-card-subtitle text-muted" jhiTranslate="artemisApp.iris.settings.supportLevel.help"></small>
+                        @if (settingsValue.enabled) {
+                            <!-- Cards revealed when Iris is enabled — slide/fade in as a group -->
+                            <div class="iris-enabled-cards">
+                                <!-- Support Level card -->
+                                <div class="iris-card">
+                                    <h6 class="iris-card-title" jhiTranslate="artemisApp.iris.settings.supportLevel.title"></h6>
+                                    <small class="iris-card-subtitle text-muted" jhiTranslate="artemisApp.iris.settings.supportLevel.help"></small>
 
-                                <div class="iris-slider-wrapper mt-3" [class.handle-popping]="handlePopping()">
-                                    <!-- Clickable tick marks at the start, middle and end of the track -->
-                                    @for (tick of supportLevelTicks; track tick.value) {
-                                        <button
-                                            type="button"
-                                            class="iris-slider-tick"
-                                            [style.left.%]="tick.value"
-                                            [class.active]="supportLevelSliderValue() === tick.value"
-                                            [class.covered]="tick.value < supportLevelSliderValue()"
-                                            (click)="onSupportLevelSliderChange(tick.value)"
-                                            [attr.aria-label]="'artemisApp.iris.settings.supportLevel.' + tick.level | artemisTranslate"
-                                        ></button>
-                                    }
-                                    <p-slider
-                                        class="iris-slider d-block"
-                                        [ngModel]="supportLevelSliderValue()"
-                                        (ngModelChange)="onSupportLevelSliderChange($event)"
-                                        [min]="0"
-                                        [max]="100"
-                                        [step]="50"
-                                        [ariaLabel]="
-                                            ('artemisApp.iris.settings.supportLevel.title' | artemisTranslate) +
-                                            ': ' +
-                                            ('artemisApp.iris.settings.supportLevel.' + currentSupportLevel() | artemisTranslate)
-                                        "
-                                    />
-                                </div>
+                                    <div class="iris-slider-wrapper mt-3" [class.handle-popping]="handlePopping()">
+                                        <!-- Clickable tick marks at the start, middle and end of the track -->
+                                        @for (tick of supportLevelTicks; track tick.value) {
+                                            <button
+                                                type="button"
+                                                class="iris-slider-tick"
+                                                [style.left.%]="tick.value"
+                                                [class.active]="supportLevelSliderValue() === tick.value"
+                                                [class.covered]="tick.value < supportLevelSliderValue()"
+                                                (click)="onSupportLevelSliderChange(tick.value)"
+                                                [attr.aria-label]="'artemisApp.iris.settings.supportLevel.' + tick.level | artemisTranslate"
+                                            ></button>
+                                        }
+                                        <p-slider
+                                            class="iris-slider d-block"
+                                            [ngModel]="supportLevelSliderValue()"
+                                            (ngModelChange)="onSupportLevelSliderChange($event)"
+                                            [min]="0"
+                                            [max]="100"
+                                            [step]="50"
+                                            [ariaLabel]="
+                                                ('artemisApp.iris.settings.supportLevel.title' | artemisTranslate) +
+                                                ': ' +
+                                                ('artemisApp.iris.settings.supportLevel.' + currentSupportLevel() | artemisTranslate)
+                                            "
+                                        />
+                                    </div>
 
-                                <!-- Labels positioned at the same percentages as the ticks so they stay aligned -->
-                                <div class="iris-slider-labels">
-                                    @for (tick of supportLevelTicks; track tick.value) {
-                                        <span class="iris-slider-label" [style.left.%]="tick.value" [jhiTranslate]="'artemisApp.iris.settings.supportLevel.' + tick.level"></span>
-                                    }
-                                </div>
+                                    <!-- Labels positioned at the same percentages as the ticks so they stay aligned -->
+                                    <div class="iris-slider-labels">
+                                        @for (tick of supportLevelTicks; track tick.value) {
+                                            <span
+                                                class="iris-slider-label"
+                                                [style.left.%]="tick.value"
+                                                [jhiTranslate]="'artemisApp.iris.settings.supportLevel.' + tick.level"
+                                            ></span>
+                                        }
+                                    </div>
 
-                                <!-- Announce the selected level to assistive technology -->
-                                <span class="visually-hidden" role="status" aria-live="polite">
-                                    {{ 'artemisApp.iris.settings.supportLevel.description.' + currentSupportLevel() + '.title' | artemisTranslate }}
-                                </span>
+                                    <!-- Announce the selected level to assistive technology -->
+                                    <span class="visually-hidden" role="status" aria-live="polite">
+                                        {{ 'artemisApp.iris.settings.supportLevel.description.' + currentSupportLevel() + '.title' | artemisTranslate }}
+                                    </span>
 
-                                <!-- Support Level description card -->
-                                <div class="iris-support-description">
-                                    <strong>{{ 'artemisApp.iris.settings.supportLevel.description.' + currentSupportLevel() + '.title' | artemisTranslate }}</strong>
-                                    <p class="mt-2 mb-2">{{ 'artemisApp.iris.settings.supportLevel.description.' + currentSupportLevel() + '.text' | artemisTranslate }}</p>
-                                    <small class="text-muted">
-                                        <em>{{ 'artemisApp.iris.settings.supportLevel.bestSuitedFor' | artemisTranslate }}:</em>
-                                        {{ 'artemisApp.iris.settings.supportLevel.description.' + currentSupportLevel() + '.bestSuitedFor' | artemisTranslate }}
-                                    </small>
+                                    <!-- Support Level description card -->
+                                    <div class="iris-support-description">
+                                        <strong>{{ 'artemisApp.iris.settings.supportLevel.description.' + currentSupportLevel() + '.title' | artemisTranslate }}</strong>
+                                        <p class="mt-2 mb-2">
+                                            {{ 'artemisApp.iris.settings.supportLevel.description.' + currentSupportLevel() + '.text' | artemisTranslate }}
+                                        </p>
+                                        <small class="text-muted">
+                                            <em>{{ 'artemisApp.iris.settings.supportLevel.bestSuitedFor' | artemisTranslate }}:</em>
+                                            {{ 'artemisApp.iris.settings.supportLevel.description.' + currentSupportLevel() + '.bestSuitedFor' | artemisTranslate }}
+                                        </small>
 
-                                    <!-- Example conversation -->
-                                    <div class="iris-example-conversation">
-                                        <small class="text-muted d-block mb-2" jhiTranslate="artemisApp.iris.settings.exampleConversationLabel"></small>
+                                        <!-- Example conversation -->
+                                        <div class="iris-example-conversation">
+                                            <small class="text-muted d-block mb-2" jhiTranslate="artemisApp.iris.settings.exampleConversationLabel"></small>
 
-                                        <div class="iris-message-user">
-                                            <div class="bubble">
-                                                {{ 'artemisApp.iris.settings.supportLevel.description.' + currentSupportLevel() + '.exampleUser' | artemisTranslate }}
+                                            <div class="iris-example-messages">
+                                                <div class="iris-message-user">
+                                                    <div class="bubble">
+                                                        {{ 'artemisApp.iris.settings.supportLevel.description.' + currentSupportLevel() + '.exampleUser' | artemisTranslate }}
+                                                    </div>
+                                                    <div class="iris-user-avatar" aria-hidden="true">
+                                                        <fa-icon [icon]="faUser" />
+                                                    </div>
+                                                </div>
+
+                                                <div class="iris-message-iris">
+                                                    <jhi-iris-logo class="iris-message-logo" [size]="24" />
+                                                    <!-- innerHTML: the example text may contain <code> spans to highlight code -->
+                                                    <div
+                                                        class="bubble"
+                                                        [innerHTML]="
+                                                            'artemisApp.iris.settings.supportLevel.description.' + currentSupportLevel() + '.exampleIris' | artemisTranslate
+                                                        "
+                                                    ></div>
+                                                </div>
                                             </div>
-                                            <div class="iris-user-avatar" aria-hidden="true">
-                                                <fa-icon [icon]="faUser" />
-                                            </div>
-                                        </div>
-
-                                        <div class="iris-message-iris">
-                                            <jhi-iris-logo class="iris-message-logo" [size]="24" />
-                                            <!-- innerHTML: the example text may contain <code> spans to highlight code -->
-                                            <div
-                                                class="bubble"
-                                                [innerHTML]="'artemisApp.iris.settings.supportLevel.description.' + currentSupportLevel() + '.exampleIris' | artemisTranslate"
-                                            ></div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- Additional Guidelines card -->
-                            <div class="iris-card">
-                                <h6 class="iris-card-title" jhiTranslate="artemisApp.iris.settings.additionalGuidelines"></h6>
-                                <small class="iris-card-subtitle text-muted" jhiTranslate="artemisApp.iris.settings.additionalGuidelinesHelp"></small>
-                                <textarea
-                                    #customInstructionsTextarea
-                                    id="customInstructions"
-                                    pTextarea
-                                    [autoResize]="true"
-                                    class="form-control mt-2 iris-guidelines-textarea"
-                                    rows="4"
-                                    [ngModel]="settingsValue.customInstructions"
-                                    (ngModelChange)="updateCustomInstructions($event)"
-                                    [maxlength]="CUSTOM_INSTRUCTIONS_MAX_LENGTH"
-                                    placeholder="{{ 'artemisApp.iris.settings.additionalGuidelinesPlaceholder' | artemisTranslate }}"
-                                ></textarea>
-                                <small class="form-text text-muted float-end">{{ getCustomInstructionsLength() }} / {{ CUSTOM_INSTRUCTIONS_MAX_LENGTH }}</small>
-                            </div>
+                                <!-- Additional Guidelines card -->
+                                <div class="iris-card">
+                                    <h6 class="iris-card-title" jhiTranslate="artemisApp.iris.settings.additionalGuidelines"></h6>
+                                    <small class="iris-card-subtitle text-muted" jhiTranslate="artemisApp.iris.settings.additionalGuidelinesHelp"></small>
+                                    <textarea
+                                        #customInstructionsTextarea
+                                        id="customInstructions"
+                                        pTextarea
+                                        [autoResize]="true"
+                                        class="form-control mt-2 iris-guidelines-textarea"
+                                        rows="4"
+                                        [ngModel]="settingsValue.customInstructions"
+                                        (ngModelChange)="updateCustomInstructions($event)"
+                                        [maxlength]="CUSTOM_INSTRUCTIONS_MAX_LENGTH"
+                                        placeholder="{{ 'artemisApp.iris.settings.additionalGuidelinesPlaceholder' | artemisTranslate }}"
+                                    ></textarea>
+                                    <small class="form-text text-muted float-end"> {{ getCustomInstructionsLength() }} / {{ CUSTOM_INSTRUCTIONS_MAX_LENGTH }} </small>
+                                </div>
 
-                            <!-- Global restriction banner -->
-                            <div class="iris-info-banner" role="note">
-                                <fa-icon [icon]="faLightbulb" />
-                                <span jhiTranslate="artemisApp.iris.settings.globalRestriction"></span>
-                            </div>
+                                <!-- Global restriction banner -->
+                                <div class="iris-info-banner" role="note">
+                                    <fa-icon [icon]="faLightbulb" />
+                                    <span jhiTranslate="artemisApp.iris.settings.globalRestriction"></span>
+                                </div>
 
-                            <!-- Reset to default + Save Changes buttons -->
-                            <div class="iris-save-row">
-                                <button
-                                    id="reset-to-default"
-                                    type="button"
-                                    pButton
-                                    outlined
-                                    severity="secondary"
-                                    [loading]="isSaving()"
-                                    [disabled]="isSaving()"
-                                    (click)="resetToDefault()"
-                                    jhiTranslate="artemisApp.iris.settings.resetToDefault"
-                                ></button>
-                                <button
-                                    id="save"
-                                    type="button"
-                                    pButton
-                                    [loading]="isSaving()"
-                                    [disabled]="!isDirty() || !isFormValid()"
-                                    (click)="saveSettings()"
-                                    jhiTranslate="artemisApp.iris.settings.saveChanges"
-                                ></button>
+                                <!-- Reset to default + Save Changes buttons -->
+                                <div class="iris-save-row">
+                                    <button
+                                        id="reset-to-default"
+                                        type="button"
+                                        pButton
+                                        outlined
+                                        severity="secondary"
+                                        [loading]="isSaving()"
+                                        [disabled]="isSaving()"
+                                        (click)="resetToDefault()"
+                                        jhiTranslate="artemisApp.iris.settings.resetToDefault"
+                                    ></button>
+                                    <button
+                                        id="save"
+                                        type="button"
+                                        pButton
+                                        [loading]="isSaving()"
+                                        [disabled]="!isDirty() || !isFormValid()"
+                                        (click)="saveSettings()"
+                                        jhiTranslate="artemisApp.iris.settings.saveChanges"
+                                    ></button>
+                                </div>
                             </div>
-                        </div>
-                    }
+                        }
+                    </div>
                 </p-tabpanel>
 
                 <!-- ── ADMIN TAB ── -->
