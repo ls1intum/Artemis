@@ -500,6 +500,37 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         expect(formValidChangesSpy).toHaveBeenLastCalledWith(false);
     });
 
+    it('should initialize as valid and not empty if no timeline is rendered', () => {
+        exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
+        exercise.exampleSolutionPublicationDate = undefined;
+        fixture = TestBed.createComponent(ProgrammingExerciseUpdateTimelineComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('isExamMode', false);
+        fixture.componentRef.setInput('complaintsInCourseEnabled', true);
+        fixture.componentRef.setInput('exampleSolutionPublicationDateSet', false);
+        fixture.componentRef.setInput('dueDate', exercise.dueDate);
+        fixture.componentRef.setInput('buildAndTestStudentSubmissionsAfterDueDate', exercise.buildAndTestStudentSubmissionsAfterDueDate);
+        fixture.componentRef.setInput('assessmentDueDate', exercise.assessmentDueDate);
+        fixture.componentRef.setInput('exampleSolutionPublicationDate', exercise.exampleSolutionPublicationDate);
+        fixture.componentRef.setInput('assessmentType', exercise.assessmentType);
+        fixture.componentRef.setInput('allowFeedbackRequests', exercise.allowFeedbackRequests);
+        fixture.componentRef.setInput('isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord', {
+            releaseDate: false,
+            startDate: false,
+            dueDate: false,
+            runTestsAfterDueDate: false,
+            assessmentDueDate: false,
+            exampleSolutionPublicationDate: false,
+        } as Record<ProgrammingExerciseInputField, boolean>);
+        fixture.detectChanges();
+
+        expect(component.timelineItems()).toHaveLength(0);
+        expect(fixture.debugElement.nativeElement.querySelector('jhi-exercise-timeline')).toBeNull();
+        expect(component.formValid).toBe(true);
+        expect(component.formEmpty).toBe(false);
+    });
+
     it('should change the value for allowing complaints for exercise with automatic assessment', () => {
         exercise.allowComplaintsForAutomaticAssessments = false;
         exercise.assessmentType = AssessmentType.AUTOMATIC;

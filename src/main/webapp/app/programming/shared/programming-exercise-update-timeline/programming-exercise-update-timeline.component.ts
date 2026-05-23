@@ -64,8 +64,8 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
 
     timelineItems = computed<TimelineItem[]>(() => this.computeTimelineItems());
 
-    formValid: boolean;
-    formEmpty: boolean;
+    formValid = true;
+    formEmpty = false;
     formValidChanges = new Subject<boolean>();
     isAthenaEnabled: boolean;
 
