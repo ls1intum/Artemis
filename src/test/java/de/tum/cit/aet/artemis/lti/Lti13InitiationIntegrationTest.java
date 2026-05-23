@@ -67,6 +67,10 @@ class Lti13InitiationIntegrationTest extends AbstractLtiIntegrationTest {
     @Test
     @WithAnonymousUser
     void initiateLoginWithUnknownRegistrationReturnsNotFound() throws Exception {
+        // Save a real platform under a different registrationId first, so that the 404 below proves the lookup
+        // actively rejects unknown IDs while a known one exists — not merely that the repository is empty.
+        savePlatform("test-platform-" + UUID.randomUUID());
+
         request.performMvcRequest(get("/api/lti/public/lti13/initiate-login/{registrationId}", "no-such-registration").param("iss", "https://platform.example.com")
                 .param("login_hint", "user-42").param("target_link_uri", "http://localhost/courses/1")).andExpect(status().isNotFound());
     }
@@ -86,11 +90,34 @@ class Lti13InitiationIntegrationTest extends AbstractLtiIntegrationTest {
     @WithAnonymousUser
     void initiateLoginWithBlankIssReturnsBadRequest() throws Exception {
         // Stricter than upstream: blank/whitespace required parameters must be rejected (LTI 1.3 spec compliance).
+        // The Artemis-specific tightening here is the most likely thing to silently regress on a future upstream
+        // re-sync, so each blank-parameter case is mirrored at the integration level (not only at the unit level)
+        // to catch a wiring revert that puts the upstream resolver back on the filter chain.
         String registrationId = "test-platform-" + UUID.randomUUID();
         savePlatform(registrationId);
 
         request.performMvcRequest(get("/api/lti/public/lti13/initiate-login/{registrationId}", registrationId).param("iss", "   ").param("login_hint", "user-42")
                 .param("target_link_uri", "http://localhost/courses/1")).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithAnonymousUser
+    void initiateLoginWithBlankLoginHintReturnsBadRequest() throws Exception {
+        String registrationId = "test-platform-" + UUID.randomUUID();
+        savePlatform(registrationId);
+
+        request.performMvcRequest(get("/api/lti/public/lti13/initiate-login/{registrationId}", registrationId).param("iss", "https://platform.example.com").param("login_hint", "")
+                .param("target_link_uri", "http://localhost/courses/1")).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithAnonymousUser
+    void initiateLoginWithBlankTargetLinkUriReturnsBadRequest() throws Exception {
+        String registrationId = "test-platform-" + UUID.randomUUID();
+        savePlatform(registrationId);
+
+        request.performMvcRequest(get("/api/lti/public/lti13/initiate-login/{registrationId}", registrationId).param("iss", "https://platform.example.com")
+                .param("login_hint", "user-42").param("target_link_uri", "\t")).andExpect(status().isBadRequest());
     }
 
     private void savePlatform(String registrationId) {

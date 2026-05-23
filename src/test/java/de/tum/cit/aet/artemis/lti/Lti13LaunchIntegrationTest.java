@@ -164,16 +164,11 @@ class Lti13LaunchIntegrationTest extends AbstractLtiIntegrationTest {
         request.postFormWithoutLocation("/api/lti/public/lti13/deep-link", body, HttpStatus.BAD_REQUEST);
     }
 
-    // --- Step 3b (auth-login filter wiring) -------------------------------------------------------------------------
-    // The /auth-login path routes through Lti13LaunchFilter, which delegates to the upstream OAuth2LoginAuthenticationFilter
-    // (and transitively OidcLaunchFlowAuthenticationProvider + NimbusJwtDecoder). We cannot reach the JWT validation
-    // branch without seeding a cached OAuth2AuthorizationRequest and a signed JWT whose JWKS is reachable — that requires
-    // either refactoring the upstream provider's lazy private JwtDecoder map or standing up a JWKS HTTP fixture. Both are
-    // out of scope here.
-    //
-    // What these tests DO guarantee, however, is that the filter chain still includes Lti13LaunchFilter at the right path
-    // for the production-shaped HTTP verbs (GET + POST per OIDC form_post). A future Spring Security upgrade that breaks
-    // path matching or filter installation surfaces here as a 404 instead of the expected 500.
+    // --- Step 3b (auth-login filter wiring) ---
+    // These tests assert filter-chain wiring only: a future upgrade that breaks path matching or filter installation
+    // surfaces here as a 404 instead of the expected 500. Reaching the upstream JWT-validation branch would require
+    // seeding a cached OAuth2AuthorizationRequest and a JWKS HTTP fixture; that deeper coverage is intentionally out of
+    // scope (tracked in the class-level Javadoc above).
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")

@@ -1,17 +1,17 @@
 /*
  * Adapted from spring-security-lti13 0.3.4 (https://github.com/oxctl/spring-security-lti13), originally:
  * uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OIDCInitiatingLoginRequestResolver
- * Copyright 2019-2026 University of Oxford and contributors.
+ * Copyright (c) University of Oxford and contributors.
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0. Unless required by
  * applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * Modifications by the Artemis maintainers (TUM AET):
- * 1. Replaced the single removed-in-Spring-7 call to UriComponentsBuilder.fromHttpUrl(String) with
- * UriComponentsBuilder.fromUriString(String). This matches upstream PR oxctl/spring-security-lti13#60.
- * 2. Additionally rejected blank/whitespace iss / login_hint / target_link_uri (upstream only rejects null).
- * The LTI 1.3 spec requires these to be non-empty strings.
+ * Modifications copyright (c) 2026 The Artemis maintainers (TUM AET), licensed under the same Apache License 2.0:
+ * 1. Replaced the removed-in-Spring-7 call to UriComponentsBuilder.fromHttpUrl(String) with
+ * UriComponentsBuilder.fromUriString(String). Matches upstream PR oxctl/spring-security-lti13#60.
+ * 2. Reject blank/whitespace iss / login_hint / target_link_uri (upstream only rejects null). The LTI 1.3 spec
+ * requires these to be non-empty strings.
  * When the upstream library publishes a Spring 7-compatible release, delete this file and revert the constructor
  * call in CustomLti13Configurer. If you also want to keep modification #2, contribute it upstream first or apply it
  * on top of the upstream class — otherwise blank handling silently regresses to upstream behaviour.
@@ -45,14 +45,24 @@ import org.springframework.web.util.UriComponentsBuilder;
  * Step 1 (third-party initiated login) call once Artemis runs on Spring Boot 4. See Artemis issue #12739
  * and the open upstream PR <a href="https://github.com/oxctl/spring-security-lti13/pull/60">oxctl/spring-security-lti13#60</a>.
  * <p>
- * This class is a verbatim copy of {@code OIDCInitiatingLoginRequestResolver} with the single line
- * changed to {@code UriComponentsBuilder.fromUriString(...)}, matching the upstream PR. It lives in
- * the same package as the upstream class so it can throw {@code InvalidClientRegistrationIdException}
- * (package-private upstream) and so the filter's 404 vs 500 bucketing keeps working unchanged.
+ * This class is a copy of {@code OIDCInitiatingLoginRequestResolver} with two intentional modifications
+ * (see the file-header license comment above for the canonical list):
+ * <ol>
+ * <li>{@code UriComponentsBuilder.fromHttpUrl(String)} → {@code fromUriString(String)} (matches upstream PR
+ * oxctl/spring-security-lti13#60).</li>
+ * <li>Blank/whitespace {@code iss} / {@code login_hint} / {@code target_link_uri} are rejected in addition to
+ * nulls (LTI 1.3 spec compliance — Artemis-only tightening on top of upstream).</li>
+ * </ol>
+ * It lives in the same package as the upstream class so it can throw {@code InvalidClientRegistrationIdException}
+ * (package-private upstream) and so the filter's 404 vs 500 bucketing keeps working unchanged. It is a drop-in
+ * replacement for the Artemis call site in {@code CustomLti13Configurer} only — the upstream constructor that
+ * takes a {@code String authorizationRequestBaseUri} (which would build a {@code PathOIDCInitiationRegistrationResolver}
+ * internally) is intentionally omitted because Artemis always supplies its own {@link Lti13PathRegistrationResolver}.
  * <p>
  * Remove this class and restore {@code new OIDCInitiatingLoginRequestResolver(...)} in
  * {@code CustomLti13Configurer.configureInitiationFilter} once a Spring 7-compatible release of
- * {@code spring-security-lti13} is published.
+ * {@code spring-security-lti13} is published. If modification #2 is to be preserved, contribute it upstream
+ * first or apply it on top of the upstream class — otherwise blank handling silently regresses.
  */
 public class Lti13InitiatingLoginRequestResolver implements OAuth2AuthorizationRequestResolver {
 
@@ -151,8 +161,10 @@ public class Lti13InitiatingLoginRequestResolver implements OAuth2AuthorizationR
     private String expandRedirectUri(HttpServletRequest request, ClientRegistration clientRegistration, String action) {
         Map<String, String> uriVariables = new HashMap<>();
         uriVariables.put("registrationId", clientRegistration.getRegistrationId());
-        // The single behavioural change vs. upstream 0.3.4: fromHttpUrl(String) was removed in Spring Framework 7,
-        // fromUriString(String) is the documented replacement and behaves identically for fully-qualified http(s) URLs.
+        // Spring 7 API replacement vs. upstream 0.3.4: fromHttpUrl(String) was removed in Spring Framework 7,
+        // fromUriString(String) is the documented replacement and behaves identically for fully-qualified http(s) URLs
+        // (UrlUtils.buildFullRequestUrl(request) only ever emits http or https, so the looser scheme check in
+        // fromUriString does not change behaviour on this path).
         String baseUrl = UriComponentsBuilder.fromUriString(UrlUtils.buildFullRequestUrl(request)).replaceQuery(null).replacePath(request.getContextPath()).build().toUriString();
         uriVariables.put("baseUrl", baseUrl);
         if (action != null) {

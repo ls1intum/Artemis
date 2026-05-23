@@ -79,10 +79,12 @@ class Lti13InitiatingLoginRequestResolverTest {
     /**
      * Direct regression test for the bug behind issue #12739. The upstream resolver calls
      * {@code UriComponentsBuilder.fromHttpUrl(String)}, which Spring Framework 7 removed and the JVM
-     * surfaces as {@link NoSuchMethodError}. If anyone ever re-routes this code path back through
-     * the upstream class (e.g. by reverting the {@code CustomLti13Configurer} wiring), this test
-     * fails immediately with the same {@code NoSuchMethodError} the production user saw, instead of
-     * silently shipping a broken Moodle integration.
+     * surfaces as {@link NoSuchMethodError}. This test exercises the shim's {@code expandRedirectUri}
+     * code path directly and catches a re-introduction of {@code fromHttpUrl} inside this class —
+     * either by accident during a future merge or by an attempted "verbatim re-sync" with upstream
+     * 0.3.4 — at unit-test speed. The complementary regression guard for a wiring-level revert
+     * (i.e. {@code CustomLti13Configurer} swapping back to the upstream class) lives in
+     * {@code Lti13InitiationIntegrationTest}, which exercises the full Spring Security filter chain.
      */
     @Test
     void resolveDoesNotThrowNoSuchMethodErrorFromRemovedSpringApi() {
