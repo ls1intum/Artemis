@@ -323,8 +323,7 @@ public class LectureService {
     }
 
     private LectureDetailsDTO.CourseDTO mapCourse(Course course) {
-        return new LectureDetailsDTO.CourseDTO(course.getId(), course.getTitle(), course.getShortName(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),
-                course.getEditorGroupName(), course.getInstructorGroupName());
+        return new LectureDetailsDTO.CourseDTO(course.getId(), course.getTitle(), course.getShortName());
     }
 
     private LectureDetailsDTO.AttachmentDTO mapAttachment(Attachment attachment) {

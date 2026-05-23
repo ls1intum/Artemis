@@ -171,12 +171,10 @@ public class LectureResource {
                     channelName, course == null ? null : CourseDTO.from(course));
         }
 
-        public record CourseDTO(Long id, String title, String shortName, String studentGroupName, String teachingAssistantGroupName, String editorGroupName,
-                String instructorGroupName) {
+        public record CourseDTO(Long id, String title, String shortName) {
 
             public static CourseDTO from(@NonNull Course course) {
-                return new CourseDTO(course.getId(), course.getTitle(), course.getShortName(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),
-                        course.getEditorGroupName(), course.getInstructorGroupName());
+                return new CourseDTO(course.getId(), course.getTitle(), course.getShortName());
             }
         }
     }

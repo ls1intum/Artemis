@@ -7,8 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.core.domain.Course;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseInfoDTO(Long id, String title, String semester, String studentGroupName, String teachingAssistantGroupName, String editorGroupName,
-        String instructorGroupName) {
+public record CourseInfoDTO(Long id, String title, String semester) {
 
     /**
      * Maps a course to a course info DTO.
@@ -21,7 +20,6 @@ public record CourseInfoDTO(Long id, String title, String semester, String stude
         if (course == null) {
             return null;
         }
-        return new CourseInfoDTO(course.getId(), course.getTitle(), course.getSemester(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),
-                course.getEditorGroupName(), course.getInstructorGroupName());
+        return new CourseInfoDTO(course.getId(), course.getTitle(), course.getSemester());
     }
 }

@@ -30,8 +30,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionInfoDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCourseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
-import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeStudentGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseWithExerciseGroupIdDTO;
 
 /**
@@ -190,44 +190,38 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     Set<ExerciseTypeMetricsEntry> countStudentsInExercisesWithDueDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     /**
-     * TODO (Phase 9): replace ExerciseTypeStudentGroupDTO with an (exerciseType, courseId) DTO and rewrite
-     * ExerciseMetricsService.aggregateActiveStudentsByExerciseType to count students via UserCourseRole by courseId
-     * instead of by studentGroupName. Also remove countUsersByStudentGroupNamesAndUserIds from UserRepository.
-     *
-     * Return the distinct exercise types and their course's student group names for exercises with release dates in the given range.
-     * This is used as the first step in an optimized two-query approach to count active students.
+     * Return the distinct exercise types and their course ids for exercises with release dates in the given range.
+     * This is used as the first step in an optimized two-query approach to count active students via UserCourseRole.
      *
      * @param minDate the minimum release date
      * @param maxDate the maximum release date
-     * @return a set of ExerciseTypeStudentGroupDTO containing exercise type and student group name
+     * @return a set of ExerciseTypeCourseDTO containing exercise type and course id
      */
     @Query("""
-            SELECT DISTINCT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeStudentGroupDTO(TYPE(e), e.course.studentGroupName)
+            SELECT DISTINCT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCourseDTO(TYPE(e), e.course.id)
             FROM Exercise e
             WHERE e.course.testCourse = FALSE
                 AND e.releaseDate >= :minDate
                 AND e.releaseDate <= :maxDate
             """)
-    Set<ExerciseTypeStudentGroupDTO> findExerciseTypesAndStudentGroupsWithReleaseDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+    Set<ExerciseTypeCourseDTO> findExerciseTypesAndCourseIdsWithReleaseDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     /**
-     * TODO (Phase 9): same as above — replace studentGroupName with courseId in DTO and migrate the service.
-     *
-     * Return the distinct exercise types and their course's student group names for exercises with due dates in the given range.
-     * This is used as the first step in an optimized two-query approach to count active students.
+     * Return the distinct exercise types and their course ids for exercises with due dates in the given range.
+     * This is used as the first step in an optimized two-query approach to count active students via UserCourseRole.
      *
      * @param minDate the minimum due date
      * @param maxDate the maximum due date
-     * @return a set of ExerciseTypeStudentGroupDTO containing exercise type and student group name
+     * @return a set of ExerciseTypeCourseDTO containing exercise type and course id
      */
     @Query("""
-            SELECT DISTINCT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeStudentGroupDTO(TYPE(e), e.course.studentGroupName)
+            SELECT DISTINCT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCourseDTO(TYPE(e), e.course.id)
             FROM Exercise e
             WHERE e.course.testCourse = FALSE
                 AND e.dueDate >= :minDate
                 AND e.dueDate <= :maxDate
             """)
-    Set<ExerciseTypeStudentGroupDTO> findExerciseTypesAndStudentGroupsWithDueDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+    Set<ExerciseTypeCourseDTO> findExerciseTypesAndCourseIdsWithDueDateBetween(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     /**
      * Return the number of exercises that will be released between minDate and maxDate, grouped by exercise type

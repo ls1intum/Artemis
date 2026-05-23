@@ -47,7 +47,6 @@ import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseRoleCountDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
-import de.tum.cit.aet.artemis.core.dto.StudentGroupCountDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserRoleDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.UserPageableSearchDTO;
@@ -1560,29 +1559,23 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     Set<Long> findActiveUserIdsSince(@Param("activeSince") ZonedDateTime activeSince);
 
-    // TODO (Phase 9): countUsersByStudentGroupNamesAndUserIds uses group name strings tied to the
-    // course.*_group_name columns. Replace once those columns are dropped.
-
     /**
-     * Count users per student group name, filtering to only the specified user IDs.
-     * <p>
-     * This is used as the second step in the optimized active students count,
+     * Count non-deleted students per course, filtering to only the specified user IDs.
+     * Used as the second step in the optimized active students count,
      * after getting active user IDs via {@link #findActiveUserIdsSince}.
      *
-     * @param studentGroupNames the set of student group names to check
-     * @param userIds           the set of user IDs to count (typically active users)
-     * @return a list of StudentGroupCountDTO with group name and count of users
+     * @param courseIds the set of course ids to count students for
+     * @param userIds   the set of user IDs to count (typically active users)
+     * @return a list of CourseRoleCountDTO with course id and count of matching students
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.StudentGroupCountDTO(
-                g,
-                COUNT(DISTINCT user.id)
-            )
-            FROM User user
-                JOIN user.groups g
-            WHERE g IN :studentGroupNames
-                AND user.id IN :userIds
-            GROUP BY g
+            SELECT new de.tum.cit.aet.artemis.core.dto.CourseRoleCountDTO(ucr.course.id, ucr.role, COUNT(DISTINCT ucr.user))
+            FROM UserCourseRole ucr
+            WHERE ucr.course.id IN :courseIds
+                AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.STUDENT
+                AND ucr.user.id IN :userIds
+                AND ucr.user.deleted = FALSE
+            GROUP BY ucr.course.id, ucr.role
             """)
-    List<StudentGroupCountDTO> countUsersByStudentGroupNamesAndUserIds(@Param("studentGroupNames") Set<String> studentGroupNames, @Param("userIds") Set<Long> userIds);
+    List<CourseRoleCountDTO> countStudentsByCourseIdsAndUserIds(@Param("courseIds") Set<Long> courseIds, @Param("userIds") Set<Long> userIds);
 }
