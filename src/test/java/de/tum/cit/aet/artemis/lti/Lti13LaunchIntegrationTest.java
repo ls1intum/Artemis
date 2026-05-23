@@ -119,9 +119,86 @@ class Lti13LaunchIntegrationTest extends AbstractLtiIntegrationTest {
         validateRedirect(header, invalidSignatureToken);
     }
 
+    // --- Step 3a (deep-link variant of the redirect proxy) ----------------------------------------------------------
+    // PublicLtiResource.lti13LaunchRedirect handles BOTH /auth-callback and /deep-link; the existing redirectProxy*
+    // tests only cover /auth-callback, leaving the second mapping untested. The same code path must accept deep-link
+    // redirects from platforms that POST the deep-linking response there.
+
+    @Test
+    @WithAnonymousUser
+    void deepLinkRedirectProxy() throws Exception {
+        Map<String, Object> body = new HashMap<>();
+        body.put("id_token", VALID_ID_TOKEN);
+        body.put("state", VALID_STATE);
+
+        URI header = request.postForm("/api/lti/public/lti13/deep-link", body, HttpStatus.FOUND);
+
+        validateRedirect(header, VALID_ID_TOKEN);
+    }
+
+    @Test
+    @WithAnonymousUser
+    void deepLinkRedirectProxyNoState() throws Exception {
+        Map<String, Object> body = new HashMap<>();
+        body.put("id_token", VALID_ID_TOKEN);
+
+        request.postFormWithoutLocation("/api/lti/public/lti13/deep-link", body, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithAnonymousUser
+    void deepLinkRedirectProxyNoToken() throws Exception {
+        Map<String, Object> body = new HashMap<>();
+        body.put("state", VALID_STATE);
+
+        request.postFormWithoutLocation("/api/lti/public/lti13/deep-link", body, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithAnonymousUser
+    void deepLinkRedirectProxyInvalidToken() throws Exception {
+        Map<String, Object> body = new HashMap<>();
+        body.put("state", VALID_STATE);
+        body.put("id_token", "not-a-jwt");
+
+        request.postFormWithoutLocation("/api/lti/public/lti13/deep-link", body, HttpStatus.BAD_REQUEST);
+    }
+
+    // --- Step 3b (auth-login filter wiring) -------------------------------------------------------------------------
+    // The /auth-login path routes through Lti13LaunchFilter, which delegates to the upstream OAuth2LoginAuthenticationFilter
+    // (and transitively OidcLaunchFlowAuthenticationProvider + NimbusJwtDecoder). We cannot reach the JWT validation
+    // branch without seeding a cached OAuth2AuthorizationRequest and a signed JWT whose JWKS is reachable — that requires
+    // either refactoring the upstream provider's lazy private JwtDecoder map or standing up a JWKS HTTP fixture. Both are
+    // out of scope here.
+    //
+    // What these tests DO guarantee, however, is that the filter chain still includes Lti13LaunchFilter at the right path
+    // for the production-shaped HTTP verbs (GET + POST per OIDC form_post). A future Spring Security upgrade that breaks
+    // path matching or filter installation surfaces here as a 404 instead of the expected 500.
+
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     void oidcFlowFails_noRequestCached() throws Exception {
+        String ltiLaunchUri = "/api/lti/public/lti13/auth-login?id_token=some-token&state=some-state";
+        request.get(ltiLaunchUri, HttpStatus.INTERNAL_SERVER_ERROR, Object.class);
+    }
+
+    @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    void oidcFlowFails_postRequest_noRequestCached() throws Exception {
+        // LTI 1.3 platforms use response_mode=form_post; the auth-login leg arrives as a POST. The filter must accept
+        // it and Artemis's error path must still trigger the 500 we expect.
+        Map<String, Object> body = new HashMap<>();
+        body.put("id_token", "some-token");
+        body.put("state", "some-state");
+
+        request.postFormWithoutLocation("/api/lti/public/lti13/auth-login", body, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    @WithAnonymousUser
+    void oidcFlowFails_anonymousUser_noRequestCached() throws Exception {
+        // The OIDC initiation flow originates from an unauthenticated browser. The filter must still process the
+        // request rather than be short-circuited by the auth gate at /api/lti/public/**.
         String ltiLaunchUri = "/api/lti/public/lti13/auth-login?id_token=some-token&state=some-state";
         request.get(ltiLaunchUri, HttpStatus.INTERNAL_SERVER_ERROR, Object.class);
     }
