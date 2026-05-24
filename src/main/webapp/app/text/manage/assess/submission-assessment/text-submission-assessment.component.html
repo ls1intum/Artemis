@@ -25,15 +25,16 @@
     (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint($event)"
     (useAsExampleSubmission)="useStudentSubmissionAsExampleSubmission()"
 >
+    <!--        TODO: hasAutomaticFeedback is currently always false; the banner will not be shown until the feedback type detection is fixed -->
+    <jhi-feedback-suggestions-banner
+        jhiBannerSlot
+        [isLoading]="isLoading()"
+        [hasAutomaticFeedback]="hasAutomaticFeedback"
+        [isAssessor]="isAssessor"
+        [resultCompletionDate]="result?.completionDate"
+        [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled"
+    />
     @if (submission) {
-        <!--        TODO: hasAutomaticFeedback is currently always false; the banner will not be shown until the feedback type detection is fixed -->
-        <jhi-feedback-suggestions-banner
-            [isLoading]="isLoading()"
-            [hasAutomaticFeedback]="hasAutomaticFeedback"
-            [isAssessor]="isAssessor"
-            [resultCompletionDate]="result?.completionDate"
-            [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled"
-        />
         <div class="row">
             <jhi-resizeable-container class="col-12">
                 <!--region Left Panel-->

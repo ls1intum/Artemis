@@ -23,14 +23,15 @@
         [correctionRound]="correctionRound"
         (useAsExampleSubmission)="useStudentSubmissionAsExampleSubmission()"
     >
+        <jhi-feedback-suggestions-banner
+            jhiBannerSlot
+            [isLoading]="isLoading"
+            [hasAutomaticFeedback]="hasAutomaticFeedback"
+            [isAssessor]="isAssessor"
+            [resultCompletionDate]="result?.completionDate"
+            [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled"
+        />
         @if (submission) {
-            <jhi-feedback-suggestions-banner
-                [isLoading]="isLoading"
-                [hasAutomaticFeedback]="hasAutomaticFeedback"
-                [isAssessor]="isAssessor"
-                [resultCompletionDate]="result?.completionDate"
-                [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled"
-            />
             <div class="editor-container flex-grow-1">
                 @if (submission) {
                     <jhi-modeling-assessment
