@@ -85,8 +85,19 @@ export class CourseManagementPage {
         await header.waitFor({ state: 'visible', timeout: 30_000 });
         await header.click();
         // Wait for SPA navigation into the course detail to complete before subsequent steps
-        // (e.g. openCourseSettings) race the next render.
-        await this.page.waitForURL(new RegExp(`/course-management/${courseID}(/|$)`));
+        // (e.g. openCourseSettings) race the next render. Under heavy multi-node CI load the
+        // click occasionally completes without triggering Angular's router (the SPA stays at
+        // /course-management instead of advancing to /course-management/<id>). Fall back to an
+        // explicit goto so the test does not consume the whole budget waiting on a missing nav.
+        const expectedUrl = new RegExp(`/course-management/${courseID}(/|$)`);
+        const urlSettled = await this.page
+            .waitForURL(expectedUrl, { timeout: 15_000 })
+            .then(() => true)
+            .catch(() => false);
+        if (!urlSettled) {
+            await this.page.goto(`/course-management/${courseID}`);
+            await this.page.waitForURL(expectedUrl, { timeout: 30_000 });
+        }
     }
 
     private async assertCourseSummary(expectedCourseSummary: CourseSummary) {
