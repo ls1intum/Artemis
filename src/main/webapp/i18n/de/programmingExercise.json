@@ -651,7 +651,7 @@
                 "alertNewExampleSolutionPublicationDateAsDueDate": "Das Veröffentlichungsdatum der Beispiellösung wurde auf das Fälligkeitsdatum gesetzt!",
                 "assessmentDueDate": "Einreichungsfrist der Bewertung",
                 "assessmentDueDateTooltip": "Die Frist für manuelle Reviews. Sobald das Datum erreicht ist, werden alle manuellen Ergebnisse an die Studierenden veröffentlicht!",
-                "configureDateForRunningTestsAfterDueDate": "Konfiguriere einen unterschiedlichen Zeitpunkt als Einreichungsfrist um Tests auszuführen",
+                "configureDateForRunningTestsAfterDueDate": "Konfiguriere einen Zeitpunkt, um Tests zu einem anderen Zeitpunkt nach der Einreichungsfrist auszuführen",
                 "defineDateForRunningTestsAfterDueDateTooltip": "Diese Option ist nur verfügbar, wenn eine Einreichungsfrist konfiguriert wurde.",
                 "enableManualAssessment": "Manuelle Bewertung aktivieren",
                 "enableManualAssessmentTooltip": "Diese Option ist nur verfügbar, wenn eine Einreichungsfrist konfiguriert wurde.",
