@@ -17,9 +17,6 @@ permissions:
   contents: read
 
 jobs:
-  # Canvas + edX matrix entries are intentionally omitted until the corresponding test classes are enabled
-  # (NightlyLtiCanvasInteropTest / NightlyLtiEdxInteropTest are @Disabled stubs). When they are enabled, copy
-  # this job and adjust `test-class` rather than spinning up empty runners on every nightly.
   moodle-interop:
     name: nightly-lti / moodle
     runs-on: ubuntu-latest

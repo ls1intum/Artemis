@@ -125,16 +125,15 @@ class Lti13Step3JwtValidationIntegrationTest extends AbstractLtiIntegrationTest 
             claims.claim("https://purl.imsglobal.org/spec/lti/claim/version", "1.3.0");
             claims.claim("https://purl.imsglobal.org/spec/lti/claim/deployment_id", "deployment-1");
             claims.claim("https://purl.imsglobal.org/spec/lti/claim/target_link_uri", "http://localhost/courses/1");
+            // Include the full claim set so OidcTokenValidator accepts the token and the request proceeds into
+            // lti13Service.performLaunch, where no Course matches /courses/1 and BadRequestAlertException (400) is
+            // thrown. The distinct 400 status (vs. the 500s in the two negative tests below) is what lets this happy
+            // path test prove a specific outcome — JWKS fetch + signature verify + claim validation all succeeded —
+            // instead of collapsing onto the same generic "any 5xx" assertion as the rejection paths.
+            claims.claim("https://purl.imsglobal.org/spec/lti/claim/roles", java.util.List.of("http://purl.imsglobal.org/vocab/lis/v2/membership#Learner"));
         });
 
-        // A signed-and-fetched-via-JWKS token must traverse upstream OidcLaunchFlowAuthenticationProvider all the way
-        // into OidcTokenValidator.validateIdToken. Without a populated DB graph we hit the LTI claim validator there,
-        // which throws OAuth2AuthenticationException("Roles claim missing") — Lti13LaunchFilter catches that and
-        // maps to 500. The 500 status therefore proves: (a) NimbusJwtDecoder.withJwkSetUri() successfully resolved
-        // the JWKS over HTTP, (b) the RS256 signature verified against the fetched public key, (c) the upstream
-        // provider is wired into the filter chain, (d) the claim validator ran. A NoSuchMethodError from a future
-        // Spring upgrade would surface here as a different (uncaught) exception, failing the test.
-        request.performMvcRequest(post("/api/lti/public/lti13/auth-login").param("id_token", idToken).param("state", state)).andExpect(status().is5xxServerError());
+        request.performMvcRequest(post("/api/lti/public/lti13/auth-login").param("id_token", idToken).param("state", state)).andExpect(status().isBadRequest());
     }
 
     @Test

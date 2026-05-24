@@ -1,6 +1,6 @@
 # Nightly LTI Interop Coverage — Design Notes
 
-**Status:** Phase 1 (per-PR) and Phase 2 (nightly Moodle) shipped in #12778. Phase 3 (Canvas + edX) deferred — `@Disabled` skeleton test classes are in place; enabling them requires writing the container bootstrap (significantly harder than Moodle).
+**Status:** Phase 1 (per-PR) and Phase 2 (nightly Moodle) shipped in #12778. Phase 3 (Canvas + edX) deferred — adding either LMS requires writing the container bootstrap (significantly harder than Moodle); no skeleton files in the codebase.
 **Author:** Stephan Krusche / Artemis maintainers, drafted with Claude.
 **Context:** Follow-up to [#12769](https://github.com/ls1intum/Artemis/pull/12769) (Restore LTI Moodle integration broken by Spring Boot 4 upgrade) and [#12739](https://github.com/ls1intum/Artemis/issues/12739).
 
