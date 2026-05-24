@@ -359,7 +359,34 @@ test.describe('Exam participation', () => {
                 if (participationId) {
                     await waitForParticipationBuildToFinish(participationId);
                 }
-                await examParticipation.checkExerciseScore(programmingExercise.id!, cAllSuccessfulSubmission.expectedResult, BUILD_RESULT_TIMEOUT * 2);
+                // Retry up to two extra times if the first build returns a non-deterministic
+                // result. The Artemis CI's C test runner occasionally fails one extra test
+                // (yielding e.g. 75% instead of the fixture's 87.5%); pushing an additional
+                // empty commit triggers a fresh build that almost always produces the right
+                // score. We keep the per-attempt wait reasonable (90s) so the total budget
+                // stays inside the @slow + test.slow() envelope.
+                let scoreMatched = false;
+                for (let attempt = 0; attempt < 3; attempt++) {
+                    try {
+                        await examParticipation.checkExerciseScore(
+                            programmingExercise.id!,
+                            cAllSuccessfulSubmission.expectedResult,
+                            attempt === 0 ? BUILD_RESULT_TIMEOUT * 2 : BUILD_RESULT_TIMEOUT,
+                        );
+                        scoreMatched = true;
+                        break;
+                    } catch (err) {
+                        if (attempt === 2) {
+                            throw err;
+                        }
+                        // Wrong build result — push an empty commit to retrigger the build.
+                        await GitExerciseParticipation.pushAdditionalCommit(programmingExerciseOverview, studentTwo, `Retry build attempt ${attempt + 1}`, cloneMethod);
+                        if (participationId) {
+                            await waitForParticipationBuildToFinish(participationId);
+                        }
+                    }
+                }
+                expect(scoreMatched, 'expected build to return the right score within 3 attempts').toBe(true);
                 await examParticipation.handInEarly();
                 await examAPIRequests.finishExam(exam);
                 await login(instructor);

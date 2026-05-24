@@ -173,6 +173,10 @@ test.describe('Exam Checklists', async () => {
             examDetails,
             studentExamManagement,
         }) => {
+            // Three navigateToExamDetailsPage + checklist verifications + two generate/prepare
+            // server-side jobs (each can take 10-30s in CI). Exceeds the 60s @fast budget under
+            // multi-node load; lift to 180s via test.slow().
+            test.slow();
             await login(instructor);
             await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.ALL_EXAMS_GENERATED);

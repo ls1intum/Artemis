@@ -193,6 +193,9 @@ test.describe('Quiz Exercise Lifecycle', { tag: '@fast' }, () => {
         });
 
         test('Loads quiz with MC + SA in edit view, verifies all views render correctly', async ({ page, login }) => {
+            // Three gotos (edit, preview, solution) with multiple per-element visibility waits
+            // exceeds the 60s @fast budget under multi-node CI load. Lift to 180s via test.slow().
+            test.slow();
             await login(admin, `/course-management/${course.id}/quiz-exercises/${quizExercise.id}/edit`);
             const titleField = page.locator('#field_title');
             await expect(titleField).toHaveValue(quizExercise.title!, { timeout: 30000 });

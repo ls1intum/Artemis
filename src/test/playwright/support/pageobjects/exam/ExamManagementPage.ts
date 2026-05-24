@@ -113,12 +113,18 @@ export class ExamManagementPage {
                 .catch(() => false);
         // The exam-students endpoint joins across submissions; under heavy multi-node CI load
         // the row for a just-handed-in student can take >30s to surface in the first response
-        // (the participation-state propagation lags behind the submit POST). Reload once
-        // before giving up — one extra round trip reliably picks up the persisted state.
-        if (!(await visibleWithin(30_000))) {
+        // (the participation-state propagation lags behind the submit POST). Try up to four
+        // reload attempts with progressively shorter per-attempt waits — totalling ~90s — so
+        // the test does not give up on a slow but eventually-correct backend state.
+        let visible = await visibleWithin(30_000);
+        for (let attempt = 0; !visible && attempt < 3; attempt++) {
             await this.page.reload();
             await this.page.waitForLoadState('load');
-            await row.waitFor({ state: 'visible', timeout: 30_000 });
+            visible = await visibleWithin(20_000);
+        }
+        if (!visible) {
+            // One last wait so the assertion error surfaces with the locator's call log.
+            await row.waitFor({ state: 'visible', timeout: 10_000 });
         }
         await expect(row).toContainText('Submitted');
     }
