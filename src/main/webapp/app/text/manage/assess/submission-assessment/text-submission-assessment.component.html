@@ -28,7 +28,7 @@
     <!--        TODO: hasAutomaticFeedback is currently always false; the banner will not be shown until the feedback type detection is fixed -->
     <jhi-feedback-suggestions-banner
         jhiBannerSlot
-        [isLoading]="isLoading()"
+        [isLoading]="loadingFeedbackSuggestions"
         [hasAutomaticFeedback]="hasAutomaticFeedback"
         [isAssessor]="isAssessor"
         [resultCompletionDate]="result?.completionDate"

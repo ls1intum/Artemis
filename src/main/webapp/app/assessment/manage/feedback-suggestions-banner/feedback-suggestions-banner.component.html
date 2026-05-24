@@ -2,20 +2,21 @@
     <p-tag severity="info" styleClass="text-wrap" [value]="'artemisApp.assessment.feedbackSuggestions.automaticAssessmentAvailable' | artemisTranslate" />
 }
 @if (hasAutomaticFeedback() && isAssessor() && !resultCompletionDate() && isFeedbackSuggestionsEnabled()) {
-    <div class="d-flex align-items-center gap-1">
-        <p-tag severity="info" styleClass="text-wrap" [value]="'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentAvailable' | artemisTranslate" />
+    <p-tag severity="info" class="d-flex align-items-center gap-1 text-wrap">
+        <span>{{ 'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentAvailable' | artemisTranslate }}</span>
         <fa-icon
             [icon]="faQuestionCircle"
             size="lg"
-            class="ms-1 cursor-pointer"
+            class="cursor-pointer"
             [pTooltip]="'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentInfo' | artemisTranslate"
             tooltipPosition="left"
+            tooltipStyleClass="feedback-suggestions-ai-tooltip"
         />
-    </div>
+    </p-tag>
 }
 @if (isLoading() && isFeedbackSuggestionsEnabled()) {
-    <div class="d-flex align-items-center gap-1 text-secondary" style="font-size: 80%">
+    <p-tag severity="secondary" class="d-flex align-items-center gap-1 text-wrap">
         <fa-icon [icon]="faCircleNotch" animation="spin" />
         <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"></span>
-    </div>
+    </p-tag>
 }

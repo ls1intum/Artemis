@@ -157,7 +157,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     get hasAutomaticFeedback(): boolean {
-        return this.automaticFeedback.length > 0;
+        return this.automaticFeedback.length > 0 || this.feedbackSuggestions.length > 0;
     }
 
     get isFeedbackSuggestionsEnabled(): boolean {

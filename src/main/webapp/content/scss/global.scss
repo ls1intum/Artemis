@@ -1568,6 +1568,13 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     white-space: pre-line;
 }
 
+// Tooltip for the generative AI disclaimer icon in the feedback suggestions banner.
+.feedback-suggestions-ai-tooltip,
+.feedback-suggestions-ai-tooltip .p-tooltip-text {
+    max-width: 400px !important;
+    white-space: normal;
+}
+
 // Override Bootstrap's default popover max-width for AI feedback popover.
 .ai-feedback-popover {
     max-width: 500px;

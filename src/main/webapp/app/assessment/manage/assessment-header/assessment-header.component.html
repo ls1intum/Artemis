@@ -1,11 +1,12 @@
 <h3 class="top-container flex-wrap flex-lg-nowrap">
     <!--back button only used in assessment dashboard-->
-    <div class="row-container me-2">
+    <div class="row-container me-2 d-flex align-items-center gap-2">
         @if (isTestRun()) {
             <span jhiTranslate="artemisApp.assessment.testRunAssessment"></span>
         } @else {
             <span jhiTranslate="artemisApp.assessment.assessment"></span>
         }
+        <ng-content select="[jhiBannerSlot]" />
     </div>
     @if (hasAssessmentDueDatePassed() && !result()?.completionDate) {
         <ngb-alert [style.fontSize]="'65%'" [type]="'warning'" (close)="hasAssessmentDueDatePassed.set(false)" jhiTranslate="artemisApp.assessment.assessmentDueDateIsOver" />

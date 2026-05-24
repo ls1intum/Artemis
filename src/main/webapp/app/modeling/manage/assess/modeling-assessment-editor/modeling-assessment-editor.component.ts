@@ -91,6 +91,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     complaint: Complaint;
     ComplaintType = ComplaintType;
     isLoading = true;
+    loadingFeedbackSuggestions = false;
     isTestRun = false;
     hasAutomaticFeedback = false;
     hasAssessmentDueDatePassed: boolean;
@@ -194,14 +195,14 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     private loadRandomSubmission(exerciseId: number): void {
         this.modelingSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound).subscribe({
-            next: async (submission?: ModelingSubmission) => {
+            next: (submission?: ModelingSubmission) => {
                 if (!submission) {
                     // there are no unassessed submissions
                     this.submission = undefined;
                     return;
                 }
 
-                await this.handleReceivedSubmission(submission);
+                this.handleReceivedSubmission(submission);
                 this.validateFeedback();
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
@@ -214,7 +215,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         });
     }
 
-    private async handleReceivedSubmission(submission: ModelingSubmission): Promise<void> {
+    private handleReceivedSubmission(submission: ModelingSubmission): void {
         this.loadingInitialSubmission = false;
         this.submission = submission;
         const studentParticipation = this.submission.participation as StudentParticipation;
@@ -254,16 +255,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.result.feedbacks = [];
         }
 
-        // Only load suggestions for new assessments, they don't make sense later.
-        // The assessment is new if it only contains automatic feedback.
-        if (this.modelingExercise.feedbackSuggestionModule && (this.result?.feedbacks?.length ?? 0) === this.automaticFeedback.length) {
-            this.feedbackSuggestions = await this.loadFeedbackSuggestions(this.modelingExercise, this.submission);
-
-            if (this.result) {
-                this.result.feedbacks = [...(this.result?.feedbacks || []), ...this.feedbackSuggestions.filter((feedback) => Boolean(feedback.reference))];
-            }
-        }
-
         this.handleFeedback(this.result?.feedbacks);
 
         if ((!this.result?.assessor || this.result.assessor.id === this.userId) && !this.result?.completionDate) {
@@ -274,6 +265,26 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound, this.submission);
 
         this.isLoading = false;
+
+        // Only load suggestions for new assessments, they don't make sense later.
+        // The assessment is new if it only contains automatic feedback.
+        // Load after isLoading=false so the page is interactive while AI suggestions fetch.
+        if (this.modelingExercise.feedbackSuggestionModule && (this.result?.feedbacks?.length ?? 0) === this.automaticFeedback.length) {
+            void this.fetchAndApplyFeedbackSuggestions();
+        }
+    }
+
+    private async fetchAndApplyFeedbackSuggestions(): Promise<void> {
+        this.loadingFeedbackSuggestions = true;
+        try {
+            this.feedbackSuggestions = await this.loadFeedbackSuggestions(this.modelingExercise!, this.submission!);
+            if (this.result) {
+                this.result.feedbacks = [...(this.result?.feedbacks || []), ...this.feedbackSuggestions.filter((feedback) => Boolean(feedback.reference))];
+            }
+            this.handleFeedback(this.result?.feedbacks);
+        } finally {
+            this.loadingFeedbackSuggestions = false;
+        }
     }
 
     /**

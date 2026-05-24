@@ -87,6 +87,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     totalScore: number;
     isTestRun = false;
     isLoading = signal(true);
+    loadingFeedbackSuggestions = false;
     saveBusy: boolean;
     submitBusy: boolean;
     cancelBusy: boolean;
@@ -151,6 +152,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         this.totalScore = 0;
 
         this.isLoading.set(true);
+        this.loadingFeedbackSuggestions = false;
         this.saveBusy = false;
         this.submitBusy = false;
         this.cancelBusy = false;
@@ -355,7 +357,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         if (this.assessments.length > 0) {
             return;
         }
-        this.isLoading.set(true);
+        this.loadingFeedbackSuggestions = true;
 
         this.feedbackSuggestionsObservable = this.athenaService.getTextFeedbackSuggestions(this.exercise!, this.submission!).subscribe({
             next: (feedbackSuggestions) => {
@@ -372,11 +374,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                     }
                 });
                 this.validateFeedback();
-                // TODO: always false until the backend sends FeedbackType.AUTOMATIC for Athena suggestions (currently always MANUAL)
-                this.hasAutomaticFeedback = this.assessments.some((feedbackItem) => feedbackItem.type === FeedbackType.AUTOMATIC);
-                this.isLoading.set(false);
+                this.hasAutomaticFeedback = feedbackSuggestions.length > 0;
+                this.loadingFeedbackSuggestions = false;
             },
-            error: () => this.isLoading.set(false),
+            error: () => (this.loadingFeedbackSuggestions = false),
         });
     }
 
