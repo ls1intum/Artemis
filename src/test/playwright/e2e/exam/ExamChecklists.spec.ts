@@ -302,9 +302,22 @@ async function navigateToExamDetailsPage(page: Page, course: any, exam: Exam) {
     // The exam-detail page wraps every checklist row in `@if (exam)` (and several rows in
     // `@if (exam().publishResultsDate)`), so testid lookups fail until the GET /exams/{id}
     // round-trip completes. `domcontentloaded` only signals HTML parse — wait for the heading
-    // explicitly so the page is fully hydrated before checklist assertions run.
-    await page.goto(`/course-management/${course.id}/exams/${exam.id}`);
-    await page.locator('#exam-detail-title').waitFor({ state: 'visible', timeout: 30_000 });
+    // explicitly so the page is fully hydrated before checklist assertions run. Under heavy
+    // multi-node CI load the lazy-loaded exam-management chunk can take >30s on first paint;
+    // reload once before giving up so a slow first chunk fetch does not flake the whole test.
+    const examUrl = `/course-management/${course.id}/exams/${exam.id}`;
+    await page.goto(examUrl);
+    const title = page.locator('#exam-detail-title');
+    const visibleWithin = async (timeout: number): Promise<boolean> =>
+        title
+            .waitFor({ state: 'visible', timeout })
+            .then(() => true)
+            .catch(() => false);
+    if (!(await visibleWithin(30_000))) {
+        await page.reload();
+        await page.waitForLoadState('load');
+        await title.waitFor({ state: 'visible', timeout: 30_000 });
+    }
 }
 
 async function addExamExerciseGroup(examExerciseGroups: ExamExerciseGroupsPage, examExerciseGroupCreation: ExamExerciseGroupCreationPage, isMandatory?: boolean) {
