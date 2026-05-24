@@ -1,11 +1,11 @@
 @if (isDialogVisible()) {
     <div class="modal-backdrop show" (click)="close()"></div>
-    <div class="modal show d-block" tabindex="-1" role="dialog" aria-modal="true" (keydown.escape)="close()">
+    <div class="modal show d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="post-modal-title" (keydown.escape)="close()">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <form [formGroup]="formGroup" (ngSubmit)="confirm()">
                     <div class="modal-header">
-                        <h4 class="modal-title">{{ modalTitle | artemisTranslate }}</h4>
+                        <h4 id="post-modal-title" class="modal-title">{{ modalTitle | artemisTranslate }}</h4>
                         <button type="button" class="btn-close" aria-label="Close" (click)="close()"></button>
                     </div>
                     <div class="modal-body">
