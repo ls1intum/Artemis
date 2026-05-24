@@ -57,7 +57,8 @@ import org.springframework.web.util.UriComponentsBuilder;
  * (package-private upstream) and so the filter's 404 vs 500 bucketing keeps working unchanged. It is a drop-in
  * replacement for the Artemis call site in {@code CustomLti13Configurer} only — the upstream constructor that
  * takes a {@code String authorizationRequestBaseUri} (which would build a {@code PathOIDCInitiationRegistrationResolver}
- * internally) is intentionally omitted because Artemis always supplies its own {@link Lti13PathRegistrationResolver}.
+ * internally) is intentionally omitted because Artemis always supplies its own
+ * {@link de.tum.cit.aet.artemis.lti.config.Lti13PathRegistrationResolver}.
  * <p>
  * Remove this class and restore {@code new OIDCInitiatingLoginRequestResolver(...)} in
  * {@code CustomLti13Configurer.configureInitiationFilter} once a Spring 7-compatible release of
@@ -159,6 +160,8 @@ public class Lti13InitiatingLoginRequestResolver implements OAuth2AuthorizationR
     }
 
     private String expandRedirectUri(HttpServletRequest request, ClientRegistration clientRegistration, String action) {
+        // Supported URI variables -> baseUrl, action, registrationId
+        // Used in -> CommonOAuth2Provider.DEFAULT_REDIRECT_URL = "{baseUrl}/{action}/oauth2/code/{registrationId}"
         Map<String, String> uriVariables = new HashMap<>();
         uriVariables.put("registrationId", clientRegistration.getRegistrationId());
         // Spring 7 API replacement vs. upstream 0.3.4: fromHttpUrl(String) was removed in Spring Framework 7,
