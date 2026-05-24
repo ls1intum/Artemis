@@ -32,6 +32,7 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
+import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
 
 // Stub component for UsersImportButtonComponent to avoid signal viewChild issues with ng-mocks
 @Component({
@@ -302,5 +303,24 @@ describe('ExamStudentsComponent', () => {
 
         expect(component.isLoading()).toBe(false);
         expect(errorSpy).toHaveBeenCalledWith('artemisApp.studentExams.startExerciseFailure', { message: 'start failed' });
+    });
+
+    it('should not refresh exam data for cached completed exercise preparation status', () => {
+        const fetchExamDataSpy = vi.spyOn(component as any, 'fetchExamData').mockImplementation(() => {});
+        component.isAllExercisesPrepared.set(false);
+
+        component['setExercisePreparationStatus']({ finished: 1, failed: 0, overall: 1 } as ExamExerciseStartPreparationStatus);
+
+        expect(fetchExamDataSpy).not.toHaveBeenCalled();
+        expect(component.isAllExercisesPrepared()).toBe(true);
+    });
+
+    it('should refresh exam data when exercise preparation changes from running to completed', () => {
+        const fetchExamDataSpy = vi.spyOn(component as any, 'fetchExamData').mockImplementation(() => {});
+        component.exercisePreparationRunning.set(true);
+
+        component['setExercisePreparationStatus']({ finished: 1, failed: 0, overall: 1 } as ExamExerciseStartPreparationStatus);
+
+        expect(fetchExamDataSpy).toHaveBeenCalledOnce();
     });
 });
