@@ -5,9 +5,11 @@ import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
+import { Tag } from 'primeng/tag';
 
 describe('FeedbackSuggestionsBannerComponent', () => {
     setupTestBed({ zoneless: true });
+    let component: FeedbackSuggestionsBannerComponent;
     let fixture: ComponentFixture<FeedbackSuggestionsBannerComponent>;
 
     beforeEach(() => {
@@ -17,6 +19,7 @@ describe('FeedbackSuggestionsBannerComponent', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(FeedbackSuggestionsBannerComponent);
+                component = fixture.componentInstance;
                 fixture.componentRef.setInput('isLoading', false);
                 fixture.componentRef.setInput('hasAutomaticFeedback', false);
                 fixture.componentRef.setInput('isAssessor', false);
@@ -24,24 +27,24 @@ describe('FeedbackSuggestionsBannerComponent', () => {
             });
     });
 
-    it('should show the non-AI automatic assessment banner when feedback suggestions are disabled', () => {
+    it('should show the non-AI automatic assessment tag when feedback suggestions are disabled', () => {
         fixture.componentRef.setInput('hasAutomaticFeedback', true);
         fixture.componentRef.setInput('isAssessor', true);
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.automaticAssessmentAvailable"]'))).toBeTruthy();
-        expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentAvailable"]'))).toBeFalsy();
+        const tags = fixture.debugElement.queryAll(By.directive(Tag));
+        expect(tags).toHaveLength(1);
         expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"]'))).toBeFalsy();
     });
 
-    it('should show the generative AI assessment banner with tooltip when feedback suggestions are enabled', () => {
+    it('should show the generative AI assessment tag when feedback suggestions are enabled', () => {
         fixture.componentRef.setInput('hasAutomaticFeedback', true);
         fixture.componentRef.setInput('isAssessor', true);
         fixture.componentRef.setInput('isFeedbackSuggestionsEnabled', true);
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.automaticAssessmentAvailable"]'))).toBeFalsy();
-        expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentAvailable"]'))).toBeTruthy();
+        const tags = fixture.debugElement.queryAll(By.directive(Tag));
+        expect(tags).toHaveLength(1);
         expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"]'))).toBeFalsy();
     });
 
@@ -50,14 +53,14 @@ describe('FeedbackSuggestionsBannerComponent', () => {
         fixture.componentRef.setInput('isFeedbackSuggestionsEnabled', true);
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.automaticAssessmentAvailable"]'))).toBeFalsy();
-        expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentAvailable"]'))).toBeFalsy();
+        expect(fixture.debugElement.queryAll(By.directive(Tag))).toHaveLength(0);
         expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"]'))).toBeTruthy();
     });
 
-    it('should show no banners when no conditions are met', () => {
+    it('should render nothing when no conditions are met', () => {
         fixture.detectChanges();
 
-        expect(fixture.debugElement.queryAll(By.css('[jhiTranslate]'))).toHaveLength(0);
+        expect(fixture.debugElement.queryAll(By.directive(Tag))).toHaveLength(0);
+        expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"]'))).toBeFalsy();
     });
 });
