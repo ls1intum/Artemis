@@ -135,7 +135,7 @@ class AutomaticAfterDueDateServiceTest {
         var latestExamEndDate = BASE_TIME.plusDays(2);
         var exercise = createExamExercise(dueDate, BuildPhaseCondition.AFTER_DUE_DATE, 180);
         when(examDateApi.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam())).thenReturn(latestExamEndDate);
-        when(examApi.findByExerciseIdElseThrow(exercise.getId())).thenReturn(exercise.getExam());
+        when(examApi.findByExerciseId(exercise.getId())).thenReturn(Optional.of(exercise.getExam()));
 
         var result = service.computeBuildAndTestDate(exercise, null);
 
@@ -199,6 +199,66 @@ class AutomaticAfterDueDateServiceTest {
         var previewDate = service.getAutomaticBuildAndTestDate(new AutomaticAfterDueDatePreviewRequestDTO(exerciseId, null, dueDate, null, null, null, null, null), exercise, null);
 
         assertThat(previewDate).isEqualTo(dueDate.plusMinutes(15));
+    }
+
+    @Test
+    void getAutomaticBuildAndTestDate_existingCourseExerciseImportedIntoExam_preservesOffsetFromCourseExercise() throws IOException, JsonProcessingException {
+        var exerciseId = 10L;
+        var targetExamEndDate = BASE_TIME.plusDays(5);
+        var targetExam = new Exam();
+        targetExam.setId(1L);
+        targetExam.setGracePeriod(120);
+        var exercise = createCourseExercise(BASE_TIME.plusDays(1), BuildPhaseCondition.AFTER_DUE_DATE);
+        exercise.setId(exerciseId);
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(exercise.getDueDate().plusHours(2));
+        when(examDateApi.getLatestIndividualExamEndDate(targetExam)).thenReturn(targetExamEndDate);
+        when(examApi.findByExerciseId(exerciseId)).thenReturn(Optional.empty());
+
+        var previewDate = service.getAutomaticBuildAndTestDate(new AutomaticAfterDueDatePreviewRequestDTO(exerciseId, targetExam.getId(), null, null, null, null, null, null),
+                exercise, targetExam);
+
+        assertThat(previewDate).isEqualTo(targetExamEndDate.plusSeconds(120).plusHours(2));
+    }
+
+    @Test
+    void getAutomaticBuildAndTestDate_existingExamExerciseImportedIntoDifferentExam_preservesOffsetFromSourceExam() throws IOException, JsonProcessingException {
+        var exerciseId = 11L;
+        var sourceExamEndDate = BASE_TIME.plusDays(3);
+        var targetExamEndDate = BASE_TIME.plusDays(7);
+        var exercise = createExamExercise(BASE_TIME.plusDays(1), BuildPhaseCondition.AFTER_DUE_DATE, 60);
+        exercise.setId(exerciseId);
+        var sourceExam = exercise.getExam();
+        sourceExam.setId(1L);
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(sourceExamEndDate.plusSeconds(60).plusMinutes(45));
+        var targetExam = new Exam();
+        targetExam.setId(2L);
+        targetExam.setGracePeriod(120);
+        when(examDateApi.getLatestIndividualExamEndDate(targetExam)).thenReturn(targetExamEndDate);
+        when(examApi.findByExerciseId(exerciseId)).thenReturn(Optional.of(sourceExam));
+        when(examDateApi.getLatestIndividualExamEndDate(sourceExam)).thenReturn(sourceExamEndDate);
+
+        var previewDate = service.getAutomaticBuildAndTestDate(new AutomaticAfterDueDatePreviewRequestDTO(exerciseId, targetExam.getId(), null, null, null, null, null, null),
+                exercise, targetExam);
+
+        assertThat(previewDate).isEqualTo(targetExamEndDate.plusSeconds(120).plusMinutes(45));
+    }
+
+    @Test
+    void getAutomaticBuildAndTestDate_existingExamExerciseInSameExam_preservesOffsetFromTargetExam() throws IOException, JsonProcessingException {
+        var exerciseId = 12L;
+        var examEndDate = BASE_TIME.plusDays(4);
+        var exercise = createExamExercise(BASE_TIME.plusDays(1), BuildPhaseCondition.AFTER_DUE_DATE, 90);
+        exercise.setId(exerciseId);
+        var exam = exercise.getExam();
+        exam.setId(1L);
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(examEndDate.plusSeconds(90).plusMinutes(30));
+        when(examDateApi.getLatestIndividualExamEndDate(exam)).thenReturn(examEndDate);
+        when(examApi.findByExerciseId(exerciseId)).thenReturn(Optional.of(exam));
+
+        var previewDate = service.getAutomaticBuildAndTestDate(new AutomaticAfterDueDatePreviewRequestDTO(exerciseId, exam.getId(), null, null, null, null, null, null), exercise,
+                exam);
+
+        assertThat(previewDate).isEqualTo(examEndDate.plusSeconds(90).plusMinutes(30));
     }
 
     @Test

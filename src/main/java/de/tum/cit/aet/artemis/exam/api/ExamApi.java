@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam.api;
 
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
@@ -57,7 +58,7 @@ public class ExamApi extends AbstractExamApi {
      * @param exerciseId the id of the exercise
      * @return the exam
      */
-    public Exam findByExerciseIdElseThrow(Long exerciseId) {
-        return examService.findByExerciseIdElseThrow(exerciseId);
+    public Optional<Exam> findByExerciseId(Long exerciseId) {
+        return examService.findByExerciseId(exerciseId);
     }
 }

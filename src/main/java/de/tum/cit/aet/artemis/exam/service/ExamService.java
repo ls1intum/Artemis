@@ -1700,7 +1700,7 @@ public class ExamService {
      * @param exerciseId the id of the exercise
      * @return the exam
      */
-    public Exam findByExerciseIdElseThrow(final Long exerciseId) {
-        return examRepository.findByExerciseIdElseThrow(exerciseId);
+    public Optional<Exam> findByExerciseId(final Long exerciseId) {
+        return examRepository.findByExerciseId(exerciseId);
     }
 }
