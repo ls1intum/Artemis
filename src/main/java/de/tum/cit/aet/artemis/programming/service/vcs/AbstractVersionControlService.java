@@ -2,10 +2,8 @@ package de.tum.cit.aet.artemis.programming.service.vcs;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Objects;
 
-import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.errors.LargeObjectException;
 import org.eclipse.jgit.internal.JGitText;
@@ -77,15 +75,13 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             return targetRepo.getRemoteRepositoryUri(); // should be the same as targetRepoUri
         }
         catch (IOException | LargeObjectException ex) {
-            Path localPath = gitService.getDefaultLocalCheckOutPathOfRepo(targetRepoUri);
             // clean up in case of an error
             try {
-                // or delete the folder if it exists
-                FileUtils.deleteDirectory(localPath.toFile());
+                deleteRepository(targetRepoUri);
             }
-            catch (IOException ioException) {
+            catch (RuntimeException cleanupException) {
                 // ignore
-                log.error("Could not delete directory of the failed cloned repository in: {}", localPath);
+                log.error("Could not delete directory of the failed copied repository: {}", targetRepoUri, cleanupException);
             }
             if (ex instanceof LargeObjectException) {
                 throw new VersionControlException(
