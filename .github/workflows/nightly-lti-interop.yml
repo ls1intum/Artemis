@@ -1,0 +1,57 @@
+name: Nightly LTI Interop
+
+# The workflow runs on a fixed schedule against the default branch and on manual dispatch.
+# It does not consume any untrusted GitHub event inputs (issue/PR titles, commit messages, etc.),
+# so command injection vectors from such inputs are not applicable here.
+
+on:
+  schedule:
+    - cron: '0 3 * * *'        # 03:00 UTC daily
+  workflow_dispatch:           # manual ad-hoc runs
+
+concurrency:
+  group: nightly-lti-interop
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  lms-interop:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - lms: moodle
+            test_class: NightlyLtiMoodleInteropTest
+          - lms: canvas
+            test_class: NightlyLtiCanvasInteropTest
+          - lms: edx
+            test_class: NightlyLtiEdxInteropTest
+    name: nightly-lti / ${{ matrix.lms }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+      - name: Run nightly LTI interop suite (${{ matrix.lms }})
+        env:
+          TEST_CLASS: ${{ matrix.test_class }}
+        run: ./gradlew test --tests "$TEST_CLASS" -DincludeTags='nightly-lti' -x webapp
+      - name: Upload JUnit reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-lti-reports-${{ matrix.lms }}
+          path: build/reports/tests/test
+      - name: Notify on failure
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.LTI_NIGHTLY_SLACK_WEBHOOK }}
+          SLACK_TITLE: "Nightly LTI interop FAILED on develop (${{ matrix.lms }})"
+          SLACK_COLOR: danger
