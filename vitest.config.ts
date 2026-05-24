@@ -64,6 +64,7 @@ export default defineConfig({
             'src/main/webapp/app/shared/components/buttons/**/*.spec.ts', // include shared buttons
             'src/main/webapp/app/shared/table-view/**/*.spec.ts', // include shared table view
             'src/main/webapp/app/shared/feature-toggle/**/*.spec.ts', // include feature-toggle service tests
+            'src/main/webapp/app/shared/deimos/**/*.spec.ts', // include deimos shared component tests
             'src/main/webapp/app/shared/sort/**/*.directive.spec.ts', // include sort directives
             'src/main/webapp/app/shared/user-import/util/**/*.spec.ts', // include user import util tests
             'src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts', // include problem statement service tests
@@ -86,6 +87,7 @@ export default defineConfig({
             'src/main/webapp/app/programming/shared/services/build-phases-template.service.spec.ts', // include build phases template service tests
             'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.spec.ts', // include build plan phases model tests
             'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.spec.ts', // include legacy build plan converter service tests
+            'src/main/webapp/app/programming/shared/services/deimos.service.spec.ts', // include deimos service tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
