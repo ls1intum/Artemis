@@ -12,6 +12,10 @@ const course = { id: SEED_COURSES.exerciseManagement.id } as any;
 
 test.describe('File upload exercise management', { tag: '@fast' }, () => {
     test('Creates a file upload exercise in the UI', async ({ login, page, navigationBar, courseManagement, courseManagementExercises, fileUploadExerciseCreation }) => {
+        // Login → openCourseManagement → openExercises → createFileUploadExercise + form
+        // interactions + final exercises-list page render exceeds 60s @fast under multi-node
+        // CI load. Bump to 180s via test.slow().
+        test.slow();
         await login(admin, '/');
         await navigationBar.openCourseManagement();
         await courseManagement.openExercisesOfCourse(course.id!);

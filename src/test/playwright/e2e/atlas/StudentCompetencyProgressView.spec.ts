@@ -159,6 +159,12 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             courseOverview,
             quizExerciseMultipleChoice,
         }) => {
+            // The describe has the @fast inherited tag (outer) plus its own @slow, so the test
+            // matches both projects. In fast-tests (60s budget) this flow — create competency,
+            // create quiz, student participates, polls for async competency progress — has been
+            // observed at ~80s under multi-node CI load. test.slow() lifts the budget to 180s
+            // for whichever project is running.
+            test.slow();
             // Create competency first
             const competency = await courseManagementAPIRequests.createCompetency(nestedCourse, 'Progress Test Competency', 'Track progress');
 

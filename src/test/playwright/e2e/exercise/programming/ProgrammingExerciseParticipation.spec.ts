@@ -99,8 +99,18 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
                     await expect(programmingExerciseOverview.getCloneUrlButton()).toBeDisabled();
                     const sshKeyNotFoundAlert = page.locator('.alert', { hasText: 'To use ssh, you need to add an ssh key to your account' });
                     await expect(sshKeyNotFoundAlert).toBeVisible();
+                    // Under heavy multi-node CI load the main page has been observed to drift
+                    // to /courses (Angular's auth/router fall-back) during the SSH-setup detour
+                    // + reload. Re-anchor explicitly so the subsequent `makeSubmission` finds
+                    // `.code-button` on the right page. We only restore on the specific drift
+                    // target (/courses without an exercise id), not on any non-matching URL —
+                    // the post-reload URL can legitimately include a sub-route (e.g. /code).
+                    const exerciseUrl = `/courses/${course.id}/exercises/${exercise.id!}`;
                     await GitExerciseParticipation.setupSSHCredentials(page.context(), sshAlgorithm);
                     await page.reload();
+                    if (/\/courses\/?$/.test(new URL(page.url()).pathname)) {
+                        await page.goto(exerciseUrl);
+                    }
                     await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentOne, cAllSuccessful, 'Solution', GitCloneMethod.ssh, sshAlgorithm);
                     const participation = await waitForParticipationBuildToFinish(participationId);
                     ProgrammingExerciseOverviewPage.verifyResultScore(participation, cAllSuccessful.expectedResult);
