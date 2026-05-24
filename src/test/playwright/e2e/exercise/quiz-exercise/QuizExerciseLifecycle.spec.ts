@@ -70,6 +70,13 @@ test.describe('Quiz Exercise Lifecycle', { tag: '@fast' }, () => {
         });
 
         test('Creates quiz with MC + SA, verifies preview and solution', async ({ page, login, courseManagement, courseManagementExercises, quizExerciseCreation }) => {
+            // Visual-mode MC question + SA question + saveQuiz + two preview/solution gotos with
+            // multiple per-element visibility waits exceeds 60s @fast under multi-node CI load.
+            // The pivotal failure observed in run 26356320032 was `getByText(mcTitle)` missing
+            // at 15s after page.goto(/preview) — the preview page lazy-mounts the question
+            // component under load. Lift test budget via test.slow() and extend the title/option
+            // visibility timeouts to 30s to absorb the lazy render.
+            test.slow();
             const quizTitle = 'LCQ' + generateUUID().substring(0, 5);
             const mcTitle = 'MC Lifecycle';
             const saTitle = 'SA Lifecycle';
@@ -93,20 +100,25 @@ test.describe('Quiz Exercise Lifecycle', { tag: '@fast' }, () => {
 
             // Preview: verify both questions render fully
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/preview`);
-            await expect(page.getByText(mcTitle)).toBeVisible({ timeout: 15000 });
+            await page.waitForLoadState('domcontentloaded');
+            // Title-visibility timeout extended from 15s to 30s — the preview page mounts the
+            // question component lazily; under multi-node CI load the first paint can take
+            // >15s. (Same fix as the DnD-preview path in QuizExerciseManagement.spec.ts.)
+            await expect(page.getByText(mcTitle)).toBeVisible({ timeout: 30000 });
             for (const option of answerOptions) {
-                await expect(page.getByText(option, { exact: true })).toBeVisible();
+                await expect(page.getByText(option, { exact: true })).toBeVisible({ timeout: 30000 });
             }
-            await expect(page.getByText(saTitle)).toBeVisible();
-            await expect(page.getByText('Never gonna').first()).toBeVisible();
+            await expect(page.getByText(saTitle)).toBeVisible({ timeout: 30000 });
+            await expect(page.getByText('Never gonna').first()).toBeVisible({ timeout: 30000 });
 
             // Solution: verify both questions
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/solution`);
-            await expect(page.getByText(mcTitle)).toBeVisible({ timeout: 15000 });
+            await page.waitForLoadState('domcontentloaded');
+            await expect(page.getByText(mcTitle)).toBeVisible({ timeout: 30000 });
             for (const option of answerOptions) {
-                await expect(page.getByText(option, { exact: true })).toBeVisible();
+                await expect(page.getByText(option, { exact: true })).toBeVisible({ timeout: 30000 });
             }
-            await expect(page.getByText(saTitle)).toBeVisible();
+            await expect(page.getByText(saTitle)).toBeVisible({ timeout: 30000 });
         });
     });
 

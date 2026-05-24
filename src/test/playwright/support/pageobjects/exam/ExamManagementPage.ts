@@ -58,14 +58,28 @@ export class ExamManagementPage {
     }
 
     /**
-     * Opens the exam assessment dashboard
-     * @param courseID the id of the course
-     * @param examID the id of the exam
-     * @param timeout timeout of waiting for assessment dashboard button
+     * Opens the exam assessment dashboard.
+     *
+     * Under heavy multi-node CI load the goto occasionally lands on `/courses` instead of
+     * the assessment-dashboard route — the assessment dashboard's lazy chunk fails to load
+     * and Angular's auth/router fall-back redirects to /courses. When that happens the
+     * downstream `clickExerciseDashboardButton` reloads /courses forever and ultimately
+     * times out. Verify the URL after navigation and re-issue the goto if it drifted.
      */
     async openAssessmentDashboard(courseID: number, examID: number, timeout = EXAM_DASHBOARD_TIMEOUT) {
-        await this.page.goto(`/course-management/${courseID}/exams/${examID}/assessment-dashboard`);
-        await this.page.waitForLoadState('domcontentloaded');
+        const expectedUrl = `/course-management/${courseID}/exams/${examID}/assessment-dashboard`;
+        const expectedPattern = new RegExp(`/course-management/${courseID}/exams/${examID}/assessment-dashboard(?:[/?#].*)?$`);
+        // Try up to twice — under multi-node CI load the first goto occasionally lands on
+        // `/courses` (assessment-dashboard chunk fails to load and Angular's fall-back redirect
+        // kicks in). Detecting the URL drift early lets us retry the navigation cleanly rather
+        // than letting downstream helpers reload the wrong page until they time out.
+        for (let attempt = 0; attempt < 2; attempt++) {
+            await this.page.goto(expectedUrl);
+            await this.page.waitForLoadState('domcontentloaded');
+            if (expectedPattern.test(this.page.url())) {
+                return;
+            }
+        }
     }
 
     /**
