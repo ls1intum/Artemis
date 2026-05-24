@@ -96,7 +96,10 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             log.error("LTI 1.3 launch request failed with status {}: {}", ex.getStatusCode().value(), ex.getMessage(), ex);
             response.sendError(ex.getStatusCode().value(), "LTI 1.3 Launch failed");
         }
-        catch (HttpClientErrorException | OAuth2AuthenticationException | IllegalStateException ex) {
+        catch (HttpClientErrorException | OAuth2AuthenticationException | IllegalStateException | IllegalArgumentException ex) {
+            // IllegalArgumentException is thrown by Lti13Service.launchRequestFrom when an id_token claim cannot be
+            // mapped to a Lti13LaunchRequest — same servlet-filter escape concern as the JwtException and
+            // HttpStatusException branches above.
             log.error("Error during LTI 1.3 launch request: {}", ex.getMessage(), ex);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "LTI 1.3 Launch failed");
         }

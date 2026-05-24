@@ -160,7 +160,10 @@ test {
         group = 'verification'
         testClassesDirs = testing.suites.test.sources.output.classesDirs
         classpath = testing.suites.test.sources.runtimeClasspath
-        useJUnitPlatform()
+        useJUnitPlatform {
+            // Match the default `test` task: nightly suites are opt-in via -DincludeTags='nightly-lti'.
+            excludeTags "nightly-lti"
+        }
         exclude "**/*IT*", "**/*IntTest*"
         testLogging.showStandardStreams = true
         reports.html.required = false

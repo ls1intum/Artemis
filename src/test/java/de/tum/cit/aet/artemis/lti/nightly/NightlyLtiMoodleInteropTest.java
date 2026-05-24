@@ -29,10 +29,15 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.containers.Container.ExecResult;
@@ -48,10 +53,13 @@ import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.lti.AbstractLtiIntegrationTest;
 import de.tum.cit.aet.artemis.lti.config.DistributedStateAuthorizationRequestRepository;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
+import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 /**
  * Nightly end-to-end interop check against a real Moodle install.
@@ -87,6 +95,8 @@ import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRe
 @Tag("nightly-lti")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
+
+    private static final Logger log = LoggerFactory.getLogger(NightlyLtiMoodleInteropTest.class);
 
     /**
      * Pinned to a tag in the frozen {@code bitnamilegacy/} namespace (Bitnami moved free images out of {@code bitnami/}
@@ -134,7 +144,7 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
     private LtiPlatformConfigurationTestRepository ltiPlatformConfigurationRepository;
 
     @Autowired
-    private de.tum.cit.aet.artemis.text.util.TextExerciseUtilService textExerciseUtilService;
+    private TextExerciseUtilService textExerciseUtilService;
 
     private String registrationId;
 
@@ -169,12 +179,29 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
 
     @AfterAll
     void cleanup() {
+        // Each teardown step is independently try-wrapped so a failure in one does not leak the others. Without this,
+        // a Docker daemon hiccup during moodle.stop() would orphan the Postgres container until Ryuk cleans up at JVM
+        // exit — which can wedge a CI runner if Ryuk also fails.
         if (registrationId != null) {
-            ltiPlatformConfigurationRepository.findAll().stream().filter(p -> registrationId.equals(p.getRegistrationId())).findFirst()
-                    .ifPresent(ltiPlatformConfigurationRepository::delete);
+            try {
+                ltiPlatformConfigurationRepository.findByRegistrationId(registrationId).ifPresent(ltiPlatformConfigurationRepository::delete);
+            }
+            catch (RuntimeException ex) {
+                log.warn("Failed to delete LTI platform row for cleanup", ex);
+            }
         }
-        moodle.stop();
-        moodleDb.stop();
+        try {
+            moodle.stop();
+        }
+        catch (RuntimeException ex) {
+            log.warn("Failed to stop Moodle container during cleanup", ex);
+        }
+        try {
+            moodleDb.stop();
+        }
+        catch (RuntimeException ex) {
+            log.warn("Failed to stop Moodle Postgres container during cleanup", ex);
+        }
     }
 
     @Test
@@ -268,15 +295,17 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
         // (requireExistingUser=false), establishes a security context, and writes the success JSON response. This is
         // the deepest end-to-end coverage achievable in a test JVM — the only thing missing is a browser session
         // round-trip, and that requires a real HTTP listener instead of MockMvc.
-        de.tum.cit.aet.artemis.core.domain.Course initialCourse = courseUtilService.createCourseWithUserPrefix("moodletest");
+        String userPrefix = "moodletest" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+        String email = userPrefix + "@example.com";
+        Course initialCourse = courseUtilService.createCourseWithUserPrefix(userPrefix);
         initialCourse.setOnlineCourse(true);
-        de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration onlineCourseConfiguration = new de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration();
-        onlineCourseConfiguration.setUserPrefix("moodletest");
+        OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
+        onlineCourseConfiguration.setUserPrefix(userPrefix);
         onlineCourseConfiguration.setRequireExistingUser(false);
-        onlineCourseConfiguration.setLtiPlatformConfiguration(ltiPlatformConfigurationRepository.findById(platformDbId()).orElseThrow());
+        onlineCourseConfiguration.setLtiPlatformConfiguration(ltiPlatformConfigurationRepository.findByRegistrationId(registrationId).orElseThrow());
         onlineCourseConfiguration.setCourse(initialCourse);
         initialCourse.setOnlineCourseConfiguration(onlineCourseConfiguration);
-        final de.tum.cit.aet.artemis.core.domain.Course course = courseRepository.save(initialCourse);
+        final Course course = courseRepository.save(initialCourse);
         var textExercise = textExerciseUtilService.createSampleTextExercise(course);
 
         String state = UUID.randomUUID().toString();
@@ -284,16 +313,18 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
         seedCachedAuthorizationRequest(state, nonce);
 
         String targetLinkUri = "http://localhost/courses/" + course.getId() + "/exercises/" + textExercise.getId();
-        String idToken = signWithMoodle(CLIENT_ID, targetLinkUri, nonce);
+        String idToken = signWithMoodle(CLIENT_ID, targetLinkUri, nonce, email);
 
-        org.springframework.test.web.servlet.MvcResult result = request.performMvcRequest(post("/api/lti/public/lti13/auth-login").param("id_token", idToken).param("state", state))
-                .andExpect(status().isOk()).andReturn();
+        MvcResult result = request.performMvcRequest(post("/api/lti/public/lti13/auth-login").param("id_token", idToken).param("state", state))
+                .andExpect(status().is(HttpStatus.OK.value())).andReturn();
 
         String body = result.getResponse().getContentAsString();
         assertThat(body).contains("targetLinkUri").contains("/courses/" + course.getId() + "/exercises/" + textExercise.getId());
 
-        var newUser = userTestRepository.findOneByEmailIgnoreCase("student@example.com").orElseThrow();
-        assertThat(newUser.getLogin()).startsWith("moodletest_");
+        // UUID-suffixed email + userPrefix mean each run creates a fresh user; otherwise re-runs in the same DB would
+        // short-circuit the user-creation path and mask any regression there.
+        var newUser = userTestRepository.findOneByEmailIgnoreCase(email).orElseThrow();
+        assertThat(newUser.getLogin()).startsWith(userPrefix + "_");
         var newUserWithGroups = userTestRepository.findUserWithGroupsAndAuthoritiesByLogin(newUser.getLogin()).orElseThrow();
         assertThat(newUserWithGroups.getGroups()).contains(course.getStudentGroupName());
     }
@@ -301,12 +332,8 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
     @Test
     @WithAnonymousUser
     void moodleJwksDocumentIsParseable() {
-        org.springframework.security.oauth2.jwt.JwtDecoder decoder = org.springframework.security.oauth2.jwt.NimbusJwtDecoder.withJwkSetUri(moodleJwksUri).build();
+        JwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(moodleJwksUri).build();
         assertThat(decoder).isNotNull();
-    }
-
-    private Long platformDbId() {
-        return ltiPlatformConfigurationRepository.findAll().stream().filter(p -> registrationId.equals(p.getRegistrationId())).findFirst().orElseThrow().getId();
     }
 
     private void seedCachedAuthorizationRequest(String state, String nonce) {
@@ -330,11 +357,21 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
      * RSA private key, kid header, and claim mapping.
      */
     private String signWithMoodle(String audience, String endpoint, String nonce) throws IOException, InterruptedException {
-        ExecResult result = moodle.execInContainer("php", SIGN_JWT_SCRIPT_IN_CONTAINER, audience, endpoint, nonce);
+        return signWithMoodle(audience, endpoint, nonce, "student@example.com");
+    }
+
+    private String signWithMoodle(String audience, String endpoint, String nonce, String email) throws IOException, InterruptedException {
+        ExecResult result = moodle.execInContainer("php", SIGN_JWT_SCRIPT_IN_CONTAINER, audience, endpoint, nonce, email);
         if (result.getExitCode() != 0) {
-            throw new IllegalStateException("Moodle JWT signing failed (exit=%d): %s".formatted(result.getExitCode(), result.getStderr()));
+            throw new IllegalStateException("Moodle JWT signing failed (exit=%d): stdout=%s stderr=%s".formatted(result.getExitCode(), result.getStdout(), result.getStderr()));
         }
-        return result.getStdout().trim();
+        String token = result.getStdout().trim();
+        if (token.isEmpty() || token.split("\\.").length != 3) {
+            // Exit 0 with empty or malformed output points at a silent PHP warning (e.g. missing key/typo in claim
+            // mapping). Surface stderr in the assertion so the failure is debuggable without re-reading container logs.
+            throw new IllegalStateException("Moodle JWT signing returned malformed token (stdout=%s, stderr=%s)".formatted(result.getStdout(), result.getStderr()));
+        }
+        return token;
     }
 
     private String signWithExtractedKey(Consumer<JWTClaimsSet.Builder> claimCustomizer) throws Exception {
