@@ -69,6 +69,12 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
         });
 
         test('Creates a Quiz with Drag and Drop', async ({ page, quizExerciseCreation }) => {
+            // DnD question creation involves a background image upload, two mouse drag
+            // sequences, a Monaco editor mount, and a quiz save (with its own 60s response
+            // wait). Cumulative cost routinely overruns the 60s @fast budget under multi-node
+            // CI load; observed worst case ~130s including the preview-page render. Lift the
+            // per-test timeout to 180s via test.slow().
+            test.slow();
             const quizQuestionTitle = 'Quiz Question';
             await quizExerciseCreation.addDragAndDropQuestion(quizQuestionTitle);
             const response = await quizExerciseCreation.saveQuiz();
@@ -76,7 +82,9 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
             createdQuizId = quiz.id;
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/preview`);
             await page.waitForLoadState('domcontentloaded');
-            await expect(page.getByText(quizQuestionTitle)).toBeVisible();
+            // The quiz-preview page mounts its question component lazily; under load the
+            // visible text can take >5s default-expect-timeout to appear. Extend to 30s.
+            await expect(page.getByText(quizQuestionTitle)).toBeVisible({ timeout: 30000 });
         });
     });
 

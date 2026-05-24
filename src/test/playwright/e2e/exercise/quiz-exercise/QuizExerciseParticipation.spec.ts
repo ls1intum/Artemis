@@ -67,7 +67,14 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             // heavy multi-node load, so set an explicit 6-minute timeout that comfortably
             // covers worst-case scheduler delay (120s) + 3 verification reloads (≤30s each).
             test.setTimeout(360_000);
-            const quizDurationSeconds = 10;
+            // Quiz duration must comfortably cover the student-side login → tick options →
+            // submit chain. With duration = 10s the chain often does not fit under multi-node
+            // CI load (login alone can take 10-15s), the quiz auto-ends before submit, and
+            // `#submit-exercise` becomes permanently disabled (the failure mode observed in
+            // 26335092464). 60s leaves a wide margin while keeping evaluation latency
+            // bounded — the post-end evaluation poll budget is 120s, so end-to-end this test
+            // still completes well within its 360s setTimeout.
+            const quizDurationSeconds = 60;
             await login(admin);
             const shortQuiz = await exerciseAPIRequests.createQuizExercise({
                 body: { course },

@@ -106,6 +106,11 @@ test.describe('Import exercises', () => {
                 courseManagement,
                 quizExerciseParticipation,
             }) => {
+                // Four sequential logins (instructor → student → instructor → student) plus the
+                // import → participate → end-quiz → check-score round trip routinely overruns
+                // the 60s @fast budget under multi-node CI load. test.slow() lifts the per-test
+                // timeout to 180s which comfortably covers the worst-case observed ~120s run.
+                test.slow();
                 await login(instructor, `/course-management/${secondCourse.id}/exercises`);
                 await courseManagementExercises.importQuizExercise();
                 await courseManagementExercises.clickImportExercise(shortAnswerQuizExercise.id!);
