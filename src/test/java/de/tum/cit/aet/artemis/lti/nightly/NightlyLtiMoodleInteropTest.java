@@ -36,8 +36,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.containers.Container.ExecResult;
@@ -58,7 +56,6 @@ import de.tum.cit.aet.artemis.lti.AbstractLtiIntegrationTest;
 import de.tum.cit.aet.artemis.lti.config.DistributedStateAuthorizationRequestRepository;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
-import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 /**
@@ -76,8 +73,10 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
  * must fetch Moodle's JWKS over real HTTP, verify the signature, and survive claim validation.</li>
  * <li><b>Step 3b (synthetic):</b> {@link #syntheticJwtSignedWithMoodleKeyValidates()} — sanity check that signs with
  * Moodle's extracted private key and a minimal claim set. Isolates the signature/JWKS mechanics from claim shape.</li>
- * <li><b>JWKS parse:</b> {@link #moodleJwksDocumentIsParseable()} — Spring's {@code NimbusJwtDecoder.withJwkSetUri()}
- * must accept Moodle's JWKS document.</li>
+ * <li><b>Full success:</b> {@link #fullLaunchSucceedsWithCourseAndExerciseFixture()} — Moodle signs an id_token whose
+ * target_link_uri matches a Course + TextExercise in the test DB; performLaunch auto-creates the user, joins them to
+ * the course's student group, and returns 200 with the success JSON. The deepest end-to-end coverage achievable in
+ * a MockMvc test JVM.</li>
  * </ul>
  * <p>
  * What this suite catches that Phase 1 cannot:
@@ -99,11 +98,12 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
     private static final Logger log = LoggerFactory.getLogger(NightlyLtiMoodleInteropTest.class);
 
     /**
-     * Pinned to a tag in the frozen {@code bitnamilegacy/} namespace (Bitnami moved free images out of {@code bitnami/}
-     * on 28 Aug 2025). The legacy namespace receives no new versions or security patches; if it disappears the nightly
-     * job needs to switch to a self-built image or pin to a digest. Tracked as a follow-up.
+     * Pinned to the same tag the rest of the repo uses via {@code .env}'s {@code MOODLE_VERSION} (consumed by
+     * {@code docker/moodle/moodle.yml}). The {@code bitnamilegacy/} namespace was created on 28 Aug 2025 as the
+     * frozen archive of free Bitnami images and receives no new versions or security patches; if it disappears the
+     * nightly job needs to switch to a self-built image or pin to a digest. Tracked as a follow-up.
      */
-    private static final String MOODLE_IMAGE = "bitnamilegacy/moodle:5.0.2";
+    private static final String MOODLE_IMAGE = "bitnamilegacy/moodle:5.0.2-debian-12-r2";
 
     private static final String POSTGRES_IMAGE = "bitnamilegacy/postgresql:17";
 
@@ -141,9 +141,6 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
     private DistributedStateAuthorizationRequestRepository stateRepository;
 
     @Autowired
-    private LtiPlatformConfigurationTestRepository ltiPlatformConfigurationRepository;
-
-    @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
     private String registrationId;
@@ -155,6 +152,13 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
     private String moodleAuthUri;
 
     private String moodleJwksUri;
+
+    // Tracked so @AfterAll can delete the rows created by fullLaunchSucceedsWithCourseAndExerciseFixture.
+    // The shared LTI integration test base does not roll back DB state between tests, so without explicit
+    // cleanup these would leak across nightly invocations sharing the same workspace DB.
+    private Long createdCourseId;
+
+    private String createdUserLogin;
 
     @BeforeAll
     void startContainers() throws Exception {
@@ -182,6 +186,23 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
         // Each teardown step is independently try-wrapped so a failure in one does not leak the others. Without this,
         // a Docker daemon hiccup during moodle.stop() would orphan the Postgres container until Ryuk cleans up at JVM
         // exit — which can wedge a CI runner if Ryuk also fails.
+        if (createdUserLogin != null) {
+            try {
+                userTestRepository.findOneByLogin(createdUserLogin).ifPresent(userTestRepository::delete);
+            }
+            catch (RuntimeException ex) {
+                log.warn("Failed to delete launch-created user for cleanup", ex);
+            }
+        }
+        if (createdCourseId != null) {
+            try {
+                // Cascade deletes OnlineCourseConfiguration + the TextExercise we attached.
+                courseRepository.findById(createdCourseId).ifPresent(courseRepository::delete);
+            }
+            catch (RuntimeException ex) {
+                log.warn("Failed to delete launch-created course for cleanup", ex);
+            }
+        }
         if (registrationId != null) {
             try {
                 ltiPlatformConfigurationRepository.findByRegistrationId(registrationId).ifPresent(ltiPlatformConfigurationRepository::delete);
@@ -201,6 +222,12 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
         }
         catch (RuntimeException ex) {
             log.warn("Failed to stop Moodle Postgres container during cleanup", ex);
+        }
+        try {
+            network.close();
+        }
+        catch (RuntimeException ex) {
+            log.warn("Failed to close docker network for cleanup", ex);
         }
     }
 
@@ -306,6 +333,7 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
         onlineCourseConfiguration.setCourse(initialCourse);
         initialCourse.setOnlineCourseConfiguration(onlineCourseConfiguration);
         final Course course = courseRepository.save(initialCourse);
+        createdCourseId = course.getId();
         var textExercise = textExerciseUtilService.createSampleTextExercise(course);
 
         String state = UUID.randomUUID().toString();
@@ -325,15 +353,9 @@ class NightlyLtiMoodleInteropTest extends AbstractLtiIntegrationTest {
         // short-circuit the user-creation path and mask any regression there.
         var newUser = userTestRepository.findOneByEmailIgnoreCase(email).orElseThrow();
         assertThat(newUser.getLogin()).startsWith(userPrefix + "_");
+        createdUserLogin = newUser.getLogin();
         var newUserWithGroups = userTestRepository.findUserWithGroupsAndAuthoritiesByLogin(newUser.getLogin()).orElseThrow();
         assertThat(newUserWithGroups.getGroups()).contains(course.getStudentGroupName());
-    }
-
-    @Test
-    @WithAnonymousUser
-    void moodleJwksDocumentIsParseable() {
-        JwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(moodleJwksUri).build();
-        assertThat(decoder).isNotNull();
     }
 
     private void seedCachedAuthorizationRequest(String state, String nonce) {

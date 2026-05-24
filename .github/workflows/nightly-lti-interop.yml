@@ -17,20 +17,13 @@ permissions:
   contents: read
 
 jobs:
-  lms-interop:
+  # Canvas + edX matrix entries are intentionally omitted until the corresponding test classes are enabled
+  # (NightlyLtiCanvasInteropTest / NightlyLtiEdxInteropTest are @Disabled stubs). When they are enabled, copy
+  # this job and adjust `test-class` rather than spinning up empty runners on every nightly.
+  moodle-interop:
+    name: nightly-lti / moodle
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - lms: moodle
-            test_class: NightlyLtiMoodleInteropTest
-          - lms: canvas
-            test_class: NightlyLtiCanvasInteropTest
-          - lms: edx
-            test_class: NightlyLtiEdxInteropTest
-    name: nightly-lti / ${{ matrix.lms }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-java@v5
@@ -38,20 +31,18 @@ jobs:
           distribution: temurin
           java-version: '25'
           cache: gradle
-      - name: Run nightly LTI interop suite (${{ matrix.lms }})
-        env:
-          TEST_CLASS: ${{ matrix.test_class }}
-        run: ./gradlew test --tests "$TEST_CLASS" -DincludeTags='nightly-lti' -x webapp
+      - name: Run nightly LTI Moodle interop suite
+        run: ./gradlew test --tests "de.tum.cit.aet.artemis.lti.nightly.NightlyLtiMoodleInteropTest" -DincludeTags='nightly-lti' -x webapp
       - name: Upload JUnit reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: nightly-lti-reports-${{ matrix.lms }}
+          name: nightly-lti-reports-moodle
           path: build/reports/tests/test
       - name: Notify on failure
         if: failure()
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.LTI_NIGHTLY_SLACK_WEBHOOK }}
-          SLACK_TITLE: "Nightly LTI interop FAILED on develop (${{ matrix.lms }})"
+          SLACK_TITLE: "Nightly LTI interop FAILED on develop (moodle)"
           SLACK_COLOR: danger

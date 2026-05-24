@@ -1,6 +1,6 @@
-# Nightly LTI Interop Coverage — Implementation Plan
+# Nightly LTI Interop Coverage — Design Notes
 
-**Status:** Draft proposal — not yet implemented.
+**Status:** Phase 1 (per-PR) and Phase 2 (nightly Moodle) shipped in #12778. Phase 3 (Canvas + edX) deferred — `@Disabled` skeleton test classes are in place; enabling them requires writing the container bootstrap (significantly harder than Moodle).
 **Author:** Stephan Krusche / Artemis maintainers, drafted with Claude.
 **Context:** Follow-up to [#12769](https://github.com/ls1intum/Artemis/pull/12769) (Restore LTI Moodle integration broken by Spring Boot 4 upgrade) and [#12739](https://github.com/ls1intum/Artemis/issues/12739).
 
@@ -300,11 +300,11 @@ class Lti13Step3JwtValidationIntegrationTest extends AbstractLtiIntegrationTest 
 
 ### Files
 
-```
+```text
 .github/workflows/nightly-lti-interop.yml                                # cron job
 src/test/java/de/tum/cit/aet/artemis/lti/nightly/                        # tagged tests
   NightlyLtiMoodleInteropTest.java
-  fixtures/MoodleSetup.java                                              # bootstrap helper
+src/test/resources/lti/nightly/moodle-sign-jwt.php                       # invoked via docker exec to call Moodle's lti_sign_jwt()
 ```
 
 ### Workflow

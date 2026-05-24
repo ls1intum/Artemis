@@ -35,7 +35,6 @@ import com.sun.net.httpserver.HttpServer;
 
 import de.tum.cit.aet.artemis.lti.config.DistributedStateAuthorizationRequestRepository;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
-import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
 
 /**
  * Step 3 of the LTI 1.3 OIDC launch — id_token signature + claim validation against the platform's JWKS.
@@ -74,9 +73,6 @@ class Lti13Step3JwtValidationIntegrationTest extends AbstractLtiIntegrationTest 
 
     @Autowired
     private DistributedStateAuthorizationRequestRepository stateRepository;
-
-    @Autowired
-    private LtiPlatformConfigurationTestRepository ltiPlatformConfigurationRepository;
 
     @BeforeAll
     static void startJwksServer() throws Exception {
