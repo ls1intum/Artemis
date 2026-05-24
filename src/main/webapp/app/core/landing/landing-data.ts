@@ -124,7 +124,7 @@ export const FEATURE_CARDS: FeatureCard[] = [
         imageAltKey: 'landing.features.cards.mobileApps.imageAlt',
         downloadLinks: [
             {
-                href: 'https://apps.apple.com/de/app/artemis-learning/id6478965616',
+                href: 'https://apps.apple.com/app/artemis-learning/id6478965616',
                 badgeSrc: 'content/images/landing/badges/app-store-badge.svg',
                 badgeSrcDark: 'content/images/landing/badges/app-store-badge-dark.svg',
                 altKey: 'landing.features.cards.mobileApps.appStoreAlt',

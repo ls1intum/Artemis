@@ -124,7 +124,7 @@ import { FAQ_ITEMS } from 'app/core/landing/landing-data';
                 <h2 class="faq-title">{{ 'landing.faq.title' | artemisTranslate }}</h2>
             </div>
             <div class="faq-content">
-                <p-accordion [multiple]="false" transitionOptions="220ms cubic-bezier(0.4, 0, 0.2, 1)">
+                <p-accordion [multiple]="false">
                     @for (item of faqItems; track item.questionKey) {
                         <p-accordionpanel [value]="item.questionKey">
                             <p-accordionheader>{{ item.questionKey | artemisTranslate }}</p-accordionheader>
