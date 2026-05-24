@@ -123,8 +123,16 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
             await page.waitForLoadState('domcontentloaded');
             await expect(page.getByRole('heading', { name: 'Text Unit' })).toBeVisible();
 
+            // Anchor on the edit form's submit button before interacting with the competency
+            // checkboxes. Under heavy multi-node CI load the text-unit edit page's competency
+            // selector occasionally hadn't rendered when the test reached the uncheck call,
+            // letting `uncheck()` consume the whole 360s test budget waiting for an element
+            // that never appeared. The submit button is the form's anchor — once it's visible,
+            // the form fields (including the competency checkboxes) are bound.
             await page.goto(`/course-management/${course.id}/lectures/${lecture.id}/unit-management/text-units/${textUnit.id}/edit`);
             await page.waitForLoadState('domcontentloaded');
+            await page.locator('#submitButton').waitFor({ state: 'visible', timeout: 30_000 });
+            await page.getByRole('checkbox', { name: 'Comp A ' + uid }).waitFor({ state: 'visible', timeout: 30_000 });
 
             await page.getByRole('checkbox', { name: 'Comp A ' + uid }).uncheck();
             await page.getByRole('checkbox', { name: 'Comp B ' + uid }).check();
