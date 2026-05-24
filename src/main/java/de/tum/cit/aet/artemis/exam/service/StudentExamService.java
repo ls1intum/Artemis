@@ -709,7 +709,7 @@ public class StudentExamService {
 
     /**
      * Generates a Student Exam marked as a testRun for the instructor to test the exam as a student would experience it.
-     * Calls {@link StudentExamService#generateTestRun and {@link ExamService#setUpTestRunExerciseParticipationsAndSubmissions}}
+     * Calls {@link StudentExamService#generateTestRun} and {@link StudentExamService#setUpTestRunExerciseParticipationsAndSubmissions}
      *
      * @param testRunConfiguration the configured studentExam
      * @return the created testRun studentExam
@@ -799,12 +799,19 @@ public class StudentExamService {
                     StudentParticipation participation = participationService.startExercise(exercise, student, true);
 
                     generatedParticipations.add(participation);
+
+                    if (!participation.isAtLeastInitialized()) {
+                        throw new IllegalStateException("Participation " + participation.getId() + " was not initialized after starting exercise " + exercise.getId()
+                                + " for student exam " + studentExam.getId() + " and student " + student.getParticipantIdentifier());
+                    }
+
                     log.info("SUCCESS: Start exercise for student exam {} and exercise {} and student {}", studentExam.getId(), exercise.getId(),
                             student.getParticipantIdentifier());
                 }
                 catch (Exception ex) {
                     log.warn("FAILED: Start exercise for student exam {} and exercise {} and student {} with exception: {}", studentExam.getId(), exercise.getId(),
                             student.getParticipantIdentifier(), ex.getMessage(), ex);
+                    throw ex;
                 }
             }
         }

@@ -374,11 +374,7 @@ export class ExamStudentsComponent implements OnDestroy {
             });
 
         effect(() => {
-            const exam: Exam | undefined = this.routeData().exam;
-            if (exam) {
-                // setup exam information
-                this.examData$.next(exam);
-            }
+            this.fetchExamData();
         });
 
         effect((onCleanup) => {
@@ -397,6 +393,14 @@ export class ExamStudentsComponent implements OnDestroy {
                 exercisePreparationSubscription.unsubscribe();
             });
         });
+    }
+
+    private fetchExamData() {
+        const exam: Exam | undefined = this.routeData().exam;
+        if (exam) {
+            // setup exam information
+            this.examData$.next(exam);
+        }
     }
 
     ngOnDestroy() {
@@ -705,7 +709,7 @@ export class ExamStudentsComponent implements OnDestroy {
             this.exercisePreparationEta.set((h ? h + 'h' : '') + (min || h ? min + 'm' : '') + (s || min || h ? s + 's' : ''));
         } else {
             this.exercisePreparationEta.set(undefined);
-            this.isAllExercisesPrepared.set(remainingExams === 0 && failedExams === 0);
+            this.fetchExamData();
         }
     }
 
