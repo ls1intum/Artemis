@@ -669,7 +669,7 @@
                 "exampleSolutionPublicationDateTooltip": "Das Datum, an dem das Lösungsrepository für Studierende zum Herunterladen verfügbar wird. Zum Deaktivieren leer lassen.",
                 "exampleSolutionPublicationDateTooltipOnImport": "Das Datum, an dem das Lösungsrepository für Studierende zum Herunterladen verfügbar wird. Kann beim Import nicht gesetzt werden.",
                 "includeTestsIntoExampleSolution": "Tests zusammen mit Lösungsvorschlag veröffentlichen",
-                "includeTestsIntoExampleSolutionTooltip": "Die automatischen Tests können zusätzlich zu dem Lösungsvorschlag bereit gestellt werden. Nur auswählbar, wenn ein Veröffentlichungsdatum für Beispiellösung konfiguriert ist.",
+                "includeTestsIntoExampleSolutionTooltip": "Die automatischen Tests können zusätzlich zu dem Lösungsvorschlag bereitgestellt werden. Nur auswählbar, wenn ein Veröffentlichungsdatum für den Lösungsvorschlag konfiguriert ist.",
                 "setTestCaseVisibilityToAfterReleaseDateOfResults": "Testergebnisse erst nach Veröffentlichung der Ergebnisse sichtbar machen",
                 "setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip": "Während der Klausur sehen Studierende nur, ob ihr Code kompiliert. Details zu den Testergebnissen werden erst nach dem Veröffentlichungsdatum der Ergebnisse angezeigt."
             },
