@@ -150,6 +150,8 @@ export default defineConfig({
                 'src/main/webapp/app/exercise/exercise-scores/**/*.ts', // include exercise-scores for code coverage
                 'src/main/webapp/app/exercise/shared/filter-dropdown/**/*.ts', // include filter-dropdown component for code coverage
                 'src/main/webapp/app/shared/search-filter/**/*.ts', // include search-filter component for code coverage
+                'src/main/webapp/app/shared/deimos/**/*.ts', // include deimos shared components for code coverage
+                'src/main/webapp/app/programming/shared/services/deimos.service.ts', // include deimos service for code coverage
                 'src/main/webapp/app/programming/shared/services/build-phases-template.service.ts', // include build phases template service for code coverage
                 'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts', // include legacy build plan converter service for code coverage
                 'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // include build plan phases model for code coverage

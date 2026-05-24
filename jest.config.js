@@ -140,6 +140,8 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/exercise/exercise-scores/**', // exercise-scores module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/shared/filter-dropdown/**', // filter-dropdown component uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/search-filter/**', // search-filter component uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/shared/deimos/**', // deimos shared components use Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/programming/shared/services/deimos.service.ts', // deimos service uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/shared/services/build-phases-template.service.ts', // build-phases-template uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts', // legacy converter uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // build-plan-phases model uses Vitest (see vitest.config.ts)
@@ -193,6 +195,8 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exercise/exercise-scores/', // exercise-scores module uses Vitest
         '<rootDir>/src/main/webapp/app/exercise/shared/filter-dropdown/', // filter-dropdown component uses Vitest
         '<rootDir>/src/main/webapp/app/shared/search-filter/', // search-filter uses Vitest
+        '<rootDir>/src/main/webapp/app/shared/deimos/', // deimos shared components use Vitest
+        '<rootDir>/src/main/webapp/app/programming/shared/services/deimos.service.ts',
         '<rootDir>/src/main/webapp/app/programming/shared/services/build-phases-template.service.ts',
         '<rootDir>/src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts',
         '<rootDir>/src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts',
@@ -286,6 +290,8 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exercise/exercise-scores/', // exercise-scores module (Vitest)
         '<rootDir>/src/main/webapp/app/exercise/shared/filter-dropdown/', // filter-dropdown component (Vitest)
         '<rootDir>/src/main/webapp/app/shared/search-filter/', // search-filter (Vitest)
+        '<rootDir>/src/main/webapp/app/shared/deimos/', // deimos shared components (Vitest)
+        '<rootDir>/src/main/webapp/app/programming/shared/services/deimos.service.spec.ts', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.spec.ts', // implemented with Vitest
         '<rootDir>/src/main/webapp/app/programming/shared/services/build-phases-template.service.spec.ts', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/programming/shared/entities/build-plan-phases.model.spec.ts', // migrated to Vitest
