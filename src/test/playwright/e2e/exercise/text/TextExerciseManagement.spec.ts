@@ -24,6 +24,11 @@ test.describe('Text exercise management', { tag: '@slow' }, () => {
             textExerciseExampleSubmissions,
             textExerciseExampleSubmissionCreation,
         }) => {
+            // Login → openCourseManagement → openExercises → createTextExercise + form +
+            // example-submission flow + up-to-three 20s polling reloads on the exercises list
+            // exceeds the 90s @slow budget under multi-node CI load. Lift the per-test
+            // timeout to 270s via test.slow() — observed worst case ~200s.
+            test.slow();
             await login(admin, '/');
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);

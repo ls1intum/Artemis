@@ -92,7 +92,20 @@ export class ExamManagementPage {
     async verifySubmitted(courseID: number, examID: number, username: string) {
         await this.page.goto(`/course-management/${courseID}/exams/${examID}/students`);
         const row = this.page.locator('tbody tr', { hasText: username }).first();
-        await row.waitFor({ state: 'visible', timeout: 30_000 });
+        const visibleWithin = async (timeout: number): Promise<boolean> =>
+            row
+                .waitFor({ state: 'visible', timeout })
+                .then(() => true)
+                .catch(() => false);
+        // The exam-students endpoint joins across submissions; under heavy multi-node CI load
+        // the row for a just-handed-in student can take >30s to surface in the first response
+        // (the participation-state propagation lags behind the submit POST). Reload once
+        // before giving up — one extra round trip reliably picks up the persisted state.
+        if (!(await visibleWithin(30_000))) {
+            await this.page.reload();
+            await this.page.waitForLoadState('load');
+            await row.waitFor({ state: 'visible', timeout: 30_000 });
+        }
         await expect(row).toContainText('Submitted');
     }
 

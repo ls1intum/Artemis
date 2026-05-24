@@ -66,6 +66,11 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
     });
 
     test('Instructor disables learning paths via course settings', async ({ page }) => {
+        // Two gotoAndEnsureRendered navigations + a settings PUT + waiting on two independent
+        // learning-path spinners + a reload-once recovery on the activation card routinely
+        // exceeds the 60s @fast budget under multi-node CI load. test.slow() lifts the per-
+        // test timeout to 180s which comfortably covers the ~140s worst case observed.
+        test.slow();
         await Commands.gotoAndEnsureRendered(page, `/course-management/${course.id}`);
         const settings = page.getByRole('link', { name: 'Settings' });
         await settings.waitFor({ state: 'visible', timeout: 30_000 });
