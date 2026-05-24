@@ -102,14 +102,14 @@ test.describe('Import exercises', () => {
                 quizExerciseCreation,
                 quizExerciseShortAnswerQuiz,
                 exerciseResult,
-                navigationBar,
-                courseManagement,
                 quizExerciseParticipation,
+                exerciseAPIRequests,
             }) => {
-                // Four sequential logins (instructor → student → instructor → student) plus the
-                // import → participate → end-quiz → check-score round trip routinely overruns
-                // the 60s @fast budget under multi-node CI load. test.slow() lifts the per-test
-                // timeout to 180s which comfortably covers the worst-case observed ~120s run.
+                // The instructor → student → end-quiz → student round trip used to require a
+                // third instructor UI login (openCourseManagement → openExercises → endQuiz
+                // with a confirmation dialog) which routinely overran even test.slow()'s 180s
+                // budget under multi-node CI load. We end the quiz directly via API instead,
+                // which keeps the student session in place and removes one full login cycle.
                 test.slow();
                 await login(instructor, `/course-management/${secondCourse.id}/exercises`);
                 await courseManagementExercises.importQuizExercise();
@@ -138,10 +138,9 @@ test.describe('Import exercises', () => {
                 expect(submission.submitted).toBe(true);
                 expect(submitResponse.status()).toBe(200);
 
-                await login(instructor, '/');
-                await navigationBar.openCourseManagement();
-                await courseManagement.openExercisesOfCourse(secondCourse.id!);
-                await courseManagementExercises.endQuiz(exercise);
+                // End the quiz via API (admin auth) so the student's result can be evaluated.
+                await login(admin);
+                await exerciseAPIRequests.endQuizNow(exercise.id!);
 
                 await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
                 await exerciseResult.shouldShowScore(100);

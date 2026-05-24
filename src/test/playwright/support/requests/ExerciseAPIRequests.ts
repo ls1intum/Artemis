@@ -605,6 +605,17 @@ export class ExerciseAPIRequests {
     }
 
     /**
+     * Ends a running quiz exercise immediately via API. Equivalent to the lifecycle
+     * `endQuiz` UI action but skips the course-management navigation chain so tests can
+     * advance to the result-check step without a 3rd instructor login.
+     *
+     * @param quizId - The ID of the quiz exercise to end.
+     */
+    async endQuizNow(quizId: number) {
+        await this.page.request.put(`${QUIZ_EXERCISE_BASE}/${quizId}/end-now`);
+    }
+
+    /**
      * Evaluates the quiz exercises in an exam.
      *
      * @param exam - The exam for which to evaluate the quiz exercises.
