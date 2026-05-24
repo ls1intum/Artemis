@@ -34,7 +34,14 @@ test.describe('Exam assessment', () => {
         let examEnd: Dayjs;
 
         test.beforeAll('Prepare exam', async ({ browser }) => {
-            examEnd = dayjs().add(60, 'seconds');
+            // 180s window (was 60s): programming exercise creation involves cloning a C
+            // template repository, which routinely takes 30-60s under multi-node CI load.
+            // The student must finish startParticipation + handInEarly inside this window
+            // — at 60s, setup occasionally overran the exam end and the conduction page
+            // redirected, leaving `#hand-in-early` un-clickable. 180s leaves comfortable
+            // headroom; the test still doesn't wait the full window since
+            // `waitForExamEnd` returns once the exam ends.
+            examEnd = dayjs().add(180, 'seconds');
             const page = await newBrowserPage(browser);
             exam = await prepareExam(course, examEnd, ExerciseType.PROGRAMMING, page);
         });
@@ -272,7 +279,13 @@ test.describe('Exam statistics', { tag: '@slow' }, () => {
 
     test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
         await login(admin);
-        examEnd = dayjs().add(60, 'seconds');
+        // 180s window (was 60s): the 'Participate in exam' beforeEach below has 4 students
+        // each go through startParticipation + open exercise + submit + handInEarly. Under
+        // multi-node CI load this routinely takes >60s, by which time the exam has ended and
+        // the conduction page redirects, leaving the navigation bar's exercise group title
+        // missing. 180s leaves comfortable headroom for the 4-student sequential loop while
+        // still letting `waitForExamEnd` return promptly once everyone has handed in.
+        examEnd = dayjs().add(180, 'seconds');
         const examConfig = {
             course,
             title: 'exam' + generateUUID(),
