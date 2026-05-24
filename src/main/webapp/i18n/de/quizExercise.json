@@ -111,6 +111,8 @@
                 "editNotPossibleDuringQuiz": "Während des Quizzes ist eine Bearbeitung nicht möglich. Nach dem Ende des Quizzes kannst du eine Re-Evaluierung durchführen.",
                 "editNotPossibleAfterEnd": "Nach dem Ende der Quiz-Bearbeitungszeit ist eine Bearbeitung nicht möglich."
             },
+            "deleteQuestion": "Frage löschen",
+            "refineQuestion": "Frage verfeinern",
             "editNotPossibleDuringQuiz": "Während des Quizzes ist eine Bearbeitung nicht möglich.",
             "saveError": "Beim Speichern ist ein Fehler ist aufgetreten. Bitte überprüfe deine Eingabe und versuche es später noch einmal.",
             "export": {
@@ -136,6 +138,11 @@
             "options": "Optionen",
             "explanation": "Erklärung",
             "randomizeQuestionOrder": "Fragen in zufälliger Reihenfolge anzeigen",
+            "includedInOverallScoreCourseLabelShort": "Berechnung des Kursergebnisses",
+            "includedInOverallScoreExamLabelShort": "Berechnung des Klausurergebnisses",
+            "includedInScoreYes": "Diese Aufgabe einbeziehen",
+            "includedInScoreBonus": "Als Bonuspunkte einbeziehen",
+            "includedInScoreNo": "Nicht einbeziehen",
             "allowedNumberOfAttempts": "Erlaubte Anzahl an Versuchen",
             "isVisibleBeforeStart": "Vor dem Start sichtbar",
             "isOpenForPractice": "Zum Üben freigegeben",
@@ -150,6 +157,16 @@
             "minutesShort": "min",
             "secondsShort": "s",
             "questions": "Fragen",
+            "questionsDescription": "Fragen für diese Quiz-Aufgabe hinzufügen und verwalten.",
+            "sections": {
+                "settings": {
+                    "title": "Quiz-Einstellungen",
+                    "description": "Allgemeine Einstellungen konfigurieren."
+                },
+                "general": "Allgemein",
+                "schedule": "Zeitplan & Modus",
+                "competencies": "Kompetenzen"
+            },
             "noQuestionsFoundCourse": "Keine Fragen in Kurs gefunden",
             "noQuestionsFoundExam": "Keine Fragen in Klausur gefunden",
             "noMatchingQuestionsFound": "Keine Fragen des Kurses entsprechen den Suchkriterien",

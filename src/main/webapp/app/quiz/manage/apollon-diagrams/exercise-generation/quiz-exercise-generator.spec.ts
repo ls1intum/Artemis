@@ -37,6 +37,10 @@ function setupCanvasAndImageMocks() {
         } as unknown as HTMLCanvasElement;
     };
 
+    // The createElement overload union contains a @deprecated entry for legacy elements like
+    // <applet>; the canvas-mocking pattern itself isn't deprecated, but TS-ESLint can't
+    // disambiguate the overloads when we hold a reference to the bound method.
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     const originalCreateElement = document.createElement.bind(document);
     const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
         if (tagName === 'canvas') {

@@ -36,7 +36,7 @@ export interface UserAddAction {
                 transition: all 0.2s ease;
 
                 &:hover {
-                    background: var(--bs-tertiary-bg);
+                    background: var(--overview-card-hover-bg, var(--bs-tertiary-bg));
                     border-color: var(--bs-secondary-border-subtle);
                     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
                 }
