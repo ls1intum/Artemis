@@ -275,9 +275,23 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
             await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentOne, cAllSuccessful, 'student commit');
             await login(instructor);
             await waitForExerciseBuildToFinish(exercise.id!);
-            await page.goto(`/course-management/${course.id}/programming-exercises/${exercise.id!}/participations`);
+            // Under multi-node CI load the course-management lazy chunk occasionally fails to
+            // resolve and Angular's auth/router fall-back lands the page on /courses instead.
+            // Verify the URL after navigation and re-issue the goto if it drifted — without
+            // this the subsequent `openCloneMenu` reloads /courses forever and times out.
+            const participationsUrl = `/course-management/${course.id}/programming-exercises/${exercise.id!}/participations`;
+            const expectedParticipationsUrl = new RegExp(`/course-management/${course.id}/programming-exercises/${exercise.id!}/participations(?:[/?#].*)?$`);
+            const gotoParticipations = async () => {
+                for (let attempt = 0; attempt < 2; attempt++) {
+                    await page.goto(participationsUrl);
+                    if (expectedParticipationsUrl.test(page.url())) {
+                        return;
+                    }
+                }
+            };
+            await gotoParticipations();
             await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, instructor, cPartiallySuccessfulSubmission, 'instructor commit');
-            await page.goto(`/course-management/${course.id}/programming-exercises/${exercise.id!}/participations`);
+            await gotoParticipations();
             await programmingExerciseParticipations.openStudentParticipationSubmissions(studentOne);
             await programmingExerciseSubmissions.checkInstructorSubmission(60000);
             await programmingExerciseSubmissions.checkStudentSubmission();
