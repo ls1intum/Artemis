@@ -13,7 +13,6 @@ import java.util.UUID;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.test.web.servlet.MvcResult;
@@ -41,17 +40,11 @@ class Lti13InitiationIntegrationTest extends AbstractLtiIntegrationTest {
 
     private static final String CLIENT_ID = "artemis-test-client";
 
-    /**
-     * The shared integration test base ({@code AbstractSpringIntegrationIndependentTest}) does not roll back the DB
-     * between tests — it only resets Mockito spies. Each test in this class inserts a UUID-keyed
-     * {@link LtiPlatformConfiguration}; without explicit cleanup those rows leak into later LTI test classes that run
-     * in the same JVM (e.g. {@code LtiIntegrationTest}, {@code OAuth2JWKSIntegrationTest}) and can produce
-     * order-dependent failures.
-     */
-    @AfterEach
-    void cleanupPlatforms() {
-        ltiPlatformConfigurationRepository.deleteAll();
-    }
+    // No @AfterEach cleanup: each test uses a UUID-keyed registrationId so intra-class collisions are impossible,
+    // and LtiIntegrationTest.getAllConfiguredLtiPlatformsAsAdmin / updateLtiPlatformConfigurationAsAdmin implicitly
+    // rely on auto-generated IDs from prior LTI tests existing in the shared DB. Wiping rows here causes those tests
+    // to fail with ObjectOptimisticLockingFailureException ("Row was already updated or deleted") because
+    // Spring Data treats save(entity-with-id-set) as merge(), which requires the row to exist.
 
     @Test
     @WithAnonymousUser
