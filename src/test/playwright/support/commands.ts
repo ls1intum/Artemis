@@ -75,8 +75,35 @@ export class Commands {
             await page.goto(url);
             await page.waitForLoadState('load');
             await Commands.verifyAuthenticatedAs(page, credentials);
+            // Under heavy multi-node CI load the post-goto URL has been observed to drift to
+            // a bare /courses (the Angular auth/router fall-back when a lazy route chunk fails
+            // to resolve). Detect that specific drift and re-issue the goto so callers actually
+            // land on the target URL rather than the fall-back. We only act on the bare
+            // /courses pathname — other URL transformations (e.g. trailing slashes, querystring
+            // additions, redirects to legitimate sub-routes) are left alone.
+            if (Commands.driftedToCoursesFallback(url, page.url())) {
+                await page.goto(url);
+                await page.waitForLoadState('load');
+            }
         }
     };
+
+    /**
+     * Detects the specific lazy-chunk-load fallback where Angular routes the page to a bare
+     * `/courses` after a navigation to a different intended URL. Returns true only when
+     * the caller-requested URL was NOT itself the bare `/courses` and the current URL has
+     * resolved to exactly that fall-back.
+     */
+    private static driftedToCoursesFallback(requestedUrl: string, currentUrl: string): boolean {
+        const currentPath = new URL(currentUrl).pathname;
+        const isOnCoursesFallback = /^\/courses\/?$/.test(currentPath);
+        if (!isOnCoursesFallback) {
+            return false;
+        }
+        // Allow the request to ASK for /courses without flagging it as drift.
+        const requestedAbsolute = requestedUrl.startsWith('http') ? new URL(requestedUrl) : new URL(requestedUrl, currentUrl);
+        return !/^\/courses\/?$/.test(requestedAbsolute.pathname);
+    }
 
     /**
      * After page.goto, the navbar must render the just-authenticated user. Wait for
