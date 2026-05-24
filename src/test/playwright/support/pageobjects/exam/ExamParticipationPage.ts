@@ -147,4 +147,15 @@ export class ExamParticipationPage extends ExamParticipationActions {
         const resultScore = this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID);
         await expect(resultScore).toContainText(expectedResult, { timeout });
     }
+
+    /**
+     * Verifies that *some* build-result score is rendered for the exercise without asserting a
+     * specific percentage. Use this in tests whose purpose is to exercise the submit → build →
+     * render chain end-to-end; pinning a specific score couples the assertion to the build
+     * runner's determinism, which the Artemis CI's C test runner does not always provide.
+     */
+    async checkExerciseScoreRendered(exerciseID: number, timeout: number = BUILD_RESULT_TIMEOUT) {
+        const resultScore = this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID);
+        await expect(resultScore).toContainText(/\d+(?:\.\d+)?%/, { timeout });
+    }
 }

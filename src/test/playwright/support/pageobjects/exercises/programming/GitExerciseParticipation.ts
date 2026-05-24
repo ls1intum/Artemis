@@ -44,41 +44,6 @@ export class GitExerciseParticipation {
         }
     }
 
-    /**
-     * Pushes an empty additional commit to re-trigger a build on the student's participation
-     * repository. The original `makeSubmission` removes the local clone in a finally block, so
-     * we have to clone fresh here. Used by tests that need to recover from a non-deterministic
-     * CI build flake (e.g. the C runner intermittently failing one extra test, yielding 75%
-     * instead of the expected 87.5%) by submitting a new commit and giving the build agent
-     * another attempt at the same code.
-     */
-    static async pushAdditionalCommit(
-        programmingExerciseOverview: ProgrammingExerciseOverviewPage,
-        student: UserCredentials,
-        commitMessage: string,
-        cloneMethod: GitCloneMethod = GitCloneMethod.https,
-        sshAlgorithm: SshEncryptionAlgorithm = SshEncryptionAlgorithm.ed25519,
-    ) {
-        await programmingExerciseOverview.openCloneMenu(cloneMethod);
-        let repoUrl = await programmingExerciseOverview.copyCloneUrl(cloneMethod);
-        await programmingExerciseOverview.getCodeButton().click();
-        if (cloneMethod === GitCloneMethod.https) {
-            repoUrl = repoUrl.replace(student.username!, `${student.username!}:${student.password!}`);
-        }
-        const urlParts = repoUrl.split('/');
-        const repoName = urlParts[urlParts.length - 1];
-        try {
-            const repo =
-                cloneMethod == GitCloneMethod.ssh ? await gitClient.cloneRepo(repoUrl, repoName, SSH_KEY_NAMES[sshAlgorithm]) : await gitClient.cloneRepo(repoUrl, repoName);
-            await repo.addConfig('user.email', `${student.username}@example.com`);
-            await repo.addConfig('user.name', student.username);
-            await repo.commit(commitMessage, undefined, { '--allow-empty': null });
-            await repo.push();
-        } finally {
-            await fs.rm(`./test-exercise-repos/${repoName}`, { recursive: true, force: true });
-        }
-    }
-
     static async setupSSHCredentials(context: BrowserContext, sshAlgorithm: SshEncryptionAlgorithm) {
         console.log(`Setting up SSH credentials with key ${SSH_KEY_NAMES[sshAlgorithm]}`);
         const page = await context.newPage();
