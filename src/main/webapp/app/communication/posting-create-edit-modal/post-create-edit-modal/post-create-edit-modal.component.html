@@ -1,7 +1,7 @@
 @if (isDialogVisible()) {
-    <div class="modal-backdrop show" (click)="close()"></div>
-    <div class="modal show d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="post-modal-title" (keydown.escape)="close()">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-backdrop post-create-edit-modal-backdrop" (click)="close()"></div>
+    <div class="modal d-block post-create-edit-modal" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="post-modal-title" (keydown.escape)="close()">
+        <div class="modal-dialog modal-lg post-create-edit-modal-dialog">
             <div class="modal-content">
                 <form [formGroup]="formGroup" (ngSubmit)="confirm()">
                     <div class="modal-header">

@@ -129,3 +129,26 @@ $delete-delay-duration: 6s;
         width: 100%;
     }
 }
+
+.post-create-edit-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1050;
+    background-color: var(--bs-backdrop-bg, #000);
+    opacity: var(--bs-backdrop-opacity, 0.5);
+}
+
+.post-create-edit-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1055;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.post-create-edit-modal-dialog {
+    min-height: calc(100% - 3.5rem);
+    margin: 1.75rem auto;
+    display: flex;
+    align-items: center;
+}
