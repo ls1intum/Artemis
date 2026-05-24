@@ -14,11 +14,13 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.core.exception.HttpStatusException;
 import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
@@ -87,6 +89,13 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
 
             writeResponse(targetLink, ltiIdToken, authToken.getAuthorizedClientRegistrationId(), response);
         }
+        catch (HttpStatusException ex) {
+            // BadRequestAlertException and other Artemis HttpStatusException subclasses carry their own HTTP status
+            // (e.g. 400 for "Course not found"). Without this catch they escape the filter as raw RuntimeExceptions
+            // since DispatcherServlet's HandlerExceptionResolver does not run for exceptions thrown inside filters.
+            log.error("LTI 1.3 launch request failed with status {}: {}", ex.getStatusCode().value(), ex.getMessage(), ex);
+            response.sendError(ex.getStatusCode().value(), "LTI 1.3 Launch failed");
+        }
         catch (HttpClientErrorException | OAuth2AuthenticationException | IllegalStateException ex) {
             log.error("Error during LTI 1.3 launch request: {}", ex.getMessage(), ex);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "LTI 1.3 Launch failed");
@@ -107,7 +116,11 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
                 throw new IllegalStateException("No authentication was returned");
             }
         }
-        catch (OAuth2AuthenticationException | IllegalStateException | IOException | ServletException ex) {
+        catch (OAuth2AuthenticationException | JwtException | IllegalStateException | IOException | ServletException ex) {
+            // JwtException covers the JWT signature/expiry rejection branches inside NimbusJwtDecoder
+            // (BadJwtException for invalid signatures, JwtValidationException for expired/not-yet-valid tokens).
+            // Without this catch they would escape the filter as raw servlet exceptions instead of being mapped
+            // to the 500 response handled by doFilterInternal.
             throw new IllegalStateException("Failed to attempt LTI 1.3 login authentication: " + ex.getMessage(), ex);
         }
 
