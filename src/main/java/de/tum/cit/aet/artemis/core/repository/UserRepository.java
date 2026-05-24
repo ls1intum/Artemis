@@ -632,6 +632,9 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return a page of matching users
      */
     default Page<User> searchAllByLoginOrNameOrEmailOrRegistrationNumber(Pageable page, String searchTerm) {
+        if (!StringUtils.hasText(searchTerm)) {
+            return Page.empty(page);
+        }
         String escaped = searchTerm.trim().toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
         return findAllByLoginOrNameOrEmailOrRegistrationNumber(page, escaped);
     }
@@ -641,10 +644,10 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
             WHERE user.deleted = FALSE
                 AND (
-                    user.login LIKE :#{#searchTerm}% ESCAPE '\\'
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#searchTerm}% ESCAPE '\\'
-                    OR user.email LIKE %:#{#searchTerm}% ESCAPE '\\'
-                    OR user.registrationNumber LIKE %:#{#searchTerm}% ESCAPE '\\'
+                    LOWER(user.login) LIKE :#{#searchTerm}% ESCAPE '\\'
+                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE %:#{#searchTerm}% ESCAPE '\\'
+                    OR LOWER(user.email) LIKE %:#{#searchTerm}% ESCAPE '\\'
+                    OR LOWER(user.registrationNumber) LIKE %:#{#searchTerm}% ESCAPE '\\'
                 )
             """)
     Page<User> findAllByLoginOrNameOrEmailOrRegistrationNumber(Pageable page, @Param("searchTerm") String searchTerm);
