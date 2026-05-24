@@ -210,7 +210,7 @@ public final class ExamUserSpecs {
     @NonNull
     public static Specification<ExamUser> ordered(@Nullable String sortedColumn, @Nullable SortingOrder sortOrder) {
         return (root, query, builder) -> {
-            if (query == null) {
+            if (query == null || Long.class.equals(query.getResultType())) {
                 return null;
             }
             boolean asc = sortOrder != SortingOrder.DESCENDING;

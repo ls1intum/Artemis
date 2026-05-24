@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -624,11 +625,17 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     /**
      * Searches for users by login (prefix), full name (contains), email (contains), or registration number (contains).
      * Used for the generic user-registration modal to find users that can be added to an entity (e.g. exam).
+     * Escapes LIKE wildcard characters ({@code %}, {@code _}, {@code \}) in {@code searchTerm} before querying.
      *
      * @param page       Pageable controlling page index and size
-     * @param searchTerm the search string entered by the instructor
+     * @param searchTerm the search string entered by the user
      * @return a page of matching users
      */
+    default Page<User> searchAllByLoginOrNameOrEmailOrRegistrationNumber(Pageable page, String searchTerm) {
+        String escaped = searchTerm.trim().toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+        return findAllByLoginOrNameOrEmailOrRegistrationNumber(page, escaped);
+    }
+
     @Query("""
             SELECT user
             FROM User user
@@ -640,7 +647,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                     OR user.registrationNumber LIKE %:#{#searchTerm}% ESCAPE '\\'
                 )
             """)
-    Page<User> searchAllByLoginOrNameOrEmailOrRegistrationNumber(Pageable page, @Param("searchTerm") String searchTerm);
+    Page<User> findAllByLoginOrNameOrEmailOrRegistrationNumber(Pageable page, @Param("searchTerm") String searchTerm);
 
     @Query("""
             SELECT DISTINCT user

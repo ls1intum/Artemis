@@ -5,6 +5,10 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -13,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -50,6 +55,7 @@ import de.tum.cit.aet.artemis.exam.service.ExamUserService;
 /**
  * REST controller for managing ExamUser.
  */
+@Validated
 @Conditional(ExamEnabled.class)
 @Lazy
 @RestController
@@ -188,7 +194,7 @@ public class ExamUserResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/exam-students/paged")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<ExamStudentDTO>> getExamStudentsPaged(@PathVariable long courseId, @PathVariable long examId, ExamStudentSearchDTO search) {
+    public ResponseEntity<List<ExamStudentDTO>> getExamStudentsPaged(@PathVariable long courseId, @PathVariable long examId, @Valid ExamStudentSearchDTO search) {
         log.debug("REST request to get paged exam-students for exam: {}", examId);
         examAccessService.checkCourseAndExamAccessForTeachingAssistantElseThrow(courseId, examId);
         Page<ExamStudentDTO> page = examUserService.findExamStudentsForExamPaged(examId, search);
@@ -228,7 +234,7 @@ public class ExamUserResource {
     @GetMapping("courses/{courseId}/exams/{examId}/students/search")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<UserForRegistrationDTO>> searchUsersForExamRegistration(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam String searchTerm,
-            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "0") @Min(0) int page, @RequestParam(defaultValue = "10") @Min(1) @Max(200) int size) {
         log.debug("REST request to search users for exam {} registration with term: {}", examId, searchTerm);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         Page<UserForRegistrationDTO> result = examUserService.searchUsersForExamRegistration(examId, searchTerm, page, size);

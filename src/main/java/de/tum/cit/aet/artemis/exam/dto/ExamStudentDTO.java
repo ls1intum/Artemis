@@ -17,7 +17,7 @@ public record ExamStudentDTO(
         Long id, Long userId, String login, String name, String email, String visibleRegistrationNumber, String studentImagePath, String plannedRoom, String actualRoom,
         String plannedSeat, String actualSeat, Boolean didCheckImage, Boolean didCheckName, Boolean didCheckLogin, Boolean didCheckRegistrationNumber, String signingImagePath,
         Boolean didExamUserAttendExam,
-        // StudentExam fields (nullable — null when no student exam has been generated)
+        // StudentExam fields
         Long studentExamId, Integer workingTime, Boolean started, Boolean submitted, ZonedDateTime startedDate, ZonedDateTime submissionDate, Long numberOfExamSessions,
         String progress) {
 

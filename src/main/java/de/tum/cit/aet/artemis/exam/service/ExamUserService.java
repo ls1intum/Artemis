@@ -8,7 +8,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -332,8 +331,7 @@ public class ExamUserService {
      */
     public Page<UserForRegistrationDTO> searchUsersForExamRegistration(long examId, String searchTerm, int page, int size) {
         PageRequest pageable = PageRequest.of(page, size);
-        String escaped = searchTerm.trim().toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
-        Page<User> users = userRepository.searchAllByLoginOrNameOrEmailOrRegistrationNumber(pageable, escaped);
+        Page<User> users = userRepository.searchAllByLoginOrNameOrEmailOrRegistrationNumber(pageable, searchTerm);
 
         List<Long> userIds = users.getContent().stream().map(User::getId).toList();
         Set<Long> registeredIds = userIds.isEmpty() ? Set.of() : examUserRepository.findRegisteredUserIdsByExamIdAndUserIds(examId, userIds);
