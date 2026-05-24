@@ -26,6 +26,11 @@ test.describe('Exam Checklists', async () => {
     });
 
     test.describe('Exercise group checks', { tag: '@fast' }, () => {
+        // Each test in this describe runs createExam + multiple navigateToExamDetailsPage +
+        // group additions; under multi-node CI load several have been observed right at or
+        // just over the 60s @fast budget. Lift the per-test timeout to 180s for the whole
+        // group so a few seconds of extra load do not flake the entire run.
+        test.describe.configure({ timeout: 180_000 });
         test('Instructor adds an exercise group and at least one exercise group check is marked', async ({
             page,
             login,
