@@ -32,8 +32,8 @@ import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchRequestDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchSummaryDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosExerciseScopeInfoDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosMaliciousParticipationLink;
+import de.tum.cit.aet.artemis.deimos.repository.DeimosBatchParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 
 class DeimosBatchServiceTest {
 
@@ -41,7 +41,7 @@ class DeimosBatchServiceTest {
 
     private static final ZonedDateTime FIXED_NOW = ZonedDateTime.parse("2026-01-15T12:00:00Z");
 
-    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private DeimosBatchParticipationRepository deimosBatchParticipationRepository;
 
     private DeimosAnalysisService deimosAnalysisService;
 
@@ -55,12 +55,12 @@ class DeimosBatchServiceTest {
 
     @BeforeEach
     void setUp() throws MalformedURLException {
-        programmingSubmissionRepository = Mockito.mock(ProgrammingSubmissionRepository.class);
+        deimosBatchParticipationRepository = Mockito.mock(DeimosBatchParticipationRepository.class);
         deimosAnalysisService = Mockito.mock(DeimosAnalysisService.class);
         mailSendingService = Mockito.mock(MailSendingService.class);
         courseRepository = Mockito.mock(CourseRepository.class);
         programmingExerciseRepository = Mockito.mock(ProgrammingExerciseRepository.class);
-        deimosBatchService = new DeimosBatchService(programmingSubmissionRepository, deimosAnalysisService, mailSendingService, courseRepository, programmingExerciseRepository,
+        deimosBatchService = new DeimosBatchService(deimosBatchParticipationRepository, deimosAnalysisService, mailSendingService, courseRepository, programmingExerciseRepository,
                 URI.create("http://localhost:8080").toURL(), r -> r.run());
     }
 
@@ -96,8 +96,9 @@ class DeimosBatchServiceTest {
         ZonedDateTime from = FIXED_NOW.minusDays(1);
         ZonedDateTime to = FIXED_NOW;
 
-        when(programmingSubmissionRepository.countDistinctParticipationIdsForCourseInRange(7L, from, to)).thenReturn(2L);
-        when(programmingSubmissionRepository.findParticipationIdsForCourseInRange(eq(7L), eq(from), eq(to), any(Pageable.class))).thenReturn(new SliceImpl<>(List.of(101L, 102L)));
+        when(deimosBatchParticipationRepository.countDistinctParticipationIdsForCourseInRange(7L, from, to)).thenReturn(2L);
+        when(deimosBatchParticipationRepository.findParticipationIdsForCourseInRange(eq(7L), eq(from), eq(to), any(Pageable.class)))
+                .thenReturn(new SliceImpl<>(List.of(101L, 102L)));
         when(courseRepository.getCourseTitle(7L)).thenReturn("Course 7");
         when(deimosAnalysisService.analyze(any(), eq(DeimosTriggerType.MANUAL), eq(DeimosBatchScope.COURSE), eq(from), eq(to), eq(List.of(101L, 102L))))
                 .thenReturn(new DeimosBatchSummaryDTO("run-1", "MANUAL", "COURSE", from, to, 2, 2, 1, 1, 0,
@@ -126,8 +127,8 @@ class DeimosBatchServiceTest {
         ZonedDateTime from = FIXED_NOW.minusHours(8);
         ZonedDateTime to = FIXED_NOW;
 
-        when(programmingSubmissionRepository.countDistinctParticipationIdsForExerciseInRange(12L, from, to)).thenReturn(2L);
-        when(programmingSubmissionRepository.findParticipationIdsForExerciseInRange(eq(12L), eq(from), eq(to), any(Pageable.class)))
+        when(deimosBatchParticipationRepository.countDistinctParticipationIdsForExerciseInRange(12L, from, to)).thenReturn(2L);
+        when(deimosBatchParticipationRepository.findParticipationIdsForExerciseInRange(eq(12L), eq(from), eq(to), any(Pageable.class)))
                 .thenReturn(new SliceImpl<>(List.of(201L, 202L)));
         when(programmingExerciseRepository.findDeimosExerciseScopeInfoById(12L))
                 .thenReturn(java.util.Optional.of(new DeimosExerciseScopeInfoDTO(12L, "Exercise 12", 7L, "Course 7", null)));
@@ -148,8 +149,9 @@ class DeimosBatchServiceTest {
         ZonedDateTime from = FIXED_NOW.minusHours(8);
         ZonedDateTime to = FIXED_NOW;
 
-        when(programmingSubmissionRepository.countDistinctParticipationIdsForCourseInRange(7L, from, to)).thenReturn(2L);
-        when(programmingSubmissionRepository.findParticipationIdsForCourseInRange(eq(7L), eq(from), eq(to), any(Pageable.class))).thenReturn(new SliceImpl<>(List.of(101L, 102L)));
+        when(deimosBatchParticipationRepository.countDistinctParticipationIdsForCourseInRange(7L, from, to)).thenReturn(2L);
+        when(deimosBatchParticipationRepository.findParticipationIdsForCourseInRange(eq(7L), eq(from), eq(to), any(Pageable.class)))
+                .thenReturn(new SliceImpl<>(List.of(101L, 102L)));
         when(courseRepository.getCourseTitle(7L)).thenReturn("Course 7");
         when(deimosAnalysisService.analyze(any(), eq(DeimosTriggerType.MANUAL), eq(DeimosBatchScope.COURSE), eq(from), eq(to), eq(List.of(101L, 102L))))
                 .thenThrow(new IllegalStateException("LLM unavailable"));
@@ -170,7 +172,7 @@ class DeimosBatchServiceTest {
     void triggerCourseBatchRejectsParticipationLimitExceeded() {
         ZonedDateTime from = FIXED_NOW.minusDays(2);
         ZonedDateTime to = FIXED_NOW;
-        when(programmingSubmissionRepository.countDistinctParticipationIdsForCourseInRange(42L, from, to)).thenReturn(PARTICIPATION_LIMIT + 1);
+        when(deimosBatchParticipationRepository.countDistinctParticipationIdsForCourseInRange(42L, from, to)).thenReturn(PARTICIPATION_LIMIT + 1);
 
         assertThatThrownBy(() -> deimosBatchService.triggerCourseBatch(42L, new DeimosBatchRequestDTO(from, to), createTriggerUser())).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("participation limit");
@@ -180,7 +182,7 @@ class DeimosBatchServiceTest {
     void triggerExerciseBatchRejectsParticipationLimitExceeded() {
         ZonedDateTime from = FIXED_NOW.minusDays(2);
         ZonedDateTime to = FIXED_NOW;
-        when(programmingSubmissionRepository.countDistinctParticipationIdsForExerciseInRange(24L, from, to)).thenReturn(PARTICIPATION_LIMIT + 1);
+        when(deimosBatchParticipationRepository.countDistinctParticipationIdsForExerciseInRange(24L, from, to)).thenReturn(PARTICIPATION_LIMIT + 1);
 
         assertThatThrownBy(() -> deimosBatchService.triggerExerciseBatch(24L, new DeimosBatchRequestDTO(from, to), createTriggerUser()))
                 .isInstanceOf(BadRequestAlertException.class).hasMessageContaining("participation limit");
@@ -190,9 +192,9 @@ class DeimosBatchServiceTest {
     void triggerCourseBatchRejectsWhenQueueIsFull() throws MalformedURLException {
         ZonedDateTime from = FIXED_NOW.minusHours(2);
         ZonedDateTime to = FIXED_NOW;
-        when(programmingSubmissionRepository.countDistinctParticipationIdsForCourseInRange(42L, from, to)).thenReturn(10L);
+        when(deimosBatchParticipationRepository.countDistinctParticipationIdsForCourseInRange(42L, from, to)).thenReturn(10L);
 
-        var rejectingBatchService = new DeimosBatchService(programmingSubmissionRepository, deimosAnalysisService, mailSendingService, courseRepository,
+        var rejectingBatchService = new DeimosBatchService(deimosBatchParticipationRepository, deimosAnalysisService, mailSendingService, courseRepository,
                 programmingExerciseRepository, URI.create("http://localhost:8080").toURL(), task -> {
                     throw new RejectedExecutionException("queue full");
                 });
@@ -205,9 +207,9 @@ class DeimosBatchServiceTest {
     void triggerExerciseBatchRejectsWhenQueueIsFull() throws MalformedURLException {
         ZonedDateTime from = FIXED_NOW.minusHours(2);
         ZonedDateTime to = FIXED_NOW;
-        when(programmingSubmissionRepository.countDistinctParticipationIdsForExerciseInRange(24L, from, to)).thenReturn(10L);
+        when(deimosBatchParticipationRepository.countDistinctParticipationIdsForExerciseInRange(24L, from, to)).thenReturn(10L);
 
-        var rejectingBatchService = new DeimosBatchService(programmingSubmissionRepository, deimosAnalysisService, mailSendingService, courseRepository,
+        var rejectingBatchService = new DeimosBatchService(deimosBatchParticipationRepository, deimosAnalysisService, mailSendingService, courseRepository,
                 programmingExerciseRepository, URI.create("http://localhost:8080").toURL(), task -> {
                     throw new RejectedExecutionException("queue full");
                 });
@@ -220,8 +222,8 @@ class DeimosBatchServiceTest {
     void triggerCourseBatchSendsFailureNotificationWhenCollectionExceedsRuntimeLimit() {
         ZonedDateTime from = FIXED_NOW.minusHours(2);
         ZonedDateTime to = FIXED_NOW;
-        when(programmingSubmissionRepository.countDistinctParticipationIdsForCourseInRange(42L, from, to)).thenReturn(PARTICIPATION_LIMIT);
-        when(programmingSubmissionRepository.findParticipationIdsForCourseInRange(eq(42L), eq(from), eq(to), any(Pageable.class)))
+        when(deimosBatchParticipationRepository.countDistinctParticipationIdsForCourseInRange(42L, from, to)).thenReturn(PARTICIPATION_LIMIT);
+        when(deimosBatchParticipationRepository.findParticipationIdsForCourseInRange(eq(42L), eq(from), eq(to), any(Pageable.class)))
                 .thenReturn(new SliceImpl<>(LongStream.rangeClosed(1, PARTICIPATION_LIMIT + 1).boxed().toList()));
         when(courseRepository.getCourseTitle(42L)).thenReturn("Course 42");
 

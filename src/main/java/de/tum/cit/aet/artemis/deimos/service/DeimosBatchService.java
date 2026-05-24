@@ -35,8 +35,8 @@ import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchRequestDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchSummaryDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosBatchTriggerResponseDTO;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosMaliciousParticipationLink;
+import de.tum.cit.aet.artemis.deimos.repository.DeimosBatchParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 
 @Profile(PROFILE_CORE)
 @ConditionalOnProperty(name = "artemis.deimos.enabled", havingValue = "true")
@@ -52,7 +52,7 @@ public class DeimosBatchService {
 
     private static final Logger log = LoggerFactory.getLogger(DeimosBatchService.class);
 
-    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private final DeimosBatchParticipationRepository deimosBatchParticipationRepository;
 
     private final DeimosAnalysisService deimosAnalysisService;
 
@@ -72,10 +72,10 @@ public class DeimosBatchService {
 
     private static final int PAGE_SIZE = 200;
 
-    public DeimosBatchService(ProgrammingSubmissionRepository programmingSubmissionRepository, DeimosAnalysisService deimosAnalysisService, MailSendingService mailSendingService,
-            CourseRepository courseRepository, ProgrammingExerciseRepository programmingExerciseRepository, @Value("${server.url}") URL artemisServerUrl,
-            @Qualifier("deimosTaskExecutor") TaskExecutor deimosTaskExecutor) {
-        this.programmingSubmissionRepository = programmingSubmissionRepository;
+    public DeimosBatchService(DeimosBatchParticipationRepository deimosBatchParticipationRepository, DeimosAnalysisService deimosAnalysisService,
+            MailSendingService mailSendingService, CourseRepository courseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            @Value("${server.url}") URL artemisServerUrl, @Qualifier("deimosTaskExecutor") TaskExecutor deimosTaskExecutor) {
+        this.deimosBatchParticipationRepository = deimosBatchParticipationRepository;
         this.deimosAnalysisService = deimosAnalysisService;
         this.mailSendingService = mailSendingService;
         this.courseRepository = courseRepository;
@@ -128,8 +128,8 @@ public class DeimosBatchService {
         List<Long> participationIds = List.of();
         try {
             participationIds = switch (scope) {
-                case COURSE -> collectParticipationIds(pageable -> programmingSubmissionRepository.findParticipationIdsForCourseInRange(scopeId, from, to, pageable));
-                case EXERCISE -> collectParticipationIds(pageable -> programmingSubmissionRepository.findParticipationIdsForExerciseInRange(scopeId, from, to, pageable));
+                case COURSE -> collectParticipationIds(pageable -> deimosBatchParticipationRepository.findParticipationIdsForCourseInRange(scopeId, from, to, pageable));
+                case EXERCISE -> collectParticipationIds(pageable -> deimosBatchParticipationRepository.findParticipationIdsForExerciseInRange(scopeId, from, to, pageable));
             };
 
             DeimosBatchSummaryDTO summary = deimosAnalysisService.analyze(runId, DeimosTriggerType.MANUAL, scope, from, to, participationIds);
@@ -239,8 +239,8 @@ public class DeimosBatchService {
             throw new BadRequestAlertException("The selected window exceeds the configured maximum", DEIMOS_ENTITY_NAME, "windowTooLarge");
         }
         long participationCount = switch (scope) {
-            case COURSE -> programmingSubmissionRepository.countDistinctParticipationIdsForCourseInRange(scopeId, request.from(), request.to());
-            case EXERCISE -> programmingSubmissionRepository.countDistinctParticipationIdsForExerciseInRange(scopeId, request.from(), request.to());
+            case COURSE -> deimosBatchParticipationRepository.countDistinctParticipationIdsForCourseInRange(scopeId, request.from(), request.to());
+            case EXERCISE -> deimosBatchParticipationRepository.countDistinctParticipationIdsForExerciseInRange(scopeId, request.from(), request.to());
         };
         if (participationCount > MAX_PARTICIPATIONS_PER_RUN) {
             throw new BadRequestAlertException("The selected window exceeds the configured participation limit", DEIMOS_ENTITY_NAME, "participationLimitExceeded");
