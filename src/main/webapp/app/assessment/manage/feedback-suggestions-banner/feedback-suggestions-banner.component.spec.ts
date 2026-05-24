@@ -9,7 +9,6 @@ import { Tag } from 'primeng/tag';
 
 describe('FeedbackSuggestionsBannerComponent', () => {
     setupTestBed({ zoneless: true });
-    let component: FeedbackSuggestionsBannerComponent;
     let fixture: ComponentFixture<FeedbackSuggestionsBannerComponent>;
 
     beforeEach(() => {
@@ -19,7 +18,6 @@ describe('FeedbackSuggestionsBannerComponent', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(FeedbackSuggestionsBannerComponent);
-                component = fixture.componentInstance;
                 fixture.componentRef.setInput('isLoading', false);
                 fixture.componentRef.setInput('hasAutomaticFeedback', false);
                 fixture.componentRef.setInput('isAssessor', false);

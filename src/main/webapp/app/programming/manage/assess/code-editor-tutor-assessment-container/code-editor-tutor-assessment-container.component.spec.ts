@@ -887,12 +887,12 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     });
 
     it('should return true for isFeedbackSuggestionsEnabled when feedbackSuggestionModule is set', () => {
-        comp['exercise'] = { ...exercise, feedbackSuggestionModule: 'module_text_programming' } as unknown as ProgrammingExercise;
+        comp['exercise'] = Object.assign({}, exercise, { feedbackSuggestionModule: 'module_text_programming' }) as unknown as ProgrammingExercise;
         expect(comp.isFeedbackSuggestionsEnabled).toBeTrue();
     });
 
     it('should return false for isFeedbackSuggestionsEnabled when feedbackSuggestionModule is absent', () => {
-        comp['exercise'] = { ...exercise, feedbackSuggestionModule: undefined } as unknown as ProgrammingExercise;
+        comp['exercise'] = Object.assign({}, exercise, { feedbackSuggestionModule: undefined }) as unknown as ProgrammingExercise;
         expect(comp.isFeedbackSuggestionsEnabled).toBeFalse();
     });
 

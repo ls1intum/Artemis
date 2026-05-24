@@ -1,7 +1,7 @@
 @if (hasAutomaticFeedback() && isAssessor() && !resultCompletionDate() && !isFeedbackSuggestionsEnabled()) {
     <p-tag severity="info" styleClass="text-wrap" [value]="'artemisApp.assessment.feedbackSuggestions.automaticAssessmentAvailable' | artemisTranslate" />
 }
-@if (hasAutomaticFeedback() && isAssessor() && !resultCompletionDate() && isFeedbackSuggestionsEnabled()) {
+@if (!isLoading() && hasAutomaticFeedback() && isAssessor() && !resultCompletionDate() && isFeedbackSuggestionsEnabled()) {
     <p-tag severity="info" class="d-flex align-items-center gap-1 text-wrap">
         <span>{{ 'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentAvailable' | artemisTranslate }}</span>
         <fa-icon
