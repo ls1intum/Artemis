@@ -121,6 +121,9 @@ public class LtiResource {
         OnlineCourseConfiguration onlineCourseConfiguration = OnlineCourseConfigurationDTO.from(onlineCourseConfigurationDTO);
         if (onlineCourseConfigurationDTO.ltiPlatformConfiguration() != null) {
             Long platformId = onlineCourseConfigurationDTO.ltiPlatformConfiguration().id();
+            if (platformId == null) {
+                throw new BadRequestAlertException("LTI platform id must not be null", OnlineCourseConfiguration.ENTITY_NAME, "invalidRegistrationId");
+            }
             onlineCourseConfiguration.setLtiPlatformConfiguration(ltiPlatformConfigurationRepository.findByIdElseThrow(platformId));
         }
 
