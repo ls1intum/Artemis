@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.organization.util;
+package de.tum.cit.aet.artemis.admin.organization.util;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 

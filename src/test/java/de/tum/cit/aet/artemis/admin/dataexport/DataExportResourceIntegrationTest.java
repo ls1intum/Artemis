@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.dataexport;
+package de.tum.cit.aet.artemis.admin.dataexport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;

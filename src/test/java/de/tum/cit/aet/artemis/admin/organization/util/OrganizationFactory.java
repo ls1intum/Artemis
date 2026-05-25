@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.organization.util;
+package de.tum.cit.aet.artemis.admin.organization.util;
 
 import de.tum.cit.aet.artemis.admin.domain.Organization;
 

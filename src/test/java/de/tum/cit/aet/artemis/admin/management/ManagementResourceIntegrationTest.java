@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.management;
+package de.tum.cit.aet.artemis.admin.management;
 
 import static de.tum.cit.aet.artemis.core.util.RequestUtilService.deleteProgrammingExerciseParamsFalse;
 import static org.assertj.core.api.Assertions.assertThat;

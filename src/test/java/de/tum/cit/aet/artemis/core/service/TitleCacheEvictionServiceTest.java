@@ -11,8 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.ApplicationContext;
 
+import de.tum.cit.aet.artemis.admin.organization.util.OrganizationUtilService;
 import de.tum.cit.aet.artemis.admin.repository.OrganizationRepository;
-import de.tum.cit.aet.artemis.core.organization.util.OrganizationUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.Pair;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;

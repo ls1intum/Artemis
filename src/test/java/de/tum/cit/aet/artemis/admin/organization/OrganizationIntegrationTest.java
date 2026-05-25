@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.organization;
+package de.tum.cit.aet.artemis.admin.organization;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -24,11 +24,11 @@ import de.tum.cit.aet.artemis.admin.dto.OrganizationCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.OrganizationCourseDTO;
 import de.tum.cit.aet.artemis.admin.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.admin.dto.OrganizationMemberDTO;
+import de.tum.cit.aet.artemis.admin.organization.util.OrganizationUtilService;
 import de.tum.cit.aet.artemis.admin.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.organization.util.OrganizationUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
