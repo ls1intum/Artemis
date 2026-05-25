@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.service.export;
+package de.tum.cit.aet.artemis.admin.service.export;
 
 import java.io.IOException;
 import java.nio.file.Files;

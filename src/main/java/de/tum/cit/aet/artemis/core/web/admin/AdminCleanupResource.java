@@ -22,8 +22,8 @@ import de.tum.cit.aet.artemis.admin.dto.NonLatestRatedResultsCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.OrphanCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.PlagiarismComparisonCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.SubmissionVersionsCleanupCountDTO;
+import de.tum.cit.aet.artemis.admin.service.DataCleanupService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
-import de.tum.cit.aet.artemis.core.service.cleanup.DataCleanupService;
 
 /**
  * REST controller for managing old data cleanup operations in Artemis.

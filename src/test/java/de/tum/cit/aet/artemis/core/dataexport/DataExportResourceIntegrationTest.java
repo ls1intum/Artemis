@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.admin.domain.DataExportState;
 import de.tum.cit.aet.artemis.admin.dto.DataExportAdminDTO;
 import de.tum.cit.aet.artemis.admin.dto.DataExportDTO;
 import de.tum.cit.aet.artemis.admin.dto.RequestDataExportDTO;
-import de.tum.cit.aet.artemis.core.service.export.DataExportService;
+import de.tum.cit.aet.artemis.admin.service.export.DataExportService;
 import de.tum.cit.aet.artemis.core.test_repository.DataExportTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.service.telemetry;
+package de.tum.cit.aet.artemis.admin.service.telemetry;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 

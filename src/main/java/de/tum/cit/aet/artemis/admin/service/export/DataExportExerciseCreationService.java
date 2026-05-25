@@ -1,9 +1,9 @@
-package de.tum.cit.aet.artemis.core.service.export;
+package de.tum.cit.aet.artemis.admin.service.export;
 
+import static de.tum.cit.aet.artemis.admin.service.export.DataExportQuizExerciseCreationService.TXT_FILE_EXTENSION;
+import static de.tum.cit.aet.artemis.admin.service.export.DataExportUtil.createDirectoryIfNotExistent;
+import static de.tum.cit.aet.artemis.admin.service.export.DataExportUtil.retrieveCourseDirPath;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.service.export.DataExportQuizExerciseCreationService.TXT_FILE_EXTENSION;
-import static de.tum.cit.aet.artemis.core.service.export.DataExportUtil.createDirectoryIfNotExistent;
-import static de.tum.cit.aet.artemis.core.service.export.DataExportUtil.retrieveCourseDirPath;
 import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundToNDecimalPlaces;
 
 import java.io.IOException;

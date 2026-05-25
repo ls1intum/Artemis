@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.admin.domain.DataExport;
 import de.tum.cit.aet.artemis.admin.domain.DataExportState;
+import de.tum.cit.aet.artemis.admin.service.DataExportScheduleService;
 import de.tum.cit.aet.artemis.core.test_repository.DataExportTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -126,7 +127,7 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationIndependent
     @Test
     void testCronDataExportCreationTaskScheduledEveryDayAt4AMByDefault() {
         final String cronExpression = "0 0 4 * * *";
-        final String cronTaskName = "de.tum.cit.aet.artemis.core.service.DataExportScheduleService.createDataExportsAndDeleteOldOnes";
+        final String cronTaskName = "de.tum.cit.aet.artemis.admin.service.DataExportScheduleService.createDataExportsAndDeleteOldOnes";
         Set<ScheduledTask> scheduledTasks = scheduledTaskHolder.getScheduledTasks();
         long scheduledCronTasksToCreateDataExportsAt4AM = scheduledTasks.stream().filter(scheduledTask -> scheduledTask.getTask() instanceof CronTask)
                 .map(scheduledTask -> (CronTask) scheduledTask.getTask()).filter(cronTask -> (cronExpression).equals(cronTask.getExpression()))

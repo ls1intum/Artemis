@@ -32,12 +32,12 @@ import de.tum.cit.aet.artemis.admin.domain.DataExportState;
 import de.tum.cit.aet.artemis.admin.dto.DataExportAdminDTO;
 import de.tum.cit.aet.artemis.admin.dto.RequestDataExportDTO;
 import de.tum.cit.aet.artemis.admin.repository.DataExportRepository;
+import de.tum.cit.aet.artemis.admin.service.export.DataExportCreationService;
+import de.tum.cit.aet.artemis.admin.service.export.DataExportService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
-import de.tum.cit.aet.artemis.core.service.export.DataExportCreationService;
-import de.tum.cit.aet.artemis.core.service.export.DataExportService;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 
 /**

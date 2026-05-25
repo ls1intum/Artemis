@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.service;
+package de.tum.cit.aet.artemis.admin.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
@@ -21,10 +21,11 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.admin.domain.DataExport;
 import de.tum.cit.aet.artemis.admin.repository.DataExportRepository;
+import de.tum.cit.aet.artemis.admin.service.export.DataExportCreationService;
+import de.tum.cit.aet.artemis.admin.service.export.DataExportService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.service.export.DataExportCreationService;
-import de.tum.cit.aet.artemis.core.service.export.DataExportService;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 
 /**
  * Service responsible for scheduling data exports.

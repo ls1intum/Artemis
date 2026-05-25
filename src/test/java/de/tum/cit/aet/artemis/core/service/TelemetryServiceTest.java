@@ -25,8 +25,8 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.core.service.telemetry.TelemetrySendingService;
-import de.tum.cit.aet.artemis.core.service.telemetry.TelemetryService;
+import de.tum.cit.aet.artemis.admin.service.telemetry.TelemetrySendingService;
+import de.tum.cit.aet.artemis.admin.service.telemetry.TelemetryService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 

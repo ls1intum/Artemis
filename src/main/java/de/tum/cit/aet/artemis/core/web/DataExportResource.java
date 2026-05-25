@@ -29,10 +29,10 @@ import de.tum.cit.aet.artemis.admin.domain.DataExportState;
 import de.tum.cit.aet.artemis.admin.dto.DataExportDTO;
 import de.tum.cit.aet.artemis.admin.dto.RequestDataExportDTO;
 import de.tum.cit.aet.artemis.admin.repository.DataExportRepository;
+import de.tum.cit.aet.artemis.admin.service.export.DataExportService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.service.export.DataExportService;
 
 /**
  * REST controller for data exports.

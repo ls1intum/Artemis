@@ -15,12 +15,12 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.admin.dto.CombinedSbomDTO;
 import de.tum.cit.aet.artemis.admin.dto.ComponentVulnerabilitiesDTO;
 import de.tum.cit.aet.artemis.admin.dto.SbomDTO;
+import de.tum.cit.aet.artemis.admin.service.SbomService;
+import de.tum.cit.aet.artemis.admin.service.VulnerabilityScanScheduleService;
+import de.tum.cit.aet.artemis.admin.service.VulnerabilityService;
 import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.ArtemisVersionService;
-import de.tum.cit.aet.artemis.core.service.SbomService;
-import de.tum.cit.aet.artemis.core.service.VulnerabilityScanScheduleService;
-import de.tum.cit.aet.artemis.core.service.VulnerabilityService;
 
 /**
  * REST controller for managing Software Bill of Materials (SBOM) as admin.
