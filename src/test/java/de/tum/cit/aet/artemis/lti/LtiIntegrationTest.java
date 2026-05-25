@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
@@ -205,7 +206,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
         LtiPlatformConfiguration platform = new LtiPlatformConfiguration();
         fillLtiPlatformConfig(platform);
         LtiPlatformConfiguration savedPlatform = ltiPlatformConfigurationRepository.save(platform);
-        doReturn(Optional.of(savedPlatform)).when(ltiPlatformConfigurationRepository).findByRegistrationId(savedPlatform.getRegistrationId());
+        doReturn(Optional.empty()).when(ltiPlatformConfigurationRepository).findByRegistrationId(anyString());
         doReturn(savedPlatform).when(ltiPlatformConfigurationRepository).findByIdElseThrow(savedPlatform.getId());
         doReturn(savedPlatform).when(ltiPlatformConfigurationRepository).findLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow(anyLong());
 
@@ -222,7 +223,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
 
         ObjectNode platformPayload = objectMapper.createObjectNode();
         platformPayload.put("id", savedPlatform.getId());
-        platformPayload.put("registrationId", savedPlatform.getRegistrationId());
+        platformPayload.put("registrationId", "forged-" + UUID.randomUUID());
         ObjectNode payload = objectMapper.createObjectNode();
         payload.put("id", savedCourse.getOnlineCourseConfiguration().getId());
         payload.put("userPrefix", "prefix");
@@ -234,6 +235,8 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
 
         JsonNode response = objectMapper.readTree(mvcResult.getResponse().getContentAsString());
         assertThat(response.get("ltiPlatformConfiguration").get("id").asLong()).isEqualTo(savedPlatform.getId());
+        verify(ltiPlatformConfigurationRepository).findByIdElseThrow(savedPlatform.getId());
+        verify(ltiPlatformConfigurationRepository, never()).findByRegistrationId(anyString());
     }
 
     @Test

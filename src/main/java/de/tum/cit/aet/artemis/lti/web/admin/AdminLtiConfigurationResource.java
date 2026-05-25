@@ -81,9 +81,9 @@ public class AdminLtiConfigurationResource {
      * @return a {@code ResponseEntity} with the platform configuration DTO and HTTP status.
      */
     @GetMapping({ "lti-platforms/{platformId}", "lti-platform/{platformId}" })
-    public ResponseEntity<LtiPlatformConfigurationDTO> getLtiPlatformConfiguration(@PathVariable("platformId") String platformId) {
+    public ResponseEntity<LtiPlatformConfigurationDTO> getLtiPlatformConfiguration(@PathVariable("platformId") Long platformId) {
         log.debug("REST request to configured lti platform");
-        LtiPlatformConfiguration platform = ltiPlatformConfigurationRepository.findByIdElseThrow(Long.parseLong(platformId));
+        LtiPlatformConfiguration platform = ltiPlatformConfigurationRepository.findByIdElseThrow(platformId);
         return new ResponseEntity<>(LtiPlatformConfigurationDTO.of(platform), HttpStatus.OK);
     }
 
@@ -94,14 +94,14 @@ public class AdminLtiConfigurationResource {
      * @return a {@code ResponseEntity<Void>} with status {@code 200 (OK)} and a header indicating the deletion.
      */
     @DeleteMapping({ "lti-platforms/{platformId}", "lti-platform/{platformId}" })
-    public ResponseEntity<Void> deleteLtiPlatformConfiguration(@PathVariable("platformId") String platformId) {
+    public ResponseEntity<Void> deleteLtiPlatformConfiguration(@PathVariable("platformId") Long platformId) {
         log.debug("REST request to delete configured LTI platform");
-        LtiPlatformConfiguration platform = ltiPlatformConfigurationRepository.findByIdElseThrow(Long.parseLong(platformId));
+        LtiPlatformConfiguration platform = ltiPlatformConfigurationRepository.findByIdElseThrow(platformId);
 
         ltiPlatformConfigurationRepository.delete(platform);
         oAuth2JWKSService.updateKey(platform.getRegistrationId());
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, platformId)).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, platformId.toString())).build();
     }
 
     /**

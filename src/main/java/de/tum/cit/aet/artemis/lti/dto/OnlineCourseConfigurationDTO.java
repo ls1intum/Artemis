@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record OnlineCourseConfigurationDTO(Long id, @NotBlank String userPrefix, @NotNull Boolean requireExistingUser,
+public record OnlineCourseConfigurationDTO(@Nullable Long id, @NotBlank String userPrefix, @NotNull Boolean requireExistingUser,
         @Nullable LtiPlatformConfigurationDTO ltiPlatformConfiguration) {
 
     public static OnlineCourseConfigurationDTO of(OnlineCourseConfiguration config) {
