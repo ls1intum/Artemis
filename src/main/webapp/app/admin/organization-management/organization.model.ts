@@ -1,6 +1,4 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { User } from 'app/account/user/user.model';
-import { Course } from 'app/course/shared/entities/course.model';
 
 export class Organization implements BaseEntity {
     id?: number;
@@ -10,8 +8,6 @@ export class Organization implements BaseEntity {
     description?: string;
     logoUrl?: string;
     emailPattern?: string;
-    users?: User[];
-    courses?: Course[];
     numberOfUsers?: number;
     numberOfCourses?: number;
 }
