@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.core.repository.saml2;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SAML2;
-
 import java.util.concurrent.TimeUnit;
 
 import jakarta.annotation.PostConstruct;
@@ -10,12 +8,14 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
+
+import de.tum.cit.aet.artemis.core.config.Saml2Enabled;
 
 /**
  * Hazelcast-backed store for SAML2 redirect URI nonces.
@@ -27,7 +27,7 @@ import com.hazelcast.map.IMap;
  * This distributed store ensures the feature works in clustered Artemis deployments where
  * the SAML2 AuthnRequest and Response may be handled by different nodes.
  */
-@Profile(PROFILE_SAML2)
+@Conditional(Saml2Enabled.class)
 @Lazy
 @Repository
 public class HazelcastSaml2RedirectUriRepository {
