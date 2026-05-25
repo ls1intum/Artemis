@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.web.admin;
+package de.tum.cit.aet.artemis.admin.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.web.util.PaginationUtil.generatePaginationHttpHeaders;

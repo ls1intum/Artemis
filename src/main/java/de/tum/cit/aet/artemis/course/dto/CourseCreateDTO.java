@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
  * The {@link #toCourse()} method creates a clean, server-controlled entity instance
  * with all fields properly initialized from the DTO values.
  *
- * @see de.tum.cit.aet.artemis.core.web.admin.AdminCourseResource#createCourse
+ * @see de.tum.cit.aet.artemis.admin.web.AdminCourseResource#createCourse
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CourseCreateDTO(

@@ -21,10 +21,10 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.dto.CombinedSbomDTO;
 import de.tum.cit.aet.artemis.admin.dto.ComponentVulnerabilitiesDTO;
 import de.tum.cit.aet.artemis.admin.dto.SbomDTO;
+import de.tum.cit.aet.artemis.admin.web.AdminSbomResource;
 import de.tum.cit.aet.artemis.core.connector.OsvRequestMockProvider;
 import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
 import de.tum.cit.aet.artemis.core.dto.osv.OsvVulnerabilityDTO;
-import de.tum.cit.aet.artemis.core.web.admin.AdminSbomResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
