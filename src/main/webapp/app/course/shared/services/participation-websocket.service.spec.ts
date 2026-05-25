@@ -13,7 +13,7 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 import { MockParticipationService } from 'test/helpers/mocks/service/mock-participation.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { StudentParticipation } from '../../../../exercise/shared/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
 
 describe('ParticipationWebsocketService', () => {
