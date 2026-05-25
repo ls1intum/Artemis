@@ -3375,8 +3375,7 @@ public class CourseTestService {
      * @return the corresponding CourseCreateDTO
      */
     private CourseCreateDTO toCourseCreateDTO(@NonNull Course course) {
-        return new CourseCreateDTO(course.getTitle(), course.getShortName(), course.getDescription(), course.getSemester(), course.getStudentGroupName(),
-                course.getTeachingAssistantGroupName(), course.getEditorGroupName(), course.getInstructorGroupName(), course.getStartDate(), course.getEndDate(),
+        return new CourseCreateDTO(course.getTitle(), course.getShortName(), course.getDescription(), course.getSemester(), course.getStartDate(), course.getEndDate(),
                 course.getEnrollmentStartDate(), course.getEnrollmentEndDate(), course.getUnenrollmentEndDate(), course.isTestCourse(), course.isOnlineCourse(),
                 course.getLanguage(), course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(),
                 course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(), course.getColor(),

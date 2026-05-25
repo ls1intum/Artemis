@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -30,6 +29,7 @@ import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingSer
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseRequest;
 import de.tum.cit.aet.artemis.core.domain.CourseRequestStatus;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestCreateDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestDTO;
@@ -96,14 +96,6 @@ class CourseRequestServiceTest {
         when(courseRequestRepository.findOneWithEagerRelationshipsById(1L)).thenReturn(Optional.of(pendingRequest));
         when(courseRepository.existsByShortNameIgnoreCase("NEW123")).thenReturn(false);
         when(courseRequestRepository.findOneByShortNameIgnoreCase("NEW123")).thenReturn(Optional.empty());
-        doAnswer(invocation -> {
-            Course course = invocation.getArgument(0);
-            course.setStudentGroupName(course.getDefaultStudentGroupName());
-            course.setTeachingAssistantGroupName(course.getDefaultTeachingAssistantGroupName());
-            course.setEditorGroupName(course.getDefaultEditorGroupName());
-            course.setInstructorGroupName(course.getDefaultInstructorGroupName());
-            return null;
-        }).when(courseAccessService).setDefaultGroupsIfNotSet(any(Course.class));
         when(courseRepository.save(any(Course.class))).thenAnswer(invocation -> {
             Course course = invocation.getArgument(0);
             course.setId(22L);
@@ -115,9 +107,8 @@ class CourseRequestServiceTest {
 
         CourseRequestDTO result = courseRequestService.acceptRequest(1L);
 
-        verify(courseAccessService).setDefaultGroupsIfNotSet(courseCaptor.capture());
-        verify(channelService).createDefaultChannels(courseCaptor.getValue());
-        verify(courseAccessService).addUserToGroup(eq(requester), eq(courseCaptor.getValue().getInstructorGroupName()), eq(courseCaptor.getValue()));
+        verify(channelService).createDefaultChannels(courseCaptor.capture());
+        verify(courseAccessService).addUserToCourse(eq(requester), eq(courseCaptor.getValue()), eq(CourseRole.INSTRUCTOR));
         verify(mailSendingService).buildAndSendAsync(eq(requester), anyString(), eq("mail/courseRequestAcceptedEmail"), anyMap());
         verify(courseRequestRepository).save(courseRequestCaptor.capture());
 
@@ -140,14 +131,6 @@ class CourseRequestServiceTest {
         when(courseRequestRepository.findOneWithEagerRelationshipsById(1L)).thenReturn(Optional.of(pendingRequest));
         when(courseRepository.existsByShortNameIgnoreCase("NEW123")).thenReturn(false);
         when(courseRequestRepository.findOneByShortNameIgnoreCase("NEW123")).thenReturn(Optional.empty());
-        doAnswer(invocation -> {
-            Course course = invocation.getArgument(0);
-            course.setStudentGroupName(course.getDefaultStudentGroupName());
-            course.setTeachingAssistantGroupName(course.getDefaultTeachingAssistantGroupName());
-            course.setEditorGroupName(course.getDefaultEditorGroupName());
-            course.setInstructorGroupName(course.getDefaultInstructorGroupName());
-            return null;
-        }).when(courseAccessService).setDefaultGroupsIfNotSet(any(Course.class));
         when(courseRepository.save(any(Course.class))).thenAnswer(invocation -> {
             Course course = invocation.getArgument(0);
             course.setId(22L);
