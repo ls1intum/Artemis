@@ -18,12 +18,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.dto.CourseRequestCreateDTO;
-import de.tum.cit.aet.artemis.core.dto.CourseRequestDTO;
-import de.tum.cit.aet.artemis.core.dto.CourseRequestDecisionDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestsAdminOverviewDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.course.CourseRequestService;
+import de.tum.cit.aet.artemis.course.dto.CourseRequestCreateDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseRequestDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseRequestDecisionDTO;
 
 @Profile(PROFILE_CORE)
 @EnforceAdmin

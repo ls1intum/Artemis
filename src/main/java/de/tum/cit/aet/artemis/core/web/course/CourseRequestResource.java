@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.dto.CourseRequestCreateDTO;
-import de.tum.cit.aet.artemis.core.dto.CourseRequestDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.course.CourseRequestService;
+import de.tum.cit.aet.artemis.course.dto.CourseRequestCreateDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseRequestDTO;
 
 @Profile(PROFILE_CORE)
 @Lazy

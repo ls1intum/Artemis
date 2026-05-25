@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.service.course;
 
-import de.tum.cit.aet.artemis.core.dto.CourseSummaryDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseSummaryDTO;
 
 /**
  * Utility class for calculating weighted progress for course operations (delete, reset).

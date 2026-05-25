@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.dto;
+package de.tum.cit.aet.artemis.course.dto;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;

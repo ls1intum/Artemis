@@ -23,14 +23,14 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.Organization;
-import de.tum.cit.aet.artemis.core.dto.ActiveCourseDTO;
-import de.tum.cit.aet.artemis.core.dto.CourseForArchiveDTO;
-import de.tum.cit.aet.artemis.core.dto.CourseGroupsDTO;
 import de.tum.cit.aet.artemis.core.dto.StatisticsEntry;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.course.dto.ActiveCourseDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseGroupsDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -89,7 +89,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     List<Course> findAllActiveForUserAndLearningPathsEnabled(@Param("now") ZonedDateTime now);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.ActiveCourseDTO(c.id, c.title, c.shortName, c.semester, COUNT(DISTINCT u))
+            SELECT new de.tum.cit.aet.artemis.course.dto.ActiveCourseDTO(c.id, c.title, c.shortName, c.semester, COUNT(DISTINCT u))
             FROM Course c
                 JOIN User u ON u.deleted = FALSE AND c.studentGroupName MEMBER OF u.groups
             WHERE (c.startDate <= :now OR c.startDate IS NULL)
@@ -618,7 +618,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
      * @return A set of courses that the user has access to and belong to a specific semester
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.CourseForArchiveDTO(c.id, c.title, c.semester, c.color, c.courseIcon)
+            SELECT new de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO(c.id, c.title, c.semester, c.color, c.courseIcon)
             FROM Course c
             WHERE (:isAdmin = TRUE
                    OR c.studentGroupName IN :groups
@@ -634,7 +634,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             @Param("now") ZonedDateTime now);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.CourseGroupsDTO(
+            SELECT new de.tum.cit.aet.artemis.course.dto.CourseGroupsDTO(
                 c.instructorGroupName,
                 c.editorGroupName,
                 c.teachingAssistantGroupName,
