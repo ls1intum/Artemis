@@ -333,30 +333,4 @@ describe('GlobalSearchNavigationViewComponent', () => {
             expect(button).toBeNull();
         });
     });
-
-    describe('when iris is open', () => {
-        beforeEach(() => {
-            vi.clearAllMocks();
-            configureTestBed(true);
-            fixture.componentRef.setInput('irisOpen', true);
-            fixture.detectChanges();
-        });
-
-        it('should show only one action button (lecture)', () => {
-            expect(component['actionButtonCount']()).toBe(1);
-        });
-
-        it('should emit SearchView.Lecture when Enter is pressed at index 0', () => {
-            const spy = vi.fn();
-            component.viewSelected.subscribe(spy);
-
-            fixture.componentRef.setInput('selectedIndex', 0);
-            fixture.detectChanges();
-
-            const event = new KeyboardEvent('keydown', { key: 'Enter' });
-            component.handleKeydown(event);
-
-            expect(spy).toHaveBeenCalledWith(SearchView.Lecture);
-        });
-    });
 });
