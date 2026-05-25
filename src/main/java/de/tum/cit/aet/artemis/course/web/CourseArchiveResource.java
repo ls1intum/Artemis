@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.web.course;
+package de.tum.cit.aet.artemis.course.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.time.ZonedDateTime.now;

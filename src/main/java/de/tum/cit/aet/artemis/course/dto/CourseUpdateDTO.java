@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
  * <p>
  * The {@link #applyTo(Course)} method applies the DTO values to an existing Course entity.
  *
- * @see de.tum.cit.aet.artemis.core.web.course.CourseUpdateResource#updateCourse
+ * @see de.tum.cit.aet.artemis.course.web.CourseUpdateResource#updateCourse
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
