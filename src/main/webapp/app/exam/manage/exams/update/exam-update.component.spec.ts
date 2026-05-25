@@ -35,7 +35,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
-import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { By } from '@angular/platform-browser';
 import { toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';

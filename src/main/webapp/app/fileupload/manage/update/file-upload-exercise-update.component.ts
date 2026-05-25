@@ -39,7 +39,7 @@ import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/diffic
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
-import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
