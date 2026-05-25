@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.dto;
+package de.tum.cit.aet.artemis.admin.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

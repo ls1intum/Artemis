@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.dto;
+package de.tum.cit.aet.artemis.admin.dto;
 
 import java.time.ZonedDateTime;
 import java.util.Set;

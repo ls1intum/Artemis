@@ -17,10 +17,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.admin.domain.LegalDocumentType;
+import de.tum.cit.aet.artemis.admin.dto.ImprintDTO;
+import de.tum.cit.aet.artemis.admin.dto.LegalDocument;
+import de.tum.cit.aet.artemis.admin.dto.PrivacyStatementDTO;
 import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.core.dto.ImprintDTO;
-import de.tum.cit.aet.artemis.core.dto.LegalDocument;
-import de.tum.cit.aet.artemis.core.dto.PrivacyStatementDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 

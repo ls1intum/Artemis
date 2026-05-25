@@ -21,10 +21,10 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.core.dto.CombinedSbomDTO;
-import de.tum.cit.aet.artemis.core.dto.SbomComponentDTO;
-import de.tum.cit.aet.artemis.core.dto.SbomDTO;
-import de.tum.cit.aet.artemis.core.dto.SbomMetadataDTO;
+import de.tum.cit.aet.artemis.admin.dto.CombinedSbomDTO;
+import de.tum.cit.aet.artemis.admin.dto.SbomComponentDTO;
+import de.tum.cit.aet.artemis.admin.dto.SbomDTO;
+import de.tum.cit.aet.artemis.admin.dto.SbomMetadataDTO;
 
 /**
  * Service for reading and parsing Software Bill of Materials (SBOM) files.

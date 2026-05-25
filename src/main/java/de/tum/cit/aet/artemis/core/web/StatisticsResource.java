@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.admin.domain.GraphType;
 import de.tum.cit.aet.artemis.admin.domain.StatisticsView;
+import de.tum.cit.aet.artemis.admin.dto.CourseManagementStatisticsDTO;
 import de.tum.cit.aet.artemis.core.domain.SpanType;
-import de.tum.cit.aet.artemis.core.dto.CourseManagementStatisticsDTO;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;

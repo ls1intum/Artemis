@@ -16,12 +16,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.dto.CleanupServiceExecutionRecordDTO;
-import de.tum.cit.aet.artemis.core.dto.NonLatestNonRatedResultsCleanupCountDTO;
-import de.tum.cit.aet.artemis.core.dto.NonLatestRatedResultsCleanupCountDTO;
-import de.tum.cit.aet.artemis.core.dto.OrphanCleanupCountDTO;
-import de.tum.cit.aet.artemis.core.dto.PlagiarismComparisonCleanupCountDTO;
-import de.tum.cit.aet.artemis.core.dto.SubmissionVersionsCleanupCountDTO;
+import de.tum.cit.aet.artemis.admin.dto.CleanupServiceExecutionRecordDTO;
+import de.tum.cit.aet.artemis.admin.dto.NonLatestNonRatedResultsCleanupCountDTO;
+import de.tum.cit.aet.artemis.admin.dto.NonLatestRatedResultsCleanupCountDTO;
+import de.tum.cit.aet.artemis.admin.dto.OrphanCleanupCountDTO;
+import de.tum.cit.aet.artemis.admin.dto.PlagiarismComparisonCleanupCountDTO;
+import de.tum.cit.aet.artemis.admin.dto.SubmissionVersionsCleanupCountDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.cleanup.DataCleanupService;
 
