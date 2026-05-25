@@ -4,7 +4,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
-import { SystemNotification, SystemNotificationType } from 'app/core/shared/entities/system-notification.model';
+import { SystemNotification, SystemNotificationType } from 'app/admin/system-notification-management/system-notification.model';
 import { take } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 

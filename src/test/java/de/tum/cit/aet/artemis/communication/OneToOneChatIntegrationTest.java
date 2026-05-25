@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.OneToOneChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
-import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 
 class OneToOneChatIntegrationTest extends AbstractConversationTest {
 

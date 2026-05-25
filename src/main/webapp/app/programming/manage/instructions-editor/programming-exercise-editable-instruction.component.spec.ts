@@ -13,7 +13,7 @@ jest.mock('y-monaco', () => ({
         destroy: jest.fn(),
     })),
 }));
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockProgrammingExerciseGradingService } from 'test/helpers/mocks/service/mock-programming-exercise-grading.service';

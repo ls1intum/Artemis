@@ -19,10 +19,10 @@ import de.tum.cit.aet.artemis.atlas.learningpath.util.LearningPathUtilService;
 import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathRecommendationService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {

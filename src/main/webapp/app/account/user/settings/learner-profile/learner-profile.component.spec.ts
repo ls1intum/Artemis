@@ -11,7 +11,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockProvider } from 'ng-mocks';
 import { LearnerProfileApiService } from './learner-profile-api.service';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 
 describe('LearnerProfileComponent', () => {
     setupTestBed({ zoneless: true });

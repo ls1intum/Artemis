@@ -38,13 +38,13 @@ import org.testcontainers.weaviate.WeaviateContainer;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.PasskeyAuthenticationService;
+import de.tum.cit.aet.artemis.admin.service.SbomService;
+import de.tum.cit.aet.artemis.admin.service.VulnerabilityService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.service.ArtemisVersionService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
-import de.tum.cit.aet.artemis.core.service.SbomService;
-import de.tum.cit.aet.artemis.core.service.VulnerabilityService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;

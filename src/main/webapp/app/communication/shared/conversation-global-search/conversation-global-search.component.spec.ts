@@ -9,7 +9,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ConversationDTO, ConversationType } from '../entities/conversation/conversation.model';

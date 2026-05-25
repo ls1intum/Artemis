@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { Subscription, combineLatest, filter, interval, lastValueFrom } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -8,12 +8,12 @@ import { ArtemisServerDateService } from 'app/shared/service/server-date.service
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { faAngleDown, faAngleUp, faListAlt } from '@fortawesome/free-solid-svg-icons';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { cloneDeep } from 'lodash-es';
 import { NgClass } from '@angular/common';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
+import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/shared/types/sidebar';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 

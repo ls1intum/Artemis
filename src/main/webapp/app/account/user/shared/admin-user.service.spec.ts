@@ -5,7 +5,7 @@ import { User } from 'app/account/user/user.model';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import { provideHttpClient } from '@angular/common/http';
-import { AuthorityFilter, OriginFilter, RegistrationNumberFilter, StatusFilter, UserFilter } from 'app/core/admin/user-management/user-management.component';
+import { AuthorityFilter, OriginFilter, RegistrationNumberFilter, StatusFilter, UserFilter } from 'app/admin/user-management/user-management.component';
 
 describe('AdminUserService', () => {
     setupTestBed({ zoneless: true });

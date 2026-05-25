@@ -18,7 +18,7 @@ class AssessmentEntityUsageArchitectureTest extends AbstractModuleEntityUsageArc
     // TODO: Reduce this to 0 by returning DTOs instead of entities
     @Override
     protected int getMaxEntityReturnViolations() {
-        return 34;
+        return 21;
     }
 
     // TODO: Reduce this to 0 by accepting DTOs instead of entities in @RequestBody/@RequestPart
@@ -30,6 +30,6 @@ class AssessmentEntityUsageArchitectureTest extends AbstractModuleEntityUsageArc
     // TODO: Reduce this to 0 by removing entity references from DTOs
     @Override
     protected int getMaxDtoEntityFieldViolations() {
-        return 5;
+        return 4;
     }
 }

@@ -25,8 +25,8 @@ import de.tum.cit.aet.artemis.communication.domain.Reaction_;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel_;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation_;
-import de.tum.cit.aet.artemis.core.domain.Course_;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.course.domain.Course_;
 
 public class MessageSpecs {
 

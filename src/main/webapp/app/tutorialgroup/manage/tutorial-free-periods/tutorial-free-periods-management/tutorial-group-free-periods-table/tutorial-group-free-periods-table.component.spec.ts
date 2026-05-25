@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroupFreePeriodsTableComponent } from './tutorial-group-free-periods-table.component';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';

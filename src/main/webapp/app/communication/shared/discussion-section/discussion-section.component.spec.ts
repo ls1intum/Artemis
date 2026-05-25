@@ -40,7 +40,7 @@ import {
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { PostContextFilter, SortDirection } from 'app/communication/metis.util';
-import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -52,7 +52,7 @@ import { PostingThreadComponent } from 'app/communication/posting-thread/posting
 import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { DialogService } from 'primeng/dynamicdialog';
 
 @Directive({

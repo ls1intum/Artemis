@@ -13,7 +13,7 @@ import { MockDirective, MockProvider } from 'ng-mocks';
 import { ExamUpdateComponent, prepareExamForImport } from 'app/exam/manage/exams/update/exam-update.component';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';

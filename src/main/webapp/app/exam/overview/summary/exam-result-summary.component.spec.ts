@@ -45,7 +45,7 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockExamParticipationService } from 'test/helpers/mocks/service/mock-exam-participation.service';
 import { MockArtemisServerDateService } from 'test/helpers/mocks/service/mock-server-date.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import * as ExamUtils from 'app/exam/overview/exam.utils';
 import { ProgrammingExamSummaryComponent } from 'app/exam/overview/summary/exercises/programming-exam-summary/programming-exam-summary.component';
 import { provideHttpClient } from '@angular/common/http';

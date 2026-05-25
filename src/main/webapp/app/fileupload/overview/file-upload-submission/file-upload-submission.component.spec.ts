@@ -23,12 +23,12 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { FileService } from 'app/shared/service/file.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 

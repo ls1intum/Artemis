@@ -23,7 +23,7 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 

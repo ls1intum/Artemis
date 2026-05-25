@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.CourseLearnerProfileDTO;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
 
