@@ -14,6 +14,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+
 @Entity
 @Table(name = "user_course_role")
 @IdClass(UserCourseRole.UserCourseRoleId.class)
