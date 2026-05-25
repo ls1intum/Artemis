@@ -16,6 +16,8 @@ import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
 import { SearchResultItemComponent } from 'app/core/navbar/global-search/components/modal/search-result-item/search-result-item.component';
 import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/components/views/iris-answer/global-search-iris-answer.component';
+import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/iris-search-answer.service';
 import {
     faBook,
     faCalendarCheck,
@@ -45,6 +47,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
             imports: [
                 GlobalSearchNavigationViewComponent,
                 MockComponent(GlobalSearchActionItemComponent),
+                MockComponent(GlobalSearchIrisAnswerComponent),
                 MockComponent(SearchResultItemComponent),
                 MockComponent(SearchableEntityItemComponent),
                 MockComponent(FaIconComponent),
@@ -55,6 +58,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(irisEnabled) } },
                 { provide: Router, useValue: { navigate: vi.fn() } },
                 { provide: SearchOverlayService, useValue: { close: vi.fn(), isOpen: signal(false) } },
+                { provide: IrisSearchAnswerService, useValue: { ask: vi.fn() } },
             ],
         });
 
