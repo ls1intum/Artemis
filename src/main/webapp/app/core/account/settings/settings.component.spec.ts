@@ -16,7 +16,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { HttpResponse } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { PROFILE_SAML2 } from 'app/app.constants';
+import { MODULE_FEATURE_SAML2 } from 'app/app.constants';
 
 describe('SettingsComponent', () => {
     setupTestBed({ zoneless: true });
@@ -58,6 +58,7 @@ describe('SettingsComponent', () => {
         const profileService = TestBed.inject(ProfileService);
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ registrationEnabled: true } as any);
         vi.spyOn(profileService, 'isProfileActive').mockReturnValue(false);
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
 
         const fixture = TestBed.createComponent(SettingsComponent);
         comp = fixture.componentInstance;
@@ -319,7 +320,7 @@ describe('SettingsComponent', () => {
 
         beforeEach(() => {
             const profileService = TestBed.inject(ProfileService);
-            vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile) => profile === PROFILE_SAML2);
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature) => feature === MODULE_FEATURE_SAML2);
 
             const fixture = TestBed.createComponent(SettingsComponent);
             compSaml2 = fixture.componentInstance;

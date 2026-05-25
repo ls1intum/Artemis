@@ -33,7 +33,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { finalize } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import dayjs from 'dayjs/esm';
-import { PROFILE_ATHENA } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
@@ -189,7 +189,7 @@ export class ExerciseHeaderActionsComponent {
     readonly isLoading = this._isLoading.asReadonly();
     readonly studentParticipations = this._studentParticipations.asReadonly();
 
-    readonly athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+    readonly athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
 
     readonly activeParticipationForCode = computed(() => {
         return this.participationMode() === 'practice' ? (this._practiceParticipation() ?? this._gradedParticipation()) : this._gradedParticipation();

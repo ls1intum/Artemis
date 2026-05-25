@@ -405,9 +405,13 @@ The semi-automatic text assessment relies on the <a href="https://github.com/ls1
 
 </Callout>
 
-### Enable the athena Spring profile
-```
---spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local,athena
+### Enable Athena
+
+Set the Athena module-feature flag in your deployment-specific override (e.g. `application-prod.yml`, or the equivalent file mounted into your container — **not** the source-tree `src/main/resources/config/application-artemis.yml`, which would be ignored by a packaged or containerized deployment):
+```yaml
+artemis:
+  athena:
+    enabled: true
 ```
 
 ### Configure API Endpoints
@@ -457,9 +461,13 @@ info:
 
 <a href="https://github.com/ls1intum/Apollon_converter">Apollon Converter</a> is needed to convert models from their JSON representation to PDF. Special configuration is required:
 
-#### Enable the apollon Spring profile
-```
---spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local,apollon
+#### Enable Apollon
+
+Set the Apollon module-feature flag in your deployment-specific override (e.g. `application-prod.yml`, or the equivalent file mounted into your container — **not** the source-tree `src/main/resources/config/application-artemis.yml`, which would be ignored by a packaged or containerized deployment):
+```yaml
+artemis:
+  apollon:
+    enabled: true
 ```
 
 #### Configure API Endpoints

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { PROFILE_ATHENA } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -88,7 +88,7 @@ describe('RequestFeedbackButtonComponent', () => {
     });
 
     function setAthenaEnabled(enabled: boolean) {
-        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: enabled ? [PROFILE_ATHENA] : [] } as ProfileInfo);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeModuleFeatures: enabled ? [MODULE_FEATURE_ATHENA] : [] } as ProfileInfo);
     }
 
     function mockExerciseDetails(exercise: Exercise) {
