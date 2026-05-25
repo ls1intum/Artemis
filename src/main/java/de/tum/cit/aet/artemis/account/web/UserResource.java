@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -21,7 +20,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,11 +33,9 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
-import de.tum.cit.aet.artemis.core.dto.CourseAccessRightsDTO;
 import de.tum.cit.aet.artemis.core.dto.SelectedLLMUsageDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserInitializationDTO;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
@@ -79,14 +75,10 @@ public class UserResource {
 
     private final UserRepository userRepository;
 
-    private final UserCourseRoleRepository userCourseRoleRepository;
-
     private final AuditEventRepository auditEventRepository;
 
-    public UserResource(AuditEventRepository auditEventRepository, UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository,
-            UserCreationService userCreationService, Optional<LtiApi> ltiApi) {
+    public UserResource(AuditEventRepository auditEventRepository, UserRepository userRepository, UserCreationService userCreationService, Optional<LtiApi> ltiApi) {
         this.userRepository = userRepository;
-        this.userCourseRoleRepository = userCourseRoleRepository;
         this.ltiApi = ltiApi;
         this.userCreationService = userCreationService;
         this.auditEventRepository = auditEventRepository;
@@ -153,23 +145,6 @@ public class UserResource {
      * @return the ResponseEntity with status 200 (OK) on success,
      *         or with status 400 (Bad Request) if the selection is invalid
      */
-    /**
-     * GET users/:userId/course-roles : Returns all course roles for the given user, grouped by course.
-     * Only accessible by instructors or admins.
-     *
-     * @param userId the id of the user
-     * @return list of CourseAccessRightsDTO, one per course the user is enrolled in
-     */
-    @GetMapping("users/{userId}/course-roles")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<List<CourseAccessRightsDTO>> getCourseRolesForUser(@PathVariable Long userId) {
-        log.debug("REST request to get course roles for user : {}", userId);
-        var entries = userCourseRoleRepository.findAllByUserIdWithCourse(userId);
-        var result = entries.stream().collect(Collectors.groupingBy(ucr -> ucr.getCourse().getId(), Collectors.mapping(ucr -> ucr.getRole(), Collectors.toSet()))).entrySet()
-                .stream().map(e -> new CourseAccessRightsDTO(e.getKey(), e.getValue())).toList();
-        return ResponseEntity.ok(result);
-    }
-
     @PutMapping("users/select-llm-usage")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> setSelectedLLMUsageToTimestampAndEnum(@RequestBody @NotNull SelectedLLMUsageDTO selectedLLMUsageDTO) {

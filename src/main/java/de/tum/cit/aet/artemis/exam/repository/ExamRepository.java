@@ -119,7 +119,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      * @param userId   id of the user
      * @param pageable paging specification
      * @param fromDate lower bound for instructors (usually {@code now.minusDays(7)})
-     * @param nowDate  lower bound for editors and tutors (usually the current timestamp)
+     * @param nowDate  upper bound for editors and tutors (usually the current timestamp)
      * @param toDate   upper bound for all roles (usually {@code now.plusDays(7)})
      * @return a paginated list of exams visible to the user according to their role
      */

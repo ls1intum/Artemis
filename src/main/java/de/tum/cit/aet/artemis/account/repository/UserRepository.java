@@ -726,11 +726,11 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             @Param("idOfUser") long idOfUser);
 
     @Query("""
-            SELECT user
+            SELECT DISTINCT user
             FROM User user
                 LEFT JOIN FETCH user.courseRoles
             WHERE user.id IN :ids
-            ORDER BY CONCAT(user.firstName, ' ', user.lastName)
+            ORDER BY user.firstName, user.lastName
             """)
     List<User> findUsersByIdsWithCourseRolesOrdered(@Param("ids") List<Long> ids);
 
