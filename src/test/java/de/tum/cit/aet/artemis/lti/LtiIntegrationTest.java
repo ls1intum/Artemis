@@ -47,6 +47,10 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
 
     private static final String TEST_PREFIX = "ltiintegrationtest";
 
+    private static final ZonedDateTime COURSE_START_DATE = ZonedDateTime.parse("2024-01-01T00:00:00Z");
+
+    private static final ZonedDateTime COURSE_END_DATE = ZonedDateTime.parse("2024-01-02T00:00:00Z");
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void dynamicRegistrationFailsAsStudent() throws Exception {
@@ -281,8 +285,7 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
     }
 
     private Course createOnlineCourseWithConfiguration() {
-        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), new HashSet<>(), "student", "tutor", "editor",
-                TEST_PREFIX + "instructor");
+        Course course = CourseFactory.generateCourse(null, COURSE_START_DATE, COURSE_END_DATE, new HashSet<>(), "student", "tutor", "editor", TEST_PREFIX + "instructor");
         course.setOnlineCourse(true);
 
         OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
