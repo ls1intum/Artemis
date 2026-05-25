@@ -1,6 +1,6 @@
 import { Component, InputSignal, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CourseGroup } from 'app/core/course/shared/entities/course.model';
+import { CourseRoleSlug } from 'app/core/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { User } from 'app/core/user/user.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -128,7 +128,7 @@ export class ExamAddStudentsDialogComponent {
     private loadCourseStudents(): void {
         this.isLoading.set(true);
 
-        this.courseManagementService.getAllUsersInCourseGroup(this.courseId(), CourseGroup.STUDENTS).subscribe({
+        this.courseManagementService.getAllUsersInCourseRole(this.courseId(), CourseRoleSlug.STUDENTS).subscribe({
             next: (studentsResponse) => {
                 const sortedStudents = (studentsResponse.body ?? [])
                     .filter((student) => !!student.login)

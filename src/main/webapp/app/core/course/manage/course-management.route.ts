@@ -227,7 +227,7 @@ export const courseManagementRoutes: Routes = [
                         canActivate: [UserRouteAccessService],
                     },
                     {
-                        path: 'groups/:courseGroup',
+                        path: 'members/:courseRoleSlug',
                         loadComponent: () =>
                             import('app/core/course/manage/course-group-membership/course-group-membership.component').then((m) => m.CourseGroupMembershipComponent),
                         data: {

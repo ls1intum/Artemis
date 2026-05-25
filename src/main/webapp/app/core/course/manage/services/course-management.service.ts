@@ -5,7 +5,7 @@ import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { filter, map, tap } from 'rxjs/operators';
-import { Course, CourseGroup } from 'app/core/course/shared/entities/course.model';
+import { Course, CourseRoleSlug } from 'app/core/course/shared/entities/course.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { User, UserNameAndLoginDTO, UserPublicInfoDTO } from 'app/core/user/user.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
@@ -443,12 +443,12 @@ export class CourseManagementService implements OnDestroy {
     }
 
     /**
-     * returns all the users in the given group of the course corresponding to the given unique identifier
+     * Returns all users enrolled in the course with the given role.
      * @param courseId - the id of the course
-     * @param courseGroup - the course group we want to get users from
+     * @param courseRoleSlug - the role path segment ('students', 'tutors', 'editors', 'instructors')
      */
-    getAllUsersInCourseGroup(courseId: number, courseGroup: CourseGroup): Observable<HttpResponse<User[]>> {
-        return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/${courseGroup}`, { observe: 'response' });
+    getAllUsersInCourseRole(courseId: number, courseRoleSlug: CourseRoleSlug): Observable<HttpResponse<User[]>> {
+        return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}`, { observe: 'response' });
     }
 
     /**
@@ -521,34 +521,34 @@ export class CourseManagementService implements OnDestroy {
     }
 
     /**
-     * adds a user to the given courseGroup of the course corresponding to the given unique identifier using a POST request
+     * Adds a single user to the course with the given role.
      * @param courseId - the id of the course
-     * @param courseGroup - the course group we want to add a user to
+     * @param courseRoleSlug - the role path segment ('students', 'tutors', 'editors', 'instructors')
      * @param login - login of the user to be added
      */
-    addUserToCourseGroup(courseId: number, courseGroup: CourseGroup, login: string): Observable<HttpResponse<void>> {
-        return this.http.post<void>(`${this.resourceUrl}/${courseId}/${courseGroup}/${login}`, {}, { observe: 'response' });
+    addUserToCourseRole(courseId: number, courseRoleSlug: CourseRoleSlug, login: string): Observable<HttpResponse<void>> {
+        return this.http.post<void>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}/${login}`, {}, { observe: 'response' });
     }
 
     /**
-     * Add users to the registered users for a course.
-     * @param courseId to which the users shall be added.
-     * @param studentDtos Student DTOs of users to add to the course.
-     * @param courseGroup the course group into which the user should be added
-     * @return studentDtos of users that were not found in the system.
+     * Bulk-adds users to the course with the given role.
+     * @param courseId the id of the course
+     * @param studentDtos Student DTOs of users to add
+     * @param courseRoleSlug the role path segment ('students', 'tutors', 'editors', 'instructors')
+     * @return studentDtos of users that were not found in the system
      */
-    addUsersToGroupInCourse(courseId: number, studentDtos: StudentDTO[], courseGroup: string): Observable<HttpResponse<StudentDTO[]>> {
-        return this.http.post<StudentDTO[]>(`${this.resourceUrl}/${courseId}/${courseGroup}`, studentDtos, { observe: 'response' });
+    addUsersToCourseRole(courseId: number, studentDtos: StudentDTO[], courseRoleSlug: string): Observable<HttpResponse<StudentDTO[]>> {
+        return this.http.post<StudentDTO[]>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}`, studentDtos, { observe: 'response' });
     }
 
     /**
-     * removes a user from the given group of the course corresponding to the given unique identifier using a DELETE request
+     * Removes a single user from the given role in the course.
      * @param courseId - the id of the course
-     * @param courseGroup - the course group
+     * @param courseRoleSlug - the role path segment ('students', 'tutors', 'editors', 'instructors')
      * @param login - login of the user to be removed
      */
-    removeUserFromCourseGroup(courseId: number, courseGroup: CourseGroup, login: string): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/${courseGroup}/${login}`, { observe: 'response' });
+    removeUserFromCourseRole(courseId: number, courseRoleSlug: CourseRoleSlug, login: string): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/${courseRoleSlug}/${login}`, { observe: 'response' });
     }
 
     /**

@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output, ViewChild, inject } fro
 import { Observable, Subject, combineLatest, merge, of } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
-import { Course, CourseGroup } from 'app/core/course/shared/entities/course.model';
+import { Course, CourseRoleSlug } from 'app/core/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
@@ -110,7 +110,7 @@ export class TeamOwnerSearchComponent implements OnInit {
      * Load options of team owner
      */
     loadOwnerOptions() {
-        return this.courseService.getAllUsersInCourseGroup(this.course.id!, CourseGroup.TUTORS).pipe(
+        return this.courseService.getAllUsersInCourseRole(this.course.id!, CourseRoleSlug.TUTORS).pipe(
             map((usersResponse) => usersResponse.body!),
             tap((ownerOptions) => {
                 this.ownerOptions = ownerOptions;

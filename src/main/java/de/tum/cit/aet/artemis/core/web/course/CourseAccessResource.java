@@ -502,23 +502,22 @@ public class CourseAccessResource {
     }
 
     /**
-     * POST /courses/:courseId/:courseGroup : Add multiple users to the user group of the course so that they can access the course
-     * The passed list of UserDTOs must include at least one unique user identifier (i.e. registration number OR email OR login)
-     * <p>
-     * This method first tries to find the student in the internal Artemis user database (because the user is probably already using Artemis).
-     * In case the user cannot be found, it additionally searches the connected LDAP in case it is configured.
+     * POST /courses/:courseId/:courseRoleSlug : Add multiple users to the course with the given role.
+     * The passed list of UserDTOs must include at least one unique user identifier (i.e. registration number OR email OR login).
+     * The courseRoleSlug path variable is the role string as used in the REST URL ('students', 'tutors', 'editors', 'instructors')
+     * and is converted to a {@link de.tum.cit.aet.artemis.core.domain.CourseRole} internally.
      *
-     * @param courseId    the id of the course
-     * @param studentDtos the list of students (with at one unique user identifier) who should get access to the course
-     * @param courseGroup the group, the user has to be added to, either 'students', 'tutors', 'instructors' or 'editors'
-     * @return the list of students who could not be registered for the course, because they could NOT be found in the Artemis database and could NOT be found in the connected LDAP
+     * @param courseId       the id of the course
+     * @param studentDtos    the list of users (with at least one unique identifier) to register
+     * @param courseRoleSlug the role path segment — one of 'students', 'tutors', 'editors', 'instructors'
+     * @return the list of users who could not be registered because they were not found in the Artemis database
      */
-    @PostMapping("courses/{courseId}/{courseGroup}")
+    @PostMapping("courses/{courseId}/{courseRoleSlug}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<StudentDTO>> addUsersToCourseGroup(@PathVariable Long courseId, @PathVariable String courseGroup, @RequestBody List<StudentDTO> studentDtos) {
+    public ResponseEntity<List<StudentDTO>> addUsersToCourseRole(@PathVariable Long courseId, @PathVariable String courseRoleSlug, @RequestBody List<StudentDTO> studentDtos) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, courseRepository.findByIdElseThrow(courseId), null);
-        log.debug("REST request to add {} as {} to course {}", studentDtos, courseGroup, courseId);
-        List<StudentDTO> notFoundStudentsDtos = courseAccessService.registerUsersForCourse(courseId, studentDtos, courseGroup);
+        log.debug("REST request to add {} as {} to course {}", studentDtos, courseRoleSlug, courseId);
+        List<StudentDTO> notFoundStudentsDtos = courseAccessService.registerUsersForCourse(courseId, studentDtos, courseRoleSlug);
         return ResponseEntity.ok().body(notFoundStudentsDtos);
     }
 }

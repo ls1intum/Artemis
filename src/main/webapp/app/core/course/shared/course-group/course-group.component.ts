@@ -2,7 +2,7 @@ import { Component, ViewEncapsulation, input, model, output, signal, viewChild }
 import { Observable, Subject, of } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
-import { Course, CourseGroup } from 'app/core/course/shared/entities/course.model';
+import { Course, CourseRoleSlug } from 'app/core/course/shared/entities/course.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
@@ -40,7 +40,7 @@ export class CourseGroupComponent {
     readonly isAdmin = input(false);
     readonly course = input.required<Course>();
     readonly tutorialGroup = input<TutorialGroup | undefined>(undefined);
-    readonly courseGroup = input.required<CourseGroup>();
+    readonly courseRoleSlug = input.required<CourseRoleSlug>();
     readonly exportFileName = input.required<string>();
 
     readonly userSearch = input<(loginOrName: string) => Observable<HttpResponse<User[]>>>(() => of(new HttpResponse<User[]>({ body: [] })));

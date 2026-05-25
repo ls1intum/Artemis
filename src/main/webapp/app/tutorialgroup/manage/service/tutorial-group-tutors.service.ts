@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { CourseGroup } from 'app/core/course/shared/entities/course.model';
+import { CourseRoleSlug } from 'app/core/course/shared/entities/course.model';
 import { TutorialGroupTutor } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
@@ -16,7 +16,7 @@ export class TutorialGroupTutorsService {
 
     loadTutors(courseId: number) {
         this.isLoading.set(true);
-        this.courseManagementService.getAllUsersInCourseGroup(courseId, CourseGroup.TUTORS).subscribe({
+        this.courseManagementService.getAllUsersInCourseRole(courseId, CourseRoleSlug.TUTORS).subscribe({
             next: (response: HttpResponse<User[]>) => {
                 const users = response.body ?? [];
                 const tutors = users.map((u) => this.convertUserToTutorialGroupTutor(u)).filter(Boolean) as TutorialGroupTutor[];
