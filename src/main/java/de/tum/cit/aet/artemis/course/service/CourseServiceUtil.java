@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.service.course;
+package de.tum.cit.aet.artemis.course.service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 

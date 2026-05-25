@@ -1,7 +1,7 @@
-package de.tum.cit.aet.artemis.core.service.course;
+package de.tum.cit.aet.artemis.course.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.service.course.CourseServiceUtil.removeUserVariables;
+import static de.tum.cit.aet.artemis.course.service.CourseServiceUtil.removeUserVariables;
 
 import java.util.HashSet;
 import java.util.List;

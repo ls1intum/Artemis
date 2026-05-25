@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.service.course;
+package de.tum.cit.aet.artemis.course.service;
 
 import static de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT;
 import static de.tum.cit.aet.artemis.assessment.domain.ComplaintType.MORE_FEEDBACK;
