@@ -141,7 +141,7 @@ public class PlagiarismCaseResource {
         if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
             throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
         }
-        var plagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(plagiarismCaseId);
+        var plagiarismCase = plagiarismCaseRepository.findByIdWithFullDetailsForDTOElseThrow(plagiarismCaseId);
         return ResponseEntity.ok(PlagiarismCaseDetailDTO.ofForInstructor(plagiarismCase));
     }
 

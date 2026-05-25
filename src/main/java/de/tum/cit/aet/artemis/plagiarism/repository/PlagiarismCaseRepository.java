@@ -26,18 +26,8 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
     @Query("""
             SELECT plagiarismCase
             FROM PlagiarismCase plagiarismCase
-                LEFT JOIN FETCH plagiarismCase.student
-                LEFT JOIN FETCH plagiarismCase.verdictBy
-                LEFT JOIN FETCH plagiarismCase.post post
-                LEFT JOIN FETCH post.answers answers
-                LEFT JOIN FETCH answers.author
-                LEFT JOIN FETCH plagiarismCase.exercise exercise
-                LEFT JOIN FETCH exercise.course
-                LEFT JOIN FETCH exercise.exerciseGroup exerciseGroup
-                LEFT JOIN FETCH exerciseGroup.exam exam
-                LEFT JOIN FETCH exam.course
+                LEFT JOIN FETCH plagiarismCase.post
                 LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmission
-                LEFT JOIN FETCH plagiarismSubmission.plagiarismComparison
             WHERE plagiarismCase.student.login = :studentLogin
                 AND plagiarismCase.exercise.id = :exerciseId
             """)
@@ -49,6 +39,7 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
                 LEFT JOIN FETCH plagiarismCase.student
                 LEFT JOIN FETCH plagiarismCase.verdictBy
                 LEFT JOIN FETCH plagiarismCase.exercise exercise
+                LEFT JOIN FETCH exercise.plagiarismDetectionConfig
                 LEFT JOIN FETCH exercise.course
                 LEFT JOIN FETCH exercise.exerciseGroup exerciseGroup
                 LEFT JOIN FETCH exerciseGroup.exam exam
@@ -68,6 +59,7 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
                 LEFT JOIN FETCH plagiarismCase.student
                 LEFT JOIN FETCH plagiarismCase.verdictBy
                 LEFT JOIN FETCH plagiarismCase.exercise exercise
+                LEFT JOIN FETCH exercise.plagiarismDetectionConfig
                 LEFT JOIN FETCH exercise.course
                 LEFT JOIN FETCH exercise.exerciseGroup exerciseGroup
                 LEFT JOIN FETCH exerciseGroup.exam exam
@@ -168,12 +160,21 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
     @Query("""
             SELECT plagiarismCase
             FROM PlagiarismCase plagiarismCase
+                LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
+            WHERE plagiarismCase.id = :plagiarismCaseId
+            """)
+    Optional<PlagiarismCase> findByIdWithPlagiarismSubmissions(@Param("plagiarismCaseId") long plagiarismCaseId);
+
+    @Query("""
+            SELECT plagiarismCase
+            FROM PlagiarismCase plagiarismCase
                 LEFT JOIN FETCH plagiarismCase.student
                 LEFT JOIN FETCH plagiarismCase.verdictBy
                 LEFT JOIN FETCH plagiarismCase.post post
                 LEFT JOIN FETCH post.answers answers
                 LEFT JOIN FETCH answers.author
                 LEFT JOIN FETCH plagiarismCase.exercise exercise
+                LEFT JOIN FETCH exercise.plagiarismDetectionConfig
                 LEFT JOIN FETCH exercise.course
                 LEFT JOIN FETCH exercise.exerciseGroup exerciseGroup
                 LEFT JOIN FETCH exerciseGroup.exam exam
@@ -182,7 +183,7 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
                 LEFT JOIN FETCH plagiarismSubmissions.plagiarismComparison
             WHERE plagiarismCase.id = :plagiarismCaseId
             """)
-    Optional<PlagiarismCase> findByIdWithPlagiarismSubmissions(@Param("plagiarismCaseId") long plagiarismCaseId);
+    Optional<PlagiarismCase> findByIdWithFullDetailsForDTO(@Param("plagiarismCaseId") long plagiarismCaseId);
 
     @Query("""
             SELECT plagiarismCase
@@ -215,6 +216,10 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
 
     default PlagiarismCase findByIdWithPlagiarismSubmissionsElseThrow(long plagiarismCaseId) {
         return getValueElseThrow(findByIdWithPlagiarismSubmissions(plagiarismCaseId), plagiarismCaseId);
+    }
+
+    default PlagiarismCase findByIdWithFullDetailsForDTOElseThrow(long plagiarismCaseId) {
+        return getValueElseThrow(findByIdWithFullDetailsForDTO(plagiarismCaseId), plagiarismCaseId);
     }
 
     default PlagiarismCase findByIdWithPlagiarismSubmissionsAndPlagiarismDetectionConfigElseThrow(long plagiarismCaseId) {
