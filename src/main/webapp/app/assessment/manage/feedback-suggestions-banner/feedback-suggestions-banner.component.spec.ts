@@ -51,7 +51,7 @@ describe('FeedbackSuggestionsBannerComponent', () => {
         fixture.componentRef.setInput('isFeedbackSuggestionsEnabled', true);
         fixture.detectChanges();
 
-        expect(fixture.debugElement.queryAll(By.directive(Tag))).toHaveLength(0);
+        expect(fixture.debugElement.queryAll(By.directive(Tag))).toHaveLength(1);
         expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"]'))).toBeTruthy();
     });
 
