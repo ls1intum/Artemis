@@ -123,6 +123,8 @@ Configure the URI schemes you trust under `saml2.allowed-redirect-schemes`; an e
 saml2:
     # Empty list (default) disables the feature. http and https are always rejected.
     allowed-redirect-schemes: ['vscode', 'artemis-ios', 'artemis-android']
+    # Lifetime of the JWT minted via the external redirect (minutes). Default: 60.
+    external-redirect-token-ttl-minutes: 60
 ```
 
 If a `redirect_uri` is provided while the feature is disabled, it is ignored and the user is redirected to `/`.
@@ -133,6 +135,7 @@ A malicious application registered for the same scheme on the user's machine cou
 and the JWT may appear in non-default reverse-proxy access logs.
 `http` and `https` schemes are always rejected, which prevents classic remote open-redirect token theft,
 and the server-side nonce is single-use with a 5-minute expiry.
+JWTs minted for the redirect flow have an independently configurable, short lifetime (default 60 minutes) to limit the blast radius of an interception.
 Enable this feature only if you accept this residual risk for the custom schemes you allowlist.
 
 # Example configuration

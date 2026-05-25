@@ -38,6 +38,10 @@ saml2:
     # Example: ['vscode', 'artemis-ios', 'artemis-android']
     # WARNING: http and https schemes are always rejected regardless of this setting.
     allowed-redirect-schemes: []
+    # Lifetime (minutes) of the JWT minted via the external client redirect flow.
+    # Kept short because the token travels through a custom-scheme URI and accepts a higher
+    # interception risk than browser-session JWTs.
+    external-redirect-token-ttl-minutes: 60
     # It is also possible to only extract parts of the attribute values.
     # For each attribute key exactly one regular expression can optionally be defined that is used to extract only parts
     # of the received value. The regular expression must match the whole value. It also has to contain a named capture

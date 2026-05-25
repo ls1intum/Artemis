@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.security.saml2;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
@@ -52,6 +53,8 @@ public class SAML2ExternalClientAuthenticationSuccessHandler extends SimpleUrlAu
 
     private final SAML2RedirectUriValidator redirectUriValidator;
 
+    private final Duration tokenTtl;
+
     /**
      * Constructs the handler.
      *
@@ -60,9 +63,11 @@ public class SAML2ExternalClientAuthenticationSuccessHandler extends SimpleUrlAu
      * @param tokenProvider         JWT token provider
      * @param auditEventRepository  audit event repository
      * @param redirectUriValidator  validator used to re-check the stored redirect URI before use
+     * @param tokenTtl              lifetime of the JWT minted for the external client; kept short
+     *                                  because the token travels through a custom-scheme URI
      */
     public SAML2ExternalClientAuthenticationSuccessHandler(HazelcastSaml2RedirectUriRepository redirectUriRepository, SAML2Service saml2Service, TokenProvider tokenProvider,
-            AuditEventRepository auditEventRepository, SAML2RedirectUriValidator redirectUriValidator) {
+            AuditEventRepository auditEventRepository, SAML2RedirectUriValidator redirectUriValidator, Duration tokenTtl) {
         super("/");
         setAlwaysUseDefaultTargetUrl(true);
         this.redirectUriRepository = redirectUriRepository;
@@ -70,6 +75,7 @@ public class SAML2ExternalClientAuthenticationSuccessHandler extends SimpleUrlAu
         this.tokenProvider = tokenProvider;
         this.auditEventRepository = auditEventRepository;
         this.redirectUriValidator = redirectUriValidator;
+        this.tokenTtl = tokenTtl;
     }
 
     @Override
@@ -122,8 +128,9 @@ public class SAML2ExternalClientAuthenticationSuccessHandler extends SimpleUrlAu
             return;
         }
 
-        // Generate a normal (non-rememberMe) JWT from the processed authentication
-        String jwt = tokenProvider.createToken(processedAuth, false);
+        // Short-lived JWT: tokens delivered via custom-scheme URI accept a higher interception risk
+        // than browser-session JWTs, so we cap their lifetime independently of the default JWT TTL.
+        String jwt = tokenProvider.createToken(processedAuth, tokenTtl.toMillis(), null);
 
         // Build redirect URI with JWT parameter, replacing any pre-existing jwt parameter
         String targetUri = UriComponentsBuilder.fromUriString(redirectUri).replaceQueryParam("jwt", jwt).build().toUriString();

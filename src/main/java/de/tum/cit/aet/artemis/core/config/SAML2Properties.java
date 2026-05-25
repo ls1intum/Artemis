@@ -45,6 +45,8 @@ public class SAML2Properties {
 
     private List<String> allowedRedirectSchemes = List.of();
 
+    private int externalRedirectTokenTtlMinutes = 60;
+
     /**
      * Validates SAML2 configuration properties on bean creation
      * EventListener cannot be used here, as the bean is lazy
@@ -230,6 +232,26 @@ public class SAML2Properties {
      */
     public void setAllowedRedirectSchemes(List<String> allowedRedirectSchemes) {
         this.allowedRedirectSchemes = allowedRedirectSchemes;
+    }
+
+    /**
+     * Gets the JWT lifetime (minutes) for tokens minted via the external client redirect flow.
+     * Kept short because the token travels through a custom-scheme URI and accepts a higher
+     * interception risk than browser-session JWTs.
+     *
+     * @return the token lifetime in minutes
+     */
+    public int getExternalRedirectTokenTtlMinutes() {
+        return externalRedirectTokenTtlMinutes;
+    }
+
+    /**
+     * Sets the JWT lifetime (minutes) for tokens minted via the external client redirect flow.
+     *
+     * @param externalRedirectTokenTtlMinutes the token lifetime in minutes (must be positive)
+     */
+    public void setExternalRedirectTokenTtlMinutes(int externalRedirectTokenTtlMinutes) {
+        this.externalRedirectTokenTtlMinutes = externalRedirectTokenTtlMinutes;
     }
 
     /**

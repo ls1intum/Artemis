@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
 import java.security.Security;
+import java.time.Duration;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
@@ -107,8 +108,9 @@ public class SAML2Configuration {
         authRequestResolver.setRelayStateResolver(new Saml2RelayStateResolver(validator, redirectUriRepository));
 
         // Configure success handler
+        Duration tokenTtl = Duration.ofMinutes(saml2Properties.getExternalRedirectTokenTtlMinutes());
         SAML2ExternalClientAuthenticationSuccessHandler successHandler = new SAML2ExternalClientAuthenticationSuccessHandler(redirectUriRepository, saml2Service, tokenProvider,
-                auditEventRepository, validator);
+                auditEventRepository, validator, tokenTtl);
 
         // @formatter:off
         http

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.authentication;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -115,6 +116,29 @@ class Saml2ExternalRedirectIntegrationTest extends AbstractSpringIntegrationLoca
         TestSecurityContextHolder.setAuthentication(authentication);
         MockHttpServletResponse response2 = onSuccess(handler, nonce, authentication);
         assertThat(response2.getStatus()).isEqualTo(HttpServletResponse.SC_BAD_REQUEST);
+    }
+
+    @Test
+    void testTokenLifetimeMatchesConfiguredTtl() throws Exception {
+        String nonce = "test-nonce-ttl";
+        storeNonce(nonce, "vscode://artemis/callback");
+
+        var handler = createHandler(Duration.ofMinutes(10));
+        Saml2Authentication authentication = createAuthentication();
+        TestSecurityContextHolder.setAuthentication(authentication);
+
+        Instant before = Instant.now();
+        MockHttpServletResponse mockResponse = onSuccess(handler, nonce, authentication);
+
+        String location = mockResponse.getRedirectedUrl();
+        assertThat(location).isNotNull().contains("jwt=");
+        String jwt = location.substring(location.indexOf("jwt=") + "jwt=".length());
+
+        Instant expiration = tokenProvider.getExpirationDate(jwt).toInstant();
+        // Lower bound: the token must not be valid for the full default 24h.
+        assertThat(expiration).isBefore(before.plus(Duration.ofHours(1)));
+        // Upper bound: must be at least the requested 10 minutes from "before".
+        assertThat(expiration).isAfterOrEqualTo(before.plus(Duration.ofMinutes(10)).minusSeconds(2));
     }
 
     @Test
@@ -248,8 +272,12 @@ class Saml2ExternalRedirectIntegrationTest extends AbstractSpringIntegrationLoca
     }
 
     private SAML2ExternalClientAuthenticationSuccessHandler createHandler() {
+        return createHandler(Duration.ofMinutes(60));
+    }
+
+    private SAML2ExternalClientAuthenticationSuccessHandler createHandler(Duration tokenTtl) {
         SAML2RedirectUriValidator validator = new SAML2RedirectUriValidator(List.of("vscode"));
-        return new SAML2ExternalClientAuthenticationSuccessHandler(redirectUriRepository, saml2Service, tokenProvider, auditEventRepository, validator);
+        return new SAML2ExternalClientAuthenticationSuccessHandler(redirectUriRepository, saml2Service, tokenProvider, auditEventRepository, validator, tokenTtl);
     }
 
     private Saml2Authentication createAuthentication() {
