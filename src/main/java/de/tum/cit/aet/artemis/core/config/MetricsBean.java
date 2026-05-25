@@ -40,13 +40,13 @@ import org.springframework.web.socket.messaging.SubProtocolWebSocketHandler;
 
 import com.zaxxer.hikari.HikariDataSource;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
 import de.tum.cit.aet.artemis.core.dto.ActiveCourseDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.StatisticsRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.exam.api.ExamMetricsApi;

@@ -13,10 +13,10 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.export.CompetencyProgressExportDTO;
 import de.tum.cit.aet.artemis.core.dto.export.UserCompetencyProgressExportDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;

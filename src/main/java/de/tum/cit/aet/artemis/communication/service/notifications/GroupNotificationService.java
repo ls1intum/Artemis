@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.AttachmentChangedNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.DuplicateTestCaseNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseOpenForPracticeNotification;
@@ -24,7 +25,6 @@ import de.tum.cit.aet.artemis.communication.domain.course_notifications.Programm
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.QuizExerciseStartedNotification;
 import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;

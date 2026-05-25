@@ -35,7 +35,7 @@ import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/con
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import dayjs from 'dayjs/esm';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';

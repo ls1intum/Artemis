@@ -28,29 +28,30 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseCreateDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseOperationProgressDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseSummaryDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.course.CourseAccessService;
 import de.tum.cit.aet.artemis.core.service.course.CourseAdminService;
 import de.tum.cit.aet.artemis.core.service.course.CourseDeletionService;
-import de.tum.cit.aet.artemis.core.service.course.CourseLoadService;
 import de.tum.cit.aet.artemis.core.service.course.CourseOperationProgressService;
 import de.tum.cit.aet.artemis.core.service.course.CourseResetService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 
 /**
@@ -87,8 +88,6 @@ public class AdminCourseResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final CourseLoadService courseLoadService;
-
     private final UserRepository userRepository;
 
     private final CourseAdminService courseAdminService;
@@ -109,9 +108,11 @@ public class AdminCourseResource {
 
     private final CourseOperationProgressService progressService;
 
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
+
     public AdminCourseResource(UserRepository userRepository, CourseAdminService courseAdminService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
             FileService fileService, Optional<LtiApi> ltiApi, ChannelService channelService, CourseDeletionService courseDeletionService, CourseAccessService courseAccessService,
-            CourseLoadService courseLoadService, CourseResetService courseResetService, CourseOperationProgressService progressService) {
+            CourseResetService courseResetService, CourseOperationProgressService progressService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         this.courseAdminService = courseAdminService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
@@ -121,9 +122,9 @@ public class AdminCourseResource {
         this.channelService = channelService;
         this.courseDeletionService = courseDeletionService;
         this.courseAccessService = courseAccessService;
-        this.courseLoadService = courseLoadService;
         this.courseResetService = courseResetService;
         this.progressService = progressService;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateService;
     }
 
     /**
@@ -189,6 +190,9 @@ public class AdminCourseResource {
         }
 
         channelService.createDefaultChannels(createdCourse);
+
+        final Course finalCourse = createdCourse;
+        searchableEntityWeaviateService.ifPresent(service -> service.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(finalCourse)));
 
         return ResponseEntity.created(new URI("/api/core/courses/" + createdCourse.getId())).body(createdCourse);
     }

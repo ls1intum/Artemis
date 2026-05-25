@@ -7,7 +7,7 @@ import dayjs from 'dayjs/esm';
 import { filter, map, tap } from 'rxjs/operators';
 import { Course, CourseRoleSlug } from 'app/core/course/shared/entities/course.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { User, UserNameAndLoginDTO, UserPublicInfoDTO } from 'app/core/user/user.model';
+import { User, UserNameAndLoginDTO, UserPublicInfoDTO } from 'app/account/user/user.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { AccountService } from 'app/core/auth/account.service';

@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 
 export const enum SystemNotificationType {
     WARNING = 'WARNING',

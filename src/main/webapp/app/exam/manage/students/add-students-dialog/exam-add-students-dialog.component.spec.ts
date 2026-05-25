@@ -4,7 +4,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { CourseRoleSlug } from 'app/core/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ExamAddStudentsDialogComponent } from 'app/exam/manage/students/add-students-dialog/exam-add-students-dialog.component';
 import { Exam } from 'app/exam/shared/entities/exam.model';

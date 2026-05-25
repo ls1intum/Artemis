@@ -15,6 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
 import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
@@ -22,7 +23,6 @@ import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.service.profile.CourseLearnerProfileService;
 import de.tum.cit.aet.artemis.atlas.service.profile.LearnerProfileService;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 
 class CourseLearnerProfileServiceTest {
 

@@ -17,10 +17,13 @@ Artemis is an interactive learning platform for programming exercises, quizzes, 
 
 ### Server
 ```bash
-./gradlew bootRun                    # Start dev server (includes Angular build)
-./gradlew bootRun -x webapp          # Server only (use with pnpm start)
-./gradlew -Pprod -Pwar clean bootWar # Production WAR artifact
+./gradlew bootRun                          # Start dev server (includes Angular build)
+./gradlew bootRun -x webapp                # Server only (use with pnpm start)
+./gradlew -Pprod -Pwar clean bootWar       # Production WAR (no SBOM, fast)
+./gradlew -Pprod -Pwar -Psbom clean bootWar # Production WAR including server + client SBOM
 ```
+
+SBOM generation (`cyclonedxBom` + `generateClientSbom`) is gated behind the `-Psbom` Gradle property. CI release-eligible jobs (pushes to `develop`/`main`/`release/*`, version tags, and published releases) set it automatically in `.github/workflows/build.yml`. Local builds and PR CI ship a WAR without the SBOM — `AdminSbomResource` returns 404 and the admin UI renders an informational banner in that case.
 
 ### Client
 ```bash
@@ -105,7 +108,8 @@ pnpm run test:one -- --test-path-pattern='src/main/webapp/app/path/to/spec\.ts$'
 
 ### Server (`src/main/java/de/tum/cit/aet/artemis/`)
 Organized by feature module:
-- `core/` - Configuration, security, utilities, base entities
+- `core/` - Configuration, security base, utilities, base entities
+- `account/` - User, authority, passkey, account REST, authentication, LDAP
 - `exercise/` - Base exercise functionality
 - `programming/` - Programming exercises with CI/CD
 - `quiz/` - Quiz exercises
@@ -116,12 +120,16 @@ Organized by feature module:
 - `assessment/` - Grading and assessment
 - `communication/` - Channels, messaging, notifications
 - `lecture/` - Lecture management
+- `calendar/` - Calendar events and iCal subscriptions
 - `atlas/` - Competency-based learning, learning analytics
 - `iris/` - LLM-based virtual tutor
 - `athena/` - ML-based assessment
+- `hyperion/` - LLM-based exercise creation assistant
 - `plagiarism/` - Plagiarism detection (JPlag)
 - `lti/` - LTI integration
 - `tutorialgroup/` - Tutorial group management
+- `globalsearch/` - Cross-entity search via Weaviate
+- `videosource/` - External video source integration (TUM Live)
 
 ### Client Web App (`src/main/webapp/app/`)
 - `core/` - Core services (HTTP, auth, guards)

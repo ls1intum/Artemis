@@ -1,6 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
@@ -13,7 +13,7 @@ import { faBan, faCheck, faSave, faTimes } from '@fortawesome/free-solid-svg-ico
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { AdminUserService } from 'app/core/user/shared/admin-user.service';
+import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';

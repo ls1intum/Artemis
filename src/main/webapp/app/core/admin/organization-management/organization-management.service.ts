@@ -4,7 +4,7 @@ import { Observable, map, tap } from 'rxjs';
 
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { PageableResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 

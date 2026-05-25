@@ -32,7 +32,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { map } from 'rxjs';
 import { ForwardMessageDialogComponent } from 'app/communication/course-conversations-components/forward-message-dialog/forward-message-dialog.component';
 import { defaultFirstLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { firstValueFrom } from 'rxjs';
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
 
@@ -569,7 +569,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
 
                             // Create new conversation if necessary
                             if (userLogins.length > 0) {
-                                let newConversation: Conversation | undefined = undefined;
+                                let newConversation: Conversation | undefined;
 
                                 if (userLogins.length === 1) {
                                     // Direct message

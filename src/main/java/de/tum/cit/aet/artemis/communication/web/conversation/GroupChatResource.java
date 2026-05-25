@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.AddedToChannelNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.RemovedFromChannelNotification;
@@ -36,7 +37,6 @@ import de.tum.cit.aet.artemis.communication.service.conversation.GroupChatServic
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.GroupChatAuthorizationService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 
 @Profile(PROFILE_CORE)

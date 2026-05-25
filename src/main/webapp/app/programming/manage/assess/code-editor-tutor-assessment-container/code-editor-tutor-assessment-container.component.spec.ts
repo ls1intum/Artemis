@@ -8,7 +8,7 @@ import { outputToObservable } from '@angular/core/rxjs-interop';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { By } from '@angular/platform-browser';
 import { MockComponent } from 'ng-mocks';

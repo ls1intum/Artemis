@@ -1,5 +1,5 @@
 import { EntityResponseType, EntityResponseTypeArray, IComplaintService } from 'app/assessment/shared/services/complaint.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Observable, of } from 'rxjs';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';

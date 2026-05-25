@@ -3,7 +3,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { of, throwError } from 'rxjs';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { CourseRoleSlug } from 'app/core/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { AlertService } from 'app/shared/service/alert.service';

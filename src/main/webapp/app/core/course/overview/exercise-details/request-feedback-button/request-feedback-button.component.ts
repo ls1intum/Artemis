@@ -1,10 +1,10 @@
-import { Component, OnDestroy, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { Subscription, filter, skip } from 'rxjs';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPenSquare } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_ATHENA } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -15,7 +15,7 @@ import { ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exer
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { UserService } from 'app/core/user/shared/user.service';
+import { UserService } from 'app/account/user/shared/user.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -24,7 +24,17 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+
+// Mirrors the server-side default for `artemis.athena.allowed-feedback-requests`
+export const DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT = 10;
+
+export function countSuccessfulAthenaFeedbackRequests(participation?: StudentParticipation): number {
+    return (
+        getAllResultsOfAllSubmissions(participation?.submissions)?.filter((result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA && result.successful == true)
+            .length ?? 0
+    );
+}
 
 @Component({
     selector: 'jhi-request-feedback-button',
@@ -52,8 +62,9 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     isExamExercise: boolean;
     participation?: StudentParticipation;
     hasUserAcceptedLLMUsage: boolean;
-    currentFeedbackRequestCount = 0;
-    feedbackRequestLimit = 10; // remark: this will be defined by the instructor and fetched
+    currentFeedbackRequestCount = signal(0);
+    readonly feedbackRequestLimit = DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT;
+    readonly isFeedbackLimitReached = computed(() => this.currentFeedbackRequestCount() >= this.feedbackRequestLimit);
 
     isSubmitted = input<boolean>();
     pendingChanges = input<boolean>(false);
@@ -71,7 +82,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+        this.athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
         this.isExamExercise = isExamExercise(this.exercise());
         if (this.isExamExercise || !this.exercise().id) {
             return;
@@ -95,10 +106,11 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
                     // Prefer practice participation when it exists (student is working in practice mode)
                     this.participation = practiceParticipation ?? gradedParticipation;
                     if (this.participation) {
-                        this.currentFeedbackRequestCount =
+                        this.currentFeedbackRequestCount.set(
                             getAllResultsOfAllSubmissions(this.participation.submissions)?.filter(
                                 (result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA && result.successful == true,
-                            ).length ?? 0;
+                            ).length ?? 0,
+                        );
                         this.subscribeToResultUpdates();
                     }
                 },
@@ -150,6 +162,9 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     }
 
     async requestAIFeedback(): Promise<void> {
+        if (this.isFeedbackLimitReached()) {
+            return;
+        }
         if (!this.hasUserAcceptedLLMUsage) {
             await this.showLLMSelectionModal();
             return;
@@ -175,7 +190,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
 
     private handleAthenaAssessment(result: Result) {
         if (result.completionDate && result.successful) {
-            this.currentFeedbackRequestCount += 1;
+            this.currentFeedbackRequestCount.update((count) => count + 1);
         }
     }
 

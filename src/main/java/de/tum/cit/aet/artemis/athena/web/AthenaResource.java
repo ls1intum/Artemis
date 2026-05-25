@@ -1,15 +1,13 @@
 package de.tum.cit.aet.artemis.athena.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +15,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.athena.config.AthenaEnabled;
 import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
@@ -46,7 +47,7 @@ import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
 /**
  * REST controller for Athena feedback suggestions.
  */
-@Profile(PROFILE_ATHENA)
+@Conditional(AthenaEnabled.class)
 @Lazy
 @RestController
 @RequestMapping("api/athena/")
@@ -55,6 +56,8 @@ public class AthenaResource {
     private static final Logger log = LoggerFactory.getLogger(AthenaResource.class);
 
     private final CourseRepository courseRepository;
+
+    private final UserRepository userRepository;
 
     private final Optional<TextRepositoryApi> textRepositoryApi;
 
@@ -77,11 +80,13 @@ public class AthenaResource {
     /**
      * The AthenaResource provides an endpoint for the client to fetch feedback suggestions from Athena.
      */
-    public AthenaResource(CourseRepository courseRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<TextSubmissionApi> textSubmissionApi,
-            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            Optional<ModelingRepositoryApi> modelingRepositoryApi, Optional<ModelingSubmissionApi> modelingSubmissionApi, AuthorizationCheckService authCheckService,
-            AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, AthenaModuleService athenaModuleService) {
+    public AthenaResource(CourseRepository courseRepository, UserRepository userRepository, Optional<TextRepositoryApi> textRepositoryApi,
+            Optional<TextSubmissionApi> textSubmissionApi, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<ModelingRepositoryApi> modelingRepositoryApi,
+            Optional<ModelingSubmissionApi> modelingSubmissionApi, AuthorizationCheckService authCheckService, AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService,
+            AthenaModuleService athenaModuleService) {
         this.courseRepository = courseRepository;
+        this.userRepository = userRepository;
         this.textRepositoryApi = textRepositoryApi;
         this.textSubmissionApi = textSubmissionApi;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -100,7 +105,7 @@ public class AthenaResource {
          * Method to apply the (graded) feedback provider. Examples: AthenaFeedbackSuggestionsService::getTextFeedbackSuggestions,
          * AthenaFeedbackSuggestionsService::getProgrammingFeedbackSuggestions
          */
-        List<OutputType> apply(ExerciseType exercise, SubmissionType submission, Boolean isGraded) throws NetworkingException;
+        List<OutputType> apply(ExerciseType exercise, SubmissionType submission, boolean isGraded, User user) throws NetworkingException;
     }
 
     private <ExerciseT extends Exercise, SubmissionT extends Submission, OutputT> ResponseEntity<List<OutputT>> getFeedbackSuggestions(long exerciseId, long submissionId,
@@ -117,9 +122,10 @@ public class AthenaResource {
         }
 
         final var submission = submissionFetcher.apply(submissionId);
+        final var user = userRepository.getUser();
 
         try {
-            return ResponseEntity.ok(feedbackProvider.apply(exercise, submission, true));
+            return ResponseEntity.ok(feedbackProvider.apply(exercise, submission, true, user));
         }
         catch (NetworkingException e) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();

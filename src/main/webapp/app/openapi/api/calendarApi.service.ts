@@ -36,7 +36,7 @@ export class CalendarApiService extends BaseService {
     }
 
     /**
-     * @endpoint get /api/core/calendar/courses/{courseId}/calendar-events-ics
+     * @endpoint get /api/calendar/courses/{courseId}/calendar-events-ics
      * @param courseId 
      * @param token 
      * @param filterOptions 
@@ -116,7 +116,7 @@ export class CalendarApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/core/calendar/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/calendar-events-ics`;
+        let localVarPath = `/api/calendar/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/calendar-events-ics`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<string>('get', `${basePath}${localVarPath}`,
             {
@@ -133,20 +133,20 @@ export class CalendarApiService extends BaseService {
     }
 
     /**
-     * @endpoint get /api/core/calendar/subscription-token
+     * @endpoint get /api/calendar/subscription-token
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public getCalendarEventSubscriptionToken(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<string>;
-    public getCalendarEventSubscriptionToken(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<string>>;
-    public getCalendarEventSubscriptionToken(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<string>>;
-    public getCalendarEventSubscriptionToken(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public getCalendarEventSubscriptionToken(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/plain', context?: HttpContext, transferCache?: boolean}): Observable<string>;
+    public getCalendarEventSubscriptionToken(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/plain', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<string>>;
+    public getCalendarEventSubscriptionToken(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'text/plain', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<string>>;
+    public getCalendarEventSubscriptionToken(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'text/plain', context?: HttpContext, transferCache?: boolean}): Observable<any> {
 
         let localVarHeaders = this.defaultHeaders;
 
         const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
-            'application/json'
+            'text/plain'
         ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
@@ -168,7 +168,7 @@ export class CalendarApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/core/calendar/subscription-token`;
+        let localVarPath = `/api/calendar/subscription-token`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<string>('get', `${basePath}${localVarPath}`,
             {
@@ -185,7 +185,7 @@ export class CalendarApiService extends BaseService {
 
     /**
      * Get calendar events grouped by month
-     * @endpoint get /api/core/calendar/courses/{courseId}/calendar-events
+     * @endpoint get /api/calendar/courses/{courseId}/calendar-events
      * @param courseId 
      * @param monthKeys 
      * @param timeZone 
@@ -265,7 +265,7 @@ export class CalendarApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/core/calendar/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/calendar-events`;
+        let localVarPath = `/api/calendar/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/calendar-events`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<{ [key: string]: Array<CalendarEvent>; }>('get', `${basePath}${localVarPath}`,
             {

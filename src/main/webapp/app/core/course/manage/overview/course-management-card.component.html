@@ -230,26 +230,13 @@
     </div>
     <div class="card-footer">
         @if (course().isAtLeastTutor) {
-            <jhi-feature-overlay [enabled]="examEnabled" placement="right">
-                <a
-                    [routerLink]="['/course-management', course().id, 'exams']"
-                    class="btn btn-primary me-1 mb-1"
-                    [ngbTooltip]="'entity.action.exams' | artemisTranslate"
-                    id="course-card-open-exams"
-                >
-                    <fa-icon [icon]="faGraduationCap" />
-                    <span class="d-none d-xl-inline" jhiTranslate="entity.action.exams"></span>
-                </a>
-            </jhi-feature-overlay>
-        }
-        @if (course().isAtLeastTutor) {
             <a
                 [routerLink]="['/course-management', course().id, 'exercises']"
-                class="btn btn-primary me-1 mb-1"
+                class="btn course-action-btn course-action-btn--exercises"
                 [ngbTooltip]="'entity.action.exercise' | artemisTranslate"
                 id="course-card-open-exercises"
             >
-                <fa-icon [icon]="faListAlt" />
+                <fa-icon [icon]="faCode" />
                 <span class="d-none d-xl-inline" jhiTranslate="entity.action.exercise"></span>
             </a>
         }
@@ -257,46 +244,38 @@
             <jhi-feature-overlay [enabled]="lectureEnabled" placement="right">
                 <a
                     [routerLink]="['/course-management', course().id, 'lectures']"
-                    class="btn btn-primary me-1 mb-1"
+                    class="btn course-action-btn course-action-btn--lectures"
                     [ngbTooltip]="'entity.action.lecture' | artemisTranslate"
                     id="course-card-open-lectures"
                 >
-                    <fa-icon [icon]="faFilePdf" />
+                    <fa-icon [icon]="faChalkboardTeacher" />
                     <span class="d-none d-xl-inline" jhiTranslate="entity.action.lecture"></span>
                 </a>
             </jhi-feature-overlay>
-        }
-        @if (course().isAtLeastTutor) {
-            <a
-                [routerLink]="['/course-management', course().id, 'course-statistics']"
-                class="btn btn-info me-1 mb-1 hidden-if-mobile"
-                [ngbTooltip]="'artemisApp.courseStatistics.statistics' | artemisTranslate"
-                id="course-card-open-open-statistics"
-            >
-                <fa-icon [icon]="faChartBar" />
-                <span class="d-none d-xl-inline" jhiTranslate="artemisApp.courseStatistics.statistics"></span>
-            </a>
-        }
-        @if (isCommunicationEnabled(course()) && course().isAtLeastTutor) {
-            <a
-                [routerLink]="['/courses', course().id, 'communication']"
-                class="btn btn-primary me-1 mb-1"
-                [ngbTooltip]="'artemisApp.courseOverview.menu.communication' | artemisTranslate"
-            >
-                <fa-icon [icon]="faComments" />
-                <span class="d-none d-xl-inline" jhiTranslate="artemisApp.metis.communication.label"></span>
-            </a>
         }
         @if (course().timeZone || course().isAtLeastInstructor) {
             <jhi-feature-overlay [enabled]="tutorialGroupEnabled">
                 <a
                     [routerLink]="['/course-management', course().id, 'tutorial-groups']"
-                    class="btn btn-primary me-1 mb-1 hidden-if-mobile"
+                    class="btn course-action-btn course-action-btn--tutorial hidden-if-mobile"
                     [ngbTooltip]="'artemisApp.entities.tutorialGroup.plural' | artemisTranslate"
                     id="course-card-open-tutorial-groups"
                 >
-                    <fa-icon [icon]="faPersonChalkboard" />
+                    <fa-icon [icon]="faUsers" />
                     <span [innerHTML]="'artemisApp.entities.tutorialGroup.plural' | artemisTranslate" class="d-none d-xl-inline"></span>
+                </a>
+            </jhi-feature-overlay>
+        }
+        @if (course().isAtLeastTutor) {
+            <jhi-feature-overlay [enabled]="examEnabled" placement="right">
+                <a
+                    [routerLink]="['/course-management', course().id, 'exams']"
+                    class="btn course-action-btn course-action-btn--exams"
+                    [ngbTooltip]="'entity.action.exams' | artemisTranslate"
+                    id="course-card-open-exams"
+                >
+                    <fa-icon [icon]="faFileAlt" />
+                    <span class="d-none d-xl-inline" jhiTranslate="entity.action.exams"></span>
                 </a>
             </jhi-feature-overlay>
         }
@@ -304,21 +283,43 @@
             <jhi-feature-overlay [enabled]="atlasEnabled">
                 <a
                     [routerLink]="['/course-management', course().id, 'competency-management']"
-                    class="btn btn-primary me-1 mb-1 hidden-if-mobile"
+                    class="btn course-action-btn course-action-btn--competencies hidden-if-mobile"
                     [ngbTooltip]="'artemisApp.competency.competencyButton' | artemisTranslate"
                     id="course-card-open-competencies"
                 >
-                    <fa-icon [icon]="faFlag" />
+                    <fa-icon [icon]="faBullseye" />
                     <span [innerHTML]="'artemisApp.competency.competencyButton' | artemisTranslate" class="d-none d-xl-inline"></span>
                 </a>
             </jhi-feature-overlay>
+        }
+        @if (course().isAtLeastTutor) {
+            <a
+                [routerLink]="['/course-management', course().id, 'faqs']"
+                class="btn course-action-btn course-action-btn--faqs"
+                [ngbTooltip]="'entity.action.faq' | artemisTranslate"
+                id="course-card-open-faq"
+            >
+                <fa-icon [icon]="faQuestion" />
+                <span class="d-none d-xl-inline" jhiTranslate="entity.action.faq"></span>
+            </a>
+        }
+        @if (isCommunicationEnabled(course()) && course().isAtLeastTutor) {
+            <a
+                [routerLink]="['/courses', course().id, 'communication']"
+                class="btn btn-primary"
+                [ngbTooltip]="'artemisApp.courseOverview.menu.communication' | artemisTranslate"
+                id="course-card-open-communication"
+            >
+                <fa-icon [icon]="faComments" />
+                <span class="d-none d-xl-inline" jhiTranslate="artemisApp.metis.communication.label"></span>
+            </a>
         }
         @if (course().isAtLeastInstructor) {
             <jhi-feature-overlay [enabled]="atlasEnabled">
                 <a
                     [jhiFeatureToggleHide]="FeatureToggle.LearningPaths"
                     [routerLink]="['/course-management', course().id, 'learning-path-management']"
-                    class="btn btn-primary me-1 mb-1 hidden-if-mobile"
+                    class="btn btn-primary hidden-if-mobile"
                     [ngbTooltip]="'artemisApp.learningPath.learningPathButton' | artemisTranslate"
                     id="course-card-open-learning-paths"
                 >
@@ -329,8 +330,19 @@
         }
         @if (course().isAtLeastTutor) {
             <a
+                [routerLink]="['/course-management', course().id, 'course-statistics']"
+                class="btn btn-info hidden-if-mobile"
+                [ngbTooltip]="'artemisApp.courseStatistics.statistics' | artemisTranslate"
+                id="course-card-open-statistics"
+            >
+                <fa-icon [icon]="faChartBar" />
+                <span class="d-none d-xl-inline" jhiTranslate="artemisApp.courseStatistics.statistics"></span>
+            </a>
+        }
+        @if (course().isAtLeastTutor) {
+            <a
                 [routerLink]="['/course-management', course().id, 'assessment-dashboard']"
-                class="btn btn-info me-1 mb-1"
+                class="btn btn-info"
                 [ngbTooltip]="'entity.action.assessmentDashboard' | artemisTranslate"
                 id="course-card-open-assessment-dashboard"
             >
@@ -341,24 +353,12 @@
         @if (course().isAtLeastInstructor) {
             <a
                 [routerLink]="['/course-management', course().id, 'scores']"
-                class="btn btn-info me-1 mb-1"
+                class="btn btn-info"
                 [ngbTooltip]="'entity.action.scores' | artemisTranslate"
                 id="course-card-open-scores"
             >
                 <fa-icon [icon]="faTable" />
                 <span class="d-none d-xl-inline" jhiTranslate="entity.action.scores"></span>
-            </a>
-        }
-
-        @if (course().isAtLeastTutor) {
-            <a
-                [routerLink]="['/course-management', course().id, 'faqs']"
-                class="btn btn-info me-1 mb-1"
-                [ngbTooltip]="'entity.action.faq' | artemisTranslate"
-                id="course-card-open-faq"
-            >
-                <fa-icon [icon]="faQuestion" />
-                <span class="d-none d-xl-inline" jhiTranslate="entity.action.faq"></span>
             </a>
         }
     </div>

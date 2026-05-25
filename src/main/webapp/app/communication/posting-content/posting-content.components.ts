@@ -5,7 +5,7 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { MetisService } from 'app/communication/service/metis.service';
 import { Subscription } from 'rxjs';
 import { PatternMatch, PostingContentPart, ReferenceType } from '../metis.util';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

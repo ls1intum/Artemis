@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { User, UserPublicInfoDTO } from 'app/core/user/user.model';
+import { User, UserPublicInfoDTO } from 'app/account/user/user.model';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { Course, CourseRoleSlug } from 'app/core/course/shared/entities/course.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';

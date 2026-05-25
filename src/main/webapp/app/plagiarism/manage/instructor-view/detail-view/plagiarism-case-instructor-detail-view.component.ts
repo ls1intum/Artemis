@@ -18,7 +18,7 @@ import { faCheck, faInfo, faPrint, faUser } from '@fortawesome/free-solid-svg-ic
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { abbreviateString } from 'app/shared/util/text.utils';
 import { AccountService } from 'app/core/auth/account.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

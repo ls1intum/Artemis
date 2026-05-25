@@ -12,7 +12,7 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { faArrowRight, faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { AdminUserService } from 'app/core/user/shared/admin-user.service';
+import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from '../../components/help-icon/help-icon.component';

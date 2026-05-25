@@ -12,7 +12,7 @@ import { Subject, of, throwError } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { TranslateService } from '@ngx-translate/core';
 import { DeepLinkingType } from 'app/lti/manage/lti13-deep-linking/lti.constants';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

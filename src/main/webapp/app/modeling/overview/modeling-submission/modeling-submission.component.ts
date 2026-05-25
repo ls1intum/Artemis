@@ -520,10 +520,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private handleAthenaAssessment(result: Result): void {
         if (result.completionDate) {
             this.assessmentResult = this.modelingAssessmentService.convertResult(result);
+            this.result = this.assessmentResult;
             this.prepareAssessmentData();
 
             if (result.successful) {
-                this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
+                this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.modelingExercise?.title ?? '' });
             }
         } else if (result.successful === false) {
             this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
@@ -718,6 +719,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      */
     onReceiveSubmissionPatchFromTeam(submissionPatch: SubmissionPatch) {
         this.modelingEditor()?.importPatch(submissionPatch.patch);
+    }
+
+    onTeamSyncReconnected() {
+        this.modelingEditor()?.broadcastFullState();
     }
 
     private isModelEmpty(model?: string): boolean {

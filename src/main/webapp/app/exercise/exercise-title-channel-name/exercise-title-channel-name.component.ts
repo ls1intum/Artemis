@@ -5,6 +5,9 @@ import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/ti
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 
+/**
+ * @deprecated Use {@link ExerciseTitleChannelNamePrimengComponent} instead.
+ */
 @Component({
     selector: 'jhi-exercise-title-channel-name',
     templateUrl: './exercise-title-channel-name.component.html',

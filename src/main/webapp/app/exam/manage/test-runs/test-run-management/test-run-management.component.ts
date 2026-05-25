@@ -13,7 +13,7 @@ import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-te
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject } from 'rxjs';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { onError } from 'app/shared/util/global.utils';
 import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

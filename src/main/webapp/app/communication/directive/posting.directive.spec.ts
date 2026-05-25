@@ -17,7 +17,7 @@ import { of } from 'rxjs';
 import { Router } from '@angular/router';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { MockProvider } from 'ng-mocks';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import * as courseModel from 'app/core/course/shared/entities/course.model';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
 

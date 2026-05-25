@@ -16,6 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
@@ -30,7 +31,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.GraphType;
 import de.tum.cit.aet.artemis.core.domain.SpanType;
 import de.tum.cit.aet.artemis.core.domain.StatisticsView;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementStatisticsDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseManagementStatisticsDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
