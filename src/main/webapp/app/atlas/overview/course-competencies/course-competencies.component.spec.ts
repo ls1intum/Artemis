@@ -11,7 +11,7 @@ import { CourseCompetenciesComponent } from 'app/atlas/overview/course-competenc
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CompetencyCardStubComponent } from 'test/helpers/stubs/atlas/competency-card-stub.component';

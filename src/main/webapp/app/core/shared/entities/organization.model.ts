@@ -1,5 +1,5 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 
 export class Organization implements BaseEntity {

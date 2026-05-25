@@ -20,7 +20,7 @@ import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ScaleType } from '@swimlane/ngx-charts';
 import { of, throwError } from 'rxjs';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/model/tutorialGroupDetailData';
 import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorialGroupSession';

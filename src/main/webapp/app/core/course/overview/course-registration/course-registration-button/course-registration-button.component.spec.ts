@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';

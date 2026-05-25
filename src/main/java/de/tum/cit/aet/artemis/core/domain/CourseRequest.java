@@ -14,6 +14,8 @@ import jakarta.persistence.Table;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+
 @Entity
 @Table(name = "course_request")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

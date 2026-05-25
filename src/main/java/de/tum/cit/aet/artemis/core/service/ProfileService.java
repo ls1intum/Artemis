@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 import de.tum.cit.aet.artemis.core.config.ArtemisConstants;
 import de.tum.cit.aet.artemis.core.config.Constants;
 
@@ -89,11 +90,13 @@ public class ProfileService {
     }
 
     /**
-     * Checks if the SAML2 profile is active
+     * Checks if the SAML2 module is enabled. Delegates to {@link ArtemisConfigHelper#isSaml2Enabled(Environment)} so
+     * that code paths still relying on the legacy {@code isSaml2Active()} naming continue to work after the migration
+     * from the {@code saml2} Spring profile to the {@code artemis.user-management.saml2.enabled} module-feature toggle.
      *
-     * @return true if the SAML2 profile is active, false otherwise
+     * @return true if SAML2 is enabled, false otherwise
      */
     public boolean isSaml2Active() {
-        return isProfileActive(Constants.PROFILE_SAML2);
+        return new ArtemisConfigHelper().isSaml2Enabled(environment);
     }
 }

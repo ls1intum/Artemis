@@ -4,7 +4,7 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPenSquare } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_ATHENA } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -15,7 +15,7 @@ import { ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exer
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { UserService } from 'app/core/user/shared/user.service';
+import { UserService } from 'app/account/user/shared/user.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -24,7 +24,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
 // Mirrors the server-side default for `artemis.athena.allowed-feedback-requests`
 export const DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT = 10;
@@ -82,7 +82,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+        this.athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
         this.isExamExercise = isExamExercise(this.exercise());
         if (this.isExamExercise || !this.exercise().id) {
             return;

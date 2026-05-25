@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { SystemNotification, SystemNotificationType } from 'app/core/shared/entities/system-notification.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { faExclamationTriangle, faInfoCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { DOCUMENT, NgClass } from '@angular/common';
 import { Subscription, filter } from 'rxjs';

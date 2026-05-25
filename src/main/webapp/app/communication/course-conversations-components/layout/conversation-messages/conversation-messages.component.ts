@@ -29,7 +29,7 @@ import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/b
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { OneToOneChat, isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

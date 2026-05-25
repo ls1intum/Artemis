@@ -4,7 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { Subject, Subscription, combineLatest } from 'rxjs';
 import { isErrorAlert, onError } from 'app/shared/util/global.utils';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
@@ -17,7 +17,7 @@ import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { AdminUserService } from 'app/core/user/shared/admin-user.service';
+import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UsersImportButtonComponent } from 'app/shared/user-import/button/users-import-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -31,7 +31,7 @@ import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { PROFILE_LDAP, addPublicFilePrefix } from 'app/app.constants';
+import { MODULE_FEATURE_LDAP, addPublicFilePrefix } from 'app/app.constants';
 import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
 
@@ -184,8 +184,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     /** Whether search input is invalid (less than 3 characters) */
     readonly searchInvalid = signal(false);
 
-    /** Whether LDAP profile is active */
-    readonly isLdapProfileActive = signal(false);
+    /** Whether the LDAP module feature is enabled */
+    readonly isLdapEnabled = signal(false);
 
     /** User filters */
     readonly filters = signal(new UserFilter());
@@ -257,7 +257,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             this.userListSubscription = this.eventManager.subscribe('userListModification', () => this.loadAll());
             this.handleNavigation();
         });
-        this.isLdapProfileActive.set(this.profileService.isProfileActive(PROFILE_LDAP));
+        this.isLdapEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_LDAP));
     }
 
     /**

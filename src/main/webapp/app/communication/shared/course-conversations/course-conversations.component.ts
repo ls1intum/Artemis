@@ -54,7 +54,7 @@ import { Posting, PostingType, SavedPostStatus, toSavedPostStatus } from 'app/co
 import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { FeatureActivationComponent } from 'app/shared/feature-activation/feature-activation.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';

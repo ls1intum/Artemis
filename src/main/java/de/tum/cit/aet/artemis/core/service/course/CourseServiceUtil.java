@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.service.course;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
 
 /**
  * Utility class for course-related services.

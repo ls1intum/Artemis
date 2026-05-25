@@ -13,7 +13,7 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ConversationDTO, ConversationType } from '../entities/conversation/conversation.model';
-import { User, UserPublicInfoDTO } from 'app/core/user/user.model';
+import { User, UserPublicInfoDTO } from 'app/account/user/user.model';
 import { By } from '@angular/platform-browser';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { OneToOneChat } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
