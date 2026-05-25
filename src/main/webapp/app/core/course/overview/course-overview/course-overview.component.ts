@@ -36,7 +36,7 @@ import { CourseNotificationSettingInfo } from 'app/communication/shared/entities
 import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { CourseNotificationPresetPickerComponent } from 'app/communication/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
-import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { CourseIrisComponent } from 'app/iris/overview/course-iris/course-iris.component';
 import { CourseDashboardComponent } from 'app/core/course/overview/course-dashboard/course-dashboard.component';
 
