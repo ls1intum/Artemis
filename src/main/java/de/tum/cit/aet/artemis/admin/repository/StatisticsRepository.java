@@ -114,7 +114,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
      * @return aggregated active user counts for multiple windows
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.ActiveUserWindowCountsDTO(
+            SELECT new de.tum.cit.aet.artemis.admin.dto.ActiveUserWindowCountsDTO(
                 COUNT(DISTINCT CASE WHEN s.submissionDate >= :nowMinus1Day THEN student.id END),
                 COUNT(DISTINCT CASE WHEN s.submissionDate >= :nowMinus7Days THEN student.id END),
                 COUNT(DISTINCT CASE WHEN s.submissionDate >= :nowMinus14Days THEN student.id END),
