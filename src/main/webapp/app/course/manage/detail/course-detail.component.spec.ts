@@ -20,7 +20,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
-import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
+import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 
 describe('Course Management Detail Component', () => {
     setupTestBed({ zoneless: true });

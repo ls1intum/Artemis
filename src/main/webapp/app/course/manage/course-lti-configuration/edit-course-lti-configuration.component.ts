@@ -10,7 +10,7 @@ import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { LOGIN_PATTERN } from 'app/shared/constants/input.constants';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
-import { LtiConfigurationService } from 'app/core/admin/lti-configuration/lti-configuration.service';
+import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

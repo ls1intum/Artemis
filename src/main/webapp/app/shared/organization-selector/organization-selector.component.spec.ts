@@ -3,7 +3,7 @@ import { OrganizationSelectorComponent } from 'app/shared/organization-selector/
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { of, throwError } from 'rxjs';
-import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
+import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { MockProvider } from 'ng-mocks';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';

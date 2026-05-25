@@ -63,7 +63,7 @@ const routes: Routes = [
             usesModuleBackground: true,
         },
         canActivate: [UserRouteAccessService, PasskeyAuthenticationGuard],
-        loadChildren: () => import('app/core/admin/admin.routes'),
+        loadChildren: () => import('app/admin/admin.routes'),
     },
     {
         path: 'privacy',

@@ -26,7 +26,7 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
+import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
