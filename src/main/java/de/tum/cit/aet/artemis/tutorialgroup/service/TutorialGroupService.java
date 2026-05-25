@@ -34,6 +34,7 @@ import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.DeregisteredFromTutorialGroupNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.RegisteredToTutorialGroupNotification;
 import de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository;
@@ -42,7 +43,6 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTO
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupRegistrationApi;

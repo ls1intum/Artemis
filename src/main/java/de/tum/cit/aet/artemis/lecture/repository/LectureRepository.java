@@ -13,7 +13,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.core.dto.calendar.LectureCalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.dto.LectureCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
@@ -42,7 +42,7 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     Set<Long> findLectureIdsByCourseId(@Param("courseId") long courseId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.calendar.LectureCalendarEventDTO(
+            SELECT new de.tum.cit.aet.artemis.calendar.dto.LectureCalendarEventDTO(
                 lecture.id,
                 lecture.title,
                 lecture.startDate,

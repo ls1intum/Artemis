@@ -41,7 +41,7 @@ import { MockProvider } from 'ng-mocks';
 import { Duration } from 'app/quiz/manage/interfaces/quiz-exercise-interfaces';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations-components/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { GeneratedQuestion } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
