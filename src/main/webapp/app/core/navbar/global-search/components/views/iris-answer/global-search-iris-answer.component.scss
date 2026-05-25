@@ -2,27 +2,27 @@
 
 .iris-inline-answer {
     border-radius: 0.75rem;
-    border: 1px solid color-mix(in srgb, var(--global-search-iris-accent) 18%, transparent);
-    background: color-mix(in srgb, var(--global-search-iris-accent) 4.5%, transparent);
+    border: 1px solid color-mix(in srgb, var(--bs-primary) 18%, transparent);
+    background: color-mix(in srgb, var(--bs-primary) 4.5%, transparent);
 }
 
 .iris-card-header {
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid color-mix(in srgb, var(--global-search-iris-accent) 12%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--bs-primary) 12%, transparent);
     border-radius: 0.75rem 0.75rem 0 0;
 }
 
 .iris-card-label {
     font-size: 0.75rem;
-    color: var(--global-search-iris-accent);
+    color: var(--bs-primary);
 }
 
 .iris-ai-badge {
     padding: 0.125rem 0.375rem;
     font-size: 0.5625rem;
     letter-spacing: 0.04em;
-    color: var(--global-search-iris-accent);
-    background: color-mix(in srgb, var(--global-search-iris-accent) 12%, transparent);
+    color: var(--bs-primary);
+    background: color-mix(in srgb, var(--bs-primary) 12%, transparent);
 }
 
 @keyframes iris-logo-pulse {
@@ -74,12 +74,12 @@
 .iris-toggle-btn {
     padding: 0.125rem 0.75rem 0;
     font-size: 0.6875rem;
-    color: color-mix(in srgb, var(--global-search-iris-accent) 60%, transparent);
+    color: color-mix(in srgb, var(--bs-primary) 60%, transparent);
     cursor: pointer;
     transition: color 0.15s;
 
     &:hover {
-        color: var(--global-search-iris-accent);
+        color: var(--bs-primary);
     }
 }
 
@@ -102,8 +102,8 @@
     width: 1.5rem;
     height: 1.5rem;
     background: transparent;
-    border: 1px solid color-mix(in srgb, var(--global-search-iris-accent) 30%, transparent);
-    color: color-mix(in srgb, var(--global-search-iris-accent) 60%, transparent);
+    border: 1px solid color-mix(in srgb, var(--bs-primary) 30%, transparent);
+    color: color-mix(in srgb, var(--bs-primary) 60%, transparent);
     font-size: 0.5rem;
     cursor: pointer;
     transition:
@@ -112,9 +112,9 @@
         background 0.15s;
 
     &:hover {
-        border-color: color-mix(in srgb, var(--global-search-iris-accent) 60%, transparent);
-        color: var(--global-search-iris-accent);
-        background: color-mix(in srgb, var(--global-search-iris-accent) 8%, transparent);
+        border-color: color-mix(in srgb, var(--bs-primary) 60%, transparent);
+        color: var(--bs-primary);
+        background: color-mix(in srgb, var(--bs-primary) 8%, transparent);
     }
 }
 
@@ -126,14 +126,14 @@
 /* "+N more" — same chip shape but accent-colored */
 .iris-more-btn {
     flex-shrink: 0;
-    color: var(--global-search-iris-accent);
-    border-color: color-mix(in srgb, var(--global-search-iris-accent) 30%, transparent);
-    background: color-mix(in srgb, var(--global-search-iris-accent) 6%, transparent);
+    color: var(--bs-primary);
+    border-color: color-mix(in srgb, var(--bs-primary) 30%, transparent);
+    background: color-mix(in srgb, var(--bs-primary) 6%, transparent);
     cursor: pointer;
 
     &:hover {
-        border-color: color-mix(in srgb, var(--global-search-iris-accent) 60%, transparent);
-        background: color-mix(in srgb, var(--global-search-iris-accent) 8%, transparent);
+        border-color: color-mix(in srgb, var(--bs-primary) 60%, transparent);
+        background: color-mix(in srgb, var(--bs-primary) 8%, transparent);
     }
 }
 
@@ -154,7 +154,7 @@
     padding: 0.25rem 0.625rem;
     min-width: 0;
     background: transparent;
-    border: 1px solid color-mix(in srgb, var(--global-search-iris-accent) 30%, transparent);
+    border: 1px solid color-mix(in srgb, var(--bs-primary) 30%, transparent);
     font-size: 0.6875rem;
     color: var(--bs-body-color);
     transition:
@@ -163,15 +163,15 @@
 
     &:hover,
     &:focus-visible {
-        border-color: color-mix(in srgb, var(--global-search-iris-accent) 60%, transparent);
-        background: color-mix(in srgb, var(--global-search-iris-accent) 8%, transparent);
+        border-color: color-mix(in srgb, var(--bs-primary) 60%, transparent);
+        background: color-mix(in srgb, var(--bs-primary) 8%, transparent);
         color: var(--bs-body-color);
         text-decoration: none !important;
     }
 }
 
 .iris-chip-icon {
-    color: var(--global-search-iris-chip-icon);
+    color: var(--bs-primary);
     font-size: 0.625rem;
 }
 
