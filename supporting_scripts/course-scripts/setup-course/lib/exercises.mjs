@@ -170,7 +170,7 @@ main "\${@}"
 `,
         PYTHON: `#!/usr/bin/env bash
 set -e
-python3 -m pytest --junitxml=test-reports/results.xml
+python3 -m pytest --ignore=assignment --junitxml=test-reports/results.xml
 `,
         C: `#!/usr/bin/env bash
 set -e
