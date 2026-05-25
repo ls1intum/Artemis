@@ -4,7 +4,7 @@ import java.time.ZonedDateTime;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.domain.CourseRequestStatus;
+import de.tum.cit.aet.artemis.course.domain.CourseRequestStatus;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CourseRequestDTO(Long id, String title, String shortName, String semester, ZonedDateTime startDate, ZonedDateTime endDate, boolean testCourse, String reason,

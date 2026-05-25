@@ -42,7 +42,6 @@ import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSetting
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.SavedPostTestRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.export.IrisChatSessionExportDTO;
 import de.tum.cit.aet.artemis.core.dto.export.IrisMessageExportDTO;
 import de.tum.cit.aet.artemis.core.service.export.DataExportCommunicationDataService;
@@ -52,6 +51,7 @@ import de.tum.cit.aet.artemis.core.service.export.DataExportLearnerProfileServic
 import de.tum.cit.aet.artemis.core.service.export.DataExportTutorialGroupService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionFactory;

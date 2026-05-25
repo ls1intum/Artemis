@@ -23,7 +23,6 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementDetailViewDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementOverviewStatisticsDTO;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
@@ -35,6 +34,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.course.CourseForUserGroupService;
 import de.tum.cit.aet.artemis.core.service.course.CourseOverviewService;
 import de.tum.cit.aet.artemis.core.service.course.CourseStatsService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 

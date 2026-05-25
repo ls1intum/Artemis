@@ -20,15 +20,15 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.CourseRequest;
-import de.tum.cit.aet.artemis.core.domain.CourseRequestStatus;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestCreateDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestDecisionDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestsAdminOverviewDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRequestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseRequest;
+import de.tum.cit.aet.artemis.course.domain.CourseRequestStatus;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentTest {

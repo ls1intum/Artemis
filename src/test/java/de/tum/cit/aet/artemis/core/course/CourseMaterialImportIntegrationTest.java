@@ -14,10 +14,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.CourseMaterialImportOptionsDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseMaterialImportResultDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseSummaryDTO;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndependentTest {

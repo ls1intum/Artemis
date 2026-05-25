@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.domain;
+package de.tum.cit.aet.artemis.course.domain;
 
 /**
  * Enum to define the different error causes for an course/exam export

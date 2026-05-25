@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
-import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 
 class GroupChatIntegrationTest extends AbstractConversationTest {
 

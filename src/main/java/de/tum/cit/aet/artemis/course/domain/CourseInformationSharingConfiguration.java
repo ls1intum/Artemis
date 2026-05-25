@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.domain;
+package de.tum.cit.aet.artemis.course.domain;
 
 /**
  * NOTE: Ordinal mapping in property of Course.java do NOT change the order of the existing values.

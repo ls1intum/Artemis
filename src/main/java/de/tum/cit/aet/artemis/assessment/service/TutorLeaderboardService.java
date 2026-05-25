@@ -22,8 +22,8 @@ import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintsDTO
 import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardMoreFeedbackRequestsDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Profile(PROFILE_CORE)

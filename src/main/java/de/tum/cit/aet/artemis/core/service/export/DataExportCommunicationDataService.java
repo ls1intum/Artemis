@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSetting
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ReactionRepository;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
  * A service to create the communication data export for users.

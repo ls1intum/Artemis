@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.domain;
+package de.tum.cit.aet.artemis.course.domain;
 
 /**
  * Current status of a long-running course operation.

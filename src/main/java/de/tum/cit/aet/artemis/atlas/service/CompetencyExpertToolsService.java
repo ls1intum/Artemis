@@ -28,8 +28,8 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyErrorDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencySaveResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
  * Service providing LLM-callable tools for the Competency Expert Sub-Agent using Spring AI's function calling API.

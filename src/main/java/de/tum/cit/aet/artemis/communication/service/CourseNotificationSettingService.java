@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.communication.domain.setting_presets.DefaultUserCo
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationSettingInfoDTO;
 import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingPresetRepository;
 import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingSpecificationRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
  * Service responsible for handling course notification settings and filtering recipients based on their preferences.

@@ -21,11 +21,11 @@ import de.tum.cit.aet.artemis.communication.repository.CourseNotificationReposit
 import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingPresetRepository;
 import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingSpecificationRepository;
 import de.tum.cit.aet.artemis.communication.service.ConversationDataCleanupService;
-import de.tum.cit.aet.artemis.core.domain.CourseOperationType;
 import de.tum.cit.aet.artemis.core.dto.CourseSummaryDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
+import de.tum.cit.aet.artemis.course.domain.CourseOperationType;
 import de.tum.cit.aet.artemis.exam.api.ExamDeletionApi;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionInfoDTO;

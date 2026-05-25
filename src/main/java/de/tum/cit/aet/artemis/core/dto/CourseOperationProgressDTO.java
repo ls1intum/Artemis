@@ -5,8 +5,8 @@ import java.time.ZonedDateTime;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.domain.CourseOperationStatus;
-import de.tum.cit.aet.artemis.core.domain.CourseOperationType;
+import de.tum.cit.aet.artemis.course.domain.CourseOperationStatus;
+import de.tum.cit.aet.artemis.course.domain.CourseOperationType;
 
 /**
  * DTO for tracking progress of long-running course operations (delete, reset, archive).

@@ -28,8 +28,6 @@ import org.springframework.data.jpa.domain.Specification;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.domain.User_;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.Course_;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.Organization_;
 import de.tum.cit.aet.artemis.core.dto.OrganizationCourseDTO;
@@ -37,6 +35,8 @@ import de.tum.cit.aet.artemis.core.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.core.dto.OrganizationMemberDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course_;
 
 /**
  * Implementation of organization repository fragment with advanced filtering and aggregation

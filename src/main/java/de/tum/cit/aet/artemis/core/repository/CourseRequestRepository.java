@@ -17,9 +17,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.cit.aet.artemis.core.domain.CourseRequest;
-import de.tum.cit.aet.artemis.core.domain.CourseRequestStatus;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.course.domain.CourseRequest;
+import de.tum.cit.aet.artemis.course.domain.CourseRequestStatus;
 
 @Profile(PROFILE_CORE)
 @Lazy

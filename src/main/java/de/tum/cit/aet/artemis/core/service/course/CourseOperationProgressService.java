@@ -15,9 +15,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.core.domain.CourseOperationStatus;
-import de.tum.cit.aet.artemis.core.domain.CourseOperationType;
 import de.tum.cit.aet.artemis.core.dto.CourseOperationProgressDTO;
+import de.tum.cit.aet.artemis.course.domain.CourseOperationStatus;
+import de.tum.cit.aet.artemis.course.domain.CourseOperationType;
 
 /**
  * Service for managing and broadcasting course operation progress (delete, reset, archive).

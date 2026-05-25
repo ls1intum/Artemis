@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.CourseMaterialImportOptionsDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseMaterialImportResultDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseSummaryDTO;
@@ -27,6 +26,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.course.CourseAdminService;
 import de.tum.cit.aet.artemis.core.service.course.CourseMaterialImportService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
  * REST controller for importing course material from one course to another.
