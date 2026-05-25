@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.domain;
+package de.tum.cit.aet.artemis.admin.domain;
 
 /**
  * This record is used for the LLMTokenUsageService to provide relevant information about LLM Token usage

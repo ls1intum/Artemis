@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.domain;
+package de.tum.cit.aet.artemis.admin.domain;
 
 import java.io.Serial;
 import java.io.Serializable;

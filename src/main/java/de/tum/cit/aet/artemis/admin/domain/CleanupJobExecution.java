@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.domain;
+package de.tum.cit.aet.artemis.admin.domain;
 
 import java.time.ZonedDateTime;
 
@@ -11,6 +11,8 @@ import jakarta.persistence.Table;
 import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 @Entity
 @Table(name = "cleanup_job_execution")

@@ -6,8 +6,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.core.domain.CleanupJobExecution;
-import de.tum.cit.aet.artemis.core.domain.CleanupJobType;
+import de.tum.cit.aet.artemis.admin.domain.CleanupJobExecution;
+import de.tum.cit.aet.artemis.admin.domain.CleanupJobType;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 /**

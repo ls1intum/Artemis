@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.domain.GraphType;
+import de.tum.cit.aet.artemis.admin.domain.GraphType;
+import de.tum.cit.aet.artemis.admin.domain.StatisticsView;
 import de.tum.cit.aet.artemis.core.domain.SpanType;
-import de.tum.cit.aet.artemis.core.domain.StatisticsView;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementStatisticsDTO;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;

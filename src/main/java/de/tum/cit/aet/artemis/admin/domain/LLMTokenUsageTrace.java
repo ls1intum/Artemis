@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.domain;
+package de.tum.cit.aet.artemis.admin.domain;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -16,6 +16,8 @@ import jakarta.persistence.Table;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
  * This represents a trace that contains one or more requests of type {@link LLMTokenUsageRequest}

@@ -30,8 +30,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.cit.aet.artemis.core.domain.DataExport;
-import de.tum.cit.aet.artemis.core.domain.DataExportState;
+import de.tum.cit.aet.artemis.admin.domain.DataExport;
+import de.tum.cit.aet.artemis.admin.domain.DataExportState;
 import de.tum.cit.aet.artemis.core.dto.DataExportAdminDTO;
 import de.tum.cit.aet.artemis.core.dto.DataExportDTO;
 import de.tum.cit.aet.artemis.core.dto.RequestDataExportDTO;

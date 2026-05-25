@@ -27,7 +27,7 @@ import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import de.tum.cit.aet.artemis.core.domain.MigrationChangelog;
+import de.tum.cit.aet.artemis.admin.domain.MigrationChangelog;
 import de.tum.cit.aet.artemis.core.repository.MigrationChangeRepository;
 
 /**

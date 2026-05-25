@@ -4,7 +4,7 @@ import java.time.ZonedDateTime;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.domain.CleanupJobExecution;
+import de.tum.cit.aet.artemis.admin.domain.CleanupJobExecution;
 
 /**
  * DTO representing a record of a cleanup service execution.

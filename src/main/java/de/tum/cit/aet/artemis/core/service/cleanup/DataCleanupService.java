@@ -12,6 +12,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.admin.domain.CleanupJobExecution;
+import de.tum.cit.aet.artemis.admin.domain.CleanupJobType;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.FeedbackCleanupRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.LongFeedbackTextCleanupRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.PlagiarismComparisonCleanupRepository;
@@ -21,8 +23,6 @@ import de.tum.cit.aet.artemis.assessment.repository.cleanup.StudentScoreCleanupR
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.SubmissionVersionCleanupRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.TeamScoreCleanupRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.TextBlockCleanupRepository;
-import de.tum.cit.aet.artemis.core.domain.CleanupJobExecution;
-import de.tum.cit.aet.artemis.core.domain.CleanupJobType;
 import de.tum.cit.aet.artemis.core.dto.CleanupServiceExecutionRecordDTO;
 import de.tum.cit.aet.artemis.core.dto.NonLatestNonRatedResultsCleanupCountDTO;
 import de.tum.cit.aet.artemis.core.dto.NonLatestRatedResultsCleanupCountDTO;

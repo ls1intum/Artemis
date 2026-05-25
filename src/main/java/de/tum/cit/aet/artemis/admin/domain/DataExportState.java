@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.domain;
+package de.tum.cit.aet.artemis.admin.domain;
 
 /**
  * An enum representing the state of a data export, which is used to determine which actions are currently available.

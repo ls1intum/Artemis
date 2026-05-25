@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.domain;
+package de.tum.cit.aet.artemis.admin.domain;
 
 /**
  * Enum representing different types of LLM (Large Language Model) services used in the system.
