@@ -17,11 +17,10 @@ async function assertMCQuestionInView(page: Page, title: string) {
     // Anchor on the component-host element first — that proves the lazy-loaded chunk for the
     // preview/solution route has resolved and the multiple-choice question component has
     // mounted. Then the per-text checks reuse Playwright's default 10s once the first match
-    // resolves. Anchoring is more robust than relying on a raw 30s text wait: under heavy
-    // parallel CI load the route's chunk fetch + Angular bootstrap can briefly exceed 30s
-    // for the title even though the page is well on its way to rendering.
-    await page.locator('jhi-multiple-choice-question').first().waitFor({ state: 'attached', timeout: 60000 });
-    await expect(page.getByText(title)).toBeVisible({ timeout: 30000 });
+    // resolves. The fixture's `page.goto` wrapper already recovers from the /courses drift
+    // pattern, so a 20s anchor wait is plenty even under multi-node CI load.
+    await page.locator('jhi-multiple-choice-question').first().waitFor({ state: 'attached', timeout: 20000 });
+    await expect(page.getByText(title)).toBeVisible({ timeout: 20000 });
     await expect(page.getByText(multipleChoiceTemplate.text)).toBeVisible();
     for (const option of multipleChoiceTemplate.answerOptions) {
         await expect(page.getByText(option.text)).toBeVisible();
