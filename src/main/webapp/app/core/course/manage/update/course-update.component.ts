@@ -4,7 +4,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
-import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, firstValueFrom, map, merge } from 'rxjs';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled, unsetCourseIcon } from 'app/core/course/shared/entities/course.model';
@@ -70,8 +69,6 @@ import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
         ArtemisTranslatePipe,
         RemoveKeysPipe,
         FeatureOverlayComponent,
-        // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
-        HasAnyAuthorityDirective,
         RouterLink,
     ],
 })
