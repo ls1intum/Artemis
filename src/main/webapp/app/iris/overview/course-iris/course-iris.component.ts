@@ -6,7 +6,7 @@ import { map } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import { CourseOverviewRoutePath } from 'app/core/course/overview/courses.route';
+import { CourseOverviewRoutePath } from 'app/course/overview/courses.route';
 
 @Component({
     selector: 'jhi-course-iris',

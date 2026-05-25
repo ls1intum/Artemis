@@ -13,7 +13,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 
 @Component({
     selector: 'jhi-text-exercise-row-buttons',

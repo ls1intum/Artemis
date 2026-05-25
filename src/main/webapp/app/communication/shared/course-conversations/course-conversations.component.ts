@@ -51,10 +51,10 @@ import { ConversationDTO } from 'app/communication/shared/entities/conversation/
 import { FaqState } from 'app/communication/shared/entities/faq.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Posting, PostingType, SavedPostStatus, toSavedPostStatus } from 'app/communication/shared/entities/posting.model';
-import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
-import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
-import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
+import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
+import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
+import { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { FeatureActivationComponent } from 'app/shared/feature-activation/feature-activation.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
@@ -127,7 +127,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
 @Component({
     selector: 'jhi-course-conversations',
     templateUrl: './course-conversations.component.html',
-    styleUrls: ['../../../core/course/overview/course-overview/course-overview.scss', './course-conversations.component.scss'],
+    styleUrls: ['../../../course/overview/course-overview/course-overview.scss', './course-conversations.component.scss'],
     encapsulation: ViewEncapsulation.None,
     providers: [MetisService, LinkifyService, LinkPreviewService],
     imports: [

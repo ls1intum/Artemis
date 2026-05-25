@@ -16,7 +16,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.StudentsAlreadyAssignedException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;

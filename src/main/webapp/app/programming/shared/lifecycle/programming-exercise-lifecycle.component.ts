@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, effect, inject, input } from '@angular/core';
-import { PROFILE_ATHENA, PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA, PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import dayjs from 'dayjs/esm';
@@ -89,7 +89,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
         if (!this.exercise.id && !this.isImport) {
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
         }
-        this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+        this.isAthenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
         this.isLocalCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
         this.updateAutomaticAfterDueDatePreview();
     }
