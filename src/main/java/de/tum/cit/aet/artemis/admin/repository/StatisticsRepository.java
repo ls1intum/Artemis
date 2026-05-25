@@ -24,10 +24,10 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.GraphType;
 import de.tum.cit.aet.artemis.admin.domain.StatisticsView;
+import de.tum.cit.aet.artemis.admin.dto.ActiveUserWindowCountsDTO;
 import de.tum.cit.aet.artemis.admin.dto.CourseStatisticsAverageScore;
 import de.tum.cit.aet.artemis.admin.dto.StatisticsEntry;
 import de.tum.cit.aet.artemis.core.domain.SpanType;
-import de.tum.cit.aet.artemis.core.dto.ActiveUserWindowCountsDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 

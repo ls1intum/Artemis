@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.dto.osv;
+package de.tum.cit.aet.artemis.admin.dto.osv;
 
 import java.util.List;
 
