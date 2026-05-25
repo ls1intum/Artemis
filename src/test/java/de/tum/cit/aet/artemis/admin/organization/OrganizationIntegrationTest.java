@@ -19,16 +19,16 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.admin.domain.Organization;
 import de.tum.cit.aet.artemis.admin.dto.OrganizationCountDTO;
-import de.tum.cit.aet.artemis.admin.dto.OrganizationCourseDTO;
-import de.tum.cit.aet.artemis.admin.dto.OrganizationDTO;
-import de.tum.cit.aet.artemis.admin.dto.OrganizationMemberDTO;
 import de.tum.cit.aet.artemis.admin.organization.util.OrganizationUtilService;
-import de.tum.cit.aet.artemis.admin.repository.OrganizationRepository;
+import de.tum.cit.aet.artemis.core.domain.Organization;
+import de.tum.cit.aet.artemis.core.dto.OrganizationCourseDTO;
+import de.tum.cit.aet.artemis.core.dto.OrganizationDTO;
+import de.tum.cit.aet.artemis.core.dto.OrganizationMemberDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -216,12 +216,14 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testRemoveUserFromOrganization() throws Exception {
         Organization organization = organizationUtilService.createOrganization();
+        organization = organizationRepo.save(organization);
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "testRemoveUser_");
 
-        organization.getUsers().add(student);
-        organization = organizationRepo.save(organization);
+        // Organization no longer holds the inverse-side collection; link is owned by User.organizations
+        student.getOrganizations().add(organization);
+        student = userTestRepository.save(student);
 
-        assertThat(organization.getUsers()).contains(student);
+        assertThat(student.getOrganizations()).contains(organization);
 
         request.delete("/api/core/admin/organizations/" + organization.getId() + "/users/" + student.getLogin(), HttpStatus.OK);
         List<OrganizationMemberDTO> remainingMembers = request.getList("/api/core/admin/organizations/" + organization.getId() + "/users", HttpStatus.OK,
@@ -237,8 +239,6 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testAddOrganization() throws Exception {
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> organizationRepo.findByIdElseThrow(Long.MAX_VALUE));
-
-        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> organizationRepo.findByIdWithEagerUsersAndCoursesElseThrow(Long.MAX_VALUE));
 
         Organization organization = organizationUtilService.createOrganization();
 
@@ -701,10 +701,12 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testOrganizationIndexing() throws Exception {
         Organization organization = organizationUtilService.createOrganization();
+        organization = organizationRepo.save(organization);
         User student = userUtilService.createAndSaveUser(TEST_PREFIX + "testOrganizationIndexing");
 
-        organization.getUsers().add(student);
-        organization = organizationRepo.save(organization);
+        // Organization no longer holds the inverse-side collection; link is owned by User.organizations
+        student.getOrganizations().add(organization);
+        userTestRepository.save(student);
 
         organization.setEmailPattern("^" + student.getEmail() + "$");
 

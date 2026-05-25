@@ -1,22 +1,13 @@
-package de.tum.cit.aet.artemis.admin.domain;
-
-import java.util.HashSet;
-import java.util.Set;
+package de.tum.cit.aet.artemis.core.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
 import org.jspecify.annotations.NonNull;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.course.domain.Course;
 
 @Entity
 @Table(name = "organization")
@@ -45,14 +36,6 @@ public class Organization extends DomainObject {
     @NonNull
     @Column(name = "emailPattern")
     private String emailPattern;
-
-    @ManyToMany(mappedBy = "organizations")
-    @JsonIgnoreProperties("organization")
-    private Set<User> users = new HashSet<>();
-
-    @ManyToMany(mappedBy = "organizations")
-    @JsonIgnoreProperties("organization")
-    private Set<Course> courses = new HashSet<>();
 
     public String getName() {
         return name;
@@ -100,21 +83,5 @@ public class Organization extends DomainObject {
 
     public void setEmailPattern(String emailPattern) {
         this.emailPattern = emailPattern;
-    }
-
-    public Set<User> getUsers() {
-        return users;
-    }
-
-    public void setUsers(Set<User> users) {
-        this.users = users;
-    }
-
-    public Set<Course> getCourses() {
-        return courses;
-    }
-
-    public void setCourses(Set<Course> courses) {
-        this.courses = courses;
     }
 }

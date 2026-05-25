@@ -9,8 +9,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.admin.domain.Organization;
-import de.tum.cit.aet.artemis.admin.repository.OrganizationRepository;
+import de.tum.cit.aet.artemis.core.domain.Organization;
+import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
 
 /**
  * Service responsible for initializing the database with specific testdata related to organizations for use in integration tests.

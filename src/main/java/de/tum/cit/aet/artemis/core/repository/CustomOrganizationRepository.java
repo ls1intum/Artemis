@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.admin.repository;
+package de.tum.cit.aet.artemis.core.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -7,9 +7,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.admin.dto.OrganizationCourseDTO;
-import de.tum.cit.aet.artemis.admin.dto.OrganizationDTO;
-import de.tum.cit.aet.artemis.admin.dto.OrganizationMemberDTO;
+import de.tum.cit.aet.artemis.core.dto.OrganizationCourseDTO;
+import de.tum.cit.aet.artemis.core.dto.OrganizationDTO;
+import de.tum.cit.aet.artemis.core.dto.OrganizationMemberDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 
 /**

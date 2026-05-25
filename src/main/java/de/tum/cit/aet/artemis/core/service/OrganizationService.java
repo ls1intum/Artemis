@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.admin.service;
+package de.tum.cit.aet.artemis.core.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -9,8 +9,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.admin.domain.Organization;
-import de.tum.cit.aet.artemis.admin.repository.OrganizationRepository;
+import de.tum.cit.aet.artemis.core.domain.Organization;
+import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 
 /**
@@ -44,7 +44,7 @@ public class OrganizationService {
      */
     public void index(final Organization organization) {
         log.debug("Start indexing for organization: {}", organization.getName());
-        organization.getUsers().forEach(user -> userRepository.removeOrganizationFromUser(user.getId(), organization));
+        userRepository.findAllByOrganizationId(organization.getId()).forEach(user -> userRepository.removeOrganizationFromUser(user.getId(), organization));
         userRepository.findAllMatchingEmailPattern(organization.getEmailPattern()).forEach(user -> {
             log.debug("User {} matches {} email pattern. Adding", user.getLogin(), organization.getName());
             userRepository.addOrganizationToUser(user.getId(), organization);
@@ -70,7 +70,7 @@ public class OrganizationService {
      */
     public Organization add(Organization organization) {
         Organization addedOrganization = save(organization);
-        addedOrganization = organizationRepository.findByIdWithEagerUsersAndCoursesElseThrow(addedOrganization.getId());
+        addedOrganization = organizationRepository.findByIdElseThrow(addedOrganization.getId());
         index(addedOrganization);
         return addedOrganization;
     }
@@ -86,7 +86,7 @@ public class OrganizationService {
     public Organization update(Organization organization) {
         log.debug("Request to update Organization : {}", organization);
         boolean indexingRequired = false;
-        var oldOrganization = organizationRepository.findByIdWithEagerUsersAndCoursesElseThrow(organization.getId());
+        var oldOrganization = organizationRepository.findByIdElseThrow(organization.getId());
         if (!oldOrganization.getEmailPattern().equals(organization.getEmailPattern())) {
             indexingRequired = true;
         }
@@ -108,11 +108,11 @@ public class OrganizationService {
      * @param organizationId the id of the organization to delete
      */
     public void deleteOrganization(Long organizationId) {
-        final Organization organization = organizationRepository.findByIdWithEagerUsersAndCoursesElseThrow(organizationId);
+        final Organization organization = organizationRepository.findByIdElseThrow(organizationId);
 
         // we make sure to delete all relations before deleting the organization
-        organization.getUsers().forEach(user -> userRepository.removeOrganizationFromUser(user.getId(), organization));
-        organization.getCourses().forEach(course -> courseRepository.removeOrganizationFromCourse(course.getId(), organization));
+        userRepository.findAllByOrganizationId(organizationId).forEach(user -> userRepository.removeOrganizationFromUser(user.getId(), organization));
+        courseRepository.findAllByOrganizationId(organizationId).forEach(course -> courseRepository.removeOrganizationFromCourse(course.getId(), organization));
 
         organizationRepository.delete(organization);
     }

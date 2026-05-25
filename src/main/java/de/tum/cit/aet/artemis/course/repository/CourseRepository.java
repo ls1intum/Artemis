@@ -22,8 +22,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.admin.domain.Organization;
 import de.tum.cit.aet.artemis.admin.dto.StatisticsEntry;
+import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -148,6 +148,14 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             WHERE course.id = :courseId
             """)
     Optional<Course> findWithEagerOrganizations(@Param("courseId") long courseId);
+
+    @Query("""
+            SELECT course
+            FROM Course course
+                JOIN course.organizations organization
+            WHERE organization.id = :organizationId
+            """)
+    Set<Course> findAllByOrganizationId(@Param("organizationId") Long organizationId);
 
     @Query("""
             SELECT course
