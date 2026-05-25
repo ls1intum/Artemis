@@ -1365,6 +1365,10 @@ public class HazelcastConfiguration {
         // MapConfig changes after the proxy is built are silently ignored on most cluster topologies.
         // Must be longer than the longest plausible LLM session (GPT-5.4 + medium reasoning ~5min).
         config.getMapConfigs().put("atlas-orchestrator-runs", new MapConfig().setBackupCount(0).setTimeToLiveSeconds(30 * 60));
+        // SAML2 redirect URI nonce store (HazelcastSaml2RedirectUriRepository). Unauthenticated
+        // callers can populate this map by hitting /saml2/authenticate/{id}?redirect_uri=...,
+        // so a hard per-node cap prevents nonce-flooding from filling Hazelcast memory.
+        config.getMapConfigs().put("saml2-redirect-uri-nonce-map", createSaml2RedirectNonceMapConfig(artemisProperties));
     }
 
     /**
@@ -1485,6 +1489,32 @@ public class HazelcastConfiguration {
     private MapConfig createAtlasSessionMapConfig(ArtemisProperties artemisProperties) {
         return new MapConfig().setBackupCount(artemisProperties.getCache().getHazelcast().getBackupCount())
                 .setEvictionConfig(new EvictionConfig().setEvictionPolicy(EvictionPolicy.LRU).setMaxSizePolicy(MaxSizePolicy.PER_NODE)).setTimeToLiveSeconds(2 * 60 * 60);
+    }
+
+    /**
+     * Creates configuration for the SAML2 redirect URI nonce store.
+     *
+     * <p>
+     * <strong>Purpose:</strong> Holds {@code nonce -> redirect_uri} entries for in-flight SAML2
+     * external-client logins (see {@code HazelcastSaml2RedirectUriRepository}). Entries are
+     * normally consumed atomically on the success callback.
+     *
+     * <p>
+     * <strong>5-Minute TTL:</strong> A SAML2 login that takes longer than five minutes is
+     * abandoned in practice; the TTL ensures stale entries clean up automatically.
+     *
+     * <p>
+     * <strong>10,000-Entry Per-Node Cap with LRU Eviction:</strong> Unauthenticated callers can
+     * populate this map (the auth-initiation endpoint accepts {@code redirect_uri} without a
+     * session), so an upper bound prevents nonce-flooding from filling Hazelcast memory. Under
+     * normal load this cap is never approached.
+     *
+     * @param artemisProperties configuration for backup count
+     * @return the SAML2 redirect nonce map configuration
+     */
+    private MapConfig createSaml2RedirectNonceMapConfig(ArtemisProperties artemisProperties) {
+        return new MapConfig().setBackupCount(artemisProperties.getCache().getHazelcast().getBackupCount()).setTimeToLiveSeconds(5 * 60)
+                .setEvictionConfig(new EvictionConfig().setEvictionPolicy(EvictionPolicy.LRU).setMaxSizePolicy(MaxSizePolicy.PER_NODE).setSize(10_000));
     }
 
     // ==================== Utilities ====================
