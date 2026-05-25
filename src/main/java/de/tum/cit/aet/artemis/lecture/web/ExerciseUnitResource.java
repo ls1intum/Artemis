@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lecture.web;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,8 +71,11 @@ public class ExerciseUnitResource {
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseUnitDto.exercise().id());
-        if (lecture.getCourse() == null) {
+        if (lecture.getCourse() == null || exercise.getCourseViaExerciseGroupOrCourseMember() == null) {
             throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
+        }
+        if (!Objects.equals(lecture.getCourse().getId(), exercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
+            throw new BadRequestAlertException("The exercise must belong to the same course as the lecture", ENTITY_NAME, "courseMismatch");
         }
 
         ExerciseUnit exerciseUnit = new ExerciseUnit();

@@ -7,6 +7,7 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -95,7 +96,8 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var competencyLink = persistedTextUnit.competencyLinks().stream().findFirst().orElseThrow();
         assertThat(competencyLink.competency().id()).isEqualTo(competency.getId());
         assertThat(competencyLink.weight()).isEqualTo(1);
-        verify(competencyProgressApi).updateProgressByLearningObjectAsync(argThat(unit -> unit instanceof TextUnit textUnit && textUnit.getId().equals(persistedTextUnit.id())));
+        verify(competencyProgressApi)
+                .updateProgressByLearningObjectAsync(argThat(unit -> unit instanceof TextUnit textUnit && Objects.equals(textUnit.getId(), persistedTextUnit.id())));
     }
 
     @Test

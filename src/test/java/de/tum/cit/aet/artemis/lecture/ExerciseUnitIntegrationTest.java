@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -40,6 +41,9 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
 
     @Autowired
     private ModelingExerciseTestRepository modelingExerciseRepository;
@@ -54,6 +58,8 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private FileUploadExerciseRepository fileUploadExerciseRepository;
 
     private Course course1;
+
+    private Course course2;
 
     private Lecture lecture1;
 
@@ -72,6 +78,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentTe
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 1);
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 2);
         this.course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
+        this.course2 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.get(1).getId());
         this.lecture1 = this.course1.getLectures().stream().findFirst().orElseThrow();
 
         this.textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().orElseThrow();
@@ -124,7 +131,12 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentTe
             Exercise exercise = exerciseById.get(exerciseUnit.exercise().id());
             assertThat(exercise).isNotNull();
             assertThat(exerciseUnit.name()).isEqualTo(exercise.getTitle());
-            assertThat(exerciseUnit.releaseDate()).isEqualTo(exercise.getReleaseDate());
+            if (exercise.getReleaseDate() == null) {
+                assertThat(exerciseUnit.releaseDate()).isNull();
+            }
+            else {
+                assertThat(exerciseUnit.releaseDate().toInstant()).isEqualTo(exercise.getReleaseDate().toInstant());
+            }
             assertThat(exerciseUnit.exercise().type()).isEqualTo(exercise.getExerciseType());
         }
 
@@ -138,6 +150,13 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentTe
         Exercise exercise = course1.getExercises().stream().findFirst().orElseThrow();
         request.postWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnitDtoWithIdFor(1L, exercise), ExerciseUnitDTO.class,
                 HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createExerciseUnit_exerciseFromDifferentCourse_shouldReturnBadRequest() throws Exception {
+        TextExercise exercise = textExerciseUtilService.createSampleTextExercise(course2);
+        request.postWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnitDtoFor(exercise), ExerciseUnitDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test

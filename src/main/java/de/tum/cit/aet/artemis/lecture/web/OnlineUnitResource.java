@@ -114,7 +114,7 @@ public class OnlineUnitResource {
 
         // Validation
         checkOnlineUnitCourseAndLecture(existingOnlineUnit, lectureId);
-        validateUrlStringAndReturnUrl(onlineUnitDto.source());
+        validateOnlineUnitSource(onlineUnitDto.source());
 
         // Precompute original competency IDs for progress update below
         Set<Long> originalCompetencyIds = existingOnlineUnit.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(CourseCompetency::getId)
@@ -166,7 +166,7 @@ public class OnlineUnitResource {
             throw new BadRequestAlertException("A new online unit cannot have an id", ENTITY_NAME, "idExists");
         }
 
-        validateUrlStringAndReturnUrl(onlineUnitDto.source());
+        validateOnlineUnitSource(onlineUnitDto.source());
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
@@ -294,7 +294,17 @@ public class OnlineUnitResource {
      * @return The URL object
      * @throws BadRequestException If the URL string is invalid
      */
+    private static void validateOnlineUnitSource(String source) {
+        if (source == null || source.isBlank()) {
+            throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
+        }
+        validateUrlStringAndReturnUrl(source);
+    }
+
     private static URL validateUrlStringAndReturnUrl(String urlString) {
+        if (urlString == null || urlString.isBlank()) {
+            throw new BadRequestException("The specified link must not be empty");
+        }
         try {
             return new URI(urlString).toURL();
         }

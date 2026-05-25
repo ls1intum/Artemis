@@ -137,6 +137,13 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createOnlineUnit_missingSource_shouldReturnBadRequest() throws Exception {
+        OnlineUnitDTO onlineUnitWithoutSource = new OnlineUnitDTO(null, onlineUnit.getName(), onlineUnit.getReleaseDate(), onlineUnit.getDescription(), null, null, null);
+        request.postWithResponseBody("/api/lecture/lectures/" + this.lecture1.getId() + "/online-units", onlineUnitWithoutSource, OnlineUnitDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void createOnlineUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
