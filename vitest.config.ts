@@ -38,7 +38,9 @@ export default defineConfig({
         include: [
             'src/main/webapp/app/fileupload/**/*.spec.ts', // include fileupload tests
             'src/main/webapp/app/account/**/*.spec.ts', // include all account tests
+            'src/main/webapp/app/admin/**/*.spec.ts', // include all admin tests
             'src/main/webapp/app/core/**/*.spec.ts', // include all core tests
+            'src/main/webapp/app/course/**/*.spec.ts', // include all course tests
             'src/main/webapp/app/calendar/**/*.spec.ts', // include all calendar tests
             'src/main/webapp/app/buildagent/**/*.spec.ts', // include build agent tests
             'src/main/webapp/app/text/**/*.spec.ts', // include text module tests
@@ -104,9 +106,11 @@ export default defineConfig({
             reportsDirectory: 'build/test-results/vitest/coverage',
             include: [
                 'src/main/webapp/app/account/**/*.ts', // include all account for code coverage
+                'src/main/webapp/app/admin/**/*.ts', // include all admin for code coverage
                 'src/main/webapp/app/assessment/**/*.ts', // include assessment for code coverage
                 'src/main/webapp/app/buildagent/**/*.ts', // include buildagent for code coverage
                 'src/main/webapp/app/core/**/*.ts', // include all core for code coverage
+                'src/main/webapp/app/course/**/*.ts', // include all course for code coverage
                 'src/main/webapp/app/calendar/**/*.ts', // include all calendar for code coverage
                 'src/main/webapp/app/fileupload/**/*.ts', // include fileupload for code coverage
                 'src/main/webapp/app/lecture/**/*.ts', // include lecture for code coverage
