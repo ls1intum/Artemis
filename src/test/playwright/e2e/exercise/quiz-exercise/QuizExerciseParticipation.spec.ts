@@ -217,7 +217,10 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
 
         test('Student cannot participate in scheduled quiz before start of working time', async ({ login, courseOverview, quizExerciseParticipation }) => {
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
-            await expect(quizExerciseParticipation.getWaitingForStartAlert()).toBeVisible();
+            // The waiting-for-start overlay is gated on the quiz's startOfWorkingTime + a
+            // client-side polling cycle. Under multi-node CI load the page render + initial
+            // poll can take >10s (the default expect timeout). Extend to 30s explicitly.
+            await expect(quizExerciseParticipation.getWaitingForStartAlert()).toBeVisible({ timeout: 30_000 });
         });
 
         test('Student can participate in scheduled quiz when working time arrives', async ({ page, login, courseOverview, quizExerciseParticipation }) => {

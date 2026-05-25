@@ -160,24 +160,27 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             quizExerciseMultipleChoice,
         }) => {
             // The describe has the @fast inherited tag (outer) plus its own @slow, so the test
-            // matches both projects. In fast-tests (60s budget) this flow — create competency,
-            // create quiz, student participates, polls for async competency progress — has been
-            // observed at ~80s under multi-node CI load. test.slow() lifts the budget to 180s
-            // for whichever project is running.
-            test.slow();
+            // matches both projects. The full flow — create competency + create quiz +
+            // student participates + 30s quiz duration + 120s competency-progress poll +
+            // post-progress UI check — needs ~210s end-to-end. Lift the per-test timeout to
+            // 6 minutes explicitly so we don't bump up against test.slow()'s 180s envelope.
+            test.setTimeout(360_000);
             // Create competency first
             const competency = await courseManagementAPIRequests.createCompetency(nestedCourse, 'Progress Test Competency', 'Track progress');
 
             // Create quiz exercise using the standard helper (ensures proper DTO conversion)
             await login(admin);
-            // Use short duration so the quiz ends quickly after submission for faster progress calculation.
-            // start-now sets dueDate = now + duration + QUIZ_GRACE_PERIOD (5s).
-            // Results are processed at dueDate + 5s. With duration=15, results arrive ~25s after start.
+            // 30s quiz duration (was 15s): with 15s the student-side login → tick answers →
+            // submit chain occasionally exceeded the window under multi-node CI load,
+            // leaving #submit-exercise permanently disabled after the quiz auto-ended. 30s
+            // is the sweet spot — comfortably above the worst observed submit chain (~20s)
+            // while keeping evaluation latency bounded (dueDate = startTime + duration; the
+            // scheduled-evaluation job fires ~5s after dueDate).
             const quizExercise = await exerciseAPIRequests.createQuizExercise({
                 body: { course: nestedCourse },
                 quizQuestions: [multipleChoiceQuizTemplate],
                 title: 'Progress Test Quiz',
-                duration: 15,
+                duration: 30,
                 competencyLinks: [{ competency: { id: competency.id }, weight: 1 }],
             });
 
@@ -196,7 +199,9 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             const response = await quizExerciseMultipleChoice.submit();
             expect(response.status()).toBe(200);
 
-            // Wait for competency progress to be calculated (quiz results are processed asynchronously)
+            // Wait for competency progress to be calculated. Worst-case path:
+            //   30s quiz duration + 5s grace period + 5s scheduler tick + competency-progress
+            //   async calculation. 120s is a comfortable upper bound under multi-node load.
             await expect
                 .poll(
                     async () => {
@@ -208,7 +213,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
                         const updatedCompetency = competencies.find((item) => item.id === competency.id);
                         return updatedCompetency?.userProgress?.[0]?.progress ?? 0;
                     },
-                    { timeout: 60000 },
+                    { timeout: 120000 },
                 )
                 .toBeGreaterThan(0);
 
