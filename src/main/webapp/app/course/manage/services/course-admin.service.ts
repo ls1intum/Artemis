@@ -1,0 +1,77 @@
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
+import { Course } from 'app/course/shared/entities/course.model';
+import { objectToJsonBlob } from 'app/shared/util/blob-util';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { CourseSummaryDTO } from 'app/course/shared/entities/course-summary.model';
+import { CourseOperationProgressDTO } from 'app/course/shared/entities/course-operation-progress.model';
+import { convertDateFromServer } from 'app/shared/util/date.utils';
+import { toCourseCreateDTO } from 'app/course/shared/entities/course-update-dto.model';
+
+export type EntityResponseType = HttpResponse<Course>;
+export type EntityArrayResponseType = HttpResponse<Course[]>;
+
+@Injectable({ providedIn: 'root' })
+export class CourseAdminService {
+    private http = inject(HttpClient);
+    private courseManagementService = inject(CourseManagementService);
+
+    private resourceUrl = 'api/core/admin/courses';
+
+    /**
+     * creates a course using a POST request
+     * @param course - the course to be created on the server
+     * @param courseImage - the course icon file
+     */
+    create(course: Course, courseImage?: Blob): Observable<EntityResponseType> {
+        const dto = toCourseCreateDTO(course);
+        const formData = new FormData();
+        formData.append('course', objectToJsonBlob(dto));
+        if (courseImage) {
+            // The image was cropped by us and is a blob, so we need to set a placeholder name for the server check
+            formData.append('file', courseImage, 'placeholderName.png');
+        }
+
+        return this.http
+            .post<Course>(this.resourceUrl, formData, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.courseManagementService.processCourseEntityResponseType(res)));
+    }
+
+    /**
+     * deletes the course corresponding to the given unique identifier using a DELETE request
+     * @param courseId - the id of the course to be deleted
+     */
+    delete(courseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${courseId}`, { observe: 'response' });
+    }
+
+    /**
+     * Returns a comprehensive summary for the course containing all relevant data counts.
+     * Used by both deletion and reset confirmation dialogs.
+     * @param courseId - the id of the course to get the summary for
+     */
+    getCourseSummary(courseId: number): Observable<HttpResponse<CourseSummaryDTO>> {
+        return this.http.get<CourseSummaryDTO>(`${this.resourceUrl}/${courseId}/summary`, { observe: 'response' });
+    }
+
+    /**
+     * Resets the course by removing all student data while preserving the course structure.
+     * @param courseId - the id of the course to reset
+     */
+    reset(courseId: number): Observable<HttpResponse<void>> {
+        return this.http.post<void>(`${this.resourceUrl}/${courseId}/reset`, null, { observe: 'response' });
+    }
+
+    /**
+     * Returns the current progress of a delete/reset/archive operation on the course.
+     * This is used for polling when WebSocket is not available.
+     * @param courseId - the id of the course to get the operation progress for
+     */
+    getOperationProgress(courseId: number): Observable<HttpResponse<CourseOperationProgressDTO | null>> {
+        return this.http
+            .get<CourseOperationProgressDTO>(`${this.resourceUrl}/${courseId}/operation-progress`, { observe: 'response' })
+            .pipe(tap((res) => res.body && (res.body.startedAt = convertDateFromServer(res.body.startedAt))));
+    }
+}

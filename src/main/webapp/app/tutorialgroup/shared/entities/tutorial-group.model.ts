@@ -1,5 +1,5 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
 import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
 import { LegacyTutorialGroupSession, TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';

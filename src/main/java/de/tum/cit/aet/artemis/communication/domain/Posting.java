@@ -19,8 +19,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
  * Base class for messages {@link Post} and answer messages {@link AnswerPost} in the communication system.

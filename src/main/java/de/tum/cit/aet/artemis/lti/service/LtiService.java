@@ -29,12 +29,12 @@ import de.tum.cit.aet.artemis.account.security.RandomUtil;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 

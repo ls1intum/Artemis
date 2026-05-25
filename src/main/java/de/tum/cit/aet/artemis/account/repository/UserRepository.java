@@ -41,7 +41,6 @@ import org.springframework.util.StringUtils;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Organization;
@@ -54,6 +53,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.dto.StudentDTO;
 
 /**
@@ -226,6 +226,14 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     // TODO (Phase 9): remove once user_groups table is dropped; use findOneWithCourseRolesAndAuthoritiesAndOrganizationsByLogin instead
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "organizations" })
     Optional<User> findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(String userLogin);
+
+    @Query("""
+            SELECT user
+            FROM User user
+            JOIN user.organizations organization
+            WHERE organization.id = :organizationId
+            """)
+    Set<User> findAllByOrganizationId(@Param("organizationId") Long organizationId);
 
     // TODO (Phase 9): remove once user_groups table is dropped; replace with UserCourseRole-based count
     Long countByDeletedIsFalseAndGroupsContains(String groupName);

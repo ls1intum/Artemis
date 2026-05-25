@@ -22,8 +22,8 @@ import de.tum.cit.aet.artemis.communication.dto.CourseNotificationSettingInfoDTO
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationSettingSpecificationRequestDTO;
 import de.tum.cit.aet.artemis.communication.test_repository.UserCourseNotificationSettingPresetTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.UserCourseNotificationSettingSpecificationTestRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class UserCourseNotificationSettingResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {

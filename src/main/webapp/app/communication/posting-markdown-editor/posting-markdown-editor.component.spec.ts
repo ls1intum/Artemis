@@ -14,9 +14,9 @@ import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.
 import { metisAnswerPostUser2, metisPostExerciseUser1 } from 'test/helpers/sample/metis-sample-data';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { Subject, of } from 'rxjs';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
-import * as CourseModel from 'app/core/course/shared/entities/course.model';
+import * as CourseModel from 'app/course/shared/entities/course.model';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ChannelReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/channel-reference.action';
 import { UserMentionAction } from 'app/shared/monaco-editor/model/actions/communication/user-mention.action';

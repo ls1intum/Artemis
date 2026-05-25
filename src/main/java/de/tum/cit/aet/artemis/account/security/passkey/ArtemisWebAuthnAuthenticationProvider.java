@@ -21,9 +21,9 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.exception.UserNotActivatedException;
 import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.service.RateLimitService;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
-import de.tum.cit.aet.artemis.core.service.RateLimitService;
 
 /**
  * Custom WebAuthn authentication provider for passkey-based authentication in Artemis.

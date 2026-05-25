@@ -5,7 +5,7 @@ import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { BehaviorSubject, firstValueFrom, of, throwError } from 'rxjs';
 import { outputToObservable } from '@angular/core/rxjs-interop';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { User } from 'app/account/user/user.model';
@@ -27,7 +27,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { delay } from 'rxjs/operators';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';

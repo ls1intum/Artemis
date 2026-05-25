@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.communication.domain.Reaction;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.domain.SavedPostStatus;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
  * Factory for creating objects related to Conversations.

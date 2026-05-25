@@ -23,7 +23,7 @@ import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { QuizBatch, QuizExercise, QuizMode, resetQuizForExam, resetQuizForImport } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
@@ -37,7 +37,7 @@ import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-qu
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { DifficultyLevel, Exercise, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { cloneDeep } from 'lodash-es';

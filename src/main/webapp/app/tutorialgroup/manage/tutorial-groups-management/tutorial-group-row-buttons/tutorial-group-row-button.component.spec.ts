@@ -7,7 +7,7 @@ import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

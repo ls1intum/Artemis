@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.assessment.dto.GradeDTO;
 import de.tum.cit.aet.artemis.assessment.dto.GradeStepDTO;
 import de.tum.cit.aet.artemis.assessment.dto.GradeStepsDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;

@@ -12,8 +12,8 @@ import jakarta.validation.constraints.Min;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 @Entity
 @Table(name = "course_learner_profile")

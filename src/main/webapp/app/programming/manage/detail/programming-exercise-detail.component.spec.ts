@@ -6,7 +6,7 @@ import { of, throwError } from 'rxjs';
 import { ProgrammingExerciseDetailComponent } from 'app/programming/manage/detail/programming-exercise-detail.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateModule } from '@ngx-translate/core';
 import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';

@@ -63,7 +63,7 @@ const routes: Routes = [
             usesModuleBackground: true,
         },
         canActivate: [UserRouteAccessService, PasskeyAuthenticationGuard],
-        loadChildren: () => import('app/core/admin/admin.routes'),
+        loadChildren: () => import('app/admin/admin.routes'),
     },
     {
         path: 'privacy',
@@ -105,7 +105,7 @@ const routes: Routes = [
     },
     {
         path: 'course-requests',
-        loadComponent: () => import('app/core/course/request/course-request.component').then((m) => m.CourseRequestComponent),
+        loadComponent: () => import('app/course/request/course-request.component').then((m) => m.CourseRequestComponent),
         data: {
             authorities: IS_AT_LEAST_STUDENT,
             pageTitle: 'artemisApp.courseRequest.title',
@@ -208,7 +208,7 @@ const routes: Routes = [
     // ===== COURSE MANAGEMENT =====
     {
         path: 'course-management',
-        loadChildren: () => import('./core/course/manage/course-management.route').then((m) => m.courseManagementRoutes),
+        loadChildren: () => import('./course/manage/course-management.route').then((m) => m.courseManagementRoutes),
         data: {
             usesModuleBackground: true,
         },
@@ -220,7 +220,7 @@ const routes: Routes = [
 
     {
         path: 'courses',
-        loadChildren: () => import('app/core/course/overview/courses.route').then((m) => m.courseRoutes),
+        loadChildren: () => import('app/course/overview/courses.route').then((m) => m.courseRoutes),
     },
     // ===== GRADING SYSTEM =====
     {
@@ -234,12 +234,12 @@ const routes: Routes = [
     {
         path: 'courses/:courseId/exercises/:exerciseId/problem-statement',
         pathMatch: 'full',
-        loadComponent: () => import('app/core/course/overview/exercise-details/problem-statement/problem-statement.component').then((m) => m.ProblemStatementComponent),
+        loadComponent: () => import('app/course/overview/exercise-details/problem-statement/problem-statement.component').then((m) => m.ProblemStatementComponent),
     },
     {
         pathMatch: 'full',
         path: 'courses/:courseId/exercises/:exerciseId/problem-statement/:participationId',
-        loadComponent: () => import('app/core/course/overview/exercise-details/problem-statement/problem-statement.component').then((m) => m.ProblemStatementComponent),
+        loadComponent: () => import('app/course/overview/exercise-details/problem-statement/problem-statement.component').then((m) => m.ProblemStatementComponent),
     },
     {
         path: 'courses/:courseId/exercises/:exerciseId/participations/:participationId/results/:resultId/feedback',

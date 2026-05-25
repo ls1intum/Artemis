@@ -19,7 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;

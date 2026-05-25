@@ -1,7 +1,7 @@
 import { Component, InputSignal, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CourseRoleSlug } from 'app/core/course/shared/entities/course.model';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseRoleSlug } from 'app/course/shared/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { User } from 'app/account/user/user.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';

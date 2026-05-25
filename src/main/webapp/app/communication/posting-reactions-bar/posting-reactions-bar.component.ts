@@ -28,13 +28,13 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import dayjs from 'dayjs/esm';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { MetisConversationService } from '../service/metis-conversation.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { map } from 'rxjs';
 import { ForwardMessageDialogComponent } from 'app/communication/course-conversations-components/forward-message-dialog/forward-message-dialog.component';
 import { defaultFirstLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
 import { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { firstValueFrom } from 'rxjs';
-import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
+import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 
 const PIN_EMOJI_ID = 'pushpin';
 const ARCHIVE_EMOJI_ID = 'open_file_folder';

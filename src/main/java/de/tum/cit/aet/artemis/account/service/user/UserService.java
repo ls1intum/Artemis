@@ -51,8 +51,8 @@ import de.tum.cit.aet.artemis.communication.service.CourseNotificationSettingSer
 import de.tum.cit.aet.artemis.communication.service.GlobalNotificationSettingService;
 import de.tum.cit.aet.artemis.communication.service.UserCourseNotificationStatusService;
 import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;

@@ -4,7 +4,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CourseInfoDTO(Long id, String title, String semester) {

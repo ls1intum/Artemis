@@ -20,7 +20,7 @@ import { faArrowDown, faCircleNotch, faEnvelope, faTimes } from '@fortawesome/fr
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Observable, Subject, forkJoin, map, takeUntil } from 'rxjs';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { PageType, PostContextFilter, PostSortCriterion, SortDirection, getUnreadPostsByLastReadDate } from 'app/communication/metis.util';
 import { MetisService } from 'app/communication/service/metis.service';
 import { Channel, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';

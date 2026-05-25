@@ -20,7 +20,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;

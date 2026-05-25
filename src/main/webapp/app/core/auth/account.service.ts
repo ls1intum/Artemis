@@ -3,7 +3,7 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';

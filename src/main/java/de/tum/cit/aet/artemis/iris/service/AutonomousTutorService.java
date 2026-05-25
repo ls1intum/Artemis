@@ -28,9 +28,9 @@ import de.tum.cit.aet.artemis.communication.repository.ConversationMessageReposi
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;

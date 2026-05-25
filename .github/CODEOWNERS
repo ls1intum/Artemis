@@ -14,11 +14,13 @@
 
 # Server code
 /src/main/java/de/tum/cit/aet/artemis/account        @krusche
+/src/main/java/de/tum/cit/aet/artemis/admin          @krusche
 /src/main/java/de/tum/cit/aet/artemis/athena         @ls1intum/athena-maintainers
 /src/main/java/de/tum/cit/aet/artemis/atlas          @ls1intum/atlas-maintainers
 /src/main/java/de/tum/cit/aet/artemis/buildagent     @ls1intum/programming-maintainers
 /src/main/java/de/tum/cit/aet/artemis/calendar       @krusche
 /src/main/java/de/tum/cit/aet/artemis/communication  @ls1intum/communication-maintainers
+/src/main/java/de/tum/cit/aet/artemis/course         @krusche
 /src/main/java/de/tum/cit/aet/artemis/globalsearch   @bassner
 /src/main/java/de/tum/cit/aet/artemis/hyperion       @ls1intum/hyperion-maintainers
 /src/main/java/de/tum/cit/aet/artemis/iris           @ls1intum/iris-maintainers
@@ -34,10 +36,12 @@
 
 # Client code & client tests
 /src/main/webapp/app/account        @krusche
+/src/main/webapp/app/admin          @krusche
 /src/main/webapp/app/atlas          @ls1intum/atlas-maintainers
 /src/main/webapp/app/buildagent     @ls1intum/programming-maintainers
 /src/main/webapp/app/calendar       @krusche
 /src/main/webapp/app/communication  @ls1intum/communication-maintainers
+/src/main/webapp/app/course         @krusche
 /src/main/webapp/app/hyperion       @ls1intum/hyperion-maintainers
 /src/main/webapp/app/iris           @ls1intum/iris-maintainers
 /src/main/webapp/app/lecture        @ls1intum/lectures-maintainers
@@ -49,11 +53,13 @@
 
 # Server tests
 /src/test/java/de/tum/cit/aet/artemis/account        @krusche
+/src/test/java/de/tum/cit/aet/artemis/admin          @krusche
 /src/test/java/de/tum/cit/aet/artemis/athena         @ls1intum/athena-maintainers
 /src/test/java/de/tum/cit/aet/artemis/atlas          @ls1intum/atlas-maintainers
 /src/test/java/de/tum/cit/aet/artemis/buildagent     @ls1intum/programming-maintainers
 /src/test/java/de/tum/cit/aet/artemis/calendar       @krusche
 /src/test/java/de/tum/cit/aet/artemis/communication  @ls1intum/communication-maintainers
+/src/test/java/de/tum/cit/aet/artemis/course         @krusche
 /src/test/java/de/tum/cit/aet/artemis/globalsearch   @bassner
 /src/test/java/de/tum/cit/aet/artemis/hyperion       @ls1intum/hyperion-maintainers
 /src/test/java/de/tum/cit/aet/artemis/iris           @ls1intum/iris-maintainers

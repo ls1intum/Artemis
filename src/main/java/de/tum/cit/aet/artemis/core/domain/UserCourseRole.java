@@ -15,6 +15,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 @Entity
 @Table(name = "user_course_role")

@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.core.service.course.CourseOverviewService;
+import de.tum.cit.aet.artemis.course.service.CourseOverviewService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class CourseOverviewServiceTest extends AbstractSpringIntegrationIndependentTest {

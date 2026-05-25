@@ -7,7 +7,7 @@ import { PostingButtonComponent } from 'app/communication/posting-button/posting
 import { PostingCreateEditDirective } from 'app/communication/directive/posting-create-edit.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { DraftService } from 'app/communication/message/service/draft-message.service';

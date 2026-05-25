@@ -47,9 +47,9 @@ import {
     DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT,
     RequestFeedbackButtonComponent,
     countSuccessfulAthenaFeedbackRequests,
-} from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+} from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
-import { StartPracticeModeButtonComponent } from 'app/core/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
+import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';

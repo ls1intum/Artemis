@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.communication.dto.ForwardedMessageDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ForwardedMessageTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
 

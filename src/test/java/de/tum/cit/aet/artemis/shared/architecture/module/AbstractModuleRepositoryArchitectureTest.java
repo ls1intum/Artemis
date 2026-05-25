@@ -187,7 +187,7 @@ public abstract class AbstractModuleRepositoryArchitectureTest extends AbstractA
 
     @Test
     void usedInProductionCode() {
-        var excludedMethods = Set.of("de.tum.cit.aet.artemis.core.repository.CustomAuditEventRepository.find(java.lang.String, java.time.Instant, java.lang.String)",
+        var excludedMethods = Set.of("de.tum.cit.aet.artemis.admin.repository.CustomAuditEventRepository.find(java.lang.String, java.time.Instant, java.lang.String)",
                 // ArtemisUserCredentialRepository.save is called by Spring Security WebAuthn framework, not by our production code directly
                 "de.tum.cit.aet.artemis.account.repository.passkey.ArtemisUserCredentialRepository.save(org.springframework.security.web.webauthn.api.CredentialRecord)",
                 // These UserRepository methods are kept for future use

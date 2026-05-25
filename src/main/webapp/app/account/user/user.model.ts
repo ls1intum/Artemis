@@ -1,6 +1,6 @@
 import { Account } from 'app/account/user/account.model';
 import dayjs from 'dayjs/esm';
-import { Organization } from 'app/core/shared/entities/organization.model';
+import { Organization } from 'app/admin/organization-management/organization.model';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
 export interface CourseRoleEntry {

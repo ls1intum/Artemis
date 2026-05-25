@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { debounceTime, distinctUntilChanged, filter, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { AlertService } from 'app/shared/service/alert.service';

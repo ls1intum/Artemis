@@ -148,6 +148,8 @@ The following members of the project management team are responsible for specifi
 | Calendar              | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
 | Global search         | Patrick Bassner ([@bassner](https://github.com/bassner))                           |
 | Video source          | Patrick Bassner ([@bassner](https://github.com/bassner))                           |
+| Course                | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
+| Admin                 | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
 
 
 

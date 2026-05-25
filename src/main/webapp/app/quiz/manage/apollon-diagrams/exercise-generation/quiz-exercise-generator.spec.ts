@@ -6,7 +6,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { ApollonEditor, UMLModel } from '@tumaet/apollon';
 import { TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MAX_SIZE_UNIT, computeDropLocation, generateDragAndDropQuizExercise } from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import * as SVGRendererAPI from 'app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';

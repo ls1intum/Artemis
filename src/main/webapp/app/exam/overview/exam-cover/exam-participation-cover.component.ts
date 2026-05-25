@@ -3,7 +3,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
