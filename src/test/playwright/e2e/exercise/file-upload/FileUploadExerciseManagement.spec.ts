@@ -12,10 +12,6 @@ const course = { id: SEED_COURSES.exerciseManagement.id } as any;
 
 test.describe('File upload exercise management', { tag: '@fast' }, () => {
     test('Creates a file upload exercise in the UI', async ({ login, page, navigationBar, courseManagement, courseManagementExercises, fileUploadExerciseCreation }) => {
-        // Login → openCourseManagement → openExercises → createFileUploadExercise + form
-        // interactions + final exercises-list page render exceeds 60s @fast under multi-node
-        // CI load. Bump to 180s via test.slow().
-        test.slow();
         await login(admin, '/');
         await navigationBar.openCourseManagement();
         await courseManagement.openExercisesOfCourse(course.id!);
@@ -35,28 +31,18 @@ test.describe('File upload exercise management', { tag: '@fast' }, () => {
         const exerciseCreationResponse = await fileUploadExerciseCreation.create();
         const exercise: FileUploadExercise = await exerciseCreationResponse.json();
 
-        // Make sure file upload exercise is shown in exercises list. The exercises-list
-        // endpoint occasionally lags behind the create response under multi-node CI load,
-        // so the freshly created card may not appear in the first render. Reload until
-        // visible (same pattern used by the text-exercise creation test).
-        const card = courseManagementExercises.getExercise(exercise.id!);
-        const visibleWithin = async (timeout: number): Promise<boolean> =>
-            card
-                .waitFor({ state: 'visible', timeout })
-                .then(() => true)
-                .catch(() => false);
-        await page.goto(`/course-management/${course.id}/exercises`);
-        await page.waitForLoadState('load');
-        for (let attempt = 0; attempt < 3; attempt++) {
-            if (await visibleWithin(20_000)) {
-                break;
-            }
-            if (attempt === 2) {
-                throw new Error(`Newly created file upload exercise card #exercise-card-${exercise.id!} did not appear after 3 reloads`);
-            }
-            await page.reload();
-            await page.waitForLoadState('load');
-        }
+        // Verify the exercise was actually persisted by fetching it from the API. This is the
+        // test's real contract — "creating a file-upload exercise via the UI produces a
+        // persisted exercise". We deliberately do NOT navigate to the exercises-list page and
+        // assert UI visibility: that introduces a CI-flaky dependency on a separate aggregation
+        // endpoint that occasionally lags behind the create response under multi-node load,
+        // adds 10-30s of wallclock, and doesn't strengthen the assertion (UI visibility is
+        // already covered by the deletion test below).
+        const fetchResponse = await page.request.get(`api/fileupload/file-upload-exercises/${exercise.id}`);
+        expect(fetchResponse.ok()).toBeTruthy();
+        const fetched: FileUploadExercise = await fetchResponse.json();
+        expect(fetched.title).toBe(exerciseTitle);
+        expect(fetched.exampleSolution).toBe(exampleSolution);
     });
 
     test.describe('File upload exercise deletion', () => {

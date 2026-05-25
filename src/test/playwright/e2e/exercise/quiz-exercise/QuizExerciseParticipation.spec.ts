@@ -215,12 +215,18 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             quizExercise = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceQuizTemplate], releaseDate, startOfWorkingTime });
         });
 
-        test('Student cannot participate in scheduled quiz before start of working time', async ({ login, courseOverview, quizExerciseParticipation }) => {
+        test('Student cannot participate in scheduled quiz before start of working time', async ({ page, login, courseOverview, quizExerciseParticipation }) => {
+            // Wait for the page's initial GET /courses/.../for-dashboard to settle before
+            // looking for the overlay — the overlay is gated on that fetch returning the
+            // quiz's startOfWorkingTime. Without the explicit wait the default 10s expect
+            // timeout can fire under multi-node CI load while the request is still in flight,
+            // even though the overlay would render seconds later.
+            const dashboardResponse = page
+                .waitForResponse((resp) => resp.url().includes(`api/core/courses/${course.id}/for-dashboard`) && resp.ok(), { timeout: 30_000 })
+                .catch(() => undefined);
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
-            // The waiting-for-start overlay is gated on the quiz's startOfWorkingTime + a
-            // client-side polling cycle. Under multi-node CI load the page render + initial
-            // poll can take >10s (the default expect timeout). Extend to 30s explicitly.
-            await expect(quizExerciseParticipation.getWaitingForStartAlert()).toBeVisible({ timeout: 30_000 });
+            await dashboardResponse;
+            await expect(quizExerciseParticipation.getWaitingForStartAlert()).toBeVisible();
         });
 
         test('Student can participate in scheduled quiz when working time arrives', async ({ page, login, courseOverview, quizExerciseParticipation }) => {

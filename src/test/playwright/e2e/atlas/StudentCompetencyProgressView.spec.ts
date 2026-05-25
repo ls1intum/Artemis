@@ -151,57 +151,44 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             await courseManagementAPIRequests.deleteCourse(nestedCourse, admin);
         });
 
-        test('Exercise submission updates competency progress indicator', async ({
-            page,
-            login,
-            courseManagementAPIRequests,
-            exerciseAPIRequests,
-            courseOverview,
-            quizExerciseMultipleChoice,
-        }) => {
-            // The describe has the @fast inherited tag (outer) plus its own @slow, so the test
-            // matches both projects. The full flow — create competency + create quiz +
-            // student participates + 30s quiz duration + 120s competency-progress poll +
-            // post-progress UI check — needs ~210s end-to-end. Lift the per-test timeout to
-            // 6 minutes explicitly so we don't bump up against test.slow()'s 180s envelope.
-            test.setTimeout(360_000);
-            // Create competency first
+        test('Exercise submission updates competency progress indicator', async ({ page, login, courseManagementAPIRequests, exerciseAPIRequests }) => {
+            // The describe inherits the outer @fast tag and adds its own @slow, so the test
+            // matches both projects. The test's contract is "submitting a quiz tied to a
+            // competency updates the student's competency progress" — the UI interaction with
+            // the quiz player is incidental. We bypass it entirely (submit via API) and force
+            // the quiz to end immediately, eliminating the UI submit race that previously
+            // flaked here under multi-node CI load.
             const competency = await courseManagementAPIRequests.createCompetency(nestedCourse, 'Progress Test Competency', 'Track progress');
 
-            // Create quiz exercise using the standard helper (ensures proper DTO conversion)
             await login(admin);
-            // 30s quiz duration (was 15s): with 15s the student-side login → tick answers →
-            // submit chain occasionally exceeded the window under multi-node CI load,
-            // leaving #submit-exercise permanently disabled after the quiz auto-ended. 30s
-            // is the sweet spot — comfortably above the worst observed submit chain (~20s)
-            // while keeping evaluation latency bounded (dueDate = startTime + duration; the
-            // scheduled-evaluation job fires ~5s after dueDate).
+            // Short duration so end-now → due-date overlap is immediate. We submit via API
+            // before the duration window closes; end-now then advances the scheduled
+            // evaluation job which produces the competency-progress update we assert on.
             const quizExercise = await exerciseAPIRequests.createQuizExercise({
                 body: { course: nestedCourse },
                 quizQuestions: [multipleChoiceQuizTemplate],
                 title: 'Progress Test Quiz',
-                duration: 30,
+                duration: 10,
                 competencyLinks: [{ competency: { id: competency.id }, weight: 1 }],
             });
-
-            // Make quiz visible and start it
             await exerciseAPIRequests.setQuizVisible(quizExercise.id!);
             await exerciseAPIRequests.startQuizNow(quizExercise.id!);
 
-            // Login as student and navigate to quiz exercise
-            await login(studentOne, `/courses/${nestedCourse.id}/exercises/${quizExercise.id!}`);
+            // Submit as student via API — no UI participation. This decouples the test from
+            // the quiz-player rendering chain and removes the previous "submit button stays
+            // disabled after the timer expires" flake.
+            await login(studentOne);
+            await exerciseAPIRequests.startExerciseParticipation(quizExercise.id!);
+            await exerciseAPIRequests.createMultipleChoiceSubmission(quizExercise, [0, 1]);
 
-            // Answer the multiple choice question - tick the first two options (correct answers)
-            await quizExerciseMultipleChoice.tickAnswerOption(quizExercise.id!, 0);
-            await quizExerciseMultipleChoice.tickAnswerOption(quizExercise.id!, 1);
+            // Force evaluation immediately so the post-submit competency progress is computed
+            // without waiting for the scheduled job to fire on quiz expiry.
+            await login(admin);
+            await exerciseAPIRequests.endQuizNow(quizExercise.id!);
 
-            // Submit the quiz
-            const response = await quizExerciseMultipleChoice.submit();
-            expect(response.status()).toBe(200);
-
-            // Wait for competency progress to be calculated. Worst-case path:
-            //   30s quiz duration + 5s grace period + 5s scheduler tick + competency-progress
-            //   async calculation. 120s is a comfortable upper bound under multi-node load.
+            // Poll the student-visible competency progress (60s is enough now — evaluation
+            // and progress calc both fire seconds after end-now without UI latency in the path).
+            await login(studentOne);
             await expect
                 .poll(
                     async () => {
@@ -213,7 +200,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
                         const updatedCompetency = competencies.find((item) => item.id === competency.id);
                         return updatedCompetency?.userProgress?.[0]?.progress ?? 0;
                     },
-                    { timeout: 120000 },
+                    { timeout: 60000 },
                 )
                 .toBeGreaterThan(0);
 
