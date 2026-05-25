@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.core.service.connectors.ldap;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP;
-
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Objects;
@@ -9,9 +7,9 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
-import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -27,6 +25,7 @@ import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.account.service.user.AuthorityService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
+import de.tum.cit.aet.artemis.core.config.LdapEnabled;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
 /**
@@ -34,7 +33,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
  * It retrieves user information from the LDAP server and creates or updates the user in the Artemis database.
  */
 @Component("ldapAuthenticationProvider")
-@Profile(PROFILE_LDAP)
+@Conditional(LdapEnabled.class)
 @Lazy
 @Primary
 public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider {

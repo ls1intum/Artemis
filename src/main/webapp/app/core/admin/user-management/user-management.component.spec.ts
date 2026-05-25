@@ -114,7 +114,7 @@ describe('UserManagementComponent', () => {
                 }),
             ),
         );
-        vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile: string) => profile === 'ldap');
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => feature === 'ldap');
 
         component.ngOnInit();
         // Advance timers to account for debounce time

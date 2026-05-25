@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.modeling.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
+import static de.tum.cit.aet.artemis.core.config.Constants.MODULE_FEATURE_ATHENA;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -99,7 +99,7 @@ public class ModelingExerciseFeedbackService {
             return;
         }
         try {
-            athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA))
+            athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, MODULE_FEATURE_ATHENA))
                     .checkLatestSubmissionHasNoAthenaResultOrThrow(modelingSubmission);
         }
         catch (BadRequestAlertException ignored) {
@@ -215,7 +215,7 @@ public class ModelingExerciseFeedbackService {
      * @throws NetworkingException if there's a problem communicating with Athena
      */
     private List<Feedback> getAthenaFeedback(ModelingExercise modelingExercise, ModelingSubmission submission, User requestingUser) throws NetworkingException {
-        AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA));
+        AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, MODULE_FEATURE_ATHENA));
         return api.getModelingFeedbackSuggestions(modelingExercise, submission, false, requestingUser).stream().filter(feedbackItem -> feedbackItem.description() != null)
                 .map(this::convertToFeedback).toList();
     }

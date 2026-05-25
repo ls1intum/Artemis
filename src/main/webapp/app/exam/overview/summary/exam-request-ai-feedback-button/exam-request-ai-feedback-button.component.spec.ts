@@ -103,7 +103,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
     function enableAthena(): void {
         const profileService = TestBed.inject(ProfileService);
-        vi.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
     }
 
     function acceptLLMUsage(): void {
@@ -152,7 +152,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
         it('should hide the button when Athena is not active', () => {
             const profileService = TestBed.inject(ProfileService);
-            vi.spyOn(profileService, 'isProfileActive').mockReturnValue(false);
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
 
             setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
             fixture.detectChanges();
@@ -283,7 +283,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
         it('should skip fetching usage when Athena is not active', () => {
             const profileService = TestBed.inject(ProfileService);
-            vi.spyOn(profileService, 'isProfileActive').mockReturnValue(false);
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
             const usageSpy = vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage');
 
             setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));

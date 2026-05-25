@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.account.web.admin;
 
 import static de.tum.cit.aet.artemis.account.domain.User.IRIS_BOT_LOGIN;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP;
 import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 
 import java.net.URI;
@@ -318,13 +317,14 @@ public class AdminUserResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated user
      */
     @PutMapping("users/{userId}/sync-ldap")
-    @Profile(PROFILE_LDAP)
     public ResponseEntity<UserDTO> syncUserViaLdap(@PathVariable Long userId) {
         log.debug("REST request to update ldap information User : {}", userId);
 
-        var user = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
+        LdapUserService service = ldapUserService
+                .orElseThrow(() -> new BadRequestAlertException("LDAP is not enabled on this Artemis instance.", "userManagement", "ldapNotEnabled"));
 
-        ldapUserService.ifPresent(service -> service.loadUserDetailsFromLdap(user));
+        var user = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
+        service.loadUserDetailsFromLdap(user);
         var updatedUser = userCreationService.saveUser(user);
 
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.updated", user.getLogin())).body(new UserDTO(updatedUser));

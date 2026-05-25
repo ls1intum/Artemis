@@ -1,14 +1,13 @@
 package de.tum.cit.aet.artemis.athena.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
-
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.athena.config.AthenaEnabled;
 import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
 import de.tum.cit.aet.artemis.athena.service.AthenaScheduleService;
 import de.tum.cit.aet.artemis.athena.service.AthenaSubmissionSelectionService;
@@ -16,7 +15,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
-@Profile(PROFILE_ATHENA)
+@Conditional(AthenaEnabled.class)
 @Controller
 @Lazy
 public class AthenaApi extends AbstractAthenaApi {
