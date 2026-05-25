@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.course;
+package de.tum.cit.aet.artemis.course;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
