@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
-import { PROFILE_SAML2 } from 'app/app.constants';
+import { MODULE_FEATURE_SAML2 } from 'app/app.constants';
 import { MessageModule } from 'primeng/message';
 
 /**
@@ -60,7 +60,7 @@ export class SettingsComponent implements OnInit {
     constructor() {
         const profileInfo = this.profileService.getProfileInfo();
         this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
-        this.isSaml2Active = this.profileService.isProfileActive(PROFILE_SAML2);
+        this.isSaml2Active = this.profileService.isModuleFeatureActive(MODULE_FEATURE_SAML2);
         this.allowedEmailPattern = profileInfo.allowedEmailPattern;
         this.allowedEmailPatternReadable = profileInfo.allowedEmailPatternReadable;
 

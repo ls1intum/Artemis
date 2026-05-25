@@ -10,7 +10,7 @@ import { ParticipationWebsocketService } from 'app/core/course/shared/services/p
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { UserService } from 'app/core/user/shared/user.service';
-import { PROFILE_ATHENA } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { getLatestResultOfStudentParticipation } from 'app/exercise/participation/participation.utils';
@@ -134,7 +134,7 @@ export class ExamRequestAiFeedbackButtonComponent {
                 return;
             }
             initialized = true;
-            this.athenaEnabled.set(this.profileService.isProfileActive(PROFILE_ATHENA));
+            this.athenaEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA));
             this.hasUserAcceptedLLMUsage.set(this.isAcceptedLLMSelection(this.accountService.userIdentity()?.selectedLLMUsage));
         });
 

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.text.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
+import static de.tum.cit.aet.artemis.core.config.Constants.MODULE_FEATURE_ATHENA;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -104,7 +104,7 @@ public class TextExerciseFeedbackService {
             return;
         }
         try {
-            athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA))
+            athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, MODULE_FEATURE_ATHENA))
                     .checkLatestSubmissionHasNoAthenaResultOrThrow(textSubmission);
         }
         catch (BadRequestAlertException ignored) {
@@ -172,7 +172,7 @@ public class TextExerciseFeedbackService {
 
             log.debug("Submission id: {}", textSubmission.getId());
 
-            AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA));
+            AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, MODULE_FEATURE_ATHENA));
             var athenaResponse = api.getTextFeedbackSuggestions(textExercise, textSubmission, false, requestingUser);
 
             Set<TextBlock> textBlocks = new HashSet<>();

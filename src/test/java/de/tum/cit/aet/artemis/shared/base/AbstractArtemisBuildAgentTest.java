@@ -63,7 +63,8 @@ import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessS
         // Use Local data store for tests to ensure isConnectedToCluster() always returns true
         "artemis.continuous-integration.data-store=Local",
         // Build agents should not have Spring AI enabled - override 'local' profile which enables hyperion
-        "artemis.hyperion.enabled=false", "artemis.atlas.enabled=false",
+        "artemis.hyperion.enabled=false", "artemis.atlas.enabled=false", "artemis.athena.enabled=false", "artemis.apollon.enabled=false",
+        "artemis.user-management.ldap.enabled=false", "artemis.user-management.saml2.enabled=false",
         // Disable JPA repository auto-configuration for build agent tests. Without the core profile,
         // DatabaseConfiguration (which specifies repositoryBaseClass=RepositoryImpl) is not loaded.
         // Spring Boot's DataJpaRepositoriesAutoConfiguration would then scan all repositories without

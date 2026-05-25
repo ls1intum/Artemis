@@ -13,7 +13,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     let fixture: ComponentFixture<ExerciseFeedbackSuggestionOptionsComponent>;
     let component: ExerciseFeedbackSuggestionOptionsComponent;
     let athenaService: { getAvailableModules: jest.Mock };
-    let profileService: { isProfileActive: jest.Mock };
+    let profileService: { isModuleFeatureActive: jest.Mock };
 
     const courseId = 42;
 
@@ -27,7 +27,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
 
     beforeEach(async () => {
         athenaService = { getAvailableModules: jest.fn() };
-        profileService = { isProfileActive: jest.fn() };
+        profileService = { isModuleFeatureActive: jest.fn() };
 
         await TestBed.configureTestingModule({
             imports: [ExerciseFeedbackSuggestionOptionsComponent],
@@ -64,7 +64,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     it('should initialize available modules and athena state in ngOnInit', fakeAsync(() => {
         const modules = ['moduleA', 'moduleB'];
         athenaService.getAvailableModules.mockReturnValue(of(modules));
-        profileService.isProfileActive.mockReturnValue(true);
+        profileService.isModuleFeatureActive.mockReturnValue(true);
 
         component.ngOnInit();
         tick();
@@ -79,7 +79,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     it('should mark modules unavailable and athena disabled when no modules are returned', fakeAsync(() => {
         component.exercise.feedbackSuggestionModule = undefined;
         athenaService.getAvailableModules.mockReturnValue(of([]));
-        profileService.isProfileActive.mockReturnValue(false);
+        profileService.isModuleFeatureActive.mockReturnValue(false);
 
         component.ngOnInit();
         tick();
@@ -214,7 +214,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         component.exercise.feedbackSuggestionModule = 'initial-module';
         component.initialAthenaModule = 'initial-module';
         athenaService.getAvailableModules.mockReturnValue(of(['moduleA']));
-        profileService.isProfileActive.mockReturnValue(true);
+        profileService.isModuleFeatureActive.mockReturnValue(true);
 
         component.ngOnInit();
         tick();

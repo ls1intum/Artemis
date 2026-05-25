@@ -57,7 +57,7 @@ import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-
 import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
 import { FileService } from 'app/shared/service/file.service';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
-import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
