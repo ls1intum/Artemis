@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -97,11 +98,25 @@ public class ArtemisSuccessfulLoginService {
      * Handles successful authentication events.
      * Sends a login notification email to users when they successfully authenticate.
      *
+     * <p>
+     * Runs asynchronously: every step inside this method (user lookup, notification-setting check,
+     * template rendering, SMTP send) executes on the async task executor rather than on the login
+     * request thread. That gives two properties we care about:
+     * <ul>
+     * <li>the login response is returned to the client without waiting for these reads / SMTP; and</li>
+     * <li>the JPA persistence context opened here does not overlap with whatever the client
+     * does next on the same connection pool — historically the source of intermittent
+     * constraint-violation flakes when an admin issues an immediate DELETE after login.</li>
+     * </ul>
+     * Because the method is async, callers cannot rely on completion before continuing — but no
+     * caller actually does (both call sites are fire-and-forget post-login notifications).
+     *
      * @param loginOrEmail         the username or email of the user who has successfully logged in
      * @param authenticationMethod the method used for authentication
      * @param clientEnvironment    the environment information of the client (optional)
      * @see AuthenticationMethod for available authentication methods
      */
+    @Async
     public void sendLoginEmail(String loginOrEmail, AuthenticationMethod authenticationMethod, @Nullable ClientEnvironment clientEnvironment) {
         try {
             User recipient;

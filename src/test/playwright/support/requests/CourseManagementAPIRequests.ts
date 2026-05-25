@@ -109,26 +109,30 @@ export class CourseManagementAPIRequests {
     /**
      * Deletes the course with the specified id.
      *
+     * Treats 404 as success: the course is already gone (typically because a previous test or
+     * fixture already deleted it), which is the desired post-condition for teardown. Other
+     * non-2xx statuses are retried briefly to absorb transient infrastructure noise.
+     *
      * @param course the course
      * @param admin the admin user
      */
     async deleteCourse(course: Course, admin: UserCredentials) {
-        if (course) {
-            await Commands.login(this.page, admin);
-            // Sometimes the server fails with a ConstraintViolationError if we delete the course immediately after a login
-            await this.page.waitForTimeout(500);
+        if (!course) {
+            return;
+        }
+        await Commands.login(this.page, admin);
 
-            // Retry in case of failures (with timeout in ms.)
-            const timeout = 5000;
-            const startTime = Date.now();
-            while (Date.now() - startTime < timeout) {
-                const response = await this.page.request.delete(`${COURSE_ADMIN_BASE}/${course.id}`);
-                if (response.ok()) {
-                    break;
-                }
-                console.log('Retrying delete course request due to failure');
-                await this.page.waitForTimeout(500);
+        // Retry briefly on transient failures (e.g. CI infra hiccups). 5xx and other non-2xx,
+        // non-404 statuses retry; 404 short-circuits because "already gone" == cleanup done.
+        const timeout = 5000;
+        const startTime = Date.now();
+        while (Date.now() - startTime < timeout) {
+            const response = await this.page.request.delete(`${COURSE_ADMIN_BASE}/${course.id}`);
+            if (response.ok() || response.status() === 404) {
+                return;
             }
+            console.log(`Retrying delete course request: status=${response.status()} url=${response.url()}`);
+            await this.page.waitForTimeout(500);
         }
     }
 
