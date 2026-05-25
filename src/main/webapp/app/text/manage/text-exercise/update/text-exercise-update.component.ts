@@ -44,7 +44,7 @@ import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.com
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
-import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 
 @Component({
     selector: 'jhi-text-exercise-update',

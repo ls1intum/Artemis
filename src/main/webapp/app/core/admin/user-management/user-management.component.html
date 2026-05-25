@@ -200,7 +200,7 @@
                                         <fa-icon [icon]="faWrench" />
                                         <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
                                     </a>
-                                    @if (isLdapProfileActive() && !user.internal) {
+                                    @if (isLdapEnabled() && !user.internal) {
                                         <button class="btn btn-success btn-sm" (click)="ldapSync(user.id!)" jhiTranslate="entity.action.ldap"></button>
                                     }
                                     <button

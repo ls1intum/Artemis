@@ -23,4 +23,15 @@ public class TextFeedbackApi extends AbstractTextApi {
     public StudentParticipation handleNonGradedFeedbackRequest(StudentParticipation participation, TextExercise textExercise) {
         return feedbackService.handleNonGradedFeedbackRequest(participation, textExercise);
     }
+
+    /**
+     * Triggers automatic Athena feedback for a text exercise submission inside a test exam. Soft-skips instead of
+     * throwing when Athena is unavailable, the submission is missing/empty or already has an Athena result.
+     *
+     * @param participation the student participation associated with the text exercise
+     * @param textExercise  the text exercise
+     */
+    public void generateAutomaticFeedbackForTestExamAsync(StudentParticipation participation, TextExercise textExercise) {
+        feedbackService.generateAutomaticFeedbackForTestExamAsync(participation, textExercise);
+    }
 }

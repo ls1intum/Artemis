@@ -12,7 +12,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_IRIS, PROFILE_ATHENA } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_IRIS, PROFILE_JENKINS } from 'app/app.constants';
 
 describe('AdminFeatureToggleComponentTest', () => {
     setupTestBed({ zoneless: true });
@@ -108,29 +108,29 @@ describe('AdminFeatureToggleComponentTest', () => {
         it('ngOnInit should load profile features', () => {
             expect(comp.profileFeatures()).toHaveLength(0);
             comp.ngOnInit();
-            expect(comp.profileFeatures()).toHaveLength(8);
+            expect(comp.profileFeatures()).toHaveLength(3);
         });
 
         it('should set isActive based on active profiles', () => {
             // Mock profile service to return some active profiles
             vi.spyOn(mockProfileService, 'isProfileActive').mockImplementation((profile: string) => {
-                return profile === PROFILE_ATHENA;
+                return profile === PROFILE_JENKINS;
             });
 
             comp.ngOnInit();
             const profiles = comp.profileFeatures();
 
-            const athena = profiles.find((p) => p.profile === PROFILE_ATHENA);
-            expect(athena?.isActive).toBe(true);
+            const jenkins = profiles.find((p) => p.profile === PROFILE_JENKINS);
+            expect(jenkins?.isActive).toBe(true);
         });
 
         it('should set documentation links for profile features', () => {
             comp.ngOnInit();
             const profiles = comp.profileFeatures();
 
-            const athena = profiles.find((p) => p.profile === PROFILE_ATHENA);
-            expect(athena?.documentationLink).toBeDefined();
-            expect(athena?.documentationLink).toContain('docs.artemis.tum.de');
+            const jenkins = profiles.find((p) => p.profile === PROFILE_JENKINS);
+            expect(jenkins?.documentationLink).toBeDefined();
+            expect(jenkins?.documentationLink).toContain('docs.artemis.tum.de');
         });
     });
 
@@ -138,7 +138,7 @@ describe('AdminFeatureToggleComponentTest', () => {
         it('ngOnInit should load module features', () => {
             expect(comp.moduleFeatures()).toHaveLength(0);
             comp.ngOnInit();
-            expect(comp.moduleFeatures()).toHaveLength(14);
+            expect(comp.moduleFeatures()).toHaveLength(18);
         });
 
         it('should set isActive based on active module features', () => {
@@ -184,13 +184,18 @@ describe('AdminFeatureToggleComponentTest', () => {
         });
 
         it('getProfileNameKey should return correct translation key', () => {
-            const key = comp.getProfileNameKey(PROFILE_ATHENA);
-            expect(key).toBe('artemisApp.features.profiles.athena.name');
+            const key = comp.getProfileNameKey(PROFILE_JENKINS);
+            expect(key).toBe('artemisApp.features.profiles.jenkins.name');
         });
 
         it('getProfileDescriptionKey should return correct translation key', () => {
-            const key = comp.getProfileDescriptionKey(PROFILE_ATHENA);
-            expect(key).toBe('artemisApp.features.profiles.athena.description');
+            const key = comp.getProfileDescriptionKey(PROFILE_JENKINS);
+            expect(key).toBe('artemisApp.features.profiles.jenkins.description');
+        });
+
+        it('getModuleFeatureNameKey should return correct translation key for Athena', () => {
+            const key = comp.getModuleFeatureNameKey(MODULE_FEATURE_ATHENA);
+            expect(key).toBe('artemisApp.features.modules.athena.name');
         });
 
         it('getModuleFeatureNameKey should return correct translation key', () => {

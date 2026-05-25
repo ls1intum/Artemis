@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.athena.service.connectors;
 
+import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_MODELING_TEST;
 import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
 import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,15 +27,19 @@ import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.service.AthenaFeedbackSuggestionsService;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -78,6 +83,10 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         textSubmission = new TextSubmission(2L).text("This is a text submission");
         StudentParticipation textParticipation = new StudentParticipation().exercise(textExercise);
         textParticipation.setId(1L);
+        User textStudent = new User();
+        textStudent.setId(11L);
+        textStudent.setSelectedLLMUsage(AiSelectionDecision.LOCAL_AI);
+        textParticipation.setParticipant(textStudent);
         textSubmission.setParticipation(textParticipation);
 
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
@@ -86,15 +95,23 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         programmingSubmission.setId(3L);
         StudentParticipation programmingParticipation = new StudentParticipation().exercise(programmingExercise);
         programmingParticipation.setId(2L);
+        User programmingStudent = new User();
+        programmingStudent.setId(12L);
+        programmingStudent.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+        programmingParticipation.setParticipant(programmingStudent);
         programmingSubmission.setParticipation(programmingParticipation);
 
         modelingExercise = new ModelingExercise();
         modelingExercise.setId(5L);
-        modelingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        modelingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_MODELING_TEST);
         modelingSubmission = new ModelingSubmission();
         modelingSubmission.setId(6L);
         StudentParticipation modelingParticipation = new StudentParticipation().exercise(modelingExercise);
         modelingParticipation.setId(4L);
+        User modelingStudent = new User();
+        modelingStudent.setId(13L);
+        modelingStudent.setSelectedLLMUsage(AiSelectionDecision.LOCAL_AI);
+        modelingParticipation.setParticipant(modelingStudent);
         modelingSubmission.setParticipation(modelingParticipation);
     }
 
@@ -103,8 +120,23 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     void testFeedbackSuggestionsText() throws NetworkingException {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()),
                 jsonPath("$.exercise.title").value(textExercise.getTitle()), jsonPath("$.submission.id").value(textSubmission.getId()),
+                jsonPath("$.submission.text").value(textSubmission.getText()), jsonPath("$.selection").doesNotExist());
+        List<TextFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, true, null);
+        assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
+        assertThat(suggestions.getFirst().indexStart()).isEqualTo(3);
+        athenaRequestMockProvider.verify();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testFeedbackSuggestionsTextWithNullSuggestionId() throws NetworkingException {
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpectWithNullId("text", jsonPath("$.exercise.id").value(textExercise.getId()),
+                jsonPath("$.exercise.title").value(textExercise.getTitle()), jsonPath("$.submission.id").value(textSubmission.getId()),
                 jsonPath("$.submission.text").value(textSubmission.getText()));
-        List<TextFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, true);
+
+        List<TextFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, true, null);
+
+        assertThat(suggestions.getFirst().id()).isNull();
         assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
         assertThat(suggestions.getFirst().indexStart()).isEqualTo(3);
         athenaRequestMockProvider.verify();
@@ -114,7 +146,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     void testTextFeedbackSuggestionsReturnsEmptyWhenModuleMissing() throws NetworkingException {
         textExercise.setFeedbackSuggestionModule(null);
 
-        List<TextFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, true);
+        List<TextFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, true, null);
 
         assertThat(suggestions).isEmpty();
     }
@@ -123,7 +155,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     void testProgrammingFeedbackSuggestionsReturnsEmptyWhenModuleMissing() throws NetworkingException {
         programmingExercise.setFeedbackSuggestionModule(null);
 
-        List<ProgrammingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, programmingSubmission, true);
+        List<ProgrammingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, programmingSubmission, true, null);
 
         assertThat(suggestions).isEmpty();
     }
@@ -132,7 +164,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     void testModelingFeedbackSuggestionsReturnsEmptyWhenModuleMissing() throws NetworkingException {
         modelingExercise.setFeedbackSuggestionModule(null);
 
-        List<ModelingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getModelingFeedbackSuggestions(modelingExercise, modelingSubmission, true);
+        List<ModelingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getModelingFeedbackSuggestions(modelingExercise, modelingSubmission, true, null);
 
         assertThat(suggestions).isEmpty();
     }
@@ -142,12 +174,171 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     void testFeedbackSuggestionsProgramming() throws NetworkingException {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming", jsonPath("$.exercise.id").value(programmingExercise.getId()),
                 jsonPath("$.exercise.title").value(programmingExercise.getTitle()), jsonPath("$.submission.id").value(programmingSubmission.getId()),
-                jsonPath("$.submission.repositoryUri")
-                        .value(serverUrl + "/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/submissions/3/repository"));
-        List<ProgrammingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, programmingSubmission, true);
+                jsonPath("$.submission.repositoryUri").value(serverUrl + "/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/submissions/3/repository"),
+                jsonPath("$.selection").doesNotExist());
+        List<ProgrammingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, programmingSubmission, true, null);
         assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
         assertThat(suggestions.getFirst().lineStart()).isEqualTo(3);
         athenaRequestMockProvider.verify();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testFeedbackSuggestionsModelingDoesNotIncludeSelectionForGradedRequest() throws NetworkingException {
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling", jsonPath("$.exercise.id").value(modelingExercise.getId()),
+                jsonPath("$.submission.id").value(modelingSubmission.getId()), jsonPath("$.selection").doesNotExist());
+
+        List<ModelingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getModelingFeedbackSuggestions(modelingExercise, modelingSubmission, true, null);
+
+        assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
+        athenaRequestMockProvider.verify();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFeedbackSuggestionsTextIncludesSelectionForNonGradedRequest() throws NetworkingException {
+        var currentUser = ((StudentParticipation) textSubmission.getParticipation()).getStudent().orElseThrow();
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()),
+                jsonPath("$.exercise.title").value(textExercise.getTitle()), jsonPath("$.submission.id").value(textSubmission.getId()),
+                jsonPath("$.submission.text").value(textSubmission.getText()), jsonPath("$.selection").value(AiSelectionDecision.LOCAL_AI.name()));
+
+        List<TextFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, false, currentUser);
+
+        assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
+        assertThat(suggestions.getFirst().indexStart()).isEqualTo(3);
+        athenaRequestMockProvider.verify();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFeedbackSuggestionsProgrammingIncludesSelectionForNonGradedRequest() throws NetworkingException {
+        var currentUser = ((StudentParticipation) programmingSubmission.getParticipation()).getStudent().orElseThrow();
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming", jsonPath("$.exercise.id").value(programmingExercise.getId()),
+                jsonPath("$.exercise.title").value(programmingExercise.getTitle()), jsonPath("$.submission.id").value(programmingSubmission.getId()),
+                jsonPath("$.submission.repositoryUri").value(serverUrl + "/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/submissions/3/repository"),
+                jsonPath("$.selection").value(AiSelectionDecision.CLOUD_AI.name()));
+
+        List<ProgrammingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, programmingSubmission, false,
+                currentUser);
+
+        assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
+        assertThat(suggestions.getFirst().lineStart()).isEqualTo(3);
+        athenaRequestMockProvider.verify();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFeedbackSuggestionsModelingIncludesSelectionForNonGradedRequest() throws NetworkingException {
+        var currentUser = ((StudentParticipation) modelingSubmission.getParticipation()).getStudent().orElseThrow();
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling", jsonPath("$.exercise.id").value(modelingExercise.getId()),
+                jsonPath("$.submission.id").value(modelingSubmission.getId()), jsonPath("$.selection").value(AiSelectionDecision.LOCAL_AI.name()));
+
+        List<ModelingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getModelingFeedbackSuggestions(modelingExercise, modelingSubmission, false, currentUser);
+
+        assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
+        athenaRequestMockProvider.verify();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFeedbackSuggestionsTextTeamParticipationIncludesCurrentUsersSelectionForNonGradedRequest() throws NetworkingException {
+        var teamParticipation = new StudentParticipation().exercise(textExercise);
+        teamParticipation.setId(7L);
+        var team = new Team();
+        team.setId(8L);
+        teamParticipation.setParticipant(team);
+
+        var teamSubmission = new TextSubmission(9L).text("This is a team text submission");
+        teamSubmission.setParticipation(teamParticipation);
+
+        var currentUser = new User();
+        currentUser.setId(14L);
+        currentUser.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()),
+                jsonPath("$.exercise.title").value(textExercise.getTitle()), jsonPath("$.submission.id").value(teamSubmission.getId()),
+                jsonPath("$.submission.text").value(teamSubmission.getText()), jsonPath("$.selection").value(AiSelectionDecision.CLOUD_AI.name()));
+
+        List<TextFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, teamSubmission, false, currentUser);
+
+        assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
+        assertThat(suggestions.getFirst().indexStart()).isEqualTo(3);
+        athenaRequestMockProvider.verify();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFeedbackSuggestionsProgrammingTeamParticipationIncludesCurrentUsersSelectionForNonGradedRequest() throws NetworkingException {
+        var teamParticipation = new ProgrammingExerciseStudentParticipation();
+        teamParticipation.setExercise(programmingExercise);
+        teamParticipation.setId(10L);
+        var team = new Team();
+        team.setId(11L);
+        teamParticipation.setParticipant(team);
+
+        var teamSubmission = new ProgrammingSubmission();
+        teamSubmission.setId(12L);
+        teamSubmission.setParticipation(teamParticipation);
+
+        var currentUser = new User();
+        currentUser.setId(15L);
+        currentUser.setSelectedLLMUsage(AiSelectionDecision.LOCAL_AI);
+
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming", jsonPath("$.exercise.id").value(programmingExercise.getId()),
+                jsonPath("$.exercise.title").value(programmingExercise.getTitle()), jsonPath("$.submission.id").value(teamSubmission.getId()),
+                jsonPath("$.submission.repositoryUri")
+                        .value(serverUrl + "/api/athena/internal/programming-exercises/" + programmingExercise.getId() + "/submissions/12/repository"),
+                jsonPath("$.selection").value(AiSelectionDecision.LOCAL_AI.name()));
+
+        List<ProgrammingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, teamSubmission, false, currentUser);
+
+        assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
+        assertThat(suggestions.getFirst().lineStart()).isEqualTo(3);
+        athenaRequestMockProvider.verify();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFeedbackSuggestionsModelingTeamParticipationIncludesCurrentUsersSelectionForNonGradedRequest() throws NetworkingException {
+        var teamParticipation = new StudentParticipation().exercise(modelingExercise);
+        teamParticipation.setId(16L);
+        var team = new Team();
+        team.setId(17L);
+        teamParticipation.setParticipant(team);
+
+        var teamSubmission = new ModelingSubmission();
+        teamSubmission.setId(18L);
+        teamSubmission.setParticipation(teamParticipation);
+
+        var currentUser = new User();
+        currentUser.setId(19L);
+        currentUser.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling", jsonPath("$.exercise.id").value(modelingExercise.getId()),
+                jsonPath("$.submission.id").value(teamSubmission.getId()), jsonPath("$.selection").value(AiSelectionDecision.CLOUD_AI.name()));
+
+        List<ModelingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getModelingFeedbackSuggestions(modelingExercise, teamSubmission, false, currentUser);
+
+        assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
+        athenaRequestMockProvider.verify();
+    }
+
+    @Test
+    void testFeedbackSuggestionsTextRejectsNoAiSelectionForNonGradedRequest() {
+        var currentUser = ((StudentParticipation) textSubmission.getParticipation()).getStudent().orElseThrow();
+        currentUser.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, false, currentUser));
+    }
+
+    @Test
+    void testFeedbackSuggestionsTextRejectsMissingSelectionForNonGradedRequest() {
+        var currentUser = ((StudentParticipation) textSubmission.getParticipation()).getStudent().orElseThrow();
+        currentUser.setSelectedLLMUsage(null);
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, false, currentUser));
     }
 
     @Test
@@ -155,7 +346,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
         var otherExercise = new TextExercise();
         textSubmission.setParticipation(new StudentParticipation().exercise(otherExercise)); // Add submission to wrong exercise
-        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, true));
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, true, null));
     }
 
     // ===== Tests for extractLearnerProfile method =====
@@ -260,7 +451,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
                 jsonPath("$.submission.text").value(textSubmission.getText()));
 
         // The service should handle null latest submission without throwing an exception
-        List<TextFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, true);
+        List<TextFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission, true, null);
         assertThat(suggestions.getFirst().title()).isEqualTo("Not so good");
         assertThat(suggestions.getFirst().indexStart()).isEqualTo(3);
         athenaRequestMockProvider.verify();

@@ -30,7 +30,7 @@ env:
 
 jobs:
   check-build-status:
-    runs-on: [self-hosted, deploy-artemis]
+    runs-on: [self-hosted, artemis-prod-deployment]
     outputs:
       build_workflow_run_id: ${{ steps.set_build_workflow_id.outputs.workflow_id }}
     steps:
@@ -51,9 +51,9 @@ jobs:
 
       - name: Extract workflow ID
         id: set_build_workflow_id
+        env:
+          WORKFLOW_DATA: ${{ steps.get_workflow_run.outputs.data }}
         run: |
-          WORKFLOW_DATA='${{ steps.get_workflow_run.outputs.data }}'
-
           WORKFLOW_ID=$(echo "$WORKFLOW_DATA" | jq -r '
             .workflow_runs[0].id // empty
           ')
@@ -76,8 +76,10 @@ jobs:
 
       - name: Verify artifact exists
         id: check_result
+        env:
+          ARTIFACT_DATA: ${{ steps.verify_artifact.outputs.data }}
         run: |
-          TOTAL_COUNT=$(echo '${{ steps.verify_artifact.outputs.data }}' | jq -r '.total_count')
+          TOTAL_COUNT=$(echo "$ARTIFACT_DATA" | jq -r '.total_count')
 
           if [ "$TOTAL_COUNT" -gt 0 ]; then
             echo "Found Artemis.war artifact in build for commit ${{ github.event.inputs.commit_sha }}"
@@ -88,7 +90,7 @@ jobs:
 
   deploy:
     needs: check-build-status
-    runs-on: [self-hosted, deploy-artemis]
+    runs-on: [self-hosted, artemis-prod-deployment]
     environment:
       name: ${{ github.event.inputs.environment_name }}
       url: ${{ vars.DEPLOYMENT_URL }}
@@ -140,7 +142,7 @@ jobs:
           export VAULT_TOKEN=$(cat ~/.vault-token)
 
       - name: Download artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: Artemis.war
           path: /tmp/artifact

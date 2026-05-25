@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.text.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
+import static de.tum.cit.aet.artemis.core.config.Constants.MODULE_FEATURE_ATHENA;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -24,8 +24,12 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
@@ -55,8 +59,11 @@ public class TextExerciseFeedbackService {
 
     private final TextBlockService textBlockService;
 
+    private final UserRepository userRepository;
+
     public TextExerciseFeedbackService(Optional<AthenaFeedbackApi> athenaFeedbackApi, SubmissionService submissionService, ResultService resultService,
-            ResultRepository resultRepository, ResultWebsocketService resultWebsocketService, ParticipationService participationService, TextBlockService textBlockService) {
+            ResultRepository resultRepository, ResultWebsocketService resultWebsocketService, ParticipationService participationService, TextBlockService textBlockService,
+            UserRepository userRepository) {
         this.athenaFeedbackApi = athenaFeedbackApi;
         this.submissionService = submissionService;
         this.resultService = resultService;
@@ -64,6 +71,48 @@ public class TextExerciseFeedbackService {
         this.resultWebsocketService = resultWebsocketService;
         this.participationService = participationService;
         this.textBlockService = textBlockService;
+        this.userRepository = userRepository;
+    }
+
+    /**
+     * Asynchronously triggers non-graded Athena feedback for a text submission in a test exam.
+     *
+     * @param participation the student participation associated with the exercise
+     * @param textExercise  the text exercise
+     */
+    public void generateAutomaticFeedbackForTestExamAsync(StudentParticipation participation, TextExercise textExercise) {
+        if (this.athenaFeedbackApi.isEmpty()) {
+            return;
+        }
+        Optional<Submission> submissionOptional;
+        try {
+            submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId()).findLatestSubmission();
+        }
+        catch (EntityNotFoundException e) {
+            log.warn("Skipping Athena feedback for text participation {}: {}", participation.getId(), e.getMessage());
+            return;
+        }
+        if (submissionOptional.isEmpty()) {
+            return;
+        }
+        if (!(submissionOptional.get() instanceof TextSubmission textSubmission)) {
+            log.warn("Skipping Athena feedback for participation {} on text exercise {}: latest submission {} is not a TextSubmission", participation.getId(), textExercise.getId(),
+                    submissionOptional.get().getId());
+            return;
+        }
+        if (textSubmission.isEmpty()) {
+            return;
+        }
+        try {
+            athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, MODULE_FEATURE_ATHENA))
+                    .checkLatestSubmissionHasNoAthenaResultOrThrow(textSubmission);
+        }
+        catch (BadRequestAlertException ignored) {
+            return;
+        }
+        // Capture the user on the calling (request) thread — SecurityContext is not propagated into the async executor.
+        User requestingUser = userRepository.getUser();
+        CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(textSubmission, participation, textExercise, requestingUser));
     }
 
     /**
@@ -91,7 +140,8 @@ public class TextExerciseFeedbackService {
                 throw new BadRequestAlertException("Submission can not be empty for an AI feedback request", "submission", "noAthenaFeedbackOnEmptySubmission", true);
             }
 
-            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(textSubmission, participation, textExercise));
+            User requestingUser = userRepository.getUser();
+            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(textSubmission, participation, textExercise, requestingUser));
         }
         return participation;
     }
@@ -103,8 +153,9 @@ public class TextExerciseFeedbackService {
      * @param textSubmission the text submission associated with the student participation.
      * @param participation  the student participation associated with the exercise.
      * @param textExercise   the text exercise object.
+     * @param requestingUser the user that requested the feedback generation
      */
-    public void generateAutomaticNonGradedFeedback(TextSubmission textSubmission, StudentParticipation participation, TextExercise textExercise) {
+    public void generateAutomaticNonGradedFeedback(TextSubmission textSubmission, StudentParticipation participation, TextExercise textExercise, User requestingUser) {
         log.debug("Using athena to generate (text exercise) feedback request: {}", textExercise.getId());
 
         // athena takes over the control here
@@ -121,8 +172,8 @@ public class TextExerciseFeedbackService {
 
             log.debug("Submission id: {}", textSubmission.getId());
 
-            AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA));
-            var athenaResponse = api.getTextFeedbackSuggestions(textExercise, textSubmission, false);
+            AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, MODULE_FEATURE_ATHENA));
+            var athenaResponse = api.getTextFeedbackSuggestions(textExercise, textSubmission, false, requestingUser);
 
             Set<TextBlock> textBlocks = new HashSet<>();
             List<Feedback> feedbacks = new ArrayList<>();

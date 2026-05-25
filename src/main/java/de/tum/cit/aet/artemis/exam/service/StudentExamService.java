@@ -24,6 +24,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -33,6 +34,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -40,6 +42,7 @@ import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.AthenaFeedbackUsageDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
@@ -53,6 +56,7 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionVersionService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.modeling.api.ModelingFeedbackApi;
 import de.tum.cit.aet.artemis.modeling.api.ModelingSubmissionApi;
 import de.tum.cit.aet.artemis.modeling.config.ModelingApiNotPresentException;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -72,6 +76,7 @@ import de.tum.cit.aet.artemis.quiz.domain.compare.DnDMapping;
 import de.tum.cit.aet.artemis.quiz.domain.compare.SAMapping;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
+import de.tum.cit.aet.artemis.text.api.TextFeedbackApi;
 import de.tum.cit.aet.artemis.text.api.TextSubmissionApi;
 import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -115,6 +120,10 @@ public class StudentExamService {
 
     private final Optional<ModelingSubmissionApi> modelingSubmissionApi;
 
+    private final Optional<TextFeedbackApi> textFeedbackApi;
+
+    private final Optional<ModelingFeedbackApi> modelingFeedbackApi;
+
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final ExamRepository examRepository;
@@ -125,12 +134,20 @@ public class StudentExamService {
 
     private final TaskScheduler scheduler;
 
+    /**
+     * Maximum number of Athena feedback requests a student may accumulate across all of their submitted test-exam
+     * attempts for a given exam. Reuses the course-exercise cap so the two stay in sync.
+     */
+    @Value("${artemis.athena.allowed-feedback-requests:10}")
+    private int allowedFeedbackRequests;
+
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, Optional<TextSubmissionApi> textSubmissionApi,
-            Optional<ModelingSubmissionApi> modelingSubmissionApi, SubmissionVersionService submissionVersionService, SubmissionService submissionService,
-            StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingTriggerService programmingTriggerService, ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService,
-            @Qualifier("taskScheduler") TaskScheduler scheduler, ExamService examService) {
+            Optional<ModelingSubmissionApi> modelingSubmissionApi, Optional<TextFeedbackApi> textFeedbackApi, Optional<ModelingFeedbackApi> modelingFeedbackApi,
+            SubmissionVersionService submissionVersionService, SubmissionService submissionService, StudentParticipationRepository studentParticipationRepository,
+            ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingTriggerService programmingTriggerService,
+            ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService, @Qualifier("taskScheduler") TaskScheduler scheduler,
+            ExamService examService) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -138,6 +155,8 @@ public class StudentExamService {
         this.submittedAnswerRepository = submittedAnswerRepository;
         this.textSubmissionApi = textSubmissionApi;
         this.modelingSubmissionApi = modelingSubmissionApi;
+        this.textFeedbackApi = textFeedbackApi;
+        this.modelingFeedbackApi = modelingFeedbackApi;
         this.submissionVersionService = submissionVersionService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.examQuizService = examQuizService;
@@ -195,6 +214,77 @@ public class StudentExamService {
             // Delay to ensure that "Building and testing" is shown in the client
             scheduler.schedule(() -> programmingTriggerService.triggerBuildForParticipations(currentStudentParticipations), Instant.now().plus(3, ChronoUnit.SECONDS));
         }
+    }
+
+    /**
+     * Requests Athena AI feedback for all text and modeling participations of a submitted test exam whose exercise
+     * has a feedback suggestion module configured. Called explicitly by the student via the test exam summary button.
+     * <p>
+     * Rejects the request if the student has already accumulated {@link #allowedFeedbackRequests} successful Athena
+     * results across all of their test-exam attempts for this exam (cross-attempt cap), or if no exercise in the
+     * attempt has a feedback suggestion module configured. Individual submissions that already have an Athena result
+     * are skipped silently inside the async dispatch in {@code generateAutomaticFeedbackForTestExamAsync}, so
+     * remaining unassessed submissions in the same attempt still get processed.
+     *
+     * @param studentExam the submitted student exam
+     * @param currentUser the user requesting feedback
+     * @throws BadRequestAlertException if the exam is not a test exam, not submitted, Athena is unavailable, the
+     *                                      request limit is reached, or no exercise has a feedback suggestion module
+     *                                      configured
+     */
+    public void requestAthenaFeedbackForTestExam(StudentExam studentExam, User currentUser) {
+        if (!Boolean.TRUE.equals(studentExam.isSubmitted())) {
+            throw new BadRequestAlertException("Student exam must be submitted before requesting feedback", "StudentExam", "studentExamNotSubmitted");
+        }
+        if (!studentExam.isTestExam()) {
+            throw new BadRequestAlertException("Athena feedback is only available for test exams", "StudentExam", "notTestExam");
+        }
+        if (textFeedbackApi.isEmpty() && modelingFeedbackApi.isEmpty()) {
+            throw new BadRequestAlertException("Athena feedback is not available", "StudentExam", "athenaNotAvailable");
+        }
+
+        long attemptsWithAthenaResult = studentExamRepository.countTestExamAttemptsWithAthenaResultByUserIdAndExamId(currentUser.getId(), studentExam.getExam().getId());
+        if (attemptsWithAthenaResult >= allowedFeedbackRequests) {
+            throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "StudentExam", "maxAthenaResultsReached", true);
+        }
+
+        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
+        List<StudentParticipation> eligibleParticipations = participations.stream()
+                .filter(participation -> participation.getExercise() != null && participation.getExercise().getFeedbackSuggestionModule() != null).toList();
+        if (eligibleParticipations.isEmpty()) {
+            throw new BadRequestAlertException("No exam exercises with a configured AI feedback module", "StudentExam", "noFeedbackSuggestionModuleConfigured", true);
+        }
+        for (StudentParticipation participation : eligibleParticipations) {
+            Exercise exercise = participation.getExercise();
+            if (exercise instanceof TextExercise && textFeedbackApi.isEmpty()) {
+                throw new BadRequestAlertException("Athena feedback for text exercises is not available", "StudentExam", "textAthenaNotAvailable");
+            }
+            if (exercise instanceof ModelingExercise && modelingFeedbackApi.isEmpty()) {
+                throw new BadRequestAlertException("Athena feedback for modeling exercises is not available", "StudentExam", "modelingAthenaNotAvailable");
+            }
+        }
+        for (StudentParticipation participation : eligibleParticipations) {
+            Exercise exercise = participation.getExercise();
+            if (exercise instanceof TextExercise textExercise) {
+                textFeedbackApi.ifPresent(api -> api.generateAutomaticFeedbackForTestExamAsync(participation, textExercise));
+            }
+            else if (exercise instanceof ModelingExercise modelingExercise) {
+                modelingFeedbackApi.ifPresent(api -> api.generateAutomaticFeedbackForTestExamAsync(participation, modelingExercise));
+            }
+        }
+    }
+
+    /**
+     * Returns how many test-exam attempts of the given user have produced a successful Athena feedback result, paired
+     * with the configured cap. Each attempt counts as one request regardless of how many exercises it contains.
+     *
+     * @param userId the id of the student whose test-exam attempts should be counted
+     * @param examId the id of the exam the attempts belong to
+     * @return the number of attempts that already produced an Athena result and the configured cap
+     */
+    public AthenaFeedbackUsageDTO getAthenaFeedbackUsage(Long userId, Long examId) {
+        long used = studentExamRepository.countTestExamAttemptsWithAthenaResultByUserIdAndExamId(userId, examId);
+        return new AthenaFeedbackUsageDTO(used, allowedFeedbackRequests);
     }
 
     private void submitStudentExam(StudentExam studentExam) {
@@ -731,10 +821,7 @@ public class StudentExamService {
         var studentExams = exam.getStudentExams();
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
 
-        var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
-        if (cache != null) {
-            cache.evict(examId);
-        }
+        this.invalidateExerciseStartStatus(examId);
 
         var finishedExamsCounter = new AtomicInteger(0);
         var failedExamsCounter = new AtomicInteger(0);
@@ -802,6 +889,13 @@ public class StudentExamService {
                 .map(wrapper -> (ExamExerciseStartPreparationStatus) wrapper.get());
     }
 
+    public void invalidateExerciseStartStatus(Long examId) {
+        var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
+        if (cache != null) {
+            cache.evict(examId);
+        }
+    }
+
     /**
      * Generates a new individual StudentExam for the specified student and stores it in the database.
      *
@@ -831,6 +925,7 @@ public class StudentExamService {
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateStudentExams(final Exam exam) {
+        this.invalidateExerciseStartStatus(exam.getId());
         final var existingStudentExams = studentExamRepository.findByExamId(exam.getId());
         // deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
         studentExamRepository.deleteAll(existingStudentExams);
@@ -851,6 +946,7 @@ public class StudentExamService {
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateMissingStudentExams(Exam exam) {
+        this.invalidateExerciseStartStatus(exam.getId());
 
         // Get all users who already have an individual exam
         Set<User> usersWithStudentExam = studentExamRepository.findUsersWithStudentExamsForExam(exam.getId());

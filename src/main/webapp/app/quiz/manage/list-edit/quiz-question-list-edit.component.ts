@@ -3,7 +3,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faFileImport, faListUl, faPlus, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { QuizQuestionEdit } from 'app/quiz/manage/interfaces/quiz-question-edit.interface';
@@ -13,7 +13,6 @@ import { ShortAnswerQuestionEditComponent } from 'app/quiz/manage/short-answer-q
 import { ApollonDiagramImportDialogComponent } from 'app/quiz/manage/apollon-diagrams/import-dialog/apollon-diagram-import-dialog.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgClass } from '@angular/common';
 import { QuizQuestionListEditExistingComponent } from '../list-edit-existing/quiz-question-list-edit-existing.component';
 import { QuizAiQuestionRefinementPanelComponent } from 'app/quiz/manage/quiz-ai-question-refinement-panel/quiz-ai-question-refinement-panel.component';
 
@@ -29,7 +28,6 @@ import { QuizAiQuestionRefinementPanelComponent } from 'app/quiz/manage/quiz-ai-
         DragAndDropQuestionEditComponent,
         ShortAnswerQuestionEditComponent,
         FaIconComponent,
-        NgClass,
         QuizQuestionListEditExistingComponent,
         QuizAiQuestionRefinementPanelComponent,
     ],
@@ -45,6 +43,7 @@ export class QuizQuestionListEditComponent {
     onQuestionAdded = output<QuizQuestion>();
     onQuestionUpdated = output<void>();
     onQuestionDeleted = output<QuizQuestion>();
+    onAiGenerateRequested = output<void>();
 
     readonly editMultipleChoiceQuestionComponents = viewChildren<MultipleChoiceQuestionEditComponent>('editMultipleChoice');
 
@@ -56,16 +55,32 @@ export class QuizQuestionListEditComponent {
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
 
-    faPlus = faPlus;
+    readonly faPlus = faPlus;
+    readonly faListUl = faListUl;
+    readonly faFileImport = faFileImport;
+    readonly faWandMagicSparkles = faWandMagicSparkles;
 
     /** Questions whose AI refinement panel is currently open. */
     openRefinementQuestions = signal(new Set<QuizQuestion>());
     /** Questions whose editor card is currently collapsed. */
     collapsedQuestions = signal(new Set<QuizQuestion>());
+    /** Per-question reasoning from the last bulk refinement. */
+    bulkRefinementReasonings = signal(new Map<QuizQuestion, string>());
 
     showExistingQuestions = false;
-
     fileMap = new Map<string, { path?: string; file: File }>();
+
+    /**
+     * Apply bulk refinement results from the parent: update per-question reasonings and reload editors.
+     * Called by the parent after a successful global refinement request.
+     *
+     * @param reasonings map from each refined question to its AI reasoning string
+     */
+    applyBulkRefinement(reasonings: Map<QuizQuestion, string>): void {
+        this.bulkRefinementReasonings.set(reasonings);
+        this.editMultipleChoiceQuestionComponents().forEach((component) => component.reloadFromQuestion());
+        this.onQuestionUpdated.emit();
+    }
 
     /**
      * Emit onQuestionUpdated if there is an update of the question.
@@ -145,7 +160,17 @@ export class QuizQuestionListEditComponent {
         const collapsedUpdated = new Set(this.collapsedQuestions());
         collapsedUpdated.delete(quizQuestion);
         this.collapsedQuestions.set(collapsedUpdated);
+        const reasoningsUpdated = new Map(this.bulkRefinementReasonings());
+        reasoningsUpdated.delete(quizQuestion);
+        this.bulkRefinementReasonings.set(reasoningsUpdated);
         this.onQuestionDeleted.emit(quizQuestion);
+    }
+
+    /** Removes the stored reasoning for a single question after the user dismisses its card. */
+    clearReasoning(quizQuestion: QuizQuestion): void {
+        const updated = new Map(this.bulkRefinementReasonings());
+        updated.delete(quizQuestion);
+        this.bulkRefinementReasonings.set(updated);
     }
 
     /**

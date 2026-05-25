@@ -39,6 +39,9 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.dto.QuizExerciseCalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.util.CalendarEventType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
@@ -48,14 +51,11 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
-import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
-import de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
-import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
@@ -122,6 +122,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
+    private final Optional<QuizScheduleService> quizScheduleService;
+
     private final QuizStatisticService quizStatisticService;
 
     private final QuizBatchService quizBatchService;
@@ -147,8 +149,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     private final Optional<ExamDateApi> examDateApi;
 
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
-            InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
-            ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
+            InstanceMessageSendService instanceMessageSendService, Optional<QuizScheduleService> quizScheduleService, QuizStatisticService quizStatisticService,
+            QuizBatchService quizBatchService, ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService, UserRepository userRepository, QuizBatchRepository quizBatchRepository,
             ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<SlideApi> slideApi, CompetencyExerciseLinkService competencyExerciseLinkService, Optional<ExamDateApi> examDateApi) {
@@ -157,6 +159,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.instanceMessageSendService = instanceMessageSendService;
+        this.quizScheduleService = quizScheduleService;
         this.quizStatisticService = quizStatisticService;
         this.quizBatchService = quizBatchService;
         this.exerciseSpecificationService = exerciseSpecificationService;
@@ -636,7 +639,17 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         quizStatisticService.recalculateStatistics(savedQuizExercise);
     }
 
+    /**
+     * Cancels the scheduled start of a quiz exercise both locally and across the cluster.
+     * <p>
+     * On nodes that run the scheduling profile the local scheduler entry is cleared synchronously
+     * so the calling node immediately observes the cancellation. The cluster-wide message is
+     * always published so all other nodes catch up regardless of profile.
+     *
+     * @param quizExerciseId the id of the quiz exercise whose scheduled start should be canceled
+     */
     public void cancelScheduledQuiz(Long quizExerciseId) {
+        quizScheduleService.ifPresent(service -> service.cancelScheduledQuizStart(quizExerciseId));
         instanceMessageSendService.sendQuizExerciseStartCancel(quizExerciseId);
     }
 

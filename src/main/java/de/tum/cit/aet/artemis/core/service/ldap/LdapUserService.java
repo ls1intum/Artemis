@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.core.service.ldap;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP;
 import static de.tum.cit.aet.artemis.core.config.Constants.TUM_LDAP_EMAILS;
 import static de.tum.cit.aet.artemis.core.config.Constants.TUM_LDAP_MAIN_EMAIL;
 import static de.tum.cit.aet.artemis.core.config.Constants.TUM_LDAP_MATRIKEL_NUMBER;
@@ -14,18 +13,19 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.ldap.query.SearchScope;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import de.tum.cit.aet.artemis.core.config.LdapEnabled;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.ldap.LdapUserRepository;
 
 @Lazy
 @Service
-@Profile(PROFILE_LDAP)
+@Conditional(LdapEnabled.class)
 public class LdapUserService {
 
     private static final Logger log = LoggerFactory.getLogger(LdapUserService.class);

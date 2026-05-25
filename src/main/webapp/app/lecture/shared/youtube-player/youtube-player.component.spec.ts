@@ -49,6 +49,11 @@ describe('YouTubePlayerComponent', () => {
         ]);
     });
 
+    async function render(): Promise<void> {
+        fixture.detectChanges();
+        await fixture.whenStable();
+    }
+
     it('starts polling on PLAYING state', () => {
         vi.useFakeTimers();
         const spy = vi.spyOn<any, any>(component, 'updateCurrentSegment');
@@ -108,14 +113,54 @@ describe('YouTubePlayerComponent', () => {
         vi.useRealTimers();
     });
 
+    it('prefers the Angular playerComponent viewChild over the event target on ready', () => {
+        const viewChildPlayer = { getCurrentTime: () => 15, seekTo: vi.fn() };
+        const eventPlayer = { getCurrentTime: () => 0, seekTo: vi.fn() };
+
+        (component as any).playerComponent = () => viewChildPlayer as any;
+        component.onPlayerReady({ target: eventPlayer } as any);
+
+        expect((component as any).youtubePlayer).toBe(viewChildPlayer);
+        expect(component['currentSegmentIndex']()).toBe(1);
+    });
+
     it('applies initialTimestamp on ready and updates segment immediately', () => {
         fixture.componentRef.setInput('initialTimestamp', 25);
-        const seekSpy = vi.fn();
-        (component as any).youtubePlayer = { getCurrentTime: () => 25, seekTo: seekSpy };
         const updateSpy = vi.spyOn<any, any>(component, 'updateCurrentSegment');
         component.onPlayerReady({} as any);
-        expect(seekSpy).toHaveBeenCalledWith(25, true);
         expect(updateSpy).toHaveBeenCalledWith(25);
+    });
+
+    it('seeks when initialTimestamp arrives after the player component exists', async () => {
+        const seekSpy = vi.fn();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        (component as any).playerComponent = () => ({ seekTo: seekSpy }) as any;
+
+        fixture.componentRef.setInput('initialTimestamp', 60);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(seekSpy).toHaveBeenCalledWith(60, true);
+    });
+
+    it('seeks again when the deeplink timestamp changes', async () => {
+        const seekSpy = vi.fn();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        (component as any).playerComponent = () => ({ seekTo: seekSpy }) as any;
+
+        fixture.componentRef.setInput('initialTimestamp', 30);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.componentRef.setInput('initialTimestamp', 60);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(seekSpy).toHaveBeenNthCalledWith(1, 30, true);
+        expect(seekSpy).toHaveBeenNthCalledWith(2, 60, true);
     });
 
     it('resyncs segment index when transcriptSegments arrives after player is ready', async () => {
@@ -125,7 +170,7 @@ describe('YouTubePlayerComponent', () => {
         await fixture.whenStable();
 
         // Player becomes ready at t=15
-        (component as any).youtubePlayer = { getCurrentTime: () => 15, seekTo: vi.fn() };
+        (component as any).playerComponent = () => ({ getCurrentTime: () => 15, seekTo: vi.fn() }) as any;
         component.onPlayerReady({} as any);
         expect(component['currentSegmentIndex']()).toBe(-1); // no segments yet
 
@@ -145,6 +190,35 @@ describe('YouTubePlayerComponent', () => {
     it('guards segment update before ready', () => {
         (component as any).youtubePlayer = null;
         expect(() => component.seekTo(5)).not.toThrow();
+    });
+
+    it.each([0, 3])('stops polling on state %s and updates the segment once more', (state) => {
+        vi.useFakeTimers();
+        const updateSpy = vi.spyOn<any, any>(component, 'updateCurrentSegment');
+        (component as any).youtubePlayer = { getCurrentTime: () => 25, seekTo: vi.fn() };
+
+        component.onStateChange({ data: 1 } as any);
+        vi.advanceTimersByTime(250);
+        updateSpy.mockClear();
+
+        component.onStateChange({ data: state } as any);
+        vi.advanceTimersByTime(1_000);
+
+        expect(updateSpy).toHaveBeenCalledTimes(1);
+        expect(updateSpy).toHaveBeenCalledWith(25);
+    });
+
+    it('resetSplitRatio clears custom sizing on the video column', async () => {
+        await render();
+
+        const videoColumnEl = component.videoColumn()!.nativeElement;
+        videoColumnEl.style.flex = '0 0 65%';
+        videoColumnEl.style.width = '650px';
+
+        component.resetSplitRatio();
+
+        expect(videoColumnEl.style.flex).toBe('');
+        expect(videoColumnEl.style.width).toBe('');
     });
 
     it('clears timeout on destroy', () => {

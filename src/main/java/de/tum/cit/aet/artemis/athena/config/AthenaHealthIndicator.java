@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.athena.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,8 +9,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.HealthIndicator;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -26,7 +24,7 @@ import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
  */
 @Component
 @Lazy
-@Profile(PROFILE_ATHENA)
+@Conditional(AthenaEnabled.class)
 public class AthenaHealthIndicator implements HealthIndicator {
 
     private static final Logger log = LoggerFactory.getLogger(AthenaHealthIndicator.class);

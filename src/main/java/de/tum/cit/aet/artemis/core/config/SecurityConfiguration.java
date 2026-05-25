@@ -287,9 +287,9 @@ public class SecurityConfiguration {
                     .requestMatchers("/", "/index.html", "/public/**").permitAll()
                     .requestMatchers("/*.js", "/*.css", "/*.map", "/*.json").permitAll()
                     .requestMatchers("/manifest.webapp", "/robots.txt").permitAll()
-                    .requestMatchers("/content/**", "/i18n/*.json", "/logo/*").permitAll()
+                    .requestMatchers("/content/**", "/i18n/*.json", "/logo/*", "/webjars/katex/**").permitAll()
                     // Information and health endpoints do not need authentication
-                    .requestMatchers("/management/info", "/management/health").permitAll()
+                    .requestMatchers("/management/info", "/management/health", "/management/health/readiness", "/management/health/liveness").permitAll()
                     // Admin area requires specific authority.
                     .requestMatchers("/api/*/admin/**").hasAuthority(Role.ADMIN.getAuthority())
                     // Publicly accessible API endpoints (allowed for everyone, potentially with secret authentication).
@@ -305,7 +305,8 @@ public class SecurityConfiguration {
                     .requestMatchers(("/api-docs")).permitAll()
                     .requestMatchers(("/api-docs.yaml")).permitAll()
                     .requestMatchers("/swagger-ui/**").permitAll()
-                    .requestMatchers("/api/core/calendar/courses/*/calendar-events-ics").permitAll()
+                    .requestMatchers("/api/core/calendar/courses/*/calendar-events-ics").permitAll() // Deprecated, to be removed Oct 2026
+                    .requestMatchers("/api/calendar/courses/*/calendar-events-ics").permitAll()
                     // `/git/**` endpoints (JGit servlet + LocalVC filters) are only registered under the `localvc` profile
                     // LocalVCFetchFilter/LocalVCPushFilter handle auth
                     .requestMatchers("/git/**").permitAll();

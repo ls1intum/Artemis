@@ -14,7 +14,7 @@
         </ngb-alert>
         <div class="mt-3">
             <button type="button" class="btn btn-secondary" (click)="previousState()"><fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span></button>
-            <button type="submit" id="save-group" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+            <button type="submit" id="save-group" [disabled]="editForm.form.invalid || isSaving()" class="btn btn-primary">
                 <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
             </button>
         </div>

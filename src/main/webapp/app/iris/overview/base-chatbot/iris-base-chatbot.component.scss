@@ -262,6 +262,8 @@ $iris-z-index-dropdown: 1050;
     gap: 8px;
     padding: 4px 0;
     justify-content: center;
+    width: fit-content;
+    margin-inline: auto;
 }
 
 .prompt-suggestion-chip {
@@ -393,7 +395,7 @@ pre {
 
 :host:not(.layout-embedded) .chat-layout {
     border: 1px solid var(--border-color);
-    border-radius: $iris-border-radius-sm;
+    border-radius: var(--iris-chat-shell-border-radius, #{$iris-border-radius-sm});
 }
 
 .chat-container {
@@ -532,7 +534,6 @@ pre {
 
     &-inner {
         display: flex;
-        align-items: stretch;
     }
 
     .textarea-wrapper {

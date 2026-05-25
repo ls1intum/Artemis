@@ -1,15 +1,16 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { faComments, faPersonChalkboard, faRectangleList, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { CourseNotification } from 'app/communication/shared/entities/course-notification/course-notification';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { BehaviorSubject, Observable, of, tap } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription, of, tap } from 'rxjs';
 import { CourseNotificationInfo } from 'app/communication/shared/entities/course-notification/course-notification-info';
 import { CourseNotificationPage } from 'app/communication/shared/entities/course-notification/course-notification-page';
 import { CourseNotificationCategory } from 'app/communication/shared/entities/course-notification/course-notification-category';
 import { CourseNotificationViewingStatus } from 'app/communication/shared/entities/course-notification/course-notification-viewing-status';
 import { CourseNotificationChannel } from 'app/communication/shared/entities/course-notification/course-notification-channel';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
+import { AccountService } from 'app/core/auth/account.service';
 
 /**
  * Service for managing course notifications.
@@ -19,7 +20,7 @@ import { convertDateFromServer } from 'app/shared/util/date.utils';
 @Injectable({
     providedIn: 'root',
 })
-export class CourseNotificationService {
+export class CourseNotificationService implements OnDestroy {
     public static readonly NOTIFICATION_TYPE_ICON_MAP = {
         newPostNotification: faComments,
         newAnswerNotification: faComments,
@@ -83,6 +84,7 @@ export class CourseNotificationService {
     public readonly pageSize = 10;
 
     private http = inject(HttpClient);
+    private readonly accountService = inject(AccountService);
 
     private courseNotificationMap: Record<number, CourseNotification[]> = {};
     private courseNotificationPageMap: Record<number, boolean> = {};
@@ -94,7 +96,38 @@ export class CourseNotificationService {
     public notificationCount$: Observable<Record<number, number>> = this.notificationCountSubject.asObservable();
     public notifications$: Observable<Record<number, CourseNotification[]>> = this.notificationSubject.asObservable();
 
+    private stateGeneration = 0;
+    private currentUserId?: number;
+    private authenticationStateSubscription: Subscription;
+
     constructor() {
+        this.notificationSubject.next(this.courseNotificationMap);
+        this.notificationCountSubject.next(this.courseNotificationCountMap);
+        this.currentUserId = this.accountService.userIdentity()?.id;
+        this.authenticationStateSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
+            if (this.currentUserId !== user?.id) {
+                this.currentUserId = user?.id;
+                this.resetState();
+            }
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.authenticationStateSubscription?.unsubscribe();
+    }
+
+    /**
+     * Clears all cached notifications, counts, page state, and the cached info response. Called on
+     * logout / user change so the next user does not see the previous user's notifications. The
+     * generation counter ensures that any pagination request still in flight at the time of reset
+     * does not write its (now stale) results back into the cleared maps.
+     */
+    private resetState(): void {
+        this.stateGeneration++;
+        this.courseNotificationMap = {};
+        this.courseNotificationPageMap = {};
+        this.courseNotificationCountMap = {};
+        this.cachedNotificationInfo = null;
         this.notificationSubject.next(this.courseNotificationMap);
         this.notificationCountSubject.next(this.courseNotificationCountMap);
     }
@@ -109,9 +142,11 @@ export class CourseNotificationService {
             return of(this.cachedNotificationInfo);
         }
 
+        const generation = this.stateGeneration;
         // Otherwise, fetch from server and cache the result
         return this.http.get<CourseNotificationInfo>(this.apiEndpoint + 'info', { observe: 'response' }).pipe(
             tap((response) => {
+                if (this.stateGeneration !== generation) return;
                 if (response.body) {
                     this.cachedNotificationInfo = response;
                 }
@@ -138,7 +173,9 @@ export class CourseNotificationService {
         }
 
         const page = Math.floor(this.courseNotificationMap[courseId].length / this.pageSize);
+        const generation = this.stateGeneration;
         this.http.get<CourseNotificationPage>(this.apiEndpoint + courseId + '?page=' + page + '&size=' + this.pageSize, { observe: 'response' }).subscribe((response) => {
+            if (this.stateGeneration !== generation) return;
             const convertedResponse = this.convertResponseFromServer(response);
 
             if (!convertedResponse.body || !convertedResponse.body.content) {

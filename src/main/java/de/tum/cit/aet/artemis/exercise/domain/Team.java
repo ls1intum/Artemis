@@ -14,8 +14,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -31,7 +29,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
  */
 @Entity
 @Table(name = "team", uniqueConstraints = { @UniqueConstraint(columnNames = { "exercise_id", "short_name" }) })
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Team extends AbstractAuditingEntity implements Participant {
 
@@ -53,7 +50,6 @@ public class Team extends AbstractAuditingEntity implements Participant {
      * occur when trying to persist the entity for the first time after changes have been made to the related entities of the ManyToMany relationship (users in this case).
      */
     @ManyToMany(fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JoinTable(name = "team_student", joinColumns = @JoinColumn(name = "team_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "student_id", referencedColumnName = "id"))
     private Set<User> students = new HashSet<>();

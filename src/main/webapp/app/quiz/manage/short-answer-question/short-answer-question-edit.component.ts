@@ -1,4 +1,5 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnInit, ViewEncapsulation, effect, inject, input, output, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnInit, ViewEncapsulation, computed, effect, inject, input, output, viewChild } from '@angular/core';
+import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
@@ -7,7 +8,7 @@ import { QuizQuestionEdit } from 'app/quiz/manage/interfaces/quiz-question-edit.
 import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
 import { cloneDeep } from 'lodash-es';
-import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
+import { QuizQuestion, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { markdownForHtml } from 'app/shared/util/markdown.conversion.util';
 import { generateExerciseHintExplanation, parseExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faAngleDown, faAngleRight, faBan, faBars, faChevronDown, faChevronUp, faTrash, faUndo, faUnlink } from '@fortawesome/free-solid-svg-icons';
@@ -28,11 +29,16 @@ import { SHORT_ANSWER_QUIZ_QUESTION_EDITOR_OPTIONS } from 'app/shared/monaco-edi
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
 import { QuizScoringInfoModalComponent } from '../quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 import { MatchPercentageInfoModalComponent } from '../match-percentage-info-modal/match-percentage-info-modal.component';
 import { CdkDrag, CdkDragPlaceholder, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SelectModule } from 'primeng/select';
+import { CheckboxModule } from 'primeng/checkbox';
+import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
 
 @Component({
     selector: 'jhi-short-answer-question-edit',
@@ -55,12 +61,27 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         CdkDragPlaceholder,
         CdkDragPreview,
         ArtemisTranslatePipe,
+        SelectModule,
+        CheckboxModule,
+        InputTextModule,
+        InputNumberModule,
     ],
 })
 export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, QuizQuestionEdit {
     shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
     private modalService = inject(NgbModal);
     private changeDetector = inject(ChangeDetectorRef);
+    private translateService = inject(TranslateService);
+    private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
+
+    readonly scoringTypeOptions = computed(() => {
+        this.currentLocale();
+        return [
+            { label: this.translateService.instant('artemisApp.quizExercise.scoringType.all_or_nothing'), value: ScoringType.ALL_OR_NOTHING },
+            { label: this.translateService.instant('artemisApp.quizExercise.scoringType.proportional_with_penalty'), value: ScoringType.PROPORTIONAL_WITH_PENALTY },
+            { label: this.translateService.instant('artemisApp.quizExercise.scoringType.proportional_without_penalty'), value: ScoringType.PROPORTIONAL_WITHOUT_PENALTY },
+        ];
+    });
 
     private readonly questionEditor = viewChild.required<MarkdownEditorMonacoComponent>('questionEditor');
     readonly questionElement = viewChild.required<ElementRef>('question');
@@ -423,9 +444,12 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
 
         const currentSpotNumber = this.numberOfSpot;
 
+        const monaco = this.questionEditor().monacoEditor();
+        if (!monaco) return;
+
         // split text before first option tag
-        const questionText = this.questionEditor()
-            .monacoEditor.getText()
+        const questionText = monaco
+            .getText()
             .split(/\[-option /g)[0]
             .trim();
         this.textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(questionText);
@@ -438,7 +462,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
         this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts);
         this.setQuestionEditorValue(this.generateMarkdown());
         this.addOptionToSpot(currentSpotNumber, markedText);
-        this.parseMarkdown(this.questionEditor().monacoEditor.getText());
+        this.parseMarkdown(monaco.getText());
 
         this.questionUpdated.emit();
     }

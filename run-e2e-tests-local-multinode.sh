@@ -5,8 +5,9 @@ set -e
 # Local Multi-Node E2E Test Runner for Artemis
 # =============================================================================
 # Mirrors the UX of run-e2e-tests-local-fast.sh but boots a full
-# production-faithful multi-node stack so that clustered Hazelcast L2 cache,
-# ActiveMQ STOMP relay, and round-robin LB behaviour are actually exercised.
+# production-faithful multi-node stack so that clustered Hazelcast IMaps,
+# Spring @Cacheable cache coherence, ActiveMQ STOMP relay, and round-robin LB
+# behaviour are actually exercised.
 #
 # Stack:
 #   - Postgres
@@ -297,9 +298,10 @@ services:
             cd /app/artemis/src/test/playwright &&
             chmod 777 /root &&
             rm -f test-reports/results*.xml &&
-            npm ci &&
-            npm run playwright:setup &&
-            PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-reports/results.xml npx playwright test e2e --grep "${TEST_FILTER}" --reporter=list,junit,monocart-reporter
+            corepack enable &&
+            pnpm install --frozen-lockfile &&
+            pnpm run playwright:setup &&
+            PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-reports/results.xml pnpm exec playwright test e2e --grep "${TEST_FILTER}" --reporter=list,junit,monocart-reporter
             '
 EOF
     OVERRIDE_ARGS="-f docker/playwright-local-override.yml"
@@ -387,7 +389,7 @@ if [ $TOTAL_TESTS -gt 0 ]; then
         done
         echo ""
         echo -e "${BLUE}Full container logs:${NC} $LOCAL_DIR/docker-compose.log"
-        echo -e "${BLUE}HTML report:${NC} cd src/test/playwright && npx playwright show-report test-reports/monocart-report"
+        echo -e "${BLUE}HTML report:${NC} cd src/test/playwright && pnpm exec playwright show-report test-reports/monocart-report"
     fi
 else
     echo "  No JUnit test results found in $REPORT_DIR"

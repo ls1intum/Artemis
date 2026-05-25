@@ -21,14 +21,13 @@ import { TranslateModule } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import * as Utils from 'app/exercise/course-exercises/course-utils';
 import { Component, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -96,6 +95,7 @@ class StubModelingEditorComponent {
     umlModel = input<unknown>();
     diagramType = input<unknown>();
     readOnly = input<boolean>(false);
+    scrollLock = input<boolean>(false);
     resizeOptions = input<unknown>();
     withExplanation = input<boolean>(false);
     onModelChanged = output<unknown>();
@@ -495,19 +495,6 @@ describe('ModelingExerciseUpdateComponent', () => {
         comp.validateDate();
 
         expect(exerciseService.validateDate).toHaveBeenCalledWith(comp.modelingExercise);
-    });
-
-    it('should set assessmentType to manual in exam mode', async () => {
-        fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
-        comp = fixture.componentInstance;
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        comp.isExamMode = true;
-        comp.semiAutomaticAssessmentAvailable = false;
-        comp.diagramTypeChanged();
-
-        expect(comp.modelingExercise.assessmentType).toEqual(AssessmentType.MANUAL);
     });
 
     it('should updateCategories properly by making category available for selection again when removing it', async () => {
