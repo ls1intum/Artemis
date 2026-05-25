@@ -16,7 +16,7 @@ import '@angular/localize/init';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 
 import { SystemNotificationManagementComponent } from 'app/admin/system-notification-management/system-notification-management.component';
-import { SystemNotification } from 'app/core/shared/entities/system-notification.model';
+import { SystemNotification } from 'app/admin/system-notification-management/system-notification.model';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { AccountService } from 'app/core/auth/account.service';

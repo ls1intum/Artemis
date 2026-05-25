@@ -12,7 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockModule } from 'ng-mocks';
 
 import { SystemNotificationManagementDetailComponent } from 'app/admin/system-notification-management/system-notification-management-detail.component';
-import { SystemNotification } from 'app/core/shared/entities/system-notification.model';
+import { SystemNotification } from 'app/admin/system-notification-management/system-notification.model';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 

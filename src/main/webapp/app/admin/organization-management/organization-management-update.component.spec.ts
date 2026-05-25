@@ -11,7 +11,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { OrganizationManagementUpdateComponent } from 'app/admin/organization-management/organization-management-update.component';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { Organization } from 'app/core/shared/entities/organization.model';
+import { Organization } from 'app/admin/organization-management/organization.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 

@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 
-import { Organization } from 'app/core/shared/entities/organization.model';
+import { Organization } from 'app/admin/organization-management/organization.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';

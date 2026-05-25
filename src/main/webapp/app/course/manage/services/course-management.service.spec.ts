@@ -12,7 +12,7 @@ import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overvie
 import { Course, CourseGroup } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
-import { Organization } from 'app/core/shared/entities/organization.model';
+import { Organization } from 'app/admin/organization-management/organization.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';

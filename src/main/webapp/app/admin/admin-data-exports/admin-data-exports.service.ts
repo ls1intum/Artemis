@@ -2,7 +2,7 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { AdminDataExport, DataExport } from 'app/core/shared/entities/data-export.model';
+import { AdminDataExport, DataExport } from 'app/admin/admin-data-exports/data-export.model';
 import { PageableResult } from 'app/shared/table/pageable-table';
 import dayjs from 'dayjs/esm';
 

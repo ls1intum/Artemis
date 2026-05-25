@@ -9,7 +9,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { Organization } from 'app/core/shared/entities/organization.model';
+import { Organization } from 'app/admin/organization-management/organization.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { User } from 'app/account/user/user.model';

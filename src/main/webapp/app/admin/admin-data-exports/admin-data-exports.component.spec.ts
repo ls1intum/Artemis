@@ -22,7 +22,7 @@ import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.servic
 import { AdminDataExportsComponent } from 'app/admin/admin-data-exports/admin-data-exports.component';
 import { AdminDataExportsService } from 'app/admin/admin-data-exports/admin-data-exports.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { AdminDataExport, DataExportState } from 'app/core/shared/entities/data-export.model';
+import { AdminDataExport, DataExportState } from 'app/admin/admin-data-exports/data-export.model';
 import { PageableResult } from 'app/shared/table/pageable-table';
 
 describe('AdminDataExportsComponent', () => {

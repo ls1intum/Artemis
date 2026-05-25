@@ -5,7 +5,7 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
-import { Organization } from 'app/core/shared/entities/organization.model';
+import { Organization } from 'app/admin/organization-management/organization.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';

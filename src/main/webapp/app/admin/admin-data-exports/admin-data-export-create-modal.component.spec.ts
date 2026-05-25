@@ -19,7 +19,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { AdminDataExportCreateModalComponent } from 'app/admin/admin-data-exports/admin-data-export-create-modal.component';
 import { AdminDataExportsService } from 'app/admin/admin-data-exports/admin-data-exports.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { DataExport, DataExportState } from 'app/core/shared/entities/data-export.model';
+import { DataExport, DataExportState } from 'app/admin/admin-data-exports/data-export.model';
 
 describe('AdminDataExportCreateModalComponent', () => {
     setupTestBed({ zoneless: true });

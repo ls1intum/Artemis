@@ -1,4 +1,4 @@
-import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/core/shared/entities/legal-document.model';
+import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/admin/legal/legal-document.model';
 
 export class Imprint extends LegalDocument {
     constructor(language: LegalDocumentLanguage) {

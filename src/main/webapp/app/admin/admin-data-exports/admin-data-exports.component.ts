@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AdminDataExport, DataExportState } from 'app/core/shared/entities/data-export.model';
+import { AdminDataExport, DataExportState } from 'app/admin/admin-data-exports/data-export.model';
 import { AdminDataExportsService } from 'app/admin/admin-data-exports/admin-data-exports.service';
 import { faBan, faCheck, faClock, faDownload, faExclamationTriangle, faPlus, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

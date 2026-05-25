@@ -1,7 +1,7 @@
 import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Organization } from 'app/core/shared/entities/organization.model';
+import { Organization } from 'app/admin/organization-management/organization.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { User } from 'app/account/user/user.model';
 import { Course } from 'app/course/shared/entities/course.model';

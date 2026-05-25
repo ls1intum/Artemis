@@ -18,7 +18,7 @@ import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ImageCropperComponent } from 'app/shared/image-cropper/component/image-cropper.component';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { Organization } from 'app/core/shared/entities/organization.model';
+import { Organization } from 'app/admin/organization-management/organization.model';
 import dayjs from 'dayjs/esm';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
 import { AccountService } from 'app/core/auth/account.service';

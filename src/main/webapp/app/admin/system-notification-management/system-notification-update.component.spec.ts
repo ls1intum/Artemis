@@ -22,7 +22,7 @@ import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 
 import { SystemNotificationManagementUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';
-import { SystemNotification, SystemNotificationType } from 'app/core/shared/entities/system-notification.model';
+import { SystemNotification, SystemNotificationType } from 'app/admin/system-notification-management/system-notification.model';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';

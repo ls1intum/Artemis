@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Organization } from 'app/core/shared/entities/organization.model';
+import { Organization } from 'app/admin/organization-management/organization.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Subject } from 'rxjs';
 import { faPlus, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';

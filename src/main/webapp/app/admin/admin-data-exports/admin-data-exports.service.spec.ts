@@ -14,7 +14,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { firstValueFrom } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { AdminDataExportsService } from 'app/admin/admin-data-exports/admin-data-exports.service';
-import { AdminDataExport, DataExportState } from 'app/core/shared/entities/data-export.model';
+import { AdminDataExport, DataExportState } from 'app/admin/admin-data-exports/data-export.model';
 
 describe('AdminDataExportsService', () => {
     setupTestBed({ zoneless: true });

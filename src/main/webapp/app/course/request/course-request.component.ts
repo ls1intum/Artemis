@@ -6,7 +6,7 @@ import dayjs from 'dayjs/esm';
 
 import { CourseRequestService } from 'app/course/request/course-request.service';
 import { CourseRequestFormComponent } from 'app/course/request/course-request-form.component';
-import { BaseCourseRequest } from 'app/core/shared/entities/course-request.model';
+import { BaseCourseRequest } from 'app/course/request/course-request.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { getCurrentAndFutureSemesters, getDefaultSemester } from 'app/shared/util/semester-utils';

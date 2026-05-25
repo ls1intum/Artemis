@@ -18,7 +18,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { OrganizationManagementDetailComponent } from 'app/admin/organization-management/organization-management-detail.component';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { Organization } from 'app/core/shared/entities/organization.model';
+import { Organization } from 'app/admin/organization-management/organization.model';
 import { User } from 'app/account/user/user.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { TableLazyLoadEvent } from 'primeng/table';

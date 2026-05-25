@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
-import { BaseCourseRequest, CourseRequest, CourseRequestStatus, CourseRequestsAdminOverview } from 'app/core/shared/entities/course-request.model';
+import { BaseCourseRequest, CourseRequest, CourseRequestStatus, CourseRequestsAdminOverview } from 'app/course/request/course-request.model';
 import { User } from 'app/account/user/user.model';
 import { convertDateFromClient, convertDateStringFromServer } from 'app/shared/util/date.utils';
 

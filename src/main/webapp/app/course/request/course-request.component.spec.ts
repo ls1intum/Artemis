@@ -6,7 +6,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
-import { CourseRequest } from 'app/core/shared/entities/course-request.model';
+import { CourseRequest } from 'app/course/request/course-request.model';
 import dayjs from 'dayjs/esm';
 import { of, throwError } from 'rxjs';
 

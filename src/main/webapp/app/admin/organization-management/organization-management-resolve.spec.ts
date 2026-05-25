@@ -9,7 +9,7 @@ import { of } from 'rxjs';
 
 import { OrganizationManagementResolve } from 'app/admin/organization-management/organization-management-resolve.service';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { Organization } from 'app/core/shared/entities/organization.model';
+import { Organization } from 'app/admin/organization-management/organization.model';
 
 describe('OrganizationManagementResolve', () => {
     setupTestBed({ zoneless: true });

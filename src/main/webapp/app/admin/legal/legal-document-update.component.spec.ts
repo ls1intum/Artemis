@@ -12,8 +12,8 @@ import { TranslateService } from '@ngx-translate/core';
 
 import { LegalDocumentUpdateComponent } from 'app/admin/legal/legal-document-update.component';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
-import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/core/shared/entities/legal-document.model';
-import { PrivacyStatement } from 'app/core/shared/entities/privacy-statement.model';
+import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/admin/legal/legal-document.model';
+import { PrivacyStatement } from 'app/admin/legal/privacy-statement.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 

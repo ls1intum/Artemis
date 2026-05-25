@@ -24,7 +24,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockProvider } from 'ng-mocks';
-import { Organization } from 'app/core/shared/entities/organization.model';
+import { Organization } from 'app/admin/organization-management/organization.model';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { LANGUAGES } from 'app/core/language/shared/language.constants';

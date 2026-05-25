@@ -17,7 +17,7 @@ import { SessionStorageService } from 'app/shared/service/session-storage.servic
 import { AlertService } from 'app/shared/service/alert.service';
 import { OrganizationManagementComponent } from 'app/admin/organization-management/organization-management.component';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { Organization } from 'app/core/shared/entities/organization.model';
+import { Organization } from 'app/admin/organization-management/organization.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 

@@ -6,7 +6,7 @@ import { provideHttpClient } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 
 import { CourseRequestService } from 'app/course/request/course-request.service';
-import { BaseCourseRequest, CourseRequestStatus } from 'app/core/shared/entities/course-request.model';
+import { BaseCourseRequest, CourseRequestStatus } from 'app/course/request/course-request.model';
 
 describe('CourseRequestService', () => {
     setupTestBed({ zoneless: true });

@@ -16,7 +16,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { COURSE_SHORT_NAME_MAX_LENGTH, SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
-import { Organization } from 'app/core/shared/entities/organization.model';
+import { Organization } from 'app/admin/organization-management/organization.model';
 import { NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService } from 'primeng/dynamicdialog';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
