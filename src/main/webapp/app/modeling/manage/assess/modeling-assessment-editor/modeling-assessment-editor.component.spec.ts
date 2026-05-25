@@ -172,7 +172,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             const submission = getSubmissionWithData();
 
             modelingSubmissionSpy.mockReturnValue(of(submission));
-            const user = <User>{ id: 99, groups: ['instructorGroup'] };
+            const user = <User>{ id: 99 };
             const result: Result = {
                 feedbacks: [new Feedback()],
                 score: 80,

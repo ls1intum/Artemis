@@ -12,6 +12,13 @@ public enum CourseRole {
         return this.ordinal() >= minimum.ordinal();
     }
 
+    /**
+     * Converts a security {@link Role} to the corresponding {@link CourseRole}.
+     *
+     * @param role the security role to convert.
+     * @return the matching {@link CourseRole}.
+     * @throws IllegalArgumentException if the role has no corresponding {@link CourseRole}.
+     */
     public static CourseRole fromRole(Role role) {
         return switch (role) {
             case STUDENT -> STUDENT;

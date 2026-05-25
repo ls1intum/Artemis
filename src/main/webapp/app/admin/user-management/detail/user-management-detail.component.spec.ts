@@ -19,7 +19,7 @@ describe('UserManagementDetailComponent', () => {
     let fixture: ComponentFixture<UserManagementDetailComponent>;
 
     /** Sample user data provided through the route resolver */
-    const testUser = new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT], ['admin']);
+    const testUser = new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT]);
 
     /** Mock ActivatedRoute with user data in the route's data observable */
     const mockRoute = {
@@ -53,7 +53,6 @@ describe('UserManagementDetailComponent', () => {
                     activated: true,
                     langKey: 'en',
                     authorities: [Authority.STUDENT],
-                    groups: ['admin'],
                 }),
             );
         });

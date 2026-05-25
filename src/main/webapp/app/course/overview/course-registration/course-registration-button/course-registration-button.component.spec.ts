@@ -37,7 +37,7 @@ describe('CourseRegistrationButtonComponent', () => {
         profileService = TestBed.inject(ProfileService);
         onRegistrationSpy = vi.spyOn(component.onRegistration, 'emit');
 
-        registerForCourseStub = vi.spyOn(courseService, 'registerForCourse').mockReturnValue(of(new HttpResponse({ body: ['student-group-name'] })));
+        registerForCourseStub = vi.spyOn(courseService, 'registerForCourse').mockReturnValue(of(new HttpResponse<void>()));
         identityStub = vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve({ login: 'ga12tes' } as User));
         getProfileInfoStub = vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ allowedCourseRegistrationUsernamePattern: '^([a-z]{2}\\d{2}[a-z]{3})' } as ProfileInfo);
     });

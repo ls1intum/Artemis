@@ -1015,6 +1015,12 @@ public class Course extends DomainObject {
         };
     }
 
+    /**
+     * Returns the course group name corresponding to the given {@link CourseRole}.
+     *
+     * @param role the course role to look up.
+     * @return the group name associated with the given role.
+     */
     public String getGroupNameForRole(CourseRole role) {
         return switch (role) {
             case STUDENT -> studentGroupName;

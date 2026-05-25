@@ -434,6 +434,17 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     long countUsersByLoginOrNameInConversationWithCourseRoles(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
             @Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles);
 
+    /**
+     * Searches for {@link User} entities by login or name within a specific conversation, filtered by their course roles.
+     * The results are paginated.
+     *
+     * @param pageable       the pagination information.
+     * @param loginOrName    the login or name to search for.
+     * @param conversationId the ID of the conversation to limit the search within.
+     * @param courseId       the ID of the course to filter by.
+     * @param roles          the set of course roles to filter by.
+     * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
+     */
     default Page<User> searchAllWithCourseRolesByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId, long courseId, Set<CourseRole> roles) {
         List<Long> ids = findUserIdsByLoginOrNameInConversationWithCourseRoles(loginOrName, conversationId, courseId, roles, pageable);
         if (ids.isEmpty()) {
@@ -619,6 +630,15 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     long countUserIdsByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
 
+    /**
+     * Searches for {@link User} entities by login or name within a specific course, eager-loading their course roles.
+     * The results are paginated.
+     *
+     * @param pageable    the pagination information.
+     * @param loginOrName the login or name to search for.
+     * @param courseId    the ID of the course to limit the search within.
+     * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
+     */
     default Page<User> searchAllWithCourseRolesByLoginOrNameInCourseAndReturnPage(Pageable pageable, String loginOrName, long courseId) {
         List<Long> userIds = findUserIdsByLoginOrNameInCourse(loginOrName, courseId, pageable);
         if (userIds.isEmpty()) {
@@ -742,6 +762,17 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     List<User> findUsersByIdsWithCourseRolesOrdered(@Param("ids") List<Long> ids);
 
+    /**
+     * Searches for {@link User} entities by login or name within a specific course, filtered by course roles,
+     * excluding a specific user. The results are paginated.
+     *
+     * @param pageable    the pagination information.
+     * @param loginOrName the login or name to search for.
+     * @param courseId    the ID of the course to limit the search within.
+     * @param roles       the set of course roles to filter by.
+     * @param idOfUser    the ID of the user to exclude from the results.
+     * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
+     */
     default Page<User> searchAllWithCourseRolesByLoginOrNameInCourseNotUserId(Pageable pageable, String loginOrName, long courseId, Set<CourseRole> roles, long idOfUser) {
         List<Long> ids = findUserIdsByLoginOrNameInCourseWithRolesNotUserId(loginOrName, courseId, roles, idOfUser, pageable);
         if (ids.isEmpty()) {

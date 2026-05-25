@@ -13,8 +13,6 @@ import { ActivatedRoute, Router, RouterState } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Title } from '@angular/platform-browser';
-import { MatChipInputEvent } from '@angular/material/chips';
-import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import * as Sentry from '@sentry/angular';
 
 import { UserManagementUpdateComponent } from 'app/admin/user-management/update/user-management-update.component';
@@ -34,7 +32,6 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { PROFILE_JENKINS } from 'app/app.constants';
 import { AccountService } from 'app/core/auth/account.service';
@@ -60,7 +57,7 @@ describe('UserManagementUpdateComponent', () => {
     let profileService: ProfileService;
 
     /** Test user data loaded from parent route */
-    const testUser = new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT], ['admin'], undefined, undefined, undefined);
+    const testUser = new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT]);
 
     /** Mock parent route containing user data from resolver */
     const parentRoute = {
@@ -336,56 +333,6 @@ describe('UserManagementUpdateComponent', () => {
         expect(component.user.organizations).toEqual([organization1]);
     });
 
-    it('should add selected group from autocomplete panel to user', () => {
-        const newGroup = 'nicegroup';
-        component.user = { groups: [] } as unknown as User;
-        component.allGroups = [newGroup];
-
-        const option = { viewValue: newGroup };
-        const event = { option } as unknown as MatAutocompleteSelectedEvent;
-
-        component.onSelected(event);
-
-        expect(component.user.groups).toEqual([newGroup]);
-    });
-
-    it('should add group to user on chip input', () => {
-        const newGroup = 'nicegroup';
-        component.allGroups = [newGroup];
-        component.user = { groups: [] } as unknown as User;
-
-        const event = { value: newGroup, chipInput: { clear: vi.fn() } } as unknown as MatChipInputEvent;
-
-        component.onGroupAdd(component.user, event);
-
-        expect(component.user.groups).toEqual([newGroup]);
-        expect(event.chipInput!.clear).toHaveBeenCalledOnce();
-    });
-
-    it('should not add group that is not in allowed groups list', () => {
-        const allowedGroup = 'nicegroup';
-        const notAllowedGroup = 'badgroup';
-        component.allGroups = [allowedGroup];
-        component.user = { groups: [] } as unknown as User;
-
-        const event = { value: notAllowedGroup, chipInput: { clear: vi.fn() } } as unknown as MatChipInputEvent;
-
-        component.onGroupAdd(component.user, event);
-
-        expect(component.user.groups).toEqual([]);
-        expect(event.chipInput!.clear).toHaveBeenCalledOnce();
-    });
-
-    it('should remove group from user', () => {
-        const group1 = 'nicegroup';
-        const group2 = 'badgroup';
-        component.user = { groups: [group1, group2] } as unknown as User;
-
-        component.onGroupRemove(component.user, group1);
-
-        expect(component.user.groups).toEqual([group2]);
-    });
-
     describe('previousState', () => {
         it('should navigate to user detail page when editing existing user', () => {
             const routerMock = TestBed.inject(Router) as unknown as MockRouter;
@@ -406,47 +353,6 @@ describe('UserManagementUpdateComponent', () => {
         });
     });
 
-    it('should filter groups by lowercase search value', () => {
-        component.allGroups = ['AdminGroup', 'StudentGroup', 'TutorGroup'];
-
-        // @ts-ignore - accessing private method for testing
-        const result = component.filter('admin');
-
-        expect(result).toEqual(['AdminGroup']);
-    });
-
-    it('should add group to user when user has no groups yet', () => {
-        const newGroup = 'nicegroup';
-        component.allGroups = [newGroup];
-        component.user = {} as User; // No groups property
-
-        const event = { value: newGroup, chipInput: { clear: vi.fn() } } as unknown as MatChipInputEvent;
-        component.onGroupAdd(component.user, event);
-
-        expect(component.user.groups).toEqual([newGroup]);
-    });
-
-    it('should not add duplicate group to user', () => {
-        const existingGroup = 'nicegroup';
-        component.allGroups = [existingGroup];
-        component.user = { groups: [existingGroup] } as unknown as User;
-
-        const event = { value: existingGroup, chipInput: { clear: vi.fn() } } as unknown as MatChipInputEvent;
-        component.onGroupAdd(component.user, event);
-
-        expect(component.user.groups).toEqual([existingGroup]);
-    });
-
-    it('should handle empty group value on chip input', () => {
-        component.allGroups = ['nicegroup'];
-        component.user = { groups: [] } as unknown as User;
-
-        const event = { value: '', chipInput: { clear: vi.fn() } } as unknown as MatChipInputEvent;
-        component.onGroupAdd(component.user, event);
-
-        expect(component.user.groups).toEqual([]);
-    });
-
     it('should handle undefined modal selection', () => {
         component.user = { organizations: [{ id: 1 }] as Organization[] } as User;
 
@@ -463,15 +369,6 @@ describe('UserManagementUpdateComponent', () => {
         expect(component.user.organizations).toHaveLength(1);
     });
 
-    it('should filter out undefined groups when filtering', () => {
-        component.allGroups = ['AdminGroup', undefined as unknown as string, 'StudentGroup'];
-
-        // @ts-ignore - accessing private method for testing
-        const result = component.filter('group');
-
-        expect(result).toEqual(['AdminGroup', 'StudentGroup']);
-    });
-
     describe('ngOnInit - additional coverage', () => {
         it('should fetch organizations for existing user', () => {
             const organizationService = TestBed.inject(OrganizationManagementService);
@@ -482,32 +379,6 @@ describe('UserManagementUpdateComponent', () => {
 
             expect(organizationService.getOrganizationsByUser).toHaveBeenCalledWith(testUser.id);
             expect(component.user.organizations).toEqual(mockOrganizations);
-        });
-
-        it('should handle groups from courseAdminService with body containing groups', () => {
-            const courseAdminService = TestBed.inject(CourseAdminService);
-            const mockGroups = ['group1', 'group2', undefined as unknown as string, 'group3'];
-            vi.spyOn(courseAdminService, 'getAllGroupsForAllCourses').mockReturnValue(of(new HttpResponse({ body: mockGroups })));
-
-            component.ngOnInit();
-
-            // Should filter out undefined groups
-            expect(component.allGroups).toEqual(['group1', 'group2', 'group3']);
-        });
-
-        it('should initialize empty groups for new user without id', () => {
-            // Simulate scenario where route returns no user (new user creation)
-            // The component initializes user.groups = [] when user.id is undefined
-            component.user = new User(); // No id
-            component.user.groups = undefined;
-            // @ts-ignore - accessing private method
-            component.initializeForm();
-
-            // Simulate new user scenario where groups should be initialized
-            if (!component.user.id) {
-                component.user.groups = [];
-            }
-            expect(component.user.groups).toEqual([]);
         });
     });
 
@@ -599,10 +470,9 @@ describe('UserManagementUpdateComponent', () => {
             expect(component.isSaving()).toBe(false);
         });
 
-        it('should preserve user groups and organizations when saving', () => {
+        it('should preserve organizations when saving', () => {
             const existingUser = new User(123);
             existingUser.login = 'test_user';
-            existingUser.groups = ['group1', 'group2'];
             existingUser.organizations = [{ id: 1 }] as Organization[];
             vi.spyOn(adminUserService, 'update').mockReturnValue(of(new HttpResponse({ body: existingUser })));
             component.user = existingUser;
@@ -611,7 +481,6 @@ describe('UserManagementUpdateComponent', () => {
 
             component.save();
 
-            expect(component.user.groups).toEqual(['group1', 'group2']);
             expect(component.user.organizations).toEqual([{ id: 1 }]);
         });
     });
@@ -739,40 +608,6 @@ describe('UserManagementUpdateComponent', () => {
             expect(sorted[0]).toBe('ROLE_ADMIN');
             expect(sorted).toContain('ROLE_UNKNOWN');
             expect(sorted).toContain('ROLE_CUSTOM');
-        });
-    });
-
-    describe('filteredGroups observable', () => {
-        it('should filter groups based on input value', async () => {
-            const courseAdminService = TestBed.inject(CourseAdminService);
-            const mockGroups = ['AdminGroup', 'StudentGroup', 'TutorGroup'];
-            vi.spyOn(courseAdminService, 'getAllGroupsForAllCourses').mockReturnValue(of(new HttpResponse({ body: mockGroups })));
-
-            component.ngOnInit();
-            await fixture.whenStable();
-
-            let filteredResult: string[] = [];
-            component.filteredGroups.subscribe((groups) => (filteredResult = groups));
-
-            component.groupCtrl.setValue('admin');
-
-            expect(filteredResult).toEqual(['AdminGroup']);
-        });
-
-        it('should return all groups when value is undefined', async () => {
-            const courseAdminService = TestBed.inject(CourseAdminService);
-            const mockGroups = ['Group1', 'Group2'];
-            vi.spyOn(courseAdminService, 'getAllGroupsForAllCourses').mockReturnValue(of(new HttpResponse({ body: mockGroups })));
-
-            component.ngOnInit();
-            await fixture.whenStable();
-
-            let filteredResult: string[] = [];
-            component.filteredGroups.subscribe((groups) => (filteredResult = groups));
-
-            component.groupCtrl.setValue(undefined);
-
-            expect(filteredResult).toEqual(['Group1', 'Group2']);
         });
     });
 });

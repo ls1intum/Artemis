@@ -84,7 +84,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     let lockAndGetProgrammingSubmissionParticipationStub: jest.SpyInstance;
     let findWithParticipationsStub: jest.SpyInstance;
 
-    const user = <User>{ id: 99, groups: ['instructorGroup'] };
+    const user = <User>{ id: 99 };
     const result: Result = {
         feedbacks: [new Feedback()],
         score: 80,
@@ -277,7 +277,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     }));
 
     it('should update assessor correctly if the manual assessment is overridden', fakeAsync(() => {
-        const user2 = <User>{ id: 100, groups: ['instructorGroup'] };
+        const user2 = <User>{ id: 100 };
         const discardPendingSubmissionsWithConfirmationStub = jest.spyOn(comp, 'discardPendingSubmissionsWithConfirmation').mockReturnValue(Promise.resolve(true));
         const updateAfterNewAssessment = jest.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(of(overrideEntityResponse));
         result.assessor = user2;
