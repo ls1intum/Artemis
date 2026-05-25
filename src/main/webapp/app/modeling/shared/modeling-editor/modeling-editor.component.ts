@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
-import { ApollonEditor, ApollonMode, SVG, UMLDiagramType, UMLModel } from '@tumaet/apollon';
+import { ApollonEditor, ApollonMode, type CollaborationUser, SVG, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { isFullScreen } from 'app/shared/util/fullscreen.util';
 import { faCheck, faCircleNotch, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -33,6 +33,8 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     showHelpButton = input(true);
     withExplanation = input(false);
     scrollLock = input(false);
+    collaborationEnabled = input(false);
+    collaborationUser = input<CollaborationUser | undefined>(undefined);
     savedStatus = input<{
         isChanged?: boolean;
         isSaving?: boolean;
@@ -57,6 +59,22 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             }
 
             this.initializeApollonEditor();
+        });
+
+        effect(() => {
+            const enabled = this.collaborationEnabled();
+            const user = this.collaborationUser();
+
+            if (this.isDestroyed || !enabled || !user || !this.apollonEditor) {
+                return;
+            }
+
+            try {
+                this.apollonEditor.setLocalAwarenessUser(user);
+            } catch (err) {
+                // Editor may not be fully initialized yet or already destroyed
+                captureException(err);
+            }
         });
 
         effect(() => {
@@ -115,6 +133,9 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
         const editorContainer = this.editorContainer();
         if (editorContainer) {
+            const collaborationEnabled = this.collaborationEnabled() && !this.readOnly();
+            const collaborationUser = collaborationEnabled ? this.collaborationUser() : undefined;
+
             this.apollonEditor = new ApollonEditor(editorContainer.nativeElement, {
                 model: umlModel,
                 mode: ApollonMode.Modelling,
@@ -122,6 +143,16 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
                 scrollLock: this.scrollLock(),
                 type: this.diagramType() || UMLDiagramType.ClassDiagram,
                 scale: 0.8,
+                collaborationEnabled,
+                collaboration: collaborationEnabled
+                    ? {
+                          enabled: true,
+                          user: collaborationUser,
+                          showPresence: true,
+                          showCursors: true,
+                          showSelectionHighlights: true,
+                      }
+                    : undefined,
             });
 
             // Expose the ApollonEditor instance on the host DOM element for E2E test access.
@@ -141,6 +172,15 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
                 }
                 this.onModelPatch.emit(patch);
             });
+
+            if (collaborationEnabled && collaborationUser) {
+                // Ensure local awareness state is set even if the editor was re-mounted.
+                try {
+                    this.apollonEditor.setLocalAwarenessUser(collaborationUser);
+                } catch (err) {
+                    captureException(err);
+                }
+            }
         }
     }
 

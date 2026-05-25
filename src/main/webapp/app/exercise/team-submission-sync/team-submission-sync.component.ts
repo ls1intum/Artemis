@@ -112,6 +112,11 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
                 next: () => {
                     const initialSync = new SubmissionPatch(ApollonEditor.generateInitialSyncMessage());
                     this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildWebsocketTopic('/patch'), initialSync);
+
+                    if (this.exerciseType === ExerciseType.MODELING) {
+                        const initialAwarenessSync = new SubmissionPatch(ApollonEditor.generateInitialAwarenessSyncMessage());
+                        this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildWebsocketTopic('/patch'), initialAwarenessSync);
+                    }
                     this.reconnected.emit();
                 },
                 error: (error: unknown) => this.onError(error),

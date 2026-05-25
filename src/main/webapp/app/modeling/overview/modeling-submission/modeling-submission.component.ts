@@ -1,6 +1,6 @@
 import { DecimalPipe, NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, viewChild } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
@@ -8,12 +8,13 @@ import { faExclamationTriangle, faGripLines, faTimeline } from '@fortawesome/fre
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { captureException } from '@sentry/angular';
-import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
+import { type CollaborationUser, UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/account/user/user.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
@@ -126,6 +127,12 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     selectedElementIds: string[] = [];
 
+    /**
+     * Local user information passed to Apollon collaboration awareness.
+     * Used for presence indicator and remote selection highlights in team exercises.
+     */
+    protected readonly apollonCollaborationUser = signal<CollaborationUser | undefined>(undefined);
+
     submission: ModelingSubmission;
     submissionId: number | undefined;
     resultId: number | undefined;
@@ -183,6 +190,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     });
 
     ngOnInit(): void {
+        this.initializeApollonCollaborationUser();
+
         if (this.inputValuesArePresent()) {
             this.setupComponentWithInputValues();
         } else {
@@ -216,6 +225,39 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (!isDisplayedOnExamSummaryPage) {
             window.scroll(0, 0);
         }
+    }
+
+    private initializeApollonCollaborationUser(): void {
+        // Ensure we have the current user identity available (cached in AccountService).
+        this.accountService.identity().then((user: User | undefined) => {
+            if (!user) {
+                return;
+            }
+            this.apollonCollaborationUser.set(this.buildApollonCollaborationUser(user));
+        });
+    }
+
+    private buildApollonCollaborationUser(user: User): CollaborationUser {
+        const name = (user.name ?? [user.firstName, user.lastName].filter(Boolean).join(' ').trim()) || user.login || 'User';
+        const id = user.login ?? (user.id !== undefined ? String(user.id) : undefined) ?? name;
+        const color = ModelingSubmissionComponent.getStableCollaborationColor(id);
+        const imageUrl = this.accountService.getImageUrl();
+        return { id, name, color, imageUrl };
+    }
+
+    private static getStableCollaborationColor(seed: string): string {
+        const hash = ModelingSubmissionComponent.hashStringToPositiveInt(seed);
+        const hue = Math.round((hash * 137.508) % 360);
+        return `hsl(${hue}, 70%, 45%)`;
+    }
+
+    private static hashStringToPositiveInt(value: string): number {
+        let hash = 0;
+        for (let i = 0; i < value.length; i++) {
+            hash = (hash << 5) - hash + value.charCodeAt(i);
+            hash |= 0; // Convert to 32-bit integer
+        }
+        return Math.abs(hash);
     }
 
     private setupMode(): void {

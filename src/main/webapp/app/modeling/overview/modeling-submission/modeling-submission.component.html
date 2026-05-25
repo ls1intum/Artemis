@@ -93,6 +93,8 @@
                                                     [umlModel]="umlModel"
                                                     [diagramType]="modelingExercise.diagramType!"
                                                     [withExplanation]="true"
+                                                    [collaborationEnabled]="modelingExercise.teamMode ?? false"
+                                                    [collaborationUser]="apollonCollaborationUser()"
                                                     [(explanation)]="explanation"
                                                     [resizeOptions]="resizeOptions"
                                                     [savedStatus]="{ isChanged, isSaving }"

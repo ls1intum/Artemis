@@ -174,6 +174,50 @@ describe('Team Submission Sync Component', () => {
         generateInitialSyncSpy.mockRestore();
     });
 
+    it('should re-broadcast initial Yjs sync + awareness sync for modeling exercises on every STOMP (re)connect', () => {
+        const mock = websocketService as unknown as MockWebsocketService;
+        component.exerciseType = ExerciseType.MODELING;
+        const expectedTopic = '/topic/participations/3/team/modeling-submissions/patch';
+        const generateInitialSyncSpy = jest.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
+        const generateInitialAwarenessSyncSpy = jest.spyOn(ApollonEditor, 'generateInitialAwarenessSyncMessage').mockReturnValue('initial-awareness-stub');
+
+        const reconnectedSpy = jest.fn();
+        component.reconnected.subscribe(reconnectedSpy);
+        component.submissionObservable = undefined;
+        const sendSpy = jest.spyOn(websocketService, 'send');
+        jest.spyOn(websocketService, 'subscribe').mockReturnValue(of());
+
+        component.ngOnInit();
+
+        // Initial connect: initial sync + awareness sync + one reconnect emission
+        expect(sendSpy).toHaveBeenCalledTimes(2);
+        expect(sendSpy.mock.calls[0][0]).toBe(expectedTopic);
+        expect((sendSpy.mock.calls[0][1] as SubmissionPatch).patch).toBe('initial-sync-stub');
+        expect(sendSpy.mock.calls[1][0]).toBe(expectedTopic);
+        expect((sendSpy.mock.calls[1][1] as SubmissionPatch).patch).toBe('initial-awareness-stub');
+        expect(reconnectedSpy).toHaveBeenCalledOnce();
+
+        // Disconnect — no fresh sync, no fresh reconnect signal
+        mock.setConnectionState(new ConnectionState(false, true));
+        expect(sendSpy).toHaveBeenCalledTimes(2);
+        expect(reconnectedSpy).toHaveBeenCalledOnce();
+
+        // Reconnect — both initial messages + reconnect signal fire again
+        mock.setConnectionState(new ConnectionState(true, true));
+        expect(sendSpy).toHaveBeenCalledTimes(4);
+        expect((sendSpy.mock.calls[2][1] as SubmissionPatch).patch).toBe('initial-sync-stub');
+        expect((sendSpy.mock.calls[3][1] as SubmissionPatch).patch).toBe('initial-awareness-stub');
+        expect(reconnectedSpy).toHaveBeenCalledTimes(2);
+
+        // A duplicate connected=true must not re-fire
+        mock.setConnectionState(new ConnectionState(true, true));
+        expect(sendSpy).toHaveBeenCalledTimes(4);
+        expect(reconnectedSpy).toHaveBeenCalledTimes(2);
+
+        generateInitialSyncSpy.mockRestore();
+        generateInitialAwarenessSyncSpy.mockRestore();
+    });
+
     it('should stop reacting to connection-state changes after ngOnDestroy', () => {
         const mock = websocketService as unknown as MockWebsocketService;
         jest.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
