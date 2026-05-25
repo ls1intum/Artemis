@@ -4,7 +4,7 @@ import { HttpResponse } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { of, throwError } from 'rxjs';
 import { User } from 'app/core/user/user.model';
-import { CourseGroup } from 'app/core/course/shared/entities/course.model';
+import { CourseRoleSlug } from 'app/core/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TutorialGroupTutorsService } from './tutorial-group-tutors.service';
@@ -14,12 +14,12 @@ describe('TutorialGroupTutorsService', () => {
 
     let service: TutorialGroupTutorsService;
 
-    let courseManagementService: { getAllUsersInCourseGroup: ReturnType<typeof vi.fn> };
+    let courseManagementService: { getAllUsersInCourseRole: ReturnType<typeof vi.fn> };
     let alertService: { addErrorAlert: ReturnType<typeof vi.fn> };
 
     beforeEach(() => {
         courseManagementService = {
-            getAllUsersInCourseGroup: vi.fn(),
+            getAllUsersInCourseRole: vi.fn(),
         };
         alertService = {
             addErrorAlert: vi.fn(),
@@ -44,13 +44,13 @@ describe('TutorialGroupTutorsService', () => {
         const fourthTutor = { id: 14, login: 'plain' } as User;
         const invalidTutorWithoutId = { login: 'missing-id', firstName: 'Broken' } as User;
         const invalidTutorWithoutLogin = { id: 15, firstName: 'Missing', lastName: 'Login' } as User;
-        courseManagementService.getAllUsersInCourseGroup.mockReturnValue(
+        courseManagementService.getAllUsersInCourseRole.mockReturnValue(
             of(new HttpResponse({ body: [firstTutor, secondTutor, thirdTutor, fourthTutor, invalidTutorWithoutId, invalidTutorWithoutLogin] })),
         );
 
         service.loadTutors(2);
 
-        expect(courseManagementService.getAllUsersInCourseGroup).toHaveBeenCalledWith(2, CourseGroup.TUTORS);
+        expect(courseManagementService.getAllUsersInCourseRole).toHaveBeenCalledWith(2, CourseRoleSlug.TUTORS);
         expect(service.tutors()).toEqual([
             { id: 11, nameAndLogin: 'ada (Ada Lovelace)' },
             { id: 12, nameAndLogin: 'grace (Grace)' },
@@ -61,21 +61,21 @@ describe('TutorialGroupTutorsService', () => {
     });
 
     it('should load no tutors if the response body is empty and clear loading state', () => {
-        courseManagementService.getAllUsersInCourseGroup.mockReturnValue(of(new HttpResponse({ body: null })));
+        courseManagementService.getAllUsersInCourseRole.mockReturnValue(of(new HttpResponse({ body: null })));
 
         service.loadTutors(2);
 
-        expect(courseManagementService.getAllUsersInCourseGroup).toHaveBeenCalledWith(2, CourseGroup.TUTORS);
+        expect(courseManagementService.getAllUsersInCourseRole).toHaveBeenCalledWith(2, CourseRoleSlug.TUTORS);
         expect(service.tutors()).toEqual([]);
         expect(service.isLoading()).toBe(false);
     });
 
     it('should show error alert if loading tutors fails and clear loading state', () => {
-        courseManagementService.getAllUsersInCourseGroup.mockReturnValue(throwError(() => new Error('network error')));
+        courseManagementService.getAllUsersInCourseRole.mockReturnValue(throwError(() => new Error('network error')));
 
         service.loadTutors(2);
 
-        expect(courseManagementService.getAllUsersInCourseGroup).toHaveBeenCalledWith(2, CourseGroup.TUTORS);
+        expect(courseManagementService.getAllUsersInCourseRole).toHaveBeenCalledWith(2, CourseRoleSlug.TUTORS);
         expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.services.tutorialGroupTutorService.networkError.fetchTutors');
         expect(service.tutors()).toEqual([]);
         expect(service.isLoading()).toBe(false);

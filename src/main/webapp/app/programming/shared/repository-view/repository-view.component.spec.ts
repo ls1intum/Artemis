@@ -263,7 +263,6 @@ describe('RepositoryViewComponent', () => {
                 studentAssignedTeamIdComputed: true,
                 secondCorrectionEnabled: true,
                 course: {
-                    instructorGroupName: 'instructorGroup',
                     isAtLeastInstructor: true,
                 },
             },

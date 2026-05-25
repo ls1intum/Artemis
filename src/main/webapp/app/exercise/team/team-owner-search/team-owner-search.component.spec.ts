@@ -44,7 +44,7 @@ describe('Team Owner Search Component', () => {
         const searchingSpy = jest.spyOn(comp.searching, 'emit');
         const searchNoResultsSpy = jest.spyOn(comp.searchNoResults, 'emit');
 
-        const courseServiceSpy = jest.spyOn(courseService, 'getAllUsersInCourseGroup');
+        const courseServiceSpy = jest.spyOn(courseService, 'getAllUsersInCourseRole');
         courseServiceSpy.mockReturnValue(of(new HttpResponse({ body: [owner] })));
 
         const searchText = owner.login!;
@@ -72,7 +72,7 @@ describe('Team Owner Search Component', () => {
         const searchingSpy = jest.spyOn(comp.searching, 'emit');
         const searchNoResultsSpy = jest.spyOn(comp.searchNoResults, 'emit');
 
-        const courseServiceSpy = jest.spyOn(courseService, 'getAllUsersInCourseGroup');
+        const courseServiceSpy = jest.spyOn(courseService, 'getAllUsersInCourseRole');
         courseServiceSpy.mockReturnValue(of(new HttpResponse({ body: [owner] })));
 
         const searchText = 'SearchText';
@@ -99,8 +99,8 @@ describe('Team Owner Search Component', () => {
     it('should handle error when loading owner options', () => {
         const searchFailedSpy = jest.spyOn(comp.searchFailed, 'emit');
 
-        const courseServiceSpy = jest.spyOn(courseService, 'getAllUsersInCourseGroup');
-        courseServiceSpy.mockReturnValue(throwError(() => new Error('getAllUsersInCourseGroup failed')));
+        const courseServiceSpy = jest.spyOn(courseService, 'getAllUsersInCourseRole');
+        courseServiceSpy.mockReturnValue(throwError(() => new Error('getAllUsersInCourseRole failed')));
 
         comp.course = { id: 1 };
 

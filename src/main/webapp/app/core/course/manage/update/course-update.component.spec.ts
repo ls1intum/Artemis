@@ -147,18 +147,9 @@ describe('Course Management Update Component', () => {
             expect(getOrganizationsStub).toHaveBeenCalled();
             expect(getOrganizationsStub).toHaveBeenCalledWith(course.id);
             expect(getProfileStub).toHaveBeenCalled();
-            expect(comp.customizeGroupNames).toBe(true);
-            expect(comp.course.studentGroupName).toBe('artemis-dev');
-            expect(comp.course.teachingAssistantGroupName).toBe('artemis-dev');
-            expect(comp.course.editorGroupName).toBe('artemis-dev');
-            expect(comp.course.instructorGroupName).toBe('artemis-dev');
             expect(comp.courseForm.get(['id'])?.value).toBe(course.id);
             expect(comp.courseForm.get(['title'])?.value).toBe(course.title);
             expect(comp.shortName.value).toBe(course.shortName);
-            expect(comp.courseForm.get(['studentGroupName'])?.value).toBe(course.studentGroupName);
-            expect(comp.courseForm.get(['teachingAssistantGroupName'])?.value).toBe(course.teachingAssistantGroupName);
-            expect(comp.courseForm.get(['editorGroupName'])?.value).toBe(course.editorGroupName);
-            expect(comp.courseForm.get(['instructorGroupName'])?.value).toBe(course.instructorGroupName);
             expect(comp.courseForm.get(['startDate'])?.value).toBe(course.startDate);
             expect(comp.courseForm.get(['endDate'])?.value).toBe(course.endDate);
             expect(comp.courseForm.get(['semester'])?.value).toBe(course.semester);
@@ -540,31 +531,6 @@ describe('Course Management Update Component', () => {
             comp.changeUnenrollmentEnabled();
             expect(comp.courseForm.controls['unenrollmentEnabled'].value).toBeFalsy();
             expect(comp.course.unenrollmentEndDate).toBeUndefined();
-        });
-    });
-
-    describe('changeCustomizeGroupNames', () => {
-        it('should initialize values if enabled and reset if disabled', () => {
-            comp.course = new Course();
-            comp.courseForm = new FormGroup({
-                studentGroupName: new FormControl('noname'),
-                teachingAssistantGroupName: new FormControl('noname'),
-                editorGroupName: new FormControl('noname'),
-                instructorGroupName: new FormControl('noname'),
-            });
-            comp.customizeGroupNames = false;
-            comp.changeCustomizeGroupNames();
-            expect(comp.courseForm.controls['studentGroupName'].value).toBe('artemis-dev');
-            expect(comp.courseForm.controls['teachingAssistantGroupName'].value).toBe('artemis-dev');
-            expect(comp.courseForm.controls['editorGroupName'].value).toBe('artemis-dev');
-            expect(comp.courseForm.controls['instructorGroupName'].value).toBe('artemis-dev');
-            expect(comp.customizeGroupNames).toBe(true);
-            comp.changeCustomizeGroupNames();
-            expect(comp.courseForm.controls['studentGroupName'].value).toBeUndefined();
-            expect(comp.courseForm.controls['teachingAssistantGroupName'].value).toBeUndefined();
-            expect(comp.courseForm.controls['editorGroupName'].value).toBeUndefined();
-            expect(comp.courseForm.controls['instructorGroupName'].value).toBeUndefined();
-            expect(comp.customizeGroupNames).toBe(false);
         });
     });
 

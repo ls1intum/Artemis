@@ -5,7 +5,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/shared/user.service';
-import { CourseGroup } from 'app/core/course/shared/entities/course.model';
+import { CourseRoleSlug } from 'app/core/course/shared/entities/course.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import dayjs from 'dayjs/esm';
@@ -24,7 +24,7 @@ describe('CourseGroupComponent', () => {
     let comp: CourseGroupComponent;
     let fixture: ComponentFixture<CourseGroupComponent>;
     let userService: UserService;
-    const courseGroup = CourseGroup.STUDENTS;
+    const courseGroup = CourseRoleSlug.STUDENTS;
     const course = { id: 123, title: 'Course Title', isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
     const parentRoute = {
         data: of({ course }),
@@ -50,7 +50,7 @@ describe('CourseGroupComponent', () => {
         userService = TestBed.inject(UserService);
         // Set required inputs using ComponentRef
         fixture.componentRef.setInput('course', course);
-        fixture.componentRef.setInput('courseGroup', courseGroup);
+        fixture.componentRef.setInput('courseRoleSlug', courseGroup);
         fixture.componentRef.setInput('exportFileName', 'test-export');
         fixture.componentRef.setInput('userSearch', (searchTerm: string) => userService.search(searchTerm));
     });

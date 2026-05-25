@@ -464,7 +464,7 @@ describe('UsersImportDialogComponent', () => {
 
     it('should show a generic error when importUsers does not match any import mode', () => {
         fixture.componentRef.setInput('exam', undefined);
-        fixture.componentRef.setInput('courseGroup', undefined);
+        fixture.componentRef.setInput('courseRoleSlug', undefined);
         fixture.componentRef.setInput('tutorialGroup', undefined);
         fixture.componentRef.setInput('adminUserMode', false);
         const alertService = TestBed.inject(AlertService);

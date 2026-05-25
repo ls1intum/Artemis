@@ -107,7 +107,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         },
         maxPoints: 100,
         gradingInstructions: 'Grading Instructions',
-        course: <Course>{ instructorGroupName: 'instructorGroup' },
+        course: <Course>{},
     } as unknown as ProgrammingExercise;
 
     const participation: ProgrammingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();

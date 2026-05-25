@@ -7,7 +7,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/shared/user.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { Course, CourseGroup } from 'app/core/course/shared/entities/course.model';
+import { Course, CourseRoleSlug } from 'app/core/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
@@ -17,8 +17,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { HttpResponse as HttpResponseType } from '@angular/common/http';
-import * as Sentry from '@sentry/angular';
-
 // Manual mock component to avoid ng-mocks issues with signal queries
 @Component({
     selector: 'jhi-course-group',
@@ -30,7 +28,7 @@ class MockCourseGroupComponent {
     readonly isAdmin = input(false);
     readonly course = input.required<Course>();
     readonly tutorialGroup = input<TutorialGroup | undefined>(undefined);
-    readonly courseGroup = input.required<CourseGroup>();
+    readonly courseRoleSlug = input.required<CourseRoleSlug>();
     readonly exportFileName = input.required<string>();
     readonly userSearch = input<(loginOrName: string) => Observable<HttpResponseType<User[]>>>(() => of(new HttpResponse<User[]>({ body: [] })));
     readonly addUserToGroup = input<(login: string) => Observable<HttpResponseType<void>>>(() => of(new HttpResponse<void>()));
@@ -45,12 +43,12 @@ describe('Course Group Membership Component', () => {
     let comp: CourseGroupMembershipComponent;
     let fixture: ComponentFixture<CourseGroupMembershipComponent>;
     let courseService: CourseManagementService;
-    const courseGroup = CourseGroup.STUDENTS;
+    const courseRoleSlug = CourseRoleSlug.STUDENTS;
     const course = { id: 123, title: 'Course Title', isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
     const parentRoute = {
         data: of({ course }),
     } as any as ActivatedRoute;
-    const route = { parent: parentRoute, params: of({ courseGroup }) } as any as ActivatedRoute;
+    const route = { parent: parentRoute, params: of({ courseRoleSlug }) } as any as ActivatedRoute;
     const courseGroupUser = new User(1, 'user');
 
     beforeEach(async () => {
@@ -78,65 +76,18 @@ describe('Course Group Membership Component', () => {
     });
 
     it('should initialize', () => {
-        vi.spyOn(courseService, 'getAllUsersInCourseGroup').mockReturnValue(of(new HttpResponse({ body: [] })));
+        vi.spyOn(courseService, 'getAllUsersInCourseRole').mockReturnValue(of(new HttpResponse({ body: [] })));
         fixture.detectChanges();
         expect(CourseGroupMembershipComponent).not.toBeNull();
     });
 
     describe('OnInit', () => {
         it('should load all course group users', () => {
-            const getUsersStub = vi.spyOn(courseService, 'getAllUsersInCourseGroup').mockReturnValue(of(new HttpResponse({ body: [courseGroupUser] })));
+            const getUsersStub = vi.spyOn(courseService, 'getAllUsersInCourseRole').mockReturnValue(of(new HttpResponse({ body: [courseGroupUser] })));
             fixture.detectChanges();
             expect(comp.course()).toEqual(course);
-            expect(comp.courseGroup()).toEqual(courseGroup);
+            expect(comp.courseRoleSlug()).toEqual(courseRoleSlug);
             expect(getUsersStub).toHaveBeenCalledOnce();
-        });
-    });
-
-    describe('courseGroupName', () => {
-        it('should return courses studentGroupName if group is students', () => {
-            comp.courseGroup.set(CourseGroup.STUDENTS);
-            comp.course.set({ ...course, studentGroupName: 'testStudentGroupName' });
-            expect(comp.courseGroupName()).toBe('testStudentGroupName');
-        });
-
-        it('should return courses teachingAssistantGroupName if group is tutors', () => {
-            comp.courseGroup.set(CourseGroup.TUTORS);
-            comp.course.set({ ...course, teachingAssistantGroupName: 'testTeachingAssistantGroupName' });
-            expect(comp.courseGroupName()).toBe('testTeachingAssistantGroupName');
-        });
-
-        it('should return courses instructorGroupName if group is instructors', () => {
-            comp.courseGroup.set(CourseGroup.INSTRUCTORS);
-            comp.course.set({ ...course, instructorGroupName: 'testInstructorGroupName' });
-            expect(comp.courseGroupName()).toBe('testInstructorGroupName');
-        });
-
-        it('should return courses editorGroupName if group is editors', () => {
-            comp.courseGroup.set(CourseGroup.EDITORS);
-            comp.course.set({ ...course, editorGroupName: 'testEditorGroupName' });
-            expect(comp.courseGroupName()).toBe('testEditorGroupName');
-        });
-
-        it('should return undefined if course is undefined', () => {
-            comp.courseGroup.set(CourseGroup.STUDENTS);
-            comp.course.set(undefined);
-            expect(comp.courseGroupName()).toBeUndefined();
-        });
-
-        it('should return undefined if courseGroup is undefined', () => {
-            comp.course.set({ ...course, studentGroupName: 'testStudentGroupName' });
-            comp.courseGroup.set(undefined);
-            expect(comp.courseGroupName()).toBeUndefined();
-        });
-
-        it('should capture exception and return undefined for unknown course group', () => {
-            const captureExceptionSpy = vi.spyOn(Sentry, 'captureException');
-            comp.course.set({ ...course });
-            // Force an unknown course group by casting
-            comp.courseGroup.set('unknownGroup' as CourseGroup);
-            expect(comp.courseGroupName()).toBeUndefined();
-            expect(captureExceptionSpy).toHaveBeenCalledWith('Unknown course group: unknownGroup');
         });
     });
 
@@ -150,7 +101,7 @@ describe('Course Group Membership Component', () => {
 
     describe('exportFileName', () => {
         it('should return export file name', () => {
-            comp.courseGroup.set(CourseGroup.STUDENTS);
+            comp.courseRoleSlug.set(CourseRoleSlug.STUDENTS);
             const user1 = new User(1, 'user1');
             comp.allCourseGroupUsers.set([user1]);
             comp.course.set({ title: 'Example' });
@@ -162,38 +113,38 @@ describe('Course Group Membership Component', () => {
         });
 
         it('should return empty string if courseGroupEntityName is empty', () => {
-            comp.courseGroup.set(undefined);
+            comp.courseRoleSlug.set(undefined);
             comp.course.set({ title: 'Example' });
             expect(comp.exportFilename()).toBe('');
         });
 
         it('should return empty string if course is undefined', () => {
-            comp.courseGroup.set(CourseGroup.STUDENTS);
+            comp.courseRoleSlug.set(CourseRoleSlug.STUDENTS);
             comp.course.set(undefined);
             expect(comp.exportFilename()).toBe('');
         });
     });
 
     describe('courseGroupEntityName', () => {
-        it('should return empty string if courseGroup is undefined', () => {
-            comp.courseGroup.set(undefined);
+        it('should return empty string if courseRoleSlug is undefined', () => {
+            comp.courseRoleSlug.set(undefined);
             expect(comp.courseGroupEntityName()).toBe('');
         });
 
         it('should return singular form when exactly one user', () => {
-            comp.courseGroup.set(CourseGroup.TUTORS);
+            comp.courseRoleSlug.set(CourseRoleSlug.TUTORS);
             comp.allCourseGroupUsers.set([new User(1, 'user1')]);
             expect(comp.courseGroupEntityName()).toBe('tutor');
         });
 
         it('should return plural form when zero users', () => {
-            comp.courseGroup.set(CourseGroup.TUTORS);
+            comp.courseRoleSlug.set(CourseRoleSlug.TUTORS);
             comp.allCourseGroupUsers.set([]);
             expect(comp.courseGroupEntityName()).toBe('tutors');
         });
 
         it('should return plural form when multiple users', () => {
-            comp.courseGroup.set(CourseGroup.EDITORS);
+            comp.courseRoleSlug.set(CourseRoleSlug.EDITORS);
             comp.allCourseGroupUsers.set([new User(1, 'user1'), new User(2, 'user2')]);
             expect(comp.courseGroupEntityName()).toBe('editors');
         });
@@ -210,29 +161,29 @@ describe('Course Group Membership Component', () => {
         });
     });
 
-    describe('addToGroup', () => {
-        it('should call courseService.addUserToCourseGroup', () => {
-            vi.spyOn(courseService, 'getAllUsersInCourseGroup').mockReturnValue(of(new HttpResponse({ body: [] })));
+    describe('addToRole', () => {
+        it('should call courseService.addUserToCourseRole', () => {
+            vi.spyOn(courseService, 'getAllUsersInCourseRole').mockReturnValue(of(new HttpResponse({ body: [] })));
             fixture.detectChanges();
 
-            const addUserSpy = vi.spyOn(courseService, 'addUserToCourseGroup').mockReturnValue(of(new HttpResponse<void>()));
+            const addUserSpy = vi.spyOn(courseService, 'addUserToCourseRole').mockReturnValue(of(new HttpResponse<void>()));
 
-            comp.addToGroup('testLogin');
+            comp.addToRole('testLogin');
 
-            expect(addUserSpy).toHaveBeenCalledWith(123, CourseGroup.STUDENTS, 'testLogin');
+            expect(addUserSpy).toHaveBeenCalledWith(123, CourseRoleSlug.STUDENTS, 'testLogin');
         });
     });
 
-    describe('removeFromGroup', () => {
-        it('should call courseService.removeUserFromCourseGroup', () => {
-            vi.spyOn(courseService, 'getAllUsersInCourseGroup').mockReturnValue(of(new HttpResponse({ body: [] })));
+    describe('removeFromRole', () => {
+        it('should call courseService.removeUserFromCourseRole', () => {
+            vi.spyOn(courseService, 'getAllUsersInCourseRole').mockReturnValue(of(new HttpResponse({ body: [] })));
             fixture.detectChanges();
 
-            const removeUserSpy = vi.spyOn(courseService, 'removeUserFromCourseGroup').mockReturnValue(of(new HttpResponse<void>()));
+            const removeUserSpy = vi.spyOn(courseService, 'removeUserFromCourseRole').mockReturnValue(of(new HttpResponse<void>()));
 
-            comp.removeFromGroup('testLogin');
+            comp.removeFromRole('testLogin');
 
-            expect(removeUserSpy).toHaveBeenCalledWith(123, CourseGroup.STUDENTS, 'testLogin');
+            expect(removeUserSpy).toHaveBeenCalledWith(123, CourseRoleSlug.STUDENTS, 'testLogin');
         });
     });
 
@@ -243,7 +194,7 @@ describe('Course Group Membership Component', () => {
             const invalidParentRoute = {
                 data: of({ course }),
             } as any as ActivatedRoute;
-            const invalidRoute = { parent: invalidParentRoute, params: of({ courseGroup: invalidCourseGroup }) } as any as ActivatedRoute;
+            const invalidRoute = { parent: invalidParentRoute, params: of({ courseRoleSlug: invalidCourseGroup }) } as any as ActivatedRoute;
 
             TestBed.resetTestingModule();
             TestBed.configureTestingModule({
@@ -274,7 +225,7 @@ describe('Course Group Membership Component', () => {
 
     describe('isAdmin', () => {
         it('should set isAdmin based on accountService', () => {
-            vi.spyOn(courseService, 'getAllUsersInCourseGroup').mockReturnValue(of(new HttpResponse({ body: [] })));
+            vi.spyOn(courseService, 'getAllUsersInCourseRole').mockReturnValue(of(new HttpResponse({ body: [] })));
             const accountService = TestBed.inject(AccountService);
             vi.spyOn(accountService, 'isAdmin').mockReturnValue(true);
 
@@ -284,7 +235,7 @@ describe('Course Group Membership Component', () => {
         });
 
         it('should set isAdmin to false when user is not admin', () => {
-            vi.spyOn(courseService, 'getAllUsersInCourseGroup').mockReturnValue(of(new HttpResponse({ body: [] })));
+            vi.spyOn(courseService, 'getAllUsersInCourseRole').mockReturnValue(of(new HttpResponse({ body: [] })));
             const accountService = TestBed.inject(AccountService);
             vi.spyOn(accountService, 'isAdmin').mockReturnValue(false);
 

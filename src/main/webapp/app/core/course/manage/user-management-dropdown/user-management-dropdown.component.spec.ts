@@ -45,25 +45,25 @@ describe('UserManagementDropdownComponent', () => {
         expect(component.userAddActions()).toEqual([
             {
                 icon: faSchool,
-                routerLink: ['/course-management/123/groups/students'],
+                routerLink: ['/course-management/123/members/students'],
                 label: 'entity.action.addStudent',
                 id: 'add-student',
             },
             {
                 icon: faPersonChalkboard,
-                routerLink: ['/course-management/123/groups/tutors'],
+                routerLink: ['/course-management/123/members/tutors'],
                 label: 'entity.action.addTutor',
                 id: 'add-tutor',
             },
             {
                 icon: faListAlt,
-                routerLink: ['/course-management/123/groups/editors'],
+                routerLink: ['/course-management/123/members/editors'],
                 label: 'entity.action.addEditor',
                 id: 'add-editor',
             },
             {
                 icon: faGraduationCap,
-                routerLink: ['/course-management/123/groups/instructors'],
+                routerLink: ['/course-management/123/members/instructors'],
                 label: 'entity.action.addInstructor',
                 id: 'add-instructor',
             },

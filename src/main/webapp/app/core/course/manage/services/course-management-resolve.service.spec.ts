@@ -77,10 +77,6 @@ describe('CourseManagementResolve', () => {
         mockCourse.id = 123;
         mockCourse.title = 'Full Course';
         mockCourse.shortName = 'FC';
-        mockCourse.studentGroupName = 'fc-students';
-        mockCourse.teachingAssistantGroupName = 'fc-tutors';
-        mockCourse.editorGroupName = 'fc-editors';
-        mockCourse.instructorGroupName = 'fc-instructors';
 
         vi.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: mockCourse, status: 200, statusText: 'OK' })));
 

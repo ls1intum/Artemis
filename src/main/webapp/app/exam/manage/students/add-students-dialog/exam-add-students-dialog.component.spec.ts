@@ -1,7 +1,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { CourseGroup } from 'app/core/course/shared/entities/course.model';
+import { CourseRoleSlug } from 'app/core/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { User } from 'app/core/user/user.model';
@@ -97,7 +97,7 @@ describe('ExamAddStudentsDialogComponent', () => {
     });
 
     it('openDialog should load students', () => {
-        vi.spyOn(courseManagementService, 'getAllUsersInCourseGroup').mockReturnValue(
+        vi.spyOn(courseManagementService, 'getAllUsersInCourseRole').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [studentBob, studentWithoutLogin, studentAlice],
@@ -111,13 +111,13 @@ describe('ExamAddStudentsDialogComponent', () => {
 
         expect(component.dialogVisible()).toBe(true);
         expect(component.searchText()).toBe('');
-        expect(courseManagementService.getAllUsersInCourseGroup).toHaveBeenCalledWith(courseId, CourseGroup.STUDENTS);
+        expect(courseManagementService.getAllUsersInCourseRole).toHaveBeenCalledWith(courseId, CourseRoleSlug.STUDENTS);
         expect(component.isLoading()).toBe(false);
         expect(component.allCourseStudents()).toEqual([studentAlice, studentBob]);
     });
 
     it('registerStudent should call service and update localRegisteredLogins', async () => {
-        vi.spyOn(courseManagementService, 'getAllUsersInCourseGroup').mockReturnValue(of(new HttpResponse({ body: [studentAlice] })));
+        vi.spyOn(courseManagementService, 'getAllUsersInCourseRole').mockReturnValue(of(new HttpResponse({ body: [studentAlice] })));
         const addStudentToExamSpy = vi.spyOn(examManagementService, 'addStudentToExam').mockReturnValue(of(new HttpResponse<StudentDTO>({ body: new StudentDTO() })));
         const emitSpy = vi.spyOn(component.studentsChanged, 'emit');
 
@@ -132,7 +132,7 @@ describe('ExamAddStudentsDialogComponent', () => {
     });
 
     it('registerStudent should show alert on error', async () => {
-        vi.spyOn(courseManagementService, 'getAllUsersInCourseGroup').mockReturnValue(of(new HttpResponse({ body: [studentAlice] })));
+        vi.spyOn(courseManagementService, 'getAllUsersInCourseRole').mockReturnValue(of(new HttpResponse({ body: [studentAlice] })));
         const alertErrorSpy = vi.spyOn(alertService, 'error');
         vi.spyOn(examManagementService, 'addStudentToExam').mockReturnValue(throwError(() => new Error('failed')));
 
@@ -157,7 +157,7 @@ describe('ExamAddStudentsDialogComponent', () => {
     });
 
     it('search filtering should work correctly', async () => {
-        vi.spyOn(courseManagementService, 'getAllUsersInCourseGroup').mockReturnValue(
+        vi.spyOn(courseManagementService, 'getAllUsersInCourseRole').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [studentAlice, studentBob],
