@@ -15,7 +15,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { BehaviorSubject, Subject, distinctUntilChanged, firstValueFrom, of } from 'rxjs';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import * as Sentry from '@sentry/angular';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { AccountService } from 'app/core/auth/account.service';

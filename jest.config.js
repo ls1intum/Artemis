@@ -146,7 +146,9 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // build-plan-phases model uses Vitest (see vitest.config.ts)
         '<rootDir>/src/main/webapp/**/*.ts',
     ],
+    // Each entry below excludes a module that has been migrated to Vitest.
     coveragePathIgnorePatterns: [
+        '<rootDir>/src/main/webapp/app/account/', // account module uses Vitest
         '<rootDir>/src/main/webapp/app/assessment/', // assessment module uses Vitest
         '<rootDir>/src/main/webapp/app/buildagent/', // buildagent module uses Vitest
         '<rootDir>/src/main/webapp/app/communication/', // communication module uses Vitest
@@ -241,6 +243,7 @@ module.exports = {
     modulePathIgnorePatterns: ['<rootDir>/src/main/resources/templates/', '<rootDir>/build/'],
     // Exclude modules migrated to Vitest (see vitest.config.ts)
     testPathIgnorePatterns: [
+        '<rootDir>/src/main/webapp/app/account/', // account module
         '<rootDir>/src/main/webapp/app/assessment/', // assessment module
         '<rootDir>/src/main/webapp/app/buildagent/', // buildagent module
         '<rootDir>/src/main/webapp/app/communication/', // communication module

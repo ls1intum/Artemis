@@ -7,7 +7,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { AlertService } from 'app/shared/service/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
+import { WebauthnService } from 'app/account/user/settings/passkey-settings/webauthn.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_PASSKEY } from 'app/app.constants';
 import { DialogModule } from 'primeng/dialog';

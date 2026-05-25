@@ -11,7 +11,7 @@ import { IdentifiableCalendarEvent } from 'app/calendar/shared/entities/calendar
 import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { CalendarApiService } from 'app/openapi/api/calendarApi.service';
 import { CalendarEvent } from 'app/openapi/model/calendarEvent';
 import { HttpErrorResponse } from '@angular/common/http';

@@ -6,7 +6,7 @@ import { Team, TeamImportStrategyType } from 'app/exercise/shared/entities/team/
 import { StudentWithTeam } from 'app/exercise/shared/entities/team/team.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TeamSearchUser } from 'app/exercise/shared/entities/team/team-search-user.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import dayjs from 'dayjs/esm';

@@ -12,6 +12,8 @@ import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+
 /**
  * A data export for user data
  * We use the creation_date of the AbstractAuditingEntity as the date when the export was requested

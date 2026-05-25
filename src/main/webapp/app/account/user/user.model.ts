@@ -1,0 +1,112 @@
+import { Account } from 'app/account/user/account.model';
+import dayjs from 'dayjs/esm';
+import { Organization } from 'app/core/shared/entities/organization.model';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+
+export class User extends Account {
+    public id?: number;
+    public groups?: string[];
+    public organizations?: Organization[];
+    public createdBy?: string;
+    public createdDate?: Date;
+    public lastModifiedBy?: string;
+    public lastModifiedDate?: Date;
+    public visibleRegistrationNumber?: string;
+    public password?: string;
+    public vcsAccessToken?: string;
+    public vcsAccessTokenExpiryDate?: string;
+    public selectedLLMUsage?: LLMSelectionDecision;
+    public selectedLLMUsageTimestamp?: dayjs.Dayjs;
+    public memirisEnabled?: boolean;
+    /**
+     * True if
+     * <ul>
+     * <li>No passkey has been registered for this user yet</li>
+     * <li>and the passkey feature is enabled</li>
+     * <li>and <code>artemis.user-management.passkey.ask-users-to-setup</code> is set to true</li>
+     * </ul>
+     */
+    public bot?: boolean;
+
+    public askToSetupPasskey?: boolean;
+
+    public loggedInWithPasskey?: boolean;
+
+    public passkeySuperAdminApproved?: boolean;
+
+    constructor(
+        id?: number,
+        login?: string,
+        firstName?: string,
+        lastName?: string,
+        email?: string,
+        activated?: boolean,
+        langKey?: string,
+        authorities?: string[],
+        groups?: string[],
+        createdBy?: string,
+        createdDate?: Date,
+        lastModifiedBy?: string,
+        lastModifiedDate?: Date,
+        password?: string,
+        imageUrl?: string,
+        vcsAccessToken?: string,
+        vcsAccessTokenExpiryDate?: string,
+        selectedLLMUsage?: LLMSelectionDecision,
+        LLMSelectionDecisionDate?: dayjs.Dayjs,
+        memirisEnabled?: boolean,
+        askToSetupPasskey?: boolean,
+        loggedInWithPasskey?: boolean,
+        passkeySuperAdminApproved?: boolean,
+    ) {
+        super(activated, authorities, email, firstName, langKey, lastName, login, imageUrl);
+        this.id = id;
+        this.groups = groups;
+        this.createdBy = createdBy;
+        this.createdDate = createdDate;
+        this.lastModifiedBy = lastModifiedBy;
+        this.lastModifiedDate = lastModifiedDate;
+        this.password = password;
+        this.vcsAccessToken = vcsAccessToken;
+        this.vcsAccessTokenExpiryDate = vcsAccessTokenExpiryDate;
+        this.selectedLLMUsage = selectedLLMUsage;
+        this.selectedLLMUsageTimestamp = LLMSelectionDecisionDate;
+        this.memirisEnabled = memirisEnabled;
+        this.askToSetupPasskey = askToSetupPasskey;
+        this.loggedInWithPasskey = loggedInWithPasskey;
+        this.passkeySuperAdminApproved = passkeySuperAdminApproved;
+    }
+}
+/**
+ * A DTO representing a user with the minimal information allowed to be seen by other users in a course
+ */
+export class UserPublicInfoDTO {
+    public id?: number;
+    public login?: string;
+
+    public name?: string;
+    public firstName?: string;
+    public lastName?: string;
+    public email?: string;
+    public imageUrl?: string;
+    public isInstructor?: boolean;
+    public isEditor?: boolean;
+    public isTeachingAssistant?: boolean;
+    public isStudent?: boolean;
+}
+
+/**
+ * A DTO representing a user which contains only the name and login
+ */
+export class UserNameAndLoginDTO {
+    public name?: string;
+    public login?: string;
+}
+
+/**
+ * A DTO representing a user which contains only the ID and login
+ */
+export class UserIdAndLoginDTO {
+    public id?: number;
+    public login?: string;
+}

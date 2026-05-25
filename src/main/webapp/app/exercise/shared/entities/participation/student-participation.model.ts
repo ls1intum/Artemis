@@ -1,4 +1,4 @@
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 

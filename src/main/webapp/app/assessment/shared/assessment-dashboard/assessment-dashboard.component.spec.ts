@@ -23,7 +23,7 @@ import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

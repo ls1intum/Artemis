@@ -8,7 +8,7 @@ import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layo
 import { ComplaintService, EntityResponseType } from 'app/assessment/shared/services/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
