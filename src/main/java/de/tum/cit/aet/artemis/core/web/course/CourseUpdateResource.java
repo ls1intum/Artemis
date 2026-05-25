@@ -5,8 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -93,16 +91,6 @@ public class CourseUpdateResource {
         this.userRepository = userRepository;
     }
 
-    private static Set<String> getChangedGroupNames(CourseUpdateDTO courseUpdateDTO, Course existingCourse) {
-        Set<String> existingGroupNames = new HashSet<>(List.of(existingCourse.getStudentGroupName(), existingCourse.getTeachingAssistantGroupName(),
-                existingCourse.getEditorGroupName(), existingCourse.getInstructorGroupName()));
-        Set<String> newGroupNames = new HashSet<>(List.of(courseUpdateDTO.studentGroupName(), courseUpdateDTO.teachingAssistantGroupName(), courseUpdateDTO.editorGroupName(),
-                courseUpdateDTO.instructorGroupName()));
-        Set<String> changedGroupNames = new HashSet<>(newGroupNames);
-        changedGroupNames.removeAll(existingGroupNames);
-        return changedGroupNames;
-    }
-
     /**
      * PUT /courses/:courseId : Updates an existing course.
      *
@@ -139,12 +127,6 @@ public class CourseUpdateResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingCourse, user);
 
         if (!authCheckService.isAdmin(user)) {
-            // this means the user must be an instructor, who has NO Admin rights.
-            // instructors are not allowed to change group names, because this would lead to security problems
-            final var changedGroupNames = getChangedGroupNames(courseUpdateDTO, existingCourse);
-            if (!changedGroupNames.isEmpty()) {
-                throw new BadRequestAlertException("You are not allowed to change the group names of a course", Course.ENTITY_NAME, "groupNamesCannotChange", true);
-            }
             // instructors are not allowed to change the access to restricted Athena modules
             if (athenaModuleAccessChanged) {
                 throw new BadRequestAlertException("You are not allowed to change the access to restricted Athena modules of a course", Course.ENTITY_NAME,

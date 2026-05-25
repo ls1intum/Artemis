@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChat
 import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTOService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
@@ -549,9 +550,8 @@ public class TutorialGroupService {
         }
 
         // ToDo: Discuss if we should allow to register course members who are not students
-        var result = new HashSet<>(
-                userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndRegistrationNumberIn(course.getStudentGroupName(), registrationNumbersToSearchFor));
-        result.addAll(new HashSet<>(userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndLoginIn(course.getStudentGroupName(), loginsToSearchFor)));
+        var result = new HashSet<>(userRepository.findAllByCourseIdAndRoleAndRegistrationNumberIn(course.getId(), CourseRole.STUDENT, registrationNumbersToSearchFor));
+        result.addAll(new HashSet<>(userRepository.findAllByCourseIdAndRoleAndLoginIn(course.getId(), CourseRole.STUDENT, loginsToSearchFor)));
         return result;
     }
 

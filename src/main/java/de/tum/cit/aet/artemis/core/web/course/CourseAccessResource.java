@@ -345,7 +345,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> addStudentToCourse(@PathVariable Long courseId, @PathVariable String studentLogin) {
         log.debug("REST request to add {} as student to course : {}", studentLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return addUserToCourseWithRole(studentLogin, userRepository.getUserWithGroupsAndAuthorities(), course, CourseRole.STUDENT);
+        return addUserToCourseWithRole(studentLogin, userRepository.getUserWithCourseRolesAndAuthorities(), course, CourseRole.STUDENT);
     }
 
     /**
@@ -360,7 +360,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> addTutorToCourse(@PathVariable Long courseId, @PathVariable String tutorLogin) {
         log.debug("REST request to add {} as tutors to course : {}", tutorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return addUserToCourseWithRole(tutorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, CourseRole.TEACHING_ASSISTANT);
+        return addUserToCourseWithRole(tutorLogin, userRepository.getUserWithCourseRolesAndAuthorities(), course, CourseRole.TEACHING_ASSISTANT);
     }
 
     /**
@@ -375,8 +375,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> addEditorToCourse(@PathVariable Long courseId, @PathVariable String editorLogin) {
         log.debug("REST request to add {} as editors to course : {}", editorLogin, courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        courseAccessService.checkIfEditorGroupsNeedsToBeCreated(course);
-        return addUserToCourseWithRole(editorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, CourseRole.EDITOR);
+        return addUserToCourseWithRole(editorLogin, userRepository.getUserWithCourseRolesAndAuthorities(), course, CourseRole.EDITOR);
     }
 
     /**
@@ -391,17 +390,17 @@ public class CourseAccessResource {
     public ResponseEntity<Void> addInstructorToCourse(@PathVariable Long courseId, @PathVariable String instructorLogin) {
         log.debug("REST request to add {} as instructors to course : {}", instructorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return addUserToCourseWithRole(instructorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, CourseRole.INSTRUCTOR);
+        return addUserToCourseWithRole(instructorLogin, userRepository.getUserWithCourseRolesAndAuthorities(), course, CourseRole.INSTRUCTOR);
     }
 
     /**
-     * adds the userLogin to the group (student, tutors or instructors) of the given course
+     * Adds the user identified by userLogin to the course with the given role.
      *
-     * @param userLogin         the user login of the student, tutor or instructor who should be added to the group
-     * @param instructorOrAdmin the user who initiates this request who must be an instructor of the given course or an admin
-     * @param course            the course which is only passes to check if the instructorOrAdmin is an instructor of the course
-     * @param group             the group to which the userLogin should be added
-     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found) or with status 403 (Forbidden)
+     * @param userLogin         the login of the user to add
+     * @param instructorOrAdmin the requesting user, must be at least instructor in the course
+     * @param course            the course to which the user should be added
+     * @param role              the course role to grant
+     * @return empty ResponseEntity with status 200 (OK), 404 (Not Found), or 403 (Forbidden)
      */
     @NonNull
     private ResponseEntity<Void> addUserToCourseWithRole(String userLogin, User instructorOrAdmin, Course course, CourseRole role) {
@@ -431,7 +430,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> removeStudentFromCourse(@PathVariable Long courseId, @PathVariable String studentLogin) {
         log.debug("REST request to remove {} as student from course : {}", studentLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseWithRole(studentLogin, userRepository.getUserWithGroupsAndAuthorities(), course, CourseRole.STUDENT);
+        return removeUserFromCourseWithRole(studentLogin, userRepository.getUserWithCourseRolesAndAuthorities(), course, CourseRole.STUDENT);
     }
 
     /**
@@ -446,7 +445,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> removeTutorFromCourse(@PathVariable Long courseId, @PathVariable String tutorLogin) {
         log.debug("REST request to remove {} as tutor from course : {}", tutorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseWithRole(tutorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, CourseRole.TEACHING_ASSISTANT);
+        return removeUserFromCourseWithRole(tutorLogin, userRepository.getUserWithCourseRolesAndAuthorities(), course, CourseRole.TEACHING_ASSISTANT);
     }
 
     /**
@@ -461,7 +460,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> removeEditorFromCourse(@PathVariable Long courseId, @PathVariable String editorLogin) {
         log.debug("REST request to remove {} as editor from course : {}", editorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseWithRole(editorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, CourseRole.EDITOR);
+        return removeUserFromCourseWithRole(editorLogin, userRepository.getUserWithCourseRolesAndAuthorities(), course, CourseRole.EDITOR);
     }
 
     /**
@@ -477,17 +476,17 @@ public class CourseAccessResource {
     public ResponseEntity<Void> removeInstructorFromCourse(@PathVariable Long courseId, @PathVariable String instructorLogin) {
         log.debug("REST request to remove {} as instructor from course : {}", instructorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseWithRole(instructorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, CourseRole.INSTRUCTOR);
+        return removeUserFromCourseWithRole(instructorLogin, userRepository.getUserWithCourseRolesAndAuthorities(), course, CourseRole.INSTRUCTOR);
     }
 
     /**
-     * removes the userLogin from the group (student, tutors or instructors) of the given course
+     * Removes the user identified by userLogin from the given role in the course.
      *
-     * @param userLogin         the user login of the student, tutor or instructor who should be removed from the group
-     * @param instructorOrAdmin the user who initiates this request who must be an instructor of the given course or an admin
-     * @param course            the course which is only passes to check if the instructorOrAdmin is an instructor of the course
-     * @param group             the group from which the userLogin should be removed
-     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found) or with status 403 (Forbidden)
+     * @param userLogin         the login of the user to remove
+     * @param instructorOrAdmin the requesting user, must be at least instructor in the course
+     * @param course            the course from which the user's role should be revoked
+     * @param role              the course role to revoke
+     * @return empty ResponseEntity with status 200 (OK), 404 (Not Found), or 403 (Forbidden)
      */
     @NonNull
     private ResponseEntity<Void> removeUserFromCourseWithRole(String userLogin, User instructorOrAdmin, Course course, CourseRole role) {

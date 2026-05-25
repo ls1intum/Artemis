@@ -492,6 +492,45 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     List<User> findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndLoginIn(String groupName, Set<String> logins);
 
+    /**
+     * Finds all non-deleted users enrolled in a course with the given role whose login is in the given set.
+     *
+     * @param courseId the ID of the course
+     * @param role     the course role to filter by
+     * @param logins   the set of logins to search for
+     * @return list of matching users
+     */
+    @Query("""
+            SELECT DISTINCT user
+            FROM User user
+                JOIN user.courseRoles ucr
+            WHERE ucr.course.id = :courseId
+                AND ucr.role = :role
+                AND user.login IN :logins
+                AND user.deleted = FALSE
+            """)
+    List<User> findAllByCourseIdAndRoleAndLoginIn(@Param("courseId") long courseId, @Param("role") CourseRole role, @Param("logins") Set<String> logins);
+
+    /**
+     * Finds all non-deleted users enrolled in a course with the given role whose registration number is in the given set.
+     *
+     * @param courseId            the ID of the course
+     * @param role                the course role to filter by
+     * @param registrationNumbers the set of registration numbers to search for
+     * @return list of matching users
+     */
+    @Query("""
+            SELECT DISTINCT user
+            FROM User user
+                JOIN user.courseRoles ucr
+            WHERE ucr.course.id = :courseId
+                AND ucr.role = :role
+                AND user.registrationNumber IN :registrationNumbers
+                AND user.deleted = FALSE
+            """)
+    List<User> findAllByCourseIdAndRoleAndRegistrationNumberIn(@Param("courseId") long courseId, @Param("role") CourseRole role,
+            @Param("registrationNumbers") Set<String> registrationNumbers);
+
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Set<User> findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndLoginIn(Set<String> logins);
 

@@ -130,16 +130,15 @@ public class TeamService {
         }
 
         // Get list of users which has the logins of the students and list of logins with which no user could be found
-        // Search users with student group name of the course to only find students of given course
-        Pair<List<User>, List<String>> existingStudentsAndNotFoundLoginsPair = getUsersFromLogins(logins, course.getStudentGroupName());
+        // Search course students via UserCourseRole to only find students of given course
+        Pair<List<User>, List<String>> existingStudentsAndNotFoundLoginsPair = getUsersFromLogins(logins, course.getId());
         List<User> existingStudentsWithLogin = existingStudentsAndNotFoundLoginsPair.getFirst();
         List<String> notFoundLogins = existingStudentsAndNotFoundLoginsPair.getSecond();
 
         // Get list of users which has the registration numbers of the students and list of registration numbers with which no user could be found
         // Give logins as argument to not find the same user again
-        // Search users with student group name of the course to only find students of given course
-        Pair<List<User>, List<String>> existingStudentsAndNotFoundRegistrationNumbersPair = getUsersFromRegistrationNumbers(registrationNumbers, logins,
-                course.getStudentGroupName());
+        // Search course students via UserCourseRole to only find students of given course
+        Pair<List<User>, List<String>> existingStudentsAndNotFoundRegistrationNumbersPair = getUsersFromRegistrationNumbers(registrationNumbers, logins, course.getId());
         List<User> existingStudentsWithRegistrationNumber = existingStudentsAndNotFoundRegistrationNumbersPair.getFirst();
         List<String> notFoundRegistrationNumbers = existingStudentsAndNotFoundRegistrationNumbersPair.getSecond();
 
@@ -160,25 +159,25 @@ public class TeamService {
     }
 
     /**
-     * Returns both students in database that has given logins and groupName, and logins with which no user could be found
+     * Returns both students enrolled in the course that have the given logins, and logins with which no user could be found.
      * <p>
-     * This is used to find the complete information of users of which we only know logins
+     * This is used to find the complete information of users of which we only know logins.
      * It also returns the logins with which no user could be found so that the caller of the function can be informed that
-     * the given user does not exist or login is wrong
+     * the given user does not exist or login is wrong.
      *
-     * @param logins    Logins to find users with
-     * @param groupName Group in which users will be searched
+     * @param logins   logins to find users with
+     * @param courseId ID of the course in which to search for students
      * @return list of users with given logins
      */
-    private Pair<List<User>, List<String>> getUsersFromLogins(List<String> logins, String groupName) {
+    private Pair<List<User>, List<String>> getUsersFromLogins(List<String> logins, long courseId) {
         // Create initial empty list for found students
         List<User> existingStudentsWithLogin = new ArrayList<>();
         // Create initial empty list for logins with which no user could be found
         List<String> notFoundLogins = new ArrayList<>();
-        // Check group name is not null, a list of logins is given and it is not empty
-        if (groupName != null && logins != null && !logins.isEmpty()) {
-            // Find all users whose login is in the given login list and who have the given group name
-            existingStudentsWithLogin = userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndLoginIn(groupName, new HashSet<>(logins));
+        // Check a list of logins is given and it is not empty
+        if (logins != null && !logins.isEmpty()) {
+            // Find all course students whose login is in the given login list
+            existingStudentsWithLogin = userRepository.findAllByCourseIdAndRoleAndLoginIn(courseId, CourseRole.STUDENT, new HashSet<>(logins));
             // Get the list of logins of found users
             Set<String> existingLogins = existingStudentsWithLogin.stream().map(User::getLogin).collect(Collectors.toCollection(HashSet::new));
             // Add logins that are in given login list but not in found users to notFoundLogins
@@ -189,29 +188,29 @@ public class TeamService {
     }
 
     /**
-     * Returns both students in database that has given registration numbers and group name, and registration numbers with which no user could be found
+     * Returns both students enrolled in the course that have the given registration numbers, and registration numbers with which no user could be found.
      * <p>
-     * This is used to find the complete information of users of which we only know registration numbers
-     * It gets login list as argument as well since registration number is used as a fallback identifier and the same user could be found by login and registration number
-     * It throws exception if such a user is found
+     * This is used to find the complete information of users of which we only know registration numbers.
+     * It gets login list as argument as well since registration number is used as a fallback identifier and the same user could be found by login and registration number.
+     * It throws exception if such a user is found.
      * Additionally, it returns registration numbers with which no users could be found so that the caller can be informed that
-     * the given user does not exist or registration number is wrong
+     * the given user does not exist or registration number is wrong.
      *
-     * @param registrationNumbers Registration numbers to find users with
-     * @param logins              Logins to find if there is any users with given login found, throws error if there is any
-     * @param groupName           Group in which users will be searched
+     * @param registrationNumbers registration numbers to find users with
+     * @param logins              logins to check if any user was already found by login (throws if so)
+     * @param courseId            ID of the course in which to search for students
      * @return list of users with given registration numbers
      * @throws StudentsAppearMultipleTimesException if any user has one of the given logins
      */
-    private Pair<List<User>, List<String>> getUsersFromRegistrationNumbers(List<String> registrationNumbers, List<String> logins, String groupName) {
+    private Pair<List<User>, List<String>> getUsersFromRegistrationNumbers(List<String> registrationNumbers, List<String> logins, long courseId) {
         // Create initial empty list for found students
         List<User> existingStudentsWithRegistrationNumber = new ArrayList<>();
         // Create initial empty list for registration numbers with which no user could be found
         List<String> notFoundRegistrationNumbers = new ArrayList<>();
-        // Check group name is not null, list of logins is given, list of registration numbers is given and it is not empty
-        if (groupName != null && logins != null && registrationNumbers != null && !registrationNumbers.isEmpty()) {
-            // Find all users whose login is in the given registration number list and who have the given group name
-            existingStudentsWithRegistrationNumber = userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndRegistrationNumberIn(groupName,
+        // Check list of logins is given, list of registration numbers is given and it is not empty
+        if (logins != null && registrationNumbers != null && !registrationNumbers.isEmpty()) {
+            // Find all course students whose registration number is in the given list
+            existingStudentsWithRegistrationNumber = userRepository.findAllByCourseIdAndRoleAndRegistrationNumberIn(courseId, CourseRole.STUDENT,
                     new HashSet<>(registrationNumbers));
             // Find users whose login is in given logins
             Set<String> loginsSet = new HashSet<>(logins);

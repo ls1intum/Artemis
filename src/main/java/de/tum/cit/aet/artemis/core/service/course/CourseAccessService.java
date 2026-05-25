@@ -19,7 +19,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
@@ -38,7 +37,8 @@ import de.tum.cit.aet.artemis.core.service.user.UserService;
 
 /**
  * Service for managing course access, including enrollment and unenrollment of users.
- * This service provides methods to enroll and unenroll users in courses, as well as to manage user groups within courses.
+ * Membership is tracked via the {@code user_course_role} table (authoritative) with a dual-write
+ * to the legacy {@code user_groups} table until Phase 9 removes it.
  */
 @Service
 @Profile(PROFILE_CORE)
@@ -121,23 +121,20 @@ public class CourseAccessService {
     }
 
     /**
-     * Add multiple users to the course so that they can access it
-     * The passed list of UserDTOs must include at least one unique user identifier (i.e. registration number OR email OR login)
-     * <p>
-     * This method first tries to find the user in the internal Artemis user database (because the user is probably already using Artemis).
-     * In case the user cannot be found, it additionally searches the connected LDAP in case it is configured.
+     * Add multiple users to the course with the role derived from the given role string.
+     * The passed list of UserDTOs must include at least one unique user identifier (i.e. registration number OR email OR login).
      *
-     * @param courseId    the id of the course
-     * @param studentDTOs the list of students (with at least registration number)
-     * @param courseGroup the group the students should be added to
-     * @return the list of students who could not be enrolled in the course, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
+     * @param courseId       the id of the course
+     * @param studentDTOs    the list of users (with at least one unique identifier)
+     * @param courseRoleSlug the role path segment from the REST URL ('students', 'tutors', 'editors', 'instructors'), converted to {@link CourseRole} internally
+     * @return the list of users who could not be registered because they were not found in the Artemis database
      */
-    public List<StudentDTO> registerUsersForCourse(Long courseId, List<StudentDTO> studentDTOs, String courseGroup) {
+    public List<StudentDTO> registerUsersForCourse(Long courseId, List<StudentDTO> studentDTOs, String courseRoleSlug) {
         var course = courseRepository.findByIdElseThrow(courseId);
         if (course.getLearningPathsEnabled()) {
             course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(course.getId());
         }
-        CourseRole courseRole = CourseRole.fromRole(Role.fromString(courseGroup));
+        CourseRole courseRole = CourseRole.fromRole(Role.fromString(courseRoleSlug));
         List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
         for (var studentDto : studentDTOs) {
             var optionalStudent = userService.findUserAndAddToCourse(studentDto.registrationNumber(), studentDto.login(), studentDto.email(), course, courseRole);
@@ -197,41 +194,4 @@ public class CourseAccessService {
         userService.removeUserFromCourse(user, course, role);
     }
 
-    /**
-     * If the corresponding group (student, tutor, editor, instructor) is not defined, this method will set the default group.
-     *
-     * @param course the course (typically created on the client and not yet existing) for which the groups should be validated
-     */
-    public void setDefaultGroupsIfNotSet(Course course) {
-        if (!StringUtils.hasText(course.getStudentGroupName())) {
-            course.setStudentGroupName(course.getDefaultStudentGroupName());
-        }
-
-        if (!StringUtils.hasText(course.getTeachingAssistantGroupName())) {
-            course.setTeachingAssistantGroupName(course.getDefaultTeachingAssistantGroupName());
-        }
-
-        if (!StringUtils.hasText(course.getEditorGroupName())) {
-            course.setEditorGroupName(course.getDefaultEditorGroupName());
-        }
-
-        if (!StringUtils.hasText(course.getInstructorGroupName())) {
-            course.setInstructorGroupName(course.getDefaultInstructorGroupName());
-        }
-    }
-
-    /**
-     * Special case for editors: checks if the default editor group needs to be created when old courses are edited
-     *
-     * @param course the course for which the default editor group will be created if it does not exist
-     */
-    public void checkIfEditorGroupsNeedsToBeCreated(Course course) {
-        // Courses that have been created before Artemis version 4.11.9 do not have an editor group.
-        // The editor group would be need to be set manually by instructors for the course and manually added to external user management.
-        // To increase the usability the group is automatically generated when a user is added.
-        if (!StringUtils.hasText(course.getEditorGroupName())) {
-            course.setEditorGroupName(course.getDefaultEditorGroupName());
-            courseRepository.save(course);
-        }
-    }
 }
