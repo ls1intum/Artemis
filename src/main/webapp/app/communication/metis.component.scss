@@ -140,13 +140,13 @@ $delete-delay-duration: 6s;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    z-index: 1055;
+    z-index: $zindex-modal;
 }
 
 .modal-dialog {
     margin: 0;
     width: 100%;
-    max-width: 800px;
+    max-width: $modal-lg;
     max-height: 90vh;
     display: flex;
     flex-direction: column;
@@ -165,5 +165,5 @@ $delete-delay-duration: 6s;
     height: 100%;
     background-color: var(--bs-backdrop-bg, #000);
     opacity: var(--bs-backdrop-opacity, 0.5);
-    z-index: 1055;
+    z-index: $zindex-modal-backdrop;
 }
