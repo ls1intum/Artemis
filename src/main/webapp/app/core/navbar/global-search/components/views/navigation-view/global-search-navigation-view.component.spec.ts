@@ -83,8 +83,8 @@ describe('GlobalSearchNavigationViewComponent', () => {
 
         describe('itemCount', () => {
             it('should equal action button count plus searchable entities when not searching', () => {
-                // actionButtonCount = 1 (lecture button; iris is inline), searchableEntities.length = 5
-                expect(component.itemCount()).toBe(6);
+                // actionButtonCount = 1 (lecture button; iris is inline), searchableEntities.length = 6
+                expect(component.itemCount()).toBe(7);
             });
 
             it('should equal action button count plus results when searching', () => {
