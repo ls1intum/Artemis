@@ -19,7 +19,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.dto.QuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -90,7 +90,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
     Set<QuizExercise> findAllWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO(
+            SELECT new de.tum.cit.aet.artemis.calendar.dto.QuizExerciseCalendarEventDTO(
                 exercise.id,
                 exercise.quizMode,
                 exercise.title,

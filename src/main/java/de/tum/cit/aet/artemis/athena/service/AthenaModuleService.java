@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.athena.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
-
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -11,9 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -22,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.athena.config.AthenaEnabled;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
@@ -34,7 +32,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  */
 @Lazy
 @Service
-@Profile(PROFILE_ATHENA)
+@Conditional(AthenaEnabled.class)
 public class AthenaModuleService {
 
     @Value("${artemis.athena.url}")
@@ -54,10 +52,10 @@ public class AthenaModuleService {
 
     private final ExerciseRepository exerciseRepository;
 
-    public AthenaModuleService(@Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
+    public AthenaModuleService(@Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper objectMapper,
             ExerciseRepository exerciseRepository) {
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
-        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
+        this.objectMapper = objectMapper;
         this.exerciseRepository = exerciseRepository;
     }
 
@@ -142,7 +140,7 @@ public class AthenaModuleService {
      * @throws BadRequestAlertException when the exercise has no access to the exercise's provided module.
      */
     public void checkHasAccessToAthenaModule(Exercise exercise, Course course, String entityName) throws BadRequestAlertException {
-        if (exercise.isExamExercise() && exercise.getFeedbackSuggestionModule() != null) {
+        if (exercise.isExamExercise() && !exercise.isTestExamExercise() && exercise.getFeedbackSuggestionModule() != null) {
             throw new BadRequestAlertException("The exam exercise has no access to Athena", entityName, "examExerciseNoAccessToAthena");
         }
         if (!course.getRestrictedAthenaModulesAccess() && restrictedModules.contains(exercise.getFeedbackSuggestionModule())) {

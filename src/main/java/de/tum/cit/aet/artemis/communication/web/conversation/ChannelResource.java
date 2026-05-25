@@ -31,6 +31,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.AddedToChannelNotification;
@@ -47,12 +49,10 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTO
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
@@ -318,7 +318,7 @@ public class ChannelResource extends ConversationManagementResource {
 
         var usersToNotify = conversationParticipantRepository.findConversationParticipantsByConversationId(channel.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
-        conversationService.deleteConversation(channel.getId());
+        channelService.deleteChannel(channel);
 
         var course = channel.getCourse();
         var channelDeletedNotification = new ChannelDeletedNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(), channel.getName());
@@ -579,6 +579,7 @@ public class ChannelResource extends ConversationManagementResource {
             }
             else {
                 service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, updatedChannel.getId());
+                service.deleteAllPostsForChannelAsync(updatedChannel.getId());
             }
         });
         return ResponseEntity.ok(conversationDTOService.convertChannelToDTO(requestingUser, updatedChannel));

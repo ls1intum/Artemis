@@ -75,5 +75,8 @@
     timeout 60s runtest --tool ${tool} ${step}.exp || true
     cd ..
     pipeline-helper -o customFeedbacks dejagnu -n "dejagnu[${step}]" -l testsuite/${tool}.log
+- name: sanitize_feedback
+  script: |-
+    sed -i 's/[^[:print:]\t]/�/g' customFeedbacks/*.json || true
   resultPaths:
     - '**/customFeedbacks/TEST-*.json'

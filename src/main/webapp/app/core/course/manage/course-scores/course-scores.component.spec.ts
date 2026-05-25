@@ -5,7 +5,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockLanguageHelper, MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { CourseScoresComponent, HighlightType } from 'app/core/course/manage/course-scores/course-scores.component';
 import {
     COURSE_OVERALL_POINTS_KEY,

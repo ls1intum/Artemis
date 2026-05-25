@@ -311,8 +311,8 @@ describe('GlobalSearchNavigationViewComponent', () => {
         });
 
         it('itemCount should equal searchableEntities count when iris is disabled', () => {
-            // actionButtonCount = 0 (iris disabled), searchableEntities.length = 5
-            expect(component.itemCount()).toBe(5);
+            // actionButtonCount = 0 (iris disabled), searchableEntities.length = 6
+            expect(component.itemCount()).toBe(6);
         });
 
         it('should not emit when Enter is pressed at index 0', () => {

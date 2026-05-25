@@ -3,7 +3,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { LtiInitializerComponent } from 'app/core/course/overview/exercise-details/lti-initializer/lti-initializer.component';
-import { UserService } from 'app/core/user/shared/user.service';
+import { UserService } from 'app/account/user/shared/user.service';
 import { MockUserService } from 'test/helpers/mocks/service/mock-user.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute, Router } from '@angular/router';

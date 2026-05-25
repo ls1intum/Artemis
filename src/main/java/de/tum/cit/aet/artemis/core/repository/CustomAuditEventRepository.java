@@ -6,7 +6,6 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.webauthn.authentication.WebAuthnAuthentication;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
 import de.tum.cit.aet.artemis.core.config.audit.AuditEventConverter;
 import de.tum.cit.aet.artemis.core.domain.PersistentAuditEvent;
@@ -49,7 +48,7 @@ public class CustomAuditEventRepository implements AuditEventRepository {
     public CustomAuditEventRepository(Environment environment, PersistenceAuditEventRepository persistenceAuditEventRepository, AuditEventConverter auditEventConverter) {
         this.persistenceAuditEventRepository = persistenceAuditEventRepository;
         this.auditEventConverter = auditEventConverter;
-        this.isSaml2Active = Set.of(environment.getActiveProfiles()).contains(Constants.PROFILE_SAML2);
+        this.isSaml2Active = new ArtemisConfigHelper().isSaml2Enabled(environment);
     }
 
     @Override

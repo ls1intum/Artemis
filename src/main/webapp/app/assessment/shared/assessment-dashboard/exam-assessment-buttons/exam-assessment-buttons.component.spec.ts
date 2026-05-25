@@ -11,7 +11,7 @@ import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

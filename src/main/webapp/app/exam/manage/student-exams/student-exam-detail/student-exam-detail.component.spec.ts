@@ -3,7 +3,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/student-exam-detail/student-exam-detail.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { MockProvider } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';

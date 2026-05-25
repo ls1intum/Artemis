@@ -7,7 +7,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { ComplaintResponseDTO, ComplaintResponseUpdateDTO } from 'app/assessment/shared/entities/complaint-response-dto.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 
 type EntityResponseType = HttpResponse<ComplaintResponseDTO>;
 

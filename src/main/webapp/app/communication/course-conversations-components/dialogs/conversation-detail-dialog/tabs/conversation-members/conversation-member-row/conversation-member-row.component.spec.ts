@@ -16,7 +16,7 @@ import { ConversationDTO } from 'app/communication/shared/entities/conversation/
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations-components/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { ChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { HttpResponse } from '@angular/common/http';

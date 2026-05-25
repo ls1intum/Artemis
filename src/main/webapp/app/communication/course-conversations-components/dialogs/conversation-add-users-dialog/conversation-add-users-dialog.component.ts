@@ -1,6 +1,6 @@
 import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { HttpErrorResponse } from '@angular/common/http';

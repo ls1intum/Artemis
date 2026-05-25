@@ -32,6 +32,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
@@ -52,7 +53,6 @@ import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepo
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -740,16 +740,25 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         String conversationId = createdPost1.getConversation().getId().toString();
         String messageId = createdPost1.getId().toString();
 
+        // Wait for both post-creation @Async increments to settle: count must reach 2 before we proceed.
+        // Without this gate, the subsequent mark-as-read @Async could race with stale post-creation increments,
+        // and the baseline `unreadCount == 0` could be satisfied by the initial state alone (never observing
+        // that mark-as-read actually ran).
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            SecurityUtils.setAuthorizationObject();
+            assertThat(getUnreadMessagesCount(createdPost1.getConversation(), student2)).isEqualTo(2);
+        });
+
         // establish baseline: mark conversation as read and verify unread count is 0
         request.patch("/api/communication/courses/" + courseId + "/conversations/" + conversationId + "/mark-as-read", null, HttpStatus.OK);
-        await().untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
             SecurityUtils.setAuthorizationObject();
             assertThat(getUnreadMessagesCount(createdPost1.getConversation(), student2)).isZero();
         });
 
         request.patch("/api/communication/courses/" + courseId + "/conversations/" + conversationId + "/messages/" + messageId + "/mark-as-unread", null, HttpStatus.OK);
 
-        await().untilAsserted(() -> {
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
             SecurityUtils.setAuthorizationObject();
             assertThat(getUnreadMessagesCount(createdPost1.getConversation(), student2)).isEqualTo(2);
             assertThat(getUnreadMessagesCount(createdPost1.getConversation(), student1)).isZero();

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.iris;
 
-import static de.tum.cit.aet.artemis.core.domain.User.IRIS_BOT_LOGIN;
+import static de.tum.cit.aet.artemis.account.domain.User.IRIS_BOT_LOGIN;
 import static de.tum.cit.aet.artemis.iris.service.IrisBotUserService.IRIS_BOT_IMAGE_URL;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -8,10 +8,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.iris.service.IrisBotUserService;
 
 class IrisBotUserServiceIntegrationTest extends AbstractIrisIntegrationTest {

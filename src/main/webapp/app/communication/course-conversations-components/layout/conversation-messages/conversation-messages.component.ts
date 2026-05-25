@@ -29,7 +29,7 @@ import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/b
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { OneToOneChat, isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -147,6 +147,12 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             untracked(() => {
                 this.focusOnPostId = focusPostIdValue;
                 this.isOpenThreadOnFocus = openThreadOnFocusValue;
+                // When messages are already rendered (e.g. navigating to a post
+                // in the current conversation via global search), scroll and
+                // highlight immediately — the messages() effect won't re-fire.
+                if (focusPostIdValue && this.messages().length > 0) {
+                    requestAnimationFrame(() => this.goToLastSelectedElement(focusPostIdValue, openThreadOnFocusValue));
+                }
             });
         });
 
@@ -685,6 +691,13 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.canStartSaving = true;
             if (isOpenThread) {
                 this.openThread.emit(element.post());
+            }
+            if (this.focusOnPostId) {
+                const postDiv = element.elementRef.nativeElement.querySelector('.post');
+                if (postDiv) {
+                    postDiv.classList.add('highlight-post');
+                    setTimeout(() => postDiv.classList.remove('highlight-post'), 2000);
+                }
             }
             this.focusOnPostId = undefined;
             this.isOpenThreadOnFocus = false;

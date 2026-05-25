@@ -11,7 +11,7 @@ import { CourseNotificationCategory } from 'app/communication/shared/entities/co
 import { CourseNotificationViewingStatus } from 'app/communication/shared/entities/course-notification/course-notification-viewing-status';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 
 describe('CourseNotificationWebsocketService', () => {
     setupTestBed({ zoneless: true });
