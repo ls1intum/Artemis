@@ -19,7 +19,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
-import { CourseAdminService } from 'app/core/course/manage/services/course-admin.service';
+import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';

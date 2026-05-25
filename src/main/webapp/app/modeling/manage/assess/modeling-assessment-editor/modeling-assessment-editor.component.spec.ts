@@ -12,7 +12,7 @@ import { User } from 'app/account/user/user.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';

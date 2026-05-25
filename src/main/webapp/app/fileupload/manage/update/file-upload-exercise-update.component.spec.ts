@@ -84,13 +84,13 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FileUploadExerciseUpdateComponent } from './file-upload-exercise-update.component';
 import { FileUploadExerciseService } from '../services/file-upload-exercise.service';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { EditType } from 'app/exercise/util/exercise.utils';
 
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';

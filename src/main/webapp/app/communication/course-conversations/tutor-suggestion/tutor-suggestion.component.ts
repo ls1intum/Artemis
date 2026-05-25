@@ -12,7 +12,7 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';

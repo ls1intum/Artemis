@@ -8,8 +8,8 @@ import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { BaseCourseRequest, CourseRequest, CourseRequestStatus } from 'app/core/shared/entities/course-request.model';
-import { CourseRequestService } from 'app/core/course/request/course-request.service';
-import { CourseRequestFormComponent } from 'app/core/course/request/course-request-form.component';
+import { CourseRequestService } from 'app/course/request/course-request.service';
+import { CourseRequestFormComponent } from 'app/course/request/course-request-form.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

@@ -5,7 +5,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -22,7 +22,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';

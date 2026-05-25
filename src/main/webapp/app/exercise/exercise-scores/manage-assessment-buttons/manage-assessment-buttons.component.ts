@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular
 import { faBan, faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';

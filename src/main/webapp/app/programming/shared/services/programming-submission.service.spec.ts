@@ -10,7 +10,7 @@ import {
     ProgrammingSubmissionState,
     ProgrammingSubmissionStateObj,
 } from 'app/programming/shared/services/programming-submission.service';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';

@@ -4,7 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { User } from 'app/account/user/user.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { faUserSlash } from '@fortawesome/free-solid-svg-icons';

@@ -8,7 +8,7 @@ import { ChannelService } from 'app/communication/conversations/service/channel.
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { initializeDialog } from 'test/helpers/dialog-test-helpers';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

@@ -14,7 +14,7 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { MockExamManagementService } from 'test/helpers/mocks/service/mock-exam-management.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 
 describe('UpcomingExamsAndExercisesComponent', () => {
     setupTestBed({ zoneless: true });

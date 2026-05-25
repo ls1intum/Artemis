@@ -12,7 +12,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CompetencyCardStubComponent } from 'test/helpers/stubs/atlas/competency-card-stub.component';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';

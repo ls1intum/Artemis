@@ -27,9 +27,9 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { User } from 'app/account/user/user.model';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';

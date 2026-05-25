@@ -49,7 +49,7 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { Subject, of } from 'rxjs';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
-import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
+import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 import { DialogService } from 'primeng/dynamicdialog';
 
 describe('PostingReactionsBarComponent', () => {

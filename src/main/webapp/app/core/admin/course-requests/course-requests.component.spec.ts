@@ -14,7 +14,7 @@ import dayjs from 'dayjs/esm';
 
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { CourseRequestsComponent } from 'app/core/admin/course-requests/course-requests.component';
-import { CourseRequestService } from 'app/core/course/request/course-request.service';
+import { CourseRequestService } from 'app/course/request/course-request.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseRequest, CourseRequestStatus, CourseRequestsAdminOverview } from 'app/core/shared/entities/course-request.model';
 

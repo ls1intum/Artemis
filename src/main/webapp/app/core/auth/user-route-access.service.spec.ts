@@ -13,7 +13,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { Mutable } from 'test/helpers/mutable';
 import { mockedActivatedRouteSnapshot } from 'test/helpers/mocks/activated-route/mock-activated-route-snapshot';
-import { CourseExerciseDetailsComponent } from 'app/core/course/overview/exercise-details/course-exercise-details.component';
+import { CourseExerciseDetailsComponent } from 'app/course/overview/exercise-details/course-exercise-details.component';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { AlertService } from 'app/shared/service/alert.service';
 import { provideHttpClient } from '@angular/common/http';

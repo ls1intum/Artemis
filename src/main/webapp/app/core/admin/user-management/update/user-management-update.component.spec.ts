@@ -34,7 +34,7 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
-import { CourseAdminService } from 'app/core/course/manage/services/course-admin.service';
+import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { PROFILE_JENKINS } from 'app/app.constants';
 import { AccountService } from 'app/core/auth/account.service';

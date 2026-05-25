@@ -6,7 +6,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';

@@ -9,10 +9,10 @@ import { ListOfComplaintsComponent } from 'app/assessment/manage/list-of-complai
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { User } from 'app/account/user/user.model';
 import { AlertService } from 'app/shared/service/alert.service';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';

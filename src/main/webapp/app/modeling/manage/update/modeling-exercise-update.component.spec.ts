@@ -13,13 +13,13 @@ import { ActivatedRoute, Data, Params, Router, UrlSegment } from '@angular/route
 import { ModelingExerciseUpdateComponent } from 'app/modeling/manage/update/modeling-exercise-update.component';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';

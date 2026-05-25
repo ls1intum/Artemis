@@ -9,7 +9,7 @@ import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizBatch, QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { QuizExerciseManageButtonsComponent } from 'app/quiz/manage/manage-buttons/quiz-exercise-manage-buttons.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
