@@ -9,7 +9,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/ent
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { CourseScores } from 'app/core/course/manage/course-scores/course-scores';
 import { ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 

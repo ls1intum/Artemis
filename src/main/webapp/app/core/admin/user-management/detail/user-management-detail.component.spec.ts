@@ -9,7 +9,7 @@ import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 
 import { UserManagementDetailComponent } from 'app/core/admin/user-management/detail/user-management-detail.component';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 
 describe('UserManagementDetailComponent', () => {

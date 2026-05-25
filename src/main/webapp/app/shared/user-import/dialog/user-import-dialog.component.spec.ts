@@ -23,8 +23,8 @@ import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { DialogModule } from 'primeng/dialog';
 import * as readUsersFromCsv from 'app/shared/user-import/util/read-users-from-csv';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { AdminUserService } from 'app/core/user/shared/admin-user.service';
-import { User } from 'app/core/user/user.model';
+import { AdminUserService } from 'app/account/user/shared/admin-user.service';
+import { User } from 'app/account/user/user.model';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 
 describe('UsersImportDialogComponent', () => {

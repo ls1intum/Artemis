@@ -3,7 +3,7 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { CourseGroup } from 'app/core/course/shared/entities/course.model';
 import { TutorialGroupTutor } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { HttpResponse } from '@angular/common/http';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { AlertService } from 'app/shared/service/alert.service';
 
 @Injectable({ providedIn: 'root' })

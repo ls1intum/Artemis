@@ -2,7 +2,7 @@ import { BehaviorSubject, Observable, of } from 'rxjs';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Posting } from 'app/communication/shared/entities/posting.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { ContextInformation, PageType, PostContextFilter, RouteComponents } from 'app/communication/metis.util';
 import { Course } from 'app/core/course/shared/entities/course.model';

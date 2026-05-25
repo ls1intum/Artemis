@@ -14,7 +14,7 @@ import { faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { PROFILE_ATHENA } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { NgTemplateOutlet } from '@angular/common';
@@ -123,7 +123,7 @@ export class ExerciseDetailsStudentActionsComponent {
     readonly isLoading = this._isLoading.asReadonly();
     readonly studentParticipations = this._studentParticipations.asReadonly();
 
-    readonly athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+    readonly athenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
 
     readonly beforeDueDate = computed(() => {
         const exercise = this.exercise();

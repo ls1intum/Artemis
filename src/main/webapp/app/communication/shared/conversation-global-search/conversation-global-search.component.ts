@@ -7,7 +7,7 @@ import { isGroupChatDTO } from '../entities/conversation/group-chat.model';
 import { isOneToOneChatDTO } from '../entities/conversation/one-to-one-chat.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { User, UserPublicInfoDTO } from 'app/core/user/user.model';
+import { User, UserPublicInfoDTO } from 'app/account/user/user.model';
 import { Subject, catchError, map, of, takeUntil } from 'rxjs';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { addPublicFilePrefix } from 'app/app.constants';

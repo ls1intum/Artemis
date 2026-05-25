@@ -18,7 +18,7 @@ import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import * as Sentry from '@sentry/angular';
 
 import { UserManagementUpdateComponent } from 'app/core/admin/user-management/update/user-management-update.component';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -28,7 +28,7 @@ import { Organization } from 'app/core/shared/entities/organization.model';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { LANGUAGES } from 'app/core/language/shared/language.constants';
-import { AdminUserService } from 'app/core/user/shared/admin-user.service';
+import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';

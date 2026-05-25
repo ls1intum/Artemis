@@ -50,12 +50,15 @@ When a user attempts to log in with LDAP authentication enabled:
 
 ### Configuration
 
-To enable LDAP authentication, activate the `ldap` Spring profile and configure the LDAP connection settings in your `application-artemis.yml`:
+To enable LDAP authentication, set the module-feature flag and configure the LDAP connection settings in your `application-artemis.yml`:
 
-#### Enable the ldap Spring profile
+#### Enable LDAP
 
-```
---spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local,ldap
+```yaml
+artemis:
+  user-management:
+    ldap:
+      enabled: true
 ```
 
 #### Configure LDAP Connection

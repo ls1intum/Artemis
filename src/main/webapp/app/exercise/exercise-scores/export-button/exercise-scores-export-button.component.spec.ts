@@ -17,7 +17,7 @@ import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entitie
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';

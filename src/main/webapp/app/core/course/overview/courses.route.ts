@@ -407,7 +407,7 @@ export const courseRoutes: Routes = [
             },
             {
                 path: CourseOverviewRoutePath.CALENDAR,
-                loadComponent: () => import('app/core/calendar/calendar-container/calendar-container.component').then((m) => m.CalendarContainerComponent),
+                loadComponent: () => import('app/calendar/calendar-container/calendar-container.component').then((m) => m.CalendarContainerComponent),
                 data: {
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.calendar',
