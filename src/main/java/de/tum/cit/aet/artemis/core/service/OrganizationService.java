@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.Organization;
-import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
+import de.tum.cit.aet.artemis.admin.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 
 /**

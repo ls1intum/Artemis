@@ -29,12 +29,12 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.admin.domain.DataExport;
 import de.tum.cit.aet.artemis.admin.domain.DataExportState;
+import de.tum.cit.aet.artemis.admin.repository.DataExportRepository;
 import de.tum.cit.aet.artemis.core.dto.DataExportAdminDTO;
 import de.tum.cit.aet.artemis.core.dto.RequestDataExportDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.DataExportRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.export.DataExportCreationService;
 import de.tum.cit.aet.artemis.core.service.export.DataExportService;

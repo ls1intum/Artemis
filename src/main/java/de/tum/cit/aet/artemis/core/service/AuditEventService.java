@@ -12,8 +12,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.admin.repository.PersistenceAuditEventRepository;
 import de.tum.cit.aet.artemis.core.config.audit.AuditEventConverter;
-import de.tum.cit.aet.artemis.core.repository.PersistenceAuditEventRepository;
 
 /**
  * Service for managing audit events.

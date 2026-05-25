@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.admin.domain.CleanupJobExecution;
 import de.tum.cit.aet.artemis.admin.domain.CleanupJobType;
+import de.tum.cit.aet.artemis.admin.repository.CleanupJobExecutionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.FeedbackCleanupRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.LongFeedbackTextCleanupRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.PlagiarismComparisonCleanupRepository;
@@ -29,7 +30,6 @@ import de.tum.cit.aet.artemis.core.dto.NonLatestRatedResultsCleanupCountDTO;
 import de.tum.cit.aet.artemis.core.dto.OrphanCleanupCountDTO;
 import de.tum.cit.aet.artemis.core.dto.PlagiarismComparisonCleanupCountDTO;
 import de.tum.cit.aet.artemis.core.dto.SubmissionVersionsCleanupCountDTO;
-import de.tum.cit.aet.artemis.core.repository.cleanup.CleanupJobExecutionRepository;
 
 @Profile(PROFILE_CORE)
 @Lazy

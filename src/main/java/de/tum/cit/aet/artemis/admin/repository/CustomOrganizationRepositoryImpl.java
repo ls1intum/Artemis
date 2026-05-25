@@ -1,10 +1,10 @@
-package de.tum.cit.aet.artemis.core.repository;
+package de.tum.cit.aet.artemis.admin.repository;
 
-import static de.tum.cit.aet.artemis.core.repository.OrganizationSpecs.getCoursePredicate;
-import static de.tum.cit.aet.artemis.core.repository.OrganizationSpecs.getCourseSpecification;
-import static de.tum.cit.aet.artemis.core.repository.OrganizationSpecs.getMemberPredicate;
-import static de.tum.cit.aet.artemis.core.repository.OrganizationSpecs.getMemberSpecification;
-import static de.tum.cit.aet.artemis.core.repository.OrganizationSpecs.getOrganizationSpecification;
+import static de.tum.cit.aet.artemis.admin.repository.OrganizationSpecs.getCoursePredicate;
+import static de.tum.cit.aet.artemis.admin.repository.OrganizationSpecs.getCourseSpecification;
+import static de.tum.cit.aet.artemis.admin.repository.OrganizationSpecs.getMemberPredicate;
+import static de.tum.cit.aet.artemis.admin.repository.OrganizationSpecs.getMemberSpecification;
+import static de.tum.cit.aet.artemis.admin.repository.OrganizationSpecs.getOrganizationSpecification;
 
 import java.util.List;
 

@@ -15,14 +15,14 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
+import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageRequestRepository;
+import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.communication.repository.CourseNotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingPresetRepository;
 import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingSpecificationRepository;
 import de.tum.cit.aet.artemis.communication.service.ConversationDataCleanupService;
-import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageRequestRepository;
-import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.course.domain.CourseOperationType;
 import de.tum.cit.aet.artemis.course.dto.CourseSummaryDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;

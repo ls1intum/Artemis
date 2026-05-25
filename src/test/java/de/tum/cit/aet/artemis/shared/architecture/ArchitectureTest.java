@@ -85,13 +85,13 @@ import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
+import de.tum.cit.aet.artemis.admin.repository.CustomOrganizationRepositoryImpl;
 import de.tum.cit.aet.artemis.communication.repository.CustomPostRepositoryImpl;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.authorization.AuthorizationTestService;
 import de.tum.cit.aet.artemis.core.config.ApplicationConfiguration;
 import de.tum.cit.aet.artemis.core.config.ConditionalMetricsExclusionConfiguration;
 import de.tum.cit.aet.artemis.core.config.StaticResourcesConfiguration;
-import de.tum.cit.aet.artemis.core.repository.CustomOrganizationRepositoryImpl;
 import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
 import de.tum.cit.aet.artemis.core.service.TitleCacheEvictionService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;

@@ -23,9 +23,9 @@ import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageRequest;
 import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
+import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageRequestRepository;
+import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.core.config.LLMModelCostConfiguration;
-import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageRequestRepository;
-import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
 
 /**
  * Service for managing the LLMTokenUsage by all LLMs in Artemis.

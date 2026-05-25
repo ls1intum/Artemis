@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.admin.domain.DataExport;
-import de.tum.cit.aet.artemis.core.repository.DataExportRepository;
+import de.tum.cit.aet.artemis.admin.repository.DataExportRepository;
 
 @Lazy
 @Repository

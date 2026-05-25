@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
-import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
+import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageTraceRepository;
 
 @Lazy
 @Repository

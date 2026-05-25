@@ -22,7 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.admin.domain.PersistentAuditEvent;
-import de.tum.cit.aet.artemis.core.repository.PersistenceAuditEventRepository;
+import de.tum.cit.aet.artemis.admin.repository.PersistenceAuditEventRepository;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
