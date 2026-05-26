@@ -240,24 +240,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private buildApollonCollaborationUser(user: User): CollaborationUser {
         const name = (user.name ?? [user.firstName, user.lastName].filter(Boolean).join(' ').trim()) || user.login || 'User';
         const id = user.login ?? (user.id !== undefined ? String(user.id) : undefined) ?? name;
-        const color = ModelingSubmissionComponent.getStableCollaborationColor(id);
         const imageUrl = this.accountService.getImageUrl();
-        return { id, name, color, imageUrl };
-    }
-
-    private static getStableCollaborationColor(seed: string): string {
-        const hash = ModelingSubmissionComponent.hashStringToPositiveInt(seed);
-        const hue = Math.round((hash * 137.508) % 360);
-        return `hsl(${hue}, 70%, 45%)`;
-    }
-
-    private static hashStringToPositiveInt(value: string): number {
-        let hash = 0;
-        for (let i = 0; i < value.length; i++) {
-            hash = (hash << 5) - hash + value.charCodeAt(i);
-            hash |= 0; // Convert to 32-bit integer
-        }
-        return Math.abs(hash);
+        return { id, name, imageUrl };
     }
 
     private setupMode(): void {
