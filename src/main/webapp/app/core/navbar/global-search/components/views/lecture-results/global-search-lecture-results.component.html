@@ -33,6 +33,7 @@
                 role="listitem"
                 [class.is-selected]="selectedIndex() === $index"
                 [routerLink]="result.lectureUnit.link"
+                [queryParams]="result.lectureUnit.queryParams"
             >
                 <div class="d-flex align-items-start gap-2 mb-2">
                     <div class="lecture-card-icon-box d-flex align-items-center justify-content-center flex-shrink-0">

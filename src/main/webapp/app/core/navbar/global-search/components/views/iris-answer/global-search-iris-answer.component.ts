@@ -91,15 +91,17 @@ export class GlobalSearchIrisAnswerComponent {
 
         // Iris answer pipeline — runs alongside the main search.
         // ask() emits multiple values: first a thinking update, then the final result.
-        // switchMap cancels the previous ask() subscription on every new query.
+        // tap() runs before debounceTime so stale state is cleared immediately on every
+        // keystroke rather than waiting for the debounce window to expire.
+        // switchMap cancels the previous ask() subscription on every new debounced query.
         toObservable(this.searchQuery)
             .pipe(
-                debounceTime(IRIS_ANSWER_DEBOUNCE_MS),
                 tap(() => {
                     this.irisResult.set(undefined);
                     this.irisThinking.set(false);
                     this.currentRunId.set(undefined);
                 }),
+                debounceTime(IRIS_ANSWER_DEBOUNCE_MS),
                 switchMap((query) => {
                     if (!query.trim()) {
                         return of(undefined);
