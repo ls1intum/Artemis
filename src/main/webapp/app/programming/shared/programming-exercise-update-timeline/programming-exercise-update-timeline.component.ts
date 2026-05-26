@@ -1,5 +1,5 @@
 import { Component, OnInit, Signal, computed, effect, inject, input, model, signal } from '@angular/core';
-import { PROFILE_ATHENA } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { Dayjs } from 'dayjs/esm';
@@ -121,7 +121,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
             this.assessmentType.set(AssessmentType.AUTOMATIC);
         }
 
-        this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+        this.isAthenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
     }
 
     toggleAssessmentType() {
