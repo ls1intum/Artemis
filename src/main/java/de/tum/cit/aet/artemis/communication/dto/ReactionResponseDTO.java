@@ -6,6 +6,8 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.account.dto.UserMapper;
+import de.tum.cit.aet.artemis.account.dto.UserSummaryDTO;
 import de.tum.cit.aet.artemis.communication.domain.Reaction;
 
 /**
@@ -25,7 +27,7 @@ import de.tum.cit.aet.artemis.communication.domain.Reaction;
  * @param creationDate when the reaction was created
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ReactionResponseDTO(Long id, @Nullable AuthorDTO user, String emojiId, @Nullable ZonedDateTime creationDate) {
+public record ReactionResponseDTO(Long id, @Nullable UserSummaryDTO user, String emojiId, @Nullable ZonedDateTime creationDate) {
 
     /**
      * Build a {@link ReactionResponseDTO} from a {@link Reaction} entity.
@@ -34,6 +36,6 @@ public record ReactionResponseDTO(Long id, @Nullable AuthorDTO user, String emoj
      * @return the projected response
      */
     public static ReactionResponseDTO from(Reaction reaction) {
-        return new ReactionResponseDTO(reaction.getId(), AuthorDTO.fromUser(reaction.getUser()), reaction.getEmojiId(), reaction.getCreationDate());
+        return new ReactionResponseDTO(reaction.getId(), UserMapper.toSummary(reaction.getUser()), reaction.getEmojiId(), reaction.getCreationDate());
     }
 }

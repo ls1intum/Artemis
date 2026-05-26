@@ -59,7 +59,7 @@ public class PlagiarismAnswerPostResource {
         long start = System.nanoTime();
         AnswerPost createdAnswerPost = plagiarismAnswerPostService.createAnswerPost(courseId, request);
         log.info("createAnswerPost took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.created(new URI("/api/plagiarism/courses" + courseId + "/answer-posts/" + createdAnswerPost.getId()))
+        return ResponseEntity.created(new URI("/api/plagiarism/courses/" + courseId + "/answer-posts/" + createdAnswerPost.getId()))
                 .body(AnswerPostResponseDTO.from(createdAnswerPost));
     }
 

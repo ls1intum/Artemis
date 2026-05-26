@@ -70,8 +70,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateAnswerPostWithUserMention(String userMention, boolean isUserMentionValid) throws Exception {
         Post parentPost = existingPostsWithAnswers.getFirst();
-        PlagiarismAnswerPostCreateRequestDTO createRequest = new PlagiarismAnswerPostCreateRequestDTO(parentPost.getId(), parentPost.getPlagiarismCase().getId(), userMention,
-                false);
+        PlagiarismAnswerPostCreateRequestDTO createRequest = new PlagiarismAnswerPostCreateRequestDTO(parentPost.getId(), userMention, false);
 
         if (!isUserMentionValid) {
             request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", createRequest, PostResponseDTO.class, HttpStatus.BAD_REQUEST);
@@ -86,7 +85,9 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(createdAnswerPost.id()).isNotNull();
         assertThat(createdAnswerPost.content()).isEqualTo(userMention);
         assertThat(createdAnswerPost.creationDate()).isNotNull();
-        assertThat(createdAnswerPost.reactions()).isEmpty();
+        // @JsonInclude(NON_EMPTY) on AnswerPostResponseDTO strips empty Sets from the wire payload, so the
+        // field comes back as null when there are no reactions yet.
+        assertThat(createdAnswerPost.reactions()).isNullOrEmpty();
     }
 
     @Test
@@ -102,8 +103,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(courseInformationSharingConfiguration);
 
         Post parentPost = existingPostsWithAnswers.getFirst();
-        PlagiarismAnswerPostCreateRequestDTO createRequest = new PlagiarismAnswerPostCreateRequestDTO(parentPost.getId(), parentPost.getPlagiarismCase().getId(),
-                "Content Answer Post", false);
+        PlagiarismAnswerPostCreateRequestDTO createRequest = new PlagiarismAnswerPostCreateRequestDTO(parentPost.getId(), "Content Answer Post", false);
 
         var answerPostCount = answerPostRepository.count();
 

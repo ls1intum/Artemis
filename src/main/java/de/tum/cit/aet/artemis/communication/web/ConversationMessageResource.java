@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
-import java.util.Collections;
 import java.util.List;
 
 import jakarta.validation.Valid;
@@ -95,8 +94,8 @@ public class ConversationMessageResource {
         conversationMessagingService.notifyAboutMessageCreation(createdMessageData);
 
         Post sendToUserPost = createdMessageData.messageWithHiddenDetails();
-        sendToUserPost.setConversation(sendToUserPost.getConversation().copy());
-        sendToUserPost.getConversation().setConversationParticipants(Collections.emptySet());
+        // Note: no payload-trimming on the entity needed — PostResponseDTO.from projects only the fields the
+        // client is allowed to see (ConversationRefDTO drops conversationParticipants by construction).
 
         log.debug("createMessage took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.created(new URI("/api/communication/courses/" + courseId + "/messages/" + sendToUserPost.getId())).body(PostResponseDTO.from(sendToUserPost));
@@ -128,15 +127,9 @@ public class ConversationMessageResource {
             throw new BadRequestAlertException("Messages must be associated with at least one conversion", conversationMessagingService.getEntityName(), "conversationMissing");
         }
 
-        // keep the data as small as possible and avoid unnecessary information sent to the client
-        // TODO: in the future we should use a DTO and send only the necessary information
-        posts.getContent().forEach(post -> {
-            if (post.getConversation() != null) {
-                post.getConversation().hideDetails();
-            }
-
-            conversationMessagingService.preparePostForBroadcast(post);
-        });
+        // PostResponseDTO is the cycle-free DTO that does this trimming structurally. preparePostForBroadcast
+        // still enriches transient fields (isSaved, authorRole) that the DTO reads.
+        posts.getContent().forEach(conversationMessagingService::preparePostForBroadcast);
         final var headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), posts);
         logDuration(posts.getContent(), principal, timeNanoStart);
         List<PostResponseDTO> body = posts.getContent().stream().map(PostResponseDTO::from).toList();

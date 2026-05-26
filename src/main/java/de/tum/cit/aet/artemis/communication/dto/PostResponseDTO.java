@@ -11,6 +11,8 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import de.tum.cit.aet.artemis.account.dto.UserMapper;
+import de.tum.cit.aet.artemis.account.dto.UserSummaryDTO;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
@@ -30,7 +32,7 @@ import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseRefDTO;
  * <li>{@code Post.answers} → {@link AnswerPostResponseDTO} which drops the {@code post} back-ref.</li>
  * <li>{@code Post.conversation} → {@link ConversationRefDTO} which carries only id/type/name/courseId.</li>
  * <li>{@code Post.plagiarismCase} → {@link PlagiarismCaseRefDTO} which carries only id/exerciseId/studentId.</li>
- * <li>{@code Post.author} → {@link AuthorDTO} which carries only id/name/imageUrl.</li>
+ * <li>{@code Post.author} → {@link UserSummaryDTO} which carries id/name/imageUrl/login/firstName/lastName/bot.</li>
  * </ul>
  *
  * @param id                   the post id
@@ -51,7 +53,7 @@ import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseRefDTO;
  * @param answers              answers on the post, ordered by creation date ascending
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PostResponseDTO(Long id, @Nullable AuthorDTO author, @Nullable UserRole authorRole, @Nullable ZonedDateTime creationDate, @Nullable ZonedDateTime updatedDate,
+public record PostResponseDTO(Long id, @Nullable UserSummaryDTO author, @Nullable UserRole authorRole, @Nullable ZonedDateTime creationDate, @Nullable ZonedDateTime updatedDate,
         @Nullable String content, @Nullable String title, @Nullable Boolean visibleForStudents, @Nullable DisplayPriority displayPriority,
         @Nullable ConversationRefDTO conversation, @Nullable PlagiarismCaseRefDTO plagiarismCase, boolean resolved, @JsonProperty("isSaved") boolean isSaved,
         boolean hasForwardedMessages, Set<ReactionResponseDTO> reactions, List<AnswerPostResponseDTO> answers) {
@@ -68,7 +70,7 @@ public record PostResponseDTO(Long id, @Nullable AuthorDTO author, @Nullable Use
         List<AnswerPostResponseDTO> answers = post.getAnswers() == null ? List.of()
                 : post.getAnswers().stream().sorted(Comparator.comparing(a -> a.getCreationDate(), Comparator.nullsLast(Comparator.naturalOrder())))
                         .map(AnswerPostResponseDTO::from).toList();
-        return new PostResponseDTO(post.getId(), AuthorDTO.fromUser(post.getAuthor()), post.getAuthorRole(), post.getCreationDate(), post.getUpdatedDate(), post.getContent(),
+        return new PostResponseDTO(post.getId(), UserMapper.toSummary(post.getAuthor()), post.getAuthorRole(), post.getCreationDate(), post.getUpdatedDate(), post.getContent(),
                 post.getTitle(), post.isVisibleForStudents(), post.getDisplayPriority(), ConversationRefDTO.from(post.getConversation()),
                 PlagiarismCaseRefDTO.from(post.getPlagiarismCase()), post.isResolved(), post.getIsSaved(), post.getHasForwardedMessages(), reactions, answers);
     }

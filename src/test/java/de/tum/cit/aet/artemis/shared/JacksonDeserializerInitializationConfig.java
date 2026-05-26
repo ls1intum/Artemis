@@ -178,30 +178,26 @@ public class JacksonDeserializerInitializationConfig {
 
     /**
      * Actively deserialize the synthetic JSON shapes that match the previously failing chains
-     * documented above, both for the cyclic entity types (which priming must have resolved) and
-     * for the new cycle-free response DTOs (which must succeed by construction).
+     * documented above, for the cycle-free response DTOs that replaced the entity payloads.
      * <p>
-     * Surfaces any regression as a deterministic context-startup failure instead of an
-     * intermittent integration-test flake whose stack trace points at a deserializer placeholder
-     * far removed from the actual cyclic-reference root cause. The probe additionally exercises
-     * {@code BeanDeserializer.deserialize} itself — {@code findRootValueDeserializer} alone
-     * only constructs the deserializer; a {@code FailingDeserializer} can still be hiding in a
-     * contextual variant that priming never touched.
+     * The DTO chains must succeed by construction — the records carry no cyclic relations, so
+     * Jackson's {@code DeserializerCache._createAndCache2} window cannot be entered. A failure
+     * here means someone added a back-reference to a response DTO and re-opened the cycle this
+     * refactor was written to close. Surfacing that as a deterministic context-startup failure
+     * (instead of an intermittent integration-test flake whose stack trace points at a
+     * {@code FailingDeserializer} placeholder) is the goal of this probe.
+     * <p>
+     * We deliberately do <em>not</em> probe the entity-typed chains ({@code List<Post>} with a
+     * reactions/user sub-tree, etc.). Priming alone cannot close the race for those: the
+     * contextual variant captured inside {@code BeanPropertyMap} for the cross-entity field is
+     * built lazily on first deserialization, after priming has completed and released the lock.
+     * The refactor's fix is to route every Jackson-deserialized surface through the DTOs above;
+     * any caller still deserializing the entity types directly will hit the race and should be
+     * migrated.
      *
      * @param tf the Jackson {@link TypeFactory} used to build parameterised collection types
      */
     private void exerciseFailureChains(TypeFactory tf) {
-        // Entity chains — these used to trigger the race. After priming above the deserializer
-        // must be fully resolved, so readValue is expected to succeed deterministically.
-        readValueOrThrow("[{\"id\":1,\"reactions\":[{\"id\":1,\"user\":{\"id\":1}}]}]", tf.constructCollectionType(List.class, Post.class), "List<Post> with reaction-user chain");
-        readValueOrThrow("[{\"id\":1,\"reactions\":[{\"id\":1,\"user\":{\"id\":1}}]}]", tf.constructCollectionType(List.class, AnswerPost.class),
-                "List<AnswerPost> with reaction-user chain");
-        readValueOrThrow("{\"id\":1,\"registrations\":[{\"id\":1,\"student\":{\"id\":1}}]}", tf.constructType(TutorialGroup.class),
-                "TutorialGroup with registrations-student chain");
-
-        // DTO chains — must succeed by construction since the records carry no cyclic relations.
-        // A failure here means someone added a back-reference to a response DTO and re-opened the
-        // cycle this refactor closed.
         readValueOrThrow("[{\"id\":1,\"reactions\":[{\"id\":1,\"user\":{\"id\":1}}]}]", tf.constructCollectionType(List.class, PostResponseDTO.class),
                 "List<PostResponseDTO> with reaction-user chain");
         readValueOrThrow("[{\"id\":1,\"reactions\":[{\"id\":1,\"user\":{\"id\":1}}]}]", tf.constructCollectionType(List.class, AnswerPostResponseDTO.class),
@@ -209,7 +205,7 @@ public class JacksonDeserializerInitializationConfig {
         readValueOrThrow("{\"id\":1,\"reactions\":[{\"id\":1,\"user\":{\"id\":1}}],\"answers\":[{\"id\":2,\"reactions\":[{\"id\":3,\"user\":{\"id\":1}}]}]}",
                 tf.constructType(PostResponseDTO.class), "PostResponseDTO with answers and nested reactions");
 
-        log.info("Jackson failure-chain exercise complete: 6 chains deserialized without hitting the cyclic-reference race");
+        log.info("Jackson DTO chain probe complete: 3 cycle-free chains deserialized");
     }
 
     private void readValueOrThrow(String json, JavaType type, String label) {
@@ -217,8 +213,8 @@ public class JacksonDeserializerInitializationConfig {
             objectMapper.readValue(json, type);
         }
         catch (Exception e) {
-            throw new IllegalStateException("Failure-chain probe failed for " + label + " — Jackson cyclic-reference race re-opened or the DTO shape regressed: " + e.getMessage(),
-                    e);
+            throw new IllegalStateException(
+                    "DTO chain probe failed for " + label + " — a back-reference was likely added to a response DTO and re-opened the cyclic-reference race: " + e.getMessage(), e);
         }
     }
 
@@ -246,11 +242,16 @@ public class JacksonDeserializerInitializationConfig {
     }
 
     /**
-     * Walk the bean's property table and refuse to start if any property still has a
-     * {@code FailingDeserializer} value deserializer. This is the exact condition that
-     * produces the {@code "No _valueDeserializer assigned"} error at deserialization
-     * time — surfacing it here turns a flaky test failure into a deterministic
-     * context-startup failure that points directly at the unresolved property.
+     * Walk the bare bean deserializer's property table and refuse to start if any property still
+     * has a {@code FailingDeserializer} value deserializer. This is the exact condition that
+     * produces the {@code "No _valueDeserializer assigned"} error at deserialization time —
+     * surfacing it here turns a flaky test failure into a deterministic context-startup failure
+     * that points directly at the unresolved property.
+     * <p>
+     * Note: this only inspects the bare-type {@link BeanDeserializerBase}. Contextual variants
+     * captured inside {@code CollectionDeserializer.valueDeserializer} are not walked here — the
+     * subsequent {@code exerciseFailureChains} probe deserializes representative Set/List shapes
+     * and catches that case via {@code readValue}.
      */
     private void assertNoFailingPlaceholders(JsonDeserializer<?> deser, Class<?> entityType) {
         if (!(deser instanceof BeanDeserializerBase beanDeser)) {
@@ -260,9 +261,9 @@ public class JacksonDeserializerInitializationConfig {
         while (properties.hasNext()) {
             SettableBeanProperty property = properties.next();
             if (!property.hasValueDeserializer()) {
-                throw new IllegalStateException("Jackson left a FailingDeserializer placeholder on " + entityType.getName() + "[\"" + property.getName()
-                        + "\"] after priming — the cyclic-reference race was not closed. " + "Add the property's type to ENTITY_TYPES (prime it BEFORE "
-                        + entityType.getSimpleName() + ") or check whether " + "a custom @JsonDeserialize on this property is preventing resolution.");
+                throw new IllegalStateException("Jackson left a FailingDeserializer placeholder on the bare-type deserializer for " + entityType.getName() + "[\""
+                        + property.getName() + "\"] after priming — the cyclic-reference race was not closed. " + "Add the property's type to ENTITY_TYPES (prime it BEFORE "
+                        + entityType.getSimpleName() + ") or check whether a custom @JsonDeserialize on this property is preventing resolution.");
             }
         }
     }

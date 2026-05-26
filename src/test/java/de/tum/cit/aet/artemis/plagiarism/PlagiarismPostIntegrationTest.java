@@ -261,16 +261,10 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         assertThat(notUpdatedPost).isNull();
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testEditPostWithIdIsNull_badRequest() throws Exception {
-        Post postToUpdate = existingPosts.getFirst();
-        postToUpdate.setId(null);
-
-        PostResponseDTO updatedPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, PostResponseDTO.class,
-                HttpStatus.BAD_REQUEST);
-        assertThat(updatedPost).isNull();
-    }
+    // Note: the previous testEditPostWithIdIsNull_badRequest case is no longer expressible — the request DTO
+    // has no id field, so the body/path-id mismatch path it used to exercise cannot be reached. Building the URL
+    // with a null path variable would yield "/posts/null" which produces a different (Spring path-binding) 400 —
+    // not the case the test intended to cover.
 
     // GET
 
