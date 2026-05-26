@@ -94,9 +94,14 @@ public class DataExportScheduleService {
             if (!executor.awaitTermination(60, java.util.concurrent.TimeUnit.MINUTES)) {
                 log.info("Not all pending data exports could be created within 60 minutes.");
                 executor.shutdownNow();
+                executor.awaitTermination(1, java.util.concurrent.TimeUnit.MINUTES);
             }
-            if (!successfulDataExports.isEmpty()) {
-                Set<DataExportEmailDTO> dataExportDtos = successfulDataExports.stream().map(DataExportEmailDTO::from).collect(Collectors.toSet());
+            Set<DataExport> successfulExportsSnapshot;
+            synchronized (successfulDataExports) {
+                successfulExportsSnapshot = new HashSet<>(successfulDataExports);
+            }
+            if (!successfulExportsSnapshot.isEmpty()) {
+                Set<DataExportEmailDTO> dataExportDtos = successfulExportsSnapshot.stream().map(DataExportEmailDTO::from).collect(Collectors.toSet());
                 mailService.sendSuccessfulDataExportsEmailToAdmin(MailRecipientDTO.from(admin.get()), dataExportDtos);
             }
         }
