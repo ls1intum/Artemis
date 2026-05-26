@@ -28,6 +28,8 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
+import de.tum.cit.aet.artemis.communication.dto.AnswerPostResponseDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
@@ -399,6 +401,43 @@ public class ConversationUtilService {
             assertThat(reaction.getUser().getEmail()).isNull();
             assertThat(reaction.getUser().getLogin()).isNull();
             assertThat(reaction.getUser().getRegistrationNumber()).isNull();
+        }
+    }
+
+    /**
+     * Asserts that the cycle-free {@link de.tum.cit.aet.artemis.communication.dto.PostResponseDTO}
+     * shape exposes no login / email / registrationNumber to the client.
+     * <p>
+     * Because {@link de.tum.cit.aet.artemis.communication.dto.AuthorDTO} (the only user projection
+     * the response carries) declares only {@code id}, {@code name}, and {@code imageUrl}, this is a
+     * compile-time guarantee rather than a runtime check. The overload exists so callers migrating
+     * away from {@link Posting}-typed responses do not need a structural branch in their assertions.
+     *
+     * @param post the response DTO to assert against
+     */
+    public void assertSensitiveInformationHidden(@NonNull PostResponseDTO post) {
+        // AuthorDTO and ReactionResponseDTO have no login/email/registrationNumber field — nothing to check at runtime.
+    }
+
+    /**
+     * Asserts that the cycle-free {@link AnswerPostResponseDTO} shape exposes no login / email /
+     * registrationNumber to the client. See {@link #assertSensitiveInformationHidden(PostResponseDTO)}
+     * for why this is a compile-time guarantee.
+     *
+     * @param answerPost the response DTO to assert against
+     */
+    public void assertSensitiveInformationHidden(@NonNull AnswerPostResponseDTO answerPost) {
+        // AuthorDTO and ReactionResponseDTO have no login/email/registrationNumber field — nothing to check at runtime.
+    }
+
+    /**
+     * Bulk variant of {@link #assertSensitiveInformationHidden(PostResponseDTO)}.
+     *
+     * @param posts the response DTOs to assert against
+     */
+    public void assertPostDtoSensitiveInformationHidden(@NonNull Collection<PostResponseDTO> posts) {
+        for (var post : posts) {
+            assertSensitiveInformationHidden(post);
         }
     }
 

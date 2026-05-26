@@ -17,11 +17,15 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.dto.AnswerPostResponseDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismAnswerPostCreateRequestDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismAnswerPostUpdateRequestDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -65,20 +69,24 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     @MethodSource("userMentionProvider")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateAnswerPostWithUserMention(String userMention, boolean isUserMentionValid) throws Exception {
-        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswers.getFirst());
-        answerPostToSave.setContent(userMention);
+        Post parentPost = existingPostsWithAnswers.getFirst();
+        PlagiarismAnswerPostCreateRequestDTO createRequest = new PlagiarismAnswerPostCreateRequestDTO(parentPost.getId(), parentPost.getPlagiarismCase().getId(), userMention,
+                false);
 
         if (!isUserMentionValid) {
-            request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", answerPostToSave, Post.class, HttpStatus.BAD_REQUEST);
+            request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", createRequest, PostResponseDTO.class, HttpStatus.BAD_REQUEST);
             return;
         }
 
-        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class,
+        AnswerPostResponseDTO createdAnswerPost = request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts", createRequest, AnswerPostResponseDTO.class,
                 HttpStatus.CREATED);
         conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
         // should not be automatically post resolving
-        assertThat(createdAnswerPost.doesResolvePost()).isFalse();
-        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
+        assertThat(createdAnswerPost.resolvesPost()).isFalse();
+        assertThat(createdAnswerPost.id()).isNotNull();
+        assertThat(createdAnswerPost.content()).isEqualTo(userMention);
+        assertThat(createdAnswerPost.creationDate()).isNotNull();
+        assertThat(createdAnswerPost.reactions()).isEmpty();
     }
 
     @Test
@@ -93,11 +101,13 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         persistedCourse = courseRepository.saveAndFlush(persistedCourse);
         assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(courseInformationSharingConfiguration);
 
-        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswers.getFirst());
+        Post parentPost = existingPostsWithAnswers.getFirst();
+        PlagiarismAnswerPostCreateRequestDTO createRequest = new PlagiarismAnswerPostCreateRequestDTO(parentPost.getId(), parentPost.getPlagiarismCase().getId(),
+                "Content Answer Post", false);
 
         var answerPostCount = answerPostRepository.count();
 
-        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts", createRequest, AnswerPostResponseDTO.class, HttpStatus.CREATED);
 
         var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
         assertThat(newAnswerPostCount).isOne();
@@ -107,18 +117,9 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         courseRepository.saveAndFlush(persistedCourse);
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCreateExistingAnswerPost_badRequest() throws Exception {
-        AnswerPost existingAnswerPostToSave = existingAnswerPosts.getFirst();
-
-        var answerPostCount = answerPostRepository.count();
-
-        request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts", existingAnswerPostToSave, AnswerPost.class, HttpStatus.BAD_REQUEST);
-        // should not increment answer count
-        var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
-        assertThat(newAnswerPostCount).isZero();
-    }
+    // Note: the previous testCreateExistingAnswerPost_badRequest case (creating with an existing id and expecting
+    // BAD_REQUEST) is no longer expressible — the request DTO has no id field by construction, so the only way the
+    // server could observe the case has been removed.
 
     // GET
     @Test
@@ -127,9 +128,9 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         var params = new LinkedMultiValueMap<String, String>();
         params.add("plagiarismCaseId", existingPostsWithAnswers.getFirst().getPlagiarismCase().getId().toString());
 
-        List<Post> returnedPosts = request.getList("/api/plagiarism/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
-        assertThat(returnedPosts).isEqualTo(existingPostsWithAnswers);
+        List<PostResponseDTO> returnedPosts = request.getList("/api/plagiarism/courses/" + courseId + "/posts", HttpStatus.OK, PostResponseDTO.class, params);
+        conversationUtilService.assertPostDtoSensitiveInformationHidden(returnedPosts);
+        assertThat(returnedPosts).extracting(PostResponseDTO::id).containsExactlyInAnyOrderElementsOf(existingPostsWithAnswers.stream().map(Post::getId).toList());
     }
 
     @Test
@@ -141,7 +142,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         params.add("plagiarismCaseId", existingPostsWithAnswers.getFirst().getPlagiarismCase().getId().toString());
         params.add("authorIds", userId.toString());
 
-        List<Post> returnedPosts = request.getList("/api/plagiarism/courses/" + courseId + "/posts", HttpStatus.FORBIDDEN, Post.class, params);
+        List<PostResponseDTO> returnedPosts = request.getList("/api/plagiarism/courses/" + courseId + "/posts", HttpStatus.FORBIDDEN, PostResponseDTO.class, params);
         assertThat(returnedPosts).isNull();
     }
 
@@ -150,7 +151,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     void testGetPlagiarismPostsForCourse_BadRequest() throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
 
-        List<Post> returnedPosts = request.getList("/api/plagiarism/courses/" + courseId + "/posts", HttpStatus.BAD_REQUEST, Post.class, params);
+        List<PostResponseDTO> returnedPosts = request.getList("/api/plagiarism/courses/" + courseId + "/posts", HttpStatus.BAD_REQUEST, PostResponseDTO.class, params);
         assertThat(returnedPosts).isNull();
     }
 
@@ -160,10 +161,12 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER ")
     void testEditAnswerPost_asStudent_Forbidden() throws Exception {
         // update post of student1 (index 0)--> FORBIDDEN
-        AnswerPost answerPostToUpdate = editExistingAnswerPost(existingAnswerPosts.getFirst());
+        AnswerPost answerPostToUpdate = existingAnswerPosts.getFirst();
+        PlagiarismAnswerPostUpdateRequestDTO updateRequest = new PlagiarismAnswerPostUpdateRequestDTO("New Test Answer Post",
+                Boolean.TRUE.equals(answerPostToUpdate.doesResolvePost()));
 
-        AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate,
-                AnswerPost.class, HttpStatus.FORBIDDEN);
+        AnswerPostResponseDTO updatedAnswerPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), updateRequest,
+                AnswerPostResponseDTO.class, HttpStatus.FORBIDDEN);
         assertThat(updatedAnswerPost).isNull();
     }
 
@@ -171,12 +174,15 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEditAnswerPost_asStudent1() throws Exception {
         // update own post (index 0)--> OK
-        AnswerPost answerPostToUpdate = editExistingAnswerPost(existingAnswerPosts.getFirst());
+        AnswerPost answerPostToUpdate = existingAnswerPosts.getFirst();
+        PlagiarismAnswerPostUpdateRequestDTO updateRequest = new PlagiarismAnswerPostUpdateRequestDTO("New Test Answer Post",
+                Boolean.TRUE.equals(answerPostToUpdate.doesResolvePost()));
 
-        AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate,
-                AnswerPost.class, HttpStatus.OK);
+        AnswerPostResponseDTO updatedAnswerPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), updateRequest,
+                AnswerPostResponseDTO.class, HttpStatus.OK);
         conversationUtilService.assertSensitiveInformationHidden(updatedAnswerPost);
-        assertThat(answerPostToUpdate).isEqualTo(updatedAnswerPost);
+        assertThat(updatedAnswerPost.id()).isEqualTo(answerPostToUpdate.getId());
+        assertThat(updatedAnswerPost.content()).isEqualTo("New Test Answer Post");
     }
 
     @ParameterizedTest
@@ -184,50 +190,49 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEditAnswerPostWithUserMention(String userMention, boolean isUserMentionValid) throws Exception {
         // update own post (index 0)--> OK
-        AnswerPost answerPostToUpdate = editExistingAnswerPost(existingAnswerPosts.getFirst());
-        answerPostToUpdate.setContent(userMention);
+        AnswerPost answerPostToUpdate = existingAnswerPosts.getFirst();
+        PlagiarismAnswerPostUpdateRequestDTO updateRequest = new PlagiarismAnswerPostUpdateRequestDTO(userMention, Boolean.TRUE.equals(answerPostToUpdate.doesResolvePost()));
 
         if (!isUserMentionValid) {
-            request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate, AnswerPost.class,
+            request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), updateRequest, AnswerPostResponseDTO.class,
                     HttpStatus.BAD_REQUEST);
             return;
         }
 
-        AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate,
-                AnswerPost.class, HttpStatus.OK);
+        AnswerPostResponseDTO updatedAnswerPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), updateRequest,
+                AnswerPostResponseDTO.class, HttpStatus.OK);
         conversationUtilService.assertSensitiveInformationHidden(updatedAnswerPost);
-        assertThat(answerPostToUpdate).isEqualTo(updatedAnswerPost);
+        assertThat(updatedAnswerPost.id()).isEqualTo(answerPostToUpdate.getId());
+        assertThat(updatedAnswerPost.content()).isEqualTo(userMention);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testEditAnswerPost_asStudent2_forbidden() throws Exception {
         // update post from another student (index 1)--> forbidden
-        AnswerPost answerPostNotToUpdate = editExistingAnswerPost(existingAnswerPosts.getFirst());
+        AnswerPost answerPostNotToUpdate = existingAnswerPosts.getFirst();
+        PlagiarismAnswerPostUpdateRequestDTO updateRequest = new PlagiarismAnswerPostUpdateRequestDTO("New Test Answer Post",
+                Boolean.TRUE.equals(answerPostNotToUpdate.doesResolvePost()));
 
-        AnswerPost notUpdatedAnswerPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPostNotToUpdate.getId(),
-                answerPostNotToUpdate, AnswerPost.class, HttpStatus.FORBIDDEN);
+        AnswerPostResponseDTO notUpdatedAnswerPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPostNotToUpdate.getId(),
+                updateRequest, AnswerPostResponseDTO.class, HttpStatus.FORBIDDEN);
         assertThat(notUpdatedAnswerPost).isNull();
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testEditAnswerPostWithIdIsNull_badRequest() throws Exception {
-        AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswers.getFirst());
-
-        AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate,
-                AnswerPost.class, HttpStatus.BAD_REQUEST);
-        assertThat(updatedAnswerPostServer).isNull();
-    }
+    // Note: the previous testEditAnswerPostWithIdIsNull_badRequest case is no longer expressible — the request DTO has
+    // no id field, so the server's id-vs-path-id mismatch path can never be reached.
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEditAnswerPostWithWrongCourseId_badRequest() throws Exception {
-        AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswers.getFirst());
+        AnswerPost answerPostToUpdate = existingAnswerPosts.getFirst();
         Course dummyCourse = courseUtilService.createCourse();
+        PlagiarismAnswerPostUpdateRequestDTO updateRequest = new PlagiarismAnswerPostUpdateRequestDTO("New Test Answer Post",
+                Boolean.TRUE.equals(answerPostToUpdate.doesResolvePost()));
 
-        AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/plagiarism/courses/" + dummyCourse.getId() + "/answer-posts/" + answerPostToUpdate.getId(),
-                answerPostToUpdate, AnswerPost.class, HttpStatus.BAD_REQUEST);
+        AnswerPostResponseDTO updatedAnswerPostServer = request.putWithResponseBody(
+                "/api/plagiarism/courses/" + dummyCourse.getId() + "/answer-posts/" + answerPostToUpdate.getId(), updateRequest, AnswerPostResponseDTO.class,
+                HttpStatus.BAD_REQUEST);
         assertThat(updatedAnswerPostServer).isNull();
     }
 
@@ -238,31 +243,31 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         AnswerPost answerPost2 = existingAnswerPosts.get(1);
 
         // confirm that answer post resolves the original post
-        answerPost.setResolvesPost(true);
-        AnswerPost resolvingAnswerPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPost.getId(), answerPost, AnswerPost.class,
-                HttpStatus.OK);
-        assertThat(resolvingAnswerPost).isEqualTo(answerPost);
+        AnswerPostResponseDTO resolvingAnswerPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPost.getId(),
+                new PlagiarismAnswerPostUpdateRequestDTO(answerPost.getContent(), true), AnswerPostResponseDTO.class, HttpStatus.OK);
+        assertThat(resolvingAnswerPost.id()).isEqualTo(answerPost.getId());
+        assertThat(resolvingAnswerPost.resolvesPost()).isTrue();
         // confirm that the post is marked as resolved when it has a resolving answer
-        assertThat(postRepository.findPostByIdElseThrow(resolvingAnswerPost.getPost().getId()).isResolved()).isTrue();
+        assertThat(postRepository.findPostByIdElseThrow(answerPost.getPost().getId()).isResolved()).isTrue();
 
-        answerPost2.setResolvesPost(true);
-        request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPost2.getId(), answerPost2, AnswerPost.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPost2.getId(),
+                new PlagiarismAnswerPostUpdateRequestDTO(answerPost2.getContent(), true), AnswerPostResponseDTO.class, HttpStatus.OK);
 
         // revoke that answer post resolves the original post
-        answerPost.setResolvesPost(false);
-        AnswerPost notResolvingAnswerPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPost.getId(), answerPost, AnswerPost.class,
-                HttpStatus.OK);
-        assertThat(notResolvingAnswerPost).isEqualTo(answerPost);
+        AnswerPostResponseDTO notResolvingAnswerPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPost.getId(),
+                new PlagiarismAnswerPostUpdateRequestDTO(answerPost.getContent(), false), AnswerPostResponseDTO.class, HttpStatus.OK);
+        assertThat(notResolvingAnswerPost.id()).isEqualTo(answerPost.getId());
+        assertThat(notResolvingAnswerPost.resolvesPost()).isFalse();
 
         // confirm that the post is still marked as resolved since it still has a resolving answer
-        assertThat(postRepository.findPostByIdElseThrow(resolvingAnswerPost.getPost().getId()).isResolved()).isTrue();
+        assertThat(postRepository.findPostByIdElseThrow(answerPost.getPost().getId()).isResolved()).isTrue();
 
         // revoke that answer post2 resolves the original post
-        answerPost2.setResolvesPost(false);
-        request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPost2.getId(), answerPost2, AnswerPost.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPost2.getId(),
+                new PlagiarismAnswerPostUpdateRequestDTO(answerPost2.getContent(), false), AnswerPostResponseDTO.class, HttpStatus.OK);
 
         // confirm that the post is marked as unresolved when it no longer has a resolving answer
-        assertThat(postRepository.findPostByIdElseThrow(resolvingAnswerPost.getPost().getId()).isResolved()).isFalse();
+        assertThat(postRepository.findPostByIdElseThrow(answerPost.getPost().getId()).isResolved()).isFalse();
     }
 
     @Test
@@ -272,16 +277,14 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         AnswerPost answerPost = existingAnswerPosts.getFirst();
 
         // confirm that answer post resolves the original post
-        answerPost.setResolvesPost(true);
-        AnswerPost resolvingAnswerPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPost.getId(), answerPost, AnswerPost.class,
-                HttpStatus.OK);
-        assertThat(resolvingAnswerPost).isEqualTo(answerPost);
+        AnswerPostResponseDTO resolvingAnswerPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPost.getId(),
+                new PlagiarismAnswerPostUpdateRequestDTO(answerPost.getContent(), true), AnswerPostResponseDTO.class, HttpStatus.OK);
+        assertThat(resolvingAnswerPost.resolvesPost()).isTrue();
 
         // revoke that answer post resolves the original post
-        answerPost.setResolvesPost(false);
-        AnswerPost notResolvingAnswerPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPost.getId(), answerPost, AnswerPost.class,
-                HttpStatus.OK);
-        assertThat(notResolvingAnswerPost).isEqualTo(answerPost);
+        AnswerPostResponseDTO notResolvingAnswerPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPost.getId(),
+                new PlagiarismAnswerPostUpdateRequestDTO(answerPost.getContent(), false), AnswerPostResponseDTO.class, HttpStatus.OK);
+        assertThat(notResolvingAnswerPost.resolvesPost()).isFalse();
     }
 
     @Test
@@ -291,15 +294,13 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         AnswerPost answerPost = existingAnswerPosts.getFirst();
 
         // confirm that answer post resolves the original post
-        answerPost.setResolvesPost(true);
-        AnswerPost resolvingAnswerPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPost.getId(), answerPost, AnswerPost.class,
-                HttpStatus.FORBIDDEN);
+        AnswerPostResponseDTO resolvingAnswerPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPost.getId(),
+                new PlagiarismAnswerPostUpdateRequestDTO(answerPost.getContent(), true), AnswerPostResponseDTO.class, HttpStatus.FORBIDDEN);
         assertThat(resolvingAnswerPost).isNull();
 
         // revoke that answer post resolves the original post
-        answerPost.setResolvesPost(false);
-        AnswerPost notResolvingAnswerPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPost.getId(), answerPost, AnswerPost.class,
-                HttpStatus.FORBIDDEN);
+        AnswerPostResponseDTO notResolvingAnswerPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPost.getId(),
+                new PlagiarismAnswerPostUpdateRequestDTO(answerPost.getContent(), false), AnswerPostResponseDTO.class, HttpStatus.FORBIDDEN);
         assertThat(notResolvingAnswerPost).isNull();
     }
 
@@ -365,33 +366,6 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     // HELPER METHODS
-
-    private AnswerPost createAnswerPost(Post post) {
-        AnswerPost answerPost = new AnswerPost();
-        answerPost.setContent("Content Answer Post");
-        answerPost.setPost(post);
-        post.addAnswerPost(answerPost);
-        return answerPost;
-    }
-
-    private AnswerPost editExistingAnswerPost(AnswerPost answerPostToUpdate) {
-        answerPostToUpdate.setContent("New Test Answer Post");
-        return answerPostToUpdate;
-    }
-
-    private void checkCreatedAnswerPost(AnswerPost expectedAnswerPost, AnswerPost createdAnswerPost) {
-        // check if answerPost was created with id
-        assertThat(createdAnswerPost).isNotNull();
-        assertThat(createdAnswerPost.getId()).isNotNull();
-
-        // check if associated post, answerPost content, and creation date are set correctly on creation
-        assertThat(createdAnswerPost.getPost()).isEqualTo(expectedAnswerPost.getPost());
-        assertThat(createdAnswerPost.getContent()).isEqualTo(expectedAnswerPost.getContent());
-        assertThat(createdAnswerPost.getCreationDate()).isNotNull();
-
-        // check if default values are set correctly on creation
-        assertThat(createdAnswerPost.getReactions()).isEmpty();
-    }
 
     protected static List<Arguments> userMentionProvider() {
         return userMentionProvider(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
