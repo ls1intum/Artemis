@@ -214,7 +214,6 @@
             "feedbackRequestAfterDueDate": "You cannot submit feedback requests after the due date.",
             "feedbackRequestPendingChanges": "You have pending changes. Please submit them first before requesting Feedback.",
             "maxAthenaResultsReached": "You have reached the maximum number of AI feedback requests.",
-            "noFeedbackSuggestionModuleConfigured": "AI feedback is not configured for any of the exercises in this exam.",
             "athenaFeedbackSuccessful": "AI feedback for {{title}} successfully generated. Click on the result to view details.",
             "athenaFeedbackFailed": "Something went wrong... AI feedback could not be generated at the moment",
             "submissionAlreadyHasAthenaResult": "This submission already has an existing AI result. Please submit again before requesting further feedback.",

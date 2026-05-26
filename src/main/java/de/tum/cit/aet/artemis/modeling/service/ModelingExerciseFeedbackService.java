@@ -98,11 +98,8 @@ public class ModelingExerciseFeedbackService {
         if (modelingSubmission.isEmpty()) {
             return;
         }
-        try {
-            athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, MODULE_FEATURE_ATHENA))
-                    .checkLatestSubmissionHasNoAthenaResultOrThrow(modelingSubmission);
-        }
-        catch (BadRequestAlertException ignored) {
+        AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, MODULE_FEATURE_ATHENA));
+        if (api.submissionHasAthenaResult(modelingSubmission)) {
             return;
         }
         // Capture the user on the calling (request) thread — SecurityContext is not propagated into the async executor.
@@ -132,7 +129,7 @@ public class ModelingExerciseFeedbackService {
 
             ModelingSubmission modelingSubmission = (ModelingSubmission) submissionOptional.get();
 
-            api.checkLatestSubmissionHasNoAthenaResultOrThrow(modelingSubmission);
+            api.checkSubmissionHasNoAthenaResultOrThrow(modelingSubmission);
 
             if (modelingSubmission.isEmpty()) {
                 throw new BadRequestAlertException("Submission can not be empty for an AI feedback request", "submission", "noAthenaFeedbackOnEmptySubmission", true);

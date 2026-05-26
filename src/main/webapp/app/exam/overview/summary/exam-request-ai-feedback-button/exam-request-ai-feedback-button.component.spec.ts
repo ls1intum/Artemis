@@ -511,7 +511,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
     describe('hasAnyAthenaResultForCurrentAttempt', () => {
         it('should return false when no participations have Athena results', () => {
             setStudentExam(studentExamForTestExam);
-            expect(component.hasAnyAthenaResultForCurrentAttempt).toBe(false);
+            expect(component.hasAnyAthenaResultForCurrentAttempt()).toBe(false);
         });
 
         it('should return true when a text participation has an Athena result on its latest submission', () => {
@@ -525,7 +525,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             const exercise = { id: 99, type: ExerciseType.TEXT, studentParticipations: [participation], exerciseGroup } as TextExercise;
 
             setStudentExam(withOverrides(studentExamForTestExam, { exercises: [exercise] }));
-            expect(component.hasAnyAthenaResultForCurrentAttempt).toBe(true);
+            expect(component.hasAnyAthenaResultForCurrentAttempt()).toBe(true);
         });
 
         it('should ignore Athena results on quiz or programming exercises', () => {
@@ -539,7 +539,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             } as QuizExercise;
 
             setStudentExam(withOverrides(studentExamForTestExam, { exercises: [quizExerciseWithAthena] }));
-            expect(component.hasAnyAthenaResultForCurrentAttempt).toBe(false);
+            expect(component.hasAnyAthenaResultForCurrentAttempt()).toBe(false);
         });
     });
 
@@ -616,7 +616,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             expect(component.isGenerating()).toBe(false);
         });
 
-        it('hydrates the received-set on init from already-present Athena results so no spinner runs', () => {
+        it('hydrates the received-set on init from already-present Athena results so no spinner runs, and prunes the stale localStorage flag', () => {
             enableAthena();
             vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage').mockReturnValue(of({ used: 1, limit: 10 }));
 
@@ -640,7 +640,11 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             setStudentExam(withOverrides(studentExamForTestExam, { submitted: true, exercises: [seededExercise] }));
             fixture.detectChanges();
 
-            expect(component.feedbackRequested()).toBe(true);
+            // Once the server has an Athena result the localStorage bridge is redundant: it gets pruned and the
+            // disabled state is driven by hasAnyAthenaResultForCurrentAttempt() alone.
+            expect(component.feedbackRequested()).toBe(false);
+            expect(localStorage.getItem(feedbackRequestedKey)).toBeNull();
+            expect(component.hasAnyAthenaResultForCurrentAttempt()).toBe(true);
             expect(component.hasAllAthenaResultsForCurrentAttempt()).toBe(true);
             expect(component.isGenerating()).toBe(false);
         });

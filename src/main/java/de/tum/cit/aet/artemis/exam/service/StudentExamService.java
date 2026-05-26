@@ -243,6 +243,7 @@ public class StudentExamService {
             throw new BadRequestAlertException("Athena feedback is not available", "StudentExam", "athenaNotAvailable");
         }
 
+        // Approximate cap: count-and-dispatch is not transactional, so concurrent requests at used == cap - 1 can both pass and briefly exceed the cap by one.
         long attemptsWithAthenaResult = studentExamRepository.countTestExamAttemptsWithAthenaResultByUserIdAndExamId(currentUser.getId(), studentExam.getExam().getId());
         if (attemptsWithAthenaResult >= allowedFeedbackRequests) {
             throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "StudentExam", "maxAthenaResultsReached", true);

@@ -58,8 +58,12 @@ public class AthenaFeedbackApi extends AbstractAthenaApi {
         athenaFeedbackSuggestionsService.checkRateLimitOrThrow(participation);
     }
 
-    public void checkLatestSubmissionHasNoAthenaResultOrThrow(Submission submission) {
-        athenaFeedbackSuggestionsService.checkLatestSubmissionHasNoAthenaResultOrThrow(submission);
+    public void checkSubmissionHasNoAthenaResultOrThrow(Submission submission) {
+        athenaFeedbackSuggestionsService.checkSubmissionHasNoAthenaResultOrThrow(submission);
+    }
+
+    public boolean submissionHasAthenaResult(Submission submission) {
+        return athenaFeedbackSuggestionsService.submissionHasAthenaResult(submission);
     }
 
     public void sendFeedback(Exercise exercise, Submission submission, List<Feedback> feedbacks) {

@@ -114,6 +114,7 @@
                 "feedbackRequested": "AI Feedback Requested",
                 "feedbackRequestSent": "AI feedback has been requested for all text and modeling exercises. Results will appear shortly.",
                 "feedbackUsageLoadFailed": "Could not load the remaining AI feedback requests. Please refresh the page to try again.",
+                "noFeedbackSuggestionModuleConfigured": "AI feedback is not configured for any of the exercises in this exam.",
                 "noSubmissionFound": "You didn't submit any solution for this exercise.",
                 "submissionLinkedToCommit": "The submission is linked to commit",
                 "noCommitHash": "No commit was made",
