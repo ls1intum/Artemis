@@ -7,7 +7,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -22,8 +21,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
@@ -137,10 +134,10 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @Test
         @WithMockUser(username = FIRST_COURSE_STUDENT1_LOGIN, roles = "USER")
         void getTutorialGroupsForCourse_asStudent_shouldHidePrivateInformation() throws Exception {
-            List<JsonNode> tutorialGroupsOfCourse = fetchTutorialGroupsOfCourse();
-            assertThat(tutorialGroupsOfCourse.stream().map(node -> node.get("id").asLong()).collect(Collectors.toSet())).contains(firstCourseTutorialGroup1.getId(),
+            var tutorialGroupsOfCourse = request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
+            assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(Collectors.toSet())).contains(firstCourseTutorialGroup1.getId(),
                     firstCourseTutorialGroup2.getId());
-            for (JsonNode tutorialGroup : tutorialGroupsOfCourse) {
+            for (TutorialGroup tutorialGroup : tutorialGroupsOfCourse) {
                 verifyPrivateInformationIsHidden(tutorialGroup);
             }
         }
@@ -148,10 +145,10 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @Test
         @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
         void getTutorialGroupsForCourse_asEditor_shouldHidePrivateInformation() throws Exception {
-            List<JsonNode> tutorialGroupsOfCourse = fetchTutorialGroupsOfCourse();
-            assertThat(tutorialGroupsOfCourse.stream().map(node -> node.get("id").asLong()).collect(Collectors.toSet())).contains(firstCourseTutorialGroup1.getId(),
+            var tutorialGroupsOfCourse = request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
+            assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(Collectors.toSet())).contains(firstCourseTutorialGroup1.getId(),
                     firstCourseTutorialGroup2.getId());
-            for (JsonNode tutorialGroup : tutorialGroupsOfCourse) { // private information hidden
+            for (var tutorialGroup : tutorialGroupsOfCourse) { // private information hidden
                 verifyPrivateInformationIsHidden(tutorialGroup);
             }
         }
@@ -159,80 +156,42 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @Test
         @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
         void getTutorialGroupsForCourse_asTutorOfOneGroup_shouldShowPrivateInformationForOwnGroup() throws Exception {
-            List<JsonNode> tutorialGroupsOfCourse = fetchTutorialGroupsOfCourse();
-            assertThat(tutorialGroupsOfCourse.stream().map(node -> node.get("id").asLong()).collect(Collectors.toSet())).contains(firstCourseTutorialGroup1.getId(),
+            var tutorialGroupsOfCourse = request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
+            assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(Collectors.toSet())).contains(firstCourseTutorialGroup1.getId(),
                     firstCourseTutorialGroup2.getId());
-            var groupWhereTutor = tutorialGroupsOfCourse.stream().filter(node -> node.get("id").asLong() == firstCourseTutorialGroup1.getId()).findFirst().orElseThrow();
+            var groupWhereTutor = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(firstCourseTutorialGroup1.getId())).findFirst()
+                    .orElseThrow();
             verifyPrivateInformationIsShown(groupWhereTutor);
 
-            var groupWhereNotTutor = tutorialGroupsOfCourse.stream().filter(node -> node.get("id").asLong() == firstCourseTutorialGroup2.getId()).findFirst().orElseThrow();
+            var groupWhereNotTutor = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(firstCourseTutorialGroup2.getId())).findFirst()
+                    .orElseThrow();
             verifyPrivateInformationIsHidden(groupWhereNotTutor);
         }
 
         @Test
         @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "INSTRUCTOR")
         void getTutorialGroupsForCourse_asInstructorOfCourse_shouldShowPrivateInformation() throws Exception {
-            List<JsonNode> tutorialGroupsOfCourse = fetchTutorialGroupsOfCourse();
+            var tutorialGroupsOfCourse = request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
             assertThat(tutorialGroupsOfCourse).hasSize(2);
-            assertThat(tutorialGroupsOfCourse.stream().map(node -> node.get("id").asLong()).collect(Collectors.toSet())).contains(firstCourseTutorialGroup1.getId(),
+            assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(Collectors.toSet())).contains(firstCourseTutorialGroup1.getId(),
                     firstCourseTutorialGroup2.getId());
-            var group1 = tutorialGroupsOfCourse.stream().filter(node -> node.get("id").asLong() == firstCourseTutorialGroup1.getId()).findFirst().orElseThrow();
+            var group1 = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(firstCourseTutorialGroup1.getId())).findFirst().orElseThrow();
             verifyPrivateInformationIsShown(group1);
-            var group2 = tutorialGroupsOfCourse.stream().filter(node -> node.get("id").asLong() == firstCourseTutorialGroup2.getId()).findFirst().orElseThrow();
+            var group2 = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(firstCourseTutorialGroup2.getId())).findFirst().orElseThrow();
             verifyPrivateInformationIsShown(group2);
         }
 
-        /**
-         * Fetches the tutorial-group list as a {@link JsonNode} stream rather than deserializing the
-         * response into {@link TutorialGroup} entities. The list endpoint still returns the JPA entity
-         * graph (migration tracked in PR #12687); its {@code TutorialGroup → registrations →
-         * TutorialGroupRegistration → student → User} chain trips Jackson's cyclic-reference race in
-         * {@code DeserializerCache._createAndCache2} whenever the response includes registrations. The
-         * race pre-exists this PR (reproducible on origin/develop at commit c39c2015) and cannot be
-         * closed from the priming side — see {@code JacksonDeserializerInitializationConfig.exerciseFailureChains}
-         * Javadoc. Switching the test-side reader to {@link JsonNode} avoids constructing the bean
-         * deserializer chain at all, so the assertions below run against the wire payload directly.
-         * Drop this helper and inline {@code getList(..., TutorialGroup.class)} once PR&nbsp;#12687 lands.
-         */
-        private List<JsonNode> fetchTutorialGroupsOfCourse() throws Exception {
-            JsonNode root = request.get("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, JsonNode.class);
-            assertThat(root.isArray()).as("tutorial-group list response must be a JSON array").isTrue();
-            List<JsonNode> elements = new ArrayList<>(root.size());
-            root.forEach(elements::add);
-            return elements;
+        private void verifyPrivateInformationIsHidden(TutorialGroup tutorialGroup) {
+            assertThat(tutorialGroup.getRegistrations()).isNullOrEmpty();
+            assertThat(tutorialGroup.getTeachingAssistant()).isNull();
+            assertThat(tutorialGroup.getCourse()).isNull();
         }
 
-        /**
-         * Verifies that the JSON projection of a {@link TutorialGroup} response element omits private
-         * information. {@code @JsonInclude(NON_EMPTY)} on the entity strips empty collections and null
-         * references, so a hidden {@code registrations} surfaces as either {@code null} (field missing)
-         * or an empty array; a hidden {@code teachingAssistant} or {@code course} as a missing/null node.
-         */
-        private void verifyPrivateInformationIsHidden(JsonNode tutorialGroup) {
-            JsonNode registrations = tutorialGroup.get("registrations");
-            assertThat(registrations == null || registrations.isNull() || (registrations.isArray() && registrations.isEmpty())).as("registrations must be null or empty").isTrue();
-            JsonNode teachingAssistant = tutorialGroup.get("teachingAssistant");
-            assertThat(teachingAssistant == null || teachingAssistant.isNull()).as("teachingAssistant must be absent").isTrue();
-            JsonNode course = tutorialGroup.get("course");
-            assertThat(course == null || course.isNull()).as("course must be absent").isTrue();
-        }
-
-        /**
-         * Mirror of {@link #verifyPrivateInformationIsHidden(JsonNode)} for the inverse expectation —
-         * the entity exposes {@code registrations}, {@code teachingAssistant} and {@code course} to
-         * callers authorised to see private information.
-         */
-        private void verifyPrivateInformationIsShown(JsonNode tutorialGroup) {
-            JsonNode registrations = tutorialGroup.get("registrations");
-            assertThat(registrations).as("registrations must be present").isNotNull();
-            assertThat(registrations.isArray()).as("registrations must be a JSON array").isTrue();
-            assertThat(registrations.isEmpty()).as("registrations must not be empty").isFalse();
-            JsonNode teachingAssistant = tutorialGroup.get("teachingAssistant");
-            assertThat(teachingAssistant).as("teachingAssistant must be present").isNotNull();
-            assertThat(teachingAssistant.isNull()).as("teachingAssistant must not be a JSON null").isFalse();
-            JsonNode course = tutorialGroup.get("course");
-            assertThat(course).as("course must be present").isNotNull();
-            assertThat(course.isNull()).as("course must not be a JSON null").isFalse();
+        private void verifyPrivateInformationIsShown(TutorialGroup tutorialGroup) {
+            assertThat(tutorialGroup.getRegistrations()).isNotNull();
+            assertThat(tutorialGroup.getRegistrations()).isNotEmpty();
+            assertThat(tutorialGroup.getTeachingAssistant()).isNotNull();
+            assertThat(tutorialGroup.getCourse()).isNotNull();
         }
     }
 
