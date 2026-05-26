@@ -292,10 +292,15 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
             const gotoParticipations = async () => {
                 for (let attempt = 0; attempt < 2; attempt++) {
                     await page.goto(participationsUrl);
-                    if (expectedParticipationsUrl.test(page.url())) {
+                    const settled = await page.waitForURL(expectedParticipationsUrl, { timeout: 15000 }).then(
+                        () => true,
+                        () => false,
+                    );
+                    if (settled) {
                         return;
                     }
                 }
+                throw new Error(`Failed to navigate to participations page after 2 attempts — landed on ${page.url()}`);
             };
             await gotoParticipations();
             await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, instructor, cPartiallySuccessfulSubmission, 'instructor commit');

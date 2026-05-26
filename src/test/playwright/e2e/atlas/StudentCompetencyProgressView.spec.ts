@@ -161,9 +161,6 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             const competency = await courseManagementAPIRequests.createCompetency(nestedCourse, 'Progress Test Competency', 'Track progress');
 
             await login(admin);
-            // Short duration so end-now → due-date overlap is immediate. We submit via API
-            // before the duration window closes; end-now then advances the scheduled
-            // evaluation job which produces the competency-progress update we assert on.
             const quizExercise = await exerciseAPIRequests.createQuizExercise({
                 body: { course: nestedCourse },
                 quizQuestions: [multipleChoiceQuizTemplate],
@@ -174,20 +171,13 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             await exerciseAPIRequests.setQuizVisible(quizExercise.id!);
             await exerciseAPIRequests.startQuizNow(quizExercise.id!);
 
-            // Submit as student via API — no UI participation. This decouples the test from
-            // the quiz-player rendering chain and removes the previous "submit button stays
-            // disabled after the timer expires" flake.
             await login(studentOne);
             await exerciseAPIRequests.startExerciseParticipation(quizExercise.id!);
             await exerciseAPIRequests.createMultipleChoiceSubmission(quizExercise, [0, 1]);
 
-            // Force evaluation immediately so the post-submit competency progress is computed
-            // without waiting for the scheduled job to fire on quiz expiry.
-            await login(admin);
-            await exerciseAPIRequests.endQuizNow(quizExercise.id!);
-
-            // Poll the student-visible competency progress (60s is enough now — evaluation
-            // and progress calc both fire seconds after end-now without UI latency in the path).
+            // The quiz is synchronized (started via startQuizNow), so evaluation runs
+            // automatically after the 10s duration window expires. Poll until the
+            // competency progress is updated.
             await login(studentOne);
             await expect
                 .poll(

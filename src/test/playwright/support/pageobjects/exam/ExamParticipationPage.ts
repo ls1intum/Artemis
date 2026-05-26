@@ -141,13 +141,6 @@ export class ExamParticipationPage extends ExamParticipationActions {
         expect(response.status()).toBe(200);
     }
 
-    async checkExerciseScore(exerciseID: number, expectedResult: string, timeout: number = BUILD_RESULT_TIMEOUT) {
-        // In exam mode, page.reload() navigates away from the active exercise tab,
-        // so we rely on WebSocket to push build results and use Playwright's auto-retry.
-        const resultScore = this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID);
-        await expect(resultScore).toContainText(expectedResult, { timeout });
-    }
-
     /**
      * Verifies that *some* build-result score is rendered for the exercise without asserting a
      * specific percentage. Use this in tests whose purpose is to exercise the submit → build →
