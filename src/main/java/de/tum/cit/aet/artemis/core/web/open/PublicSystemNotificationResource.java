@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.communication.service.SystemNotificationService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
+import de.tum.cit.aet.artemis.notification.service.SystemNotificationService;
 
 /**
  * REST controller for public system notifications.

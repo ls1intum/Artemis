@@ -18,9 +18,9 @@ import org.springframework.security.web.webauthn.registration.WebAuthnRegistrati
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 
 /**
  * Custom WebAuthn registration filter for Artemis that extends Spring Security's {@link WebAuthnRegistrationFilter}.

@@ -18,13 +18,13 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.communication.service.notifications.push_notifications.ApplePushNotificationService;
-import de.tum.cit.aet.artemis.communication.service.notifications.push_notifications.FirebasePushNotificationService;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationApiType;
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationDeviceType;
 import de.tum.cit.aet.artemis.notification.repository.PushNotificationDeviceConfigurationRepository;
+import de.tum.cit.aet.artemis.notification.service.notifications.push_notifications.ApplePushNotificationService;
+import de.tum.cit.aet.artemis.notification.service.notifications.push_notifications.FirebasePushNotificationService;
 
 class AppleFirebasePushNotificationServiceTest {
 

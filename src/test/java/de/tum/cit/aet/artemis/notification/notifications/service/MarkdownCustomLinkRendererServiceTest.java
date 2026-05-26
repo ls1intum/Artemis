@@ -10,7 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownCustomLinkRendererService;
+import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomLinkRendererService;
 
 class MarkdownCustomLinkRendererServiceTest {
 

@@ -18,10 +18,10 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationSettingInfoDTO;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationSettingSpecificationRequestDTO;
-import de.tum.cit.aet.artemis.communication.service.CourseNotificationSettingPresetRegistryService;
-import de.tum.cit.aet.artemis.communication.service.CourseNotificationSettingService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingPresetRegistryService;
+import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingService;
 
 @Profile(PROFILE_CORE)
 @Lazy

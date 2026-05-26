@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownCustomReferenceRendererService;
+import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomReferenceRendererService;
 
 class MarkdownCustomReferenceRendererServiceTest {
 

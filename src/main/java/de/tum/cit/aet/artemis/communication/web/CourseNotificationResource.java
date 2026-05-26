@@ -16,12 +16,12 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationInfoDTO;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationPageableDTO;
-import de.tum.cit.aet.artemis.communication.service.CourseNotificationRegistryService;
-import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
-import de.tum.cit.aet.artemis.communication.service.CourseNotificationSettingPresetRegistryService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
+import de.tum.cit.aet.artemis.notification.service.CourseNotificationRegistryService;
+import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
+import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingPresetRegistryService;
 
 @Profile(PROFILE_CORE)
 @Lazy
