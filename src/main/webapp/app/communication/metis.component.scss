@@ -143,7 +143,7 @@ $delete-delay-duration: 6s;
     z-index: $zindex-modal;
 }
 
-.modal-dialog {
+.post-create-edit-modal-dialog {
     margin: 0;
     width: 100%;
     max-width: $modal-lg;
@@ -151,12 +151,11 @@ $delete-delay-duration: 6s;
     flex-direction: column;
 }
 
-.modal-content {
+.post-create-edit-modal-content {
     max-height: 90vh;
     overflow-y: auto;
 }
-
-.modal-backdrop {
+.post-create-edit-modal-backdrop {
     position: fixed;
     top: 0;
     left: 0;
