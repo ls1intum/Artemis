@@ -26,11 +26,13 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.account.security.RandomUtil;
+import de.tum.cit.aet.artemis.account.service.user.AuthorityService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
-import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
@@ -56,17 +58,20 @@ public class LtiService {
 
     private final UserRepository userRepository;
 
-    private final UserService userService;
+    private final UserCourseRoleRepository userCourseRoleRepository;
+
+    private final AuthorityService authorityService;
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     private final JWTCookieService jwtCookieService;
 
-    public LtiService(UserCreationService userCreationService, UserRepository userRepository, UserService userService, ArtemisAuthenticationProvider artemisAuthenticationProvider,
-            JWTCookieService jwtCookieService) {
+    public LtiService(UserCreationService userCreationService, UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, AuthorityService authorityService,
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, JWTCookieService jwtCookieService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
-        this.userService = userService;
+        this.userCourseRoleRepository = userCourseRoleRepository;
+        this.authorityService = authorityService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.jwtCookieService = jwtCookieService;
     }
@@ -159,12 +164,22 @@ public class LtiService {
 
     /**
      * Enrolls a user as a student in the given course.
+     * Writes to the user_course_role table and also keeps the legacy user_groups table in sync until Phase 9 removes it.
      *
      * @param user   the user to enroll
      * @param course the course to enroll the user in
      */
     private void enrollUserInCourse(User user, Course course) {
-        userService.addUserToCourse(user, course, CourseRole.STUDENT);
+        if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), CourseRole.STUDENT)) {
+            userCourseRoleRepository.save(new UserCourseRole(user, course, CourseRole.STUDENT));
+        }
+        // Dual-write: also write to legacy user_groups table until Phase 9 removes it
+        String groupName = course.getStudentGroupName();
+        if (groupName != null && !user.getGroups().contains(groupName)) {
+            user.getGroups().add(groupName);
+        }
+        user.setAuthorities(authorityService.buildAuthorities(user));
+        userCreationService.saveUser(user);
     }
 
     /**
