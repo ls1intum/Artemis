@@ -1,6 +1,6 @@
 import { test } from '../../support/fixtures';
 import { admin } from '../../support/users';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { expect } from '@playwright/test';
 
 test.describe('Learning Path Management', { tag: '@fast' }, () => {

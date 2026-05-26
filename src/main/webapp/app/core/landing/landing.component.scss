@@ -4,3 +4,17 @@
     min-height: 100vh;
     overflow-x: hidden;
 }
+
+/* Reserve enough vertical space so the "on viewport" trigger only fires after the user
+   has scrolled past the spotlight — otherwise every deferred section would hydrate
+   eagerly on a tall desktop viewport. Empty by default; hydrated children replace the
+   reserved space with real content. */
+.landing-defer-placeholder {
+    min-height: 400px;
+
+    /* Collapse the reserved height once the deferred child has rendered anything,
+       so we don't leave a 400 px gap at the bottom of the rendered section. */
+    &:has(> :not(:empty)) {
+        min-height: 0;
+    }
+}

@@ -15,7 +15,7 @@ import {
     generateExampleTutorialGroupFreePeriod,
     tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData,
 } from 'test/helpers/sample/tutorialgroup/tutorialGroupFreePeriodExampleModel';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { TutorialGroupFreePeriodFormComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -83,7 +83,7 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
     });
 
     it('should throw an error when date and alternativeDate are undefined', () => {
-        let undefinedDate: Date | undefined;
+        const undefinedDate: Date | undefined = undefined;
         const time = new Date('2023-12-31T12:00:00');
         expect(() => {
             CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(undefinedDate, time, undefinedDate);

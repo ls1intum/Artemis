@@ -9,7 +9,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { of } from 'rxjs';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { BonusService } from 'app/assessment/manage/grading/bonus/bonus.service';
-import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';
+import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -21,7 +21,7 @@ import { MockComponent } from 'ng-mocks';
 import { HttpResponse } from '@angular/common/http';
 import { Bonus, BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { CourseScores } from 'app/core/course/manage/course-scores/course-scores';
+import { CourseScores } from 'app/course/manage/course-scores/course-scores';
 
 describe('GradingKeyTableComponent', () => {
     setupTestBed({ zoneless: true });

@@ -8,8 +8,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
-import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
-import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
+import { WebauthnService } from 'app/account/user/settings/passkey-settings/webauthn.service';
+import { WebauthnApiService } from 'app/account/user/settings/passkey-settings/webauthn-api.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ActivatedRoute, Router } from '@angular/router';
