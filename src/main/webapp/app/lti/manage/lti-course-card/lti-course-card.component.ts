@@ -1,5 +1,5 @@
 import { Component, effect, input } from '@angular/core';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { ImageComponent } from 'app/shared/image/image.component';
 import { RouterLink } from '@angular/router';
@@ -11,7 +11,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 @Component({
     selector: 'jhi-overview-lti-course-card',
     templateUrl: './lti-course-card.component.html',
-    styleUrls: ['../../../core/course/overview/course-card/course-card.scss'],
+    styleUrls: ['../../../course/overview/course-card/course-card.scss'],
     imports: [RouterLink, NgStyle, ImageComponent, TranslateDirective, ArtemisDatePipe],
 })
 export class LtiCourseCardComponent {

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
+import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY } from 'app/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 
 @Injectable({ providedIn: 'root' })
 export class LocalStorageService {
