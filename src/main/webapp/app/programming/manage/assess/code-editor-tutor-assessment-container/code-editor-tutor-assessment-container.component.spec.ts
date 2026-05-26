@@ -55,6 +55,7 @@ import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/he
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
@@ -911,17 +912,16 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.loadingFeedbackSuggestions).toBeFalse();
     });
 
-    it('should render the feedback suggestions banner when submission is set', async () => {
-        const { FeedbackSuggestionsBannerComponent } = await import('app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component');
+    it('should render the feedback suggestions banner when submission is set', fakeAsync(() => {
         jest.spyOn(repositoryFileService, 'getFilesWithContent').mockReturnValue(of(templateFileSessionReturn));
         jest.spyOn(repositoryFileService, 'getFile').mockReturnValue(new BehaviorSubject({ fileContent: '' }));
 
-        const feedbackLoaded = firstValueFrom(comp.onFeedbackLoaded);
         fixture.detectChanges();
-        await feedbackLoaded;
+        tick(100);
+        flush();
         fixture.changeDetectorRef.detectChanges();
 
         const banner = fixture.debugElement.query(By.directive(FeedbackSuggestionsBannerComponent));
         expect(banner).not.toBeNull();
-    });
+    }));
 });
