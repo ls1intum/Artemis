@@ -164,7 +164,7 @@ public class ArtemisSuccessfulLoginService {
                 }
             }
 
-            mailSendingService.buildAndSendAsync(recipient, "email.notification.login.title", "mail/notification/newLoginEmail", contextVariables);
+            mailSendingService.buildAndSendSync(recipient, "email.notification.login.title", "mail/notification/newLoginEmail", contextVariables);
         }
         catch (EntityNotFoundException ignored) {
             log.error("User with login {} not found when trying to send newLoginEmail", loginOrEmail);
