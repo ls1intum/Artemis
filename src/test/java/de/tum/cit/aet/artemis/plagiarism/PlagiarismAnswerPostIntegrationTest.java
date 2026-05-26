@@ -18,6 +18,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.dto.AnswerPostResponseDTO;
+import de.tum.cit.aet.artemis.communication.dto.ParentPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
@@ -69,7 +70,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateAnswerPostWithUserMention(String userMention, boolean isUserMentionValid) throws Exception {
         Post parentPost = existingPostsWithAnswers.getFirst();
-        PlagiarismAnswerPostCreateRequestDTO createRequest = new PlagiarismAnswerPostCreateRequestDTO(parentPost.getId(), userMention, false);
+        PlagiarismAnswerPostCreateRequestDTO createRequest = new PlagiarismAnswerPostCreateRequestDTO(new ParentPostDTO(parentPost.getId()), userMention, false);
 
         if (!isUserMentionValid) {
             // Send the invalid-mention request to the plagiarism answer-post endpoint that the success branch
@@ -106,7 +107,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(courseInformationSharingConfiguration);
 
         Post parentPost = existingPostsWithAnswers.getFirst();
-        PlagiarismAnswerPostCreateRequestDTO createRequest = new PlagiarismAnswerPostCreateRequestDTO(parentPost.getId(), "Content Answer Post", false);
+        PlagiarismAnswerPostCreateRequestDTO createRequest = new PlagiarismAnswerPostCreateRequestDTO(new ParentPostDTO(parentPost.getId()), "Content Answer Post", false);
 
         var answerPostCount = answerPostRepository.count();
 

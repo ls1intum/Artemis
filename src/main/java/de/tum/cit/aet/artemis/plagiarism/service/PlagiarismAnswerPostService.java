@@ -51,7 +51,7 @@ public class PlagiarismAnswerPostService extends PostingService {
     /**
      * Checks course, user and associated post validity,
      * determines the answer post's author and persists the answer post on the parent post resolved
-     * by {@code request.postId()}, then broadcasts the update.
+     * by {@code request.post().id()}, then broadcasts the update.
      *
      * @param courseId id of the course the answer post belongs to
      * @param request  payload carrying the parent post id and the new answer's content
@@ -61,7 +61,7 @@ public class PlagiarismAnswerPostService extends PostingService {
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
 
-        Post post = postRepository.findPostByIdElseThrow(request.postId());
+        Post post = postRepository.findPostByIdElseThrow(request.post().id());
         parseUserMentions(course, request.content());
 
         AnswerPost answerPost = new AnswerPost();

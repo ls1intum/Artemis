@@ -16,10 +16,15 @@ import de.tum.cit.aet.artemis.communication.domain.UserRole;
 /**
  * Cycle-free projection of {@link AnswerPost} for REST and websocket responses.
  * <p>
- * The back-reference to the parent {@code Post} is intentionally omitted: an answer is always
- * returned embedded inside its parent {@code PostResponseDTO}, and dropping the reference is what
- * breaks the {@code Post ↔ AnswerPost} JSON cycle that triggers Jackson's cyclic-reference race
- * during integration test deserialization.
+ * The {@link #post} field carries only a {@link AnswerParentPostRefDTO} — the parent post's id
+ * plus a cycle-free {@link ConversationRefDTO}. That is enough for the web client to route the
+ * answer to the correct conversation (its {@code AnswerPostService.getResourceEndpoint} reads
+ * {@code answerPost.post.conversation} to disambiguate communication vs plagiarism answer-post
+ * endpoints) while still cutting the {@code Post ↔ AnswerPost} JSON cycle that triggers Jackson's
+ * cyclic-reference race during integration test deserialization. {@link AnswerParentPostRefDTO}
+ * does not expose the parent's {@code reactions} or {@code answers} collections, so the cycle
+ * {@code AnswerPost.post → Post.answers → AnswerPost.post → ...} cannot be reconstructed from the
+ * wire payload.
  *
  * @param id                   the answer id
  * @param author               the author of the answer
@@ -30,12 +35,13 @@ import de.tum.cit.aet.artemis.communication.domain.UserRole;
  * @param resolvesPost         whether the answer resolves the parent post
  * @param isSaved              whether the requesting user has bookmarked the answer; transient
  * @param hasForwardedMessages whether this answer has forwarded messages attached
+ * @param post                 cycle-free parent-post reference (id + conversation) for client routing
  * @param reactions            reactions on the answer
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AnswerPostResponseDTO(Long id, @Nullable UserSummaryDTO author, @Nullable UserRole authorRole, @Nullable ZonedDateTime creationDate,
         @Nullable ZonedDateTime updatedDate, @Nullable String content, boolean resolvesPost, @JsonProperty("isSaved") boolean isSaved, boolean hasForwardedMessages,
-        Set<ReactionResponseDTO> reactions) {
+        @Nullable AnswerParentPostRefDTO post, Set<ReactionResponseDTO> reactions) {
 
     /**
      * Build an {@link AnswerPostResponseDTO} from an {@link AnswerPost} entity.
@@ -48,6 +54,6 @@ public record AnswerPostResponseDTO(Long id, @Nullable UserSummaryDTO author, @N
                 : answerPost.getReactions().stream().map(ReactionResponseDTO::from).collect(Collectors.toUnmodifiableSet());
         return new AnswerPostResponseDTO(answerPost.getId(), UserSummaryDTO.from(answerPost.getAuthor()), answerPost.getAuthorRole(), answerPost.getCreationDate(),
                 answerPost.getUpdatedDate(), answerPost.getContent(), Boolean.TRUE.equals(answerPost.doesResolvePost()), answerPost.getIsSaved(),
-                answerPost.getHasForwardedMessages(), reactions);
+                answerPost.getHasForwardedMessages(), AnswerParentPostRefDTO.from(answerPost.getPost()), reactions);
     }
 }

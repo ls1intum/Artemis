@@ -57,7 +57,7 @@ public class PlagiarismAnswerPostResource {
     @EnforceAtLeastStudent
     public ResponseEntity<AnswerPostResponseDTO> createAnswerPost(@PathVariable Long courseId, @Valid @RequestBody PlagiarismAnswerPostCreateRequestDTO request)
             throws URISyntaxException {
-        log.debug("POST createAnswerPost invoked for course {} with parent post {}", courseId, request.postId());
+        log.debug("POST createAnswerPost invoked for course {} with parent post {}", courseId, request.post() == null ? null : request.post().id());
         long start = System.nanoTime();
         AnswerPost createdAnswerPost = plagiarismAnswerPostService.createAnswerPost(courseId, request);
         log.info("createAnswerPost took {}", TimeLogUtil.formatDurationFrom(start));
