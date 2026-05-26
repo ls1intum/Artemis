@@ -130,7 +130,7 @@ $delete-delay-duration: 6s;
     }
 }
 
-.modal {
+.post-create-edit-modal {
     position: fixed;
     top: 0;
     left: 0;
@@ -147,7 +147,6 @@ $delete-delay-duration: 6s;
     margin: 0;
     width: 100%;
     max-width: $modal-lg;
-    max-height: 90vh;
     display: flex;
     flex-direction: column;
 }
@@ -163,7 +162,6 @@ $delete-delay-duration: 6s;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: var(--bs-backdrop-bg, #000);
     opacity: var(--bs-backdrop-opacity, 0.5);
     z-index: $zindex-modal-backdrop;
 }
