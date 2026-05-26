@@ -109,8 +109,8 @@ public class AutomaticAfterDueDateService {
         if (relevantData.programmingExerciseId() == null) { // no reference exercise
             offset = null; // no previous offset
         }
-        else if (relevantData.examId() == null || (originalExamOfExercise = examApi.findByExerciseId(loadedProgrammingExercise.getId())).isEmpty()) { // reference exercise exists
-                                                                                                                                                      // and not in exam
+        // reference exercise exists and not in exam
+        else if (relevantData.examId() == null || (originalExamOfExercise = examApi.findByExerciseId(loadedProgrammingExercise.getId())).isEmpty()) {
             offset = loadedProgrammingExercise.getDueDate() == null || loadedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null ? null
                     : Duration.between(loadedProgrammingExercise.getDueDate(), loadedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         }

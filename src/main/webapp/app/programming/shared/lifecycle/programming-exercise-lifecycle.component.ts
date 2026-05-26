@@ -25,6 +25,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgStyle } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
+import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 import { findParamInRouteHierarchy } from 'app/shared/util/navigation.utils';
 
 @Component({
@@ -314,13 +315,18 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
 
         const routeExamId = findParamInRouteHierarchy(this.activatedRoute, 'examId');
 
+        let hasAfterDueDateBuildPhase: boolean | undefined = undefined;
+        if (this.customizeBuildPlan()) {
+            hasAfterDueDateBuildPhase = !!this.buildPhasesTemplateService.buildPlan()?.phases?.some((phase) => phase.condition === 'AFTER_DUE_DATE');
+        } else if (this.isImport) {
+            hasAfterDueDateBuildPhase = this.getImportedHasAfterDueDateBuildPhase();
+        }
+
         const requestData: AutomaticAfterDueDatePreviewRequest = {
             programmingExerciseId: this.exercise.id,
             examId: this.isExamMode ? (routeExamId ? Number(routeExamId) : undefined) : undefined,
             dueDate: this.isExamMode ? undefined : convertDateFromClient(this.exercise.dueDate),
-            hasAfterDueDateBuildPhase: this.customizeBuildPlan()
-                ? !!this.buildPhasesTemplateService.buildPlan()?.phases?.some((phase) => phase.condition === 'AFTER_DUE_DATE')
-                : undefined,
+            hasAfterDueDateBuildPhase: hasAfterDueDateBuildPhase,
             programmingLanguage: this.exercise.programmingLanguage!,
             projectType: this.exercise.projectType,
             staticCodeAnalysisEnabled: !!this.exercise.staticCodeAnalysisEnabled,
@@ -347,5 +353,15 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
                 this.previousAutomaticAfterDueDatePreviewRequest = undefined;
             },
         });
+    }
+
+    private getImportedHasAfterDueDateBuildPhase(): boolean | undefined {
+        const buildPlanConfiguration = this.exercise.buildConfig?.buildPlanConfiguration;
+        const parsedBuildPlan = parseBuildPlanPhases(buildPlanConfiguration);
+        if (!parsedBuildPlan) {
+            return undefined;
+        }
+
+        return parsedBuildPlan.phases.some((phase) => phase.condition === 'AFTER_DUE_DATE');
     }
 }
