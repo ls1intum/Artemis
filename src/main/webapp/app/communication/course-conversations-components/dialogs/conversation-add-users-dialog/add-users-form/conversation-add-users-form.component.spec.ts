@@ -8,7 +8,7 @@ import { CourseUsersSelectorComponent } from 'app/communication/course-users-sel
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { GroupChatDTO } from '../../../../shared/entities/conversation/group-chat.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO } from 'test/helpers/sample/conversationExampleModels';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { By } from '@angular/platform-browser';
 import { UserPublicInfoDTO } from 'app/account/user/user.model';

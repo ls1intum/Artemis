@@ -13,6 +13,21 @@ account:
   - conduct agreement
   - caseSensitive: false
 
+admin:
+  - admin
+  - sbom
+  - vulnerability
+  - cleanup
+  - data export
+  - telemetry
+  - organization management
+  - imprint
+  - privacy statement
+  - audit
+  - legal document
+  - rate limit
+  - caseSensitive: false
+
 assessment:
   - assessment
   - bonus
@@ -67,9 +82,17 @@ communication:
   - caseSensitive: false
 
 core:
-  - data export
   - migration
   - security
+  - caseSensitive: false
+
+course:
+  - course
+  - enrollment
+  - course request
+  - course archive
+  - course material import
+  - course management
   - caseSensitive: false
 
 exam:

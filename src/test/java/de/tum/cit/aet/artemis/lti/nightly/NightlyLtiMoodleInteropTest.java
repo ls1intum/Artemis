@@ -51,7 +51,7 @@ import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lti.AbstractLtiIntegrationTest;
 import de.tum.cit.aet.artemis.lti.config.DistributedStateAuthorizationRequestRepository;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;

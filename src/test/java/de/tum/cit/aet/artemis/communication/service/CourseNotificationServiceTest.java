@@ -39,7 +39,7 @@ import de.tum.cit.aet.artemis.communication.dto.CourseNotificationPageableDTO;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationWithStatusDTO;
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationParameterTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 @ExtendWith(MockitoExtension.class)
 class CourseNotificationServiceTest {

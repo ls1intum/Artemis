@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { CourseGroup } from 'app/core/course/shared/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { CourseGroup } from 'app/course/shared/entities/course.model';
 import { TutorialGroupTutor } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/account/user/user.model';

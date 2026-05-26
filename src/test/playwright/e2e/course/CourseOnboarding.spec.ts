@@ -1,5 +1,5 @@
 import { test } from '../../support/fixtures';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { admin } from '../../support/users';
 import { expect } from '@playwright/test';
 import { generateUUID } from '../../support/utils';

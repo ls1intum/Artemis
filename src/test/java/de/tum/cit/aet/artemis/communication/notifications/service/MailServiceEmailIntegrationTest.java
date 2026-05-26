@@ -26,14 +26,14 @@ import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetupTest;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.admin.domain.DataExport;
+import de.tum.cit.aet.artemis.admin.dto.ComponentVulnerabilitiesDTO;
+import de.tum.cit.aet.artemis.admin.dto.ComponentWithVulnerabilitiesDTO;
+import de.tum.cit.aet.artemis.admin.dto.VulnerabilityDTO;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
-import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
-import de.tum.cit.aet.artemis.core.dto.ComponentVulnerabilitiesDTO;
-import de.tum.cit.aet.artemis.core.dto.ComponentWithVulnerabilitiesDTO;
-import de.tum.cit.aet.artemis.core.dto.VulnerabilityDTO;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 

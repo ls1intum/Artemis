@@ -27,10 +27,10 @@ import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.CourseLearnerProfileDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.service.profile.CourseLearnerProfileService;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.service.course.CourseAtlasService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.service.CourseAtlasService;
 
 @Conditional(AtlasEnabled.class)
 @Lazy
@@ -57,7 +57,7 @@ public class CourseLearnerProfileResource {
     }
 
     /**
-     * GET course-learner-profiles : get a Set of a {@link de.tum.cit.aet.artemis.core.domain.Course} id
+     * GET course-learner-profiles : get a Set of a {@link de.tum.cit.aet.artemis.course.domain.Course} id
      * to the corresponding {@link CourseLearnerProfile} of the logged-in user.
      *
      * @return The ResponseEntity with status 200 (OK) and with the body containing a set of DTOs, which contains per course profile data.

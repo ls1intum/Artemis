@@ -4,7 +4,7 @@ import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ImageComponent, ImageLoadingStatus } from 'app/shared/image/image.component';
 import { faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { ImageCropperModalComponent } from 'app/core/course/manage/image-cropper-modal/image-cropper-modal.component';
+import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
 import { DialogService } from 'primeng/dynamicdialog';
 import { base64StringToBlob } from 'app/shared/util/blob-util';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
