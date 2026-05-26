@@ -7,6 +7,11 @@
         Phase 1 of the course-groups → user_course_role refactor.
 
         CS-1: Create user_course_role table + index; add lti_created to jhi_user.
+              The table is created twice with different column types (DB-specific):
+              - MySQL/H2: course_role as ENUM('STUDENT',…)
+              - PostgreSQL: course_role as varchar(20) (PostgreSQL has no inline ENUM syntax)
+              Foreign keys, the covering index, and the lti_created column are in CS-1-common
+              and are DB-agnostic.
         CS-2: Backfill user_course_role from user_groups by joining the four
               course.*_group_name columns. Each matched (user, course, role) pair
               becomes one row. Non-course groups (e.g. "lti") are naturally excluded
@@ -19,7 +24,8 @@
               DROP the user_groups table.
     -->
 
-    <changeSet id="20260518120000-1" author="ayca-cevdet">
+    <!-- MySQL / H2: native ENUM column for course_role -->
+    <changeSet id="20260518120000-1-mysql" author="ayca-cevdet" dbms="mysql,h2">
         <createTable tableName="user_course_role">
             <column name="user_id" type="bigint">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="pk_user_course_role"/>
@@ -31,7 +37,25 @@
                 <constraints nullable="false" primaryKey="true" primaryKeyName="pk_user_course_role"/>
             </column>
         </createTable>
+    </changeSet>
 
+    <!-- PostgreSQL: varchar(20) instead of inline ENUM (PostgreSQL has no inline ENUM syntax) -->
+    <changeSet id="20260518120000-1-postgres" author="ayca-cevdet" dbms="postgresql">
+        <createTable tableName="user_course_role">
+            <column name="user_id" type="bigint">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_user_course_role"/>
+            </column>
+            <column name="course_id" type="bigint">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_user_course_role"/>
+            </column>
+            <column name="course_role" type="varchar(20)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_user_course_role"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <!-- DB-agnostic: foreign keys, covering index, and lti_created column -->
+    <changeSet id="20260518120000-1-common" author="ayca-cevdet">
         <addForeignKeyConstraint
             baseTableName="user_course_role" baseColumnNames="user_id"
             constraintName="fk_ucr_user_id"
