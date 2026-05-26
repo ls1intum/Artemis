@@ -47,6 +47,7 @@ class StubModelingEditorComponent {
     umlModel = input<UMLModel>();
     diagramType = input<UMLDiagramType>();
     readOnly = input<boolean>(false);
+    scrollLock = input<boolean>(false);
     explanation = input<string>();
     withExplanation = input<boolean>(false);
 

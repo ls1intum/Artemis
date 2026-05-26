@@ -5,7 +5,7 @@ import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import dayjs from 'dayjs/esm';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { AnswerPostComponent } from '../answer-post/answer-post.component';
 import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';

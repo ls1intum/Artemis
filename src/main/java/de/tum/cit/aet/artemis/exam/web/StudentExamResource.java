@@ -35,15 +35,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.event.ExamLiveEvent;
+import de.tum.cit.aet.artemis.exam.dto.AthenaFeedbackUsageDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamAttendanceCheckEventDTO;
 import de.tum.cit.aet.artemis.exam.dto.examevent.ExamLiveEventBaseDTO;
@@ -303,6 +304,50 @@ public class StudentExamResource {
         log.info("Completed submitStudentExam with {} exercises for user {} in a total time of {}", existingStudentExam.getExercises().size(), currentUser.getLogin(),
                 formatDurationFrom(start));
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * POST /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/request-feedback : Request Athena AI
+     * feedback for all text and modeling exercises in the given submitted test exam.
+     *
+     * @param courseId      the course to which the exam belongs
+     * @param examId        the exam to which the student exam belongs
+     * @param studentExamId the id of the student exam
+     * @return 200 OK if the feedback request was accepted
+     */
+    @PostMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/request-feedback")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> requestAthenaFeedbackForTestExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+        log.debug("REST request to trigger Athena feedback for student exam {}", studentExamId);
+        User currentUser = userRepository.getUser();
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
+        validateExamRequestParametersElseThrow(studentExam, examId, courseId);
+        if (!Objects.equals(currentUser.getId(), studentExam.getUser().getId())) {
+            throw new AccessForbiddenException("Current user is not the user of the requested student exam");
+        }
+        studentExamService.requestAthenaFeedbackForTestExam(studentExam, currentUser);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/athena-feedback-usage : Return how many
+     * Athena AI feedback requests the current user has already used for this test exam and the configured cap.
+     *
+     * @param courseId      the course to which the exam belongs
+     * @param examId        the exam to which the student exam belongs
+     * @param studentExamId the id of the student exam
+     * @return 200 OK with the usage information
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/athena-feedback-usage")
+    @EnforceAtLeastStudent
+    public ResponseEntity<AthenaFeedbackUsageDTO> getAthenaFeedbackUsage(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId) {
+        User currentUser = userRepository.getUser();
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
+        validateExamRequestParametersElseThrow(studentExam, examId, courseId);
+        if (!Objects.equals(currentUser.getId(), studentExam.getUser().getId())) {
+            throw new AccessForbiddenException("Current user is not the user of the requested student exam");
+        }
+        return ResponseEntity.ok(studentExamService.getAthenaFeedbackUsage(currentUser.getId(), examId));
     }
 
     /**

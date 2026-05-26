@@ -19,7 +19,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
@@ -27,12 +27,12 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status/submission-result-status.component';
-import { ExerciseDetailsStudentActionsComponent } from 'app/core/course/overview/exercise-details/student-actions/exercise-details-student-actions.component';
+import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
+import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/student-actions/exercise-details-student-actions.component';
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag/not-released-tag.component';
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
-import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
+import { CourseExerciseRowComponent } from 'app/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
 import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
@@ -403,6 +403,56 @@ describe('CourseLectureDetailsComponent', () => {
             courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
 
             expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(45.5);
+        });
+
+        it('should preserve timestamp for unit with only YouTube video', () => {
+            const youtubeUnit = new AttachmentVideoUnit();
+            youtubeUnit.id = 103;
+            youtubeUnit.youtubeVideoId = 'dQw4w9WgXcQ';
+            youtubeUnit.lecture = lecture;
+
+            courseLecturesDetailsComponent.lectureUnits = [youtubeUnit];
+            courseLecturesDetailsComponent.targetUnitId.set(103);
+            courseLecturesDetailsComponent.targetVideoTimestamp.set(30);
+
+            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
+
+            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(30);
+        });
+
+        it('should preserve timestamp and page for unit with both YouTube video and PDF', () => {
+            const youtubeUnitWithPdf = new AttachmentVideoUnit();
+            youtubeUnitWithPdf.id = 104;
+            youtubeUnitWithPdf.youtubeVideoId = 'dQw4w9WgXcQ';
+            youtubeUnitWithPdf.attachment = new Attachment();
+            youtubeUnitWithPdf.attachment.link = '/path/to/slides.pdf';
+            youtubeUnitWithPdf.lecture = lecture;
+
+            courseLecturesDetailsComponent.lectureUnits = [youtubeUnitWithPdf];
+            courseLecturesDetailsComponent.targetUnitId.set(104);
+            courseLecturesDetailsComponent.targetVideoTimestamp.set(60);
+            courseLecturesDetailsComponent.targetPdfPage.set(7);
+
+            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
+
+            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(60);
+            expect(courseLecturesDetailsComponent.targetPdfPage()).toBe(7);
+        });
+
+        it('should clear timestamp for unit with neither video source nor YouTube video ID', () => {
+            const unitWithoutVideo = new AttachmentVideoUnit();
+            unitWithoutVideo.id = 105;
+            unitWithoutVideo.attachment = new Attachment();
+            unitWithoutVideo.attachment.link = '/path/to/document.pdf';
+            unitWithoutVideo.lecture = lecture;
+
+            courseLecturesDetailsComponent.lectureUnits = [unitWithoutVideo];
+            courseLecturesDetailsComponent.targetUnitId.set(105);
+            courseLecturesDetailsComponent.targetVideoTimestamp.set(45);
+
+            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
+
+            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBeUndefined();
         });
     });
 });

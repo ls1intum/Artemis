@@ -6,7 +6,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { ApollonEditor, UMLModel } from '@tumaet/apollon';
 import { TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MAX_SIZE_UNIT, computeDropLocation, generateDragAndDropQuizExercise } from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import * as SVGRendererAPI from 'app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
@@ -37,6 +37,10 @@ function setupCanvasAndImageMocks() {
         } as unknown as HTMLCanvasElement;
     };
 
+    // The createElement overload union contains a @deprecated entry for legacy elements like
+    // <applet>; the canvas-mocking pattern itself isn't deprecated, but TS-ESLint can't
+    // disambiguate the overloads when we hold a reference to the bound method.
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     const originalCreateElement = document.createElement.bind(document);
     const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
         if (tagName === 'canvas') {

@@ -39,11 +39,25 @@ if (fs.existsSync(vitestSummaryPath)) {
     }
 } else if (VITEST_MODULES.size > 0) {
     console.error('❌ Vitest coverage-summary.json not found at', vitestSummaryPath);
-    console.error('   Vitest modules require coverage. Run "npm run vitest:coverage" first.');
+    console.error('   Vitest modules require coverage. Run "pnpm run vitest:coverage" first.');
     process.exit(1);
 }
 
 const moduleThresholds = {
+    account: {
+        statements: 95.00,
+        branches:   80.00,
+        functions:  95.00,
+        lines:      95.50,
+    },
+    admin: {
+        // TODO: branches at 78% has room to improve once admin gets more component-level tests
+        // (admin-data-exports, admin-sbom, organization-management are the lowest).
+        statements: 92.50,
+        branches:   78.00,
+        functions:  88.50,
+        lines:      92.50,
+    },
     assessment: {
         statements: 93.00,
         branches:   82.00,
@@ -69,10 +83,21 @@ const moduleThresholds = {
         lines:      92.70,
     },
     core: {
-        statements: 88.40,
-        branches:   68.50,
-        functions:  79.60,
-        lines:      88.30,
+        // Statements/lines lowered (course + admin moved out — their well-covered code lifted
+        // the previous baseline). Branches/functions raised (the moved code had lower coverage
+        // for those metrics on average). TODO: keep tightening as core continues to slim down.
+        statements: 87.50,
+        branches:   75.50,
+        functions:  87.00,
+        lines:      87.50,
+    },
+    course: {
+        // TODO: branches at 73% reflects the large course-management subtree; ratchet up as
+        // remaining components get tests (course-archive, course-dashboard visualizations).
+        statements: 90.50,
+        branches:   72.50,
+        functions:  86.50,
+        lines:      91.00,
     },
     exam: {
         statements: 91.50,

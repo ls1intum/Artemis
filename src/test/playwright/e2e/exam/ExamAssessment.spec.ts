@@ -3,7 +3,7 @@ import { Exercise, ExerciseType } from '../../support/constants';
 import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor, users } from '../../support/users';
 import { Page, expect } from '@playwright/test';
 
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Commands } from '../../support/commands';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
@@ -189,7 +189,7 @@ test.describe('Exam assessment', () => {
                 await page.waitForTimeout(graceEnd.diff(dayjs(), 'ms') + 5000);
             }
             await page.goto(`/course-management/${course.id}/exams/${exam.id}/assessment-dashboard`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             const response = await courseAssessment.clickEvaluateQuizzes();
             expect(response.status()).toBe(200);
             if (dayjs().isBefore(resultDate)) {
@@ -223,7 +223,7 @@ test.describe('Exam grading', { tag: '@slow' }, () => {
         test('Set exam gradings', async ({ login, page, examManagement, examGrading }) => {
             await login(instructor);
             await page.goto(`/course-management/${course.id}/exams/${exam.id}`);
-            await page.waitForLoadState('networkidle');
+            await page.waitForLoadState('domcontentloaded');
             await examManagement.openGradingKey();
             await examGrading.addGradeStep(40, '5.0');
             await examGrading.addGradeStep(15, '4.0');
@@ -325,10 +325,10 @@ test.describe('Exam statistics', { tag: '@slow' }, () => {
     test('Check exam statistics', async ({ login, page, examManagement, examAPIRequests }) => {
         await login(instructor);
         await page.goto(`/course-management/${course.id}/exams/${exam.id}`);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         await examManagement.openScoresPage();
         await page.waitForURL(`**/exams/${exam.id}/scores`);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         const examScores = new ExamScoresPage(page);
         await examScores.checkExamStatistics(examStatisticsSample.statistics);
         await examScores.checkGradeDistributionChart(examStatisticsSample.gradeDistribution);

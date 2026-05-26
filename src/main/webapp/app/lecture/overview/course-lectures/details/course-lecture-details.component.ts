@@ -15,7 +15,7 @@ import { finalize, tap } from 'rxjs/operators';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faChalkboardTeacher, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
-import { isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
+import { isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { Subscription } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -46,7 +46,7 @@ export interface LectureUnitCompletionEvent {
 @Component({
     selector: 'jhi-course-lecture-details',
     templateUrl: './course-lecture-details.component.html',
-    styleUrls: ['../../../../core/course/overview/course-overview/course-overview.scss', '../../../shared/course-lectures/course-lectures.scss'],
+    styleUrls: ['../../../../course/overview/course-overview/course-overview.scss', '../../../shared/course-lectures/course-lectures.scss'],
     imports: [
         TranslateDirective,
         ExerciseUnitComponent,
@@ -244,7 +244,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
         if (targetUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
             const attachmentUnit = targetUnit as AttachmentVideoUnit;
-            const hasVideo = !!attachmentUnit.videoSource;
+            const hasVideo = !!attachmentUnit.videoSource || !!attachmentUnit.youtubeVideoId;
             const isPdf = attachmentUnit.attachment?.link?.toLowerCase().endsWith('.pdf');
             // Clear timestamp only if unit has NO video source
             if (!hasVideo) {

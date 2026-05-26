@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
 import { QuizExercisePopupService } from './quiz-exercise-popup.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Component } from '@angular/core';
 
 @Component({ template: '' })

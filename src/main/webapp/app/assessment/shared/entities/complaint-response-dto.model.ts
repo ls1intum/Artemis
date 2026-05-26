@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { UserIdAndLoginDTO } from 'app/core/user/user.model';
+import { UserIdAndLoginDTO } from 'app/account/user/user.model';
 
 export enum ComplaintAction {
     REFRESH_LOCK = 'REFRESH_LOCK',

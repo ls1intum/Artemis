@@ -21,8 +21,8 @@ import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/ht
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { FormsModule } from '@angular/forms';
-import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
-import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
+import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
+import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 import dayjs from 'dayjs/esm';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/shared/components/slice-navigator/slice-navigator.component';

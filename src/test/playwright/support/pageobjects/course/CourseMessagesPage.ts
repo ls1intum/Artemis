@@ -2,7 +2,7 @@ import { Page, expect } from '@playwright/test';
 import { Channel, ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { GroupChat } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { UserCredentials } from '../../users';
 import { CommunicationAPIRequests } from '../../requests/CommunicationAPIRequests';
 import { setMonacoEditorContent, setMonacoEditorContentByLocator } from '../../utils';

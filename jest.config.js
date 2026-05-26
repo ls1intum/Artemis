@@ -96,6 +96,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/buildagent/**', // buildagent module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/communication/**', // communication module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/core/**', // core module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/calendar/**', // calendar module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/fileupload/**', // fileupload module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/iris/**', // iris module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/lecture/**', // lecture module uses Vitest (see vitest.config.ts)
@@ -109,6 +110,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/shared/table-view/**', // table view module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/components/buttons/**', // buttons module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/manage/students/**', // exam manage students module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exam/overview/summary/exam-request-ai-feedback-button/**', // exam request AI feedback button uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/manage/student-exams/**', // exam manage student-exams module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/manage/test-runs/**', // exam manage test-runs module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/manage/exercise-groups/**', // exam manage exercise groups module uses Vitest (see vitest.config.ts)
@@ -144,11 +146,16 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // build-plan-phases model uses Vitest (see vitest.config.ts)
         '<rootDir>/src/main/webapp/**/*.ts',
     ],
+    // Each entry below excludes a module that has been migrated to Vitest.
     coveragePathIgnorePatterns: [
+        '<rootDir>/src/main/webapp/app/account/', // account module uses Vitest
+        '<rootDir>/src/main/webapp/app/admin/', // admin module uses Vitest
         '<rootDir>/src/main/webapp/app/assessment/', // assessment module uses Vitest
         '<rootDir>/src/main/webapp/app/buildagent/', // buildagent module uses Vitest
         '<rootDir>/src/main/webapp/app/communication/', // communication module uses Vitest
         '<rootDir>/src/main/webapp/app/core/', // core module uses Vitest
+        '<rootDir>/src/main/webapp/app/course/', // course module uses Vitest
+        '<rootDir>/src/main/webapp/app/calendar/', // calendar module uses Vitest
         '<rootDir>/src/main/webapp/app/fileupload/', // fileupload module uses Vitest
         '<rootDir>/src/main/webapp/app/iris/', // iris module uses Vitest
         '<rootDir>/src/main/webapp/app/lecture/', // lecture module uses Vitest
@@ -161,6 +168,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/atlas/', // atlas module uses Vitest
         '<rootDir>/src/main/webapp/app/shared/components/buttons/', // buttons module uses Vitest
         '<rootDir>/src/main/webapp/app/exam/manage/students/', // exam manage students module uses Vitest
+        '<rootDir>/src/main/webapp/app/exam/overview/summary/exam-request-ai-feedback-button/', // exam request AI feedback button uses Vitest
         '<rootDir>/src/main/webapp/app/exam/manage/student-exams/', // exam manage student-exams module uses Vitest
         '<rootDir>/src/main/webapp/app/exam/manage/test-runs/', // exam manage test-runs module uses Vitest
         '<rootDir>/src/main/webapp/app/exam/manage/exercise-groups/', // exam manage exercise groups module uses Vitest
@@ -212,7 +220,16 @@ module.exports = {
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary', 'json-summary'],
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
     moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],
-    transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
+    // Under pnpm's symlinked layout, dep files live at
+    //   node_modules/.pnpm/<pkg>@<ver>/node_modules/<pkg>/...
+    // Jest follows the symlinks to those real paths before checking transformIgnorePatterns,
+    // so the original npm-flat negative-lookahead pattern (`node_modules/(?!${esModules})`)
+    // was rejecting Angular/d3/swimlane ESM files inside .pnpm/ and producing
+    // `Unexpected token 'export'` SyntaxErrors. Authoring a pattern that captures
+    // both layouts proved brittle in the joined regex Jest constructs internally,
+    // so we transform every file in node_modules. Cost: longer cold runs (~10-15s
+    // overhead on a full suite) for guaranteed correctness with the symlink layout.
+    transformIgnorePatterns: [],
     transform: {
         '^.+\\.(ts|js|mjs|html|svg)$': [
             'jest-preset-angular',
@@ -228,10 +245,14 @@ module.exports = {
     modulePathIgnorePatterns: ['<rootDir>/src/main/resources/templates/', '<rootDir>/build/'],
     // Exclude modules migrated to Vitest (see vitest.config.ts)
     testPathIgnorePatterns: [
+        '<rootDir>/src/main/webapp/app/account/', // account module
+        '<rootDir>/src/main/webapp/app/admin/', // admin module
         '<rootDir>/src/main/webapp/app/assessment/', // assessment module
         '<rootDir>/src/main/webapp/app/buildagent/', // buildagent module
         '<rootDir>/src/main/webapp/app/communication/', // communication module
         '<rootDir>/src/main/webapp/app/core/', // core module
+        '<rootDir>/src/main/webapp/app/course/', // course module
+        '<rootDir>/src/main/webapp/app/calendar/', // calendar module
         '<rootDir>/src/main/webapp/app/fileupload/', // fileupload module
         '<rootDir>/src/main/webapp/app/iris/', // iris module
         '<rootDir>/src/main/webapp/app/lecture/', // lecture module
@@ -242,6 +263,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/tutorialgroup/', // tutorialgroup module
         '<rootDir>/src/main/webapp/app/atlas/', // atlas module
         '<rootDir>/src/main/webapp/app/exam/manage/students/', // exam manage students module
+        '<rootDir>/src/main/webapp/app/exam/overview/summary/exam-request-ai-feedback-button/', // exam request AI feedback button
         '<rootDir>/src/main/webapp/app/exam/manage/student-exams/', // exam manage student-exams module
         '<rootDir>/src/main/webapp/app/exam/manage/test-runs/', // exam manage test-runs module
         '<rootDir>/src/main/webapp/app/exam/manage/exercise-groups/', // exam manage exercise groups module

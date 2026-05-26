@@ -24,7 +24,7 @@ export function resizeCanvas(canvas: HTMLCanvasElement, width: number, height: n
             for (let i = 0; i < width; i++) {
                 const x2 = (i + j * width) * 4;
                 const center_y = j * ratioHeight;
-                let weight = 0;
+                let weight: number;
                 let weights = 0;
                 let weights_alpha = 0;
                 let gx_r = 0;

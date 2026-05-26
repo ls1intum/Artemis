@@ -10,7 +10,7 @@ import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iri
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { ButtonDirective } from 'primeng/button';
 import { AccountService } from 'app/core/auth/account.service';
-import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
 interface FeatureCard {
     titleKey: string;
