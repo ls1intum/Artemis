@@ -5,7 +5,7 @@ import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-compo
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import dayjs from 'dayjs/esm';
 import { round } from 'app/shared/util/utils';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Subscription } from 'rxjs';
 import { NgClass } from '@angular/common';

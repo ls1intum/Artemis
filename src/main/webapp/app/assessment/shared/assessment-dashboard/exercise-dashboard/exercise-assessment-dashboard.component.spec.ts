@@ -31,7 +31,7 @@ import { ProgrammingSubmissionService } from 'app/programming/shared/services/pr
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
-import { Language } from 'app/core/course/shared/entities/course.model';
+import { Language } from 'app/course/shared/entities/course.model';
 import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -58,7 +58,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

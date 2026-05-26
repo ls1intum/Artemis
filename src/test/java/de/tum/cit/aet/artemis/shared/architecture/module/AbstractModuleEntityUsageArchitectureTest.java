@@ -54,36 +54,36 @@ import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
 public abstract class AbstractModuleEntityUsageArchitectureTest extends AbstractArchitectureTest implements ModuleArchitectureTest {
 
     /**
-     * Returns the maximum allowed number of entity return type violations for this module.
+     * Returns the EXACT number of entity return type violations this module currently has.
      * <p>
-     * <b>TODO:</b> This number should be reduced to 0 over time as DTOs are introduced.
-     * When you fix violations, update this number to the new (lower) count.
+     * The test uses {@code hasSize(...)} (exact match), so the override here must equal the
+     * actual violation count: too low fails as a regression, too high fails as a stale baseline
+     * that's hiding an improvement. The "max" in the legacy method name predates the exact-match
+     * semantics; treat it as "expected count".
+     * <p>
+     * <b>TODO:</b> Reduce to 0 over time as DTOs are introduced.
      *
-     * @return the maximum number of allowed violations (0 means fully compliant)
+     * @return the exact number of entity-return violations expected (0 means fully compliant)
      */
     protected abstract int getMaxEntityReturnViolations();
 
     /**
-     * Returns the maximum allowed number of entity input (RequestBody/RequestPart) violations for this module.
-     * <p>
-     * <b>TODO:</b> This number should be reduced to 0 over time as DTOs are introduced.
-     * When you fix violations, update this number to the new (lower) count.
+     * Returns the EXACT number of entity input (RequestBody/RequestPart) violations this module
+     * currently has. See {@link #getMaxEntityReturnViolations()} for the exact-match semantics.
      *
-     * @return the maximum number of allowed violations (0 means fully compliant)
+     * @return the exact number of entity-input violations expected (0 means fully compliant)
      */
     protected abstract int getMaxEntityInputViolations();
 
     /**
-     * Returns the maximum allowed number of DTO entity field violations for this module.
+     * Returns the EXACT number of DTO-entity-field violations this module currently has.
      * <p>
      * DTOs must not contain fields that reference @Entity types, as this defeats the purpose
      * of using DTOs (lazy wrapping pattern). DTOs should only contain primitive types,
-     * date/time types, enums, and other DTOs.
-     * <p>
-     * <b>TODO:</b> This number should be reduced to 0 over time as DTOs are fixed.
-     * When you fix violations, update this number to the new (lower) count.
+     * date/time types, enums, and other DTOs. See {@link #getMaxEntityReturnViolations()} for
+     * the exact-match semantics.
      *
-     * @return the maximum number of allowed violations (0 means fully compliant)
+     * @return the exact number of DTO-entity-field violations expected (0 means fully compliant)
      */
     protected int getMaxDtoEntityFieldViolations() {
         return 0; // Default: no violations allowed for new modules
@@ -147,10 +147,11 @@ public abstract class AbstractModuleEntityUsageArchitectureTest extends Abstract
         classes().that().resideInAPackage(getModuleWithSubpackage()).and().areAnnotatedWith(RestController.class).should(condition).allowEmptyShould(true).check(productionClasses);
 
         int maxAllowed = getMaxEntityReturnViolations();
-        assertThat(violations)
-                .as("Entity return type violations in module %s (max allowed: %d, found: %d). " + "TODO: This number should be reduced to 0 by using DTOs instead of entities. "
-                        + "See the database documentation for guidelines on DTO usage.", getModulePackage(), maxAllowed, violations.size())
-                .hasSizeLessThanOrEqualTo(maxAllowed);
+        assertThat(violations).as(
+                "Entity return type violations in module %s (expected exactly: %d, found: %d). "
+                        + "Self-enforcing ratchet: if you reduce violations, lower this override; if you add a new violation, fix it instead of inflating the override. "
+                        + "TODO: This number should be reduced to 0 by using DTOs instead of entities. " + "See the database documentation for guidelines on DTO usage.",
+                getModulePackage(), maxAllowed, violations.size()).hasSize(maxAllowed);
     }
 
     /**
@@ -225,10 +226,11 @@ public abstract class AbstractModuleEntityUsageArchitectureTest extends Abstract
         classes().that().resideInAPackage(getModuleWithSubpackage()).and().areAnnotatedWith(RestController.class).should(condition).allowEmptyShould(true).check(productionClasses);
 
         int maxAllowed = getMaxEntityInputViolations();
-        assertThat(violations)
-                .as("Entity input violations in module %s (max allowed: %d, found: %d). " + "TODO: This number should be reduced to 0 by using DTOs instead of entities. "
-                        + "See the database documentation for guidelines on DTO usage.", getModulePackage(), maxAllowed, violations.size())
-                .hasSizeLessThanOrEqualTo(maxAllowed);
+        assertThat(violations).as(
+                "Entity input violations in module %s (expected exactly: %d, found: %d). "
+                        + "Self-enforcing ratchet: if you reduce violations, lower this override; if you add a new violation, fix it instead of inflating the override. "
+                        + "TODO: This number should be reduced to 0 by using DTOs instead of entities. " + "See the database documentation for guidelines on DTO usage.",
+                getModulePackage(), maxAllowed, violations.size()).hasSize(maxAllowed);
     }
 
     /**
@@ -290,9 +292,11 @@ public abstract class AbstractModuleEntityUsageArchitectureTest extends Abstract
 
         int maxAllowed = getMaxDtoEntityFieldViolations();
         assertThat(violations).as(
-                "DTO entity field violations in module %s (max allowed: %d, found: %d). " + "TODO: This number should be reduced to 0 by removing entity references from DTOs. "
+                "DTO entity field violations in module %s (expected exactly: %d, found: %d). "
+                        + "Self-enforcing ratchet: if you reduce violations, lower this override; if you add a new violation, fix it instead of inflating the override. "
+                        + "TODO: This number should be reduced to 0 by removing entity references from DTOs. "
                         + "DTOs should only contain primitive types, date/time types, enums, and other DTOs. " + "See the database documentation for guidelines on DTO usage.",
-                getModulePackage(), maxAllowed, violations.size()).hasSizeLessThanOrEqualTo(maxAllowed);
+                getModulePackage(), maxAllowed, violations.size()).hasSize(maxAllowed);
     }
 
     /**

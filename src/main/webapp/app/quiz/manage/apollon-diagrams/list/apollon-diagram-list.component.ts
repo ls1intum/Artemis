@@ -8,8 +8,8 @@ import { ApollonDiagramCreateFormComponent } from 'app/quiz/manage/apollon-diagr
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
 import { SortService } from 'app/shared/service/sort.service';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { Course } from 'app/course/shared/entities/course.model';
 import { faPlus, faSort, faTimes, faX } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { UMLDiagramType } from '@tumaet/apollon';

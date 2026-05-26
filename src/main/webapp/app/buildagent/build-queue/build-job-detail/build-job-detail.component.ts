@@ -14,7 +14,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgClass } from '@angular/common';
 import { ResultComponent } from 'app/exercise/result/result.component';
-import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
+import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { downloadFile } from 'app/shared/util/download.util';
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';

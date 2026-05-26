@@ -1,10 +1,10 @@
 import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { DoughnutChartType } from 'app/core/course/manage/detail/course-detail.component';
+import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Color, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
