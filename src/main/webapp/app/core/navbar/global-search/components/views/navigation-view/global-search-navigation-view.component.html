@@ -1,10 +1,10 @@
 <!-- Iris inline answer card -->
-@if (irisEnabled) {
+@if (irisEnabled()) {
     <jhi-global-search-iris-answer [searchQuery]="searchQuery()" />
 }
 
 <!-- Action button: Search Lecture Content (visible when iris enabled and no filter active) -->
-@if (irisEnabled && showLectureButton()) {
+@if (irisEnabled() && showLectureButton()) {
     <div #selectableItem>
         <jhi-global-search-action-item
             [title]="'global.search.actions.lectureSearchTitle' | artemisTranslate"
