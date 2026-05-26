@@ -117,14 +117,21 @@ public class PlagiarismPostService extends PostingService {
 
         parseUserMentions(course, request.content());
 
-        boolean hasContentChanged = !Objects.equals(existingPost.getContent(), request.content());
+        boolean hasContentChanged = request.content() != null && !Objects.equals(existingPost.getContent(), request.content());
         if (hasContentChanged) {
             existingPost.setUpdatedDate(ZonedDateTime.now());
         }
 
-        // update: allow overwriting of values only for depicted fields if the user is at least an INSTRUCTOR
-        existingPost.setTitle(request.title());
-        existingPost.setContent(request.content());
+        // Partial-update semantics: only overwrite a field when the client explicitly sent a non-null value.
+        // Omitting `title` from the JSON body leaves the existing title untouched; sending `"title": null` is
+        // equivalent to omission here. Use a sentinel field on the DTO if a future caller needs to explicitly
+        // clear the title.
+        if (request.title() != null) {
+            existingPost.setTitle(request.title());
+        }
+        if (request.content() != null) {
+            existingPost.setContent(request.content());
+        }
 
         Post updatedPost = postRepository.save(existingPost);
 

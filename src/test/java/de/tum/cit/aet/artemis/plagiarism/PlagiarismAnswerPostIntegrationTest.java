@@ -157,7 +157,7 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     // UPDATE
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER ")
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testEditAnswerPost_asStudent_Forbidden() throws Exception {
         // update post of student1 (index 0)--> FORBIDDEN
         AnswerPost answerPostToUpdate = existingAnswerPosts.getFirst();

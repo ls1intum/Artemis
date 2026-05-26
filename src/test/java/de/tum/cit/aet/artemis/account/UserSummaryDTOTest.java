@@ -16,7 +16,11 @@ class UserSummaryDTOTest {
     }
 
     @Test
-    void fromCopiesAllVisibleFields() {
+    void fromCopiesIdNameAndImageUrlButOmitsLoginFirstNameLastName() {
+        // login, firstName, lastName, email, registrationNumber are intentionally not record components — they
+        // were not in the pre-refactor wire shape (@JsonIncludeProperties({"id","name","imageUrl","bot"})) on
+        // Posting.author, and exposing them now would widen the data-minimization guarantee the existing tests
+        // (assertSensitiveInformationHidden) rely on.
         User user = new User(42L, "ada.lovelace", "Ada", "Lovelace", "en", "ada@example.org");
         user.setImageUrl("/images/ada.png");
 
@@ -24,9 +28,7 @@ class UserSummaryDTOTest {
 
         assertThat(summary).isNotNull();
         assertThat(summary.id()).isEqualTo(42L);
-        assertThat(summary.login()).isEqualTo("ada.lovelace");
-        assertThat(summary.firstName()).isEqualTo("Ada");
-        assertThat(summary.lastName()).isEqualTo("Lovelace");
+        // getName() composes first + last
         assertThat(summary.name()).isEqualTo("Ada Lovelace");
         assertThat(summary.imageUrl()).isEqualTo("/images/ada.png");
         assertThat(summary.bot()).isFalse();
@@ -41,7 +43,6 @@ class UserSummaryDTOTest {
 
         assertThat(summary).isNotNull();
         assertThat(summary.name()).isEqualTo("Ada");
-        assertThat(summary.lastName()).isNull();
     }
 
     @Test

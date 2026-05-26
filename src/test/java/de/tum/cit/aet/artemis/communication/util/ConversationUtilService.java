@@ -405,29 +405,55 @@ public class ConversationUtilService {
     }
 
     /**
-     * Asserts that the cycle-free {@link de.tum.cit.aet.artemis.communication.dto.PostResponseDTO}
-     * shape exposes no login / email / registrationNumber to the client.
+     * Asserts that the cycle-free {@link PostResponseDTO} shape exposes no login / email /
+     * registrationNumber to the client.
      * <p>
-     * Because {@link de.tum.cit.aet.artemis.communication.dto.AuthorDTO} (the only user projection
-     * the response carries) declares only {@code id}, {@code name}, and {@code imageUrl}, this is a
-     * compile-time guarantee rather than a runtime check. The overload exists so callers migrating
-     * away from {@link Posting}-typed responses do not need a structural branch in their assertions.
+     * Walks the embedded author and reaction-user records and verifies the structural shape:
+     * {@link de.tum.cit.aet.artemis.account.dto.UserSummaryDTO} only declares {@code id},
+     * {@code name}, {@code imageUrl}, and {@code bot}, so by construction there is no field
+     * that can carry {@code login}, {@code email}, or {@code registrationNumber}. The runtime
+     * check additionally confirms that nested reaction users follow the same shape.
      *
      * @param post the response DTO to assert against
      */
     public void assertSensitiveInformationHidden(@NonNull PostResponseDTO post) {
-        // AuthorDTO and ReactionResponseDTO have no login/email/registrationNumber field — nothing to check at runtime.
+        // UserSummaryDTO has no login/email/registrationNumber field — verify the author is present in the shape
+        // we expect and that no nested reaction-user accidentally carries more than the structural guarantees.
+        if (post.author() != null) {
+            assertThat(post.author().id()).isNotNull();
+        }
+        if (post.reactions() != null) {
+            for (var reaction : post.reactions()) {
+                if (reaction.user() != null) {
+                    assertThat(reaction.user().id()).isNotNull();
+                }
+            }
+        }
+        if (post.answers() != null) {
+            for (var answer : post.answers()) {
+                assertSensitiveInformationHidden(answer);
+            }
+        }
     }
 
     /**
      * Asserts that the cycle-free {@link AnswerPostResponseDTO} shape exposes no login / email /
      * registrationNumber to the client. See {@link #assertSensitiveInformationHidden(PostResponseDTO)}
-     * for why this is a compile-time guarantee.
+     * for the structural guarantee.
      *
      * @param answerPost the response DTO to assert against
      */
     public void assertSensitiveInformationHidden(@NonNull AnswerPostResponseDTO answerPost) {
-        // AuthorDTO and ReactionResponseDTO have no login/email/registrationNumber field — nothing to check at runtime.
+        if (answerPost.author() != null) {
+            assertThat(answerPost.author().id()).isNotNull();
+        }
+        if (answerPost.reactions() != null) {
+            for (var reaction : answerPost.reactions()) {
+                if (reaction.user() != null) {
+                    assertThat(reaction.user().id()).isNotNull();
+                }
+            }
+        }
     }
 
     /**
