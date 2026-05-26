@@ -52,8 +52,8 @@ export class CourseManagementPage {
         // hydrated asynchronously after navigation, so the bare .click() races the render.
         const link = this.getCourse(courseID).locator('#course-card-open-exercises');
         await link.waitFor({ state: 'visible', timeout: 30_000 });
-        await link.click();
-        await this.page.waitForURL('**/exercises**');
+        await link.scrollIntoViewIfNeeded();
+        await Promise.all([this.page.waitForURL('**/exercises**'), link.click()]);
     }
 
     /**

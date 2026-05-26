@@ -13,7 +13,7 @@ import { ExerciseAssessmentDashboardPage } from '../../support/pageobjects/asses
 import { StudentAssessmentPage } from '../../support/pageobjects/assessment/StudentAssessmentPage';
 import { ExamAssessmentPage } from '../../support/pageobjects/assessment/ExamAssessmentPage';
 import { test } from '../../support/fixtures';
-import { generateUUID, newBrowserPage, prepareExam, startAssessing, waitForExamEnd } from '../../support/utils';
+import { generateUUID, newBrowserPage, prepareExam, startAssessing, waitForExamBuildAndTestAfterDueDate, waitForExamEnd } from '../../support/utils';
 import { EXAM_DASHBOARD_TIMEOUT } from '../../support/timeouts';
 import examStatisticsSample from '../../fixtures/exam/statistics.json';
 import { ExamScoresPage } from '../../support/pageobjects/exam/ExamScoresPage';
@@ -30,6 +30,8 @@ test.beforeAll('Get student name', async ({ browser }) => {
 
 test.describe('Exam assessment', () => {
     test.describe.serial('Programming exercise assessment', { tag: '@slow' }, () => {
+        // Preparing an exam and initial participation can exceed 90s on loaded local CI-like runs.
+        test.describe.configure({ timeout: 180_000 });
         let exam: Exam;
         let examEnd: Dayjs;
 
@@ -52,6 +54,7 @@ test.describe('Exam assessment', () => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
             await waitForExamEnd(examEnd, page);
+            await waitForExamBuildAndTestAfterDueDate(exam, page);
             await login(tutor);
             await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
             await examAssessment.addNewFeedback(2, 'Good job');

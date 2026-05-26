@@ -83,6 +83,7 @@ export class ExerciseAPIRequests {
         scaMaxPenalty?: number | undefined;
         releaseDate?: dayjs.Dayjs;
         dueDate?: dayjs.Dayjs;
+        buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
         title?: string;
         programmingShortName?: string;
         programmingLanguage?: ProgrammingLanguage;
@@ -99,6 +100,7 @@ export class ExerciseAPIRequests {
             scaMaxPenalty = undefined,
             releaseDate = dayjs(),
             dueDate = dayjs().add(1, 'day'),
+            buildAndTestStudentSubmissionsAfterDueDate,
             title = 'Programming ' + generateUUID(),
             programmingShortName = 'programming' + generateUUID(),
             programmingLanguage = ProgrammingLanguage.JAVA,
@@ -136,6 +138,9 @@ export class ExerciseAPIRequests {
             exercise.releaseDate = releaseDate;
             exercise.dueDate = dueDate;
             exercise.assessmentDueDate = assessmentDate;
+        }
+        if (buildAndTestStudentSubmissionsAfterDueDate) {
+            exercise.buildAndTestStudentSubmissionsAfterDueDate = buildAndTestStudentSubmissionsAfterDueDate;
         }
 
         if (scaMaxPenalty) {

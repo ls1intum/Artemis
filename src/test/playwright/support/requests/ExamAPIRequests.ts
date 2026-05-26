@@ -107,6 +107,10 @@ export class ExamAPIRequests {
      * @param exam the exam object
      * */
     async deleteExam(exam: Exam) {
+        // beforeAll failures may leave exam partially initialized; teardown should stay best-effort.
+        if (!exam?.id || !exam.course?.id) {
+            return;
+        }
         await this.page.request.delete(`api/exam/courses/${exam.course!.id}/exams/${exam.id}`);
     }
 

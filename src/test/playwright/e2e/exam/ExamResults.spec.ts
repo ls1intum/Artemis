@@ -3,7 +3,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Commands } from '../../support/commands';
 import { admin, instructor, studentOne, tutor } from '../../support/users';
 import dayjs, { Dayjs } from 'dayjs';
-import { generateUUID } from '../../support/utils';
+import { generateUUID, waitForExamBuildAndTestAfterDueDate } from '../../support/utils';
 import { Exercise, ExerciseType, ProgrammingLanguage } from '../../support/constants';
 import { ExamAssessmentPage } from '../../support/pageobjects/assessment/ExamAssessmentPage';
 import { ModelingExerciseAssessmentEditor } from '../../support/pageobjects/assessment/ModelingExerciseAssessmentEditor';
@@ -64,6 +64,7 @@ test.describe.serial('Exam Results', { tag: '@slow' }, () => {
         exercises['programming'] = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
             submission: cPartiallySuccessfulSubmission,
             programmingLanguage: ProgrammingLanguage.C,
+            skipBuildResultCheck: true,
         });
         exercises['quiz'] = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 });
         exercises['modeling'] = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING);
@@ -124,6 +125,7 @@ test.describe.serial('Exam Results', { tag: '@slow' }, () => {
             const timeToWait = graceEnd.diff(dayjs(), 'ms') + 5000;
             await page.waitForTimeout(timeToWait);
         }
+        await waitForExamBuildAndTestAfterDueDate(exam, page);
 
         const examAssessment = new ExamAssessmentPage(page);
         const modelingExerciseAssessment = new ModelingExerciseAssessmentEditor(page);
