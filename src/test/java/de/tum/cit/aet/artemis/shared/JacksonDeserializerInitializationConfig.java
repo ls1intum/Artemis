@@ -193,7 +193,7 @@ public class JacksonDeserializerInitializationConfig {
      * built lazily on first deserialization, after priming has completed and released the lock.
      * The refactor's fix is to route every Jackson-deserialized surface through the DTOs above;
      * any caller still deserializing the entity types directly will hit the race and should be
-     * migrated.
+     * migrated. (Tutorial-group list endpoint migration is tracked in PR&nbsp;#12687.)
      *
      * @param tf the Jackson {@link TypeFactory} used to build parameterised collection types
      */
