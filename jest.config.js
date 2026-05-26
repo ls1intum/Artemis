@@ -102,6 +102,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/lecture/**', // lecture module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/lti/**', // lti module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/modeling/**', // modeling module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/notification/**', // notification module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/openapi/**', // ignore openapi files because they are generated
         '!<rootDir>/src/main/webapp/app/quiz/**', // quiz module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/text/**', // text module uses Vitest (see vitest.config.ts)
