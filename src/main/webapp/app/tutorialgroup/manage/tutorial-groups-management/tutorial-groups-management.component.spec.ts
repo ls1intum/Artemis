@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DebugElement, getDebugNode } from '@angular/core';
+import { DebugElement, EmbeddedViewRef, getDebugNode } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockProvider } from 'ng-mocks';
@@ -50,6 +50,10 @@ describe('TutorialGroupsManagementComponent', () => {
 
     const router = new MockRouter();
 
+    // Embedded views created by renderTitleBarActions() are tracked so they can be destroyed after each test,
+    // preventing leaked component instances and subscriptions across tests.
+    let titleBarActionViews: EmbeddedViewRef<unknown>[] = [];
+
     /**
      * The Holidays / Create / More actions (including the import and export buttons) are projected into the
      * shared course title bar via the `*titleBarActions` directive, so they are not part of the component's own
@@ -59,6 +63,7 @@ describe('TutorialGroupsManagementComponent', () => {
     function renderTitleBarActions(): DebugElement {
         const actionsTemplate = TestBed.inject(CourseTitleBarService).actionsTemplate();
         const view = actionsTemplate!.createEmbeddedView({});
+        titleBarActionViews.push(view);
         view.detectChanges();
         return getDebugNode(view.rootNodes[0]) as DebugElement;
     }
@@ -110,6 +115,8 @@ describe('TutorialGroupsManagementComponent', () => {
     });
 
     afterEach(() => {
+        titleBarActionViews.forEach((view) => view.destroy());
+        titleBarActionViews = [];
         fixture.destroy();
         vi.restoreAllMocks();
     });
