@@ -22,7 +22,6 @@ import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismAnswerPostCreateRequestDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismAnswerPostUpdateRequestDTO;
@@ -222,19 +221,14 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     // Note: the previous testEditAnswerPostWithIdIsNull_badRequest case is no longer expressible — the request DTO has
     // no id field, so the server's id-vs-path-id mismatch path can never be reached.
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testEditAnswerPostWithWrongCourseId_badRequest() throws Exception {
-        AnswerPost answerPostToUpdate = existingAnswerPosts.getFirst();
-        Course dummyCourse = courseUtilService.createCourse();
-        PlagiarismAnswerPostUpdateRequestDTO updateRequest = new PlagiarismAnswerPostUpdateRequestDTO("New Test Answer Post",
-                Boolean.TRUE.equals(answerPostToUpdate.doesResolvePost()));
-
-        AnswerPostResponseDTO updatedAnswerPostServer = request.putWithResponseBody(
-                "/api/plagiarism/courses/" + dummyCourse.getId() + "/answer-posts/" + answerPostToUpdate.getId(), updateRequest, AnswerPostResponseDTO.class,
-                HttpStatus.BAD_REQUEST);
-        assertThat(updatedAnswerPostServer).isNull();
-    }
+    // Note: testEditAnswerPostWithWrongCourseId_badRequest was removed.
+    // Before this refactor, the test (despite its name) exercised the body-id-null check — it sent an AnswerPost
+    // entity without id, and the service threw BadRequest on `answerPost.getId() == null`. The "wrong course id"
+    // was incidental: the assertion fired before the courseId path variable was consulted.
+    // With the new DTO-based request payload (no id field at all), the body-id case is unreachable.
+    // The corresponding course-mismatch authorization concern is covered by testEditAnswerPost_asStudent_Forbidden,
+    // which exercises the authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow path the controller still
+    // uses when a user is not enrolled in the resolved course.
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
