@@ -35,9 +35,9 @@ import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationApiType;
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationDeviceConfigurationId;
-import de.tum.cit.aet.artemis.notification.dto.PushNotificationRegisterBody;
+import de.tum.cit.aet.artemis.notification.dto.PushNotificationRegisterBodyDTO;
 import de.tum.cit.aet.artemis.notification.dto.PushNotificationRegisterDTO;
-import de.tum.cit.aet.artemis.notification.dto.PushNotificationUnregisterRequest;
+import de.tum.cit.aet.artemis.notification.dto.PushNotificationUnregisterRequestDTO;
 import de.tum.cit.aet.artemis.notification.repository.PushNotificationDeviceConfigurationRepository;
 import io.jsonwebtoken.ExpiredJwtException;
 
@@ -87,7 +87,7 @@ public class PushNotificationResource {
      */
     @PostMapping("register")
     @EnforceAtLeastStudent
-    public ResponseEntity<PushNotificationRegisterDTO> register(@Valid @RequestBody PushNotificationRegisterBody pushNotificationRegisterBody) {
+    public ResponseEntity<PushNotificationRegisterDTO> register(@Valid @RequestBody PushNotificationRegisterBodyDTO pushNotificationRegisterBody) {
         var newKey = aesKeyGenerator.generateKey();
 
         String token = getToken();
@@ -119,7 +119,7 @@ public class PushNotificationResource {
         return ResponseEntity.ok(new PushNotificationRegisterDTO(encodedKey, Constants.PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM));
     }
 
-    private PushNotificationDeviceConfiguration getPushNotificationDeviceConfiguration(PushNotificationRegisterBody pushNotificationRegisterBody, Date expirationDate,
+    private PushNotificationDeviceConfiguration getPushNotificationDeviceConfiguration(PushNotificationRegisterBodyDTO pushNotificationRegisterBody, Date expirationDate,
             SecretKey newKey) {
         PushNotificationApiType apiType = pushNotificationRegisterBody.apiType() != null ? pushNotificationRegisterBody.apiType() : PushNotificationApiType.DEFAULT;
 
@@ -139,7 +139,7 @@ public class PushNotificationResource {
      */
     @DeleteMapping("unregister")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> unregister(@Valid @RequestBody PushNotificationUnregisterRequest body) {
+    public ResponseEntity<Void> unregister(@Valid @RequestBody PushNotificationUnregisterRequestDTO body) {
         final var deviceId = new PushNotificationDeviceConfigurationId(userRepository.getUser(), body.token(), body.deviceType());
 
         if (!pushNotificationDeviceConfigurationRepository.existsById(deviceId)) {

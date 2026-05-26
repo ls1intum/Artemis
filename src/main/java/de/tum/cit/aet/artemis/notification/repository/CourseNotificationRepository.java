@@ -38,7 +38,7 @@ public interface CourseNotificationRepository extends ArtemisJpaRepository<Cours
      * @return list of course notifications that match the criteria
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.communication.dto.CourseNotificationWithStatusDTO(cn, us)
+            SELECT new de.tum.cit.aet.artemis.notification.dto.CourseNotificationWithStatusDTO(cn, us)
             FROM CourseNotification cn
                 JOIN cn.userStatuses us
             WHERE us.user.id = :userId
