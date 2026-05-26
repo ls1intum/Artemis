@@ -162,6 +162,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/lecture/', // lecture module uses Vitest
         '<rootDir>/src/main/webapp/app/lti/', // lti module uses Vitest
         '<rootDir>/src/main/webapp/app/modeling/', // modeling module uses Vitest
+        '<rootDir>/src/main/webapp/app/notification/', // notification module uses Vitest
         '<rootDir>/src/main/webapp/app/openapi/',
         '<rootDir>/src/main/webapp/app/quiz/', // quiz module uses Vitest
         '<rootDir>/src/main/webapp/app/text/', // text module uses Vitest
@@ -211,10 +212,10 @@ module.exports = {
     // Re-tune when migration completes.
     coverageThreshold: {
         global: {
-            statements: 83,
-            branches: 73,
-            functions: 72.5,
-            lines: 84,
+            statements: 81,
+            branches: 71,
+            functions: 71,
+            lines: 82,
         },
     },
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
@@ -259,6 +260,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/lecture/', // lecture module
         '<rootDir>/src/main/webapp/app/lti/', // lti module
         '<rootDir>/src/main/webapp/app/modeling/', // modeling module
+        '<rootDir>/src/main/webapp/app/notification/', // notification module
         '<rootDir>/src/main/webapp/app/quiz/', // quiz module
         '<rootDir>/src/main/webapp/app/text/', // text module
         '<rootDir>/src/main/webapp/app/tutorialgroup/', // tutorialgroup module
