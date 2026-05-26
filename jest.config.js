@@ -147,11 +147,15 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**', // programming exercise update timeline uses Vitest (see vitest.config.ts)
         '<rootDir>/src/main/webapp/**/*.ts',
     ],
+    // Each entry below excludes a module that has been migrated to Vitest.
     coveragePathIgnorePatterns: [
+        '<rootDir>/src/main/webapp/app/account/', // account module uses Vitest
+        '<rootDir>/src/main/webapp/app/admin/', // admin module uses Vitest
         '<rootDir>/src/main/webapp/app/assessment/', // assessment module uses Vitest
         '<rootDir>/src/main/webapp/app/buildagent/', // buildagent module uses Vitest
         '<rootDir>/src/main/webapp/app/communication/', // communication module uses Vitest
         '<rootDir>/src/main/webapp/app/core/', // core module uses Vitest
+        '<rootDir>/src/main/webapp/app/course/', // course module uses Vitest
         '<rootDir>/src/main/webapp/app/calendar/', // calendar module uses Vitest
         '<rootDir>/src/main/webapp/app/fileupload/', // fileupload module uses Vitest
         '<rootDir>/src/main/webapp/app/iris/', // iris module uses Vitest
@@ -243,10 +247,13 @@ module.exports = {
     modulePathIgnorePatterns: ['<rootDir>/src/main/resources/templates/', '<rootDir>/build/'],
     // Exclude modules migrated to Vitest (see vitest.config.ts)
     testPathIgnorePatterns: [
+        '<rootDir>/src/main/webapp/app/account/', // account module
+        '<rootDir>/src/main/webapp/app/admin/', // admin module
         '<rootDir>/src/main/webapp/app/assessment/', // assessment module
         '<rootDir>/src/main/webapp/app/buildagent/', // buildagent module
         '<rootDir>/src/main/webapp/app/communication/', // communication module
         '<rootDir>/src/main/webapp/app/core/', // core module
+        '<rootDir>/src/main/webapp/app/course/', // course module
         '<rootDir>/src/main/webapp/app/calendar/', // calendar module
         '<rootDir>/src/main/webapp/app/fileupload/', // fileupload module
         '<rootDir>/src/main/webapp/app/iris/', // iris module

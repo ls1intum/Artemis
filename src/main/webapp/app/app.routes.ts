@@ -51,7 +51,7 @@ const routes: Routes = [
     },
     {
         path: '',
-        loadChildren: () => import('app/core/user/settings/user-settings.route').then((m) => m.routes),
+        loadChildren: () => import('app/account/user/settings/user-settings.route').then((m) => m.routes),
         data: {
             usesModuleBackground: true,
         },
@@ -63,7 +63,7 @@ const routes: Routes = [
             usesModuleBackground: true,
         },
         canActivate: [UserRouteAccessService, PasskeyAuthenticationGuard],
-        loadChildren: () => import('app/core/admin/admin.routes'),
+        loadChildren: () => import('app/admin/admin.routes'),
     },
     {
         path: 'privacy',
@@ -105,7 +105,7 @@ const routes: Routes = [
     },
     {
         path: 'course-requests',
-        loadComponent: () => import('app/core/course/request/course-request.component').then((m) => m.CourseRequestComponent),
+        loadComponent: () => import('app/course/request/course-request.component').then((m) => m.CourseRequestComponent),
         data: {
             authorities: IS_AT_LEAST_STUDENT,
             pageTitle: 'artemisApp.courseRequest.title',
@@ -151,7 +151,7 @@ const routes: Routes = [
             {
                 path: 'activate',
                 pathMatch: 'full',
-                loadComponent: () => import('app/core/account/activate/activate.component').then((m) => m.ActivateComponent),
+                loadComponent: () => import('app/account/activate/activate.component').then((m) => m.ActivateComponent),
                 data: {
                     pageTitle: 'activate.title',
                 },
@@ -159,7 +159,7 @@ const routes: Routes = [
             {
                 path: 'password',
                 pathMatch: 'full',
-                loadComponent: () => import('app/core/account/password/password.component').then((m) => m.PasswordComponent),
+                loadComponent: () => import('app/account/password/password.component').then((m) => m.PasswordComponent),
                 data: {
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'global.menu.account.password',
@@ -169,7 +169,7 @@ const routes: Routes = [
             {
                 path: 'reset/finish',
                 pathMatch: 'full',
-                loadComponent: () => import('app/core/account/password-reset/finish/password-reset-finish.component').then((m) => m.PasswordResetFinishComponent),
+                loadComponent: () => import('app/account/password-reset/finish/password-reset-finish.component').then((m) => m.PasswordResetFinishComponent),
                 data: {
                     pageTitle: 'global.menu.account.password',
                 },
@@ -177,7 +177,7 @@ const routes: Routes = [
             {
                 path: 'reset/request',
                 pathMatch: 'full',
-                loadComponent: () => import('app/core/account/password-reset/init/password-reset-init.component').then((m) => m.PasswordResetInitComponent),
+                loadComponent: () => import('app/account/password-reset/init/password-reset-init.component').then((m) => m.PasswordResetInitComponent),
                 data: {
                     pageTitle: 'global.menu.account.password',
                 },
@@ -185,7 +185,7 @@ const routes: Routes = [
             {
                 path: 'register',
                 pathMatch: 'full',
-                loadComponent: () => import('app/core/account/register/register.component').then((m) => m.RegisterComponent),
+                loadComponent: () => import('app/account/register/register.component').then((m) => m.RegisterComponent),
                 data: {
                     pageTitle: 'register.title',
                 },
@@ -193,7 +193,7 @@ const routes: Routes = [
             {
                 path: 'settings',
                 pathMatch: 'full',
-                loadComponent: () => import('app/core/account/settings/settings.component').then((m) => m.SettingsComponent),
+                loadComponent: () => import('app/account/settings/settings.component').then((m) => m.SettingsComponent),
                 data: {
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'global.menu.account.settings',
@@ -208,7 +208,7 @@ const routes: Routes = [
     // ===== COURSE MANAGEMENT =====
     {
         path: 'course-management',
-        loadChildren: () => import('./core/course/manage/course-management.route').then((m) => m.courseManagementRoutes),
+        loadChildren: () => import('./course/manage/course-management.route').then((m) => m.courseManagementRoutes),
         data: {
             usesModuleBackground: true,
         },
@@ -220,7 +220,7 @@ const routes: Routes = [
 
     {
         path: 'courses',
-        loadChildren: () => import('app/core/course/overview/courses.route').then((m) => m.courseRoutes),
+        loadChildren: () => import('app/course/overview/courses.route').then((m) => m.courseRoutes),
     },
     // ===== GRADING SYSTEM =====
     {
@@ -234,12 +234,12 @@ const routes: Routes = [
     {
         path: 'courses/:courseId/exercises/:exerciseId/problem-statement',
         pathMatch: 'full',
-        loadComponent: () => import('app/core/course/overview/exercise-details/problem-statement/problem-statement.component').then((m) => m.ProblemStatementComponent),
+        loadComponent: () => import('app/course/overview/exercise-details/problem-statement/problem-statement.component').then((m) => m.ProblemStatementComponent),
     },
     {
         pathMatch: 'full',
         path: 'courses/:courseId/exercises/:exerciseId/problem-statement/:participationId',
-        loadComponent: () => import('app/core/course/overview/exercise-details/problem-statement/problem-statement.component').then((m) => m.ProblemStatementComponent),
+        loadComponent: () => import('app/course/overview/exercise-details/problem-statement/problem-statement.component').then((m) => m.ProblemStatementComponent),
     },
     {
         path: 'courses/:courseId/exercises/:exerciseId/participations/:participationId/results/:resultId/feedback',

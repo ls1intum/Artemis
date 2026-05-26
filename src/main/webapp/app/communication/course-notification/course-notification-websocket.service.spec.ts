@@ -5,13 +5,13 @@ import { CourseNotificationWebsocketService } from 'app/communication/course-not
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { BehaviorSubject, Subject, firstValueFrom } from 'rxjs';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { CourseNotification } from 'app/communication/shared/entities/course-notification/course-notification';
 import { CourseNotificationCategory } from 'app/communication/shared/entities/course-notification/course-notification-category';
 import { CourseNotificationViewingStatus } from 'app/communication/shared/entities/course-notification/course-notification-viewing-status';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 
 describe('CourseNotificationWebsocketService', () => {
     setupTestBed({ zoneless: true });

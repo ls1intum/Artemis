@@ -21,9 +21,9 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.core.dto.osv.OsvBatchResponseDTO;
-import de.tum.cit.aet.artemis.core.dto.osv.OsvVulnerabilityDTO;
-import de.tum.cit.aet.artemis.core.dto.osv.OsvVulnerabilityResultDTO;
+import de.tum.cit.aet.artemis.admin.dto.osv.OsvBatchResponseDTO;
+import de.tum.cit.aet.artemis.admin.dto.osv.OsvVulnerabilityDTO;
+import de.tum.cit.aet.artemis.admin.dto.osv.OsvVulnerabilityResultDTO;
 
 /**
  * Mock provider for OSV (Open Source Vulnerabilities) API requests.
