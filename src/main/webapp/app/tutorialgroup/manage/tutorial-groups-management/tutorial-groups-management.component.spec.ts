@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { DebugElement, getDebugNode } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockProvider } from 'ng-mocks';
@@ -26,6 +27,7 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 import '@angular/localize/init';
 import { tutorialGroupConfigurationDtoFromEntity } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 
 interface TutorialGroupApiServiceMock {
     getTutorialGroupsForCourse: ReturnType<typeof vi.fn>;
@@ -47,6 +49,19 @@ describe('TutorialGroupsManagementComponent', () => {
     let getOneOfCourseSpy: ReturnType<typeof vi.spyOn>;
 
     const router = new MockRouter();
+
+    /**
+     * The Holidays / Create / More actions (including the import and export buttons) are projected into the
+     * shared course title bar via the `*titleBarActions` directive, so they are not part of the component's own
+     * DOM. This renders the registered actions template the same way `jhi-course-title-bar` would, allowing the
+     * projected buttons to be queried.
+     */
+    function renderTitleBarActions(): DebugElement {
+        const actionsTemplate = TestBed.inject(CourseTitleBarService).actionsTemplate();
+        const view = actionsTemplate!.createEmbeddedView({});
+        view.detectChanges();
+        return getDebugNode(view.rootNodes[0]) as DebugElement;
+    }
 
     beforeEach(async () => {
         tutorialGroupApiServiceMock = {
@@ -120,7 +135,7 @@ describe('TutorialGroupsManagementComponent', () => {
         getOneOfCourseSpy.mockClear();
         expect(getOneOfCourseSpy).not.toHaveBeenCalled();
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).not.toHaveBeenCalled();
-        const tutorialGroupImportButtonComponent = fixture.debugElement.query(By.directive(TutorialGroupsImportButtonComponent)).componentInstance;
+        const tutorialGroupImportButtonComponent = renderTitleBarActions().query(By.directive(TutorialGroupsImportButtonComponent)).componentInstance;
         tutorialGroupImportButtonComponent.importFinished.emit();
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledOnce();
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1, 'response');
@@ -132,7 +147,7 @@ describe('TutorialGroupsManagementComponent', () => {
         getOneOfCourseSpy.mockClear();
         expect(getOneOfCourseSpy).not.toHaveBeenCalled();
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).not.toHaveBeenCalled();
-        const tutorialGroupExportButtonComponent = fixture.debugElement.query(By.directive(TutorialGroupsExportButtonComponent)).componentInstance;
+        const tutorialGroupExportButtonComponent = renderTitleBarActions().query(By.directive(TutorialGroupsExportButtonComponent)).componentInstance;
         tutorialGroupExportButtonComponent.exportFinished.emit();
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledOnce();
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1, 'response');
