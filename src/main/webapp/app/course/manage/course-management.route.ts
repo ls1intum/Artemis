@@ -234,8 +234,7 @@ export const courseManagementRoutes: Routes = [
                     },
                     {
                         path: 'members/:courseRoleSlug',
-                        loadComponent: () =>
-                            import('app/course/manage/course-group-membership/course-group-membership.component').then((m) => m.CourseGroupMembershipComponent),
+                        loadComponent: () => import('app/course/manage/course-group-membership/course-group-membership.component').then((m) => m.CourseGroupMembershipComponent),
                         data: {
                             authorities: IS_AT_LEAST_INSTRUCTOR,
                             pageTitle: 'artemisApp.userManagement.groups',

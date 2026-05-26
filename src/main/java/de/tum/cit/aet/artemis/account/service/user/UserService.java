@@ -52,7 +52,6 @@ import de.tum.cit.aet.artemis.communication.service.GlobalNotificationSettingSer
 import de.tum.cit.aet.artemis.communication.service.UserCourseNotificationStatusService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
@@ -67,6 +66,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.service.sshuserkeys.UserSshPublicKeyService;
