@@ -5,7 +5,7 @@ import { DifficultyLevel, IncludedInOverallScore } from 'app/exercise/shared/ent
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { CompetencyLinkDTO, GradingCriterionDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
-
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 /**
  * DTO for auxiliary repository
  */
@@ -67,6 +67,7 @@ export interface UpdateProgrammingExerciseDTO {
     startDate?: string;
     dueDate?: string;
     assessmentDueDate?: string;
+    assessmentType?: AssessmentType;
     exampleSolutionPublicationDate?: string;
 
     // Course/ExerciseGroup references (by ID)
@@ -187,6 +188,7 @@ export function toUpdateProgrammingExerciseDTO(exercise: ProgrammingExercise): U
         startDate: convertDateFromClient(exercise.startDate),
         dueDate: convertDateFromClient(exercise.dueDate),
         assessmentDueDate: convertDateFromClient(exercise.assessmentDueDate),
+        assessmentType: exercise.assessmentType,
         exampleSolutionPublicationDate: convertDateFromClient(exercise.exampleSolutionPublicationDate),
         courseId,
         exerciseGroupId,
