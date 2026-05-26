@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
-import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
@@ -125,8 +125,10 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         var post = this.postInConversation(chat.getId(), "student1");
         post.setIsSaved(false);
         // then
+        // The broadcast wraps the entity in a cycle-free PostBroadcastDTO (see PostingService.broadcastForPost);
+        // match by post id since record equality between PostResponseDTO and Post entity wouldn't hold.
         verify(websocketMessagingService, timeout(2000).times(3)).sendMessage(anyString(),
-                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(post)));
+                (Object) argThat(argument -> argument instanceof PostBroadcastDTO broadcast && post.getId().equals(broadcast.post().id())));
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.NEW_MESSAGE);
 
         // cleanup
