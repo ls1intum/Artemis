@@ -130,6 +130,8 @@ Organized by feature module:
 - `tutorialgroup/` - Tutorial group management
 - `globalsearch/` - Cross-entity search via Weaviate
 - `videosource/` - External video source integration (TUM Live)
+- `course/` - Course management, registration, archive, dashboard, statistics
+- `admin/` - Admin operations: data export, vulnerability scan, cleanup, telemetry, organization management, legal documents
 
 ### Client Web App (`src/main/webapp/app/`)
 - `core/` - Core services (HTTP, auth, guards)

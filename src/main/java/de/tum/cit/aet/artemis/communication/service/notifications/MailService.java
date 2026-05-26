@@ -17,9 +17,9 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.core.domain.DataExport;
+import de.tum.cit.aet.artemis.admin.domain.DataExport;
+import de.tum.cit.aet.artemis.admin.dto.ComponentVulnerabilitiesDTO;
 import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
-import de.tum.cit.aet.artemis.core.dto.ComponentVulnerabilitiesDTO;
 
 /**
  * Service for preparing and sending emails.

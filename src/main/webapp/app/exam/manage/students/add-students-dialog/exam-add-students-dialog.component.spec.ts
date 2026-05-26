@@ -1,8 +1,8 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { CourseGroup } from 'app/core/course/shared/entities/course.model';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseGroup } from 'app/course/shared/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { User } from 'app/account/user/user.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';

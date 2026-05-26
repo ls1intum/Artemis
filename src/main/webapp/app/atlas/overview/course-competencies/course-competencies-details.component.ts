@@ -21,8 +21,8 @@ import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/le
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import { Subscription, combineLatest } from 'rxjs';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { Course } from 'app/course/shared/entities/course.model';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -45,7 +45,7 @@ import { ScienceService } from 'app/shared/science/science.service';
 @Component({
     selector: 'jhi-course-competencies-details',
     templateUrl: './course-competencies-details.component.html',
-    styleUrls: ['../../../core/course/overview/course-overview/course-overview.scss'],
+    styleUrls: ['../../../course/overview/course-overview/course-overview.scss'],
     imports: [
         FireworksComponent,
         TranslateDirective,

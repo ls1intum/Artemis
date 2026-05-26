@@ -37,8 +37,8 @@ import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSetting
 import de.tum.cit.aet.artemis.communication.repository.MaintenanceEmailRecipientRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**

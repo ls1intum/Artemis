@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.ConductAgreement;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.ConductAgreementRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
  * Service Implementation for managing a user's agreement to a course's code of conduct.

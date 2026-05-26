@@ -13,7 +13,7 @@ import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercis
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
 import dayjs from 'dayjs/esm';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_APOLLON } from 'app/app.constants';

@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.communication.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationPageableDTO;
 import de.tum.cit.aet.artemis.communication.repository.CourseNotificationParameterRepository;
 import de.tum.cit.aet.artemis.communication.repository.CourseNotificationRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
  * Service that handles all course notification logic. Whenever you want to create a new notification use this service
