@@ -33,7 +33,15 @@ artemis:
         enabled: true
     lti:
         enabled: false
+    athena:
+        enabled: false # Set this to true to enable the Athena module for LLM-based feedback suggestions; requires the athena service to be reachable via artemis.athena.url
+    apollon:
+        enabled: false # Set this to true to enable the Apollon module for UML diagram PDF export; requires the apollon conversion service to be reachable via artemis.apollon.conversion-service-url
     user-management:
+        ldap:
+            enabled: false # Set this to true to enable LDAP-based user synchronization (artemis.user-management.ldap.url etc.)
+        saml2:
+            enabled: false # Set this to true to enable SAML2 single sign-on; requires the saml2 and spring.security.saml2 blocks (see application-saml2.yml.example)
         passkey:
             enabled: false # used by Constants.PASSKEY_ENABLED_PROPERTY_NAME
             require-for-administrator-features: false # if true, administrators must authenticate with passkey to access admin features

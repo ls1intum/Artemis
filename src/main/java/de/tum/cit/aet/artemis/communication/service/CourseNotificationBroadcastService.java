@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.communication.service;
 
 import java.util.List;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationDTO;
-import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
  * Interface for services that broadcast course notifications to users.

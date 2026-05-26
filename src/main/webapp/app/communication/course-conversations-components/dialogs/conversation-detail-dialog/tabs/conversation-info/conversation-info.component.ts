@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, computed, inject, input, output, signal }
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { getUserLabel } from 'app/communication/course-conversations-components/other/conversation.util';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Subject, debounceTime, distinctUntilChanged, filter, map, takeUntil } from 'rxjs';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';

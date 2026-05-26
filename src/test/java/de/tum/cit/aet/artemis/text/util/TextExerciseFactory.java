@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseFactory;
