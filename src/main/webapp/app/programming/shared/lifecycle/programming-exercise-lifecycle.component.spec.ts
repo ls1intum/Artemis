@@ -7,7 +7,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { QueryList, SimpleChange } from '@angular/core';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { expectElementToBeDisabled, expectElementToBeEnabled } from 'test/helpers/utils/general-test.utils';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Subject, of } from 'rxjs';
 import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -280,7 +280,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         comp.ngOnChanges({ exercise: { currentValue: newerExercise } as SimpleChange });
 
         expect(alertSpy).toHaveBeenCalledTimes(nthCall + 1);
-        expect(alertSpy).toHaveBeenNthCalledWith(++nthCall, 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate');
+        expect(alertSpy).toHaveBeenNthCalledWith(nthCall + 1, 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate');
     });
 
     it('should enable checkbox for complaints on automatic assessments for automatically assessed exam exercises', () => {

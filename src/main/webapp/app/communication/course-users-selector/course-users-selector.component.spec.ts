@@ -8,9 +8,9 @@ import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseUsersSelectorComponent, SearchRoleGroup } from 'app/communication/course-users-selector/course-users-selector.component';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { UserPublicInfoDTO } from 'app/account/user/user.model';
 
 import { TranslateModule } from '@ngx-translate/core';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
@@ -112,7 +112,7 @@ describe('CourseUsersSelectorComponent', () => {
             fixture.changeDetectorRef.detectChanges();
             expect(searchStub).toHaveBeenCalledOnce();
             expect(searchStub).toHaveBeenCalledWith(1, 'test', ['students', 'tutors', 'instructors']);
-            expectDropdownItems(fixture.nativeElement, ['MHMortimer of Sto Helit (mort)']);
+            expectDropdownItems(['MHMortimer of Sto Helit (mort)']);
             // selecting the user in the dropdown
             getDropdownButtons(fixture.debugElement)[0].triggerEventHandler('click', {});
             fixture.changeDetectorRef.detectChanges();
@@ -170,8 +170,9 @@ describe('CourseUsersSelectorComponent', () => {
         return Array.from(element.queryAll(By.css('button.dropdown-item')));
     }
 
-    function expectDropdownItems(nativeEl: HTMLElement, dropdownEntries: string[]): void {
-        const pages = nativeEl.querySelectorAll('button.dropdown-item');
+    function expectDropdownItems(dropdownEntries: string[]): void {
+        const completion = document.querySelector('ngb-typeahead-window');
+        const pages = completion!.querySelectorAll('button.dropdown-item');
         expect(pages).toHaveLength(dropdownEntries.length);
         for (let i = 0; i < dropdownEntries.length; i++) {
             const resultDef = dropdownEntries[i];

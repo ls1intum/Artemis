@@ -6,7 +6,7 @@ import { of, throwError } from 'rxjs';
 import { ProgrammingExerciseDetailComponent } from 'app/programming/manage/detail/programming-exercise-detail.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateModule } from '@ngx-translate/core';
 import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
@@ -493,6 +493,39 @@ describe('ProgrammingExerciseDetailComponent', () => {
         expect(dialog.summaryMessage()).toBe('Assigned this exercise to Recursion.');
         expect(dialog.appliedActions()).toHaveLength(1);
         expect(dialog.appliedActions()[0].type).toBe(AppliedActionType.Assign);
+    });
+
+    it('should show warning toast and dialog when orchestrator returns PARTIAL', async () => {
+        recreateFixtureWithAtlasModule();
+
+        const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+        const apiService = TestBed.inject(CompetencyOrchestrationApiService);
+        jest.spyOn(apiService, 'runForProgrammingExercise').mockResolvedValue({
+            status: CompetencyOrchestrationStatus.Partial,
+            summary: 'Orchestrator failed after applying 1 action(s).',
+            appliedActions: [
+                {
+                    type: AppliedActionType.Create,
+                    competencyId: 7,
+                    competencyTitle: 'Loops',
+                    detail: 'Created competency Loops',
+                    justification: 'Exercise teaches loops',
+                },
+            ],
+        });
+        comp.programmingExercise = buildInstructorExerciseForDialog();
+        await comp.triggerAtlasOrchestrator();
+        fixture.detectChanges();
+
+        expect(addAlertSpy).toHaveBeenCalledWith({
+            type: AlertType.WARNING,
+            message: 'Orchestrator failed after applying 1 action(s).',
+            disableTranslation: true,
+        });
+        const dialog = fixture.debugElement.query(By.directive(OrchestrationResultDialogComponent)).componentInstance as OrchestrationResultDialogComponent;
+        expect(dialog.visible()).toBeTrue();
+        expect(dialog.appliedActions()).toHaveLength(1);
+        expect(dialog.appliedActions()[0].type).toBe(AppliedActionType.Create);
     });
 
     it('should error when Atlas orchestrator returns FAILED', async () => {
