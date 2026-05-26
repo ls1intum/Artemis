@@ -111,12 +111,15 @@ export class CourseManagementAPIRequests {
      *
      * Treats 404 as success: the course is already gone (typically because a previous test or
      * fixture already deleted it), which is the desired post-condition for teardown. Other
-     * non-2xx statuses are retried briefly to absorb transient infrastructure noise.
+     * non-2xx statuses are retried briefly to absorb transient infrastructure noise. If the
+     * retry budget is exhausted without a 2xx or 404, throws so the teardown failure surfaces
+     * instead of being silently swallowed.
      *
-     * @param course the course
+     * @param course the course (may be undefined; call is a no-op in that case so callers can
+     *               unconditionally clean up describe-scoped variables without checking themselves)
      * @param admin the admin user
      */
-    async deleteCourse(course: Course, admin: UserCredentials) {
+    async deleteCourse(course: Course | undefined, admin: UserCredentials) {
         if (!course) {
             return;
         }
@@ -126,14 +129,19 @@ export class CourseManagementAPIRequests {
         // non-404 statuses retry; 404 short-circuits because "already gone" == cleanup done.
         const timeout = 5000;
         const startTime = Date.now();
+        let lastStatus: number | undefined;
+        let lastUrl: string | undefined;
         while (Date.now() - startTime < timeout) {
             const response = await this.page.request.delete(`${COURSE_ADMIN_BASE}/${course.id}`);
             if (response.ok() || response.status() === 404) {
                 return;
             }
-            console.log(`Retrying delete course request: status=${response.status()} url=${response.url()}`);
+            lastStatus = response.status();
+            lastUrl = response.url();
+            console.log(`Retrying delete course request: status=${lastStatus} url=${lastUrl}`);
             await this.page.waitForTimeout(500);
         }
+        throw new Error(`deleteCourse timed out after ${timeout}ms (last status=${lastStatus} url=${lastUrl}) — course id=${course.id} was not deleted`);
     }
 
     /**

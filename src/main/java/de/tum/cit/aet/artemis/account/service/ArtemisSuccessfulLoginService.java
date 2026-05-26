@@ -99,17 +99,21 @@ public class ArtemisSuccessfulLoginService {
      * Sends a login notification email to users when they successfully authenticate.
      *
      * <p>
-     * Runs asynchronously: every step inside this method (user lookup, notification-setting check,
-     * template rendering, SMTP send) executes on the async task executor rather than on the login
-     * request thread. That gives two properties we care about:
+     * Runs asynchronously: the user lookup, the notification-setting check, and the template-variable
+     * preparation all execute on the async task executor rather than on the login request thread. The
+     * subsequent {@link MailSendingService#buildAndSendAsync} call then schedules the template rendering
+     * and SMTP send on its own async task. None of these steps runs on the login thread.
+     * <p>
+     * This gives two properties:
      * <ul>
-     * <li>the login response is returned to the client without waiting for these reads / SMTP; and</li>
-     * <li>the JPA persistence context opened here does not overlap with whatever the client
-     * does next on the same connection pool — historically the source of intermittent
-     * constraint-violation flakes when an admin issues an immediate DELETE after login.</li>
+     * <li>the login response is returned to the client without waiting for the user lookup, the
+     * setting check, or the SMTP dispatch; and</li>
+     * <li>the JPA persistence context opened here does not overlap with whatever the client does
+     * next on the same connection pool — a defensive improvement that shrinks the post-login window
+     * during which subsequent requests could conceivably interact with this session's reads.</li>
      * </ul>
      * Because the method is async, callers cannot rely on completion before continuing — but no
-     * caller actually does (both call sites are fire-and-forget post-login notifications).
+     * caller actually does (all call sites are fire-and-forget post-login notifications).
      *
      * @param loginOrEmail         the username or email of the user who has successfully logged in
      * @param authenticationMethod the method used for authentication
