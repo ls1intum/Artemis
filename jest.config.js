@@ -109,6 +109,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/atlas/**', // atlas module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/table-view/**', // table view module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/components/buttons/**', // buttons module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/shared/components/unified-feedback/**', // unified-feedback component uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/manage/students/**', // exam manage students module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/overview/summary/exam-request-ai-feedback-button/**', // exam request AI feedback button uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/manage/student-exams/**', // exam manage student-exams module uses Vitest (see vitest.config.ts)
@@ -277,6 +278,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exam/shared/', // exam shared module (vitest)
         '<rootDir>/src/main/webapp/app/exam/overview/', // exam overview module (vitest)
         '<rootDir>/src/main/webapp/app/shared/components/buttons/', // shared/buttons components
+        '<rootDir>/src/main/webapp/app/shared/components/unified-feedback/', // unified-feedback component uses Vitest
         '<rootDir>/src/main/webapp/app/shared/table-view/', // shared/table-view component
         '<rootDir>/src/main/webapp/app/shared/feature-toggle/', // feature-toggle service (vitest)
         '<rootDir>/src/main/webapp/app/shared/sort/', // sort directives
