@@ -72,7 +72,11 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         PlagiarismAnswerPostCreateRequestDTO createRequest = new PlagiarismAnswerPostCreateRequestDTO(parentPost.getId(), userMention, false);
 
         if (!isUserMentionValid) {
-            request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", createRequest, PostResponseDTO.class, HttpStatus.BAD_REQUEST);
+            // Send the invalid-mention request to the plagiarism answer-post endpoint that the success branch
+            // below targets — otherwise BAD_REQUEST could surface for an unrelated reason (e.g. content-type
+            // mismatch on /api/communication/courses/{id}/messages) and a regression on plagiarism answer-post
+            // validation would go undetected.
+            request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts", createRequest, AnswerPostResponseDTO.class, HttpStatus.BAD_REQUEST);
             return;
         }
 

@@ -11,9 +11,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * Only the fields an update is allowed to mutate are present; the controller resolves the existing
  * answer post by its path-variable id and applies these fields.
  *
- * @param content      the new answer content
- * @param resolvesPost whether the answer resolves its parent post
+ * @param content      the new answer content; {@code null} leaves the existing content untouched
+ * @param resolvesPost whether the answer resolves its parent post; {@code null} means "field not
+ *                         provided" (do not toggle the resolve state). The boxed type avoids the
+ *                         pre-refactor footgun where Jackson silently defaulted a missing JSON
+ *                         property to {@code false} and a content-only update could clear the
+ *                         existing resolve flag.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismAnswerPostUpdateRequestDTO(@Nullable String content, boolean resolvesPost) {
+public record PlagiarismAnswerPostUpdateRequestDTO(@Nullable String content, @Nullable Boolean resolvesPost) {
 }

@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.plagiarism.web;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -53,7 +55,7 @@ public class PlagiarismAnswerPostResource {
      */
     @PostMapping("courses/{courseId}/answer-posts")
     @EnforceAtLeastStudent
-    public ResponseEntity<AnswerPostResponseDTO> createAnswerPost(@PathVariable Long courseId, @RequestBody PlagiarismAnswerPostCreateRequestDTO request)
+    public ResponseEntity<AnswerPostResponseDTO> createAnswerPost(@PathVariable Long courseId, @Valid @RequestBody PlagiarismAnswerPostCreateRequestDTO request)
             throws URISyntaxException {
         log.debug("POST createAnswerPost invoked for course {} with parent post {}", courseId, request.postId());
         long start = System.nanoTime();

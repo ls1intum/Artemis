@@ -99,24 +99,48 @@ public class PlagiarismAnswerPostService extends PostingService {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         parseUserMentions(course, request.content());
 
-        AnswerPost updatedAnswerPost;
+        // Authorization model preserves the pre-refactor contract:
+        //
+        // * Resolve-flag change and content edit are authorization-distinct. The resolving permission
+        // (`mayMarkAnswerPostAsResolvingElseThrow` — parent-post author or instructor) is orthogonal to
+        // the content-edit permission (`mayUpdateOrDeleteAnswerPostElseThrow` — answer author). An
+        // instructor can toggle resolve on someone else's answer without being allowed to rewrite its
+        // content.
+        // * If the resolve flag is actually changing, the request is treated primarily as a resolve
+        // operation. Sending the existing content alongside (a common frontend pattern) does not trigger
+        // the content-edit authorization. If the request additionally carries *different* content, the
+        // content edit is independently authorized — this closes the CodeRabbit-flagged corner case where
+        // a single PUT that changed both fields silently dropped the content because only the resolve
+        // branch ran.
+        // * If the resolve flag is unchanged, the request is treated as a content edit; the ownership
+        // check fires even for no-op edits, matching the original `else` branch that always asserted
+        // ownership before writing content back, so a non-author cannot probe the endpoint with a
+        // same-content PUT.
+        // `resolvesPost` is a boxed Boolean on the DTO; null means "field not provided, do not toggle".
 
-        // determine if the update operation is to mark the answer post as resolving the original post
-        if (!Objects.equals(existingAnswerPost.doesResolvePost(), request.resolvesPost())) {
-            // check if requesting user is allowed to mark this answer post as resolving, i.e. if user is author of original post or at least tutor
+        boolean resolveFlagChanging = request.resolvesPost() != null && !Objects.equals(existingAnswerPost.doesResolvePost(), request.resolvesPost());
+        if (resolveFlagChanging) {
             mayMarkAnswerPostAsResolvingElseThrow(existingAnswerPost, user, course);
             existingAnswerPost.setResolvesPost(request.resolvesPost());
-            // sets the post as resolved if there exists any resolving answer
+            // re-evaluate the parent post's resolved status — any resolving answer keeps the post marked as resolved
             existingAnswerPost.getPost().setResolved(existingAnswerPost.getPost().getAnswers().stream().anyMatch(AnswerPost::doesResolvePost));
             postRepository.save(existingAnswerPost.getPost());
+
+            if (request.content() != null && !Objects.equals(existingAnswerPost.getContent(), request.content())) {
+                mayUpdateOrDeleteAnswerPostElseThrow(existingAnswerPost, user);
+                existingAnswerPost.setContent(request.content());
+                existingAnswerPost.setUpdatedDate(ZonedDateTime.now());
+            }
         }
         else {
-            // check if requesting user is allowed to update the content, i.e. if user is author of answer post or at least tutor
             mayUpdateOrDeleteAnswerPostElseThrow(existingAnswerPost, user);
-            existingAnswerPost.setContent(request.content());
-            existingAnswerPost.setUpdatedDate(ZonedDateTime.now());
+            if (request.content() != null && !Objects.equals(existingAnswerPost.getContent(), request.content())) {
+                existingAnswerPost.setContent(request.content());
+                existingAnswerPost.setUpdatedDate(ZonedDateTime.now());
+            }
         }
-        updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
+
+        AnswerPost updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
         this.preparePostAndBroadcast(updatedAnswerPost, course);
         return updatedAnswerPost;
     }

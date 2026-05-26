@@ -747,7 +747,8 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     private static Long idOf(Object postLike) {
         return switch (postLike) {
             case Post post -> post.getId();
-            case AnswerPost answerPost -> answerPost.getId();
+            // The broadcast carries the *parent* post, so for an AnswerPost input we compare against its parent's id.
+            case AnswerPost answerPost -> answerPost.getPost() == null ? null : answerPost.getPost().getId();
             case PostResponseDTO dto -> dto.id();
             case null, default -> null;
         };
