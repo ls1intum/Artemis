@@ -335,7 +335,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             expect(component['irisResult']()).toBeUndefined();
         });
 
-        it('should reset irisResult and irisThinking when a new query is debounced', () => {
+        it('should reset irisResult and irisThinking immediately when a new query is emitted', () => {
             // First query resolves
             fixture.componentRef.setInput('searchQuery', 'query one');
             fixture.detectChanges();
@@ -346,10 +346,8 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             fixture.detectChanges();
             expect(component['irisResult']()?.answer).toBe('First answer');
 
-            // New query — tap() resets state once the debounce fires
+            // New query — tap() runs immediately on emission, before the debounce fires
             fixture.componentRef.setInput('searchQuery', 'query two');
-            fixture.detectChanges();
-            vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS + 300); // tap() runs here
             fixture.detectChanges();
 
             expect(component['irisResult']()).toBeUndefined();
