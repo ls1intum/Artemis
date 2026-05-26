@@ -17,8 +17,8 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository;
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationDeviceType;
+import de.tum.cit.aet.artemis.notification.repository.PushNotificationDeviceConfigurationRepository;
 
 /**
  * Handles the sending of Android Notifications to the Relay Service

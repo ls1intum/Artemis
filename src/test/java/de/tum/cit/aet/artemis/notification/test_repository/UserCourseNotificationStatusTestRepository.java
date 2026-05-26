@@ -6,8 +6,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationStatusRepository;
 import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatus;
+import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationStatusRepository;
 
 @Lazy
 @Repository

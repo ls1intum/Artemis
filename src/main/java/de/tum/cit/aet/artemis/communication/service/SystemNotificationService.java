@@ -18,12 +18,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.communication.repository.MaintenanceEmailRecipientRepository;
-import de.tum.cit.aet.artemis.communication.repository.SystemNotificationRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
+import de.tum.cit.aet.artemis.notification.repository.MaintenanceEmailRecipientRepository;
+import de.tum.cit.aet.artemis.notification.repository.SystemNotificationRepository;
 
 @Profile(PROFILE_CORE)
 @Lazy

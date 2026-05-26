@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.communication.repository;
+package de.tum.cit.aet.artemis.notification.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 

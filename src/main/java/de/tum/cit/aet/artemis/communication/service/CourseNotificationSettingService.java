@@ -14,14 +14,14 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationSettingInfoDTO;
-import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingPresetRepository;
-import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingSpecificationRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationSettingPreset;
 import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationSettingSpecification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotification;
 import de.tum.cit.aet.artemis.notification.domain.setting_presets.DefaultUserCourseNotificationSettingPreset;
+import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationSettingPresetRepository;
+import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationSettingSpecificationRepository;
 
 /**
  * Service responsible for handling course notification settings and filtering recipients based on their preferences.

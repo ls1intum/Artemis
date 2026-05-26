@@ -17,10 +17,10 @@ import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.communication.dto.PushNotificationRegisterBody;
 import de.tum.cit.aet.artemis.communication.dto.PushNotificationRegisterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PushNotificationUnregisterRequest;
-import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository;
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationApiType;
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationDeviceType;
+import de.tum.cit.aet.artemis.notification.repository.PushNotificationDeviceConfigurationRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentTest {
