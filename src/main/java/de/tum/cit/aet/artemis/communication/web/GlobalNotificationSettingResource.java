@@ -16,12 +16,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationSetting;
-import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.communication.dto.UpdateGlobalNotificationSettingDTO;
 import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.GlobalNotificationSettingService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationSetting;
+import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 
 @Profile(PROFILE_CORE)
 @RestController

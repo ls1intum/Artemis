@@ -9,9 +9,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationSetting;
-import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
+import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationSetting;
+import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 
 @Profile(PROFILE_CORE)
 @Service

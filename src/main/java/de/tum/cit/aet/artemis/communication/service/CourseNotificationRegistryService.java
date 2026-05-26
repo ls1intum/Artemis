@@ -15,7 +15,7 @@ import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.annotations.CourseNotificationType;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.CourseNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotification;
 
 /**
  * Registry service that discovers and maps all {@link CourseNotification}

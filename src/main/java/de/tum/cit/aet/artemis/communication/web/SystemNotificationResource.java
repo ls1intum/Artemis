@@ -20,12 +20,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import de.tum.cit.aet.artemis.communication.domain.notification.SystemNotification;
 import de.tum.cit.aet.artemis.communication.repository.SystemNotificationRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
+import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
 
 /**
  * REST controller for managing SystemNotification.

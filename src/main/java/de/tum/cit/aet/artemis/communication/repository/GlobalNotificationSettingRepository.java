@@ -16,9 +16,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationSetting;
-import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationSetting;
+import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 
 @Profile(PROFILE_CORE)
 @Repository

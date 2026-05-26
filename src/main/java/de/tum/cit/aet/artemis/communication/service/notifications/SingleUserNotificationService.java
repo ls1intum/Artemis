@@ -16,10 +16,6 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseAssessedNotification;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewCpcPlagiarismCaseNotification;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewPlagiarismCaseNotification;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.PlagiarismCaseVerdictNotification;
 import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -28,6 +24,10 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.ExerciseAssessedNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewCpcPlagiarismCaseNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewPlagiarismCaseNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.PlagiarismCaseVerdictNotification;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 
 @Profile(PROFILE_CORE)

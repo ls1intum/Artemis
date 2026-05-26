@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
-import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationSetting;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.Reaction;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
@@ -36,6 +35,7 @@ import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ReactionRepository;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationSetting;
 
 /**
  * A service to create the communication data export for users.

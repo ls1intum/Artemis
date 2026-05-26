@@ -20,7 +20,6 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnswerNotification;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
@@ -34,6 +33,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewAnswerNotification;
 
 /**
  * Service that handles the autonomous tutor pipeline status updates.

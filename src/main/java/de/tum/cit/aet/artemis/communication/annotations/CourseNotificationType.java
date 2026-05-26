@@ -5,7 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.CourseNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotification;
 
 /**
  * Annotation that marks classes extending {@link CourseNotification} with a unique numeric identifier.

@@ -35,7 +35,6 @@ import org.springframework.util.MultiValueMap;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
-import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostSortCriterion;
@@ -48,7 +47,6 @@ import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
-import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
@@ -56,6 +54,8 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
+import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {

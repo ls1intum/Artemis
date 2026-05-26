@@ -14,19 +14,19 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.AttachmentChangedNotification;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.DuplicateTestCaseNotification;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseOpenForPracticeNotification;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseUpdatedNotification;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewExerciseNotification;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewManualFeedbackRequestNotification;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.ProgrammingBuildRunUpdateNotification;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.ProgrammingTestCasesChangedNotification;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.QuizExerciseStartedNotification;
 import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.AttachmentChangedNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.DuplicateTestCaseNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.ExerciseOpenForPracticeNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.ExerciseUpdatedNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewExerciseNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewManualFeedbackRequestNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.ProgrammingBuildRunUpdateNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.ProgrammingTestCasesChangedNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.QuizExerciseStartedNotification;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 

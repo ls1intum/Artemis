@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.communication.domain.UserCourseNotificationStatusType;
+import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatusType;
 
 /**
  * Record for notification status update requests

@@ -5,7 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import de.tum.cit.aet.artemis.communication.domain.setting_presets.UserCourseNotificationSettingPreset;
+import de.tum.cit.aet.artemis.notification.domain.setting_presets.UserCourseNotificationSettingPreset;
 
 /**
  * Annotation that marks classes extending {@link UserCourseNotificationSettingPreset} with a unique numeric identifier.

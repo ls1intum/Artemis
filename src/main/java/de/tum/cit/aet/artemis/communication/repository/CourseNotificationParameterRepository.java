@@ -9,8 +9,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.communication.domain.CourseNotificationParameter;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.notification.domain.CourseNotificationParameter;
 
 /**
  * Repository for the {@link CourseNotificationParameter} entity.

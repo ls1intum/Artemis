@@ -23,8 +23,6 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnswerNotification;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewMentionNotification;
 import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
@@ -49,6 +47,8 @@ import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearch
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.iris.api.AutonomousTutorApi;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewAnswerNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewMentionNotification;
 
 @Profile(PROFILE_CORE)
 @Lazy

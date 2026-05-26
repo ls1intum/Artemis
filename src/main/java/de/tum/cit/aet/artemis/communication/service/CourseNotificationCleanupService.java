@@ -12,8 +12,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.repository.CourseNotificationRepository;
+import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
 
 @Lazy
 @Service

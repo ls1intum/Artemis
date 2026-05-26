@@ -35,9 +35,6 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.AddedToChannelNotification;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.ChannelDeletedNotification;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.RemovedFromChannelNotification;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.ChannelIdAndNameDTO;
 import de.tum.cit.aet.artemis.communication.dto.FeedbackChannelRequestDTO;
@@ -61,6 +58,9 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.AddedToChannelNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.ChannelDeletedNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.RemovedFromChannelNotification;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
 
 @Profile(PROFILE_CORE)

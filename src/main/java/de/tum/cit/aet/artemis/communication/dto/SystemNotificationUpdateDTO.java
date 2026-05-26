@@ -7,8 +7,8 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.communication.domain.SystemNotificationType;
-import de.tum.cit.aet.artemis.communication.domain.notification.SystemNotification;
+import de.tum.cit.aet.artemis.notification.domain.SystemNotificationType;
+import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
 
 /**
  * DTO for creating and updating SystemNotifications.

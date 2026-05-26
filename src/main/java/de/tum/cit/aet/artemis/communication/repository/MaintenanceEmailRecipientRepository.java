@@ -41,7 +41,7 @@ public interface MaintenanceEmailRecipientRepository extends ArtemisJpaRepositor
                 AND NOT EXISTS (
                     SELECT 1 FROM GlobalNotificationSetting s
                     WHERE s.userId = u.id
-                        AND s.notificationType = de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType.MAINTENANCE
+                        AND s.notificationType = de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType.MAINTENANCE
                         AND s.enabled = FALSE
                 )
             """)
@@ -62,7 +62,7 @@ public interface MaintenanceEmailRecipientRepository extends ArtemisJpaRepositor
                 AND NOT EXISTS (
                     SELECT 1 FROM GlobalNotificationSetting s
                     WHERE s.userId = u.id
-                        AND s.notificationType = de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType.MAINTENANCE
+                        AND s.notificationType = de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType.MAINTENANCE
                         AND s.enabled = FALSE
                 )
             """)

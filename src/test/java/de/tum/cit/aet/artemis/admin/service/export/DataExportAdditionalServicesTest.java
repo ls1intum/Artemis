@@ -31,8 +31,6 @@ import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
-import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationSetting;
-import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
@@ -52,6 +50,8 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionFactory;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
+import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationSetting;
+import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
 
