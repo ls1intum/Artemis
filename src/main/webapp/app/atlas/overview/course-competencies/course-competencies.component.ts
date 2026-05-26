@@ -5,9 +5,9 @@ import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Competency, CourseCompetencyType, compareSoftDueDate, getMastery } from 'app/atlas/shared/entities/competency.model';
 import { Subscription } from 'rxjs';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -19,7 +19,7 @@ import { ScienceService } from 'app/shared/science/science.service';
 @Component({
     selector: 'jhi-course-competencies',
     templateUrl: './course-competencies.component.html',
-    styleUrls: ['../../../core/course/overview/course-overview/course-overview.scss'],
+    styleUrls: ['../../../course/overview/course-overview/course-overview.scss'],
     imports: [CompetencyCardComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class CourseCompetenciesComponent implements OnInit, OnDestroy {

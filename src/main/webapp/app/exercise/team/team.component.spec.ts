@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { TeamComponent } from 'app/exercise/team/team.component';
 import { TeamService } from 'app/exercise/team/team.service';

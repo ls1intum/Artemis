@@ -18,11 +18,13 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { Observable, Subject, of } from 'rxjs';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { SubmissionSyncPayload } from 'app/exercise/shared/entities/submission/submission-sync-payload.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { SubmissionPatchPayload } from 'app/exercise/shared/entities/submission/submission-patch-payload.model';
 import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { ConnectionState } from 'app/shared/service/websocket.service';
+import { ApollonEditor } from '@tumaet/apollon';
 
 describe('Team Submission Sync Component', () => {
     setupTestBed({ zoneless: true });
@@ -134,5 +136,62 @@ describe('Team Submission Sync Component', () => {
         const patch: SubmissionPatch = { patch: JSON.stringify([{ op: 'replace', path: '/text', value: 'new text' }]) };
         mockEmitter.next(patch);
         expect(sendSpy).toHaveBeenCalledWith(expectedTopic, patch);
+    });
+
+    it('should re-broadcast the initial Yjs sync message and emit `reconnected` on every STOMP (re)connect', () => {
+        const mock = websocketService as unknown as MockWebsocketService;
+        const expectedTopic = '/topic/participations/3/team/text-submissions/patch';
+        const generateInitialSyncSpy = jest.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
+        const reconnectedSpy = jest.fn();
+        component.reconnected.subscribe(reconnectedSpy);
+
+        // Drop the submissionObservable so the only thing that produces /patch sends is the reconnect path
+        component.submissionObservable = undefined;
+        const sendSpy = jest.spyOn(websocketService, 'send');
+        jest.spyOn(websocketService, 'subscribe').mockReturnValue(of());
+
+        component.ngOnInit();
+
+        // BehaviorSubject in MockWebsocketService starts as connected=true → exactly one initial sync + one reconnect emission
+        expect(sendSpy).toHaveBeenCalledOnce();
+        expect(sendSpy.mock.calls[0][0]).toBe(expectedTopic);
+        expect(sendSpy.mock.calls[0][1]).toBeInstanceOf(SubmissionPatch);
+        expect((sendSpy.mock.calls[0][1] as SubmissionPatch).patch).toBe('initial-sync-stub');
+        expect(reconnectedSpy).toHaveBeenCalledOnce();
+
+        // Disconnect — no fresh sync, no fresh reconnect signal
+        mock.setConnectionState(new ConnectionState(false, true));
+        expect(sendSpy).toHaveBeenCalledOnce();
+        expect(reconnectedSpy).toHaveBeenCalledOnce();
+
+        // Reconnect — initial sync and reconnect signal fire again
+        mock.setConnectionState(new ConnectionState(true, true));
+        expect(sendSpy).toHaveBeenCalledTimes(2);
+        expect((sendSpy.mock.calls[1][1] as SubmissionPatch).patch).toBe('initial-sync-stub');
+        expect(reconnectedSpy).toHaveBeenCalledTimes(2);
+
+        // A duplicate connected=true must not re-fire (distinctUntilChanged on the `connected` field)
+        mock.setConnectionState(new ConnectionState(true, true));
+        expect(sendSpy).toHaveBeenCalledTimes(2);
+        expect(reconnectedSpy).toHaveBeenCalledTimes(2);
+
+        generateInitialSyncSpy.mockRestore();
+    });
+
+    it('should stop reacting to connection-state changes after ngOnDestroy', () => {
+        const mock = websocketService as unknown as MockWebsocketService;
+        jest.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
+        const reconnectedSpy = jest.fn();
+        component.reconnected.subscribe(reconnectedSpy);
+        component.submissionObservable = undefined;
+        jest.spyOn(websocketService, 'subscribe').mockReturnValue(of());
+
+        component.ngOnInit();
+        expect(reconnectedSpy).toHaveBeenCalledOnce();
+
+        component.ngOnDestroy();
+        mock.setConnectionState(new ConnectionState(false, true));
+        mock.setConnectionState(new ConnectionState(true, true));
+        expect(reconnectedSpy).toHaveBeenCalledOnce();
     });
 });

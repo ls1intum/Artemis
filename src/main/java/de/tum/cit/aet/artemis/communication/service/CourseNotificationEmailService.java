@@ -24,6 +24,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownCustomLinkRendererService;
@@ -31,7 +32,6 @@ import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownCustom
 import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownCustomRendererService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownImageBlockRendererFactory;
 import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownRelativeToAbsolutePathAttributeProvider;
-import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
  * Service responsible for sending course notifications via email to recipients.

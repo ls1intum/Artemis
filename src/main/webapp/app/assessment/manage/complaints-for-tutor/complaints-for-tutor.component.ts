@@ -11,7 +11,7 @@ import { assessmentNavigateBack } from 'app/shared/util/navigate-back.util';
 import { Location } from '@angular/common';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { isAllowedToRespondToComplaintAction } from 'app/assessment/manage/services/assessment.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ComplaintAction, ComplaintResponseUpdateDTO } from 'app/assessment/shared/entities/complaint-response-dto.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';

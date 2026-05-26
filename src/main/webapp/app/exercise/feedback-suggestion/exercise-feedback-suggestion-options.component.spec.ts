@@ -1,6 +1,7 @@
 import { Mock, expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -16,7 +17,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     let fixture: ComponentFixture<ExerciseFeedbackSuggestionOptionsComponent>;
     let component: ExerciseFeedbackSuggestionOptionsComponent;
     let athenaService: { getAvailableModules: Mock };
-    let profileService: { isProfileActive: Mock };
+    let profileService: { isModuleFeatureActive: Mock };
 
     const courseId = 42;
 
@@ -30,7 +31,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
 
     beforeEach(async () => {
         athenaService = { getAvailableModules: vi.fn() };
-        profileService = { isProfileActive: vi.fn() };
+        profileService = { isModuleFeatureActive: vi.fn() };
 
         await TestBed.configureTestingModule({
             imports: [ExerciseFeedbackSuggestionOptionsComponent],
@@ -67,7 +68,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     it('should initialize available modules and athena state in ngOnInit', () => {
         const modules = ['moduleA', 'moduleB'];
         athenaService.getAvailableModules.mockReturnValue(of(modules));
-        profileService.isProfileActive.mockReturnValue(true);
+        profileService.isModuleFeatureActive.mockReturnValue(true);
 
         component.ngOnInit();
         expect(athenaService.getAvailableModules).toHaveBeenCalledWith(courseId, component.exercise);
@@ -80,7 +81,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     it('should mark modules unavailable and athena disabled when no modules are returned', () => {
         component.exercise.feedbackSuggestionModule = undefined;
         athenaService.getAvailableModules.mockReturnValue(of([]));
-        profileService.isProfileActive.mockReturnValue(false);
+        profileService.isModuleFeatureActive.mockReturnValue(false);
 
         component.ngOnInit();
         expect(component.availableAthenaModules).toEqual([]);
@@ -213,11 +214,21 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         component.exercise.feedbackSuggestionModule = 'initial-module';
         component.initialAthenaModule = 'initial-module';
         athenaService.getAvailableModules.mockReturnValue(of(['moduleA']));
-        profileService.isProfileActive.mockReturnValue(true);
+        profileService.isModuleFeatureActive.mockReturnValue(true);
 
         component.ngOnInit();
         expect(component.exercise.feedbackSuggestionModule).toBe('initial-module');
         expect(component.modulesAvailable).toBe(true);
         expect(component.isAthenaEnabled).toBe(true);
+    });
+
+    it('should query the athena module feature flag in ngOnInit', () => {
+        athenaService.getAvailableModules.mockReturnValue(of([]));
+        profileService.isModuleFeatureActive.mockImplementation((feature) => feature === MODULE_FEATURE_ATHENA);
+
+        component.ngOnInit();
+
+        expect(component.isAthenaEnabled).toBe(true);
+        expect(profileService.isModuleFeatureActive).toHaveBeenCalledWith(MODULE_FEATURE_ATHENA);
     });
 });

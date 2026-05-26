@@ -4,7 +4,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute } from '@angular/router';
-import { PROFILE_ATHENA } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -60,7 +60,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
 
     it('should set isAthenaEnabled$ with the result from athenaService', async () => {
         vi.spyOn(athenaService, 'getAvailableModules').mockReturnValue(of());
-        vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile) => profile === PROFILE_ATHENA);
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature) => feature === MODULE_FEATURE_ATHENA);
         component.exercise = { type: ExerciseType.TEXT, dueDate: futureDueDate, feedbackSuggestionModule: undefined } as Exercise;
 
         component.ngOnInit();

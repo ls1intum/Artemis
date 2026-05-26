@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SAML2;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -10,18 +8,18 @@ import jakarta.annotation.PostConstruct;
 
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
- * This class describes SAML2 properties. Those values are specified in application-saml2.yml and automatically mapped to the below Java attributes. Admins can override the values
- * in application-prod.yml
+ * This class describes SAML2 properties. Those values are specified in application-saml2.yml.example and automatically mapped to the below Java attributes when SAML2 is enabled.
+ * Admins can override the values in application-prod.yml.
  */
-@Profile(PROFILE_SAML2)
+@Conditional(Saml2Enabled.class)
 @Component
 @Lazy
-@ConfigurationProperties(Constants.PROFILE_SAML2)
+@ConfigurationProperties(Constants.SAML2_PROPERTIES_PREFIX)
 public class SAML2Properties {
 
     /**

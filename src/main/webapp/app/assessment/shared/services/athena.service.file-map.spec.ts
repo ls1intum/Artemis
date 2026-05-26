@@ -48,7 +48,7 @@ describe('AthenaService file map behaviour', () => {
         service = TestBed.inject(AthenaService);
         httpMock = TestBed.inject(HttpTestingController);
         profileService = TestBed.inject(ProfileService);
-        vi.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
     });
 
     afterEach(() => {

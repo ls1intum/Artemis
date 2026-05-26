@@ -13,7 +13,7 @@ import {
     getIcon,
 } from 'app/atlas/shared/entities/competency.model';
 import { ActivatedRoute } from '@angular/router';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { finalize } from 'rxjs';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
@@ -26,6 +26,9 @@ import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-to
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 
+/**
+ * @deprecated Use {@link CompetencySelectionPrimengComponent} instead.
+ */
 @Component({
     selector: 'jhi-competency-selection',
     templateUrl: './competency-selection.component.html',

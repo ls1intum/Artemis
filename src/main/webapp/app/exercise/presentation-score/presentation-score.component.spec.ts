@@ -2,7 +2,7 @@ import { expect } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';

@@ -1,6 +1,6 @@
 import { test } from '../../support/fixtures';
 import { Commands } from '../../support/commands';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingLanguage } from '../../support/constants';
 import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, users } from '../../support/users';
 import { generateUUID } from '../../support/utils';

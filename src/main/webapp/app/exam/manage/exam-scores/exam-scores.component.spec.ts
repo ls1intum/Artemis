@@ -440,7 +440,7 @@ describe('ExamScoresComponent', () => {
         // expect correct average points for exercises
         expect(groupResult1!.exerciseResults).toHaveLength(5);
         groupResult1!.exerciseResults.forEach((exResult) => {
-            let averageExPoints = 0;
+            let averageExPoints: number;
             let exInfo;
             if (exResult.exerciseId === 11) {
                 // result for ex 1_1
@@ -522,7 +522,7 @@ describe('ExamScoresComponent', () => {
         // expect correct average points for exercises
         expect(groupResult1!.exerciseResults).toHaveLength(5);
         groupResult1!.exerciseResults.forEach((exResult) => {
-            let averageExPoints = 0;
+            let averageExPoints: number;
             let exInfo;
             if (exResult.exerciseId === 11) {
                 // result for ex 1_1
