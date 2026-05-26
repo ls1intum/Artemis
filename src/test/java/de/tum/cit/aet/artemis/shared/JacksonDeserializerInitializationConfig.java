@@ -24,6 +24,8 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.Reaction;
+import de.tum.cit.aet.artemis.communication.dto.AnswerPostResponseDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -170,6 +172,54 @@ public class JacksonDeserializerInitializationConfig {
             assertNoFailingPlaceholders(bareDeser, entityType);
         }
         log.info("Jackson deserializer prime complete: {} bean types + {} collection wrappers", ENTITY_TYPES.size(), ENTITY_TYPES.size() * 2);
+
+        exerciseFailureChains(tf);
+    }
+
+    /**
+     * Actively deserialize the synthetic JSON shapes that match the previously failing chains
+     * documented above, both for the cyclic entity types (which priming must have resolved) and
+     * for the new cycle-free response DTOs (which must succeed by construction).
+     * <p>
+     * Surfaces any regression as a deterministic context-startup failure instead of an
+     * intermittent integration-test flake whose stack trace points at a deserializer placeholder
+     * far removed from the actual cyclic-reference root cause. The probe additionally exercises
+     * {@code BeanDeserializer.deserialize} itself — {@code findRootValueDeserializer} alone
+     * only constructs the deserializer; a {@code FailingDeserializer} can still be hiding in a
+     * contextual variant that priming never touched.
+     *
+     * @param tf the Jackson {@link TypeFactory} used to build parameterised collection types
+     */
+    private void exerciseFailureChains(TypeFactory tf) {
+        // Entity chains — these used to trigger the race. After priming above the deserializer
+        // must be fully resolved, so readValue is expected to succeed deterministically.
+        readValueOrThrow("[{\"id\":1,\"reactions\":[{\"id\":1,\"user\":{\"id\":1}}]}]", tf.constructCollectionType(List.class, Post.class), "List<Post> with reaction-user chain");
+        readValueOrThrow("[{\"id\":1,\"reactions\":[{\"id\":1,\"user\":{\"id\":1}}]}]", tf.constructCollectionType(List.class, AnswerPost.class),
+                "List<AnswerPost> with reaction-user chain");
+        readValueOrThrow("{\"id\":1,\"registrations\":[{\"id\":1,\"student\":{\"id\":1}}]}", tf.constructType(TutorialGroup.class),
+                "TutorialGroup with registrations-student chain");
+
+        // DTO chains — must succeed by construction since the records carry no cyclic relations.
+        // A failure here means someone added a back-reference to a response DTO and re-opened the
+        // cycle this refactor closed.
+        readValueOrThrow("[{\"id\":1,\"reactions\":[{\"id\":1,\"user\":{\"id\":1}}]}]", tf.constructCollectionType(List.class, PostResponseDTO.class),
+                "List<PostResponseDTO> with reaction-user chain");
+        readValueOrThrow("[{\"id\":1,\"reactions\":[{\"id\":1,\"user\":{\"id\":1}}]}]", tf.constructCollectionType(List.class, AnswerPostResponseDTO.class),
+                "List<AnswerPostResponseDTO> with reaction-user chain");
+        readValueOrThrow("{\"id\":1,\"reactions\":[{\"id\":1,\"user\":{\"id\":1}}],\"answers\":[{\"id\":2,\"reactions\":[{\"id\":3,\"user\":{\"id\":1}}]}]}",
+                tf.constructType(PostResponseDTO.class), "PostResponseDTO with answers and nested reactions");
+
+        log.info("Jackson failure-chain exercise complete: 6 chains deserialized without hitting the cyclic-reference race");
+    }
+
+    private void readValueOrThrow(String json, JavaType type, String label) {
+        try {
+            objectMapper.readValue(json, type);
+        }
+        catch (Exception e) {
+            throw new IllegalStateException("Failure-chain probe failed for " + label + " — Jackson cyclic-reference race re-opened or the DTO shape regressed: " + e.getMessage(),
+                    e);
+        }
     }
 
     /**
