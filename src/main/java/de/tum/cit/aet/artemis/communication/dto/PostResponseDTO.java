@@ -11,7 +11,6 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import de.tum.cit.aet.artemis.account.dto.UserMapper;
 import de.tum.cit.aet.artemis.account.dto.UserSummaryDTO;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -70,7 +69,7 @@ public record PostResponseDTO(Long id, @Nullable UserSummaryDTO author, @Nullabl
         List<AnswerPostResponseDTO> answers = post.getAnswers() == null ? List.of()
                 : post.getAnswers().stream().sorted(Comparator.comparing(a -> a.getCreationDate(), Comparator.nullsLast(Comparator.naturalOrder())))
                         .map(AnswerPostResponseDTO::from).toList();
-        return new PostResponseDTO(post.getId(), UserMapper.toSummary(post.getAuthor()), post.getAuthorRole(), post.getCreationDate(), post.getUpdatedDate(), post.getContent(),
+        return new PostResponseDTO(post.getId(), UserSummaryDTO.from(post.getAuthor()), post.getAuthorRole(), post.getCreationDate(), post.getUpdatedDate(), post.getContent(),
                 post.getTitle(), post.isVisibleForStudents(), post.getDisplayPriority(), ConversationRefDTO.from(post.getConversation()),
                 PlagiarismCaseRefDTO.from(post.getPlagiarismCase()), post.isResolved(), post.getIsSaved(), post.getHasForwardedMessages(), reactions, answers);
     }

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.account.dto;
+package de.tum.cit.aet.artemis.account;
 
 import static de.tum.cit.aet.artemis.account.domain.User.IRIS_BOT_LOGIN;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -6,20 +6,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.UserSummaryDTO;
 
-class UserMapperTest {
+class UserSummaryDTOTest {
 
     @Test
-    void toSummaryReturnsNullForNullInput() {
-        assertThat(UserMapper.toSummary(null)).isNull();
+    void fromReturnsNullForNullInput() {
+        assertThat(UserSummaryDTO.from(null)).isNull();
     }
 
     @Test
-    void toSummaryCopiesAllVisibleFields() {
+    void fromCopiesAllVisibleFields() {
         User user = new User(42L, "ada.lovelace", "Ada", "Lovelace", "en", "ada@example.org");
         user.setImageUrl("/images/ada.png");
 
-        UserSummaryDTO summary = UserMapper.toSummary(user);
+        UserSummaryDTO summary = UserSummaryDTO.from(user);
 
         assertThat(summary).isNotNull();
         assertThat(summary.id()).isEqualTo(42L);
@@ -32,11 +33,11 @@ class UserMapperTest {
     }
 
     @Test
-    void toSummaryComposesNameFromFirstNameAloneWhenLastNameMissing() {
+    void fromComposesNameFromFirstNameAloneWhenLastNameMissing() {
         User user = new User();
         user.setFirstName("Ada");
 
-        UserSummaryDTO summary = UserMapper.toSummary(user);
+        UserSummaryDTO summary = UserSummaryDTO.from(user);
 
         assertThat(summary).isNotNull();
         assertThat(summary.name()).isEqualTo("Ada");
@@ -44,11 +45,11 @@ class UserMapperTest {
     }
 
     @Test
-    void toSummaryDetectsIrisBotAccount() {
+    void fromDetectsIrisBotAccount() {
         User bot = new User();
         bot.setLogin(IRIS_BOT_LOGIN);
 
-        UserSummaryDTO summary = UserMapper.toSummary(bot);
+        UserSummaryDTO summary = UserSummaryDTO.from(bot);
 
         assertThat(summary).isNotNull();
         assertThat(summary.bot()).isTrue();

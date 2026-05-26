@@ -9,7 +9,6 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import de.tum.cit.aet.artemis.account.dto.UserMapper;
 import de.tum.cit.aet.artemis.account.dto.UserSummaryDTO;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
@@ -47,7 +46,7 @@ public record AnswerPostResponseDTO(Long id, @Nullable UserSummaryDTO author, @N
     public static AnswerPostResponseDTO from(AnswerPost answerPost) {
         Set<ReactionResponseDTO> reactions = answerPost.getReactions() == null ? Set.of()
                 : answerPost.getReactions().stream().map(ReactionResponseDTO::from).collect(Collectors.toUnmodifiableSet());
-        return new AnswerPostResponseDTO(answerPost.getId(), UserMapper.toSummary(answerPost.getAuthor()), answerPost.getAuthorRole(), answerPost.getCreationDate(),
+        return new AnswerPostResponseDTO(answerPost.getId(), UserSummaryDTO.from(answerPost.getAuthor()), answerPost.getAuthorRole(), answerPost.getCreationDate(),
                 answerPost.getUpdatedDate(), answerPost.getContent(), Boolean.TRUE.equals(answerPost.doesResolvePost()), answerPost.getIsSaved(),
                 answerPost.getHasForwardedMessages(), reactions);
     }

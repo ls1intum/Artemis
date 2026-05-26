@@ -1,27 +1,28 @@
-package de.tum.cit.aet.artemis.course.dto;
+package de.tum.cit.aet.artemis.course;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseRefDTO;
 
-class CourseMapperTest {
+class CourseRefDTOTest {
 
     @Test
-    void toRefReturnsNullForNullInput() {
-        assertThat(CourseMapper.toRef(null)).isNull();
+    void fromReturnsNullForNullInput() {
+        assertThat(CourseRefDTO.from(null)).isNull();
     }
 
     @Test
-    void toRefCopiesIdentityAndDisplayFields() {
+    void fromCopiesIdentityAndDisplayFields() {
         Course course = new Course();
         course.setId(7L);
         course.setTitle("Software Engineering");
         course.setShortName("SE");
         course.setColor("#3273dc");
 
-        CourseRefDTO ref = CourseMapper.toRef(course);
+        CourseRefDTO ref = CourseRefDTO.from(course);
 
         assertThat(ref).isNotNull();
         assertThat(ref.id()).isEqualTo(7L);
@@ -31,11 +32,11 @@ class CourseMapperTest {
     }
 
     @Test
-    void toRefTolerantOfMissingOptionalFields() {
+    void fromTolerantOfMissingOptionalFields() {
         Course course = new Course();
         course.setId(8L);
 
-        CourseRefDTO ref = CourseMapper.toRef(course);
+        CourseRefDTO ref = CourseRefDTO.from(course);
 
         assertThat(ref).isNotNull();
         assertThat(ref.id()).isEqualTo(8L);
