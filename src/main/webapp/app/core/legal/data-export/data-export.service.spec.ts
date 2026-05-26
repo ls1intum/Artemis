@@ -4,8 +4,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 import { DataExportService } from 'app/core/legal/data-export/data-export.service';
-import { DataExport } from 'app/core/shared/entities/data-export.model';
-import { User } from 'app/core/user/user.model';
+import { DataExport } from 'app/admin/admin-data-exports/data-export.model';
+import { User } from 'app/account/user/user.model';
 import dayjs from 'dayjs/esm';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

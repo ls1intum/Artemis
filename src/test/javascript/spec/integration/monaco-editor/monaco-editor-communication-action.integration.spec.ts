@@ -4,7 +4,7 @@ import { MetisService } from 'app/communication/service/metis.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { HttpResponse } from '@angular/common/http';
 import { firstValueFrom, of } from 'rxjs';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -17,7 +17,7 @@ import { metisExamChannelDTO, metisExerciseChannelDTO, metisGeneralChannelDTO, m
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import * as monaco from 'monaco-editor';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';

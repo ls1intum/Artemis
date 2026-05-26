@@ -1,7 +1,7 @@
 import { BASE_API } from './constants';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { APIRequestContext, Page } from '@playwright/test';
-import { Account } from 'app/core/user/account.model';
+import { Account } from 'app/account/user/account.model';
 import { NavigationBar } from './pageobjects/NavigationBar';
 import { CourseManagementPage } from './pageobjects/course/CourseManagementPage';
 

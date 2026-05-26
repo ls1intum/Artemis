@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal, viewChild } from '@angular/core';
-import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
+import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { Organization } from 'app/core/shared/entities/organization.model';
+import { Organization } from 'app/admin/organization-management/organization.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TableLazyLoadEvent } from 'primeng/table';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared/table-view/table-view';

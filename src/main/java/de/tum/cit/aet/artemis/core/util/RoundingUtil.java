@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.core.util;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 public class RoundingUtil {
 

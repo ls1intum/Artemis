@@ -19,11 +19,11 @@ import { IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
-import { UserService } from 'app/core/user/shared/user.service';
+import { UserService } from 'app/account/user/shared/user.service';
 import dayjs from 'dayjs/esm';
 import { provideHttpClient } from '@angular/common/http';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ExerciseChatbotButtonComponent', () => {

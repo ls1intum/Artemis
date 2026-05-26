@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { LLMSelectionModalService } from './llm-selection-popup.service';
-import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('LLMSelectionModalService', () => {
     let service: LLMSelectionModalService;

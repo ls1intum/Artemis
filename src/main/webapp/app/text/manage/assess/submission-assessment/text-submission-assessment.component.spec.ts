@@ -32,7 +32,7 @@ import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual-textblock-selection/manual-textblock-selection.component';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { TextBlock, TextBlockType } from 'app/text/shared/entities/text-block.model';
