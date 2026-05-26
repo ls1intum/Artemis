@@ -31,7 +31,10 @@ import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -88,6 +91,31 @@ public class ExamUtilService {
 
     private static final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);
 
+    /**
+     * Phase-8 bridge: converts legacy group membership into user_course_role rows
+     * for courses created directly in ExamUtilService (without going through CourseUtilService).
+     *
+     * @param course the course to enroll users in
+     */
+    private void enrollUsersFromGroupsInCourse(Course course) {
+        enrollGroupInCourse(course.getStudentGroupName(), course, CourseRole.STUDENT);
+        enrollGroupInCourse(course.getTeachingAssistantGroupName(), course, CourseRole.TEACHING_ASSISTANT);
+        enrollGroupInCourse(course.getEditorGroupName(), course, CourseRole.EDITOR);
+        enrollGroupInCourse(course.getInstructorGroupName(), course, CourseRole.INSTRUCTOR);
+    }
+
+    private void enrollGroupInCourse(String groupName, Course course, CourseRole role) {
+        if (groupName == null || groupName.isBlank()) {
+            return;
+        }
+        Set<User> users = userRepo.findAllByDeletedIsFalseAndGroupsContains(groupName);
+        for (User user : users) {
+            if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role)) {
+                userCourseRoleRepository.save(new UserCourseRole(user, course, role));
+            }
+        }
+    }
+
     private static final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
 
     @Autowired
@@ -119,6 +147,9 @@ public class ExamUtilService {
 
     @Autowired
     private UserTestRepository userRepo;
+
+    @Autowired
+    private UserCourseRoleRepository userCourseRoleRepository;
 
     @Autowired
     private ExerciseGroupRepository exerciseGroupRepository;
@@ -1038,6 +1069,7 @@ public class ExamUtilService {
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(mandatory, exam);
 
         course = courseRepo.save(course);
+        enrollUsersFromGroupsInCourse(course);
         exam = examRepository.save(exam);
 
         Optional<Course> optionalCourse = courseRepo.findById(course.getId());
@@ -1079,6 +1111,7 @@ public class ExamUtilService {
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(mandatory, exam);
 
         course = courseRepo.save(course);
+        enrollUsersFromGroupsInCourse(course);
         exam = examRepository.save(exam);
 
         Optional<Course> optionalCourse = courseRepo.findById(course.getId());
@@ -1111,6 +1144,7 @@ public class ExamUtilService {
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(mandatory, exam);
 
         course = courseRepo.save(course);
+        enrollUsersFromGroupsInCourse(course);
         exam = examRepository.save(exam);
 
         Optional<Course> optionalCourse = courseRepo.findById(course.getId());
@@ -1326,6 +1360,7 @@ public class ExamUtilService {
     public Exam setupExamWithTwoCorrectionRounds() {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
+        enrollUsersFromGroupsInCourse(course);
         Exam exam = addExam(course);
         exam.setNumberOfCorrectionRoundsInExam(2);
         exam.setStartDate(ZonedDateTime.now().minusHours(2));

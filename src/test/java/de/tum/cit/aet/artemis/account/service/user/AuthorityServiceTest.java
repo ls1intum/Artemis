@@ -11,6 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -28,6 +31,9 @@ class AuthorityServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     @Autowired
     private CourseUtilService courseUtilService;
+
+    @Autowired
+    private UserCourseRoleRepository userCourseRoleRepository;
 
     private Course course;
 
@@ -84,75 +90,77 @@ class AuthorityServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     }
 
     @Test
-    void testBuildAuthorities_shouldAddInstructorAuthorityBasedOnGroup() {
-        // Create a user with instructor group
+    void testBuildAuthorities_shouldAddInstructorAuthorityBasedOnCourseRole() {
+        // Enroll user as instructor in the course (the new UCR-based mechanism)
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        user.setGroups(Set.of(course.getInstructorGroupName()));
+        userCourseRoleRepository.save(new UserCourseRole(user, course, CourseRole.INSTRUCTOR));
         user.setAuthorities(Set.of());
 
         // Call buildAuthorities
         Set<Authority> authorities = authorityService.buildAuthorities(user);
 
-        // Verify INSTRUCTOR authority is added based on group
+        // Verify INSTRUCTOR authority is granted based on user_course_role
         assertThat(authorities).contains(new Authority(Role.INSTRUCTOR.getAuthority()));
         assertThat(authorities).contains(Authority.USER_AUTHORITY); // STUDENT role is always added
     }
 
     @Test
-    void testBuildAuthorities_shouldAddEditorAuthorityBasedOnGroup() {
-        // Create a user with editor group
+    void testBuildAuthorities_shouldAddEditorAuthorityBasedOnCourseRole() {
+        // Enroll user as editor in the course (the new UCR-based mechanism)
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        user.setGroups(Set.of(course.getEditorGroupName()));
+        userCourseRoleRepository.save(new UserCourseRole(user, course, CourseRole.EDITOR));
         user.setAuthorities(Set.of());
 
         // Call buildAuthorities
         Set<Authority> authorities = authorityService.buildAuthorities(user);
 
-        // Verify EDITOR authority is added based on group
+        // Verify EDITOR authority is granted based on user_course_role
         assertThat(authorities).contains(new Authority(Role.EDITOR.getAuthority()));
         assertThat(authorities).contains(Authority.USER_AUTHORITY); // STUDENT role is always added
     }
 
     @Test
-    void testBuildAuthorities_shouldAddTeachingAssistantAuthorityBasedOnGroup() {
-        // Create a user with teaching assistant group
+    void testBuildAuthorities_shouldAddTeachingAssistantAuthorityBasedOnCourseRole() {
+        // Enroll user as teaching assistant in the course (the new UCR-based mechanism)
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        user.setGroups(Set.of(course.getTeachingAssistantGroupName()));
+        userCourseRoleRepository.save(new UserCourseRole(user, course, CourseRole.TEACHING_ASSISTANT));
         user.setAuthorities(Set.of());
 
         // Call buildAuthorities
         Set<Authority> authorities = authorityService.buildAuthorities(user);
 
-        // Verify TEACHING_ASSISTANT authority is added based on group
+        // Verify TEACHING_ASSISTANT authority is granted based on user_course_role
         assertThat(authorities).contains(new Authority(Role.TEACHING_ASSISTANT.getAuthority()));
         assertThat(authorities).contains(Authority.USER_AUTHORITY); // STUDENT role is always added
     }
 
     @Test
-    void testBuildAuthorities_shouldHandleNullGroups() {
-        // Create a user with null groups
+    void testBuildAuthorities_shouldOnlyGrantStudentAuthorityWhenNoEnrollment() {
+        // A user with no UCR entries should only get STUDENT authority
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        user.setGroups(null);
         user.setAuthorities(Set.of());
 
         // Call buildAuthorities - should not throw exception
         Set<Authority> authorities = authorityService.buildAuthorities(user);
 
-        // Verify at least STUDENT authority is added
+        // Verify at least STUDENT authority is added (and no higher roles)
         assertThat(authorities).contains(Authority.USER_AUTHORITY);
+        assertThat(authorities).doesNotContain(new Authority(Role.INSTRUCTOR.getAuthority()));
+        assertThat(authorities).doesNotContain(new Authority(Role.EDITOR.getAuthority()));
+        assertThat(authorities).doesNotContain(new Authority(Role.TEACHING_ASSISTANT.getAuthority()));
     }
 
     @Test
-    void testBuildAuthorities_shouldCombinePreservedAndGroupBasedAuthorities() {
-        // Create a super admin user with instructor group
+    void testBuildAuthorities_shouldCombinePreservedAndCourseRoleBasedAuthorities() {
+        // A super admin user who is also an instructor in a course should have both authorities
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        userCourseRoleRepository.save(new UserCourseRole(user, course, CourseRole.INSTRUCTOR));
         user.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY));
-        user.setGroups(Set.of(course.getInstructorGroupName()));
 
         // Call buildAuthorities
         Set<Authority> authorities = authorityService.buildAuthorities(user);
 
-        // Verify both preserved and group-based authorities are present
+        // Verify both preserved and UCR-based authorities are present
         assertThat(authorities).contains(Authority.SUPER_ADMIN_AUTHORITY);
         assertThat(authorities).contains(new Authority(Role.INSTRUCTOR.getAuthority()));
         assertThat(authorities).contains(Authority.USER_AUTHORITY); // STUDENT role is always added

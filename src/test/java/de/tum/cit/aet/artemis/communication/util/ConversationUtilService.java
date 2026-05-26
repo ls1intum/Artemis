@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
@@ -35,6 +36,9 @@ import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepo
 import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ReactionTestRepository;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -66,6 +70,12 @@ public class ConversationUtilService {
 
     @Autowired
     private CourseTestRepository courseRepo;
+
+    @Autowired
+    private UserTestRepository userRepo;
+
+    @Autowired
+    private UserCourseRoleRepository userCourseRoleRepository;
 
     @Autowired
     private ExerciseTestRepository exerciseRepo;
@@ -111,7 +121,28 @@ public class ConversationUtilService {
     public Course createCourseWithPostsDisabled() {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
-        return courseRepo.save(course);
+        course = courseRepo.save(course);
+        enrollUsersFromGroupsInCourse(course);
+        return course;
+    }
+
+    private void enrollUsersFromGroupsInCourse(Course course) {
+        enrollGroupInCourse(course.getStudentGroupName(), course, CourseRole.STUDENT);
+        enrollGroupInCourse(course.getTeachingAssistantGroupName(), course, CourseRole.TEACHING_ASSISTANT);
+        enrollGroupInCourse(course.getEditorGroupName(), course, CourseRole.EDITOR);
+        enrollGroupInCourse(course.getInstructorGroupName(), course, CourseRole.INSTRUCTOR);
+    }
+
+    private void enrollGroupInCourse(String groupName, Course course, CourseRole role) {
+        if (groupName == null || groupName.isBlank()) {
+            return;
+        }
+        Set<de.tum.cit.aet.artemis.account.domain.User> users = userRepo.findAllByDeletedIsFalseAndGroupsContains(groupName);
+        for (de.tum.cit.aet.artemis.account.domain.User user : users) {
+            if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role)) {
+                userCourseRoleRepository.save(new UserCourseRole(user, course, role));
+            }
+        }
     }
 
     /**

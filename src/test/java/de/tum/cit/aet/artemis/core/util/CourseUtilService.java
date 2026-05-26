@@ -36,8 +36,11 @@ import de.tum.cit.aet.artemis.assessment.util.GradingScaleUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.Organization;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
@@ -206,6 +209,9 @@ public class CourseUtilService {
     @Autowired
     private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
 
+    @Autowired
+    private UserCourseRoleRepository userCourseRoleRepository;
+
     /**
      * Creates and saves a course (`id` is automatically generated).
      *
@@ -213,7 +219,9 @@ public class CourseUtilService {
      */
     public Course createCourse() {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        return courseRepo.save(course);
+        course = courseRepo.save(course);
+        enrollUsersFromGroupsInCourse(course);
+        return course;
     }
 
     /**
@@ -225,7 +233,9 @@ public class CourseUtilService {
     public Course createCourseWithUserPrefix(String userPrefix) {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), userPrefix + "tumuser", userPrefix + "tutor", userPrefix + "editor",
                 userPrefix + "instructor");
-        return courseRepo.save(course);
+        course = courseRepo.save(course);
+        enrollUsersFromGroupsInCourse(course);
+        return course;
     }
 
     /**
@@ -236,7 +246,9 @@ public class CourseUtilService {
     public Course createCourseWithMessagingEnabled() {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor", true);
         course.setCourseInformationSharingMessagingCodeOfConduct("Code of Conduct");
-        return courseRepo.save(course);
+        course = courseRepo.save(course);
+        enrollUsersFromGroupsInCourse(course);
+        return course;
     }
 
     /**
@@ -249,7 +261,9 @@ public class CourseUtilService {
     public Course createCourseWithCustomStudentGroupName(String studentGroupName, String shortName) {
         Course course = CourseFactory.generateCourse(null, shortName, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), studentGroupName, "tutor", "editor", "instructor", 3, 3, 7,
                 500, 500, true, true, 7);
-        return courseRepo.save(course);
+        course = courseRepo.save(course);
+        enrollUsersFromGroupsInCourse(course);
+        return course;
     }
 
     /**
@@ -273,7 +287,9 @@ public class CourseUtilService {
         lectureRepo.save(lecture);
         exerciseRepository.save(programmingExercise);
 
-        return courseRepo.save(course);
+        course = courseRepo.save(course);
+        enrollUsersFromGroupsInCourse(course);
+        return course;
     }
 
     /**
@@ -288,6 +304,7 @@ public class CourseUtilService {
      * @return The new course.
      */
     public Course createCourseWithOrganizations(String name, String shortName, String url, String description, String logoUrl, String emailPattern) {
+        // createCourse() already calls enrollUsersFromGroupsInCourse; the extra save here re-enrolls after org assignment
         Course course = createCourse();
         Set<Organization> organizations = new HashSet<>();
         Organization organization = organizationTestService.createOrganization(name, shortName, url, description, logoUrl, emailPattern);
@@ -443,7 +460,9 @@ public class CourseUtilService {
         course1.addLectures(lecture2);
 
         course1 = courseRepo.save(course1);
+        enrollUsersFromGroupsInCourse(course1);
         course2 = courseRepo.save(course2);
+        enrollUsersFromGroupsInCourse(course2);
 
         lectureRepo.save(lecture1);
         lectureRepo.save(lecture2);
@@ -583,6 +602,7 @@ public class CourseUtilService {
 
         // Save course and exercises to database
         Course courseSaved = courseRepo.save(course);
+        enrollUsersFromGroupsInCourse(courseSaved);
         modelingExercise = exerciseRepository.save(modelingExercise);
         textExercise = exerciseRepository.save(textExercise);
         fileUploadExercise = exerciseRepository.save(fileUploadExercise);
@@ -752,6 +772,7 @@ public class CourseUtilService {
 
         // Save course and exercises to database
         Course courseSaved = courseRepo.save(course);
+        enrollUsersFromGroupsInCourse(courseSaved);
         modelingExercise = exerciseRepository.save(modelingExercise);
         textExercise = exerciseRepository.save(textExercise);
         fileUploadExercise = exerciseRepository.save(fileUploadExercise);
@@ -920,7 +941,35 @@ public class CourseUtilService {
     public Course addEmptyCourse(String studentGroupName, String taGroupName, String editorGroupName, String instructorGroupName) {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), studentGroupName, taGroupName, editorGroupName,
                 instructorGroupName);
-        return courseRepo.save(course);
+        course = courseRepo.save(course);
+        enrollUsersFromGroupsInCourse(course);
+        return course;
+    }
+
+    /**
+     * Enrolls all users whose legacy group membership matches a course's group names into the {@code user_course_role} table.
+     * This is the Phase-8 bridge: tests still set up users via string groups; this method converts those groups into
+     * UCR rows so that {@link de.tum.cit.aet.artemis.core.service.AuthorizationCheckService} can find the right role.
+     *
+     * @param course the course whose group names are used as enrollment keys
+     */
+    public void enrollUsersFromGroupsInCourse(Course course) {
+        enrollGroupInCourse(course.getStudentGroupName(), course, CourseRole.STUDENT);
+        enrollGroupInCourse(course.getTeachingAssistantGroupName(), course, CourseRole.TEACHING_ASSISTANT);
+        enrollGroupInCourse(course.getEditorGroupName(), course, CourseRole.EDITOR);
+        enrollGroupInCourse(course.getInstructorGroupName(), course, CourseRole.INSTRUCTOR);
+    }
+
+    private void enrollGroupInCourse(String groupName, Course course, CourseRole role) {
+        if (groupName == null || groupName.isBlank()) {
+            return;
+        }
+        Set<User> users = userRepo.findAllByDeletedIsFalseAndGroupsContains(groupName);
+        for (User user : users) {
+            if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role)) {
+                userCourseRoleRepository.save(new UserCourseRole(user, course, role));
+            }
+        }
     }
 
     /**
@@ -942,6 +991,7 @@ public class CourseUtilService {
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "other-instructors");
         if ("Programming".equals(title)) {
             course = courseRepo.save(course);
+            enrollUsersFromGroupsInCourse(course);
 
             var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
             ProgrammingExerciseFactory.populateUnreleasedProgrammingExercise(programmingExercise, "TSTEXC", "Programming", false);
@@ -960,7 +1010,8 @@ public class CourseUtilService {
             TextExercise textExercise = TextExerciseFactory.generateTextExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, course);
             textExercise.setTitle("Text");
             course.addExercises(textExercise);
-            courseRepo.save(course);
+            course = courseRepo.save(course);
+            enrollUsersFromGroupsInCourse(course);
             exerciseRepository.save(textExercise);
         }
         else if (title.startsWith("ClassDiagram")) {
@@ -968,7 +1019,8 @@ public class CourseUtilService {
                     DiagramType.ClassDiagram, course);
             modelingExercise.setTitle(title);
             course.addExercises(modelingExercise);
-            courseRepo.save(course);
+            course = courseRepo.save(course);
+            enrollUsersFromGroupsInCourse(course);
             exerciseRepository.save(modelingExercise);
         }
 
@@ -990,6 +1042,7 @@ public class CourseUtilService {
         textExercise.setTitle("Text");
         course.addExercises(textExercise);
         course = courseRepo.save(course);
+        enrollUsersFromGroupsInCourse(course);
         exerciseRepository.save(modelingExercise);
         exerciseRepository.save(textExercise);
         return course;
@@ -1017,6 +1070,7 @@ public class CourseUtilService {
         course.addExercises(fileUploadExercise);
 
         course = courseRepo.save(course);
+        enrollUsersFromGroupsInCourse(course);
         exerciseRepository.save(modelingExercise);
         exerciseRepository.save(textExercise);
         exerciseRepository.save(fileUploadExercise);
@@ -1111,6 +1165,7 @@ public class CourseUtilService {
         }
         var tutors = userRepo.getTutors(course).stream().sorted(Comparator.comparing(User::getId)).toList();
         course = courseRepo.save(course);
+        enrollUsersFromGroupsInCourse(course);
         course.setExercises(new HashSet<>()); // avoid lazy init issue
         for (int i = 0; i < numberOfExercises; i++) {
             var currentUser = tutors.get(i % 4);
@@ -1291,7 +1346,11 @@ public class CourseUtilService {
         course.addExercises(textExercise);
         User user = userUtilService.createAndSaveUser(tutorLogin);
         user.setGroups(Set.of(course.getTeachingAssistantGroupName()));
-        userRepo.save(user);
+        user = userRepo.save(user);
+        // Also create the UCR entry so AuthorizationCheckService can find this user's role
+        if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), CourseRole.TEACHING_ASSISTANT)) {
+            userCourseRoleRepository.save(new UserCourseRole(user, course, CourseRole.TEACHING_ASSISTANT));
+        }
         return course;
     }
 
@@ -1346,7 +1405,10 @@ public class CourseUtilService {
         course.setTeachingAssistantGroupName(userPrefix + "tutor" + suffix);
         course.setEditorGroupName(userPrefix + "editor" + suffix);
         course.setInstructorGroupName(userPrefix + "instructor" + suffix);
-        courseRepo.save(course);
+        // Remove stale UCR entries for this course and re-derive from the new group names
+        userCourseRoleRepository.deleteByCourse_Id(course.getId());
+        Course savedCourse = courseRepo.save(course);
+        enrollUsersFromGroupsInCourse(savedCourse);
     }
 
     /**
@@ -1367,6 +1429,8 @@ public class CourseUtilService {
         gradingScaleUtilService.generateAndSaveGradingScale(2, new double[] { 0, 50, 100 }, true, 1, Optional.empty(), exam);
         course.addExam(exam);
         examUtilService.addExerciseGroupsAndExercisesToExam(exam, withProgrammingExercise, withAllQuizQuestionTypes);
-        return courseRepo.save(course);
+        course = courseRepo.save(course);
+        enrollUsersFromGroupsInCourse(course);
+        return course;
     }
 }

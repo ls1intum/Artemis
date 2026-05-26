@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CalendarSubscriptionTokenStore;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.repository.CalendarSubscriptionTokenStoreRepository;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 
 /**
@@ -78,6 +79,9 @@ public class UserUtilService {
 
     @Autowired
     private CalendarSubscriptionTokenStoreRepository calendarSubscriptionTokenStoreRepository;
+
+    @Autowired
+    private UserCourseRoleRepository userCourseRoleRepository;
 
     /**
      * Changes the currently authorized User to the User with the given username.
@@ -396,6 +400,9 @@ public class UserUtilService {
             log.debug("Removing {} users from all courses...", currentUsers.size());
             currentUsers.forEach(user -> user.setGroups(Set.of()));
             userTestRepository.saveAll(currentUsers);
+            // Also remove all user_course_role entries so AuthorizationCheckService sees no stale roles.
+            // Courses created afterwards will re-populate via CourseUtilService.enrollUsersFromGroupsInCourse().
+            userCourseRoleRepository.deleteAll();
             log.debug("Removing {} users from all courses. Done", currentUsers.size());
             log.debug("Save {} users to database...", usersToAdd.size());
             usersToAdd = userTestRepository.saveAll(usersToAdd);
