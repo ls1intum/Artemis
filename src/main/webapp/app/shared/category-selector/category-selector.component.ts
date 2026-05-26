@@ -16,6 +16,9 @@ import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 
 const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '#1b97ca', '#0d3cc2', '#0ab84f'];
 
+/**
+ * @deprecated Use {@link CategorySelectorPrimengComponent} instead.
+ */
 @Component({
     selector: 'jhi-category-selector',
     templateUrl: './category-selector.component.html',

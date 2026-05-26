@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, effect, inject, input, output } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
-import { Course, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
+import { Course, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

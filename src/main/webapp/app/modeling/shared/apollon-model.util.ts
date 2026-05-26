@@ -86,6 +86,23 @@ export function getModelEdges(model: UMLModel | ApollonModelData | undefined): A
     return Array.isArray(collection) ? collection : Object.values(collection);
 }
 
+function getNestedNodeElements(model: UMLModel | ApollonModelData | undefined): Array<{ id: string; [key: string]: unknown }> {
+    return getModelNodes(model).flatMap((node) => {
+        const data = node.data as Record<string, unknown> | undefined;
+        const nestedCollections = [data?.attributes, data?.methods, data?.actionRows];
+
+        return nestedCollections.flatMap((collection) => {
+            if (!Array.isArray(collection)) {
+                return [];
+            }
+
+            return collection.filter(
+                (item): item is { id: string; [key: string]: unknown } => !!item && typeof item === 'object' && typeof (item as { id?: unknown }).id === 'string',
+            );
+        });
+    });
+}
+
 /**
  * Counts the total number of elements (nodes + edges) in an Apollon model.
  *
@@ -115,8 +132,9 @@ export function isModelEmpty(model: UMLModel | ApollonModelData | undefined): bo
  */
 export function getModelElementIds(model: UMLModel | ApollonModelData | undefined): Set<string> {
     const nodeIds = getModelNodes(model).map((node) => node.id);
+    const nestedNodeElementIds = getNestedNodeElements(model).map((element) => element.id);
     const edgeIds = getModelEdges(model).map((edge) => edge.id);
-    return new Set([...nodeIds, ...edgeIds]);
+    return new Set([...nodeIds, ...nestedNodeElementIds, ...edgeIds]);
 }
 
 export function hasExplicitInteractiveConfig(model: UMLModel | ApollonModelData | undefined): boolean {

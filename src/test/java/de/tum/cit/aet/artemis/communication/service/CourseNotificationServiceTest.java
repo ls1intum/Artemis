@@ -27,6 +27,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.CourseNotificationParameter;
 import de.tum.cit.aet.artemis.communication.domain.NotificationChannelOption;
@@ -38,8 +39,7 @@ import de.tum.cit.aet.artemis.communication.dto.CourseNotificationPageableDTO;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationWithStatusDTO;
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationParameterTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 @ExtendWith(MockitoExtension.class)
 class CourseNotificationServiceTest {

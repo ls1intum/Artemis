@@ -9,8 +9,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationDTO;
-import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
  * Service responsible for delivering course notifications to the web application via websockets.

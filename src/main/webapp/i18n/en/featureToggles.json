@@ -27,22 +27,6 @@
                 "description": "Enable or disable features for all users. Changes take effect immediately without server restart."
             },
             "profiles": {
-                "athena": {
-                    "name": "Athena (AI Assessment)",
-                    "description": "Enables Athena ML-based automated feedback suggestions for text and programming exercises."
-                },
-                "apollon": {
-                    "name": "Apollon (Modeling)",
-                    "description": "Enables the Apollon UML modeling editor for creating and editing diagrams in modeling exercises."
-                },
-                "ldap": {
-                    "name": "LDAP Authentication",
-                    "description": "Enables LDAP-based authentication for user login through institutional directory services."
-                },
-                "saml2": {
-                    "name": "SAML2 Authentication",
-                    "description": "Enables SAML2-based single sign-on (SSO) authentication through identity providers."
-                },
                 "localci": {
                     "name": "Local CI",
                     "description": "Enables the local continuous integration system for building and testing programming submissions."
@@ -108,6 +92,22 @@
                 "lti": {
                     "name": "LTI Integration",
                     "description": "Enables Learning Tools Interoperability (LTI) for integration with external learning management systems."
+                },
+                "athena": {
+                    "name": "Athena (AI Assessment)",
+                    "description": "Enables Athena ML-based automated feedback suggestions for text and programming exercises."
+                },
+                "apollon": {
+                    "name": "Apollon (Modeling)",
+                    "description": "Enables the Apollon UML modeling editor for creating and editing diagrams in modeling exercises."
+                },
+                "ldap": {
+                    "name": "LDAP Authentication & Synchronization",
+                    "description": "Enables LDAP-based authentication and user synchronization for verifying credentials and fetching user details from institutional directory services."
+                },
+                "saml2": {
+                    "name": "SAML2 Authentication",
+                    "description": "Enables SAML2-based single sign-on (SSO) authentication through identity providers."
                 },
                 "passkey": {
                     "name": "Passkey Authentication",

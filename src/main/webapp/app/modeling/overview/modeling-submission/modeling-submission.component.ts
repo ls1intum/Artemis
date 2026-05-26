@@ -14,8 +14,8 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { Course } from 'app/course/shared/entities/course.model';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
 import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
@@ -520,10 +520,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private handleAthenaAssessment(result: Result): void {
         if (result.completionDate) {
             this.assessmentResult = this.modelingAssessmentService.convertResult(result);
+            this.result = this.assessmentResult;
             this.prepareAssessmentData();
 
             if (result.successful) {
-                this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
+                this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.modelingExercise?.title ?? '' });
             }
         } else if (result.successful === false) {
             this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
@@ -718,6 +719,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      */
     onReceiveSubmissionPatchFromTeam(submissionPatch: SubmissionPatch) {
         this.modelingEditor()?.importPatch(submissionPatch.patch);
+    }
+
+    onTeamSyncReconnected() {
+        this.modelingEditor()?.broadcastFullState();
     }
 
     private isModelEmpty(model?: string): boolean {
