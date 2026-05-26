@@ -43,7 +43,7 @@ public class CourseNotificationSettingPresetRegistryService {
     public CourseNotificationSettingPresetRegistryService() {
         ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
         scanner.addIncludeFilter(new AnnotationTypeFilter(CourseNotificationSettingPreset.class));
-        String basePackage = "de.tum.cit.aet.artemis.communication.domain.setting_presets";
+        String basePackage = "de.tum.cit.aet.artemis.notification.domain.setting_presets";
 
         for (BeanDefinition bd : scanner.findCandidateComponents(basePackage)) {
             try {

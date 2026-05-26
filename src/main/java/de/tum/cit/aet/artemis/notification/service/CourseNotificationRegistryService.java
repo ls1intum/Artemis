@@ -43,7 +43,7 @@ public class CourseNotificationRegistryService {
     public CourseNotificationRegistryService() {
         ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
         scanner.addIncludeFilter(new AnnotationTypeFilter(CourseNotificationType.class));
-        String basePackage = "de.tum.cit.aet.artemis.communication.domain.course_notifications";
+        String basePackage = "de.tum.cit.aet.artemis.notification.domain.course_notifications";
 
         for (BeanDefinition bd : scanner.findCandidateComponents(basePackage)) {
             try {
