@@ -36,10 +36,10 @@
                 </button>
             }
 
-            <!-- Source chips — first 2 inline; all chips in one wrapping row when expanded -->
+            <!-- Source chips — first INITIAL_VISIBLE_SOURCE_COUNT inline; all chips in one wrapping row when expanded -->
             @if (sources().length > 0) {
                 <div class="iris-chips d-flex align-items-center" [class.iris-chips--expanded]="moreOpen()">
-                    @for (source of moreOpen() ? sources() : sources().slice(0, 2); track $index) {
+                    @for (source of moreOpen() ? sources() : sources().slice(0, INITIAL_VISIBLE_SOURCE_COUNT); track $index) {
                         <a
                             class="iris-chip d-inline-flex align-items-center text-decoration-none text-nowrap rounded-pill"
                             [routerLink]="linkFor(source)"
@@ -52,9 +52,9 @@
                             }
                         </a>
                     }
-                    @if (sources().length > 2 && !moreOpen()) {
+                    @if (sources().length > INITIAL_VISIBLE_SOURCE_COUNT && !moreOpen()) {
                         <button class="iris-chip iris-more-btn rounded-pill" type="button" (click)="moreOpen.set(true)">
-                            +{{ sources().length - 2 }} {{ 'global.search.irisAnswerMore' | artemisTranslate }}
+                            +{{ sources().length - INITIAL_VISIBLE_SOURCE_COUNT }} {{ 'global.search.irisAnswerMore' | artemisTranslate }}
                         </button>
                     }
                     @if (moreOpen()) {

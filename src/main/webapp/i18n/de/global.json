@@ -63,11 +63,13 @@
                 "lecturesTitle": "Vorlesungsdetails",
                 "lecturesDescription": "Vorlesungsinhalte und Einheiten ansehen",
                 "communicationTitle": "Kommunikation",
-                "communicationDescription": "Kommunikationskanäle durchsuchen",
+                "communicationDescription": "Kanäle und Nachrichten durchsuchen",
                 "faqsTitle": "FAQs",
                 "faqsDescription": "Häufig gestellte Fragen durchsuchen",
                 "examsTitle": "Klausuren",
-                "examsDescription": "Klausuren in Ihren Kursen durchsuchen"
+                "examsDescription": "Klausuren in deinen Kursen durchsuchen",
+                "coursesTitle": "Kurse",
+                "coursesDescription": "Eingeschriebene Kurse durchsuchen"
             },
             "types": {
                 "filter": "#Filter",
@@ -78,7 +80,8 @@
                 "due": "Fällig: {{ date }}",
                 "point": "Punkt",
                 "points": "Punkte",
-                "examExercise": "Klausur"
+                "examExercise": "Klausur",
+                "reply": "Antwort"
             },
             "comingSoon": "Demnächst verfügbar",
             "enterToActivate": "Eingabetaste drücken zum Aktivieren",

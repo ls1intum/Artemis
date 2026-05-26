@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.pyris.job;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**

@@ -5,7 +5,7 @@ import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { delay, of, throwError } from 'rxjs';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';

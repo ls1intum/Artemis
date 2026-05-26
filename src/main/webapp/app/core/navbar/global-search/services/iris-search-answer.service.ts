@@ -1,11 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, filter, timeout } from 'rxjs';
+import { Observable, filter, shareReplay, timeout } from 'rxjs';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 
 /** Maximum time (ms) to wait for a WebSocket response before the Observable errors. */
-const IRIS_SEARCH_ANSWER_WS_TIMEOUT_MS = 30_000;
+export const IRIS_SEARCH_ANSWER_WS_TIMEOUT_MS = 60_000;
 
 /** STOMP channel on which Artemis pushes global search answer updates for the current user. */
 const GLOBAL_SEARCH_ANSWER_WS_CHANNEL = '/user/topic/iris/global-search-answer';
@@ -16,6 +16,13 @@ const GLOBAL_SEARCH_ANSWER_WS_CHANNEL = '/user/topic/iris/global-search-answer';
 export class IrisSearchAnswerService {
     private readonly http = inject(HttpClient);
     private readonly websocketService = inject(WebsocketService);
+
+    /**
+     * Shared STOMP subscription across all concurrent ask() calls.
+     * Opens when the first subscriber arrives; closes when the last one unsubscribes.
+     * This avoids subscribe/unsubscribe churn when the user types rapidly.
+     */
+    private readonly statusUpdates$ = this.websocketService.subscribe<IrisSearchStatusUpdate>(GLOBAL_SEARCH_ANSWER_WS_CHANNEL).pipe(shareReplay({ bufferSize: 0, refCount: true }));
 
     /**
      * Fires an async ask-Iris request and returns a multi-emit Observable:
@@ -38,10 +45,10 @@ export class IrisSearchAnswerService {
             // The server registers this ID as the Hazelcast job token; WebSocket callbacks echo it back.
             const runId = window.crypto.randomUUID();
 
-            // 1. Subscribe to the WebSocket channel first so we never miss the thinking callback.
-            //    The filter is definite from the start — no undefined fallback needed.
-            const wsSubscription = this.websocketService
-                .subscribe<IrisSearchStatusUpdate>(GLOBAL_SEARCH_ANSWER_WS_CHANNEL)
+            // 1. Attach to the shared STOMP subscription, filtering to this run's messages only.
+            //    The shared Observable keeps the underlying STOMP channel open as long as any
+            //    ask() subscriber is active, avoiding repeated subscribe/unsubscribe STOMP frames.
+            const wsSubscription = this.statusUpdates$
                 .pipe(
                     filter((update) => update.runId === runId),
                     timeout(IRIS_SEARCH_ANSWER_WS_TIMEOUT_MS),

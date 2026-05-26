@@ -12,7 +12,7 @@ import { CourseTrainingQuizService } from '../../service/course-training-quiz.se
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { SubmittedAnswerAfterEvaluation } from './submitted-answer-after-evaluation';
 import { QuizQuestionTraining } from './quiz-question-training.model';
 

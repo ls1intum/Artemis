@@ -6,14 +6,14 @@ import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-e
 import { MockProvider } from 'ng-mocks';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { UMLDiagramType } from '@tumaet/apollon';
 import { of } from 'rxjs';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 
 describe('ModelingExerciseResolver', () => {
     setupTestBed({ zoneless: true });

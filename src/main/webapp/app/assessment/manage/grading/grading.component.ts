@@ -9,9 +9,9 @@ import { Observable, Subject, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { catchError, finalize } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { faExclamationTriangle, faInfo, faPlus, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -902,7 +902,7 @@ export class GradingComponent implements OnInit {
     }
 
     private async readGradingStepsFromCSVFile(csvFile: File) {
-        let csvGradeSteps: CsvGradeStep[] = [];
+        let csvGradeSteps: CsvGradeStep[];
         try {
             csvGradeSteps = await this.parseCSVFile(csvFile);
         } catch (error) {

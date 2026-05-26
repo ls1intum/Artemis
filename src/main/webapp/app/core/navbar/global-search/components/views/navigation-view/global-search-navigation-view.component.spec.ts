@@ -10,12 +10,16 @@ import { GlobalSearchNavigationViewComponent } from './global-search-navigation-
 import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { Router } from '@angular/router';
 import { SearchOverlayService } from 'app/core/navbar/global-search/services/search-overlay.service';
 import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
 import { SearchResultItemComponent } from 'app/core/navbar/global-search/components/modal/search-result-item/search-result-item.component';
 import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/components/views/iris-answer/global-search-iris-answer.component';
+import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/iris-search-answer.service';
 import {
     faBook,
     faCalendarCheck,
@@ -40,11 +44,12 @@ describe('GlobalSearchNavigationViewComponent', () => {
     // jsdom does not implement scrollIntoView; mock it to prevent TypeError in the effect
     HTMLElement.prototype.scrollIntoView = vi.fn();
 
-    function configureTestBed(irisEnabled: boolean): void {
+    function configureTestBed(irisEnabled: boolean, llmDecision: LLMSelectionDecision = LLMSelectionDecision.CLOUD_AI): void {
         TestBed.configureTestingModule({
             imports: [
                 GlobalSearchNavigationViewComponent,
                 MockComponent(GlobalSearchActionItemComponent),
+                MockComponent(GlobalSearchIrisAnswerComponent),
                 MockComponent(SearchResultItemComponent),
                 MockComponent(SearchableEntityItemComponent),
                 MockComponent(FaIconComponent),
@@ -53,8 +58,10 @@ describe('GlobalSearchNavigationViewComponent', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(irisEnabled) } },
+                { provide: AccountService, useValue: { userIdentity: signal({ selectedLLMUsage: llmDecision }) } },
                 { provide: Router, useValue: { navigate: vi.fn() } },
                 { provide: SearchOverlayService, useValue: { close: vi.fn(), isOpen: signal(false) } },
+                { provide: IrisSearchAnswerService, useValue: { ask: vi.fn() } },
             ],
         });
 
@@ -79,8 +86,8 @@ describe('GlobalSearchNavigationViewComponent', () => {
 
         describe('itemCount', () => {
             it('should equal action button count plus searchable entities when not searching', () => {
-                // actionButtonCount = 1 (lecture button; iris is inline), searchableEntities.length = 5
-                expect(component.itemCount()).toBe(6);
+                // actionButtonCount = 1 (lecture button; iris is inline), searchableEntities.length = 6
+                expect(component.itemCount()).toBe(7);
             });
 
             it('should equal action button count plus results when searching', () => {
@@ -307,8 +314,8 @@ describe('GlobalSearchNavigationViewComponent', () => {
         });
 
         it('itemCount should equal searchableEntities count when iris is disabled', () => {
-            // actionButtonCount = 0 (iris disabled), searchableEntities.length = 5
-            expect(component.itemCount()).toBe(5);
+            // actionButtonCount = 0 (iris disabled), searchableEntities.length = 6
+            expect(component.itemCount()).toBe(6);
         });
 
         it('should not emit when Enter is pressed at index 0', () => {
@@ -330,29 +337,23 @@ describe('GlobalSearchNavigationViewComponent', () => {
         });
     });
 
-    describe('when iris is open', () => {
+    describe('when iris module is enabled but user has opted out of AI', () => {
         beforeEach(() => {
             vi.clearAllMocks();
-            configureTestBed(true);
-            fixture.componentRef.setInput('irisOpen', true);
-            fixture.detectChanges();
+            configureTestBed(true, LLMSelectionDecision.NO_AI);
         });
 
-        it('should show only one action button (lecture)', () => {
-            expect(component['actionButtonCount']()).toBe(1);
+        it('should not render the iris answer card', () => {
+            expect(fixture.nativeElement.querySelector('jhi-global-search-iris-answer')).toBeNull();
         });
 
-        it('should emit SearchView.Lecture when Enter is pressed at index 0', () => {
-            const spy = vi.fn();
-            component.viewSelected.subscribe(spy);
+        it('should not render the lecture search button', () => {
+            expect(fixture.nativeElement.querySelector('jhi-global-search-action-item')).toBeNull();
+        });
 
-            fixture.componentRef.setInput('selectedIndex', 0);
-            fixture.detectChanges();
-
-            const event = new KeyboardEvent('keydown', { key: 'Enter' });
-            component.handleKeydown(event);
-
-            expect(spy).toHaveBeenCalledWith(SearchView.Lecture);
+        it('itemCount should equal searchableEntities count only', () => {
+            // actionButtonCount = 0 (user opted out), searchableEntities.length = 6
+            expect(component.itemCount()).toBe(6);
         });
     });
 });

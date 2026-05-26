@@ -8,7 +8,7 @@ import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExternalSubmissionService } from 'app/exercise/external-submission/external-submission.service';
 import { SCORE_PATTERN } from 'app/app.constants';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';

@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { isRequestToArtemisServer } from './interceptor.util';
-import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
+import { BrowserFingerprintService } from 'app/account/fingerprint/browser-fingerprint.service';
 
 /**
  * HTTP interceptor that adds browser fingerprint, instance ID, and session ID headers to requests.

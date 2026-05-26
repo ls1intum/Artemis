@@ -6,7 +6,7 @@ import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import dayjs from 'dayjs/esm';
 import { BehaviorSubject, Observable, Subject, Subscription, distinct, filter, map, tap } from 'rxjs';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 
 const EVENT_ACKNOWLEDGEMENT_LOCAL_STORAGE_KEY = 'examLastAcknowledgedEvent';

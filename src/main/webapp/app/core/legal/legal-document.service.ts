@@ -1,9 +1,9 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { PrivacyStatement } from 'app/core/shared/entities/privacy-statement.model';
+import { PrivacyStatement } from 'app/admin/legal/privacy-statement.model';
 import { Observable } from 'rxjs';
-import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/core/shared/entities/legal-document.model';
-import { Imprint } from 'app/core/shared/entities/imprint.model';
+import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/admin/legal/legal-document.model';
+import { Imprint } from 'app/admin/legal/imprint.model';
 
 @Injectable({
     providedIn: 'root',

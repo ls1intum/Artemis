@@ -5,7 +5,7 @@ import { ExternalCloningService } from 'app/programming/shared/services/external
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { MODULE_FEATURE_THEIA } from 'app/app.constants';
@@ -27,10 +27,10 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { TheiaService } from 'app/programming/shared/services/theia.service';
-import { SshUserSettingsService } from 'app/core/user/settings/ssh-settings/ssh-user-settings.service';
+import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/ssh-user-settings.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { IdeSettingsService } from 'app/core/user/settings/ide-preferences/ide-settings.service';
-import { Ide } from 'app/core/user/settings/ide-preferences/ide.model';
+import { IdeSettingsService } from 'app/account/user/settings/ide-preferences/ide-settings.service';
+import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 export enum RepositoryAuthenticationMethod {

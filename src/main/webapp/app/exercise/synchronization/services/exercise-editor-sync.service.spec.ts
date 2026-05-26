@@ -12,7 +12,7 @@ import {
 } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ConnectionState, WebsocketService } from 'app/shared/service/websocket.service';
-import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
+import { BrowserFingerprintService } from 'app/account/fingerprint/browser-fingerprint.service';
 import { ReviewThreadSyncAction } from 'app/exercise/shared/entities/review/review-thread-sync-update.model';
 
 describe('ExerciseEditorSyncService', () => {

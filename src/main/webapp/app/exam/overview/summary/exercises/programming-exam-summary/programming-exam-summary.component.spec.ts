@@ -6,7 +6,7 @@ import { CodeButtonComponent } from 'app/shared/components/buttons/code-button/c
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';

@@ -13,6 +13,6 @@ class TutorialGroupRepositoryArchitectureTest extends AbstractModuleRepositoryAr
     // TODO: This method should be removed once all repositories are tested
     @Override
     protected Set<String> testTransactionalExclusions() {
-        return Set.of("de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupsConfigurationService.onTimeZoneUpdate(de.tum.cit.aet.artemis.core.domain.Course)");
+        return Set.of("de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupsConfigurationService.onTimeZoneUpdate(de.tum.cit.aet.artemis.course.domain.Course)");
     }
 }

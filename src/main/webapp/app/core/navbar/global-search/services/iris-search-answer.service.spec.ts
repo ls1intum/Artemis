@@ -4,7 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Subject } from 'rxjs';
-import { IrisSearchAnswerService } from './iris-search-answer.service';
+import { IRIS_SEARCH_ANSWER_WS_TIMEOUT_MS, IrisSearchAnswerService } from './iris-search-answer.service';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 
@@ -122,7 +122,7 @@ describe('IrisSearchAnswerService', () => {
         const req = httpTesting.expectOne('api/iris/search-answer');
         req.flush(null, { status: 202, statusText: 'Accepted' });
 
-        vi.advanceTimersByTime(30_001);
+        vi.advanceTimersByTime(IRIS_SEARCH_ANSWER_WS_TIMEOUT_MS + 1);
 
         expect(errorReceived).toBeDefined();
         vi.useRealTimers();

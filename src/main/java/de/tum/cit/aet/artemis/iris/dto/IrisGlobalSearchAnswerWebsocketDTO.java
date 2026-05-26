@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.iris.dto;
 
 import java.util.List;
 
+import jakarta.validation.constraints.NotBlank;
+
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -19,5 +21,5 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchSou
  * </ul>
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record IrisGlobalSearchAnswerWebsocketDTO(String runId, boolean isThinking, @Nullable String answer, @Nullable List<PyrisGlobalSearchSourceDTO> sources) {
+public record IrisGlobalSearchAnswerWebsocketDTO(@NotBlank String runId, boolean isThinking, @Nullable String answer, @Nullable List<PyrisGlobalSearchSourceDTO> sources) {
 }

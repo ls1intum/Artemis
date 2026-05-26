@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
@@ -230,7 +231,7 @@ public class PyrisConnectorService {
             var settings = new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, null);
             var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, List.of(), accessContext);
             var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, Void.class);
-            if (response.getStatusCode().value() != 202) {
+            if (response.getStatusCode().value() != HttpStatus.ACCEPTED.value()) {
                 log.warn("Unexpected status {} from Pyris search/ask async", response.getStatusCode().value());
                 throw new PyrisConnectorException("Unexpected status from Pyris global-search pipeline: " + response.getStatusCode().value());
             }
