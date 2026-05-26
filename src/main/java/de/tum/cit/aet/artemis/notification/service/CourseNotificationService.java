@@ -21,13 +21,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.communication.dto.CourseNotificationDTO;
-import de.tum.cit.aet.artemis.communication.dto.CourseNotificationPageableDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotificationParameter;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatusType;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotification;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationPageableDTO;
 import de.tum.cit.aet.artemis.notification.repository.CourseNotificationParameterRepository;
 import de.tum.cit.aet.artemis.notification.repository.CourseNotificationRepository;
 

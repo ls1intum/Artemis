@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.communication.annotations.CourseNotificationType;
+import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotification;
 
 /**

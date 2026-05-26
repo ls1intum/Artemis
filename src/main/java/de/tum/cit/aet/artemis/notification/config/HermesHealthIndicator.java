@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.communication.config;
+package de.tum.cit.aet.artemis.notification.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 

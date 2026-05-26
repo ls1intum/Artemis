@@ -16,9 +16,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.communication.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 
 @ExtendWith(MockitoExtension.class)
 class CourseNotificationWebappServiceTest {

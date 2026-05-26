@@ -15,10 +15,10 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.cit.aet.artemis.communication.dto.CourseNotificationWithStatusDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
 import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatusType;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationWithStatusDTO;
 
 /**
  * Repository for the {@link CourseNotification} entity.

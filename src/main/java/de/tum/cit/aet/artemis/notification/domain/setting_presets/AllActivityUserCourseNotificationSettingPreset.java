@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.notification.domain.setting_presets;
 
 import java.util.Map;
 
-import de.tum.cit.aet.artemis.communication.annotations.CourseNotificationSettingPreset;
+import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationSettingPreset;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.AddedToChannelNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.AttachmentChangedNotification;

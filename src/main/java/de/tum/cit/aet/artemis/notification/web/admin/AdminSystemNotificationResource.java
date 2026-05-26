@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.communication.web.admin;
+package de.tum.cit.aet.artemis.notification.web.admin;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -21,11 +21,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.communication.dto.SystemNotificationUpdateDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
+import de.tum.cit.aet.artemis.notification.dto.SystemNotificationUpdateDTO;
 import de.tum.cit.aet.artemis.notification.repository.SystemNotificationRepository;
 import de.tum.cit.aet.artemis.notification.service.SystemNotificationService;
 

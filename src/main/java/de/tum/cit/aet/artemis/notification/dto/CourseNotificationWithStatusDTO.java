@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.communication.dto;
+package de.tum.cit.aet.artemis.notification.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.communication.annotations;
+package de.tum.cit.aet.artemis.notification.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

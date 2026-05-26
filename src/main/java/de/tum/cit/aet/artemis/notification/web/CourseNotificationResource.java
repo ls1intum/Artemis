@@ -13,12 +13,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.communication.dto.CourseNotificationDTO;
-import de.tum.cit.aet.artemis.communication.dto.CourseNotificationInfoDTO;
-import de.tum.cit.aet.artemis.communication.dto.CourseNotificationPageableDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationInfoDTO;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationPageableDTO;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationRegistryService;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingPresetRegistryService;

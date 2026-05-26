@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.communication.dto;
+package de.tum.cit.aet.artemis.notification.dto;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;

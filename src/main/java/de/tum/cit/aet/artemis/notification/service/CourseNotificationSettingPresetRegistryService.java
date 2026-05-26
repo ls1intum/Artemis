@@ -17,11 +17,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.communication.annotations.CourseNotificationSettingPreset;
-import de.tum.cit.aet.artemis.communication.dto.UserCourseNotificationSettingPresetDTO;
+import de.tum.cit.aet.artemis.notification.annotations.CourseNotificationSettingPreset;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotification;
 import de.tum.cit.aet.artemis.notification.domain.setting_presets.UserCourseNotificationSettingPreset;
+import de.tum.cit.aet.artemis.notification.dto.UserCourseNotificationSettingPresetDTO;
 
 /**
  * Registry service that provides options from the setting presets.

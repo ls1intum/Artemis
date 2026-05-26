@@ -12,8 +12,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.communication.dto.MaintenanceEmailRecipientDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.notification.dto.MaintenanceEmailRecipientDTO;
 
 /**
  * Repository for querying maintenance email recipients.
