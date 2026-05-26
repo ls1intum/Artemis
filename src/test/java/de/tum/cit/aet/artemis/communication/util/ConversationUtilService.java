@@ -442,6 +442,27 @@ public class ConversationUtilService {
     }
 
     /**
+     * Overload that accepts the same {@link Collection} of {@link PostResponseDTO} but matches the
+     * unqualified {@code assertSensitiveInformationHidden(Set/List)} call sites the existing tests
+     * use after migration from {@link Posting}. Functionally identical to
+     * {@link #assertPostDtoSensitiveInformationHidden}.
+     *
+     * @param posts the response DTOs to assert against
+     */
+    public void assertSensitiveInformationHidden(@NonNull Set<PostResponseDTO> posts) {
+        assertPostDtoSensitiveInformationHidden(posts);
+    }
+
+    /**
+     * List-typed overload mirroring {@link #assertSensitiveInformationHidden(Set)}.
+     *
+     * @param posts the response DTOs to assert against
+     */
+    public void assertSensitiveInformationHidden(@NonNull List<PostResponseDTO> posts) {
+        assertPostDtoSensitiveInformationHidden(posts);
+    }
+
+    /**
      * Creates and saves a OneToOneChat for the given Course. It also creates and saves two ConversationParticipants for the OneToOneChat.
      *
      * @param course     The Course the OneToOneChat belongs to
