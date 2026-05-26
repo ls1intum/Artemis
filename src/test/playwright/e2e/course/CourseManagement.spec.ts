@@ -99,11 +99,19 @@ test.describe('Course management', { tag: '@fast' }, () => {
     });
 
     test.describe('Course creation', () => {
-        let course: Course;
-        let course2: Course;
+        let course: Course | undefined;
+        let course2: Course | undefined;
 
         test.beforeEach('Set course title and shortname', async ({ login }) => {
             await login(admin, '/');
+            // Reset the closure variables so the previous test's (already-deleted) course
+            // reference isn't carried into this test's afterEach. Without this reset the
+            // afterEach below would call deleteCourse on a stale id and the server would
+            // return 404, which historically (before the null-check added in #11885) showed
+            // up as a server-side ConstraintViolationException — the source of the long-lived
+            // "ConstraintViolationError" comment + 5 s retry workaround in deleteCourse.
+            course = undefined;
+            course2 = undefined;
             const uid = generateUUID();
             courseData.title = 'Course ' + uid;
             courseData.shortName = 'playwright' + uid;
