@@ -10,6 +10,8 @@ import { GlobalSearchNavigationViewComponent } from './global-search-navigation-
 import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { Router } from '@angular/router';
 import { SearchOverlayService } from 'app/core/navbar/global-search/services/search-overlay.service';
 import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
@@ -42,7 +44,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
     // jsdom does not implement scrollIntoView; mock it to prevent TypeError in the effect
     HTMLElement.prototype.scrollIntoView = vi.fn();
 
-    function configureTestBed(irisEnabled: boolean): void {
+    function configureTestBed(irisEnabled: boolean, llmDecision: LLMSelectionDecision = LLMSelectionDecision.CLOUD_AI): void {
         TestBed.configureTestingModule({
             imports: [
                 GlobalSearchNavigationViewComponent,
@@ -56,6 +58,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(irisEnabled) } },
+                { provide: AccountService, useValue: { userIdentity: signal({ selectedLLMUsage: llmDecision }) } },
                 { provide: Router, useValue: { navigate: vi.fn() } },
                 { provide: SearchOverlayService, useValue: { close: vi.fn(), isOpen: signal(false) } },
                 { provide: IrisSearchAnswerService, useValue: { ask: vi.fn() } },
@@ -331,6 +334,26 @@ describe('GlobalSearchNavigationViewComponent', () => {
         it('should not render the lecture content action button', () => {
             const button = fixture.nativeElement.querySelector('jhi-global-search-action-item');
             expect(button).toBeNull();
+        });
+    });
+
+    describe('when iris module is enabled but user has opted out of AI', () => {
+        beforeEach(() => {
+            vi.clearAllMocks();
+            configureTestBed(true, LLMSelectionDecision.NO_AI);
+        });
+
+        it('should not render the iris answer card', () => {
+            expect(fixture.nativeElement.querySelector('jhi-global-search-iris-answer')).toBeNull();
+        });
+
+        it('should not render the lecture search button', () => {
+            expect(fixture.nativeElement.querySelector('jhi-global-search-action-item')).toBeNull();
+        });
+
+        it('itemCount should equal searchableEntities count only', () => {
+            // actionButtonCount = 0 (user opted out), searchableEntities.length = 6
+            expect(component.itemCount()).toBe(6);
         });
     });
 });

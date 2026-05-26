@@ -23,6 +23,8 @@ import { SearchResultView } from 'app/core/navbar/global-search/components/views
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SearchEntityType, SearchableEntity } from 'app/core/navbar/global-search/models/searchable-entity.model';
 import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
@@ -60,6 +62,7 @@ export const IRIS_ANSWER_ACTION_INDEX = 0;
 })
 export class GlobalSearchNavigationViewComponent extends SearchResultView {
     private readonly profileService = inject(ProfileService);
+    private readonly accountService = inject(AccountService);
     private readonly cdr = inject(ChangeDetectorRef);
 
     readonly searchQuery = input.required<string>();
@@ -87,13 +90,19 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     // Query all selectable items for auto-scroll functionality
     private readonly selectableItems = viewChildren<ElementRef<HTMLElement>>('selectableItem');
 
-    // False when artemis.iris.enabled = false in the server config; action buttons are hidden.
-    protected readonly irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
+    // False when artemis.iris.enabled = false in the server config.
+    private readonly irisModuleEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
+    // True only when the module is enabled AND the user has opted into AI usage (LOCAL_AI or CLOUD_AI).
+    protected readonly irisEnabled = computed(() => {
+        if (!this.irisModuleEnabled) return false;
+        const usage = this.accountService.userIdentity()?.selectedLLMUsage;
+        return usage === LLMSelectionDecision.LOCAL_AI || usage === LLMSelectionDecision.CLOUD_AI;
+    });
     // Lecture search button is only visible when no filter is active
     protected readonly showLectureButton = computed(() => this.activeFilters().length === 0);
     // Number of action buttons currently visible (only the lecture search button now)
     protected readonly actionButtonCount = computed(() => {
-        if (!this.irisEnabled) return 0;
+        if (!this.irisEnabled()) return 0;
         return this.showLectureButton() ? 1 : 0;
     });
 
@@ -359,7 +368,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         const buttonCount = this.actionButtonCount();
 
         // Lecture search button at index 0 when iris is enabled and no filter active
-        if (this.showLectureButton() && this.irisEnabled && idx === IRIS_ANSWER_ACTION_INDEX) {
+        if (this.showLectureButton() && this.irisEnabled() && idx === IRIS_ANSWER_ACTION_INDEX) {
             event.preventDefault();
             this.viewSelected.emit(SearchView.Lecture);
             return;
