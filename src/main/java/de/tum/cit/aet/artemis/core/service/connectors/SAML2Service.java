@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.core.service.connectors;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SAML2;
 import static de.tum.cit.aet.artemis.core.config.Constants.SYSTEM_ACCOUNT;
 
 import java.time.Instant;
@@ -22,8 +21,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -32,19 +31,20 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.Authority;
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.exception.UserNotActivatedException;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.ArtemisSuccessfulLoginService;
+import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
+import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.communication.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.config.SAML2Properties;
-import de.tum.cit.aet.artemis.core.domain.Authority;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.config.Saml2Enabled;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
-import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
-import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
-import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
 
 /**
@@ -61,7 +61,7 @@ import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
  */
 @Lazy
 @Service
-@Profile(PROFILE_SAML2)
+@Conditional(Saml2Enabled.class)
 public class SAML2Service {
 
     private final AuditEventRepository auditEventRepository;

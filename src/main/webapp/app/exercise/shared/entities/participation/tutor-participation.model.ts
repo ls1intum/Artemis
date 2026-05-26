@@ -1,4 +1,4 @@
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExampleSubmission, ExampleSubmissionDTO } from 'app/assessment/shared/entities/example-submission.model';

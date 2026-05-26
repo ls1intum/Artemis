@@ -1,4 +1,4 @@
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import dayjs from 'dayjs/esm';

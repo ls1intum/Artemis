@@ -15,7 +15,7 @@ import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
@@ -44,8 +44,8 @@ import { ParticipationManagementDTO } from './participation-management-dto.model
 import { ParticipationSearch } from 'app/shared/table/pageable-table';
 import { FilterDropdownComponent } from 'app/exercise/shared/filter-dropdown/filter-dropdown.component';
 import { TeamStudentsListComponent } from 'app/exercise/team/team-participate/team-students-list.component';
-import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
-import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 
 export enum FilterProp {
     ALL = 'All',

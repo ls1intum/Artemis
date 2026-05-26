@@ -11,7 +11,7 @@ import { CourseNotificationCategory } from 'app/communication/shared/entities/co
 import dayjs from 'dayjs/esm';
 import { faComments } from '@fortawesome/free-solid-svg-icons';
 import { BehaviorSubject, distinctUntilChanged, firstValueFrom } from 'rxjs';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';

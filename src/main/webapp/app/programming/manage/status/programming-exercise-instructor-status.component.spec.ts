@@ -4,7 +4,7 @@ import { SessionStorageService } from 'app/shared/service/session-storage.servic
 import { Subject } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { triggerChanges } from 'test/helpers/utils/general-test.utils';
 import { ProgrammingExerciseInstructorStatusComponent } from 'app/programming/manage/status/programming-exercise-instructor-status.component';
 import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';

@@ -6,7 +6,7 @@ import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submis
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { countSubmissions, getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -18,13 +18,13 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CommonModule } from '@angular/common';
-import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status/submission-result-status.component';
+import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
 import { DifficultyLevelComponent } from 'app/exercise/difficulty-level/difficulty-level.component';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ResultHistoryDropdownComponent } from './result-history-dropdown/result-history-dropdown.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 
 @Component({
     selector: 'jhi-exercise-headers-information',

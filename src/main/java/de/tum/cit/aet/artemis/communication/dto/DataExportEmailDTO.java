@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.communication.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.domain.DataExport;
+import de.tum.cit.aet.artemis.admin.domain.DataExport;
 
 /**
  * DTO carrying the data export fields referenced from mail templates rendered by the

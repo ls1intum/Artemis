@@ -28,9 +28,9 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
-import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
  * Service for sending emails asynchronously.

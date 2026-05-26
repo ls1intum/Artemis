@@ -1,7 +1,7 @@
 import { Page, expect } from '@playwright/test';
 import { UserCredentials } from '../../users';
 import { COURSE_ADMIN_BASE } from '../../constants';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { CourseSummary } from '../../../e2e/course/CourseManagement.spec';
 
 /**

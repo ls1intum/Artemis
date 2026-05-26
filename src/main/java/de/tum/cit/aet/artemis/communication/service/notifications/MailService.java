@@ -16,10 +16,10 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
+import de.tum.cit.aet.artemis.admin.dto.ComponentVulnerabilitiesDTO;
 import de.tum.cit.aet.artemis.communication.dto.DataExportEmailDTO;
 import de.tum.cit.aet.artemis.communication.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
-import de.tum.cit.aet.artemis.core.dto.ComponentVulnerabilitiesDTO;
 
 /**
  * Service for preparing and sending emails.

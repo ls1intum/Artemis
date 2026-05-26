@@ -3,7 +3,7 @@ import { DisplayPriority, UserRole } from 'app/communication/metis.util';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import dayjs from 'dayjs/esm';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 
 export interface PlagiarismPostCreationResponseDtoModel {
     id: number;

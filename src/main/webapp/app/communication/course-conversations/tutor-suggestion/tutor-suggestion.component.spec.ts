@@ -17,11 +17,11 @@ import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/f
 import { TranslateService } from '@ngx-translate/core';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { ActivatedRoute } from '@angular/router';
-import { UserService } from 'app/core/user/shared/user.service';
+import { UserService } from 'app/account/user/shared/user.service';
 import dayjs from 'dayjs/esm';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
