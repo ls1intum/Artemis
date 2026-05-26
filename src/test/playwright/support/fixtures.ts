@@ -190,20 +190,6 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
         // nothing. Short-circuit them via a path prefix.
         const isUnauthenticatedRoute = (url: string) => /\/(sign-in|account|reset|register|forget-password)(\/|\?|$)/.test(url);
 
-        // Detects Angular's lazy-chunk fall-back drift: the caller asked for a non-/courses
-        // URL but the SPA settled on `/courses` (or `/courses/`). This is the recurring
-        // failure pattern under multi-node CI load — when a route's lazy chunk fails to
-        // resolve, the router strands the page on the bare /courses page and downstream
-        // assertions spin against the wrong URL.
-        const driftedToCoursesFallback = (requestedUrl: string, currentUrl: string): boolean => {
-            const currentPath = new URL(currentUrl).pathname;
-            if (!/^\/courses\/?$/.test(currentPath)) {
-                return false;
-            }
-            const requestedAbsolute = requestedUrl.startsWith('http') ? new URL(requestedUrl) : new URL(requestedUrl, currentUrl);
-            return !/^\/courses\/?$/.test(requestedAbsolute.pathname);
-        };
-
         const originalGoto = page.goto.bind(page);
         page.goto = async (url, options) => {
             const response = await originalGoto(url, options);
@@ -238,8 +224,8 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
                 // Detect & recover from `/courses` lazy-chunk fall-back drift. The navbar
                 // attaches fine on /courses too, so the attached-check above does not catch
                 // this; we re-issue the original goto so the caller actually lands on the
-                // URL they asked for.
-                if (typeof url === 'string' && driftedToCoursesFallback(url, page.url())) {
+                // URL they asked for. Reuses the single drift heuristic from `Commands`.
+                if (typeof url === 'string' && Commands.driftedToCoursesFallback(url, page.url())) {
                     await originalGoto(url, options);
                 }
             } catch {

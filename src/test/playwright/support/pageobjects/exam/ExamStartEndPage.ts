@@ -24,14 +24,27 @@ export class ExamStartEndPage {
      * welcome flow on test exams under heavy load, where occasional navigation races
      * have been observed to land the student directly in conduction without ever
      * rendering the welcome confirmation form.
+     *
+     * Races the conduction indicator against the welcome screen's `#confirmBox` and
+     * returns as soon as either appears, so the common case (welcome screen renders
+     * normally) resolves the moment `#confirmBox` is visible instead of always paying
+     * the full conduction-probe timeout.
      */
     private async isInConduction(): Promise<boolean> {
-        return this.page
+        const timeout = 5_000;
+        const conduction = this.page
             .locator('button', { hasText: /Hand in Early/i })
             .first()
-            .waitFor({ state: 'visible', timeout: 1_500 })
-            .then(() => true)
-            .catch(() => false);
+            .waitFor({ state: 'visible', timeout })
+            .then(() => 'conduction' as const)
+            .catch(() => undefined);
+        const welcome = this.page
+            .locator('#confirmBox')
+            .waitFor({ state: 'visible', timeout })
+            .then(() => 'welcome' as const)
+            .catch(() => undefined);
+        const firstVisible = await Promise.race([conduction, welcome]);
+        return firstVisible === 'conduction';
     }
 
     async pressStartWithWait() {

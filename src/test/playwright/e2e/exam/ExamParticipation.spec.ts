@@ -355,19 +355,11 @@ test.describe('Exam participation', () => {
                     }
                 }
                 await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentTwo, cAllSuccessfulSubmission, 'Solution', cloneMethod);
-                // Wait for build via API (student-accessible endpoint).
+                // Wait for build via API (student-accessible endpoint) before checking UI.
                 if (participationId) {
                     await waitForParticipationBuildToFinish(participationId);
                 }
-                // Verify the UI renders *a* build result for this exercise. We deliberately do
-                // NOT assert the specific percentage (cAllSuccessfulSubmission.expectedResult
-                // is "87.5%"): the Artemis CI's C test runner sometimes fails one extra test
-                // under multi-node load (producing 75% instead of 87.5%), which is a CI build
-                // flake outside this test's scope. The test's purpose is to exercise the
-                // git-clone → push → build-trigger → UI-render chain end-to-end — asserting a
-                // specific score couples it to a known-unstable test runner. We assert that
-                // some percentage-formatted score appears once the build completes.
-                await examParticipation.checkExerciseScoreRendered(programmingExercise.id!, BUILD_RESULT_TIMEOUT);
+                await examParticipation.checkExerciseScore(programmingExercise.id!, cAllSuccessfulSubmission.expectedResult, BUILD_RESULT_TIMEOUT * 2);
                 await examParticipation.handInEarly();
                 await examAPIRequests.finishExam(exam);
                 await login(instructor);

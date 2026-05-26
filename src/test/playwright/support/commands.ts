@@ -93,8 +93,11 @@ export class Commands {
      * `/courses` after a navigation to a different intended URL. Returns true only when
      * the caller-requested URL was NOT itself the bare `/courses` and the current URL has
      * resolved to exactly that fall-back.
+     *
+     * Public so the single source of truth for this heuristic can be reused by the
+     * `page.goto` render-check wrapper in `support/fixtures.ts` rather than duplicating it.
      */
-    private static driftedToCoursesFallback(requestedUrl: string, currentUrl: string): boolean {
+    static driftedToCoursesFallback(requestedUrl: string, currentUrl: string): boolean {
         const currentPath = new URL(currentUrl).pathname;
         const isOnCoursesFallback = /^\/courses\/?$/.test(currentPath);
         if (!isOnCoursesFallback) {

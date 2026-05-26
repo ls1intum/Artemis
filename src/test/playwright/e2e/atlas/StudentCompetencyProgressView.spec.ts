@@ -177,8 +177,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
 
             // The quiz is synchronized (started via startQuizNow), so evaluation runs
             // automatically after the 10s duration window expires. Poll until the
-            // competency progress is updated.
-            await login(studentOne);
+            // competency progress is updated (the student session from above is still active).
             await expect
                 .poll(
                     async () => {

@@ -80,6 +80,10 @@ export class ExamManagementPage {
                 return;
             }
         }
+        // Both attempts drifted (typically to /courses). Fail loudly with an actionable
+        // message rather than returning silently and letting a downstream helper time out
+        // against the wrong page — matching the throw-on-miss behaviour of `openExam`.
+        throw new Error(`openAssessmentDashboard: expected URL matching ${expectedUrl} but landed at ${this.page.url()}`);
     }
 
     /**
