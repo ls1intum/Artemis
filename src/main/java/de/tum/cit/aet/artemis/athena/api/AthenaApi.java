@@ -14,6 +14,7 @@ import de.tum.cit.aet.artemis.athena.service.AthenaSubmissionSelectionService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 
 @Conditional(AthenaEnabled.class)
 @Controller
@@ -55,5 +56,17 @@ public class AthenaApi extends AbstractAthenaApi {
 
     public void revokeAccessToRestrictedFeedbackSuggestionModules(Course course) {
         athenaModuleService.revokeAccessToRestrictedFeedbackSuggestionModules(course);
+    }
+
+    public void applyAthenaCourseSettings(Exercise exercise, Course course) {
+        athenaModuleService.applyAthenaCourseSettings(exercise, course);
+    }
+
+    public void clearFeedbackSuggestionModuleForCourse(Long courseId, ExerciseType exerciseType) {
+        athenaModuleService.clearFeedbackSuggestionModuleForCourse(courseId, exerciseType);
+    }
+
+    public void clearAllowFeedbackRequestsForCourse(Long courseId, ExerciseType exerciseType) {
+        athenaModuleService.clearAllowFeedbackRequestsForCourse(courseId, exerciseType);
     }
 }
