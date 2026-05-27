@@ -26,7 +26,6 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
  * @param id                    the conversation id
  * @param type                  the discriminator string matching {@code @JsonSubTypes.Type.name} on {@link Conversation}
  * @param name                  the displayed name of the conversation; {@code null} for one-to-one chats
- * @param courseId              the id of the course the conversation belongs to
  * @param isPublic              whether the channel is public; {@code null} for non-channels
  * @param isAnnouncementChannel whether the channel is an announcement channel; {@code null} for non-channels
  * @param isArchived            whether the channel is archived; {@code null} for non-channels
@@ -34,8 +33,8 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
  * @param lastMessageDate       when the last message was posted in this conversation
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ConversationRefDTO(Long id, String type, @Nullable String name, @Nullable Long courseId, @Nullable Boolean isPublic, @Nullable Boolean isAnnouncementChannel,
-        @Nullable Boolean isArchived, @Nullable Boolean isCourseWide, @Nullable ZonedDateTime lastMessageDate) {
+public record ConversationRefDTO(Long id, String type, @Nullable String name, @Nullable Boolean isPublic, @Nullable Boolean isAnnouncementChannel, @Nullable Boolean isArchived,
+        @Nullable Boolean isCourseWide, @Nullable ZonedDateTime lastMessageDate) {
 
     /**
      * Build a {@link ConversationRefDTO} from a {@link Conversation} entity. Returns {@code null}
@@ -48,7 +47,6 @@ public record ConversationRefDTO(Long id, String type, @Nullable String name, @N
         if (conversation == null) {
             return null;
         }
-        Long courseId = conversation.getCourse() != null ? conversation.getCourse().getId() : null;
         Boolean isPublic = null;
         Boolean isAnnouncement = null;
         Boolean isArchived = null;
@@ -59,7 +57,7 @@ public record ConversationRefDTO(Long id, String type, @Nullable String name, @N
             isArchived = channel.getIsArchived();
             isCourseWide = channel.getIsCourseWide();
         }
-        return new ConversationRefDTO(conversation.getId(), discriminatorOf(conversation), nameOf(conversation), courseId, isPublic, isAnnouncement, isArchived, isCourseWide,
+        return new ConversationRefDTO(conversation.getId(), discriminatorOf(conversation), nameOf(conversation), isPublic, isAnnouncement, isArchived, isCourseWide,
                 conversation.getLastMessageDate());
     }
 

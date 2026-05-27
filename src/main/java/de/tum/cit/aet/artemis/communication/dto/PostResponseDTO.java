@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseRefDTO;
  * <ul>
  * <li>{@code Post.reactions} → {@link ReactionResponseDTO} which drops the {@code post}/{@code answerPost} back-refs.</li>
  * <li>{@code Post.answers} → {@link AnswerPostResponseDTO} which drops the {@code post} back-ref.</li>
- * <li>{@code Post.conversation} → {@link ConversationRefDTO} which carries only id/type/name/courseId.</li>
+ * <li>{@code Post.conversation} → {@link ConversationRefDTO} which carries only id/type/name plus the channel flags the client reads.</li>
  * <li>{@code Post.plagiarismCase} → {@link PlagiarismCaseRefDTO} which carries only the id.</li>
  * <li>{@code Post.author} → {@link UserSummaryDTO} which carries id/name/imageUrl/bot — matching the pre-refactor wire shape from {@code @JsonIncludeProperties} on
  * {@code Posting.author}.</li>

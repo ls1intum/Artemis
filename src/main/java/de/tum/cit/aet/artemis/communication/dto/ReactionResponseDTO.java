@@ -6,7 +6,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.account.dto.UserSummaryDTO;
+import de.tum.cit.aet.artemis.account.dto.UserNameRefDTO;
 import de.tum.cit.aet.artemis.communication.domain.Reaction;
 
 /**
@@ -21,12 +21,12 @@ import de.tum.cit.aet.artemis.communication.domain.Reaction;
  * constraints inappropriate for outbound payloads.
  *
  * @param id           the reaction id
- * @param user         the user who created the reaction
+ * @param user         the user who created the reaction; only id and name, matching the original {@code @JsonIncludeProperties({"id","name"})} on {@code Reaction.user}
  * @param emojiId      the emoji identifier
  * @param creationDate when the reaction was created
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ReactionResponseDTO(Long id, @Nullable UserSummaryDTO user, String emojiId, @Nullable ZonedDateTime creationDate) {
+public record ReactionResponseDTO(Long id, @Nullable UserNameRefDTO user, String emojiId, @Nullable ZonedDateTime creationDate) {
 
     /**
      * Build a {@link ReactionResponseDTO} from a {@link Reaction} entity.
@@ -35,6 +35,6 @@ public record ReactionResponseDTO(Long id, @Nullable UserSummaryDTO user, String
      * @return the projected response
      */
     public static ReactionResponseDTO from(Reaction reaction) {
-        return new ReactionResponseDTO(reaction.getId(), UserSummaryDTO.from(reaction.getUser()), reaction.getEmojiId(), reaction.getCreationDate());
+        return new ReactionResponseDTO(reaction.getId(), UserNameRefDTO.from(reaction.getUser()), reaction.getEmojiId(), reaction.getCreationDate());
     }
 }
