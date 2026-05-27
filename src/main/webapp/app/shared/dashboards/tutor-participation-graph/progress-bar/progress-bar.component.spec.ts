@@ -1,74 +1,67 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
-import { SimpleChange } from '@angular/core';
-import { MockDirective } from 'ng-mocks';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 
 describe('ProgressBarComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ProgressBarComponent>;
     let component: ProgressBarComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip)],
-            declarations: [ProgressBarComponent],
-            providers: [
-                {
-                    provide: ThemeService,
-                    useClass: MockThemeService,
-                },
-            ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ProgressBarComponent);
-                component = fixture.componentInstance;
-            });
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ProgressBarComponent],
+            providers: [{ provide: ThemeService, useClass: MockThemeService }],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(ProgressBarComponent);
+        component = fixture.componentInstance;
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it.each([
         { percentage: 49, clazz: 'bg-danger' },
         { percentage: 99, clazz: 'bg-warning' },
         { percentage: 100, clazz: 'bg-success' },
-    ])('uses correct background', ({ percentage, clazz }) => {
-        component.percentage = percentage;
-        fixture.changeDetectorRef.detectChanges();
-        component.ngOnChanges({ percentage: {} as SimpleChange });
-        expect(component.backgroundColorClass).toBe(clazz);
+    ])('uses correct background for percentage $percentage', ({ percentage, clazz }) => {
+        fixture.componentRef.setInput('percentage', percentage);
+        fixture.componentRef.setInput('numerator', percentage);
+        fixture.componentRef.setInput('denominator', 100);
+        expect(component.backgroundColorClass()).toBe(clazz);
     });
 
     it('updates foreground color correctly based on theme and percentage', () => {
         const themeService = TestBed.inject(ThemeService);
-        fixture.detectChanges();
+        fixture.componentRef.setInput('numerator', 100);
+        fixture.componentRef.setInput('denominator', 100);
 
-        component.percentage = 100;
-        component.ngOnChanges({ percentage: {} as SimpleChange });
-        expect(component.foregroundColorClass).toBe('text-white');
+        fixture.componentRef.setInput('percentage', 100);
+        expect(component.foregroundColorClass()).toBe('text-white');
 
-        component.percentage = 50;
-        component.ngOnChanges({ percentage: {} as SimpleChange });
-        expect(component.foregroundColorClass).toBe('text-dark');
+        fixture.componentRef.setInput('percentage', 50);
+        expect(component.foregroundColorClass()).toBe('text-dark');
 
         themeService.applyThemePreference(Theme.DARK);
-
-        fixture.changeDetectorRef.detectChanges();
-
-        expect(component.foregroundColorClass).toBe('text-white');
+        expect(component.foregroundColorClass()).toBe('text-white');
     });
 
-    it('unsubscribes from theme service on destroy', () => {
-        fixture.detectChanges();
-        expect(component.themeSubscription).toBeDefined();
-        expect(component.themeSubscription.closed).toBeFalse();
+    it('returns 0 percentage when both numerator and denominator are zero', () => {
+        fixture.componentRef.setInput('percentage', 42);
+        fixture.componentRef.setInput('numerator', 0);
+        fixture.componentRef.setInput('denominator', 0);
+        expect(component.normalizedPercentage()).toBe(0);
+    });
 
-        component.ngOnDestroy();
-
-        expect(component.themeSubscription.closed).toBeTrue();
+    it('returns 0 percentage when value is NaN', () => {
+        fixture.componentRef.setInput('percentage', NaN);
+        fixture.componentRef.setInput('numerator', 1);
+        fixture.componentRef.setInput('denominator', 2);
+        expect(component.normalizedPercentage()).toBe(0);
     });
 });
