@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -97,11 +98,31 @@ public class ArtemisSuccessfulLoginService {
      * Handles successful authentication events.
      * Sends a login notification email to users when they successfully authenticate.
      *
+     * <p>
+     * Runs asynchronously: the user lookup, the notification-setting check, the template-variable
+     * preparation, and the subsequent {@link MailSendingService#buildAndSendSync} call (template
+     * rendering + SMTP send) all execute on the async task executor rather than on the login request
+     * thread. Because this method is already {@code @Async}, the mail send is invoked synchronously
+     * (rather than via {@code buildAndSendAsync}) so it runs on this same async thread instead of
+     * dispatching a second task onto the executor. None of these steps runs on the login thread.
+     * <p>
+     * This gives two properties:
+     * <ul>
+     * <li>the login response is returned to the client without waiting for the user lookup, the
+     * setting check, or the SMTP dispatch; and</li>
+     * <li>the JPA persistence context opened here does not overlap with whatever the client does
+     * next on the same connection pool — a defensive improvement that shrinks the post-login window
+     * during which subsequent requests could conceivably interact with this session's reads.</li>
+     * </ul>
+     * Because the method is async, callers cannot rely on completion before continuing — but no
+     * caller actually does (all call sites are fire-and-forget post-login notifications).
+     *
      * @param loginOrEmail         the username or email of the user who has successfully logged in
      * @param authenticationMethod the method used for authentication
      * @param clientEnvironment    the environment information of the client (optional)
      * @see AuthenticationMethod for available authentication methods
      */
+    @Async
     public void sendLoginEmail(String loginOrEmail, AuthenticationMethod authenticationMethod, @Nullable ClientEnvironment clientEnvironment) {
         try {
             User recipient;
@@ -145,7 +166,7 @@ public class ArtemisSuccessfulLoginService {
                 }
             }
 
-            mailSendingService.buildAndSendAsync(recipient, "email.notification.login.title", "mail/notification/newLoginEmail", contextVariables);
+            mailSendingService.buildAndSendSync(recipient, "email.notification.login.title", "mail/notification/newLoginEmail", contextVariables);
         }
         catch (EntityNotFoundException ignored) {
             log.error("User with login {} not found when trying to send newLoginEmail", loginOrEmail);
