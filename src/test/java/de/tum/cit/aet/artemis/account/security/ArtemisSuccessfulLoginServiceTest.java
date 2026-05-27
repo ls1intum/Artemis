@@ -6,11 +6,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-
-import jakarta.mail.internet.MimeMessage;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,7 +42,6 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
 
         User user = userTestRepository.findOneByLogin(username).get();
 
-        doNothing().when(javaMailSender).send(any(MimeMessage.class));
         artemisSuccessfulLoginService.sendLoginEmail(username, AuthenticationMethod.PASSWORD, null);
         await().atMost(5, SECONDS)
                 .untilAsserted(() -> verify(mailSendingService).buildAndSendSync(eq(user), eq("email.notification.login.title"), eq("mail/notification/newLoginEmail"), anyMap()));
@@ -58,7 +54,6 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
 
         User user = userTestRepository.findOneByLogin(username).get();
 
-        doNothing().when(javaMailSender).send(any(MimeMessage.class));
         artemisSuccessfulLoginService.sendLoginEmail(user.getEmail(), AuthenticationMethod.PASSWORD, null);
         await().atMost(5, SECONDS)
                 .untilAsserted(() -> verify(mailSendingService).buildAndSendSync(eq(user), eq("email.notification.login.title"), eq("mail/notification/newLoginEmail"), anyMap()));
@@ -68,7 +63,6 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
     void shouldHandleUserNotFoundGracefully() throws EntityNotFoundException {
         String username = "nonexistentuser";
-        doNothing().when(javaMailSender).send(any(MimeMessage.class));
 
         artemisSuccessfulLoginService.sendLoginEmail(username, AuthenticationMethod.PASSWORD, null);
 
