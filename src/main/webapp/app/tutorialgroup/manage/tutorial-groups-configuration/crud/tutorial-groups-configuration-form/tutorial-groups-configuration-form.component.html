@@ -10,6 +10,7 @@
                             name="period"
                             id="period"
                             required
+                            [attr.aria-label]="'artemisApp.forms.configurationForm.periodInput.label' | artemisTranslate"
                             [class.is-invalid]="isPeriodInvalid"
                             (focus)="markPeriodAsTouched()"
                             [value]="periodControl?.value | artemisDateRange: 'long-date' : undefined : true"
