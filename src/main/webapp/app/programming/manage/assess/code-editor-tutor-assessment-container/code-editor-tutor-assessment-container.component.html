@@ -19,7 +19,7 @@
 <div [id]="'exercise-' + exercise?.id">
     <jhi-assessment-layout
         (navigateBack)="navigateBack()"
-        [isLoading]="loadingParticipation"
+        [isLoading]="loadingParticipation || loadingFeedbackSuggestions"
         [saveBusy]="saveBusy"
         [submitBusy]="submitBusy"
         [cancelBusy]="cancelBusy"
