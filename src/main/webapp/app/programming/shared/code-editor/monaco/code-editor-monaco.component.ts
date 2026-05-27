@@ -38,7 +38,7 @@ import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChang
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import { CommentThread, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import {
     getFirstCommentByCreatedDateThenId,
     isReviewCommentsSupportedRepository,
@@ -608,7 +608,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         );
     }
 
-    private scheduleReviewCommentRenderForSelectedFile(): void {
+    public scheduleReviewCommentRenderForSelectedFile(): void {
         if (!this.enableExerciseReviewComments() || !this.selectedFile() || !isReviewCommentsSupportedRepository(this.selectedRepository())) {
             this.pendingReviewRenderFile = undefined;
             return;
@@ -791,6 +791,10 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
                 onApplyInlineFix: ({ thread }) => this.persistInlineFixApplication(thread),
                 onNavigateToLocation: (location) => this.onNavigateToReviewCommentLocation.emit(location),
                 showLocationWarning: () => this.commitState() === CommitState.UNCOMMITTED_CHANGES,
+                showFeedbackAction: (thread) =>
+                    thread.targetType === CommentThreadLocationType.TEMPLATE_REPO ||
+                    thread.targetType === CommentThreadLocationType.SOLUTION_REPO ||
+                    thread.targetType === CommentThreadLocationType.TEST_REPO,
             });
         }
         return this.reviewCommentManager;
