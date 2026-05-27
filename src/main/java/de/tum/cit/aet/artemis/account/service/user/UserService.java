@@ -757,11 +757,14 @@ public class UserService {
         if (!StringUtils.hasText(userDto.login())) {
             throw new IllegalArgumentException("Login is required to create an internal user");
         }
+        String login = userDto.login().toLowerCase(Locale.ROOT);
+        if (IRIS_BOT_LOGIN.equals(login)) {
+            throw new IllegalArgumentException("The login '" + IRIS_BOT_LOGIN + "' is reserved and cannot be used.");
+        }
         String password = StringUtils.hasText(userDto.password()) ? userDto.password() : null;
         // reuse the same validation that the regular admin create-user endpoint uses
         checkUsernameAndPasswordValidityElseThrow(userDto.login(), password);
 
-        String login = userDto.login().toLowerCase(Locale.ROOT);
         if (userRepository.findOneByLogin(login).isPresent()) {
             throw new IllegalStateException("Login already in use: " + login);
         }

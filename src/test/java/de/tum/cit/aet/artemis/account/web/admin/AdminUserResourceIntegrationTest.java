@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.account.web.admin;
 
+import static de.tum.cit.aet.artemis.account.domain.User.IRIS_BOT_LOGIN;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -750,6 +751,18 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
                     .andExpect(jsonPath("$[0].login").value(newLogin));
 
             assertThat(userUtilService.userExistsWithLogin(newLogin)).isFalse();
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void importUsers_createInternalUsers_reservedIrisBotLoginReportsAsNotImported() throws Exception {
+            UserImportDTO irisBotDto = new UserImportDTO(IRIS_BOT_LOGIN, "Iris", "Bot", null, IRIS_BOT_LOGIN + "@example.com", "secret123");
+
+            mockMvc.perform(post("/api/core/admin/users/import").param("createInternalUsers", "true").contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(List.of(irisBotDto)))).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1))
+                    .andExpect(jsonPath("$[0].login").value(IRIS_BOT_LOGIN));
+
+            assertThat(userUtilService.userExistsWithLogin(IRIS_BOT_LOGIN)).isFalse();
         }
 
         @Test
