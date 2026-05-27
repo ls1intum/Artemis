@@ -1,4 +1,9 @@
 jhi-context-selection {
+    .iris-context-trigger-wrapper {
+        display: inline-flex;
+        align-items: center;
+    }
+
     .iris-context-trigger.p-select {
         min-width: 0;
         width: auto;
@@ -42,9 +47,20 @@ jhi-context-selection {
         padding: 2px 8px;
         gap: 4px;
         color: var(--bs-body-color);
+        flex-wrap: nowrap;
         transition:
             background-color 0.15s ease,
             border-color 0.15s ease;
+
+        .iris-context-chip-label {
+            display: inline-block;
+            min-width: 0;
+            max-width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            vertical-align: middle;
+        }
 
         .p-chip-label {
             display: inline-flex;

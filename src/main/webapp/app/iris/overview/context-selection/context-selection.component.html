@@ -1,5 +1,10 @@
 <div class="iris-context-selection flex items-center gap-2">
-    <span [pTooltip]="'artemisApp.iris.contextSelection.addContextTooltip' | artemisTranslate" tooltipPosition="bottom" tooltipStyleClass="iris-context-tooltip">
+    <span
+        class="iris-context-trigger-wrapper"
+        [pTooltip]="'artemisApp.iris.contextSelection.addContextTooltip' | artemisTranslate"
+        tooltipPosition="bottom"
+        tooltipStyleClass="iris-context-tooltip iris-context-tooltip-tight"
+    >
         <p-select
             [attr.aria-label]="'artemisApp.iris.contextSelection.label' | artemisTranslate"
             [disabled]="disabled()"
@@ -40,7 +45,9 @@
     @if (activeChip(); as chip) {
         <p-chip [removable]="true" (onRemove)="onChipRemove()" styleClass="iris-context-chip">
             <fa-icon [icon]="chip.faIcon" />
-            <span class="ms-1">{{ chip.label }}</span>
+            <span class="ms-1 iris-context-chip-label" [pTooltip]="chip.label" tooltipPosition="bottom" tooltipStyleClass="iris-context-tooltip iris-context-tooltip-spaced">{{
+                chip.label
+            }}</span>
             <ng-template #removeicon>
                 <fa-icon [icon]="faXmark" />
             </ng-template>

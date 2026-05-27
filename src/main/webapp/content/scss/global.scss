@@ -1483,11 +1483,33 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     transition: transform 0.3s ease;
 }
 
-// Compact tooltip used by Iris context selection trigger
+// Compact tooltip used by Iris context selection (add button and chip label)
 .p-tooltip.iris-context-tooltip .p-tooltip-text {
     font-size: 0.75rem;
     padding: 0.3rem 0.55rem;
     line-height: 1.2;
+}
+
+// Reduced gap between tooltip and trigger (used by the plus add button)
+.p-tooltip.iris-context-tooltip-tight {
+    &.p-tooltip-bottom {
+        margin-top: -0.35rem;
+    }
+
+    &.p-tooltip-top {
+        margin-bottom: -0.35rem;
+    }
+}
+
+// Increased gap between tooltip and trigger (used by the context chip label)
+.p-tooltip.iris-context-tooltip-spaced {
+    &.p-tooltip-bottom {
+        margin-top: 0.1rem;
+    }
+
+    &.p-tooltip-top {
+        margin-bottom: 0.4rem;
+    }
 }
 
 // About Iris modal — PrimeNG variant (sidebar chat)
