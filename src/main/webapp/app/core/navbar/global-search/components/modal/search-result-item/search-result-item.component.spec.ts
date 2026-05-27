@@ -254,6 +254,21 @@ describe('SearchResultItemComponent', () => {
             expect(result.endsWith('…\n```')).toBe(false);
         });
 
+        it('should close an open four-backtick fenced code block with four backticks when truncating', () => {
+            const description = 'Some intro\n````\n' + 'X'.repeat(400);
+            fixture.componentRef.setInput('result', {
+                id: '1',
+                title: 'My Exercise',
+                type: 'exercise',
+                description,
+            } as GlobalSearchResult);
+            fixture.detectChanges();
+
+            const result = component['cleanedDescription']()!;
+            expect(result.endsWith('…\n````')).toBe(true);
+            expect(result).not.toMatch(/…\n`{3}$/);
+        });
+
         it('should not truncate a short description', () => {
             fixture.componentRef.setInput('result', {
                 id: '1',

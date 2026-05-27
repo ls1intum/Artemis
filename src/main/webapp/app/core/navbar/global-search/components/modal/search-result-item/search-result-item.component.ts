@@ -78,7 +78,8 @@ function truncateDescription(description: string, maxLength: number = DESCRIPTIO
     const insideCodeBlock = fenceMatches != undefined && fenceMatches.length % 2 !== 0;
 
     if (insideCodeBlock) {
-        return truncated + '…\n```';
+        const openingFence = fenceMatches[fenceMatches.length - 1];
+        return truncated + '…\n' + openingFence;
     }
 
     return truncated + '…';
