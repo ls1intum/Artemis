@@ -3,6 +3,8 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, map } from 'rxjs';
 import { Comment, CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentThread, CreateCommentThread, UpdateThreadResolvedState } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { matchesSelectedRepository } from 'app/exercise/review/review-comment-utils';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ReviewThreadSyncAction, ReviewThreadSyncUpdate } from 'app/exercise/shared/entities/review/review-thread-sync-update.model';
 import {
@@ -39,6 +41,12 @@ export class ExerciseReviewCommentService implements OnDestroy {
     readonly threads = signal<CommentThread[]>([]);
 
     /**
+     * Local-only selection of review threads that should be forwarded to Hyperion code generation as feedback.
+     * This state is scoped to the active exercise/editor session and is never persisted independently.
+     */
+    readonly selectedFeedbackThreadIds = signal<number[]>([]);
+
+    /**
      * Sets the active exercise context and clears thread state when it changes.
      *
      * @param exerciseId The currently active exercise id.
@@ -53,6 +61,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
         this.pendingSyncUpdates = [];
         this.activeExerciseId = exerciseId;
         this.threads.set([]);
+        this.selectedFeedbackThreadIds.set([]);
         this.synchronizationSubscription?.unsubscribe();
         this.synchronizationSubscription = undefined;
         this.subscribedExerciseId = undefined;
@@ -70,7 +79,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
     reloadThreads(onLoaded?: () => void): void {
         const exerciseId = this.activeExerciseId;
         if (!exerciseId) {
-            this.threads.set([]);
+            this.setThreads([]);
             return;
         }
         const reloadId = ++this.reloadSequence;
@@ -101,6 +110,46 @@ export class ExerciseReviewCommentService implements OnDestroy {
     }
 
     /**
+     * Toggles whether a thread should be included as feedback in the next Hyperion generation request.
+     *
+     * @param threadId The thread id to toggle.
+     */
+    toggleThreadFeedbackSelection(threadId: number): void {
+        this.selectedFeedbackThreadIds.update((threadIds) => {
+            if (threadIds.includes(threadId)) {
+                return threadIds.filter((existingThreadId) => existingThreadId !== threadId);
+            }
+            return [...threadIds, threadId];
+        });
+    }
+
+    /**
+     * Checks whether a thread is currently selected for Hyperion code generation.
+     *
+     * @param threadId The thread id to inspect.
+     * @returns True if the thread is part of the local feedback selection.
+     */
+    isThreadSelectedAsFeedback(threadId: number): boolean {
+        return this.selectedFeedbackThreadIds().includes(threadId);
+    }
+
+    /**
+     * Returns currently selected feedback thread ids that still belong to the active repository context.
+     *
+     * @param repositoryType The repository currently selected in the code editor.
+     * @param auxiliaryRepositoryId The selected auxiliary repository id, if applicable.
+     * @returns The filtered thread ids in user selection order.
+     */
+    getSelectedFeedbackThreadIdsForRepository(repositoryType?: RepositoryType, auxiliaryRepositoryId?: number): number[] {
+        const matchingThreadIds = new Set(
+            this.threads()
+                .filter((thread) => !thread.resolved && !thread.outdated && matchesSelectedRepository(thread, repositoryType, auxiliaryRepositoryId))
+                .map((thread) => thread.id),
+        );
+        return this.selectedFeedbackThreadIds().filter((threadId) => matchingThreadIds.has(threadId));
+    }
+
+    /**
      * Creates a thread in the active exercise and reconciles local thread state.
      *
      * @param thread The thread payload.
@@ -121,7 +170,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
                     return;
                 }
                 const normalizedThread: CommentThread = createdThread.comments ? createdThread : Object.assign({}, createdThread, { comments: [] });
-                this.threads.update((threads) => this.appendThreadToThreads(threads, normalizedThread));
+                this.updateThreads((threads) => this.appendThreadToThreads(threads, normalizedThread));
                 onSuccess?.();
             },
             error: () => {
@@ -148,7 +197,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
                 if (this.activeExerciseId !== exerciseId) {
                     return;
                 }
-                this.threads.update((threads) => this.removeCommentFromThreads(threads, commentId));
+                this.updateThreads((threads) => this.removeCommentFromThreads(threads, commentId));
             },
             error: () => {
                 if (this.activeExerciseId !== exerciseId) {
@@ -180,7 +229,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
                 if (!createdComment) {
                     return;
                 }
-                this.threads.update((threads) => this.appendCommentToThreads(threads, createdComment));
+                this.updateThreads((threads) => this.appendCommentToThreads(threads, createdComment));
                 onSuccess?.();
             },
             error: () => {
@@ -213,7 +262,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
                 if (!updatedComment) {
                     return;
                 }
-                this.threads.update((threads) => this.updateCommentInThreads(threads, updatedComment));
+                this.updateThreads((threads) => this.updateCommentInThreads(threads, updatedComment));
                 onSuccess?.();
             },
             error: () => {
@@ -277,7 +326,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
                 if (!updatedThread?.id) {
                     return;
                 }
-                this.threads.update((threads) => this.replaceThreadInThreads(threads, updatedThread));
+                this.updateThreads((threads) => this.replaceThreadInThreads(threads, updatedThread));
             },
             error: () => {
                 if (this.activeExerciseId !== exerciseId) {
@@ -420,6 +469,20 @@ export class ExerciseReviewCommentService implements OnDestroy {
      */
     deleteComment(exerciseId: number, commentId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/review-comments/${commentId}`, { observe: 'response' });
+    }
+
+    private setThreads(threads: CommentThread[]): void {
+        this.threads.set(threads);
+        this.reconcileSelectedFeedbackThreadIds(threads);
+    }
+
+    private updateThreads(updater: (threads: CommentThread[]) => CommentThread[]): void {
+        this.setThreads(updater(this.threads()));
+    }
+
+    private reconcileSelectedFeedbackThreadIds(threads: CommentThread[]): void {
+        const validThreadIds = new Set(threads.filter((thread) => !thread.resolved && !thread.outdated).map((thread) => thread.id));
+        this.selectedFeedbackThreadIds.update((threadIds) => threadIds.filter((threadId) => validThreadIds.has(threadId)));
     }
 
     /**
