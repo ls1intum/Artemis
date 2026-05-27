@@ -731,11 +731,11 @@ Only valid feedback is forwarded: resolved and outdated threads are excluded, th
 
 After confirmation, Artemis starts an asynchronous generation job. While the job is running:
 
-- selected repositories are processed one after another
-- the status popover shows queued, running, completed, warning, failed, and skipped states
-- file activity lists newly created or updated files
-- the currently open repository is refreshed as generated files are committed
-- build feedback can be used for an additional improvement attempt
+- Selected repositories are processed one after another
+- The status popover shows queued, running, completed, warning, failed, and skipped states
+- File activity lists newly created or updated files
+- The currently open repository is refreshed as generated files are committed
+- Build feedback can be used for an additional improvement attempt
 
 <Image src={hyperionGenerationStatus} alt="Generation status popover with repository states and file activity" size={ImageSize.large} caption="Live generation status with repository states and file activity" />
 
