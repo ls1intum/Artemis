@@ -1,0 +1,184 @@
+<div class="iris-dashboard">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex align-items-center gap-2">
+            <fa-icon [icon]="faRobot" />
+            <h3 class="mb-0">Iris Dashboard</h3>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <p-select [ngModel]="selectedTimeSpan()" [options]="timeSpanOptions" optionLabel="label" (ngModelChange)="onTimeSpanChange($event)" size="small" styleClass="w-auto" />
+            <button class="btn btn-sm btn-outline-secondary" (click)="refresh()">
+                <fa-icon [icon]="faSync" />
+            </button>
+        </div>
+    </div>
+
+    @if (loading()) {
+        <div class="text-center py-5">Loading...</div>
+    }
+
+    @if (overview()) {
+        @let o = overview()!;
+        <!-- Row 1: Sessions & Users -->
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <p-card header="Total Sessions">
+                    <span class="fs-3 fw-bold">{{ o.totalSessions }}</span>
+                </p-card>
+            </div>
+            <div class="col-md-3">
+                <p-card header="Active Sessions">
+                    <span class="fs-3 fw-bold">{{ o.activeSessions }}</span>
+                </p-card>
+            </div>
+            <div class="col-md-3">
+                <p-card header="Engagement Rate">
+                    <span class="fs-3 fw-bold">{{ o.engagementRate | number: '1.1-1' }}%</span>
+                </p-card>
+            </div>
+            <div class="col-md-3">
+                <p-card header="Unique Users">
+                    <span class="fs-3 fw-bold">{{ o.uniqueUsers }}</span>
+                </p-card>
+            </div>
+        </div>
+
+        <!-- Row 2: No-Response -->
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <p-card header="No-Response Rate">
+                    <span class="fs-3 fw-bold" [class.text-danger]="o.noResponseRate > 10">{{ o.noResponseRate | number: '1.1-1' }}%</span>
+                </p-card>
+            </div>
+            <div class="col-md-4">
+                <p-card header="No-Response Messages">
+                    <span class="fs-3 fw-bold">{{ o.noResponseMessageCount }}</span>
+                </p-card>
+            </div>
+            <div class="col-md-4">
+                <p-card header="No-Response Sessions">
+                    <span class="fs-3 fw-bold">{{ o.noResponseSessionCount }}</span>
+                </p-card>
+            </div>
+        </div>
+
+        <!-- Row 3: Ratings -->
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <p-card header="Thumbs Up Ratio">
+                    <span class="fs-3 fw-bold">{{ o.thumbsUpRatio | number: '1.1-1' }}%</span>
+                    <div class="text-muted small">Absolute: {{ o.thumbsUpAbsoluteRate | number: '1.1-1' }}%</div>
+                </p-card>
+            </div>
+            <div class="col-md-3">
+                <p-card header="Thumbs Down Ratio">
+                    <span class="fs-3 fw-bold">{{ o.thumbsDownRatio | number: '1.1-1' }}%</span>
+                    <div class="text-muted small">Absolute: {{ o.thumbsDownAbsoluteRate | number: '1.1-1' }}%</div>
+                </p-card>
+            </div>
+            <div class="col-md-3">
+                <p-card header="Sessions with Thumbs Up">
+                    <span class="fs-3 fw-bold">{{ o.sessionsWithThumbsUp }}</span>
+                </p-card>
+            </div>
+            <div class="col-md-3">
+                <p-card header="Sessions with Thumbs Down">
+                    <span class="fs-3 fw-bold">{{ o.sessionsWithThumbsDown }}</span>
+                </p-card>
+            </div>
+        </div>
+
+        <!-- Row 4: Response Time & Cost -->
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <p-card header="Avg Response Time">
+                    <span class="fs-3 fw-bold">{{ o.avgResponseTimeSeconds | number: '1.1-1' }}s</span>
+                </p-card>
+            </div>
+            <div class="col-md-4">
+                <p-card header="P50 / P95">
+                    <span class="fs-3 fw-bold">{{ o.p50ResponseTimeSeconds | number: '1.1-1' }}s / {{ o.p95ResponseTimeSeconds | number: '1.1-1' }}s</span>
+                </p-card>
+            </div>
+            <div class="col-md-4">
+                <p-card header="Token Cost">
+                    <span class="fs-3 fw-bold">{{ o.totalTokenCostEur | number: '1.2-4' }} EUR</span>
+                </p-card>
+            </div>
+        </div>
+
+        <!-- Breakdown Tables -->
+        <p-tabs [value]="activeBreakdownTab()" (valueChange)="activeBreakdownTab.set($event)">
+            <p-tablist>
+                <p-tab [value]="0">By Chat Mode</p-tab>
+                <p-tab [value]="1">By Course (Top 10)</p-tab>
+                <p-tab [value]="2">By Model</p-tab>
+            </p-tablist>
+        </p-tabs>
+
+        @if (activeBreakdownTab() === 0) {
+            <p-table [value]="chatModeBreakdown()" class="p-datatable-sm">
+                <ng-template #header>
+                    <tr>
+                        <th>Mode</th>
+                        <th>Sessions</th>
+                        <th>Messages</th>
+                        <th>No-Response Rate</th>
+                    </tr>
+                </ng-template>
+                <ng-template #body let-entry>
+                    <tr>
+                        <td>{{ entry.label }}</td>
+                        <td>{{ entry.values['sessions'] }}</td>
+                        <td>{{ entry.values['messages'] }}</td>
+                        <td>{{ entry.values['noResponseRate'] | number: '1.1-1' }}%</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        }
+
+        @if (activeBreakdownTab() === 1) {
+            <p-table [value]="courseBreakdown()" class="p-datatable-sm">
+                <ng-template #header>
+                    <tr>
+                        <th>Course</th>
+                        <th>Sessions</th>
+                        <th>Cost (EUR)</th>
+                    </tr>
+                </ng-template>
+                <ng-template #body let-entry>
+                    <tr>
+                        <td>{{ entry.label }}</td>
+                        <td>{{ entry.values['sessions'] }}</td>
+                        <td>{{ entry.values['costEur'] | number: '1.2-4' }} EUR</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        }
+
+        @if (activeBreakdownTab() === 2) {
+            <p-table [value]="modelBreakdown()" class="p-datatable-sm">
+                <ng-template #header>
+                    <tr>
+                        <th>Model</th>
+                        <th>Total Tokens</th>
+                        <th>Cost (EUR)</th>
+                    </tr>
+                </ng-template>
+                <ng-template #body let-entry>
+                    <tr>
+                        <td>{{ entry.label }}</td>
+                        <td>{{ entry.values['totalTokens'] | number }}</td>
+                        <td>{{ entry.values['costEur'] | number: '1.2-4' }} EUR</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        }
+
+        <!-- Config Panel -->
+        @if (config()) {
+            <p-panel header="Configuration (Read-Only)" [toggleable]="true" [collapsed]="true" class="mt-3">
+                <pre>{{ config() | json }}</pre>
+            </p-panel>
+        }
+    }
+</div>
