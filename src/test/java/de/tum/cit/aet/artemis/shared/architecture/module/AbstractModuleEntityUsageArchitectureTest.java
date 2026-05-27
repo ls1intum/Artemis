@@ -18,7 +18,9 @@ import java.util.Optional;
 import jakarta.persistence.Entity;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -124,6 +126,12 @@ public abstract class AbstractModuleEntityUsageArchitectureTest extends Abstract
                         continue;
                     }
 
+                    // Only actual REST endpoints matter — skip private/helper methods (e.g. DTO->entity mappers)
+                    // that merely happen to live in a @RestController and return an entity.
+                    if (!isRestEndpointMethod(reflectedMethod)) {
+                        continue;
+                    }
+
                     // Check the generic return type to handle ResponseEntity<T>, List<T>, etc.
                     Type returnType = reflectedMethod.getGenericReturnType();
                     Optional<Class<?>> entityType = findFirstEntityType(returnType);
@@ -186,6 +194,11 @@ public abstract class AbstractModuleEntityUsageArchitectureTest extends Abstract
                     Method reflectedMethod = findMatchingDeclaredMethod(reflectedController, archMethod);
                     if (reflectedMethod == null) {
                         // synthetic/bridge methods etc. - skip safely
+                        continue;
+                    }
+
+                    // Only actual REST endpoints matter — skip private/helper methods.
+                    if (!isRestEndpointMethod(reflectedMethod)) {
                         continue;
                     }
 
@@ -300,6 +313,17 @@ public abstract class AbstractModuleEntityUsageArchitectureTest extends Abstract
     }
 
     /**
+     * Whether the given controller method is an actual HTTP endpoint, i.e. it is (meta-)annotated with
+     * {@link RequestMapping}. This covers {@code @GetMapping}/{@code @PostMapping}/{@code @PutMapping}/
+     * {@code @DeleteMapping}/{@code @PatchMapping} (all meta-annotated with {@code @RequestMapping}) and any
+     * custom mapping annotation. Private/helper methods (e.g. DTO&lt;-&gt;entity mappers) that merely live in a
+     * {@code @RestController} but carry no mapping annotation are not endpoints and must not be flagged.
+     */
+    protected static boolean isRestEndpointMethod(Method method) {
+        return AnnotatedElementUtils.hasAnnotation(method, RequestMapping.class);
+    }
+
+    /**
      * Matches ArchUnit's JavaMethod to the declared reflective Method on the controller class.
      * Uses name + raw parameter types.
      */
@@ -354,6 +378,11 @@ public abstract class AbstractModuleEntityUsageArchitectureTest extends Abstract
                 return Optional.empty();
             }
             case ParameterizedType parameterizedType -> {
+                // A Class<X> (e.g. Class<? extends LectureUnit>) is a type token, not an embedded entity value:
+                // its type argument names a type, it does not serialize an entity instance. Don't recurse into it.
+                if (parameterizedType.getRawType() == Class.class) {
+                    return Optional.empty();
+                }
                 for (Type arg : parameterizedType.getActualTypeArguments()) {
                     Optional<Class<?>> found = findFirstEntityType(arg);
                     if (found.isPresent()) {

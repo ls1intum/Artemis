@@ -18,7 +18,7 @@ class LectureEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchit
     // TODO: Reduce this to 0 by returning DTOs instead of entities
     @Override
     protected int getMaxEntityReturnViolations() {
-        return 18;
+        return 17;
     }
 
     // TODO: Reduce this to 0 by accepting DTOs instead of entities in @RequestBody/@RequestPart
