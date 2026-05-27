@@ -184,6 +184,14 @@ public class AthenaModuleService {
         exerciseRepository.revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(course.getId(), restrictedModules);
     }
 
+    /**
+     * Returns the configured default Athena module name for the given exercise type.
+     *
+     * @param exerciseType the exercise type
+     * @return the default module name
+     * @throws IllegalStateException    if the default module property is not configured
+     * @throws IllegalArgumentException if the exercise type has no configured default module
+     */
     public String getDefaultModule(ExerciseType exerciseType) {
         return switch (exerciseType) {
             case TEXT -> {
@@ -208,6 +216,13 @@ public class AthenaModuleService {
         };
     }
 
+    /**
+     * Applies the course's Athena settings to a newly created exercise.
+     * Sets feedbackSuggestionModule and allowFeedbackRequests based on course-level flags.
+     *
+     * @param exercise the newly created exercise (mutated in place)
+     * @param course   the course the exercise belongs to
+     */
     public void applyAthenaCourseSettings(Exercise exercise, Course course) {
         boolean gradingEnabled = switch (exercise.getExerciseType()) {
             case TEXT -> course.isAthenaTextGradingEnabled();
@@ -230,6 +245,12 @@ public class AthenaModuleService {
         }
     }
 
+    /**
+     * Clears the feedbackSuggestionModule field for all exercises of the given type in the course.
+     *
+     * @param courseId     the course id
+     * @param exerciseType the exercise type whose grading Athena module is being disabled
+     */
     public void clearFeedbackSuggestionModuleForCourse(Long courseId, ExerciseType exerciseType) {
         switch (exerciseType) {
             case TEXT -> exerciseRepository.clearTextExerciseFeedbackSuggestionModuleByCourseId(courseId);
@@ -239,6 +260,12 @@ public class AthenaModuleService {
         }
     }
 
+    /**
+     * Clears the allowFeedbackRequests flag for all exercises of the given type in the course.
+     *
+     * @param courseId     the course id
+     * @param exerciseType the exercise type whose preliminary Athena feedback is being disabled
+     */
     public void clearAllowFeedbackRequestsForCourse(Long courseId, ExerciseType exerciseType) {
         switch (exerciseType) {
             case TEXT -> exerciseRepository.clearTextExerciseAllowFeedbackRequestsByCourseId(courseId);
