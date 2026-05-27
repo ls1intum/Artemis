@@ -169,7 +169,9 @@ class ContentChangeAccumulatorServiceTest {
         clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
         assertThat(service.claimDueBatch(1L)).as("scheduled cap must be exhausted").isEmpty();
 
-        assertThat(service.claimBatchNow(1L)).as("manual flush must bypass daily cap").isPresent();
+        Optional<BatchClaim> manualClaim = service.claimBatchNow(1L);
+        assertThat(manualClaim).as("manual flush must bypass daily cap").isPresent();
+        assertThat(manualClaim.get().exerciseIds()).containsExactly(200L);
 
         service.record(1L, 300L, false);
         clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
