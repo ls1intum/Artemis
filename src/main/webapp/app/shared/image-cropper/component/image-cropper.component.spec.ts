@@ -123,6 +123,38 @@ describe('ImageCropperComponent', () => {
             // The expensive cropService call is skipped to avoid passing undefined to it.
             expect(cropServiceCropSpy).not.toHaveBeenCalled();
         });
+
+        it('crops and emits when the loaded image and sourceImage view child are present', () => {
+            const loadedImage = { transformed: { base64: 'base64', image: new Image(), size: { width: 100, height: 100 } } } as LoadedImage;
+            comp.loadedImage = loadedImage;
+            const sourceImage = new ElementRef(document.createElement('div'));
+            vi.spyOn(comp, 'sourceImage').mockReturnValue(sourceImage as ElementRef<HTMLDivElement>);
+            const croppedEvent = { base64: 'cropped-base64' } as ImageCroppedEvent;
+            cropServiceCropSpy.mockReturnValue(croppedEvent);
+            const imageCroppedSpy = vi.spyOn(comp.imageCropped, 'emit');
+
+            const res = comp.crop();
+
+            expect(startCropImageSpy).toHaveBeenCalledOnce();
+            expect(cropServiceCropSpy).toHaveBeenCalledWith(sourceImage, loadedImage, comp.cropper, comp.settings);
+            expect(imageCroppedSpy).toHaveBeenCalledWith(croppedEvent);
+            expect(res).toBe(croppedEvent);
+        });
+
+        it('crops but does not emit when cropService returns no output', () => {
+            const loadedImage = { transformed: { base64: 'base64', image: new Image(), size: { width: 100, height: 100 } } } as LoadedImage;
+            comp.loadedImage = loadedImage;
+            const sourceImage = new ElementRef(document.createElement('div'));
+            vi.spyOn(comp, 'sourceImage').mockReturnValue(sourceImage as ElementRef<HTMLDivElement>);
+            cropServiceCropSpy.mockReturnValue(undefined);
+            const imageCroppedSpy = vi.spyOn(comp.imageCropped, 'emit');
+
+            const res = comp.crop();
+
+            expect(cropServiceCropSpy).toHaveBeenCalledOnce();
+            expect(imageCroppedSpy).not.toHaveBeenCalled();
+            expect(res).toBeUndefined();
+        });
     });
 
     describe('input change reset paths', () => {
