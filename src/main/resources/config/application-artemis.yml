@@ -127,6 +127,22 @@ artemis:
     enabled: false
     url: <your-pyris-url>
     secret-token: <your-secret>
+    dashboard:
+      max-query-window-days: 365
+      stale-threshold-minutes: 5
+      digest:
+        enabled: false
+        cron: "0 0 7 * * *"
+        recipients: []
+      alert:
+        enabled: false
+        no-response-rate-threshold: 10
+        check-interval-minutes: 30
+        cooldown-minutes: 360
+        lookback-minutes: 60
+        minimum-eligible-sessions: 10
+        minimum-user-messages: 20
+        recipients: []
 
   weaviate:
     enabled: false
