@@ -16,8 +16,10 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ComplaintRequestDTO } from 'app/assessment/shared/entities/complaint-request-dto.model';
 import { provideHttpClient } from '@angular/common/http';
-import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
-import { Feedback } from '../entities/feedback.model';
+import { ComplaintDTO, ParticipantDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import { Feedback, FeedbackDTO } from 'app/assessment/shared/entities/feedback.model';
+import { Team } from 'app/exercise/shared/entities/team/team.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 
 describe('ComplaintService', () => {
     setupTestBed({ zoneless: true });
@@ -517,5 +519,113 @@ describe('ComplaintService', () => {
             complaintType: ComplaintType.COMPLAINT,
         });
         expect(sanitizedComplaintResponse.complaint!.result).toBeUndefined();
+    });
+
+    describe('convertComplaintFromServer', () => {
+        it('should map base fields and attach the provided result', () => {
+            const dto = new ComplaintDTO();
+            dto.id = 7;
+            dto.complaintText = 'Why only 80%?';
+            dto.complaintType = ComplaintType.COMPLAINT;
+            dto.complaintIsAccepted = true;
+            dto.submittedTime = dayjsTime1;
+
+            const result = new Result();
+            result.id = 99;
+
+            const complaint = complaintService.convertComplaintFromServer(dto, result);
+
+            expect(complaint).toBeInstanceOf(Complaint);
+            expect(complaint.id).toBe(7);
+            expect(complaint.complaintText).toBe('Why only 80%?');
+            expect(complaint.complaintType).toBe(ComplaintType.COMPLAINT);
+            expect(complaint.accepted).toBe(true);
+            expect(complaint.submittedTime?.toISOString()).toBe(dayjsTime1.toISOString());
+            expect(complaint.result).toBe(result);
+        });
+
+        it('should tolerate an undefined result', () => {
+            const dto = new ComplaintDTO();
+            dto.id = 8;
+
+            const complaint = complaintService.convertComplaintFromServer(dto, undefined);
+
+            expect(complaint.id).toBe(8);
+            expect(complaint.result).toBeUndefined();
+        });
+
+        it('should map a student participant onto complaint.student', () => {
+            const dto = new ComplaintDTO();
+            dto.participant = { id: 3, name: 'Student One', login: 'student1', isStudent: true } as ParticipantDTO;
+
+            const complaint = complaintService.convertComplaintFromServer(dto, undefined);
+
+            expect(complaint.student).toBeInstanceOf(User);
+            expect(complaint.student?.id).toBe(3);
+            expect(complaint.student?.name).toBe('Student One');
+            expect(complaint.student?.login).toBe('student1');
+            expect(complaint.team).toBeUndefined();
+        });
+
+        it('should map a team participant onto complaint.team', () => {
+            const dto = new ComplaintDTO();
+            dto.participant = { id: 4, name: 'Team Awesome', login: 'team-awesome', isStudent: false } as ParticipantDTO;
+
+            const complaint = complaintService.convertComplaintFromServer(dto, undefined);
+
+            expect(complaint.team).toBeInstanceOf(Team);
+            expect(complaint.team?.id).toBe(4);
+            expect(complaint.team?.name).toBe('Team Awesome');
+            expect(complaint.team?.shortName).toBe('team-awesome');
+            expect(complaint.student).toBeUndefined();
+        });
+    });
+
+    describe('convertComplaintFromServerInList', () => {
+        it('should reconstruct the reduced result, exercise title, assessor and feedbacks', () => {
+            const dto = new ComplaintDTO();
+            dto.id = 11;
+            dto.complaintType = ComplaintType.COMPLAINT;
+            dto.complaintIsAccepted = false;
+            dto.result = {
+                id: 55,
+                completionDate: dayjsTime1,
+                score: 80,
+                rated: true,
+                assessmentType: AssessmentType.MANUAL,
+                assessor: { id: 9, login: 'tutor1', name: 'Tutor One' },
+                exerciseTitle: 'My Exercise',
+                feedbacks: [{ id: 1, credits: 5, reference: 'reference-id', detailText: 'Good' } as FeedbackDTO],
+                submission: { id: 21, participation: { id: 31, exercise: { id: 41, type: ExerciseType.TEXT } } },
+            } as ResultSimpleDTO;
+
+            const complaint = complaintService.convertComplaintFromServerInList(dto);
+
+            expect(complaint.id).toBe(11);
+            expect(complaint.accepted).toBe(false);
+            expect(complaint.result).toBeInstanceOf(Result);
+            expect(complaint.result?.id).toBe(55);
+            expect(complaint.result?.score).toBe(80);
+            expect(complaint.result?.rated).toBe(true);
+            expect(complaint.result?.assessmentType).toBe(AssessmentType.MANUAL);
+            expect(complaint.result?.assessor?.login).toBe('tutor1');
+            expect(complaint.result?.feedbacks).toHaveLength(1);
+            expect(complaint.result?.submission?.id).toBe(21);
+            const participation = complaint.result?.submission?.participation as StudentParticipation;
+            expect(participation.id).toBe(31);
+            expect(participation.exercise?.id).toBe(41);
+            expect(participation.exercise?.type).toBe(ExerciseType.TEXT);
+            expect(participation.exercise?.title).toBe('My Exercise');
+        });
+
+        it('should leave result undefined when the DTO has no result', () => {
+            const dto = new ComplaintDTO();
+            dto.id = 12;
+
+            const complaint = complaintService.convertComplaintFromServerInList(dto);
+
+            expect(complaint.id).toBe(12);
+            expect(complaint.result).toBeUndefined();
+        });
     });
 });

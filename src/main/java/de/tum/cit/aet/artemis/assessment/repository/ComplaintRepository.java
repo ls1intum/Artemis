@@ -222,7 +222,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @param exerciseIds - the ids of the exercises in the course
      * @return a list of complaints
      */
-    @EntityGraph(type = LOAD, attributePaths = { "result.submission.participation.exercise", "result.assessor" })
+    @EntityGraph(type = LOAD, attributePaths = { "result.submission.participation.exercise", "result.assessor", "complaintResponse.reviewer" })
     List<Complaint> findAllByResult_ExerciseIdIn(Set<Long> exerciseIds);
 
     /**
@@ -233,7 +233,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @param exerciseId - the id of the exercise
      * @return a list of complaints
      */
-    @EntityGraph(type = LOAD, attributePaths = { "result.submission.participation.exercise", "result.assessor" })
+    @EntityGraph(type = LOAD, attributePaths = { "result.submission.participation.exercise", "result.assessor", "complaintResponse.reviewer" })
     List<Complaint> findAllByResult_Assessor_IdAndResult_ExerciseId(Long assessorId, Long exerciseId);
 
     /**
@@ -244,7 +244,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @param exerciseIds - the ids of the exercises (e.g., from a course)
      * @return a list of complaints
      */
-    @EntityGraph(type = LOAD, attributePaths = { "result.submission.participation.exercise", "result.assessor" })
+    @EntityGraph(type = LOAD, attributePaths = { "result.submission.participation.exercise", "result.assessor", "complaintResponse.reviewer" })
     List<Complaint> findAllByResult_Assessor_IdAndResult_ExerciseIdIn(Long assessorId, Set<Long> exerciseIds);
 
     /**

@@ -504,10 +504,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             return;
         }
 
+        // Reassemble the manual result's feedbacks from the editor state first, then snapshot them: getFeedbacksForUpdateAfterComplaint must
+        // capture the freshly assembled feedback list, not the pre-edit one.
+        this.setFeedbacksForManualResult();
         const feedbacks = this.complaintService.getFeedbacksForUpdateAfterComplaint(this.manualResult!.feedbacks!);
         const complaintResponse = this.complaintService.getComplaintResponseForUpdateAfterComplaint(assessmentAfterComplaint.complaintResponse);
 
-        this.setFeedbacksForManualResult();
         this.manualResultService.updateAfterComplaint(feedbacks, complaintResponse, this.submission!.id!, this.manualResult!.assessmentNote?.note).subscribe({
             next: (result: Result) => {
                 assessmentAfterComplaint.onSuccess();
@@ -658,7 +660,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 if (!res.body) {
                     return;
                 }
-                this.complaint = this.complaintService.convertComplaintFromServer(res.body, this.manualResult!);
+                this.complaint = this.complaintService.convertComplaintFromServer(res.body, this.manualResult);
             },
             error: (err: HttpErrorResponse) => {
                 this.onError(err?.message);

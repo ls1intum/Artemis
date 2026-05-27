@@ -243,9 +243,10 @@ export class ComplaintService implements IComplaintService {
 
     /**
      * Converts a complaint DTO into a {@link Complaint}, attaching the already-loaded result the complaint belongs to.
-     * Used when the surrounding component already holds the full result (e.g. assessment editors).
+     * Used when the surrounding component already holds the full result (e.g. assessment editors). The result may be
+     * undefined for views that do not consume {@link Complaint#result}.
      */
-    public convertComplaintFromServer(dto: ComplaintDTO, result: Result): Complaint {
+    public convertComplaintFromServer(dto: ComplaintDTO, result: Result | undefined): Complaint {
         const complaint = this.convertComplaintBaseFromServer(dto);
         complaint.result = result;
         return complaint;

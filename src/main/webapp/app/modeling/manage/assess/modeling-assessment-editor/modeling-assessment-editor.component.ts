@@ -309,7 +309,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 if (!res.body) {
                     return;
                 }
-                this.complaint = this.complaintService.convertComplaintFromServer(res.body, this.result!);
+                this.complaint = this.complaintService.convertComplaintFromServer(res.body, this.result);
             },
             error: () => {
                 this.onError();

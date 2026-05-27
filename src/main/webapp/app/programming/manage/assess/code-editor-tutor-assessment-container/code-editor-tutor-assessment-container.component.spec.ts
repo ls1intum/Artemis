@@ -648,6 +648,33 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         }),
     );
 
+    it('should send the reassembled feedbacks (not a stale snapshot) when resolving a complaint', fakeAsync(() => {
+        comp.ngOnInit();
+        tick(100);
+
+        // The editor state holds the up-to-date feedbacks the tutor just edited...
+        comp.referencedFeedback = [{ detailText: 'REF', credits: 1, reference: 'file:1', type: FeedbackType.MANUAL } as Feedback];
+        comp.unreferencedFeedback = [{ detailText: 'UNREF', credits: 1, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback];
+        comp.automaticFeedback = [{ detailText: 'AUTO', credits: 0, type: FeedbackType.AUTOMATIC } as Feedback];
+        // ...while the manual result still carries a stale feedback list that must NOT be the one sent to the server.
+        comp.manualResult!.feedbacks = [{ detailText: 'STALE', credits: 99, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback];
+
+        jest.spyOn(comp, 'validateFeedback').mockImplementation(() => (comp.assessmentsAreValid = true));
+        const assessmentAfterComplaint: AssessmentAfterComplaint = {
+            complaintResponse: new ComplaintResponse(),
+            onSuccess: () => {},
+            onError: () => {},
+        };
+
+        comp.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
+        flush();
+
+        expect(updateAfterComplaintStub).toHaveBeenCalledOnce();
+        const sentFeedbacks: Feedback[] = updateAfterComplaintStub.mock.calls[0][0];
+        expect(sentFeedbacks.map((feedback) => feedback.detailText)).toEqual(['REF', 'UNREF', 'AUTO']);
+        expect(sentFeedbacks.some((feedback) => feedback.detailText === 'STALE')).toBeFalse();
+    }));
+
     it('should validate assessments after submission is received during component init', async () => {
         // make assessment valid
         submission.results![0].feedbacks = [
