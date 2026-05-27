@@ -62,9 +62,14 @@ describe('TutorialGroupsManagementComponent', () => {
      */
     function renderTitleBarActions(): DebugElement {
         const actionsTemplate = TestBed.inject(CourseTitleBarService).actionsTemplate();
+        // The directive only registers a template when the `@if (isAtLeastEditor)` block renders; assert it
+        // explicitly so a missing template fails with a clear message instead of a cryptic null dereference.
+        expect(actionsTemplate).toBeDefined();
         const view = actionsTemplate!.createEmbeddedView({});
         titleBarActionViews.push(view);
         view.detectChanges();
+        // The `*titleBarActions` directive sits directly on the actions wrapper `<div>`, so the embedded view's
+        // first root node is that element; its DebugElement.query traverses into the nested action buttons.
         return getDebugNode(view.rootNodes[0]) as DebugElement;
     }
 
