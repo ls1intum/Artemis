@@ -1,6 +1,6 @@
 import { Component, computed, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBook, faCalendarAlt, faGraduationCap, faLevelDownAlt, faTrophy } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faCalendarAlt, faGraduationCap, faHashtag, faLevelDownAlt, faReply, faTrophy } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -22,6 +22,8 @@ export class SearchResultItemComponent {
     protected readonly faGraduationCap = faGraduationCap;
     protected readonly faTrophy = faTrophy;
     protected readonly faLevelDownAlt = faLevelDownAlt;
+    protected readonly faHashtag = faHashtag;
+    protected readonly faReply = faReply;
 
     result = input.required<GlobalSearchResult>();
     icon = input.required<IconDefinition>();
@@ -34,10 +36,13 @@ export class SearchResultItemComponent {
     protected startDate = computed(() => this.result().metadata?.['startDate']);
     protected points = computed(() => this.result().metadata?.['points']);
     protected difficulty = computed(() => this.result().metadata?.['difficulty']);
+    protected channelName = computed(() => this.result().metadata?.['channelName']);
+    protected isReply = computed(() => !!this.result().metadata?.['isReply']);
 
     protected isExamExercise = computed(() => this.result().type === 'exercise' && !!this.result().metadata?.['examId']);
+    protected isMessage = computed(() => this.result().type === 'post' || this.result().type === 'answer_post');
 
-    protected hasAnyMetadata = computed(() => !!(this.courseName() || this.dueDate() || this.startDate() || this.points() || this.difficulty()));
+    protected hasAnyMetadata = computed(() => !!(this.courseName() || this.dueDate() || this.startDate() || this.points() || this.difficulty() || this.channelName()));
     protected showCourseSeparator = computed(() => !!(this.courseName() && (this.dueDate() || this.startDate() || this.points() || this.difficulty())));
     protected showStartDateOnly = computed(() => !!(this.startDate() && !this.dueDate()));
     protected showDatePointsSeparator = computed(() => !!(this.points() && (this.dueDate() || this.startDate())));

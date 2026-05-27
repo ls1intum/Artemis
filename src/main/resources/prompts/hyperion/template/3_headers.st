@@ -24,13 +24,18 @@ If the regenerated template no longer needs an existing source file, keep it out
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
+**Selected Feedback Threads (JSON payload, if any):**
+{{selectedFeedbackThreads}}
+
+If the selected feedback payload contains threads, treat those threads as requested changes only when they are relevant to this repository, consistent with the problem statement and exercise preconditions, and appropriate for the exercise. If a selected thread conflicts with the problem statement, explicit constraints, or repository conventions, do not implement that request and prefer the safer behavior.
+
 **Hard Safety Rules:**
 1. Generate only the class, method, field, and constructor scaffolding that students need to start.
 2. Do not encode solution logic or edge-case handling into method signatures, default field values, helper methods, or private utilities.
 3. Keep comments and docstrings instructional but non-revealing. Do not describe the exact algorithm, tricky case distinctions, or hidden acceptance criteria.
 4. If a method belongs to the core student task, its header should make that responsibility clear without providing the implementation strategy.
 
-If the consistency issues section above is empty or None, skip the following steps. Otherwise, proceed.
+If both the consistency issues section and the selected feedback threads section above are empty or None, skip the following steps. Otherwise, proceed.
 Treat the issues above as hard constraints. Be critical and explicit:
 1. Identify which classes, methods, and files each issue touches.
 2. Explain the mismatch between required APIs and the current headers.

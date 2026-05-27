@@ -26,20 +26,23 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.Course_;
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User_;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.Organization_;
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.domain.User_;
 import de.tum.cit.aet.artemis.core.dto.OrganizationCourseDTO;
 import de.tum.cit.aet.artemis.core.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.core.dto.OrganizationMemberDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course_;
 
 /**
- * Implementation of organization repository fragment with advanced filtering and aggregation
+ * Implementation of organization repository fragment with advanced filtering and aggregation.
+ * <p>
+ * Joins between Organization and User / Course always start from the owning side ({@link User#getOrganizations()} /
+ * {@code Course.getOrganizations()}) because Organization does not have inverse-side collections.
  */
 public class CustomOrganizationRepositoryImpl implements CustomOrganizationRepository {
 
@@ -85,19 +88,20 @@ public class CustomOrganizationRepositoryImpl implements CustomOrganizationRepos
         Expression<Long> courseCountExpr;
 
         if (withCounts) {
-            // Correlated subqueries avoid the Cartesian product that dual LEFT JOINs would produce
+            // Correlated subqueries against the owning sides (User.organizations / Course.organizations)
+            // — Organization has no inverse-side collections.
             Subquery<Long> userCountSub = query.subquery(Long.class);
-            Root<Organization> ucRoot = userCountSub.from(Organization.class);
-            Join<Organization, User> ucJoin = ucRoot.join(Organization_.USERS, JoinType.LEFT);
-            userCountSub.select(builder.count(ucJoin.get(User_.ID)));
-            userCountSub.where(builder.equal(ucRoot.get(Organization_.ID), root.get(Organization_.ID)));
+            Root<User> ucRoot = userCountSub.from(User.class);
+            Join<User, Organization> ucJoin = ucRoot.join(User_.ORGANIZATIONS, JoinType.INNER);
+            userCountSub.select(builder.count(ucRoot.get(User_.ID)));
+            userCountSub.where(builder.equal(ucJoin.get(Organization_.ID), root.get(Organization_.ID)));
             userCountExpr = userCountSub;
 
             Subquery<Long> courseCountSub = query.subquery(Long.class);
-            Root<Organization> ccRoot = courseCountSub.from(Organization.class);
-            Join<Organization, Course> ccJoin = ccRoot.join(Organization_.COURSES, JoinType.LEFT);
-            courseCountSub.select(builder.count(ccJoin.get(Course_.ID)));
-            courseCountSub.where(builder.equal(ccRoot.get(Organization_.ID), root.get(Organization_.ID)));
+            Root<Course> ccRoot = courseCountSub.from(Course.class);
+            Join<Course, Organization> ccJoin = ccRoot.join(Course_.ORGANIZATIONS, JoinType.INNER);
+            courseCountSub.select(builder.count(ccRoot.get(Course_.ID)));
+            courseCountSub.where(builder.equal(ccJoin.get(Organization_.ID), root.get(Organization_.ID)));
             courseCountExpr = courseCountSub;
         }
         else {
@@ -137,7 +141,7 @@ public class CustomOrganizationRepositoryImpl implements CustomOrganizationRepos
         typedQuery.setMaxResults(pageable.getPageSize());
 
         List<OrganizationDTO> results = typedQuery.getResultList();
-        long total = countWithSpecification(builder, specification);
+        long total = countOrganizationsWithSpecification(builder, specification);
 
         return new PageImpl<>(results, pageable, total);
     }
@@ -154,28 +158,29 @@ public class CustomOrganizationRepositoryImpl implements CustomOrganizationRepos
 
         CriteriaBuilder builder = entityManager.getCriteriaBuilder();
         CriteriaQuery<OrganizationMemberDTO> query = builder.createQuery(OrganizationMemberDTO.class);
-        Root<Organization> root = query.from(Organization.class);
-        Join<Organization, User> u = root.join(Organization_.USERS, JoinType.INNER);
+        Root<User> userRoot = query.from(User.class);
+        Join<User, Organization> orgJoin = userRoot.join(User_.ORGANIZATIONS, JoinType.INNER);
 
-        Expression<String> nameExpr = builder.concat(builder.concat(builder.coalesce(u.get(User_.FIRST_NAME), ""), " "), builder.coalesce(u.get(User_.LAST_NAME), ""));
+        Expression<String> nameExpr = builder.concat(builder.concat(builder.coalesce(userRoot.get(User_.FIRST_NAME), ""), " "),
+                builder.coalesce(userRoot.get(User_.LAST_NAME), ""));
 
-        query.select(builder.construct(OrganizationMemberDTO.class, u.get(User_.ID), u.get(User_.LOGIN), nameExpr, u.get(User_.EMAIL)));
+        query.select(builder.construct(OrganizationMemberDTO.class, userRoot.get(User_.ID), userRoot.get(User_.LOGIN), nameExpr, userRoot.get(User_.EMAIL)));
 
         // Filtering
-        query.where(getMemberPredicate(builder, root, u, organizationId, searchTerm));
+        query.where(getMemberPredicate(builder, userRoot, orgJoin, organizationId, searchTerm));
 
         // Sorting
         final String effectiveSortedColumn = sortedColumn != null ? sortedColumn : "";
         Expression<?> sortExpr = switch (effectiveSortedColumn) {
-            case "login" -> u.get(User_.LOGIN);
+            case "login" -> userRoot.get(User_.LOGIN);
             case "name" -> nameExpr;
-            case "email" -> u.get(User_.EMAIL);
-            default -> u.get(User_.ID);
+            case "email" -> userRoot.get(User_.EMAIL);
+            default -> userRoot.get(User_.ID);
         };
 
         Order primaryOrder = (sortOrder == SortingOrder.DESCENDING) ? builder.desc(sortExpr) : builder.asc(sortExpr);
         // Tie-breaker for stable pagination
-        Order tieBreaker = builder.asc(u.get(User_.ID));
+        Order tieBreaker = builder.asc(userRoot.get(User_.ID));
         query.orderBy(primaryOrder, tieBreaker);
 
         TypedQuery<OrganizationMemberDTO> typedQuery = entityManager.createQuery(query);
@@ -183,7 +188,7 @@ public class CustomOrganizationRepositoryImpl implements CustomOrganizationRepos
         typedQuery.setMaxResults(pageable.getPageSize());
 
         List<OrganizationMemberDTO> results = typedQuery.getResultList();
-        long total = countWithSpecification(builder, getMemberSpecification(organizationId, searchTerm));
+        long total = countUsersWithSpecification(builder, getMemberSpecification(organizationId, searchTerm));
 
         return new PageImpl<>(results, pageable, total);
     }
@@ -200,25 +205,25 @@ public class CustomOrganizationRepositoryImpl implements CustomOrganizationRepos
 
         CriteriaBuilder builder = entityManager.getCriteriaBuilder();
         CriteriaQuery<OrganizationCourseDTO> query = builder.createQuery(OrganizationCourseDTO.class);
-        Root<Organization> root = query.from(Organization.class);
-        Join<Organization, Course> c = root.join(Organization_.COURSES, JoinType.INNER);
+        Root<Course> courseRoot = query.from(Course.class);
+        Join<Course, Organization> orgJoin = courseRoot.join(Course_.ORGANIZATIONS, JoinType.INNER);
 
-        query.select(builder.construct(OrganizationCourseDTO.class, c.get(Course_.ID), c.get(Course_.TITLE), c.get(Course_.SHORT_NAME)));
+        query.select(builder.construct(OrganizationCourseDTO.class, courseRoot.get(Course_.ID), courseRoot.get(Course_.TITLE), courseRoot.get(Course_.SHORT_NAME)));
 
         // Filtering
-        query.where(getCoursePredicate(builder, root, c, organizationId, searchTerm));
+        query.where(getCoursePredicate(builder, courseRoot, orgJoin, organizationId, searchTerm));
 
         // Sorting
         final String effectiveSortedColumn = sortedColumn != null ? sortedColumn : "";
         Expression<?> sortExpr = switch (effectiveSortedColumn) {
-            case "title" -> c.get(Course_.TITLE);
-            case "shortName" -> c.get(Course_.SHORT_NAME);
-            default -> c.get(Course_.ID);
+            case "title" -> courseRoot.get(Course_.TITLE);
+            case "shortName" -> courseRoot.get(Course_.SHORT_NAME);
+            default -> courseRoot.get(Course_.ID);
         };
 
         Order primaryOrder = (sortOrder == SortingOrder.DESCENDING) ? builder.desc(sortExpr) : builder.asc(sortExpr);
         // Tie-breaker for stable pagination
-        Order tieBreaker = builder.asc(c.get(Course_.ID));
+        Order tieBreaker = builder.asc(courseRoot.get(Course_.ID));
         query.orderBy(primaryOrder, tieBreaker);
 
         TypedQuery<OrganizationCourseDTO> typedQuery = entityManager.createQuery(query);
@@ -226,17 +231,53 @@ public class CustomOrganizationRepositoryImpl implements CustomOrganizationRepos
         typedQuery.setMaxResults(pageable.getPageSize());
 
         List<OrganizationCourseDTO> results = typedQuery.getResultList();
-        long total = countWithSpecification(builder, getCourseSpecification(organizationId, searchTerm));
+        long total = countCoursesWithSpecification(builder, getCourseSpecification(organizationId, searchTerm));
 
         return new PageImpl<>(results, pageable, total);
     }
 
     /**
-     * Returns the total number of rows matching the given specification.
+     * Returns the total number of organizations matching the given specification.
      */
-    private long countWithSpecification(CriteriaBuilder builder, Specification<Organization> specification) {
+    private long countOrganizationsWithSpecification(CriteriaBuilder builder, Specification<Organization> specification) {
         CriteriaQuery<Long> countQuery = builder.createQuery(Long.class);
         Root<Organization> countRoot = countQuery.from(Organization.class);
+
+        if (specification != null) {
+            Predicate predicate = specification.toPredicate(countRoot, countQuery, builder);
+            if (predicate != null) {
+                countQuery.where(predicate);
+            }
+        }
+
+        countQuery.select(builder.count(countRoot));
+        return entityManager.createQuery(countQuery).getSingleResult();
+    }
+
+    /**
+     * Returns the total number of users matching the given specification.
+     */
+    private long countUsersWithSpecification(CriteriaBuilder builder, Specification<User> specification) {
+        CriteriaQuery<Long> countQuery = builder.createQuery(Long.class);
+        Root<User> countRoot = countQuery.from(User.class);
+
+        if (specification != null) {
+            Predicate predicate = specification.toPredicate(countRoot, countQuery, builder);
+            if (predicate != null) {
+                countQuery.where(predicate);
+            }
+        }
+
+        countQuery.select(builder.count(countRoot));
+        return entityManager.createQuery(countQuery).getSingleResult();
+    }
+
+    /**
+     * Returns the total number of courses matching the given specification.
+     */
+    private long countCoursesWithSpecification(CriteriaBuilder builder, Specification<Course> specification) {
+        CriteriaQuery<Long> countQuery = builder.createQuery(Long.class);
+        Root<Course> countRoot = countQuery.from(Course.class);
 
         if (specification != null) {
             Predicate predicate = specification.toPredicate(countRoot, countQuery, builder);

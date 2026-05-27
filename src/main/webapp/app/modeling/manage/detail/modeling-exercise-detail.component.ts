@@ -13,9 +13,10 @@ import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercis
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
 import dayjs from 'dayjs/esm';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_APOLLON } from 'app/app.constants';
 import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import {
     getExerciseGeneralDetailsSection,
@@ -59,12 +60,11 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     doughnutStats: ExerciseManagementStatisticsDto;
     isExamExercise: boolean;
 
-    isApollonProfileActive = false;
+    isApollonEnabled = false;
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe((params) => {
-            // Checks if the current environment includes "apollon" profile
-            this.isApollonProfileActive = this.profileService.isProfileActive('apollon');
+            this.isApollonEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_APOLLON);
             this.load(params['exerciseId']);
         });
         this.registerChangeInModelingExercises();
@@ -105,7 +105,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
                     {
                         type: DetailType.ModelingEditor,
                         title: 'artemisApp.exercise.sections.solution',
-                        data: { umlModel: this.exampleSolutionUML, diagramType: exercise.diagramType, title: exercise.title, isApollonProfileActive: this.isApollonProfileActive },
+                        data: { umlModel: this.exampleSolutionUML, diagramType: exercise.diagramType, title: exercise.title, isApollonEnabled: this.isApollonEnabled },
                     },
                     {
                         title: 'artemisApp.modelingExercise.exampleSolutionExplanation',

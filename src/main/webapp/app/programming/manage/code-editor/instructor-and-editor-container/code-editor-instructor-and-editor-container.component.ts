@@ -122,6 +122,21 @@ interface CodeGenerationIterationActivityGroup {
     activities: CodeGenerationFileActivity[];
 }
 
+interface CodeGenerationSelectedFeedbackThread {
+    threadId: number;
+    targetType: CommentThreadLocationType;
+    auxiliaryRepositoryId?: number;
+    filePath?: string;
+    lineNumber?: number;
+    locationLabel: string;
+}
+
+interface CodeGenerationSelectedFeedbackRepositorySummary {
+    repositoryType: SupportedCodeGenerationRepositoryType;
+    threadCount: number;
+    threads: CodeGenerationSelectedFeedbackThread[];
+}
+
 interface CodeGenerationRepositoryStatus {
     repositoryType: SupportedCodeGenerationRepositoryType;
     enabled: boolean;
@@ -289,10 +304,31 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     readonly codeGenerationStatuses = signal<CodeGenerationRepositoryStatus[]>(
         SUPPORTED_CODE_GENERATION_REPOSITORIES.map((repositoryType) => this.createCodeGenerationStatus(repositoryType)),
     );
+    readonly expandedFeedbackSummaryRepositories = signal<SupportedCodeGenerationRepositoryType[]>([]);
     readonly codeGenerationActivityLog = computed(() =>
         this.codeGenerationStatuses()
             .flatMap((status) => status.fileActivities)
             .sort((left, right) => right.timestamp - left.timestamp),
+    );
+    readonly codeGenerationSelectedFeedbackSummaries = computed<CodeGenerationSelectedFeedbackRepositorySummary[]>(() => {
+        const threadsById = new Map(this.exerciseReviewCommentService.threads().map((thread) => [thread.id, thread]));
+
+        return this.supportedCodeGenerationRepositories.map((repositoryType) => {
+            const selectedThreadIds = this.exerciseReviewCommentService.getSelectedFeedbackThreadIdsForRepository(repositoryType);
+            const threads = selectedThreadIds
+                .map((threadId) => threadsById.get(threadId))
+                .filter((thread): thread is CommentThread => thread !== undefined)
+                .map((thread) => this.mapThreadToSelectedFeedbackThread(thread));
+
+            return {
+                repositoryType,
+                threadCount: threads.length,
+                threads,
+            };
+        });
+    });
+    readonly totalSelectedFeedbackThreadCount = computed(() =>
+        this.codeGenerationSelectedFeedbackSummaries().reduce((threadCount, summary) => threadCount + summary.threadCount, 0),
     );
 
     constructor() {
@@ -584,10 +620,20 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     private createCodeGenerationRequest(repositoryType: RepositoryType, checkOnly = false, initialAutoGeneration = false): CodeGenerationRequest {
         // Runtime contract: backend expects RepositoryType enum names (e.g. TEMPLATE), while generated OpenAPI type currently exposes repository names (e.g. exercise).
+        const request: CodeGenerationRequest = { repositoryType, checkOnly } as unknown as CodeGenerationRequest;
         if (initialAutoGeneration) {
-            return { repositoryType, checkOnly, initialAutoGeneration: true } as unknown as CodeGenerationRequest;
+            request.initialAutoGeneration = true;
         }
-        return { repositoryType, checkOnly } as unknown as CodeGenerationRequest;
+        if (!checkOnly) {
+            const selectedFeedbackThreadIds = this.exerciseReviewCommentService.getSelectedFeedbackThreadIdsForRepository(
+                repositoryType,
+                repositoryType === RepositoryType.AUXILIARY ? this.selectedRepositoryId : undefined,
+            );
+            if (selectedFeedbackThreadIds.length > 0) {
+                request.selectedFeedbackThreadIds = selectedFeedbackThreadIds;
+            }
+        }
+        return request;
     }
 
     /**
@@ -914,6 +960,42 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 iteration: iteration === 'unknown' ? undefined : iteration,
                 activities,
             }));
+    }
+
+    /**
+     * Toggles the selected-feedback details for a repository in the generation settings popover.
+     * @param repositoryType repository whose selected threads should be shown or hidden
+     */
+    toggleFeedbackSummaryRepository(repositoryType: SupportedCodeGenerationRepositoryType): void {
+        this.expandedFeedbackSummaryRepositories.update((expandedRepositories) =>
+            expandedRepositories.includes(repositoryType)
+                ? expandedRepositories.filter((expandedRepositoryType) => expandedRepositoryType !== repositoryType)
+                : [...expandedRepositories, repositoryType],
+        );
+    }
+
+    /**
+     * Returns whether the selected-feedback details for a repository are currently expanded.
+     * @param repositoryType repository to inspect
+     * @returns true if the repository summary is expanded
+     */
+    isFeedbackSummaryRepositoryExpanded(repositoryType: SupportedCodeGenerationRepositoryType): boolean {
+        return this.expandedFeedbackSummaryRepositories().includes(repositoryType);
+    }
+
+    /**
+     * Navigates from the generation settings popover to a selected feedback thread.
+     * @param thread selected feedback thread summary entry
+     */
+    navigateToSelectedFeedbackThread(thread: CodeGenerationSelectedFeedbackThread): void {
+        this.codeGenerationSettingsPopover()?.hide();
+        this.onNavigateToReviewCommentLocation({
+            threadId: thread.threadId,
+            targetType: thread.targetType,
+            filePath: thread.filePath,
+            lineNumber: thread.lineNumber,
+            auxiliaryRepositoryId: thread.auxiliaryRepositoryId,
+        });
     }
 
     private getCodeGenerationExecutionState(event: Extract<HyperionEvent, { type: 'DONE' }>): Extract<CodeGenerationExecutionState, 'success' | 'warning' | 'error'> {
@@ -1684,6 +1766,33 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
 
         return content;
+    }
+
+    private mapThreadToSelectedFeedbackThread(thread: CommentThread): CodeGenerationSelectedFeedbackThread {
+        const filePath = thread.filePath ?? thread.initialFilePath ?? undefined;
+        const lineNumber = thread.lineNumber ?? thread.initialLineNumber;
+
+        return {
+            threadId: thread.id,
+            targetType: thread.targetType,
+            auxiliaryRepositoryId: thread.auxiliaryRepositoryId,
+            filePath,
+            lineNumber,
+            locationLabel: this.getSelectedFeedbackThreadLocationLabel(filePath, lineNumber),
+        };
+    }
+
+    private getSelectedFeedbackThreadLocationLabel(filePath?: string, lineNumber?: number): string {
+        if (filePath && lineNumber !== undefined && lineNumber > 0) {
+            return `${filePath}:${lineNumber}`;
+        }
+        if (filePath) {
+            return filePath;
+        }
+        if (lineNumber !== undefined && lineNumber > 0) {
+            return this.translateService.instant('artemisApp.programmingExercise.codeGeneration.selectedFeedback.line', { line: lineNumber });
+        }
+        return this.translateService.instant('artemisApp.programmingExercise.codeGeneration.selectedFeedback.unknownLocation');
     }
 
     private navigateToLocation(location: { targetType: CommentThreadLocationType; filePath?: string; lineNumber?: number; auxiliaryRepositoryId?: number }): void {

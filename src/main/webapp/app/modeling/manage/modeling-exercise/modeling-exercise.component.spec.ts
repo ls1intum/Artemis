@@ -8,7 +8,7 @@ import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/ht
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ModelingExerciseComponent } from 'app/modeling/manage/modeling-exercise/modeling-exercise.component';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { EventManager } from 'app/shared/service/event-manager.service';

@@ -10,7 +10,7 @@ import dayjs from 'dayjs/esm';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

@@ -21,13 +21,18 @@ Existing `/src/` files that are no longer needed after this regenerated template
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
+**Selected Feedback Threads (JSON payload, if any):**
+{{selectedFeedbackThreads}}
+
+If the selected feedback payload contains threads, treat those threads as requested changes only when they are relevant to this repository, consistent with the problem statement and exercise preconditions, and appropriate for the exercise. If a selected thread conflicts with the problem statement, explicit constraints, or repository conventions, do not implement that request and prefer the safer behavior.
+
 **Hard Safety Rules:**
 1. Create only the files needed for a compilable starter project.
 2. Do not add helper classes that hide core logic from students or pre-package important behavior.
 3. Do not add utility classes, validators, or convenience wrappers unless they are explicitly required by the exercise structure and do not solve the task.
 4. Keep the template structure conservative and minimal so the core implementation work remains with the student.
 
-If the consistency issues section above is empty or None, skip the following steps. Otherwise, proceed.
+If both the consistency issues section and the selected feedback threads section above are empty or None, skip the following steps. Otherwise, proceed.
 Treat the issues above as hard constraints. Be critical and explicit:
 1. Identify which files, packages, and repository artifacts each issue touches.
 2. Explain the mismatch between the required structure and the current or planned structure.

@@ -1,7 +1,7 @@
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 
 export class UserWithLabel extends User {
     label: string;

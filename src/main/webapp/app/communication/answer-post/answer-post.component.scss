@@ -54,6 +54,24 @@
 
 .answer-post {
     border-radius: 7px;
+
+    &.highlight-reply {
+        animation: highlight-fade 2s ease-in-out;
+    }
+}
+
+@keyframes highlight-fade {
+    0% {
+        background-color: rgba($primary, 0.25);
+    }
+
+    70% {
+        background-color: rgba($primary, 0.15);
+    }
+
+    100% {
+        background-color: transparent;
+    }
 }
 
 @include media-breakpoint-down(sm) {

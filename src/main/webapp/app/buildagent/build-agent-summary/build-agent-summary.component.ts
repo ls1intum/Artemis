@@ -14,8 +14,8 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
-import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
-import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
+import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
+import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 
 /**
  * Component that displays a summary of all build agents in the system.

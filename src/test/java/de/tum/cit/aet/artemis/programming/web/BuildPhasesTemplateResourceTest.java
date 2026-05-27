@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
@@ -45,8 +45,8 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
             new TestProvider("JAVA/PLAIN_MAVEN", 1),
             new TestProvider("JAVA/PLAIN_MAVEN?sequentialRuns=true", 2),
             new TestProvider("JAVA/PLAIN_MAVEN?staticAnalysis=true", 2),
-            new TestProvider("JAVA/MAVEN_BLACKBOX", 7),
-            new TestProvider("JAVA/MAVEN_BLACKBOX?staticAnalysis=true", 8),
+            new TestProvider("JAVA/MAVEN_BLACKBOX", 8),
+            new TestProvider("JAVA/MAVEN_BLACKBOX?staticAnalysis=true", 9),
             new TestProvider("ASSEMBLER", 4),
             new TestProvider("C/FACT", 2),
             new TestProvider("C/GCC", 3),
