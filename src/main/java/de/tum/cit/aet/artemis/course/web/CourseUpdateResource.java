@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseUpdateDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.CourseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
@@ -173,6 +174,14 @@ public class CourseUpdateResource {
         boolean oldLearningPathsEnabled = existingCourse.getLearningPathsEnabled();
         String oldCodeOfConduct = existingCourse.getCourseInformationSharingMessagingCodeOfConduct();
 
+        // Capture Athena flag values BEFORE applying DTO so we can detect true→false transitions
+        boolean wasTextGradingEnabled = existingCourse.isAthenaTextGradingEnabled();
+        boolean wasTextPreliminaryEnabled = existingCourse.isAthenaTextPreliminaryEnabled();
+        boolean wasModelingGradingEnabled = existingCourse.isAthenaModelingGradingEnabled();
+        boolean wasModelingPreliminaryEnabled = existingCourse.isAthenaModelingPreliminaryEnabled();
+        boolean wasProgrammingGradingEnabled = existingCourse.isAthenaProgrammingGradingEnabled();
+        boolean wasProgrammingPreliminaryEnabled = existingCourse.isAthenaProgrammingPreliminaryEnabled();
+
         // Apply DTO values to the existing course entity - this preserves all relationships
         courseUpdateDTO.applyTo(existingCourse);
         existingCourse.setId(courseId); // Ensure the ID is correct
@@ -228,6 +237,26 @@ public class CourseUpdateResource {
         // if access to restricted athena modules got disabled for the course, we need to set all exercises that use restricted modules to null
         if (athenaModuleAccessChanged && !courseUpdateDTO.restrictedAthenaModulesAccess()) {
             athenaApi.ifPresent(api -> api.revokeAccessToRestrictedFeedbackSuggestionModules(result));
+        }
+
+        // if individual Athena flags transitioned from enabled to disabled, bulk-clear the corresponding exercise settings
+        if (wasTextGradingEnabled && !courseUpdateDTO.athenaTextGradingEnabled()) {
+            athenaApi.ifPresent(api -> api.clearFeedbackSuggestionModuleForCourse(result.getId(), ExerciseType.TEXT));
+        }
+        if (wasTextPreliminaryEnabled && !courseUpdateDTO.athenaTextPreliminaryEnabled()) {
+            athenaApi.ifPresent(api -> api.clearAllowFeedbackRequestsForCourse(result.getId(), ExerciseType.TEXT));
+        }
+        if (wasModelingGradingEnabled && !courseUpdateDTO.athenaModelingGradingEnabled()) {
+            athenaApi.ifPresent(api -> api.clearFeedbackSuggestionModuleForCourse(result.getId(), ExerciseType.MODELING));
+        }
+        if (wasModelingPreliminaryEnabled && !courseUpdateDTO.athenaModelingPreliminaryEnabled()) {
+            athenaApi.ifPresent(api -> api.clearAllowFeedbackRequestsForCourse(result.getId(), ExerciseType.MODELING));
+        }
+        if (wasProgrammingGradingEnabled && !courseUpdateDTO.athenaProgrammingGradingEnabled()) {
+            athenaApi.ifPresent(api -> api.clearFeedbackSuggestionModuleForCourse(result.getId(), ExerciseType.PROGRAMMING));
+        }
+        if (wasProgrammingPreliminaryEnabled && !courseUpdateDTO.athenaProgrammingPreliminaryEnabled()) {
+            athenaApi.ifPresent(api -> api.clearAllowFeedbackRequestsForCourse(result.getId(), ExerciseType.PROGRAMMING));
         }
 
         if (timeZoneChanged && tutorialGroupChannelManagementApi.isPresent()) {
