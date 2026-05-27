@@ -13,7 +13,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status/submission-result-status.component';
+import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
 import dayjs from 'dayjs/esm';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 

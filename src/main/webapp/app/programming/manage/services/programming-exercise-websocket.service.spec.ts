@@ -6,7 +6,7 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 
 describe('ProgrammingExerciseWebsocketService', () => {
     let service: ProgrammingExerciseWebsocketService;

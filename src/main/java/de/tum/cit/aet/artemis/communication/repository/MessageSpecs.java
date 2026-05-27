@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.NonNull;
 import org.springframework.data.jpa.domain.Specification;
 
+import de.tum.cit.aet.artemis.account.domain.User_;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost_;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
@@ -24,9 +25,8 @@ import de.tum.cit.aet.artemis.communication.domain.Reaction_;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel_;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation_;
-import de.tum.cit.aet.artemis.core.domain.Course_;
-import de.tum.cit.aet.artemis.core.domain.User_;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.course.domain.Course_;
 
 public class MessageSpecs {
 

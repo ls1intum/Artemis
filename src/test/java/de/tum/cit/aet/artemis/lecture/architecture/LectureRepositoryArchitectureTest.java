@@ -14,7 +14,7 @@ class LectureRepositoryArchitectureTest extends AbstractModuleRepositoryArchitec
     @Override
     protected Set<String> testTransactionalExclusions() {
         return Set.of(
-                "de.tum.cit.aet.artemis.lecture.service.LectureImportService.importLecture(de.tum.cit.aet.artemis.lecture.domain.Lecture, de.tum.cit.aet.artemis.core.domain.Course, boolean)",
+                "de.tum.cit.aet.artemis.lecture.service.LectureImportService.importLecture(de.tum.cit.aet.artemis.lecture.domain.Lecture, de.tum.cit.aet.artemis.course.domain.Course, boolean)",
                 // dispatchPendingJobs and handleIrisReset need @Transactional because they use
                 // FOR UPDATE SKIP LOCKED and bulk state resets, and their callers have no transaction context.
                 "de.tum.cit.aet.artemis.lecture.service.ProcessingStateCallbackService.dispatchPendingJobs()",

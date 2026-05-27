@@ -162,12 +162,15 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
 
     @Test
     void testClassWithEnforceAdminInCorrectlyNamed() {
+        // In the dedicated admin module every class is admin-related by definition, so the legacy
+        // "@EnforceAdmin classes must live in a *.admin subpackage" rule does not apply there.
+        boolean isAdminModule = getModulePackage().endsWith(".admin");
         ArchRule annotationToNameRule = classesOfThisModuleThat().areAnnotatedWith(EnforceAdmin.class).should().haveSimpleNameStartingWith("Admin")
                 .andShould(new ArchCondition<>("Have package name ending with .admin") {
 
                     @Override
                     public void check(JavaClass item, ConditionEvents events) {
-                        if (!item.getPackage().getName().endsWith(".admin")) {
+                        if (!isAdminModule && !item.getPackage().getName().endsWith(".admin")) {
                             events.add(violated(item, "Classes annotated with @EnforceAdmin should be in an admin subpackage."));
                         }
                     }

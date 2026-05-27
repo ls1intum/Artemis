@@ -2,7 +2,7 @@ import { vi } from 'vitest';
 import '@angular/localize/init';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PagingService } from 'app/exercise/services/paging.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Observable, of } from 'rxjs';
 import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

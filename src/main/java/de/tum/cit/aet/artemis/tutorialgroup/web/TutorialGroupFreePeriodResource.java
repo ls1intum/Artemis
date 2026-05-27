@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupFreePeriodDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupFreePeriodRequestDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
@@ -73,14 +74,14 @@ public class TutorialGroupFreePeriodResource {
      */
     @GetMapping("courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<TutorialGroupFreePeriod> getOneOfConfiguration(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
+    public ResponseEntity<TutorialGroupFreePeriodDTO> getOneOfConfiguration(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
             @PathVariable Long tutorialGroupFreePeriodId) {
         log.debug("REST request to get tutorial group free period: {} of tutorial group configuration {} of course: {}", tutorialGroupFreePeriodId, tutorialGroupsConfigurationId,
                 courseId);
         var freePeriod = tutorialGroupFreePeriodRepository.findByIdElseThrow(tutorialGroupFreePeriodId);
         checkEntityIdMatchesPathIds(freePeriod, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, freePeriod.getTutorialGroupsConfiguration().getCourse(), null);
-        return ResponseEntity.ok(freePeriod);
+        return ResponseEntity.ok(TutorialGroupFreePeriodDTO.from(freePeriod));
     }
 
     /**
@@ -95,7 +96,7 @@ public class TutorialGroupFreePeriodResource {
      */
     @PutMapping("courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<TutorialGroupFreePeriod> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
+    public ResponseEntity<TutorialGroupFreePeriodDTO> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
             @PathVariable Long tutorialGroupFreePeriodId, @RequestBody @Valid TutorialGroupFreePeriodRequestDTO tutorialGroupFreePeriod) throws URISyntaxException {
         log.debug("REST request to update TutorialGroupFreePeriod: {} for tutorial group configuration: {} of course: {}", tutorialGroupFreePeriodId, tutorialGroupsConfigurationId,
                 courseId);
@@ -129,7 +130,7 @@ public class TutorialGroupFreePeriodResource {
         // cancel now overlapping sessions
         tutorialGroupFreePeriodService.cancelOverlappingSessions(configuration.getCourse(), updatedFreePeriod);
 
-        return ResponseEntity.ok(updatedFreePeriod);
+        return ResponseEntity.ok(TutorialGroupFreePeriodDTO.from(updatedFreePeriod));
     }
 
     /**
@@ -142,7 +143,7 @@ public class TutorialGroupFreePeriodResource {
      */
     @PostMapping("courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods")
     @EnforceAtLeastInstructor
-    public ResponseEntity<TutorialGroupFreePeriod> create(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
+    public ResponseEntity<TutorialGroupFreePeriodDTO> create(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
             @RequestBody @Valid TutorialGroupFreePeriodRequestDTO tutorialGroupFreePeriod) throws URISyntaxException {
         log.debug("REST request to create TutorialGroupFreePeriod: {} for tutorial group configuration: {} of course: {}", tutorialGroupFreePeriod, tutorialGroupsConfigurationId,
                 courseId);
@@ -173,7 +174,7 @@ public class TutorialGroupFreePeriodResource {
         tutorialGroupFreePeriodService.cancelOverlappingSessions(tutorialGroupsConfiguration.getCourse(), persistedTutorialGroupFreePeriod);
 
         return ResponseEntity.created(new URI("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups-configuration/" + tutorialGroupsConfigurationId
-                + "/tutorial-free-periods/" + persistedTutorialGroupFreePeriod.getId())).body(persistedTutorialGroupFreePeriod);
+                + "/tutorial-free-periods/" + persistedTutorialGroupFreePeriod.getId())).body(TutorialGroupFreePeriodDTO.from(persistedTutorialGroupFreePeriod));
     }
 
     /**

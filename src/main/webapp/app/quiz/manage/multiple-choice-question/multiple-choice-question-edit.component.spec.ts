@@ -315,7 +315,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
 
     it('should trigger delete button', () => {
         const spy = vi.spyOn(component, 'deleteQuestion');
-        const deleteButton = fixture.debugElement.query(By.css(`.delete-button`));
+        const deleteButton = fixture.debugElement.query(By.css(`.question-action-btn--delete`));
         deleteButton.nativeElement.click();
         expect(spy).toHaveBeenCalledOnce();
     });

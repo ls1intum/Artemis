@@ -8,6 +8,8 @@ import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+
 @Entity
 @Table(name = "calendar_subscription_token_store")
 public class CalendarSubscriptionTokenStore extends DomainObject {

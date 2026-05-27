@@ -15,9 +15,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import de.tum.cit.aet.artemis.admin.service.RateLimitConfigurationService;
+import de.tum.cit.aet.artemis.admin.service.RateLimitService;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
-import de.tum.cit.aet.artemis.core.service.RateLimitConfigurationService;
-import de.tum.cit.aet.artemis.core.service.RateLimitService;
 import inet.ipaddr.IPAddressString;
 
 @ExtendWith(MockitoExtension.class)
