@@ -247,10 +247,16 @@ export class CourseCreationPage {
 
     /**
      * Updates the created exam.
+     *
+     * Scopes `waitForResponse` to the update method (PUT/POST `multipart/form-data`)
+     * — the generic `api/core/courses/*` glob also matches concurrent GETs (refresh,
+     * stats, dashboards) that the page issues right before the form save, and racing
+     * against those returns a course object without the just-edited fields.
+     *
      * @returns the response if a test needs it
      */
     async update() {
-        const responsePromise = this.page.waitForResponse(`api/core/courses/*`);
+        const responsePromise = this.page.waitForResponse((resp) => /\/api\/core\/courses\/\d+(\?|$)/.test(resp.url()) && ['POST', 'PUT'].includes(resp.request().method()));
         await this.page.click('#save-entity');
         const response = await responsePromise;
         return response.json();
