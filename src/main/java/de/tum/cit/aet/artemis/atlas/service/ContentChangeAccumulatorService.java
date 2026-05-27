@@ -112,7 +112,7 @@ public class ContentChangeAccumulatorService {
             if (acc == null || !acc.hasContent()) {
                 continue;
             }
-            if (acc.lastEventTime().isBefore(cutoff) || acc.lastEventTime().equals(cutoff)) {
+            if (!acc.lastEventTime().isAfter(cutoff)) {
                 due.add(entry.getKey());
             }
         }
@@ -298,8 +298,4 @@ public class ContentChangeAccumulatorService {
         return LocalDate.now(clock);
     }
 
-    /** Log helper — keep out of production flow; used when manual operators need to inspect state. */
-    void dump() {
-        log.info("atlas.contentChangeAccumulator debounceSec={} dailyCap={} entries={}", debounceWindowSeconds, dailyCap, map.size());
-    }
 }
