@@ -16,6 +16,7 @@ import {
     ReviewThreadSyncUpdateEvent,
 } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 describe('ExerciseReviewCommentService', () => {
     setupTestBed({ zoneless: true });
@@ -69,11 +70,13 @@ describe('ExerciseReviewCommentService', () => {
 
     it('setExercise should clear thread state when exercise id changes', () => {
         service.threads.set([{ id: 1 } as any]);
+        service.selectedFeedbackThreadIds.set([1]);
 
         const changed = service.setExercise(42);
 
         expect(changed).toBe(true);
         expect(service.threads()).toEqual([]);
+        expect(service.selectedFeedbackThreadIds()).toEqual([]);
         expect(syncServiceMock.subscribeToUpdates).toHaveBeenCalledTimes(1);
     });
 
@@ -385,6 +388,7 @@ describe('ExerciseReviewCommentService', () => {
     it('toggleResolvedInContext should replace updated thread', () => {
         service.setExercise(3);
         service.threads.set([{ id: 7, resolved: false }] as any);
+        service.selectedFeedbackThreadIds.set([7]);
 
         service.toggleResolvedInContext(7, true);
 
@@ -394,6 +398,28 @@ describe('ExerciseReviewCommentService', () => {
         req.flush({ id: 7, resolved: true });
 
         expect(service.threads()).toEqual([{ id: 7, resolved: true }] as any);
+        expect(service.selectedFeedbackThreadIds()).toEqual([]);
+    });
+
+    it('toggleThreadFeedbackSelection should add and remove the selected thread id', () => {
+        service.toggleThreadFeedbackSelection(5);
+        expect(service.selectedFeedbackThreadIds()).toEqual([5]);
+
+        service.toggleThreadFeedbackSelection(5);
+        expect(service.selectedFeedbackThreadIds()).toEqual([]);
+    });
+
+    it('getSelectedFeedbackThreadIdsForRepository should keep only active matching threads in selection order', () => {
+        service.threads.set([
+            { id: 3, targetType: CommentThreadLocationType.SOLUTION_REPO, resolved: false, outdated: false },
+            { id: 1, targetType: CommentThreadLocationType.TEMPLATE_REPO, resolved: false, outdated: false },
+            { id: 2, targetType: CommentThreadLocationType.TEMPLATE_REPO, resolved: true, outdated: false },
+        ] as any);
+        service.selectedFeedbackThreadIds.set([2, 1, 3]);
+
+        const threadIds = service.getSelectedFeedbackThreadIdsForRepository(RepositoryType.TEMPLATE);
+
+        expect(threadIds).toEqual([1]);
     });
 
     it('toggleGroupResolvedInContext should replace all updated group threads', () => {
