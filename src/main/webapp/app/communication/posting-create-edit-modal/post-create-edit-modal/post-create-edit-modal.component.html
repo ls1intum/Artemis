@@ -1,8 +1,8 @@
 @if (isDialogVisible()) {
-    <div class="modal-backdrop" (click)="close()"></div>
-    <div class="modal d-block" tabindex="-1" (keydown.escape)="close()">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
+    <div class="modal-backdrop post-create-edit-modal-backdrop" (click)="close()"></div>
+    <div class="modal d-block post-create-edit-modal" tabindex="-1" (keydown.escape)="close()">
+        <div class="modal-dialog post-create-edit-modal-dialog modal-lg">
+            <div class="modal-content post-create-edit-modal-content">
                 <form [formGroup]="formGroup" (ngSubmit)="confirm()">
                     <div class="modal-header">
                         <h4 class="modal-title">{{ modalTitle | artemisTranslate }}</h4>
