@@ -12,8 +12,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import de.tum.cit.aet.artemis.core.service.RateLimitConfigurationService;
-import de.tum.cit.aet.artemis.core.service.RateLimitService;
+import de.tum.cit.aet.artemis.admin.service.RateLimitConfigurationService;
+import de.tum.cit.aet.artemis.admin.service.RateLimitService;
 import inet.ipaddr.IPAddress;
 
 /**

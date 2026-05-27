@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ComponentFixture, TestBed } from '@angular/core/testing';

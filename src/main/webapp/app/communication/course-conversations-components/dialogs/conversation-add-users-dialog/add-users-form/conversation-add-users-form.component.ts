@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, input, output } from '@angular/core';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';

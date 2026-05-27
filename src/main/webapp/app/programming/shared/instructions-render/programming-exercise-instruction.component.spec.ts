@@ -8,7 +8,7 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import dayjs from 'dayjs/esm';
 import { Subscription, of, throwError } from 'rxjs';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
 import {

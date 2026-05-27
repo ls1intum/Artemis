@@ -5,7 +5,7 @@ import { SessionStorageService } from 'app/shared/service/session-storage.servic
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { LegalDocumentLanguage } from 'app/core/shared/entities/legal-document.model';
+import { LegalDocumentLanguage } from 'app/admin/legal/legal-document.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { MockLanguageHelper } from 'test/helpers/mocks/service/mock-translate.service';
 import { of } from 'rxjs';

@@ -5,7 +5,7 @@ import { MockDirective, MockPipe } from 'ng-mocks';
 import { WritableSignal, signal } from '@angular/core';
 import { ContextSelectionComponent } from './context-selection.component';
 import { ChatServiceMode, IrisChatService, SessionContext } from 'app/iris/overview/services/iris-chat.service';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

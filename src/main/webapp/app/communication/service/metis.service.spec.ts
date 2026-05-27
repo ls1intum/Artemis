@@ -3,7 +3,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockPostService } from 'test/helpers/mocks/service/mock-post.service';
 import { MockAnswerPostService } from 'test/helpers/mocks/service/mock-answer-post.service';

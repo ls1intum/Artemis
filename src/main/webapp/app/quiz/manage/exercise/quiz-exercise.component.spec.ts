@@ -11,7 +11,7 @@ import { QuizExerciseComponent } from 'app/quiz/manage/exercise/quiz-exercise.co
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizBatch, QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';

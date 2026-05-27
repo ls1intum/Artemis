@@ -1,5 +1,6 @@
 .quiz-ai-refinement-panel {
     padding: 0 24px 24px;
+    background: var(--overview-card-bg, var(--bs-tertiary-bg));
 }
 
 .quiz-ai-refinement-panel .refinement-input-row {
@@ -19,11 +20,18 @@
 
 .quiz-ai-refinement-panel button.refinement-submit-button {
     align-items: center;
+    background: var(--blue);
+    color: white !important;
     display: flex;
     flex-shrink: 0;
     height: 2.75rem;
     justify-content: center;
     width: 2.75rem;
+}
+
+.quiz-ai-refinement-panel button.refinement-submit-button:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--blue) 80%, black);
+    border-color: color-mix(in srgb, var(--blue) 80%, black);
 }
 
 .quiz-ai-refinement-panel .refinement-explanation-card {

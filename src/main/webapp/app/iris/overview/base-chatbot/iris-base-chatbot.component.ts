@@ -80,10 +80,11 @@ import { MenuItem } from 'primeng/api';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { IrisThinkingBubbleComponent } from 'app/iris/overview/base-chatbot/iris-thinking-bubble/iris-thinking-bubble.component';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
+import { IrisOnboardingService } from 'app/iris/overview/iris-onboarding-modal/iris-onboarding.service';
 import { IrisChatMemoriesIndicatorComponent } from 'app/iris/overview/base-chatbot/memories-indicator/iris-chat-memories-indicator.component';
 import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
 import { EXERCISE_PLACEHOLDER_LABEL_KEYS, LECTURE_PLACEHOLDER_LABEL_KEYS } from './iris-chatbot-placeholder-labels';
@@ -166,6 +167,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected llmModalService = inject(LLMSelectionModalService);
     private readonly destroyRef = inject(DestroyRef);
     private readonly clipboard = inject(Clipboard);
+    private readonly onboardingService = inject(IrisOnboardingService);
     private readonly irisChatHttpService = inject(IrisChatHttpService);
 
     // Icons
@@ -224,6 +226,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     // Messages with processing
     private readonly rawMessages = toSignal(this.chatService.currentMessages(), { initialValue: [] as IrisMessage[] });
     readonly messages = computed(() => this.processMessages(this.rawMessages()));
+    // Tracks whether the chat service has finished its first session-load attempt for the
+    // current context. Prevents downstream gates (notably the onboarding tour) from acting
+    // on the BehaviorSubject's empty initial value before the real messages arrive.
+    private readonly initialLoadComplete = toSignal(this.chatService.initialLoadComplete$, { initialValue: false });
 
     // Computed state
     readonly hasActiveStage = computed(() => this.stages()?.some((stage) => [IrisStageStateDTO.IN_PROGRESS, IrisStageStateDTO.NOT_STARTED].includes(stage.state)) ?? false);
@@ -305,6 +311,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     // Animation state (internal tracking)
     private shouldAnimate = false;
+    // Ensures the onboarding tour is offered at most once per mount even though
+    // the triggering effect re-evaluates each time its gating signals change.
+    private onboardingTriggerRequested = false;
     readonly animatingMessageIds = signal(new Set<number>());
     private previousSessionId: number | undefined;
     private previousMessageCount = 0;
@@ -655,6 +664,30 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
             untracked(() => this.interpolatedLabels.set(labels));
         });
+
+        // Kick off the onboarding tour the moment all gating signals agree it's appropriate.
+        // Brand-new users mount this component with isAIEnabled() === false (they have not
+        // picked an LLM yet). A one-shot call from ngAfterViewInit would evaluate too early
+        // and skip the tour forever. This effect re-fires after acceptPermission() flips
+        // userAccepted, then guards against re-entry with onboardingTriggerRequested.
+        //
+        // initialLoadComplete() is the race fix: messages starts as [] (BehaviorSubject
+        // initial value), so isEmptyState() returns true on every mount before the chat
+        // service has loaded the actual session. Without this gate, returning users with
+        // existing messages would briefly look like new users and the tour could fire
+        // before the server-side message-count check finishes the round-trip.
+        effect(() => {
+            const ready = this.initialLoadComplete() && this.layout() === 'client' && this.isEmptyState() && !this.error() && this.active() && this.isAIEnabled();
+            if (!ready || this.onboardingTriggerRequested) {
+                return;
+            }
+            this.onboardingTriggerRequested = true;
+            untracked(() => {
+                const shouldShowOnboarding = () =>
+                    this.initialLoadComplete() && this.layout() === 'client' && this.isEmptyState() && !this.error() && this.active() && this.isAIEnabled();
+                void this.onboardingService.showOnboardingIfNeeded(shouldShowOnboarding).catch(() => undefined);
+            });
+        });
     }
 
     /**
@@ -668,6 +701,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         // Enable animations after initial messages have loaded
         // Delay ensures initial message batch doesn't trigger animations
         setTimeout(() => (this.shouldAnimate = true), 500);
+    }
+
+    onContextChangedDuringOnboarding(): void {
+        if (this.onboardingService.currentStep() === 1) {
+            this.onboardingService.onboardingEvent$.next({ type: 'contextChanged' });
+        }
     }
 
     checkIfUserAcceptedLLMUsage(): void {
@@ -968,9 +1007,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         this.onSend();
     }
 
-    applyChipText(translationKey: string): void {
+    applyChipText(starterKey: string, translationKey?: string): void {
         if (this.isInputDisabled()) return;
-        const text = this.translateService.instant(translationKey);
+        const text = this.translateService.instant(starterKey);
         this.chipPreviewText.set('');
         this.isChipTextApplied.set(true);
         this.newMessageTextContent.set(text);
@@ -982,6 +1021,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
             this.adjustTextareaRows();
         });
+        if (this.onboardingService.currentStep() === 2 && translationKey) {
+            this.onboardingService.onboardingEvent$.next({ type: 'chipClicked', translationKey });
+        }
     }
 
     onChipMouseEnter(starterKey: string): void {
@@ -1121,6 +1163,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     openAboutIrisModal(): void {
+        if (this.onboardingService.currentStep() === 3) {
+            this.onboardingService.onboardingEvent$.next({ type: 'aboutIrisOpened' });
+        }
         // The floating exercise chat widget lives inside a CDK MatDialog overlay and uses CSS
         // transforms for drag/resize. In that specific case the About dialog must also use CDK
         // to escape the widget's stacking context. Other Iris hosts with widget-like layout,
