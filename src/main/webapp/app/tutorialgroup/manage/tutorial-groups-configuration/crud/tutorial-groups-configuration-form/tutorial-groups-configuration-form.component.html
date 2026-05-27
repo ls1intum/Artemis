@@ -4,7 +4,7 @@
             <form class="row" [formGroup]="form" (ngSubmit)="submitForm()">
                 <!-- Period -->
                 <div class="col-auto">
-                    <label class="form-label" for="period" jhiTranslate="artemisApp.forms.configurationForm.periodInput.label"></label>
+                    <h5 jhiTranslate="artemisApp.forms.configurationForm.periodInput.label"></h5>
                     <div class="input-group">
                         <input
                             name="period"
@@ -62,7 +62,7 @@
                         </div>
                         <!--Public Channel / Private Channel -->
                         <div class="form-group mt-3" [hidden]="!useTutorialGroupChannelsControl?.value">
-                            <label class="d-block" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.label"></label>
+                            <h5 jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.label"></h5>
                             <div class="btn-group" role="group">
                                 <input formControlName="usePublicTutorialGroupChannels" type="radio" class="btn-check" id="public" autocomplete="off" checked [value]="true" />
                                 <label class="btn btn-outline-secondary" for="public" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.public"></label>
@@ -77,12 +77,10 @@
                         </div>
                     </div>
                 </div>
-                <div class="row mt-3">
-                    <div class="col-12 d-flex justify-content-end">
-                        <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
-                            <span jhiTranslate="{{ isEditMode() ? 'entity.action.save' : 'global.generic.create' }}"></span>
-                        </button>
-                    </div>
+                <div class="col-12 mt-3 d-flex justify-content-end">
+                    <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
+                        <span jhiTranslate="{{ isEditMode() ? 'entity.action.save' : 'global.generic.create' }}"></span>
+                    </button>
                 </div>
             </form>
         }
