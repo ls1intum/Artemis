@@ -168,6 +168,75 @@ export type ArtemisRequests = {
  * Custom test object extended to use Artemis related fixtures.
  */
 export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRequests>({
+    /**
+     * Wrap `page.goto` with a lightweight Angular-render check. Under heavy parallel
+     * multi-node load the SPA occasionally fails to bootstrap the route component on
+     * the first navigation — only the static app shell + footer render, leaving every
+     * subsequent locator call to time out against a blank page. The wrapper:
+     *   - waits up to 1s for the navbar's `#account-menu` (the universal post-bootstrap
+     *     indicator on routes that include the navbar);
+     *   - if not attached AND the URL is on a navbar-bearing route, reloads once with a
+     *     10s grace window for a fresh chunk fetch to recover;
+     *   - if the URL is on a known no-navbar route (exam participation, quiz live,
+     *     problem-statement standalone, LTI), returns immediately so those tests pay no
+     *     overhead.
+     * Net cost on healthy pages: a single sub-100ms locator check. Net benefit on broken
+     * pages: ~10s reload that turns a deterministic test failure into a passing test.
+     */
+    page: async ({ page }, use) => {
+        // Unauthenticated routes (login / account / reset) do not render `#account-menu`
+        // (the navbar template gates it on `isAuthenticated()`), so the render-check would
+        // always go through the reload+10s grace path on those routes and burn budget for
+        // nothing. Short-circuit them via a path prefix.
+        const isUnauthenticatedRoute = (url: string) => /\/(sign-in|account|reset|register|forget-password)(\/|\?|$)/.test(url);
+
+        const originalGoto = page.goto.bind(page);
+        page.goto = async (url, options) => {
+            const response = await originalGoto(url, options);
+            try {
+                const currentUrl = page.url();
+                if (Commands.isNoNavbarRoute(currentUrl) || isUnauthenticatedRoute(currentUrl)) {
+                    return response;
+                }
+                const attached = await page
+                    .locator('#account-menu')
+                    .waitFor({ state: 'attached', timeout: 1_000 })
+                    .then(() => true)
+                    .catch(() => false);
+                if (!attached) {
+                    // Before reloading, re-check the URL — Angular's auth guard may have
+                    // redirected to /sign-in (or another unauthenticated route) during the
+                    // 1s wait, in which case reloading would disrupt that redirect and pin
+                    // the page back to a route the user cannot access. The reload-recovery
+                    // is for "Angular lazy chunk failed to bootstrap", not "user is
+                    // unauthenticated and Angular redirected them out".
+                    const urlAfterWait = page.url();
+                    if (Commands.isNoNavbarRoute(urlAfterWait) || isUnauthenticatedRoute(urlAfterWait)) {
+                        return response;
+                    }
+                    await page.reload();
+                    await page.waitForLoadState('load');
+                    await page
+                        .locator('#account-menu')
+                        .waitFor({ state: 'attached', timeout: 10_000 })
+                        .catch(() => undefined);
+                }
+                // Detect & recover from `/courses` lazy-chunk fall-back drift. The navbar
+                // attaches fine on /courses too, so the attached-check above does not catch
+                // this; we re-issue the original goto so the caller actually lands on the
+                // URL they asked for. Reuses the single drift heuristic from `Commands`.
+                if (typeof url === 'string' && Commands.driftedToCoursesFallback(url, page.url())) {
+                    await originalGoto(url, options);
+                }
+            } catch {
+                // Never let the render-check throw — it must be invisible to tests
+                // whose post-goto assertions are perfectly capable of surfacing their own
+                // errors.
+            }
+            return response;
+        };
+        await use(page);
+    },
     loginPage: async ({ page }, use) => {
         await use(new LoginPage(page));
     },

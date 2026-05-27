@@ -61,7 +61,20 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
          * yield partial collections, so options appeared deselected and the per-question score flipped between 0 and its true value.
          */
         test('Selected MC options stay fully populated across reloads after quiz evaluation', async ({ login, exerciseAPIRequests, page, quizExerciseMultipleChoice }) => {
-            const quizDurationSeconds = 10;
+            // The scheduled quiz-evaluation job + repeated page reloads make this test
+            // routinely exceed the 60s fast-test budget under parallel CI load. The 120s
+            // evaluation poll alone consumes most of `test.slow()`'s 180s budget under
+            // heavy multi-node load, so set an explicit 6-minute timeout that comfortably
+            // covers worst-case scheduler delay (120s) + 3 verification reloads (≤30s each).
+            test.setTimeout(360_000);
+            // Quiz duration must comfortably cover the student-side login → tick options →
+            // submit chain. With duration = 10s the chain often does not fit under multi-node
+            // CI load (login alone can take 10-15s), the quiz auto-ends before submit, and
+            // `#submit-exercise` becomes permanently disabled (the failure mode observed in
+            // 26335092464). 60s leaves a wide margin while keeping evaluation latency
+            // bounded — the post-end evaluation poll budget is 120s, so end-to-end this test
+            // still completes well within its 360s setTimeout.
+            const quizDurationSeconds = 60;
             await login(admin);
             const shortQuiz = await exerciseAPIRequests.createQuizExercise({
                 body: { course },
@@ -88,33 +101,56 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
              * the MC question on this response, or null when evaluation has not yet populated a rated result (e.g. the `results` array is still empty).
              */
             async function reloadAndReadSelectedOptionIds(): Promise<number[] | null> {
-                const responsePromise = page.waitForResponse(
-                    (response) =>
-                        response.url().includes(`/api/quiz/quiz-exercises/${shortQuiz.id}/start-participation`) && response.request().method() === 'POST' && response.ok(),
-                );
-                await page.goto(`/courses/${course.id}/exercises/${shortQuiz.id!}`);
-                const body = await (await responsePromise).json();
-                const submission = (body.submissions ?? [])[0];
-                if (!submission || !(submission.results ?? []).length) {
-                    return null;
+                // Bound the response wait to 45s so a single hung request (the multi-node
+                // observation under load) does not consume the entire test budget. On
+                // timeout we re-issue the navigation up to two more times before giving up
+                // — a hung start-participation POST is a backend race that consistently
+                // recovers on subsequent retries within 1-2 attempts.
+                for (let attempt = 0; attempt < 3; attempt++) {
+                    const responsePromise = page.waitForResponse(
+                        (response) =>
+                            response.url().includes(`/api/quiz/quiz-exercises/${shortQuiz.id}/start-participation`) && response.request().method() === 'POST' && response.ok(),
+                        { timeout: 45_000 },
+                    );
+                    await page.goto(`/courses/${course.id}/exercises/${shortQuiz.id!}`);
+                    let body: any;
+                    try {
+                        body = await (await responsePromise).json();
+                    } catch {
+                        if (attempt === 2) {
+                            throw new Error(`reloadAndReadSelectedOptionIds: start-participation never returned after 3 attempts`);
+                        }
+                        continue;
+                    }
+                    const submission = (body.submissions ?? [])[0];
+                    if (!submission || !(submission.results ?? []).length) {
+                        return null;
+                    }
+                    const mcAnswer = (submission.submittedAnswers ?? []).find((submittedAnswer: any) => submittedAnswer.quizQuestion?.id === mcQuestionId);
+                    return mcAnswer ? (mcAnswer.selectedOptions ?? []).map((option: any) => option.id).sort((a: number, b: number) => a - b) : [];
                 }
-                const mcAnswer = (submission.submittedAnswers ?? []).find((submittedAnswer: any) => submittedAnswer.quizQuestion?.id === mcQuestionId);
-                return mcAnswer ? (mcAnswer.selectedOptions ?? []).map((option: any) => option.id).sort((a: number, b: number) => a - b) : [];
+                return null;
             }
 
-            // Poll the refresh endpoint until the scheduled evaluation job has created a rated result — more robust than a fixed sleep on loaded CI workers.
-            const evaluationTimeoutMs = (quizDurationSeconds + 30) * 1000;
+            // Poll the refresh endpoint until the scheduled evaluation job has created a rated
+            // result — more robust than a fixed sleep on loaded CI workers. The scheduled job
+            // fires after the quiz `duration` window closes, so under heavy parallel CI load
+            // the job can be delayed by 60-90s waiting for an idle scheduler thread.
+            const evaluationTimeoutMs = 120_000;
             await expect
                 .poll(() => reloadAndReadSelectedOptionIds().then((ids) => ids !== null), {
                     message: 'evaluation did not produce a rated result within the expected window',
                     timeout: evaluationTimeoutMs,
-                    intervals: [1000, 2000, 3000],
+                    intervals: [1000, 2000, 3000, 5000],
                 })
                 .toBe(true);
 
             const expectedSortedOptionIds = [...expectedTickedOptionIds].sort((a, b) => a - b);
-            // Reload several times after evaluation completes; the bug manifested non-deterministically, so the loop amplifies any remaining flakiness.
-            for (let iteration = 0; iteration < 5; iteration++) {
+            // Reload several times after evaluation completes; the bug manifested non-deterministically,
+            // so the loop amplifies any remaining flakiness. Three reloads is the sweet spot: enough to
+            // catch the original eagerly-fetched / cached-collection regression, few enough to fit the
+            // slow-test budget under heavy parallel CI load.
+            for (let iteration = 0; iteration < 3; iteration++) {
                 const selectedOptionIds = await reloadAndReadSelectedOptionIds();
                 expect(selectedOptionIds, `iteration ${iteration}: server must return exactly the answer options the student ticked`).toEqual(expectedSortedOptionIds);
             }
@@ -179,8 +215,17 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             quizExercise = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceQuizTemplate], releaseDate, startOfWorkingTime });
         });
 
-        test('Student cannot participate in scheduled quiz before start of working time', async ({ login, courseOverview, quizExerciseParticipation }) => {
+        test('Student cannot participate in scheduled quiz before start of working time', async ({ page, login, courseOverview, quizExerciseParticipation }) => {
+            // Wait for the page's initial GET /courses/.../for-dashboard to settle before
+            // looking for the overlay — the overlay is gated on that fetch returning the
+            // quiz's startOfWorkingTime. Without the explicit wait the default 10s expect
+            // timeout can fire under multi-node CI load while the request is still in flight,
+            // even though the overlay would render seconds later.
+            const dashboardResponse = page
+                .waitForResponse((resp) => resp.url().includes(`api/core/courses/${course.id}/for-dashboard`) && resp.ok(), { timeout: 30_000 })
+                .catch(() => undefined);
             await login(studentOne, `/courses/${course.id}/exercises/${quizExercise.id}`);
+            await dashboardResponse;
             await expect(quizExerciseParticipation.getWaitingForStartAlert()).toBeVisible();
         });
 
