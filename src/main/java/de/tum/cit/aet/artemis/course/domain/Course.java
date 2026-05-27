@@ -175,6 +175,24 @@ public class Course extends DomainObject {
     @Column(name = "restricted_athena_modules_access", nullable = false)
     private boolean restrictedAthenaModulesAccess = false; // default is false
 
+    @Column(name = "athena_text_grading_enabled", nullable = false)
+    private boolean athenaTextGradingEnabled = false;
+
+    @Column(name = "athena_text_preliminary_enabled", nullable = false)
+    private boolean athenaTextPreliminaryEnabled = false;
+
+    @Column(name = "athena_modeling_grading_enabled", nullable = false)
+    private boolean athenaModelingGradingEnabled = false;
+
+    @Column(name = "athena_modeling_preliminary_enabled", nullable = false)
+    private boolean athenaModelingPreliminaryEnabled = false;
+
+    @Column(name = "athena_programming_grading_enabled", nullable = false)
+    private boolean athenaProgrammingGradingEnabled = false;
+
+    @Column(name = "athena_programming_preliminary_enabled", nullable = false)
+    private boolean athenaProgrammingPreliminaryEnabled = false;
+
     /**
      * Note: Currently just used in the scope of the tutorial groups feature
      */
@@ -790,6 +808,54 @@ public class Course extends DomainObject {
 
     public void setRestrictedAthenaModulesAccess(boolean restrictedAthenaModulesAccess) {
         this.restrictedAthenaModulesAccess = restrictedAthenaModulesAccess;
+    }
+
+    public boolean isAthenaTextGradingEnabled() {
+        return athenaTextGradingEnabled;
+    }
+
+    public void setAthenaTextGradingEnabled(boolean athenaTextGradingEnabled) {
+        this.athenaTextGradingEnabled = athenaTextGradingEnabled;
+    }
+
+    public boolean isAthenaTextPreliminaryEnabled() {
+        return athenaTextPreliminaryEnabled;
+    }
+
+    public void setAthenaTextPreliminaryEnabled(boolean athenaTextPreliminaryEnabled) {
+        this.athenaTextPreliminaryEnabled = athenaTextPreliminaryEnabled;
+    }
+
+    public boolean isAthenaModelingGradingEnabled() {
+        return athenaModelingGradingEnabled;
+    }
+
+    public void setAthenaModelingGradingEnabled(boolean athenaModelingGradingEnabled) {
+        this.athenaModelingGradingEnabled = athenaModelingGradingEnabled;
+    }
+
+    public boolean isAthenaModelingPreliminaryEnabled() {
+        return athenaModelingPreliminaryEnabled;
+    }
+
+    public void setAthenaModelingPreliminaryEnabled(boolean athenaModelingPreliminaryEnabled) {
+        this.athenaModelingPreliminaryEnabled = athenaModelingPreliminaryEnabled;
+    }
+
+    public boolean isAthenaProgrammingGradingEnabled() {
+        return athenaProgrammingGradingEnabled;
+    }
+
+    public void setAthenaProgrammingGradingEnabled(boolean athenaProgrammingGradingEnabled) {
+        this.athenaProgrammingGradingEnabled = athenaProgrammingGradingEnabled;
+    }
+
+    public boolean isAthenaProgrammingPreliminaryEnabled() {
+        return athenaProgrammingPreliminaryEnabled;
+    }
+
+    public void setAthenaProgrammingPreliminaryEnabled(boolean athenaProgrammingPreliminaryEnabled) {
+        this.athenaProgrammingPreliminaryEnabled = athenaProgrammingPreliminaryEnabled;
     }
 
     public Set<TutorialGroup> getTutorialGroups() {

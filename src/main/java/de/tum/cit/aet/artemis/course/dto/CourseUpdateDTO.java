@@ -59,7 +59,9 @@ public record CourseUpdateDTO(
 
         // Course features
         boolean learningPathsEnabled, boolean studentCourseAnalyticsDashboardEnabled, Integer presentationScore, Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores,
-        boolean restrictedAthenaModulesAccess, String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone) {
+        boolean restrictedAthenaModulesAccess, boolean athenaTextGradingEnabled, boolean athenaTextPreliminaryEnabled, boolean athenaModelingGradingEnabled,
+        boolean athenaModelingPreliminaryEnabled, boolean athenaProgrammingGradingEnabled, boolean athenaProgrammingPreliminaryEnabled, String timeZone,
+        CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone) {
 
     /**
      * Applies the DTO values to an existing Course entity.
@@ -119,6 +121,12 @@ public record CourseUpdateDTO(
         course.setMaxPoints(maxPoints);
         course.setAccuracyOfScores(accuracyOfScores);
         course.setRestrictedAthenaModulesAccess(restrictedAthenaModulesAccess);
+        course.setAthenaTextGradingEnabled(athenaTextGradingEnabled);
+        course.setAthenaTextPreliminaryEnabled(athenaTextPreliminaryEnabled);
+        course.setAthenaModelingGradingEnabled(athenaModelingGradingEnabled);
+        course.setAthenaModelingPreliminaryEnabled(athenaModelingPreliminaryEnabled);
+        course.setAthenaProgrammingGradingEnabled(athenaProgrammingGradingEnabled);
+        course.setAthenaProgrammingPreliminaryEnabled(athenaProgrammingPreliminaryEnabled);
         course.setTimeZone(timeZone);
         course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
@@ -144,7 +152,8 @@ public record CourseUpdateDTO(
                 course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(), course.getColor(), course.getCourseIcon(),
                 course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(), course.getCourseInformationSharingMessagingCodeOfConduct(),
                 course.getLearningPathsEnabled(), course.getStudentCourseAnalyticsDashboardEnabled(), course.getPresentationScore(), course.getMaxPoints(),
-                course.getAccuracyOfScores(), course.getRestrictedAthenaModulesAccess(), course.getTimeZone(), course.getCourseInformationSharingConfiguration(),
-                course.isOnboardingDone());
+                course.getAccuracyOfScores(), course.getRestrictedAthenaModulesAccess(), course.isAthenaTextGradingEnabled(), course.isAthenaTextPreliminaryEnabled(),
+                course.isAthenaModelingGradingEnabled(), course.isAthenaModelingPreliminaryEnabled(), course.isAthenaProgrammingGradingEnabled(),
+                course.isAthenaProgrammingPreliminaryEnabled(), course.getTimeZone(), course.getCourseInformationSharingConfiguration(), course.isOnboardingDone());
     }
 }

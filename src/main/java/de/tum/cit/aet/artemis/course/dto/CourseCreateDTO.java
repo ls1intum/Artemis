@@ -54,7 +54,9 @@ public record CourseCreateDTO(
 
         // Course features
         boolean learningPathsEnabled, boolean studentCourseAnalyticsDashboardEnabled, Integer presentationScore, Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores,
-        boolean restrictedAthenaModulesAccess, String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration) {
+        boolean restrictedAthenaModulesAccess, boolean athenaTextGradingEnabled, boolean athenaTextPreliminaryEnabled, boolean athenaModelingGradingEnabled,
+        boolean athenaModelingPreliminaryEnabled, boolean athenaProgrammingGradingEnabled, boolean athenaProgrammingPreliminaryEnabled, String timeZone,
+        CourseInformationSharingConfiguration courseInformationSharingConfiguration) {
 
     /**
      * Creates a new Course entity from this DTO.
@@ -117,6 +119,12 @@ public record CourseCreateDTO(
         course.setMaxPoints(maxPoints);
         course.setAccuracyOfScores(accuracyOfScores);
         course.setRestrictedAthenaModulesAccess(restrictedAthenaModulesAccess);
+        course.setAthenaTextGradingEnabled(athenaTextGradingEnabled);
+        course.setAthenaTextPreliminaryEnabled(athenaTextPreliminaryEnabled);
+        course.setAthenaModelingGradingEnabled(athenaModelingGradingEnabled);
+        course.setAthenaModelingPreliminaryEnabled(athenaModelingPreliminaryEnabled);
+        course.setAthenaProgrammingGradingEnabled(athenaProgrammingGradingEnabled);
+        course.setAthenaProgrammingPreliminaryEnabled(athenaProgrammingPreliminaryEnabled);
         course.setTimeZone(timeZone);
         course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
