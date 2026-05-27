@@ -114,60 +114,33 @@ describe('SearchResultItemComponent', () => {
     });
 
     describe('cleanedDescription', () => {
-        it('should strip a heading first line matching the title', () => {
+        it.each([
+            { case: 'heading', description: '# My Exercise\nThis is the body.' },
+            { case: 'bold', description: '**My Exercise**\nThis is the body.' },
+            { case: 'italic', description: '*My Exercise*\nThis is the body.' },
+            { case: 'plain', description: 'My Exercise\nThis is the body.' },
+        ])('should strip a $case first line matching the title', ({ description }) => {
             fixture.componentRef.setInput('result', {
                 id: '1',
                 title: 'My Exercise',
                 type: 'exercise',
-                description: '# My Exercise\nThis is the body.',
+                description,
             } as GlobalSearchResult);
             fixture.detectChanges();
 
             expect(component['cleanedDescription']()).toBe('This is the body.');
         });
 
-        it('should strip a bold first line matching the title', () => {
+        it.each([
+            { case: 'description equals only the title heading', description: '# My Exercise' },
+            { case: 'empty description', description: '' },
+            { case: 'undefined description', description: undefined },
+        ])('should return undefined when $case', ({ description }) => {
             fixture.componentRef.setInput('result', {
                 id: '1',
                 title: 'My Exercise',
                 type: 'exercise',
-                description: '**My Exercise**\nThis is the body.',
-            } as GlobalSearchResult);
-            fixture.detectChanges();
-
-            expect(component['cleanedDescription']()).toBe('This is the body.');
-        });
-
-        it('should strip an italic first line matching the title', () => {
-            fixture.componentRef.setInput('result', {
-                id: '1',
-                title: 'My Exercise',
-                type: 'exercise',
-                description: '*My Exercise*\nThis is the body.',
-            } as GlobalSearchResult);
-            fixture.detectChanges();
-
-            expect(component['cleanedDescription']()).toBe('This is the body.');
-        });
-
-        it('should strip a plain first line matching the title', () => {
-            fixture.componentRef.setInput('result', {
-                id: '1',
-                title: 'My Exercise',
-                type: 'exercise',
-                description: 'My Exercise\nThis is the body.',
-            } as GlobalSearchResult);
-            fixture.detectChanges();
-
-            expect(component['cleanedDescription']()).toBe('This is the body.');
-        });
-
-        it('should return undefined when description equals only the title heading', () => {
-            fixture.componentRef.setInput('result', {
-                id: '1',
-                title: 'My Exercise',
-                type: 'exercise',
-                description: '# My Exercise',
+                description,
             } as GlobalSearchResult);
             fixture.detectChanges();
 
@@ -184,29 +157,6 @@ describe('SearchResultItemComponent', () => {
             fixture.detectChanges();
 
             expect(component['cleanedDescription']()).toBe('# Different Heading\nThis is the body.');
-        });
-
-        it('should return undefined for an empty description', () => {
-            fixture.componentRef.setInput('result', {
-                id: '1',
-                title: 'My Exercise',
-                type: 'exercise',
-                description: '',
-            } as GlobalSearchResult);
-            fixture.detectChanges();
-
-            expect(component['cleanedDescription']()).toBeUndefined();
-        });
-
-        it('should return undefined for an undefined description', () => {
-            fixture.componentRef.setInput('result', {
-                id: '1',
-                title: 'My Exercise',
-                type: 'exercise',
-            } as GlobalSearchResult);
-            fixture.detectChanges();
-
-            expect(component['cleanedDescription']()).toBeUndefined();
         });
 
         it('should truncate a long description and append ellipsis', () => {
