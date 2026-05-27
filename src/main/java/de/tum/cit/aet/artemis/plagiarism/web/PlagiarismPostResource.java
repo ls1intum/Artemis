@@ -28,6 +28,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -37,6 +38,7 @@ import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationResponseDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostUpdateRequestDTO;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismPostService;
 
 /**
@@ -83,30 +85,30 @@ public class PlagiarismPostResource {
      *
      * @param courseId id of course the post belongs to
      * @param postId   id of the post to update
-     * @param post     post to update
-     * @return ResponseEntity with status 200 (OK) containing the updated post in the response body,
+     * @param request  update payload carrying the fields the instructor may mutate
+     * @return ResponseEntity with status 200 (OK) containing the updated post as a cycle-free DTO,
      *         or with status 400 (Bad Request) if the checks on user, course- or post-validity fail
      */
     @PutMapping("courses/{courseId}/posts/{postId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Post> updatePost(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody Post post) {
-        log.debug("PUT updatePost invoked for course {} with post {}", courseId, post.getContent());
+    public ResponseEntity<PostResponseDTO> updatePost(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody PlagiarismPostUpdateRequestDTO request) {
+        log.debug("PUT updatePost invoked for course {} with content length {}", courseId, request.content() == null ? 0 : request.content().length());
         long start = System.nanoTime();
-        Post updatedPost = plagiarismPostService.updatePost(courseId, postId, post);
+        Post updatedPost = plagiarismPostService.updatePost(courseId, postId, request);
         log.info("updatePost took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.ok(updatedPost);
+        return ResponseEntity.ok(PostResponseDTO.from(updatedPost));
     }
 
     /**
      * GET /courses/{courseId}/posts: Get all posts for a course by its id
      *
      * @param postContextFilter request param for filtering posts
-     * @return ResponseEntity with status 200 (OK) and with body all posts for course, that match the specified context
-     *         or 400 (Bad Request) if the checks on user, course, or post-validity fail
+     * @return ResponseEntity with status 200 (OK) and with body all posts for the plagiarism case as
+     *         cycle-free DTOs, or 400 (Bad Request) if the checks on user, course, or post-validity fail
      */
     @GetMapping("courses/{courseId}/posts")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<Post>> getPostsInCourse(PostContextFilterDTO postContextFilter) {
+    public ResponseEntity<List<PostResponseDTO>> getPostsInCourse(PostContextFilterDTO postContextFilter) {
         Page<Post> coursePosts;
         if (postContextFilter.plagiarismCaseId() != null) {
             coursePosts = new PageImpl<>(plagiarismPostService.getAllPlagiarismCasePosts(postContextFilter));
@@ -117,7 +119,8 @@ public class PlagiarismPostResource {
         }
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), coursePosts);
 
-        return new ResponseEntity<>(coursePosts.getContent(), headers, HttpStatus.OK);
+        List<PostResponseDTO> body = coursePosts.getContent().stream().map(PostResponseDTO::from).toList();
+        return new ResponseEntity<>(body, headers, HttpStatus.OK);
     }
 
     /**
