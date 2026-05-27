@@ -8,6 +8,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -41,6 +42,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.tutorsuggestion.PyrisT
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
 
 @Component
 @Conditional(IrisEnabled.class)
@@ -358,6 +360,17 @@ public class IrisRequestMockProvider {
             .andExpect(method(HttpMethod.POST))
             .andRespond(withSuccess(write(responseBody), MediaType.APPLICATION_JSON));
         // @formatter:on
+    }
+
+    public void mockSearchLectures(Object responseBody, List<Long> expectedCourseIds) {
+        mockServer.expect(ExpectedCount.once(), requestTo(lectureSearchApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+            var mockRequest = (MockClientHttpRequest) request;
+            var body = mockRequest.getBodyAsString();
+            assertThat(body).isNotNull();
+            var dto = mapper.readValue(body, PyrisLectureSearchRequestDTO.class);
+            assertThat(dto.courseIds()).containsExactlyInAnyOrderElementsOf(expectedCourseIds);
+            return withSuccess(write(responseBody), MediaType.APPLICATION_JSON).createResponse(request);
+        });
     }
 
     public void mockSearchLecturesError(HttpStatus status) {

@@ -75,7 +75,7 @@ class IrisLectureSearchIntegrationTest extends AbstractIrisIntegrationTest {
         var results = List
                 .of(new PyrisLectureSearchResultDTO(new PyrisLectureSearchResultDTO.CourseDTO(42L, "Algorithms"), new PyrisLectureSearchResultDTO.LectureDTO(10L, "Sorting"),
                         new PyrisLectureSearchResultDTO.LectureUnitDTO(1L, "QuickSort Slide", "/link/1", 2), "quicksort snippet"));
-        irisRequestMockProvider.mockSearchLectures(results);
+        irisRequestMockProvider.mockSearchLectures(results, List.of(42L));
 
         var requestDTO = new PyrisLectureSearchRequestDTO("sorting algorithms", 5, List.of(42L));
         List<PyrisLectureSearchResultDTO> response = request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
