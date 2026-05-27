@@ -77,8 +77,12 @@
                 </div>
             }
 
+            <!-- Description (rendered as markdown, restricted to non-interactive tags) -->
             @if (cleanedDescription()) {
-                <div class="result-description mb-0 text-secondary small" [innerHTML]="cleanedDescription() | htmlForMarkdown"></div>
+                <div
+                    class="result-description mb-0 text-secondary small"
+                    [innerHTML]="cleanedDescription() | htmlForMarkdown: [] : PREVIEW_ALLOWED_TAGS : PREVIEW_ALLOWED_ATTRS"
+                ></div>
             }
         </div>
     </div>

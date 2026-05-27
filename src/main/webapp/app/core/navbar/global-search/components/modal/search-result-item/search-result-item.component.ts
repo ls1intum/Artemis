@@ -100,6 +100,36 @@ export class SearchResultItemComponent {
     protected readonly faHashtag = faHashtag;
     protected readonly faReply = faReply;
 
+    /** Non-interactive HTML tags allowed in the description preview (excludes a, button, img, etc.). */
+    protected readonly PREVIEW_ALLOWED_TAGS = [
+        'p',
+        'strong',
+        'em',
+        'b',
+        'i',
+        'u',
+        's',
+        'del',
+        'code',
+        'pre',
+        'br',
+        'span',
+        'sub',
+        'sup',
+        'h1',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        'ul',
+        'ol',
+        'li',
+        'blockquote',
+    ];
+    /** No HTML attributes allowed — strips href, onclick, etc. */
+    protected readonly PREVIEW_ALLOWED_ATTRS: string[] = [];
+
     result = input.required<GlobalSearchResult>();
     icon = input.required<IconDefinition>();
     isSelected = input.required<boolean>();

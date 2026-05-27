@@ -88,6 +88,31 @@ describe('SearchResultItemComponent', () => {
         expect(spy).toHaveBeenCalledWith(component.result());
     });
 
+    it('should not render an active anchor for markdown links in description', () => {
+        fixture.componentRef.setInput('result', {
+            id: '1',
+            title: 'Graph BFS Shortest Path',
+            type: 'exercise',
+            description:
+                '# Graph BFS Shortest Path\n\n' +
+                '*Implement* **BFS** ***to*** `find`\n' +
+                '```\nfunction bfs(graph, start) {\n  const visited = new Set();\n}\n```\n' +
+                '_shortest_ path in an unweighted graph. See [docs](https://example.com) for details.',
+            metadata: {},
+        } as GlobalSearchResult);
+        fixture.detectChanges();
+
+        const descriptionEl: HTMLElement = fixture.nativeElement.querySelector('.result-description');
+        expect(descriptionEl).toBeTruthy();
+
+        // The link text should be visible
+        expect(descriptionEl.textContent).toContain('docs');
+
+        // But no <a> element should be present
+        const anchor = descriptionEl.querySelector('a');
+        expect(anchor).toBeNull();
+    });
+
     describe('cleanedDescription', () => {
         it('should strip a heading first line matching the title', () => {
             fixture.componentRef.setInput('result', {
