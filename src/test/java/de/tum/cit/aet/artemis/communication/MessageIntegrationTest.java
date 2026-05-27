@@ -32,6 +32,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
@@ -385,8 +387,12 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("conversationIds", channel.getId().toString());
 
-        List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
-        // get amount of posts with that certain
+        // Deserialize into a JSON tree instead of the Post entity graph. That graph forms a Jackson cycle
+        // (Post -> reactions -> Reaction -> post -> Post) and Reaction.user carries @JsonIncludeProperties; resolving
+        // the filtered deserializer mid-cycle is order-dependent and can leave User.id without a value deserializer
+        // ("No _valueDeserializer assigned") when this test runs before another has warmed the shared ObjectMapper's
+        // cache, which makes it flaky in CI. This assertion only needs the number of returned posts. See #12798.
+        List<JsonNode> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, JsonNode.class, params);
         assertThat(returnedPosts).hasSize(1);
     }
 
