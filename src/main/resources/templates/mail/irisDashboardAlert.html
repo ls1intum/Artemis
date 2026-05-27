@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="#{email.irisDashboardAlert.title}">Iris Alert: High No-Response Rate</title>
+    <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
+    <th:block th:replace="~{mail/notification/fragments :: css}"/>
+</head>
+<body>
+<th:block th:replace="~{mail/notification/fragments :: header}"/>
+<div id="message-body">
+    <p style="color: #d32f2f; font-weight: bold;">
+        <span th:text="#{email.irisDashboardAlert.banner}">ALERT: Iris no-response rate exceeds threshold</span>
+    </p>
+
+    <table style="width:100%; border-collapse:collapse; margin:16px 0;">
+        <tr>
+            <td style="padding:8px; border:1px solid #ddd;"><strong th:text="#{email.irisDashboardAlert.currentRate}">Current No-Response Rate</strong></td>
+            <td style="padding:8px; border:1px solid #ddd; color:#d32f2f;" th:text="${#numbers.formatDecimal(alert.noResponseRate(), 1, 1) + '%'}">0%</td>
+        </tr>
+        <tr>
+            <td style="padding:8px; border:1px solid #ddd;"><strong th:text="#{email.irisDashboardAlert.threshold}">Threshold</strong></td>
+            <td style="padding:8px; border:1px solid #ddd;" th:text="${#numbers.formatDecimal(alert.threshold(), 1, 1) + '%'}">0%</td>
+        </tr>
+        <tr>
+            <td style="padding:8px; border:1px solid #ddd;"><strong th:text="#{email.irisDashboardAlert.eligibleSessions}">Eligible Sessions</strong></td>
+            <td style="padding:8px; border:1px solid #ddd;" th:text="${alert.eligibleSessions()}">0</td>
+        </tr>
+        <tr>
+            <td style="padding:8px; border:1px solid #ddd;"><strong th:text="#{email.irisDashboardAlert.failedSessions}">Failed Sessions</strong></td>
+            <td style="padding:8px; border:1px solid #ddd;" th:text="${alert.failedSessions()}">0</td>
+        </tr>
+    </table>
+
+    <!-- Per-mode breakdown -->
+    <th:block th:if="${!alert.chatModeBreakdown().isEmpty()}">
+        <p><strong th:text="#{email.irisDashboardAlert.modeBreakdown}">Breakdown by Mode:</strong></p>
+        <table style="width:100%; border-collapse:collapse; margin:8px 0;">
+            <tr>
+                <th style="padding:6px; border:1px solid #ddd; text-align:left;" th:text="#{email.irisDashboardAlert.mode}">Mode</th>
+                <th style="padding:6px; border:1px solid #ddd; text-align:right;" th:text="#{email.irisDashboardAlert.noResponseRateHeader}">No-Response Rate</th>
+                <th style="padding:6px; border:1px solid #ddd; text-align:right;" th:text="#{email.irisDashboardAlert.failedHeader}">Failed</th>
+                <th style="padding:6px; border:1px solid #ddd; text-align:right;" th:text="#{email.irisDashboardAlert.eligibleHeader}">Eligible</th>
+            </tr>
+            <tr th:each="entry : ${alert.chatModeBreakdown()}">
+                <td style="padding:6px; border:1px solid #ddd;" th:text="${entry.mode()}">Mode</td>
+                <td style="padding:6px; border:1px solid #ddd; text-align:right;" th:text="${#numbers.formatDecimal(entry.noResponseRate(), 1, 1) + '%'}">0%</td>
+                <td style="padding:6px; border:1px solid #ddd; text-align:right;" th:text="${entry.failedSessions()}">0</td>
+                <td style="padding:6px; border:1px solid #ddd; text-align:right;" th:text="${entry.eligibleSessions()}">0</td>
+            </tr>
+        </table>
+    </th:block>
+
+    <p>
+        <a th:with="url=(@{|${baseUrl}${alert.dashboardPath()}|})"
+           th:href="${url}" th:text="#{email.irisDashboardAlert.viewDashboard}">View Dashboard</a>
+    </p>
+
+    <th:block th:replace="~{mail/notification/fragments :: farewell}"/>
+</div>
+<th:block th:replace="~{mail/notification/fragments :: footer}"/>
+</body>
+</html>
