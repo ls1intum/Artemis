@@ -667,6 +667,66 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     void revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(@Param("courseId") Long courseId,
             @Param("restrictedFeedbackSuggestionModule") Collection<String> restrictedFeedbackSuggestionModule);
 
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE Exercise e
+            SET e.feedbackSuggestionModule = NULL
+            WHERE e.course.id = :courseId
+                  AND TYPE(e) IN (TextExercise)
+            """)
+    void clearTextExerciseFeedbackSuggestionModuleByCourseId(@Param("courseId") Long courseId);
+
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE Exercise e
+            SET e.allowFeedbackRequests = false
+            WHERE e.course.id = :courseId
+                  AND TYPE(e) IN (TextExercise)
+            """)
+    void clearTextExerciseAllowFeedbackRequestsByCourseId(@Param("courseId") Long courseId);
+
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE Exercise e
+            SET e.feedbackSuggestionModule = NULL
+            WHERE e.course.id = :courseId
+                  AND TYPE(e) IN (ModelingExercise)
+            """)
+    void clearModelingExerciseFeedbackSuggestionModuleByCourseId(@Param("courseId") Long courseId);
+
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE Exercise e
+            SET e.allowFeedbackRequests = false
+            WHERE e.course.id = :courseId
+                  AND TYPE(e) IN (ModelingExercise)
+            """)
+    void clearModelingExerciseAllowFeedbackRequestsByCourseId(@Param("courseId") Long courseId);
+
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE Exercise e
+            SET e.feedbackSuggestionModule = NULL
+            WHERE e.course.id = :courseId
+                  AND TYPE(e) IN (ProgrammingExercise)
+            """)
+    void clearProgrammingExerciseFeedbackSuggestionModuleByCourseId(@Param("courseId") Long courseId);
+
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE Exercise e
+            SET e.allowFeedbackRequests = false
+            WHERE e.course.id = :courseId
+                  AND TYPE(e) IN (ProgrammingExercise)
+            """)
+    void clearProgrammingExerciseAllowFeedbackRequestsByCourseId(@Param("courseId") Long courseId);
+
     /**
      * For an explanation, see {@link ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long, long)}
      *
