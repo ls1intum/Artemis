@@ -12,6 +12,7 @@ import org.springframework.data.annotation.CreatedDate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -31,6 +32,7 @@ public class Reaction extends DomainObject {
     @ManyToOne
     // Avoid to leak too much information, only the name (for display) and the id (for comparison) is needed)
     @JsonIncludeProperties({ "id", "name" })
+    @JsonDeserialize(using = ReactionUserDeserializer.class)
     private User user;
 
     @CreatedDate
