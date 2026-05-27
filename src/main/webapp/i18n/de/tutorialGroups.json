@@ -12,8 +12,7 @@
                 "everyWeek": "Jede Woche",
                 "everyNWeeks": "Alle {{ n }} Wochen"
             },
-            "timeZone": "Zeitzone: {{ timeZone }}",
-            "betaWarning": "Diese Funktion befindet sich derzeit im Beta-Stadium. Es können Bugs und Änderungen auftreten. Bitte melde Fehler unter: https://github.com/ls1intum/Artemis/issues "
+            "timeZone": "Zeitzone: {{ timeZone }}"
         },
         "entities": {
             "tutorialGroup": {
