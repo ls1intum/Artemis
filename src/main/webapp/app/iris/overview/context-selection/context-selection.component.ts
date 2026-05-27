@@ -137,6 +137,7 @@ export class ContextSelectionComponent {
         const courseId = this.courseId();
         if (courseId !== undefined) {
             this.chatService.stagePendingContext(ChatServiceMode.COURSE, courseId);
+            this.contextChanged.emit();
         }
     }
 }
