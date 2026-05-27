@@ -239,8 +239,8 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
             return;
         }
 
-        AnswerPostResponseDTO createdAnswerPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", toCreateAnswerPostDTO(answerPostToSave),
-                AnswerPostResponseDTO.class, HttpStatus.CREATED);
+        AnswerPostResponseDTO createdAnswerPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages",
+                toCreateAnswerPostDTO(answerPostToSave), AnswerPostResponseDTO.class, HttpStatus.CREATED);
         conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
         // should not be automatically post resolving
         assertThat(createdAnswerPost.resolvesPost()).isFalse();

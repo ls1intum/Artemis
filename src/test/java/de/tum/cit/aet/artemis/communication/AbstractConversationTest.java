@@ -101,7 +101,8 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationLocalCI
         Post postToSave = createPostWithConversation(conversationId, authorLoginWithoutPrefix);
         CreatePostDTO postToCreate = new CreatePostDTO(postToSave.getContent(), postToSave.getTitle(), false, new CreatePostConversationDTO(conversationId));
 
-        PostResponseDTO createdPost = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/messages", postToCreate, PostResponseDTO.class, HttpStatus.CREATED);
+        PostResponseDTO createdPost = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/messages", postToCreate, PostResponseDTO.class,
+                HttpStatus.CREATED);
         assertThat(createdPost.conversation().id()).isEqualTo(conversationId);
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(numberBefore + 1);
         return createdPost;

@@ -128,7 +128,8 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
     }
 
     private PostResponseDTO createPostViaApi(Conversation conversation) throws Exception {
-        CreatePostDTO postToCreate = new CreatePostDTO("Test message in " + conversation.getClass().getSimpleName(), null, false, new CreatePostConversationDTO(conversation.getId()));
+        CreatePostDTO postToCreate = new CreatePostDTO("Test message in " + conversation.getClass().getSimpleName(), null, false,
+                new CreatePostConversationDTO(conversation.getId()));
         return request.postWithResponseBody("/api/communication/courses/" + course.getId() + "/messages", postToCreate, PostResponseDTO.class, HttpStatus.CREATED);
     }
 

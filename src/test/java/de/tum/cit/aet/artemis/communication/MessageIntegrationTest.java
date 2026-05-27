@@ -870,8 +870,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Post pinnedPost = new Post();
         pinnedPost.setAuthor(instructorParticipant.getUser());
         pinnedPost.setConversation(channel);
-        PostResponseDTO createdPinnedPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", toCreatePostDTO(pinnedPost),
-                PostResponseDTO.class, HttpStatus.CREATED);
+        PostResponseDTO createdPinnedPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", toCreatePostDTO(pinnedPost), PostResponseDTO.class,
+                HttpStatus.CREATED);
 
         MultiValueMap<String, String> paramsPin = new LinkedMultiValueMap<>();
         paramsPin.add("displayPriority", DisplayPriority.PINNED.toString());
