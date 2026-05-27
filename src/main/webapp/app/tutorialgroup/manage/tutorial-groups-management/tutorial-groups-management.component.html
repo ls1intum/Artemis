@@ -6,20 +6,20 @@
                     @if (course?.tutorialGroupsConfiguration && isAtLeastInstructor) {
                         <a
                             ngbTooltip="{{ 'artemisApp.pages.tutorialFreePeriodsManagement.explanation' | artemisTranslate }}"
-                            class="btn btn-primary"
+                            class="btn btn-primary btn-sm"
                             [routerLink]="['/course-management', courseId, 'tutorial-groups', 'configuration', course!.tutorialGroupsConfiguration!.id, 'tutorial-free-days']"
                         >
                             <fa-icon [icon]="faUmbrellaBeach" />
                             <span class="d-none d-md-inline" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.freePeriodsButtons"></span>
                         </a>
                     }
-                    <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'tutorial-groups', 'create']">
+                    <a class="btn btn-primary btn-sm" [routerLink]="['/course-management', courseId, 'tutorial-groups', 'create']">
                         <fa-icon [icon]="faPlus" />
                         <span class="d-none d-md-inline" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.creatTutorialGroupButton"></span>
                     </a>
                     @if (isAtLeastInstructor) {
                         <div ngbDropdown class="d-inline-block">
-                            <button type="button" class="btn btn-primary" id="dropdownBasic1" ngbDropdownToggle jhiTranslate="artemisApp.generic.more"></button>
+                            <button type="button" class="btn btn-primary btn-sm" id="dropdownBasic1" ngbDropdownToggle jhiTranslate="artemisApp.generic.more"></button>
                             <div ngbDropdownMenu>
                                 @if (course?.tutorialGroupsConfiguration) {
                                     <a
