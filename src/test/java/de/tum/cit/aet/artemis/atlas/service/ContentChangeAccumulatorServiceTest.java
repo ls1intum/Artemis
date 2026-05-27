@@ -158,6 +158,25 @@ class ContentChangeAccumulatorServiceTest {
     }
 
     @Test
+    void claimBatchNow_doesNotConsumeDailyCap() {
+        for (int i = 0; i < DAILY_CAP; i++) {
+            service.record(1L, 100L + i, false);
+            clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+            assertThat(service.claimDueBatch(1L)).as("scheduled run #%d", i + 1).isPresent();
+        }
+
+        service.record(1L, 200L, false);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        assertThat(service.claimDueBatch(1L)).as("scheduled cap must be exhausted").isEmpty();
+
+        assertThat(service.claimBatchNow(1L)).as("manual flush must bypass daily cap").isPresent();
+
+        service.record(1L, 300L, false);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        assertThat(service.claimDueBatch(1L)).as("manual flush must not have freed scheduled quota").isEmpty();
+    }
+
+    @Test
     void tryClaimLock_secondAcquirerIsRejectedUntilRelease() throws Exception {
         assertThat(service.tryClaimLock(42L)).isTrue();
         java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newSingleThreadExecutor();
