@@ -180,11 +180,11 @@ public class AdminStandardizedCompetencyResource {
      * @throws JsonProcessingException if the catalog cannot be serialized
      */
     @GetMapping("standardized-competencies/export")
-    public ResponseEntity<byte[]> exportStandardizedCompetencyCatalog() throws JsonProcessingException {
+    public ResponseEntity<String> exportStandardizedCompetencyCatalog() throws JsonProcessingException {
         log.debug("REST request to export standardized competency catalog");
 
         var catalog = standardizedCompetencyService.exportStandardizedCompetencyCatalog();
-        var catalogJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(catalog);
+        var catalogJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(catalog);
 
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.setContentType(MediaType.APPLICATION_JSON);
