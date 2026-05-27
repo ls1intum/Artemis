@@ -230,8 +230,14 @@ export class CourseManagementAPIRequests {
     }
 
     async createExamTestRun(exam: Exam, exercises: Array<Exercise>) {
+        // 1080s (18 min) matches ExamAPIRequests.createExamTestRun's default. The old 120s
+        // budget routinely expired mid-test under heavy parallel multi-node load — four
+        // sequential exercise submissions (TEXT + PROGRAMMING + QUIZ + MODELING) plus the
+        // navigation between them can easily exceed two minutes when the cluster is busy,
+        // causing the exam clock to hit zero before the test finishes submitting and
+        // dropping the page on the end-of-exam screen.
         const data = {
-            workingTime: 120,
+            workingTime: 1080,
             exam,
             exercises,
             ended: false,
