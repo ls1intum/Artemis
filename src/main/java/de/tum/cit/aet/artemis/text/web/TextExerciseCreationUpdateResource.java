@@ -155,7 +155,8 @@ public class TextExerciseCreationUpdateResource {
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(textExercise, ENTITY_NAME);
 
         // Check that only allowed athena modules are used
-        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
+        athenaApi.ifPresentOrElse(api -> api.applyAthenaCourseSettings(textExercise, course), () -> textExercise.setFeedbackSuggestionModule(null));
+        athenaApi.ifPresent(api -> api.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME));
 
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(textExercise);
         TextExercise savedExercise = textExerciseRepository.save(textExercise);

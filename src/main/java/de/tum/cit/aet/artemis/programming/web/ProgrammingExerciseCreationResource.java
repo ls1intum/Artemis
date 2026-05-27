@@ -118,7 +118,8 @@ public class ProgrammingExerciseCreationResource {
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(programmingExercise, ENTITY_NAME);
 
         // Check that only allowed athena modules are used
-        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(programmingExercise, course, ENTITY_NAME), () -> programmingExercise.setFeedbackSuggestionModule(null));
+        athenaApi.ifPresentOrElse(api -> api.applyAthenaCourseSettings(programmingExercise, course), () -> programmingExercise.setFeedbackSuggestionModule(null));
+        athenaApi.ifPresent(api -> api.checkHasAccessToAthenaModule(programmingExercise, course, ENTITY_NAME));
 
         try {
             // Setup all repositories etc

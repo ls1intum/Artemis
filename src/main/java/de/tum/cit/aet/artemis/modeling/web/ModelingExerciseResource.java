@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
@@ -126,6 +127,8 @@ public class ModelingExerciseResource {
 
     private final Optional<SlideApi> slideApi;
 
+    private final Optional<AthenaApi> athenaApi;
+
     private final Optional<AtlasMLApi> atlasMLApi;
 
     private final Optional<CompetencyApi> competencyApi;
@@ -137,8 +140,8 @@ public class ModelingExerciseResource {
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, ModelingExerciseImportService modelingExerciseImportService,
             SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService, GroupNotificationScheduleService groupNotificationScheduleService,
             GradingCriterionRepository gradingCriterionRepository, ChannelService channelService, ChannelRepository channelRepository,
-            ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi,
-            Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService) {
+            ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AthenaApi> athenaApi,
+            Optional<AtlasMLApi> atlasMLApi, Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -158,6 +161,7 @@ public class ModelingExerciseResource {
         this.exerciseVersionService = exerciseVersionService;
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
+        this.athenaApi = athenaApi;
         this.atlasMLApi = atlasMLApi;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
     }
@@ -195,6 +199,9 @@ public class ModelingExerciseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(modelingExercise, ENTITY_NAME);
+
+        athenaApi.ifPresent(api -> api.applyAthenaCourseSettings(modelingExercise, course));
+        athenaApi.ifPresent(api -> api.checkHasAccessToAthenaModule(modelingExercise, course, ENTITY_NAME));
 
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(modelingExercise);
         ModelingExercise savedExercise = modelingExerciseRepository.save(modelingExercise);
