@@ -18,18 +18,18 @@ class AtlasEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitec
     // TODO: Reduce this to 0 by returning DTOs instead of entities
     @Override
     protected int getMaxEntityReturnViolations() {
-        return 19;
+        return 2;
     }
 
     // TODO: Reduce this to 0 by accepting DTOs instead of entities in @RequestBody/@RequestPart
     @Override
     protected int getMaxEntityInputViolations() {
-        return 7;
+        return 0;
     }
 
     // TODO: Reduce this to 0 by removing entity references from DTOs
     @Override
     protected int getMaxDtoEntityFieldViolations() {
-        return 2;
+        return 1;
     }
 }

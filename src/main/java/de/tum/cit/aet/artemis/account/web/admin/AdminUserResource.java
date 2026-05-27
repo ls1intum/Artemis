@@ -1,0 +1,436 @@
+package de.tum.cit.aet.artemis.account.web.admin;
+
+import static de.tum.cit.aet.artemis.account.domain.User.IRIS_BOT_LOGIN;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import jakarta.validation.Valid;
+
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
+import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
+import de.tum.cit.aet.artemis.account.service.user.UserService;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.dto.UserDTO;
+import de.tum.cit.aet.artemis.core.dto.UserImportDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.UserPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.LoginAlreadyUsedException;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
+import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
+
+/**
+ * REST controller for managing users.
+ * <p>
+ * This class accesses the {@link User} entity, and needs to fetch its collection of authorities.
+ * <p>
+ * For a normal use-case, it would be better to have an eager relationship between User and Authority, and send everything to the client side: there would be no View Model and DTO,
+ * a lot less code, and an outer-join which would be good for performance.
+ * <p>
+ * We use a View Model and a DTO for 3 reasons:
+ * <ul>
+ * <li>We want to keep a lazy association between the user and the authorities, because people will quite often do relationships with the user, and we don't want them to get the
+ * authorities all the time for nothing (for performance reasons). This is the #1 goal: we should not impact our users' application because of this use-case.</li>
+ * <li>Not having an outer join causes n+1 requests to the database. The {@code authorities} association uses {@code @BatchSize(20)} so the lookups are batched within a single
+ * transaction, but each HTTP call pays the database round-trip. If this becomes a measured bottleneck, consider an explicit {@code @EntityGraph} or fetch join on the auth
+ * path.</li>
+ * <li>As this manages users, for security reasons, we'd rather have a DTO layer.</li>
+ * </ul>
+ * <p>
+ * Another option would be to have a specific JPA entity graph to handle this case.
+ */
+@Profile(PROFILE_CORE)
+@EnforceAdmin
+@Lazy
+@RestController
+@RequestMapping("api/core/admin/")
+public class AdminUserResource {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminUserResource.class);
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
+    private final String artemisInternalAdminUsername;
+
+    private final UserService userService;
+
+    private final UserCreationService userCreationService;
+
+    private final UserRepository userRepository;
+
+    private final AuthorityRepository authorityRepository;
+
+    private final Optional<LdapUserService> ldapUserService;
+
+    private final AuthorizationCheckService authorizationCheckService;
+
+    public AdminUserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, AuthorityRepository authorityRepository,
+            Optional<LdapUserService> ldapUserService, AuthorizationCheckService authorizationCheckService,
+            @Nullable @Value("${artemis.user-management.internal-admin.username:#{null}}") String artemisInternalAdminUsername) {
+        this.userRepository = userRepository;
+        this.userService = userService;
+        this.userCreationService = userCreationService;
+        this.authorityRepository = authorityRepository;
+        this.ldapUserService = ldapUserService;
+        this.authorizationCheckService = authorizationCheckService;
+        this.artemisInternalAdminUsername = artemisInternalAdminUsername;
+    }
+
+    /**
+     * POST users : Creates a new user.
+     * <p>
+     * Creates a new user if the login and email are not already used, and sends an email with an activation link. The user needs to be activated on creation.
+     *
+     * @param userToBeCreated the user to create. If the password is null, a random one will be generated
+     * @return the ResponseEntity with status 201 (Created) and with body the new user, or with status 400 (Bad Request) if the login or email is already in use
+     * @throws URISyntaxException       if the Location URI syntax is incorrect
+     * @throws BadRequestAlertException 400 (Bad Request) if the login or email is already in use
+     */
+    @PostMapping("users")
+    public ResponseEntity<User> createUser(@Valid @RequestBody ManagedUserVM userToBeCreated) throws URISyntaxException, AccessForbiddenAlertException {
+        this.userService.checkUsernameAndPasswordValidityElseThrow(userToBeCreated.getLogin(), userToBeCreated.getPassword());
+
+        log.debug("REST request to save User : {}", userToBeCreated);
+
+        checkSuperAdminAuthorizationToManageAdmin(AuthorizationCheckService.isAdminByAuthorityName(userToBeCreated.getAuthorities()));
+
+        if (userToBeCreated.getId() != null) {
+            throw new BadRequestAlertException("A new user cannot already have an ID", "userManagement", "idExists");
+            // Lowercase the user login before comparing with database
+        }
+        else if (IRIS_BOT_LOGIN.equals(userToBeCreated.getLogin().toLowerCase())) {
+            throw new BadRequestAlertException("The login '" + IRIS_BOT_LOGIN + "' is reserved and cannot be used.", "userManagement", "loginReserved");
+        }
+        else if (userRepository.findOneByLogin(userToBeCreated.getLogin().toLowerCase()).isPresent()) {
+            throw new LoginAlreadyUsedException();
+        }
+        else if (userRepository.findOneByEmailIgnoreCase(userToBeCreated.getEmail()).isPresent()) {
+            throw new EmailAlreadyUsedException();
+        }
+        else {
+            User newUser = userCreationService.createUser(userToBeCreated);
+
+            // NOTE: Mail service is NOT active at the moment
+            // mailService.sendCreationEmail(newUser);
+            return ResponseEntity.created(new URI("/api/core/users/" + newUser.getLogin()))
+                    .headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.created", newUser.getLogin())).body(newUser);
+        }
+    }
+
+    /**
+     * PATCH users/:userId/activate : activate the user with the given login.
+     *
+     * @param userId the id of the user to activate
+     * @return the ResponseEntity with status 200 (OK) and with body the activated user, or with status 404 (Not Found)
+     */
+    @PatchMapping("users/{userId}/activate")
+    public ResponseEntity<UserDTO> activateUser(@PathVariable long userId) throws AccessForbiddenAlertException {
+        log.debug("REST request to activate User {}", userId);
+        return userRepository.findOneWithGroupsAndAuthoritiesById(userId).map(userToBeActivated -> {
+            if (IRIS_BOT_LOGIN.equals(userToBeActivated.getLogin())) {
+                throw new BadRequestAlertException("The Iris bot user cannot be modified via the API.", "userManagement", "cannotModifyIrisBot");
+            }
+            checkSuperAdminAuthorizationToManageAdmin(AuthorizationCheckService.isAdmin(userToBeActivated.getAuthorities()));
+            userCreationService.activateUser(userToBeActivated);
+            return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.activated", userToBeActivated.getLogin()))
+                    .body(new UserDTO(userToBeActivated));
+        }).orElseThrow(() -> new EntityNotFoundException("User", userId));
+    }
+
+    /**
+     * PATCH users/:userId/deactivate : deactivate the user with the given login.
+     *
+     * @param userId the id of the user to deactivate
+     * @return the ResponseEntity with status 200 (OK) and with body the deactivated user, or with status 404 (Not Found)
+     */
+    @PatchMapping("users/{userId}/deactivate")
+    public ResponseEntity<UserDTO> deactivateUser(@PathVariable long userId) throws AccessForbiddenAlertException {
+        log.debug("REST request to deactivate User {}", userId);
+        return userRepository.findOneWithGroupsAndAuthoritiesById(userId).map(userToBeDeactivated -> {
+            if (IRIS_BOT_LOGIN.equals(userToBeDeactivated.getLogin())) {
+                throw new BadRequestAlertException("The Iris bot user cannot be modified via the API.", "userManagement", "cannotModifyIrisBot");
+            }
+            checkSuperAdminAuthorizationToManageAdmin(AuthorizationCheckService.isAdmin(userToBeDeactivated.getAuthorities()));
+            userCreationService.deactivateUser(userToBeDeactivated);
+            return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.deactivated", userToBeDeactivated.getLogin()))
+                    .body(new UserDTO(userToBeDeactivated));
+        }).orElseThrow(() -> new EntityNotFoundException("User", userId));
+    }
+
+    /**
+     * PUT users : Updates an existing User.
+     *
+     * @param managedUserVM the user to update
+     * @return the ResponseEntity with status 200 (OK) and with body the updated user
+     * @throws EmailAlreadyUsedException 400 (Bad Request) if the email is already in use
+     * @throws LoginAlreadyUsedException 400 (Bad Request) if the login is already in use
+     */
+    @PutMapping("users")
+    public ResponseEntity<UserDTO> updateUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws AccessForbiddenAlertException {
+        this.userService.checkUsernameAndPasswordValidityElseThrow(managedUserVM.getLogin(), managedUserVM.getPassword());
+        log.debug("REST request to update User : {}", managedUserVM);
+
+        var existingUserByEmail = userRepository.findOneByEmailIgnoreCase(managedUserVM.getEmail());
+        if (existingUserByEmail.isPresent() && (!existingUserByEmail.get().getId().equals(managedUserVM.getId()))) {
+            throw new EmailAlreadyUsedException();
+        }
+
+        if (IRIS_BOT_LOGIN.equals(managedUserVM.getLogin().toLowerCase())) {
+            throw new BadRequestAlertException("The login '" + IRIS_BOT_LOGIN + "' is reserved and cannot be used.", "userManagement", "loginReserved");
+        }
+
+        var existingUserByLogin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(managedUserVM.getLogin().toLowerCase());
+        if (existingUserByLogin.isPresent() && (!existingUserByLogin.get().getId().equals(managedUserVM.getId()))) {
+            throw new LoginAlreadyUsedException();
+        }
+
+        var existingUser = userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(managedUserVM.getId());
+        if (IRIS_BOT_LOGIN.equals(existingUser.getLogin())) {
+            throw new BadRequestAlertException("The Iris bot user cannot be modified via the API.", "userManagement", "cannotModifyIrisBot");
+        }
+        boolean editedUserIsAdmin = AuthorizationCheckService.isAdmin(existingUser.getAuthorities());
+        boolean requestedAdminEscalation = managedUserVM.getAuthorities() != null && AuthorizationCheckService.isAdminByAuthorityName(managedUserVM.getAuthorities());
+        checkSuperAdminAuthorizationToManageAdmin(editedUserIsAdmin || requestedAdminEscalation);
+        checkCannotRemoveSuperAdminFromDefaultAdmin(existingUser.getLogin(), managedUserVM.getAuthorities());
+
+        final boolean shouldActivateUser = !existingUser.getActivated() && managedUserVM.isActivated();
+        var updatedUser = userCreationService.updateUser(existingUser, managedUserVM);
+
+        if (shouldActivateUser) {
+            userService.activateUser(updatedUser);
+        }
+
+        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.updated", managedUserVM.getLogin())).body(new UserDTO(updatedUser));
+    }
+
+    /**
+     * Checks if the current user has permission to manage admin users. Throws an exception if the operation involves
+     * an admin user (either creating, editing, or deleting) and the current user is not a super admin.
+     *
+     * @param involvesAdminUser whether the operation involves managing an admin user
+     * @throws AccessForbiddenAlertException if a non-super-admin tries to manage an admin user
+     */
+    private void checkSuperAdminAuthorizationToManageAdmin(boolean involvesAdminUser) {
+        if (involvesAdminUser && !this.authorizationCheckService.isSuperAdmin()) {
+            throw new AccessForbiddenAlertException("Only super administrators are allowed to manage administrators.", "userManagement",
+                    "userManagement.onlySuperAdminCanManageAdmins");
+        }
+    }
+
+    /**
+     * Checks if the operation attempts to remove super admin rights from the default admin user defined in the configuration.
+     * The default admin must always retain super admin rights to ensure system accessibility.
+     *
+     * @param login          the login of the user being modified
+     * @param newAuthorities the new authorities to be assigned to the user (may be null if not changing authorities)
+     * @throws BadRequestAlertException if attempting to remove super admin rights from the default admin
+     */
+    private void checkCannotRemoveSuperAdminFromDefaultAdmin(String login, Set<String> newAuthorities) {
+        if (artemisInternalAdminUsername == null || newAuthorities == null) {
+            return;
+        }
+
+        boolean isDefaultAdmin = artemisInternalAdminUsername.equals(login);
+        boolean newAuthoritiesContainSuperAdmin = newAuthorities.contains(SUPER_ADMIN.getAuthority());
+
+        if (isDefaultAdmin && !newAuthoritiesContainSuperAdmin) {
+            throw new BadRequestAlertException("You cannot remove super admin rights from the default admin user.", "userManagement",
+                    "userManagement.cannotRemoveDefaultAdminRights");
+        }
+    }
+
+    /**
+     * GET users/:login : get the "login" user.
+     *
+     * @param login the login of the user to find
+     * @return the ResponseEntity with status 200 (OK) and with body the "login" user, or with status 404 (Not Found)
+     */
+    @GetMapping("users/{login:" + Constants.LOGIN_REGEX + "}")
+    public ResponseEntity<UserDTO> getUser(@PathVariable String login) {
+        log.debug("REST request to get User : {}", login);
+        return ResponseUtil.wrapOrNotFound(userRepository.findOneWithGroupsAndAuthoritiesByLogin(login).map(user -> {
+            user.setVisibleRegistrationNumber();
+            return new UserDTO(user);
+        }));
+    }
+
+    /**
+     * POST users/import : Import multiple users to the user management.
+     * The passed list of {@link UserImportDTO}s must include at least one unique user identifier per entry
+     * (i.e. registration number OR email OR login).
+     * <p>
+     * This method first tries to find each user in the internal Artemis user database (because the user is probably
+     * already using Artemis). If the user cannot be found, it additionally searches the connected LDAP (if configured).
+     * <p>
+     * If {@code createInternalUsers} is set to {@code true}, users that cannot be found are created as internal Artemis
+     * users. In that case, an optional {@code password} per entry is honored; if no password is supplied, a random one
+     * is generated. This is intended for admins who want to provision multiple internal users (e.g. test personas) at
+     * once, without having to issue a password reset for each of them.
+     *
+     * @param userDtos            the list of users (each with at least one unique identifier) who should be imported
+     * @param createInternalUsers whether to create users that cannot be found as internal Artemis users
+     * @return the list of users who could not be imported (neither found nor — when requested — created)
+     */
+    @PostMapping("users/import")
+    public ResponseEntity<List<UserImportDTO>> importUsers(@RequestBody List<UserImportDTO> userDtos,
+            @RequestParam(value = "createInternalUsers", defaultValue = "false") boolean createInternalUsers) {
+        log.debug("REST request to import {} users to Artemis (createInternalUsers={})", userDtos.size(), createInternalUsers);
+        List<UserImportDTO> notImportedUsers = userService.importUsers(userDtos, createInternalUsers);
+        return ResponseEntity.ok().body(notImportedUsers);
+    }
+
+    /**
+     * PUT users/:userId/sync-ldap : Updates an existing User based on the info available in the LDAP server.
+     *
+     * @param userId of the user to update
+     * @return the ResponseEntity with status 200 (OK) and with body the updated user
+     */
+    @PutMapping("users/{userId}/sync-ldap")
+    public ResponseEntity<UserDTO> syncUserViaLdap(@PathVariable Long userId) {
+        log.debug("REST request to update ldap information User : {}", userId);
+
+        LdapUserService service = ldapUserService
+                .orElseThrow(() -> new BadRequestAlertException("LDAP is not enabled on this Artemis instance.", "userManagement", "ldapNotEnabled"));
+
+        var user = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
+        service.loadUserDetailsFromLdap(user);
+        var updatedUser = userCreationService.saveUser(user);
+
+        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.updated", user.getLogin())).body(new UserDTO(updatedUser));
+    }
+
+    /**
+     * GET users : get all users.
+     *
+     * @param userSearch the pagination information for user search
+     * @return the ResponseEntity with status 200 (OK) and with body all users
+     */
+    @GetMapping("users")
+    public ResponseEntity<List<UserDTO>> getAllUsers(UserPageableSearchDTO userSearch) {
+        final Page<UserDTO> page = userRepository.getAllManagedUsers(userSearch);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
+     * GET users/not-enrolled : get all logins of not enrolled users as a sorted list (no admins)
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body all logins of not enrolled users
+     */
+    @GetMapping("users/not-enrolled")
+    public ResponseEntity<List<String>> getNotEnrolledUsers() {
+        List<String> logins = userRepository.findAllNotEnrolledUsers();
+        return new ResponseEntity<>(logins, HttpStatus.OK);
+    }
+
+    /**
+     * GET /users/authorities : get all authorities of the requesting user.
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body a string list of the all the roles
+     */
+    @GetMapping("users/authorities")
+    public ResponseEntity<List<String>> getAuthorities() {
+        return ResponseEntity.ok(authorityRepository.getAuthorities());
+    }
+
+    /**
+     * DELETE users/:login : delete the "login" User.
+     *
+     * @param login the login of the user to delete
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @DeleteMapping("users/{login:" + Constants.LOGIN_REGEX + "}")
+    public ResponseEntity<Void> deleteUser(@PathVariable String login) {
+        log.debug("REST request to delete User: {}", login);
+        if (IRIS_BOT_LOGIN.equals(login)) {
+            throw new BadRequestAlertException("The Iris bot user cannot be deleted via the API.", "userManagement", "cannotDeleteIrisBot");
+        }
+        if (userRepository.isCurrentUser(login)) {
+            throw new BadRequestAlertException("You cannot delete yourself", "userManagement", "cannotDeleteYourself");
+        }
+
+        User userToBeDeleted = userRepository.findOneWithGroupsAndAuthoritiesByLogin(login).orElseThrow(() -> new EntityNotFoundException("User", login));
+        checkSuperAdminAuthorizationToManageAdmin(AuthorizationCheckService.isAdmin(userToBeDeleted.getAuthorities()));
+        userService.softDeleteUser(login);
+        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.deleted", login)).build();
+    }
+
+    /**
+     * Delete users: deletes the provided users
+     *
+     * @param logins user logins to delete
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @DeleteMapping("users")
+    public ResponseEntity<List<String>> deleteUsers(@RequestBody List<String> logins) {
+        log.debug("REST request to delete {} users", logins.size());
+        List<String> deletedUsers = Collections.synchronizedList(new java.util.ArrayList<>());
+
+        // Remove protected users from the list
+        logins.remove(IRIS_BOT_LOGIN);
+        // Get current user and remove current user from list of logins
+        var currentUser = userRepository.getUser();
+        logins.remove(currentUser.getLogin());
+
+        // Check if non-super-admin is trying to delete admin users
+        Set<User> usersToDelete = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndLoginIn(new HashSet<>(logins));
+        boolean containsAdminUser = usersToDelete.stream().anyMatch(user -> AuthorizationCheckService.isAdmin(user.getAuthorities()));
+        checkSuperAdminAuthorizationToManageAdmin(containsAdminUser);
+
+        logins.parallelStream().forEach(login -> {
+            try {
+                if (!userRepository.isCurrentUser(login)) {
+                    userService.softDeleteUser(login);
+                    deletedUsers.add(login);
+                }
+            }
+            catch (Exception exception) {
+                // In order to handle all users even if some users produce exceptions, we catch them and ignore them and proceed with the remaining users
+                log.error("REST request to delete user {} failed", login);
+                log.error(exception.getMessage(), exception);
+            }
+        });
+        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.batch.deleted", String.valueOf(deletedUsers.size())))
+                .body(deletedUsers);
+    }
+}

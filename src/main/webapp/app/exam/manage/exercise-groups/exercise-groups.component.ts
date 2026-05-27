@@ -10,7 +10,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseService } from 'app/exercise/services/exercise.service';

@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { ModuleFeature, PROFILE_DEV, PROFILE_PROD, ProfileFeature } from 'app/app.constants';
 import { ProfileInfo } from '../profile-info.model';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
+import { BrowserFingerprintService } from 'app/account/fingerprint/browser-fingerprint.service';
 import { firstValueFrom } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })

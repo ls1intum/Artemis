@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.core.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -18,7 +17,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.domain.Organization;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 /**
@@ -29,15 +27,6 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Repository
 public interface OrganizationRepository extends ArtemisJpaRepository<Organization, Long>, JpaSpecificationExecutor<Organization>, CustomOrganizationRepository {
 
-    @Query("""
-            SELECT organization
-            FROM Organization organization
-                LEFT JOIN FETCH organization.users
-                LEFT JOIN FETCH organization.courses
-            WHERE organization.id = :organizationId
-            """)
-    Optional<Organization> findByIdWithEagerUsersAndCourses(@Param("organizationId") long organizationId);
-
     /**
      * Get all organizations where the given user is currently in
      *
@@ -46,9 +35,9 @@ public interface OrganizationRepository extends ArtemisJpaRepository<Organizatio
      */
     @Query("""
             SELECT DISTINCT organization
-            FROM Organization organization
-                JOIN organization.users ou
-            WHERE ou.id = :userId
+            FROM User user
+                JOIN user.organizations organization
+            WHERE user.id = :userId
             """)
     Set<Organization> findAllOrganizationsByUserId(@Param("userId") long userId);
 
@@ -60,9 +49,9 @@ public interface OrganizationRepository extends ArtemisJpaRepository<Organizatio
      */
     @Query("""
             SELECT DISTINCT organization
-            FROM Organization organization
-                JOIN organization.courses oc
-            WHERE oc.id = :courseId
+            FROM Course course
+                JOIN course.organizations organization
+            WHERE course.id = :courseId
             """)
     Set<Organization> findAllOrganizationsByCourseId(@Param("courseId") long courseId);
 
@@ -73,11 +62,10 @@ public interface OrganizationRepository extends ArtemisJpaRepository<Organizatio
      * @return the number of users contained in the organization
      */
     @Query("""
-            SELECT COUNT(users.id) AS num_user
-            FROM Organization organization
-                LEFT JOIN organization.users users
+            SELECT COUNT(user.id)
+            FROM User user
+                JOIN user.organizations organization
             WHERE organization.id = :organizationId
-            GROUP BY organization.id
             """)
     Long getNumberOfUsersByOrganizationId(@Param("organizationId") long organizationId);
 
@@ -88,11 +76,10 @@ public interface OrganizationRepository extends ArtemisJpaRepository<Organizatio
      * @return the number of courses contained in the organization
      */
     @Query("""
-            SELECT COUNT(courses.id) AS num_courses
-            FROM Organization organization
-                LEFT JOIN organization.courses courses
+            SELECT COUNT(course.id)
+            FROM Course course
+                JOIN course.organizations organization
             WHERE organization.id = :organizationId
-            GROUP BY organization.id
             """)
     Long getNumberOfCoursesByOrganizationId(@Param("organizationId") long organizationId);
 
@@ -131,14 +118,4 @@ public interface OrganizationRepository extends ArtemisJpaRepository<Organizatio
         return matchingOrganizations;
     }
 
-    /**
-     * Get an organization containing the eagerly loaded list of users and courses
-     *
-     * @param organizationId the id of the organization to retrieve
-     * @return the organization with the given id containing eagerly loaded list of users and courses
-     */
-    @NonNull
-    default Organization findByIdWithEagerUsersAndCoursesElseThrow(long organizationId) throws EntityNotFoundException {
-        return getValueElseThrow(findByIdWithEagerUsersAndCourses(organizationId), organizationId);
-    }
 }

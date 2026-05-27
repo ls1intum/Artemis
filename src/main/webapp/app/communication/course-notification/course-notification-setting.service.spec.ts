@@ -13,7 +13,7 @@ import { CourseNotificationSettingPreset } from 'app/communication/shared/entiti
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { BehaviorSubject, distinctUntilChanged, firstValueFrom } from 'rxjs';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 
 describe('CourseNotificationSettingService', () => {
     setupTestBed({ zoneless: true });

@@ -12,8 +12,8 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { DataExportService } from 'app/core/legal/data-export/data-export.service';
 import { of, throwError } from 'rxjs';
-import { DataExport } from 'app/core/shared/entities/data-export.model';
-import { User } from 'app/core/user/user.model';
+import { DataExport } from 'app/admin/admin-data-exports/data-export.model';
+import { User } from 'app/account/user/user.model';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
