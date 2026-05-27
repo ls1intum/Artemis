@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.communication.dto.ConversationWebsocketDTO;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
@@ -89,7 +90,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationLocalCI
         return conversationParticipantRepository.findConversationParticipantsByConversationId(conversationId);
     }
 
-    Post postInConversation(Long conversationId, String authorLoginWithoutPrefix) throws Exception {
+    PostResponseDTO postInConversation(Long conversationId, String authorLoginWithoutPrefix) throws Exception {
         long[] conversationIds = new long[] { conversationId };
         PostContextFilterDTO postContextFilter = new PostContextFilterDTO(exampleCourseId, null, conversationIds, null, null, false, false, false, null, null);
         var requestingUser = userRepository.getUser();
@@ -97,8 +98,8 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationLocalCI
         var numberBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).stream().toList().size();
         Post postToSave = createPostWithConversation(conversationId, authorLoginWithoutPrefix);
 
-        Post createdPost = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
-        assertThat(createdPost.getConversation().getId()).isEqualTo(conversationId);
+        PostResponseDTO createdPost = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/messages", postToSave, PostResponseDTO.class, HttpStatus.CREATED);
+        assertThat(createdPost.conversation().id()).isEqualTo(conversationId);
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(numberBefore + 1);
         return createdPost;
     }
