@@ -8,7 +8,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TypeAheadUserSearchFieldComponent } from 'app/core/legal/data-export/type-ahead-search-field/type-ahead-user-search-field.component';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { DialogModule } from 'primeng/dialog';
 
 @Component({

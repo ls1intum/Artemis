@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
+import { CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';

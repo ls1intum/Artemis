@@ -29,8 +29,8 @@ export abstract class QuizExerciseValidationDirective {
     isExamMode: boolean;
     isImport: boolean;
 
-    invalidReasons: ValidationReason[];
-    invalidWarnings: ValidationReason[];
+    invalidReasons: ValidationReason[] = [];
+    invalidWarnings: ValidationReason[] = [];
 
     protected invalidFlaggedQuestions: InvalidFlaggedQuestions = {};
     pendingChangesCache: boolean;

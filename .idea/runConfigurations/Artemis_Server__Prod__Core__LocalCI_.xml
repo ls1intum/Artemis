@@ -1,6 +1,8 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Artemis Server (Prod, Core, LocalCI)" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
-    <option name="ACTIVE_PROFILES" value="prod,core,ldap,localvc,localci,scheduling,local" />
+    <option name="ACTIVE_PROFILES" value="prod,core,localvc,localci,scheduling,local" />
+    <!-- LDAP is now toggled via the artemis.user-management.ldap.enabled module-feature flag in your environment config. -->
+    <!-- Set artemis.user-management.ldap.enabled=true there to enable LDAP-based user synchronization. -->
     <option name="ALTERNATIVE_JRE_PATH" value="25" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
     <module name="Artemis.main" />

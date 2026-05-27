@@ -1,4 +1,4 @@
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, effect, inject, input, output } from '@angular/core';
 import { Observable, Subscription, of } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';

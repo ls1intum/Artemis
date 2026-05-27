@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.iris.service.pyris.job;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
  * A pyris job that extracts competencies from a course description.

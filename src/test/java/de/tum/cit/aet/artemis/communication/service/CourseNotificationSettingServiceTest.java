@@ -22,6 +22,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.communication.domain.UserCourseNotificationSettingPreset;
 import de.tum.cit.aet.artemis.communication.domain.UserCourseNotificationSettingSpecification;
@@ -31,7 +32,6 @@ import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewPostN
 import de.tum.cit.aet.artemis.communication.domain.setting_presets.DefaultUserCourseNotificationSettingPreset;
 import de.tum.cit.aet.artemis.communication.test_repository.UserCourseNotificationSettingPresetTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.UserCourseNotificationSettingSpecificationTestRepository;
-import de.tum.cit.aet.artemis.core.domain.User;
 
 @ExtendWith(MockitoExtension.class)
 class CourseNotificationSettingServiceTest {
