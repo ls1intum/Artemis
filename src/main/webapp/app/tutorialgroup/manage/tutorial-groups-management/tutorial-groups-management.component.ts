@@ -23,8 +23,6 @@ import { TutorialGroupsTableComponent } from 'app/tutorialgroup/manage/tutorial-
 import { TutorialGroupFreeDaysOverviewComponent } from 'app/tutorialgroup/shared/tutorial-group-free-days-overview/tutorial-group-free-days-overview.component';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
-import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
-import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 import { HttpResponse } from '@angular/common/http';
@@ -53,8 +51,6 @@ import { convertTutorialGroupResponseArrayDatesFromServer } from 'app/tutorialgr
         TutorialGroupFreeDaysOverviewComponent,
         ArtemisTranslatePipe,
         CourseTitleBarActionsDirective,
-        CourseTitleBarTitleDirective,
-        CourseTitleBarTitleComponent,
     ],
 })
 export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {

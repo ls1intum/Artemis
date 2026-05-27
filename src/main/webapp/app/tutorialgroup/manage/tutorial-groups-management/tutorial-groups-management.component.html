@@ -1,10 +1,6 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
     <div class="row">
         <div class="col-12 col-xl-10">
-            <div *titleBarTitle class="d-flex align-items-center">
-                <jhi-course-title-bar-title title="artemisApp.pages.tutorialGroupsManagement.title" />
-                <span class="badge rounded-pill text-bg-warning ms-2" ngbTooltip="{{ 'artemisApp.generic.betaWarning' | artemisTranslate }}">BETA</span>
-            </div>
             @if (isAtLeastEditor) {
                 <div *titleBarActions class="d-flex gap-2">
                     @if (course?.tutorialGroupsConfiguration && isAtLeastInstructor) {
