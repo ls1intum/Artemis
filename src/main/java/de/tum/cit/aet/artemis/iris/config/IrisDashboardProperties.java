@@ -28,6 +28,9 @@ public class IrisDashboardProperties {
 
     private final Alert alert = new Alert();
 
+    /**
+     * Validates that the configured property values are within acceptable ranges.
+     */
     @PostConstruct
     public void validate() {
         if (maxQueryWindowDays <= 0) {
