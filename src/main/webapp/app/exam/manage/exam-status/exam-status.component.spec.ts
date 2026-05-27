@@ -11,7 +11,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockExamChecklistService } from 'test/helpers/mocks/service/mock-exam-checklist.service';
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import { of } from 'rxjs';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

@@ -11,7 +11,7 @@ import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { Component, input, viewChild, viewChildren } from '@angular/core';
-import { Course, Language } from 'app/core/course/shared/entities/course.model';
+import { Course, Language } from 'app/course/shared/entities/course.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { runOnPushChangeDetection } from 'test/helpers/on-push-change-detection.helper';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

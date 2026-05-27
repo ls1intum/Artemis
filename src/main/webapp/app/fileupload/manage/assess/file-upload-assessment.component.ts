@@ -10,7 +10,7 @@ import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-t
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';

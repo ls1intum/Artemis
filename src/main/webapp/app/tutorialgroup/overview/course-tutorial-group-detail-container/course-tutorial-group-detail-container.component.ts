@@ -4,7 +4,7 @@ import { TutorialGroupDetailAccessLevel, TutorialGroupDetailComponent } from 'ap
 import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariable';
 import { TutorialGroupCourseAndGroupService } from 'app/tutorialgroup/shared/service/tutorial-group-course-and-group.service';
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
-import { isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
+import { isMessagingEnabled } from 'app/course/shared/entities/course.model';
 
 @Component({
     selector: 'jhi-course-tutorial-group-detail-container',

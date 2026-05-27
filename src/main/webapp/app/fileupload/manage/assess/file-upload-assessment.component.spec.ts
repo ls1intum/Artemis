@@ -29,7 +29,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { SubmissionExerciseType, SubmissionType, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';

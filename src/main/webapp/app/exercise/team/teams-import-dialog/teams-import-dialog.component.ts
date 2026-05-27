@@ -9,7 +9,7 @@ import { TeamImportStrategyType as ImportStrategy, Team } from 'app/exercise/sha
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { flatMap } from 'lodash-es';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { faBan, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass } from '@angular/common';

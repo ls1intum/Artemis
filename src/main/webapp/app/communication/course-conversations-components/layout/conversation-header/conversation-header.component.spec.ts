@@ -16,7 +16,7 @@ import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOn
 import { BehaviorSubject, EMPTY, Subject } from 'rxjs';
 import { ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
-import { CourseExerciseDetailsComponent } from 'app/core/course/overview/exercise-details/course-exercise-details.component';
+import { CourseExerciseDetailsComponent } from 'app/course/overview/exercise-details/course-exercise-details.component';
 import { ExamDetailComponent } from 'app/exam/manage/exams/detail/exam-detail.component';
 import { MetisService } from 'app/communication/service/metis.service';
 import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
