@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.communication.util;
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.lang.reflect.RecordComponent;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,6 +18,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.UserSummaryDTO;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
@@ -417,22 +419,26 @@ public class ConversationUtilService {
      * @param post the response DTO to assert against
      */
     public void assertSensitiveInformationHidden(@NonNull PostResponseDTO post) {
-        // UserSummaryDTO has no login/email/registrationNumber field — verify the author is present in the shape
-        // we expect and that no nested reaction-user accidentally carries more than the structural guarantees.
+        assertUserProjectionExposesNoSensitiveFields();
         if (post.author() != null) {
             assertThat(post.author().id()).isNotNull();
-        }
-        if (post.reactions() != null) {
-            for (var reaction : post.reactions()) {
-                if (reaction.user() != null) {
-                    assertThat(reaction.user().id()).isNotNull();
-                }
-            }
         }
         if (post.answers() != null) {
             for (var answer : post.answers()) {
                 assertSensitiveInformationHidden(answer);
             }
+        }
+    }
+
+    /**
+     * The response DTOs ({@link PostResponseDTO}, {@link AnswerPostResponseDTO}, and the embedded reactions) carry
+     * every user solely as a {@link UserSummaryDTO}. Asserting that record declares none of the sensitive fields
+     * structurally guarantees no message payload can leak {@code login}/{@code email}/{@code registrationNumber} to
+     * the client, and fails fast if a future change widens the user projection.
+     */
+    private void assertUserProjectionExposesNoSensitiveFields() {
+        for (RecordComponent component : UserSummaryDTO.class.getRecordComponents()) {
+            assertThat(component.getName()).isNotIn("login", "email", "registrationNumber", "password");
         }
     }
 
@@ -444,15 +450,9 @@ public class ConversationUtilService {
      * @param answerPost the response DTO to assert against
      */
     public void assertSensitiveInformationHidden(@NonNull AnswerPostResponseDTO answerPost) {
+        assertUserProjectionExposesNoSensitiveFields();
         if (answerPost.author() != null) {
             assertThat(answerPost.author().id()).isNotNull();
-        }
-        if (answerPost.reactions() != null) {
-            for (var reaction : answerPost.reactions()) {
-                if (reaction.user() != null) {
-                    assertThat(reaction.user().id()).isNotNull();
-                }
-            }
         }
     }
 
