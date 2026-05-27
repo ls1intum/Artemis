@@ -125,6 +125,9 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/shared/feature-toggle/**', // feature-toggle service uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/sort/**', // sort directives use vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/user-import/util/**', // user import utils use Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/shared/range-slider/**', // range slider uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/shared/dashboards/**', // dashboards uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/shared/image-cropper/**', // image cropper uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/exercise-headers/**', // exercise headers module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/synchronization/**', // exercise synchronization module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/version-history/**', // exercise version history module uses Vitest (see vitest.config.ts)
@@ -183,6 +186,9 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/shared/sort/', // sort directives use Vitest
         '<rootDir>/src/main/webapp/app/shared/user-import/util/', // user import utils use Vitest
         '<rootDir>/src/main/webapp/app/shared/table-view/', // table view module uses Vitest
+        '<rootDir>/src/main/webapp/app/shared/range-slider/', // range slider uses Vitest
+        '<rootDir>/src/main/webapp/app/shared/dashboards/', // dashboards uses Vitest
+        '<rootDir>/src/main/webapp/app/shared/image-cropper/', // image cropper uses Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.ts',
         '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts',
         '<rootDir>/src/main/webapp/app/shared/monaco-editor/inline-refinement-button/',
@@ -280,6 +286,9 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/shared/feature-toggle/', // feature-toggle service (vitest)
         '<rootDir>/src/main/webapp/app/shared/sort/', // sort directives
         '<rootDir>/src/main/webapp/app/shared/user-import/util/', // user import utils
+        '<rootDir>/src/main/webapp/app/shared/range-slider/', // range slider (vitest)
+        '<rootDir>/src/main/webapp/app/shared/dashboards/', // dashboards (vitest)
+        '<rootDir>/src/main/webapp/app/shared/image-cropper/', // image cropper (vitest)
         '<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/shared/monaco-editor/inline-refinement-button/', // migrated to Vitest
