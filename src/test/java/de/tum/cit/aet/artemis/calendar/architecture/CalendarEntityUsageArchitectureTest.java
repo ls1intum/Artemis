@@ -23,11 +23,4 @@ class CalendarEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchi
     protected int getMaxEntityInputViolations() {
         return 0;
     }
-
-    // QuizExerciseCalendarEventDTO.quizBatch references the QuizBatch entity directly.
-    // TODO: Reduce this to 0 by extracting the needed primitive fields instead of embedding the entity.
-    @Override
-    protected int getMaxDtoEntityFieldViolations() {
-        return 1;
-    }
 }
