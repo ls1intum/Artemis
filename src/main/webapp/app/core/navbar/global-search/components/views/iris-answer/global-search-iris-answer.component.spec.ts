@@ -8,7 +8,8 @@ import { provideRouter } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { faFile, faFilePdf, faFileVideo, faVideo } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble, faFile, faFilePdf, faFileVideo, faHashtag, faKeyboard, faQuestion, faVideo } from '@fortawesome/free-solid-svg-icons';
+import { GlobalSearchSource } from 'app/core/navbar/global-search/models/global-search-source.model';
 import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/iris-search-answer.service';
 import { GlobalSearchIrisAnswerComponent } from './global-search-iris-answer.component';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
@@ -386,20 +387,44 @@ describe('GlobalSearchIrisAnswerComponent', () => {
     });
 
     describe('iconFor()', () => {
+        const src = (sourceType: string, exerciseType?: string): GlobalSearchSource => ({
+            sourceType,
+            entityId: 1,
+            course: { id: 1, name: 'C' },
+            title: 'T',
+            exerciseType,
+        });
+
         it('should return faFilePdf for lecture_unit_slide', () => {
-            expect(component['iconFor']('lecture_unit_slide')).toBe(faFilePdf);
+            expect(component['iconFor'](src('lecture_unit_slide'))).toBe(faFilePdf);
         });
 
         it('should return faFileVideo for lecture_unit_slide_video', () => {
-            expect(component['iconFor']('lecture_unit_slide_video')).toBe(faFileVideo);
+            expect(component['iconFor'](src('lecture_unit_slide_video'))).toBe(faFileVideo);
         });
 
         it('should return faVideo for lecture_unit_video', () => {
-            expect(component['iconFor']('lecture_unit_video')).toBe(faVideo);
+            expect(component['iconFor'](src('lecture_unit_video'))).toBe(faVideo);
         });
 
         it('should return faFile for an unknown source type', () => {
-            expect(component['iconFor']('unknown_type')).toBe(faFile);
+            expect(component['iconFor'](src('unknown_type'))).toBe(faFile);
+        });
+
+        it('should return faQuestion for exercise with no sub-type', () => {
+            expect(component['iconFor'](src('exercise'))).toBe(faQuestion);
+        });
+
+        it('should return faKeyboard for programming exercise', () => {
+            expect(component['iconFor'](src('exercise', 'programming'))).toBe(faKeyboard);
+        });
+
+        it('should return faCheckDouble for quiz exercise', () => {
+            expect(component['iconFor'](src('exercise', 'quiz'))).toBe(faCheckDouble);
+        });
+
+        it('should return faHashtag for channel', () => {
+            expect(component['iconFor'](src('channel'))).toBe(faHashtag);
         });
     });
 });

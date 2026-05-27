@@ -45,7 +45,7 @@
                             [routerLink]="linkFor(source)"
                             [queryParams]="queryParamsFor(source)"
                         >
-                            <fa-icon [icon]="iconFor(source.sourceType)" class="iris-chip-icon flex-shrink-0" aria-hidden="true" />
+                            <fa-icon [icon]="iconFor(source)" class="iris-chip-icon flex-shrink-0" aria-hidden="true" />
                             <span class="iris-chip-name text-truncate">{{ source.title }}</span>
                             @if (source.lectureUnit?.displayMeta) {
                                 <span class="iris-chip-meta text-body-secondary">· {{ source.lectureUnit!.displayMeta }}</span>

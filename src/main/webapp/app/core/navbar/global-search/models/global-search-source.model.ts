@@ -12,6 +12,8 @@ export interface GlobalSearchSource {
     course: CourseInfo;
     title: string;
     snippet?: string;
+    /** Exercise sub-type (only when sourceType="exercise"): "programming" | "quiz" | "modeling" | "text" | "file-upload" */
+    exerciseType?: string;
     // Lecture-specific (only present for lecture_unit_* source types)
     lecture?: LectureInfo;
     lectureUnit?: LectureUnitInfo;

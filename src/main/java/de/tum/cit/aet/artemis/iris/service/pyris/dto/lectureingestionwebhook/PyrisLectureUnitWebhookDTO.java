@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook;
 
+import java.time.ZonedDateTime;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
@@ -11,5 +13,6 @@ import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisLectureUnitWebhookDTO(String pdfFile, int attachmentVersion, PyrisLectureTranscriptionDTO transcription, long lectureUnitId, String lectureUnitName,
-        long lectureId, String lectureName, long courseId, String courseName, String courseDescription, String lectureUnitLink, String videoLink, VideoSourceType videoSourceType) {
+        long lectureId, String lectureName, long courseId, String courseName, String courseDescription, String lectureUnitLink, String videoLink, VideoSourceType videoSourceType,
+        ZonedDateTime releaseDate) {
 }

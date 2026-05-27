@@ -1,7 +1,23 @@
 import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faBook, faCalendarCheck, faChevronUp, faComments, faFile, faFilePdf, faFileVideo, faKeyboard, faQuestionCircle, faVideo } from '@fortawesome/free-solid-svg-icons';
+import {
+    faBook,
+    faCalendarCheck,
+    faCheckDouble,
+    faChevronUp,
+    faFile,
+    faFilePdf,
+    faFileUpload,
+    faFileVideo,
+    faFont,
+    faHashtag,
+    faKeyboard,
+    faProjectDiagram,
+    faQuestion,
+    faQuestionCircle,
+    faVideo,
+} from '@fortawesome/free-solid-svg-icons';
 import { RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
@@ -63,15 +79,25 @@ export class GlobalSearchIrisAnswerComponent {
         lecture_unit_slide: faFilePdf,
         lecture_unit_slide_video: faFileVideo,
         lecture_unit_video: faVideo,
-        exercise: faKeyboard,
         faq: faQuestionCircle,
         exam: faCalendarCheck,
-        channel: faComments,
+        channel: faHashtag,
         lecture: faBook,
     };
 
-    protected iconFor(sourceType: string): IconDefinition {
-        return this.SOURCE_ICONS[sourceType] ?? faFile;
+    private readonly EXERCISE_TYPE_ICONS: Record<string, IconDefinition> = {
+        programming: faKeyboard,
+        modeling: faProjectDiagram,
+        text: faFont,
+        'file-upload': faFileUpload,
+        quiz: faCheckDouble,
+    };
+
+    protected iconFor(source: GlobalSearchSource): IconDefinition {
+        if (source.sourceType === 'exercise') {
+            return source.exerciseType ? (this.EXERCISE_TYPE_ICONS[source.exerciseType] ?? faQuestion) : faQuestion;
+        }
+        return this.SOURCE_ICONS[source.sourceType] ?? faFile;
     }
 
     protected linkFor(source: GlobalSearchSource): string[] {

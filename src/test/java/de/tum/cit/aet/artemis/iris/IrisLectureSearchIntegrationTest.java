@@ -121,7 +121,8 @@ class IrisLectureSearchIntegrationTest extends AbstractIrisIntegrationTest {
         var requestDTO = new PyrisSearchAskRequestDTO("What is backpropagation?", 5, UUID.randomUUID());
         request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.ACCEPTED);
 
-        var source = new PyrisGlobalSearchSourceDTO("lecture_unit_slide", 3L, new PyrisLectureSearchResultDTO.CourseDTO(1L, "ML"), "Neural Nets", "backprop snippet", null, null);
+        var source = new PyrisGlobalSearchSourceDTO("lecture_unit_slide", 3L, new PyrisLectureSearchResultDTO.CourseDTO(1L, "ML"), "Neural Nets", "backprop snippet", null, null,
+                null);
         var doneStage = new PyrisStageDTO("LLM", 90, PyrisStageState.DONE, null, false, null);
         sendLectureSearchStatus(jobIdRef.get(), new PyrisGlobalSearchAnswerStatusUpdateDTO(List.of(doneStage), "Neural networks learn via backpropagation.", List.of(source)));
 

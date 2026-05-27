@@ -12,5 +12,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record PyrisGlobalSearchSourceDTO(@JsonProperty("sourceType") String sourceType, @JsonProperty("entityId") long entityId,
         @JsonProperty("course") PyrisLectureSearchResultDTO.CourseDTO course, @JsonProperty("title") String title, @JsonProperty("snippet") String snippet,
-        @JsonProperty("lecture") PyrisLectureSearchResultDTO.LectureDTO lecture, @JsonProperty("lectureUnit") PyrisLectureSearchResultDTO.LectureUnitDTO lectureUnit) {
+        @JsonProperty("exerciseType") String exerciseType, @JsonProperty("lecture") PyrisLectureSearchResultDTO.LectureDTO lecture,
+        @JsonProperty("lectureUnit") PyrisLectureSearchResultDTO.LectureUnitDTO lectureUnit) {
 }
