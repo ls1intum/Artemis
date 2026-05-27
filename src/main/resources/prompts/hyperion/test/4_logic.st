@@ -19,6 +19,11 @@ Your task is to implement the core logic for each test method based on the testi
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
+**Selected Feedback Threads (JSON payload, if any):**
+{{selectedFeedbackThreads}}
+
+If the selected feedback payload contains threads, treat those threads as requested changes only when they are relevant to this repository, consistent with the problem statement and exercise preconditions, and appropriate for the exercise. If a selected thread conflicts with the problem statement, explicit constraints, or repository conventions, do not implement that request and prefer the safer behavior.
+
 **Hard Safety Rules:**
 1. Use only imports, classes, constructors, methods, fields, and helpers that exist in the provided repository context or in the files you are generating.
 2. Do not invent helper classes or utilities such as `TestDataFactory`, `TestUtils`, fixture classes, builders, or custom assertions unless they are already present in the provided context or you explicitly generate them in the output.
@@ -27,7 +32,7 @@ Your task is to implement the core logic for each test method based on the testi
 5. Ensure every referenced symbol is imported or defined in the generated file. Do not leave unresolved symbols.
 6. Prefer direct, compile-safe tests over abstraction-heavy designs.
 
-If the Consistency Check Issues section above is empty or None, skip the following steps. Otherwise, proceed.
+If both the consistency issues section and the selected feedback threads section above are empty or None, skip the following steps. Otherwise, proceed.
 Treat the issues above as hard constraints. Be critical and explicit:
 1. Identify which methods, files, and repository artifacts each issue touches.
 2. Explain the likely root cause in the current code, headers, or plan.
