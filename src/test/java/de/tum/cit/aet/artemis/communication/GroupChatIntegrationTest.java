@@ -19,14 +19,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
-import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
-import de.tum.cit.aet.artemis.core.user.util.UserFactory;
+import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 
 class GroupChatIntegrationTest extends AbstractConversationTest {
 

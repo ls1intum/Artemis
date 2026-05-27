@@ -6,7 +6,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { lastValueFrom } from 'rxjs';
 import { SortingOrder } from 'app/shared/table/pageable-table';

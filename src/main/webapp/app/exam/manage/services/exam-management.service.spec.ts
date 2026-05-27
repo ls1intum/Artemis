@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';

@@ -15,7 +15,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';

@@ -16,7 +16,7 @@ import { TextEditorService } from 'app/text/overview/service/text-editor.service
 import { BehaviorSubject } from 'rxjs';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
-import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status/submission-result-status.component';
+import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
 import { TextEditorComponent } from 'app/text/overview/text-editor/text-editor.component';
 import { textEditorRoute } from 'app/text/overview/text-editor.route';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -27,7 +27,7 @@ import { ComplaintsFormComponent } from 'app/assessment/overview/complaint-form/
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { MockTextSubmissionService } from 'test/helpers/mocks/service/mock-text-submission.service';
-import { Language } from 'app/core/course/shared/entities/course.model';
+import { Language } from 'app/course/shared/entities/course.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -51,7 +51,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { RequestFeedbackButtonComponent } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { FormsModule } from '@angular/forms';

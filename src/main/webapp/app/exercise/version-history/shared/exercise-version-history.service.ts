@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { ParseLinks } from 'app/core/admin/system-notification-management/parse-links.service';
+import { ParseLinks } from 'app/admin/system-notification-management/parse-links.service';
 import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
 import { convertDateStringFromServer } from 'app/shared/util/date.utils';
 import dayjs from 'dayjs/esm';

@@ -10,11 +10,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.UserCourseNotificationStatus;
 import de.tum.cit.aet.artemis.communication.domain.UserCourseNotificationStatusType;
 import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationStatusRepository;
-import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
  * Service for managing user course notification statuses.

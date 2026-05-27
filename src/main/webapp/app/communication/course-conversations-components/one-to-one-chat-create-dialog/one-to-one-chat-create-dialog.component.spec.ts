@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { OneToOneChatCreateDialogComponent } from 'app/communication/course-conversations-components/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { CourseUsersSelectorComponent } from 'app/communication/course-users-selector/course-users-selector.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

@@ -23,7 +23,7 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { Subscription, firstValueFrom, take, timeout } from 'rxjs';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback } from 'app/assessment/shared/entities/feedback.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component';
 import { fromPairs, pickBy } from 'lodash-es';
 import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/suggestion/code-editor-tutor-assessment-inline-feedback-suggestion.component';

@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.jspecify.annotations.Nullable;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 
 /**
