@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, inject, input, output, signal } from '@angular/core';
 import { faChalkboardUser, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -49,6 +49,7 @@ export class ContextSelectionComponent {
     protected readonly faXmark = faXmark;
 
     readonly disabled = input<boolean>(false);
+    readonly contextChanged = output<void>();
 
     readonly courseId = signal<number | undefined>(this.chatService.getCourseId());
 
@@ -128,6 +129,7 @@ export class ContextSelectionComponent {
             .find((o) => o.value === value);
         if (option) {
             this.chatService.stagePendingContext(option.mode, option.entityId, option.label);
+            this.contextChanged.emit();
         }
     }
 
