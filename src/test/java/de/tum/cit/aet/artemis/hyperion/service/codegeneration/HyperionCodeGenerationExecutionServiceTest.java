@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.codegeneration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -455,10 +456,10 @@ class HyperionCodeGenerationExecutionServiceTest {
         File obsoleteFile = mock(File.class);
         String originalCommitId = "orig-hash";
         String newCommitId = "new-hash";
-        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
-        solutionParticipation.setId(99L);
-        solutionParticipation.setRepositoryUri("http://localhost/git/abc/abc-solution.git");
-        exercise.setSolutionParticipation(solutionParticipation);
+        TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
+        templateParticipation.setId(99L);
+        templateParticipation.setRepositoryUri("http://localhost/git/abc/abc-template.git");
+        exercise.setTemplateParticipation(templateParticipation);
 
         when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
         when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
@@ -468,25 +469,29 @@ class HyperionCodeGenerationExecutionServiceTest {
         doNothing().when(gitService).resetToOriginHead(repository);
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
         when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
-        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
+        when(templateStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
                 .thenReturn(new CodeGenerationResponseDTO(null, List.of(), List.of("src/main/java/OldSort.java")));
-        when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
-        doNothing().when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
-        when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
+        when(programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(exercise.getId())).thenReturn(templateParticipation);
+        doNothing().when(continuousIntegrationTriggerService).triggerBuild(templateParticipation, "new-hash", RepositoryType.TEMPLATE);
+        when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(templateParticipation));
 
         ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
         Result buildResult = mock(Result.class);
         when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(eq(99L), eq("new-hash"))).thenReturn(submission);
         when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(org.mockito.ArgumentMatchers.anyLong())).thenReturn(Optional.of(buildResult));
-        when(buildResult.getScore()).thenReturn(100.0);
-        when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(false);
+        when(buildResult.getScore()).thenReturn(0.0);
+        when(buildResult.getTestCaseCount()).thenReturn(1);
+        when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.TEMPLATE)).thenReturn(false);
 
-        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, false, publisher);
+        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.TEMPLATE, false, publisher);
 
         assertThat(result).isEqualTo(buildResult);
         verify(repositoryService).deleteFile(repository, "src/main/java/OldSort.java");
+        verify(publisher).fileDeleted("src/main/java/OldSort.java", RepositoryType.TEMPLATE, 1);
         verify(repositoryService).commitChanges(repository, user);
-        verify(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
+        verify(continuousIntegrationTriggerService).triggerBuild(templateParticipation, "new-hash", RepositoryType.TEMPLATE);
+        verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.SUCCESS, HyperionCodeGenerationEventDTO.CompletionReason.BUILD_SUCCEEDED, Map.of(), 1,
+                "Obsolete template files were removed from the template repository.");
     }
 
     @Test
@@ -603,25 +608,30 @@ class HyperionCodeGenerationExecutionServiceTest {
     void deleteObsoleteFiles_withSafeSourceFile_deletesExistingFile() throws Exception {
         Repository mockRepository = mock(Repository.class);
         File obsoleteFile = mock(File.class);
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
 
         when(gitService.getFileByName(mockRepository, "src/main/java/OldSort.java")).thenReturn(Optional.of(obsoleteFile));
 
-        boolean deletedAnyFile = ReflectionTestUtils.invokeMethod(service, "deleteObsoleteFiles", mockRepository, List.of("src/main/java/OldSort.java"), exercise);
+        boolean deletedAnyFile = ReflectionTestUtils.invokeMethod(service, "deleteObsoleteFiles", mockRepository, List.of("src/main/java/OldSort.java"), exercise,
+                RepositoryType.TEMPLATE, publisher, 2);
 
         assertThat(deletedAnyFile).isTrue();
         verify(repositoryService).deleteFile(mockRepository, "src/main/java/OldSort.java");
+        verify(publisher).fileDeleted("src/main/java/OldSort.java", RepositoryType.TEMPLATE, 2);
     }
 
     @Test
     void deleteObsoleteFiles_withUnsafePaths_ignoresDeletionRequests() throws Exception {
         Repository mockRepository = mock(Repository.class);
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
 
         boolean deletedAnyFile = ReflectionTestUtils.invokeMethod(service, "deleteObsoleteFiles", mockRepository,
-                List.of("pom.xml", "../src/main/java/OldSort.java", "src/../pom.xml", "/src/main/java/OldSort.java", ""), exercise);
+                List.of("pom.xml", "../src/main/java/OldSort.java", "src/../pom.xml", "/src/main/java/OldSort.java", ""), exercise, RepositoryType.TEMPLATE, publisher, 1);
 
         assertThat(deletedAnyFile).isFalse();
         verify(gitService, never()).getFileByName(eq(mockRepository), anyString());
         verify(repositoryService, never()).deleteFile(any(), anyString());
+        verify(publisher, never()).fileDeleted(anyString(), any(), anyInt());
     }
 
     @Test
@@ -793,12 +803,33 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(101L, "commit-hash")).thenReturn(submission);
         when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
         when(buildResult.getScore()).thenReturn(0.0);
+        when(buildResult.getTestCaseCount()).thenReturn(1);
         when(buildResult.isSuccessful()).thenReturn(false);
 
         Object outcome = ReflectionTestUtils.invokeMethod(service, "waitForBuildResult", exercise, "commit-hash", RepositoryType.TEMPLATE);
 
         assertThat(ReflectionTestUtils.getField(outcome, "result")).isEqualTo(buildResult);
         assertThat(ReflectionTestUtils.getField(outcome, "state")).hasToString("SUCCESS");
+    }
+
+    @Test
+    void waitForBuildResult_withTemplateCompileFailureScoreZero_returnsFailedOutcome() {
+        TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
+        templateParticipation.setId(102L);
+        ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
+        Result buildResult = mock(Result.class);
+
+        when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
+        when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(templateParticipation));
+        when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(102L, "commit-hash")).thenReturn(submission);
+        when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
+        when(buildResult.getScore()).thenReturn(0.0);
+        when(buildResult.getTestCaseCount()).thenReturn(0);
+
+        Object outcome = ReflectionTestUtils.invokeMethod(service, "waitForBuildResult", exercise, "commit-hash", RepositoryType.TEMPLATE);
+
+        assertThat(ReflectionTestUtils.getField(outcome, "result")).isEqualTo(buildResult);
+        assertThat(ReflectionTestUtils.getField(outcome, "state")).hasToString("FAILED");
     }
 
     @Test

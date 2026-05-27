@@ -7,7 +7,7 @@ export type HyperionCompletionReason = 'BUILD_SUCCEEDED' | 'NO_COMMITTED_FILES' 
 
 export type HyperionEvent =
     | { type: 'STARTED' | 'PROGRESS'; iteration?: number }
-    | { type: 'FILE_UPDATED' | 'NEW_FILE'; path: string; iteration?: number }
+    | { type: 'FILE_UPDATED' | 'NEW_FILE' | 'FILE_DELETED'; path: string; iteration?: number }
     | {
           type: 'DONE';
           success: boolean;

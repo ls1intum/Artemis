@@ -91,7 +91,8 @@ public class HyperionCodeGenerationExecutionService {
     private record BuildResultOutcome(Result result, BuildResultState state) {
     }
 
-    private record GenerationExecutionResult(Result result, BuildResultOutcome buildResultOutcome, String lastCommitHash, int attemptsUsed, boolean generatedFilesCommitted) {
+    private record GenerationExecutionResult(Result result, BuildResultOutcome buildResultOutcome, String lastCommitHash, int attemptsUsed, boolean generatedFilesCommitted,
+            boolean deletionOnly) {
     }
 
     private record GenerationAttemptResult(String commitHash, BuildResultOutcome buildResultOutcome) {
@@ -115,8 +116,10 @@ public class HyperionCodeGenerationExecutionService {
 
         private boolean generatedFilesCommitted;
 
+        private boolean deletionOnly;
+
         private GenerationExecutionResult snapshot() {
-            return new GenerationExecutionResult(result, buildResultOutcome, lastCommitHash, attemptsUsed, generatedFilesCommitted);
+            return new GenerationExecutionResult(result, buildResultOutcome, lastCommitHash, attemptsUsed, generatedFilesCommitted, deletionOnly);
         }
     }
 
@@ -259,7 +262,8 @@ public class HyperionCodeGenerationExecutionService {
         }
     }
 
-    private boolean deleteObsoleteFiles(Repository repository, List<String> deletedFiles, ProgrammingExercise exercise) throws IOException {
+    private boolean deleteObsoleteFiles(Repository repository, List<String> deletedFiles, ProgrammingExercise exercise, RepositoryType repositoryType,
+            HyperionCodeGenerationEventPublisher publisher, int iteration) throws IOException {
         boolean deletedAnyFile = false;
         for (String deletedFile : deletedFiles) {
             Optional<String> safePath = normalizeDeletableSourcePath(deletedFile);
@@ -272,6 +276,7 @@ public class HyperionCodeGenerationExecutionService {
                 continue;
             }
             repositoryService.deleteFile(repository, safePath.get());
+            publisher.fileDeleted(safePath.get(), repositoryType, iteration);
             deletedAnyFile = true;
             log.debug("Deleted obsolete file {} for exercise {}", safePath.get(), exercise.getId());
         }
@@ -469,7 +474,8 @@ public class HyperionCodeGenerationExecutionService {
         }
 
         HyperionCodeGenerationEventDTO.CompletionStatus completionStatus = determineCompletionStatus(executionResult.generatedFilesCommitted, executionResult.buildResultOutcome);
-        CompletionDetails completionDetails = buildCompletionDetails(repositoryType, executionResult.generatedFilesCommitted, executionResult.buildResultOutcome);
+        CompletionDetails completionDetails = buildCompletionDetails(repositoryType, executionResult.generatedFilesCommitted, executionResult.deletionOnly,
+                executionResult.buildResultOutcome);
         int reportedAttempts = executionResult.attemptsUsed;
         publisher.done(completionStatus, completionDetails.reason(), completionDetails.reasonParams(), reportedAttempts, completionDetails.message());
 
@@ -524,7 +530,7 @@ public class HyperionCodeGenerationExecutionService {
             return null;
         }
 
-        boolean deletedAnyFile = deleteObsoleteFiles(repository, deletedFiles, exercise);
+        boolean deletedAnyFile = deleteObsoleteFiles(repository, deletedFiles, exercise, repositoryType, publisher, executionProgress.attemptsUsed);
         boolean publishedAnyFile = publishGeneratedFiles(repository, generatedFiles, exercise, repositoryType, publisher, executionProgress.attemptsUsed);
         if (!deletedAnyFile && !publishedAnyFile) {
             return null;
@@ -532,6 +538,7 @@ public class HyperionCodeGenerationExecutionService {
         CommitTriggerResult commitTriggerResult = commitAndGetHash(repository, user, repositoryUri, exercise, repositoryType);
         String commitHash = commitTriggerResult.commitHash();
         executionProgress.lastCommitHash = commitHash;
+        executionProgress.deletionOnly = !publishedAnyFile && (!executionProgress.generatedFilesCommitted || executionProgress.deletionOnly);
         executionProgress.generatedFilesCommitted = true;
         if (!commitTriggerResult.buildTriggered()) {
             return new GenerationAttemptResult(commitHash, new BuildResultOutcome(null, BuildResultState.CI_TRIGGER_FAILED));
@@ -556,14 +563,14 @@ public class HyperionCodeGenerationExecutionService {
         return publishedAnyFile;
     }
 
-    private CompletionDetails buildCompletionDetails(RepositoryType repositoryType, boolean generatedFilesCommitted, BuildResultOutcome buildResultOutcome) {
+    private CompletionDetails buildCompletionDetails(RepositoryType repositoryType, boolean generatedFilesCommitted, boolean deletionOnly, BuildResultOutcome buildResultOutcome) {
         if (!generatedFilesCommitted) {
             return new CompletionDetails(repositoryGenerationLabel(repositoryType) + " did not produce any committed files.",
                     HyperionCodeGenerationEventDTO.CompletionReason.NO_COMMITTED_FILES, Map.of());
         }
 
         HyperionCodeGenerationEventDTO.CompletionReason completionReason = buildCompletionReason(buildResultOutcome.state());
-        return new CompletionDetails(committedFilesMessagePrefix(repositoryType) + buildResultMessageSuffix(completionReason), completionReason, Map.of());
+        return new CompletionDetails(committedFilesMessagePrefix(repositoryType, deletionOnly) + buildResultMessageSuffix(completionReason), completionReason, Map.of());
     }
 
     private HyperionCodeGenerationEventDTO.CompletionStatus determineCompletionStatus(boolean generatedFilesCommitted, BuildResultOutcome buildResultOutcome) {
@@ -584,7 +591,15 @@ public class HyperionCodeGenerationExecutionService {
         };
     }
 
-    private String committedFilesMessagePrefix(RepositoryType repositoryType) {
+    private String committedFilesMessagePrefix(RepositoryType repositoryType, boolean deletionOnly) {
+        if (deletionOnly) {
+            return switch (repositoryType) {
+                case TEMPLATE -> "Obsolete template files were removed from the template repository";
+                case SOLUTION -> "Obsolete solution files were removed from the solution repository";
+                case TESTS -> "Obsolete test files were removed from the test repository";
+                default -> "Obsolete files were removed from the repository";
+            };
+        }
         return switch (repositoryType) {
             case TEMPLATE -> "Template files were generated and committed to the template repository";
             case SOLUTION -> "Solution files were generated and committed to the solution repository";
@@ -767,7 +782,7 @@ public class HyperionCodeGenerationExecutionService {
             return false;
         }
         return switch (repositoryType) {
-            case TEMPLATE -> isExactScore(result, 0.0);
+            case TEMPLATE -> isExactScore(result, 0.0) && result.getTestCaseCount() != null && result.getTestCaseCount() > 0;
             case SOLUTION -> isExactScore(result, 100.0);
             case TESTS -> Boolean.TRUE.equals(result.isSuccessful());
             default -> false;

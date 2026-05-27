@@ -88,10 +88,10 @@ const CODE_GENERATION_STATUS_SESSION_STORAGE_TTL_MS = 3_600_000;
 
 type SupportedCodeGenerationRepositoryType = (typeof SUPPORTED_CODE_GENERATION_REPOSITORIES)[number];
 type CodeGenerationExecutionState = 'idle' | 'queued' | 'running' | 'success' | 'warning' | 'error' | 'skipped';
-type CodeGenerationFileEventType = 'FILE_UPDATED' | 'NEW_FILE';
+type CodeGenerationFileEventType = 'FILE_UPDATED' | 'NEW_FILE' | 'FILE_DELETED';
 type CodeGenerationRepositoryTranslationKey = `artemisApp.programmingExercise.codeGeneration.repositories.${Lowercase<SupportedCodeGenerationRepositoryType>}`;
 type CodeGenerationStateTranslationKey = `artemisApp.programmingExercise.codeGeneration.status.${CodeGenerationExecutionState}`;
-type CodeGenerationFileActionTranslationKey = `artemisApp.programmingExercise.codeGeneration.status.${'fileCreated' | 'fileUpdated'}`;
+type CodeGenerationFileActionTranslationKey = `artemisApp.programmingExercise.codeGeneration.status.${'fileCreated' | 'fileUpdated' | 'fileDeleted'}`;
 
 const CODE_GENERATION_STATE_CLASSES: Record<CodeGenerationExecutionState, string> = {
     idle: 'text-body-secondary',
@@ -106,6 +106,7 @@ const CODE_GENERATION_STATE_CLASSES: Record<CodeGenerationExecutionState, string
 const CODE_GENERATION_FILE_ACTION_TRANSLATION_KEYS: Record<CodeGenerationFileEventType, CodeGenerationFileActionTranslationKey> = {
     FILE_UPDATED: 'artemisApp.programmingExercise.codeGeneration.status.fileUpdated',
     NEW_FILE: 'artemisApp.programmingExercise.codeGeneration.status.fileCreated',
+    FILE_DELETED: 'artemisApp.programmingExercise.codeGeneration.status.fileDeleted',
 };
 
 interface CodeGenerationFileActivity {
@@ -764,7 +765,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param event websocket event emitted by Hyperion
      */
     private handleCodeGenerationJobEvent(repositoryType: SupportedCodeGenerationRepositoryType, event: HyperionEvent) {
-        if (event.type === 'FILE_UPDATED' || event.type === 'NEW_FILE') {
+        if (event.type === 'FILE_UPDATED' || event.type === 'NEW_FILE' || event.type === 'FILE_DELETED') {
             this.registerCodeGenerationFileActivity(repositoryType, event.type, event.path, event.iteration);
             this.scheduleCodeGenerationRepositoryPull(repositoryType);
             return;

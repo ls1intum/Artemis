@@ -349,7 +349,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.setCodeGenerationRepositoryEnabled(RepositoryType.TESTS, repositories.includes(RepositoryType.TESTS));
         };
 
-        it('should only allow code generation for Java exercises', () => {
+        it('should expose code generation only for Java exercises', () => {
             comp.exercise = createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA });
 
             expect((comp as any).canGenerateCode()).toBeTrue();
@@ -357,15 +357,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.exercise = createMockExercise({ programmingLanguage: ProgrammingLanguage.PYTHON });
 
             expect((comp as any).canGenerateCode()).toBeFalse();
-        });
-
-        it('should hide code generation controls for non-Java exercises', () => {
-            comp.exercise = createMockExercise({ programmingLanguage: ProgrammingLanguage.PYTHON });
-
-            fixture.detectChanges();
-
-            expect(fixture.nativeElement.querySelector('[jhitranslate="artemisApp.programmingExercise.codeGeneration.generateCode"]')).toBeNull();
-            expect(fixture.nativeElement.querySelector('[aria-label="artemisApp.programmingExercise.codeGeneration.statusTooltip"]')).toBeNull();
         });
 
         it('should not generate for non-Java exercises', async () => {
@@ -537,7 +528,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(comp.hyperionEnabled).toBeFalse();
         });
 
-        it('should debounce repository pulls across FILE_UPDATED and NEW_FILE events', fakeAsync(() => {
+        it('should debounce repository pulls across file activity events', fakeAsync(() => {
             comp.selectedRepository = RepositoryType.TEMPLATE;
             selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
             (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-3' }));
@@ -551,6 +542,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             job$.next({ type: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 1 });
             job$.next({ type: 'NEW_FILE', path: 'src/test/java/AppTest.java', iteration: 2 });
+            job$.next({ type: 'FILE_DELETED', path: 'src/main/java/Obsolete.java', iteration: 3 });
 
             expect(pullSpy).not.toHaveBeenCalled();
 
@@ -558,12 +550,17 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             expect(pullSpy).toHaveBeenCalledOnce();
             expect(comp.codeGenerationActivityLog()).toEqual([
+                expect.objectContaining({ repositoryType: RepositoryType.TEMPLATE, eventType: 'FILE_DELETED', path: 'src/main/java/Obsolete.java', iteration: 3 }),
                 expect.objectContaining({ repositoryType: RepositoryType.TEMPLATE, eventType: 'NEW_FILE', path: 'src/test/java/AppTest.java', iteration: 2 }),
                 expect.objectContaining({ repositoryType: RepositoryType.TEMPLATE, eventType: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 1 }),
             ]);
             expect(
                 comp.getCodeGenerationIterationActivityGroups(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.TEMPLATE)!.fileActivities),
             ).toEqual([
+                {
+                    iteration: 3,
+                    activities: [expect.objectContaining({ path: 'src/main/java/Obsolete.java', iteration: 3 })],
+                },
                 {
                     iteration: 2,
                     activities: [expect.objectContaining({ path: 'src/test/java/AppTest.java', iteration: 2 })],

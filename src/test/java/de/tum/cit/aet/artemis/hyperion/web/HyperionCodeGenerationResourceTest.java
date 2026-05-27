@@ -113,6 +113,18 @@ class HyperionCodeGenerationResourceTest {
     }
 
     @Test
+    void generateCode_withNonJavaExercise_throwsException() {
+        CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false);
+        testExercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
+
+        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
+
+        assertThatThrownBy(() -> resource.generateCode(1L, request)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("Code generation is only supported for Java exercises");
+        verify(codeGenerationJobService, never()).startJob(testUser, testExercise, null, RepositoryType.SOLUTION, false);
+    }
+
+    @Test
     void validateGenerationRequest_withNegativeExerciseId_throwsException() {
         CodeGenerationRequestDTO request = new CodeGenerationRequestDTO(RepositoryType.SOLUTION, false);
 

@@ -352,7 +352,7 @@
                 },
                 "activityTitle": "Dateiaktivität",
                 "iteration": "Iteration {{iteration}}",
-                "noActivity": "Es wurden noch keine Dateien erstellt oder aktualisiert.",
+                "noActivity": "Es wurden noch keine Dateien erstellt, aktualisiert oder entfernt.",
                 "attempts": "Versuche: {{attempts}}",
                 "status": {
                     "idle": "Nicht gestartet",
@@ -364,7 +364,8 @@
                     "skipped": "Übersprungen",
                     "skippedMessage": "Übersprungen, weil eine vorherige Repository-Generierung fehlgeschlagen ist.",
                     "fileCreated": "erstellt",
-                    "fileUpdated": "aktualisiert"
+                    "fileUpdated": "aktualisiert",
+                    "fileDeleted": "entfernt"
                 }
             },
             "status": {

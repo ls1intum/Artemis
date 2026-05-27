@@ -135,4 +135,27 @@ class HyperionCodeGenerationTaskServiceTest {
         assertThat(payload.iteration()).isEqualTo(2);
         verify(cleanup).run();
     }
+
+    @Test
+    void runJobAsync_whenPublisherSendsFileDeletion_forwardsIterationInPayload() {
+        Runnable cleanup = mock(Runnable.class);
+
+        service.runJobAsync("job-5", user, exercise, 1L, RepositoryType.TEMPLATE, false, cleanup);
+
+        ArgumentCaptor<HyperionCodeGenerationEventPublisher> publisherCaptor = ArgumentCaptor.forClass(HyperionCodeGenerationEventPublisher.class);
+        verify(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.TEMPLATE), eq(false), publisherCaptor.capture());
+
+        reset(websocket);
+        publisherCaptor.getValue().fileDeleted("src/main/java/Obsolete.java", RepositoryType.TEMPLATE, 3);
+
+        ArgumentCaptor<HyperionCodeGenerationEventDTO> payloadCaptor = ArgumentCaptor.forClass(HyperionCodeGenerationEventDTO.class);
+        verify(websocket).send(eq("student1"), eq("code-generation/jobs/job-5"), payloadCaptor.capture());
+
+        HyperionCodeGenerationEventDTO payload = payloadCaptor.getValue();
+        assertThat(payload.type()).isEqualTo(HyperionCodeGenerationEventDTO.Type.FILE_DELETED);
+        assertThat(payload.path()).isEqualTo("src/main/java/Obsolete.java");
+        assertThat(payload.repositoryType()).isEqualTo(RepositoryType.TEMPLATE);
+        assertThat(payload.iteration()).isEqualTo(3);
+        verify(cleanup).run();
+    }
 }

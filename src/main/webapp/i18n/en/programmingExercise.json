@@ -352,7 +352,7 @@
                 },
                 "activityTitle": "File Activity",
                 "iteration": "Iteration {{iteration}}",
-                "noActivity": "No files have been created or updated yet.",
+                "noActivity": "No files have been created, updated, or removed yet.",
                 "attempts": "Attempts made: {{attempts}}",
                 "status": {
                     "idle": "Not started",
@@ -364,7 +364,8 @@
                     "skipped": "Skipped",
                     "skippedMessage": "Skipped because a previous repository generation failed.",
                     "fileCreated": "created",
-                    "fileUpdated": "updated"
+                    "fileUpdated": "updated",
+                    "fileDeleted": "removed"
                 }
             },
             "status": {

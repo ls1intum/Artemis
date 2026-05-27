@@ -107,6 +107,12 @@ public class HyperionCodeGenerationTaskService {
         }
 
         @Override
+        public void fileDeleted(String path, RepositoryType repoType, int iteration) {
+            websocket.send(login, topicSuffix, new HyperionCodeGenerationEventDTO(HyperionCodeGenerationEventDTO.Type.FILE_DELETED, jobId, exercise.getId(), iteration, repoType,
+                    path, null, null, null, null, null, null));
+        }
+
+        @Override
         public void done(HyperionCodeGenerationEventDTO.CompletionStatus completionStatus, HyperionCodeGenerationEventDTO.CompletionReason completionReason,
                 Map<String, String> completionReasonParams, int attemptsUsed, String message) {
             boolean success = completionStatus == HyperionCodeGenerationEventDTO.CompletionStatus.SUCCESS;
