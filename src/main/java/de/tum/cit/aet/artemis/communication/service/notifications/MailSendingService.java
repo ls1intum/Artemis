@@ -77,6 +77,15 @@ public class MailSendingService {
     }
 
     /**
+     * Returns whether mail sending is configured.
+     *
+     * @return {@code true} if mail sending is properly configured, {@code false} otherwise
+     */
+    public boolean isMailConfigured() {
+        return mailConfigured;
+    }
+
+    /**
      * Sends an e-mail to the specified sender asynchronously
      *
      * @param recipient   who should be contacted.

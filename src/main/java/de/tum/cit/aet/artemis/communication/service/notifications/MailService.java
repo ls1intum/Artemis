@@ -20,6 +20,8 @@ import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
 import de.tum.cit.aet.artemis.core.dto.ComponentVulnerabilitiesDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisDashboardAlertDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisDashboardDigestDTO;
 
 /**
  * Service for preparing and sending emails.
@@ -206,5 +208,33 @@ public class MailService {
         context.setVariable(VERSION_INFO, versionInfo);
         context.setVariable(SHOULD_RECOMMEND_UPGRADE, shouldRecommendUpgrade);
         prepareTemplateAndSendEmail(admin, "mail/vulnerabilityScanResultEmail", "email.vulnerabilityScan.title", context);
+    }
+
+    /**
+     * Sends the Iris dashboard daily digest email.
+     *
+     * @param admin  the admin user to notify
+     * @param digest the digest data to include in the email
+     */
+    public void sendIrisDashboardDigestEmail(User admin, IrisDashboardDigestDTO digest) {
+        log.debug("Sending Iris dashboard digest email to admin email address '{}'", admin.getEmail());
+        Locale locale = Locale.forLanguageTag(admin.getLangKey());
+        Context context = createBaseContext(admin, locale);
+        context.setVariable("digest", digest);
+        prepareTemplateAndSendEmail(admin, "mail/irisDashboardDigest", "email.irisDashboardDigest.title", context);
+    }
+
+    /**
+     * Sends the Iris dashboard alert email.
+     *
+     * @param admin the admin user to notify
+     * @param alert the alert data to include in the email
+     */
+    public void sendIrisDashboardAlertEmail(User admin, IrisDashboardAlertDTO alert) {
+        log.debug("Sending Iris dashboard alert email to admin email address '{}'", admin.getEmail());
+        Locale locale = Locale.forLanguageTag(admin.getLangKey());
+        Context context = createBaseContext(admin, locale);
+        context.setVariable("alert", alert);
+        prepareTemplateAndSendEmail(admin, "mail/irisDashboardAlert", "email.irisDashboardAlert.title", context);
     }
 }
