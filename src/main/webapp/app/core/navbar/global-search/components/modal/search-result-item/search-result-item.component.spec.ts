@@ -87,4 +87,101 @@ describe('SearchResultItemComponent', () => {
         component['onClick']();
         expect(spy).toHaveBeenCalledWith(component.result());
     });
+
+    describe('cleanedDescription', () => {
+        it('should strip a heading first line matching the title', () => {
+            fixture.componentRef.setInput('result', {
+                id: '1',
+                title: 'My Exercise',
+                type: 'exercise',
+                description: '# My Exercise\nThis is the body.',
+            } as GlobalSearchResult);
+            fixture.detectChanges();
+
+            expect(component['cleanedDescription']()).toBe('This is the body.');
+        });
+
+        it('should strip a bold first line matching the title', () => {
+            fixture.componentRef.setInput('result', {
+                id: '1',
+                title: 'My Exercise',
+                type: 'exercise',
+                description: '**My Exercise**\nThis is the body.',
+            } as GlobalSearchResult);
+            fixture.detectChanges();
+
+            expect(component['cleanedDescription']()).toBe('This is the body.');
+        });
+
+        it('should strip an italic first line matching the title', () => {
+            fixture.componentRef.setInput('result', {
+                id: '1',
+                title: 'My Exercise',
+                type: 'exercise',
+                description: '*My Exercise*\nThis is the body.',
+            } as GlobalSearchResult);
+            fixture.detectChanges();
+
+            expect(component['cleanedDescription']()).toBe('This is the body.');
+        });
+
+        it('should strip a plain first line matching the title', () => {
+            fixture.componentRef.setInput('result', {
+                id: '1',
+                title: 'My Exercise',
+                type: 'exercise',
+                description: 'My Exercise\nThis is the body.',
+            } as GlobalSearchResult);
+            fixture.detectChanges();
+
+            expect(component['cleanedDescription']()).toBe('This is the body.');
+        });
+
+        it('should return undefined when description equals only the title heading', () => {
+            fixture.componentRef.setInput('result', {
+                id: '1',
+                title: 'My Exercise',
+                type: 'exercise',
+                description: '# My Exercise',
+            } as GlobalSearchResult);
+            fixture.detectChanges();
+
+            expect(component['cleanedDescription']()).toBeUndefined();
+        });
+
+        it('should return the full description when the first line does not match the title', () => {
+            fixture.componentRef.setInput('result', {
+                id: '1',
+                title: 'My Exercise',
+                type: 'exercise',
+                description: '# Different Heading\nThis is the body.',
+            } as GlobalSearchResult);
+            fixture.detectChanges();
+
+            expect(component['cleanedDescription']()).toBe('# Different Heading\nThis is the body.');
+        });
+
+        it('should return undefined for an empty description', () => {
+            fixture.componentRef.setInput('result', {
+                id: '1',
+                title: 'My Exercise',
+                type: 'exercise',
+                description: '',
+            } as GlobalSearchResult);
+            fixture.detectChanges();
+
+            expect(component['cleanedDescription']()).toBeUndefined();
+        });
+
+        it('should return undefined for an undefined description', () => {
+            fixture.componentRef.setInput('result', {
+                id: '1',
+                title: 'My Exercise',
+                type: 'exercise',
+            } as GlobalSearchResult);
+            fixture.detectChanges();
+
+            expect(component['cleanedDescription']()).toBeUndefined();
+        });
+    });
 });
