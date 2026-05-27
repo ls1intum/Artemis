@@ -72,6 +72,9 @@ test.describe('Course management', { tag: '@fast' }, () => {
         });
 
         test('Manually adds and removes a student', async ({ navigationBar, courseManagement }) => {
+            // 4 openCourseManagement + 4 openCourse navigations + add/remove flows easily
+            // exceed the @fast 60s budget under heavy multi-node load. Triple it.
+            test.slow();
             const username = studentOne.username;
             await navigationBar.openCourseManagement();
             await courseManagement.openCourse(course.id!);
@@ -275,6 +278,11 @@ test.describe('Course management', { tag: '@fast' }, () => {
             courseMessages,
             communicationAPIRequests,
         }) => {
+            // Course delete with summary spawns ~15 API requests to populate the course +
+            // a slow DELETE on a course that has exercises/exam/messages attached, then
+            // re-loads course-management-overview which is a heavy aggregation. Even the
+            // tripled @slow budget (180s) routinely overruns under heavy multi-node load.
+            test.setTimeout(360_000);
             // Use API calls instead of UI navigation for faster user creation
             await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
             await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
