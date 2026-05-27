@@ -85,6 +85,9 @@ artemis:
     url: http://localhost:5100
     secret: abcdef12345
     restricted-modules: module_text_llm,module_programming_llm
+    default-text-module: module_text_llm
+    default-programming-module: module_programming_llm
+    default-modeling-module: module_modeling_llm
   apollon:
     conversion-service-url: http://localhost:8080
   hyperion:
