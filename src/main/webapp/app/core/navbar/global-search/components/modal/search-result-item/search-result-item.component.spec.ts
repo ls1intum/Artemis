@@ -183,5 +183,77 @@ describe('SearchResultItemComponent', () => {
 
             expect(component['cleanedDescription']()).toBeUndefined();
         });
+
+        it('should truncate a long description and append ellipsis', () => {
+            const longText = 'A'.repeat(400);
+            fixture.componentRef.setInput('result', {
+                id: '1',
+                title: 'My Exercise',
+                type: 'exercise',
+                description: longText,
+            } as GlobalSearchResult);
+            fixture.detectChanges();
+
+            const result = component['cleanedDescription']()!;
+            expect(result).toHaveLength(301); // 300 chars + ellipsis
+            expect(result.endsWith('…')).toBe(true);
+            expect(result).not.toContain('```');
+        });
+
+        it('should close an open fenced code block when truncating', () => {
+            const description = 'Some intro\n```\n' + 'X'.repeat(400);
+            fixture.componentRef.setInput('result', {
+                id: '1',
+                title: 'My Exercise',
+                type: 'exercise',
+                description,
+            } as GlobalSearchResult);
+            fixture.detectChanges();
+
+            const result = component['cleanedDescription']()!;
+            expect(result.endsWith('…\n```')).toBe(true);
+        });
+
+        it('should not close code block when truncation lands after an even number of fences', () => {
+            const description = '```\ncode\n```\n' + 'Y'.repeat(400);
+            fixture.componentRef.setInput('result', {
+                id: '1',
+                title: 'My Exercise',
+                type: 'exercise',
+                description,
+            } as GlobalSearchResult);
+            fixture.detectChanges();
+
+            const result = component['cleanedDescription']()!;
+            expect(result.endsWith('…')).toBe(true);
+            expect(result.endsWith('…\n```')).toBe(false);
+        });
+
+        it('should not truncate a short description', () => {
+            fixture.componentRef.setInput('result', {
+                id: '1',
+                title: 'My Exercise',
+                type: 'exercise',
+                description: 'Short description.',
+            } as GlobalSearchResult);
+            fixture.detectChanges();
+
+            expect(component['cleanedDescription']()).toBe('Short description.');
+        });
+
+        it('should truncate description after stripping title line', () => {
+            const longBody = 'B'.repeat(400);
+            fixture.componentRef.setInput('result', {
+                id: '1',
+                title: 'My Exercise',
+                type: 'exercise',
+                description: '# My Exercise\n' + longBody,
+            } as GlobalSearchResult);
+            fixture.detectChanges();
+
+            const result = component['cleanedDescription']()!;
+            expect(result).toHaveLength(301);
+            expect(result.endsWith('…')).toBe(true);
+        });
     });
 });

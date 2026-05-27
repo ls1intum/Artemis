@@ -54,6 +54,36 @@ function stripMarkdownFormatting(text: string): string {
         .trim();
 }
 
+/** Maximum number of characters to keep in a search result description before truncating. */
+const DESCRIPTION_MAX_LENGTH = 300;
+
+/**
+ * Matches fenced code block delimiters (``` with optional language tag).
+ */
+const FENCED_CODE_BLOCK_PATTERN = /^(`{3,})/gm;
+
+/**
+ * Truncates a markdown description to a maximum length.
+ * If the truncation lands inside a fenced code block, the block is closed properly.
+ */
+function truncateDescription(description: string, maxLength: number = DESCRIPTION_MAX_LENGTH): string {
+    if (description.length <= maxLength) {
+        return description;
+    }
+
+    const truncated = description.substring(0, maxLength);
+
+    // Count fenced code block delimiters to detect if we're inside an unclosed block
+    const fenceMatches = truncated.match(FENCED_CODE_BLOCK_PATTERN);
+    const insideCodeBlock = fenceMatches != undefined && fenceMatches.length % 2 !== 0;
+
+    if (insideCodeBlock) {
+        return truncated + '…\n```';
+    }
+
+    return truncated + '…';
+}
+
 @Component({
     selector: 'jhi-global-search-result-item',
     standalone: true,
@@ -113,10 +143,10 @@ export class SearchResultItemComponent {
         const firstLineMatchesTitle = title && strippedFirstLine.toLowerCase() === title.trim().toLowerCase();
         if (firstLineMatchesTitle) {
             const descriptionWithoutFirstLine = lines.slice(1).join('\n').trim();
-            return descriptionWithoutFirstLine || undefined;
+            return descriptionWithoutFirstLine ? truncateDescription(descriptionWithoutFirstLine) : undefined;
         }
 
-        return description;
+        return truncateDescription(description);
     });
 
     protected onClick() {
