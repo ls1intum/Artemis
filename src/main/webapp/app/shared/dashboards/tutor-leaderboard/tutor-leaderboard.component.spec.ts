@@ -91,4 +91,28 @@ describe('TutorLeaderboardComponent', () => {
             expect(table.tBodies).toHaveLength(1);
         });
     });
+
+    describe('sorting re-renders the table', () => {
+        function renderedNames(): string[] {
+            const cells = fixture.debugElement.nativeElement.querySelectorAll('tbody tr td:nth-child(2)');
+            return Array.from(cells as NodeListOf<HTMLTableCellElement>).map((cell) => cell.textContent!.trim());
+        }
+
+        it('reorders the rendered rows when sorting by name using natural ordering', () => {
+            // Use the real sort service so the DOM order reflects an actual sort.
+            sortByPropertySpy.mockRestore();
+            const user9 = { name: 'Test User 9', userId: 1 } as TutorLeaderboardElement;
+            const user10 = { name: 'Test User 10', userId: 2 } as TutorLeaderboardElement;
+            const user8 = { name: 'Test User 8', userId: 3 } as TutorLeaderboardElement;
+            fixture.componentRef.setInput('tutorsData', [user9, user10, user8]);
+            fixture.detectChanges();
+
+            comp.sortPredicate.set('name');
+            comp.reverseOrder.set(true); // ascending
+            fixture.detectChanges();
+
+            // Natural ordering keeps "Test User 10" after "Test User 9" instead of right after "Test User 1".
+            expect(renderedNames()).toEqual(['Test User 8', 'Test User 9', 'Test User 10']);
+        });
+    });
 });

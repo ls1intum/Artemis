@@ -79,4 +79,27 @@ describe('RangeSliderComponent', () => {
         fixture.detectChanges();
         expect(component['localMaxValue']()).toBe(60);
     });
+
+    it('clamps the min thumb in the DOM when dragged past the max', () => {
+        const minInput: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('input.range-min');
+        // Simulate the browser moving the thumb beyond the max selection during a drag.
+        minInput.value = '90';
+        minInput.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        // selectedMaxValue is 80, step 5 -> min must be clamped to 75 both in state and in the DOM.
+        expect(component['localMinValue']()).toBe(75);
+        expect(minInput.value).toBe('75');
+    });
+
+    it('clamps the max thumb in the DOM when dragged below the min', () => {
+        const maxInput: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('input.range-max');
+        maxInput.value = '10';
+        maxInput.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        // selectedMinValue is 20, step 5 -> max must be clamped to 25 both in state and in the DOM.
+        expect(component['localMaxValue']()).toBe(25);
+        expect(maxInput.value).toBe('25');
+    });
 });

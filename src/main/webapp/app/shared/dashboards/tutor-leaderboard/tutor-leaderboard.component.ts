@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -42,15 +42,13 @@ export class TutorLeaderboardComponent {
     readonly sortPredicate = signal<string>('points');
     readonly reverseOrder = signal<boolean>(false);
 
+    /**
+     * Rows sorted by the current predicate and direction. Returns a fresh array (rather than sorting
+     * the input in place) so the new reference re-renders the `@for` and the parent-supplied input is
+     * not mutated as a side effect.
+     */
+    readonly sortedTutorsData = computed<TutorLeaderboardElement[]>(() => this.sortService.sortByProperty([...this.tutorsData()], this.sortPredicate(), this.reverseOrder()));
+
     readonly faSort = faSort;
     readonly faExclamationTriangle = faExclamationTriangle;
-
-    constructor() {
-        // Re-sorts whenever the data, predicate or sort direction changes. Sorts in place; signal
-        // identity equality prevents an infinite loop because the array reference does not change.
-        effect(() => {
-            const data = this.tutorsData();
-            this.sortService.sortByProperty(data, this.sortPredicate(), this.reverseOrder());
-        });
-    }
 }

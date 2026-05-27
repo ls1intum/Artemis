@@ -85,13 +85,25 @@ export class RangeSliderComponent {
         if (minSliderIsUpdated) {
             if (this.localMinValue() >= this.localMaxValue()) {
                 this.localMinValue.set(this.localMaxValue() - this.step());
+                this.reflectClampedValueToThumb(inputEl, this.localMinValue());
             }
             return this.localMinValue();
         }
 
         if (this.localMaxValue() <= this.localMinValue()) {
             this.localMaxValue.set(this.localMinValue() + this.step());
+            this.reflectClampedValueToThumb(inputEl, this.localMaxValue());
         }
         return this.localMaxValue();
+    }
+
+    /**
+     * Writes the clamped value back to the slider thumb directly. `NgModel` only propagates a model
+     * change to the view in a deferred microtask, which is not reliably flushed under zoneless change
+     * detection. Without this the thumb would stay at the invalid dragged position even though the
+     * underlying signal is already clamped.
+     */
+    private reflectClampedValueToThumb(inputEl: HTMLInputElement, clampedValue: number): void {
+        inputEl.value = String(clampedValue);
     }
 }

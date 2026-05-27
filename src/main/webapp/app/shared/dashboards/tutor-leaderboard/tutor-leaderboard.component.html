@@ -46,7 +46,7 @@
             </tr>
         </thead>
         <tbody>
-            @for (tutor of tutorsData(); track tutor; let i = $index) {
+            @for (tutor of sortedTutorsData(); track tutor; let i = $index) {
                 <tr>
                     <td>{{ i + 1 }}</td>
                     <td>
