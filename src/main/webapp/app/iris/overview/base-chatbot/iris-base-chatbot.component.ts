@@ -1151,15 +1151,11 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     openNewSession() {
-        if (this.isChatHistoryAvailable()) {
-            // Dashboard: always create a new session with the course as context
-            const courseId = this.chatService.getCourseId();
-            if (courseId !== undefined) {
-                this.chatService.switchToNewSession(ChatServiceMode.COURSE, courseId);
-                return;
-            }
+        const pageContext = this.chatService.pageContext();
+        this.chatService.startFreshChat();
+        if (pageContext) {
+            this.chatService.stagePendingContext(pageContext.mode, pageContext.entityId, pageContext.entityName);
         }
-        this.chatService.clearChat();
     }
 
     openAboutIrisModal(): void {

@@ -91,7 +91,7 @@ export class AboutIrisModalComponent {
     }
 
     tryIris(): void {
-        this.chatService.clearChat();
+        this.chatService.startFreshChat();
         this.dynamicDialogRef?.close();
         this.matDialogRef?.close();
     }

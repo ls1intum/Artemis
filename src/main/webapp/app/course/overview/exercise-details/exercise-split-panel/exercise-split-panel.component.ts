@@ -191,7 +191,7 @@ export class ExerciseSplitPanelComponent {
             const mode = ExerciseSplitPanelComponent.getChatMode(exercise.type!);
             if (this.showIris() && exercise.id && mode) {
                 // Use untracked to avoid re-running this effect when chatService state changes
-                untracked(() => this.chatService.switchTo(mode, exercise.id!));
+                untracked(() => this.chatService.openChatForContext(mode, exercise.id!, exercise.title));
             }
         });
         effect(() => {

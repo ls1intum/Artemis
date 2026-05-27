@@ -105,8 +105,8 @@ export class IrisExerciseChatbotButtonComponent {
             }
         });
 
-        // Effect to switch chat context when mode or route params change
-        // Using effect instead of subscription ensures inputs are set before first run
+        // Reuse the existing session tagged with this lecture/exercise if one exists in the history;
+        // otherwise the COURSE chat is opened with the lecture/exercise pre-selected as pending context.
         effect(() => {
             const mode = this.mode();
             const params = this.routeParams();
@@ -114,8 +114,7 @@ export class IrisExerciseChatbotButtonComponent {
             if (rawId) {
                 const id = parseInt(rawId, 10);
                 if (!Number.isNaN(id)) {
-                    // Use untracked to avoid re-running this effect when chatService state changes
-                    untracked(() => this.chatService.switchTo(mode, id));
+                    untracked(() => this.chatService.openChatForContext(mode, id));
                 }
             }
         });

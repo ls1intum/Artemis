@@ -127,14 +127,14 @@ export class ContextSelectionComponent {
             .flatMap((g) => g.items)
             .find((o) => o.value === value);
         if (option) {
-            this.chatService.switchContextOfCurrentSession(option.mode, option.entityId, option.label);
+            this.chatService.stagePendingContext(option.mode, option.entityId, option.label);
         }
     }
 
     onChipRemove(): void {
         const courseId = this.courseId();
         if (courseId !== undefined) {
-            this.chatService.switchContextOfCurrentSession(ChatServiceMode.COURSE, courseId);
+            this.chatService.stagePendingContext(ChatServiceMode.COURSE, courseId);
         }
     }
 }

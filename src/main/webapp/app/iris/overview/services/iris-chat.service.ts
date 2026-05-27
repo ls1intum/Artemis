@@ -59,16 +59,17 @@ export class IrisChatService implements OnDestroy {
 
     private currentSessionIdSubject = new BehaviorSubject<number | undefined>(undefined);
     private currentSessionId$ = this.currentSessionIdSubject.asObservable();
+    /** What the active session is about. Set when a session loads or is created. */
     private readonly _committedContext = signal<SessionContext | undefined>(undefined);
     readonly committedContext = this._committedContext.asReadonly();
-    /**
-     * Set only when the user has selected a different context via the dropdown but has not yet sent a
-     * message. Undefined means "no divergence from committed". The display context (dropdown, placeholder)
-     * is derived as {@link _pendingContext} ?? {@link _committedContext}, so clearing this
-     * automatically reverts the UI to the committed state without any manual sync.
-     */
+
+    /** User's unsent override of {@link _committedContext}. Cleared on send (commits) or on revert. */
     private readonly _pendingContext = signal<SessionContext | undefined>(undefined);
     readonly displayContext = computed(() => this._pendingContext() ?? this._committedContext());
+
+    /** Entity scope of the current page. Seeds {@link _pendingContext} when "New chat" starts a fresh session. */
+    private readonly _pageContext = signal<SessionContext | undefined>(undefined);
+    readonly pageContext = this._pageContext.asReadonly();
 
     public get sessionId(): number | undefined {
         return this.currentSessionIdSubject.value;
@@ -181,6 +182,7 @@ export class IrisChatService implements OnDestroy {
         this.sessionId = undefined;
         this._committedContext.set(undefined);
         this._pendingContext.set(undefined);
+        this._pageContext.set(undefined);
         this.messages.next([]);
         this.stages.next([]);
         this.suggestions.next([]);
@@ -563,15 +565,6 @@ export class IrisChatService implements OnDestroy {
         this.suggestions.next(suggestions);
     }
 
-    public clearChat(): void {
-        this.close();
-        this.sessionLoadingSubscription?.unsubscribe();
-        this.sessionLoadingSubscription = this.createNewSession().subscribe({
-            ...this.handleNewSession(),
-            complete: () => this.loadChatSessions(),
-        });
-    }
-
     private handleWebsocketMessage(payload: IrisChatWebsocketDTO) {
         if (payload.rateLimitInfo) {
             this.irisStatusService.handleRateLimitInfo(payload.rateLimitInfo);
@@ -626,7 +619,6 @@ export class IrisChatService implements OnDestroy {
             this.websocketSessionSubscription?.unsubscribe();
             this.websocketSessionSubscription = undefined;
             this.sessionId = undefined;
-            this._pendingContext.set(undefined);
             this.messages.next([]);
             this.stages.next([]);
             this.suggestions.next([]);
@@ -635,6 +627,9 @@ export class IrisChatService implements OnDestroy {
             this.newIrisMessage.next(undefined);
             this.initialLoadCompleteSubject.next(false);
         }
+        // Always clear the pending context, even when no session existed yet: a pending context
+        // may have been staged by the lecture/exercise auto-preselect before the session loaded.
+        this._pendingContext.set(undefined);
         this.error.next(undefined);
     }
 
@@ -706,28 +701,72 @@ export class IrisChatService implements OnDestroy {
             catchError(() => throwError(() => new Error(IrisErrorMessageKey.SESSION_CREATION_FAILED))),
         );
     }
-
-    switchTo(mode: ChatServiceMode, id?: number): void {
-        const newContext = id !== undefined ? { mode, entityId: id } : undefined;
+    /**
+     * Commits `(mode, entityId)` and opens its session, clearing any pending context.
+     * Skips the session reload if the context is already committed.
+     */
+    private resumeOrCreateChat(mode: ChatServiceMode, entityId: number): void {
         const current = this._committedContext();
-        const isDifferent = current?.mode !== newContext?.mode || current?.entityId !== newContext?.entityId;
-        this._committedContext.set(newContext);
+        const isDifferent = current?.mode !== mode || current?.entityId !== entityId;
+        this._committedContext.set({ mode, entityId });
+        this._pendingContext.set(undefined);
         if (isDifferent) {
             this.closeAndStart();
         }
     }
 
     /**
-     * Records a dropdown context selection as a pending override without touching the server.
-     * The database, message history, and websocket subscription stay untouched until the next
-     * {@link sendMessage}, which forwards the override in the request body via IrisMessageRequestDTO.pendingContext so the server inserts the
-     * CTXSWAP marker atomically. If the user reverts to the committed context before sending,
-     * the override is cleared and no marker is written.
+     * Course-dashboard mount. No-op if the dashboard is re-mounted for the same course.
      */
-    public switchContextOfCurrentSession(mode: ChatServiceMode, entityId: number, entityName?: string): void {
-        if (!this.sessionId) {
-            return;
-        }
+    public resumeOrCreateCourseChat(courseId: number): void {
+        this._pageContext.set({ mode: ChatServiceMode.COURSE, entityId: courseId });
+        this.resumeOrCreateChat(ChatServiceMode.COURSE, courseId);
+    }
+
+    /**
+     * Tutor-suggestion entry point (e.g. from a communication thread). The TUTOR_SUGGESTION mode
+     * bypasses LLM-consent gating in {@link start} via {@link modeRequiresLLMAcceptance}.
+     */
+    public resumeOrCreateTutorSuggestionChat(postId: number): void {
+        this.resumeOrCreateChat(ChatServiceMode.TUTOR_SUGGESTION, postId);
+    }
+
+    /**
+     * Lecture/exercise page mount: resumes a history session tagged with `(mode, entityId)`
+     * if one exists, otherwise opens a fresh COURSE chat with the context staged via
+     * {@link stagePendingContext}. Always re-fetches sessions so URL-direct entry behaves
+     * identically to in-app navigation. The optional `entityName` is stored on the
+     * {@link _pageContext} so the "New chat" affordance can later stage a labelled chip.
+     */
+    public openChatForContext(mode: ChatServiceMode, entityId: number, entityName?: string): void {
+        this._pageContext.set({ mode, entityId, entityName });
+        const courseId = this.getCourseId();
+        if (courseId === undefined) return;
+
+        // Cancel any in-flight session-loading effort so racing navigations don't double-fire.
+        this.sessionLoadingSubscription?.unsubscribe();
+        const generation = this.stateGeneration;
+
+        this.sessionLoadingSubscription = this.irisChatHttpService.getChatSessions(courseId).subscribe((sessions: IrisSessionDTO[]) => {
+            if (this.stateGeneration !== generation) return;
+            // switchToSession itself does not re-query getChatSessions, so the sidebar must be pre-populated here.
+            this.chatSessions.next(sessions);
+            const matching = sessions.find((s) => s.mode === mode && s.entityId === entityId);
+            if (matching) {
+                this.switchToSession(matching);
+                return;
+            }
+            this.startFreshChat();
+            this.stagePendingContext(mode, entityId, entityName);
+        });
+    }
+
+    /**
+     * Stages a context override; the server only sees it on the next {@link sendMessage},
+     * which commits it via a CTXSWAP marker. Reverting to the committed context clears the override.
+     * Safe to call before {@link sessionId} is set (e.g. during lecture/exercise auto-preselect).
+     */
+    public stagePendingContext(mode: ChatServiceMode, entityId: number, entityName?: string): void {
         const committed = this._committedContext();
         if (committed?.mode === mode && committed?.entityId === entityId) {
             this._pendingContext.set(undefined);
@@ -736,10 +775,18 @@ export class IrisChatService implements OnDestroy {
         }
     }
 
-    switchToNewSession(mode: ChatServiceMode, id?: number): void {
-        this._committedContext.set(id !== undefined ? { mode, entityId: id } : undefined);
-        this.close();
-        if (this._committedContext()) {
+    /**
+     * Closes the active session and opens a fresh COURSE session for the current course.
+     * No-op if the current session is already an empty COURSE session.
+     */
+    public startFreshChat(): void {
+        const committed = this._committedContext();
+        const courseId = this.getCourseId();
+        const isFreshCourseSession =
+            this.sessionId !== undefined && committed?.mode === ChatServiceMode.COURSE && committed.entityId === courseId && this.messages.getValue().length === 0;
+        if (!isFreshCourseSession && courseId) {
+            this.close();
+            this._committedContext.set({ mode: ChatServiceMode.COURSE, entityId: courseId });
             this.sessionLoadingSubscription?.unsubscribe();
             this.sessionLoadingSubscription = this.createNewSession().subscribe({
                 ...this.handleNewSession(),

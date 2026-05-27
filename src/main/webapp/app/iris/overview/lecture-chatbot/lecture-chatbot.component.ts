@@ -33,12 +33,12 @@ export class LectureChatbotComponent {
     readonly lectureId = input<number>();
 
     constructor() {
-        // Keep chat service mode aligned with the currently displayed lecture.
+        // Reuse the existing chat session tagged with this lecture if one exists in the history;
+        // otherwise the COURSE chat is opened with the lecture pre-selected as pending context.
         effect(() => {
             const lectureId = this.lectureId();
             if (lectureId !== undefined) {
-                // Use untracked to avoid re-running this effect when chatService state changes
-                untracked(() => this.chatService.switchTo(ChatServiceMode.LECTURE, lectureId));
+                untracked(() => this.chatService.openChatForContext(ChatServiceMode.LECTURE, lectureId));
             }
         });
     }

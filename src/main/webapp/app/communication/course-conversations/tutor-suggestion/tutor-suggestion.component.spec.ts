@@ -9,7 +9,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { IrisMessage } from 'app/iris/shared/entities/iris-message.model';
-import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { mockCourseSettings } from 'test/helpers/mocks/iris/mock-settings';
 import { AccountService } from 'app/core/auth/account.service';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
@@ -119,15 +119,15 @@ describe('TutorSuggestionComponent', () => {
         componentRef.setInput('course', { id: 1 } as any);
     });
 
-    it('should initialize and switch chat service if IRIS is enabled', () => {
+    it('should initialize and resume/create the tutor-suggestion chat if IRIS is enabled', () => {
         vi.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(true);
         vi.spyOn(courseSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(courseSettings));
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
-        const switchToSpy = vi.spyOn(chatService, 'switchTo').mockReturnValue(undefined);
+        const resumeSpy = vi.spyOn(chatService, 'resumeOrCreateTutorSuggestionChat').mockReturnValue(undefined);
         const getFeatureToggleSpy = vi.spyOn(featureToggleService, 'getFeatureToggleActive');
         const getActiveStatusSpy = vi.spyOn(irisStatusService, 'getActiveStatus');
         fixture.detectChanges();
-        expect(switchToSpy).toHaveBeenCalledWith(ChatServiceMode.TUTOR_SUGGESTION, 1);
+        expect(resumeSpy).toHaveBeenCalledWith(1);
         expect(getFeatureToggleSpy).toHaveBeenCalledWith(FeatureToggle.TutorSuggestions);
         expect(getActiveStatusSpy).toHaveBeenCalled();
     });
@@ -136,14 +136,30 @@ describe('TutorSuggestionComponent', () => {
         vi.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(true);
         const getCourseSettingsSpy = vi.spyOn(courseSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(courseSettings));
         const profileServiceMock = vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
-        const switchToSpy = vi.spyOn(chatService, 'switchTo').mockReturnValue(undefined);
+        const resumeSpy = vi.spyOn(chatService, 'resumeOrCreateTutorSuggestionChat').mockReturnValue(undefined);
         vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
         vi.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
         fixture.detectChanges();
         vi.advanceTimersByTime(0);
         expect(profileServiceMock).toHaveBeenCalledOnce();
         expect(getCourseSettingsSpy).toHaveBeenCalledOnce();
-        expect(switchToSpy).toHaveBeenCalledWith(ChatServiceMode.TUTOR_SUGGESTION, 1);
+        expect(resumeSpy).toHaveBeenCalledWith(1);
+    });
+
+    it('should not resume the tutor-suggestion chat when the post has no id', () => {
+        vi.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(true);
+        vi.spyOn(courseSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(courseSettings));
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+        vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
+        vi.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
+        const resumeSpy = vi.spyOn(chatService, 'resumeOrCreateTutorSuggestionChat').mockReturnValue(undefined);
+
+        // Mirrors the in-flight state where the optimistic post DTO has no id yet.
+        componentRef.setInput('post', { id: undefined } as any);
+        fixture.detectChanges();
+        vi.advanceTimersByTime(0);
+
+        expect(resumeSpy).not.toHaveBeenCalled();
     });
 
     describe('should set irisEnabled to', () => {

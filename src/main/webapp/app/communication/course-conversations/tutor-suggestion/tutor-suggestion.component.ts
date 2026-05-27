@@ -11,7 +11,7 @@ import { IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.m
 import { Post } from 'app/communication/shared/entities/post.model';
 import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
-import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -47,8 +47,8 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
             this.course();
             untracked(() => {
                 if (this.initialized && this.irisEnabled) {
-                    if (post) {
-                        this.chatService.switchTo(ChatServiceMode.TUTOR_SUGGESTION, post.id);
+                    if (post?.id) {
+                        this.chatService.resumeOrCreateTutorSuggestionChat(post.id);
                         this.messagesSubscription?.unsubscribe();
                         this.subscribeToIrisActivation();
                     }
@@ -112,11 +112,11 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
                 if (!this.isAtLeastTutor || post?.resolved) {
                     return;
                 }
-                if (course?.id && post) {
+                if (course?.id && post?.id) {
                     this.irisSettingsSubscription = this.irisSettingsService.getCourseSettingsWithRateLimit(course.id).subscribe((response) => {
                         this.irisEnabled = !!response?.settings?.enabled;
                         if (this.irisEnabled) {
-                            this.chatService.switchTo(ChatServiceMode.TUTOR_SUGGESTION, post.id);
+                            this.chatService.resumeOrCreateTutorSuggestionChat(post.id!);
                             this.subscribeToIrisActivation();
                             this.fetchMessages();
                         }

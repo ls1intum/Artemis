@@ -15,7 +15,7 @@ describe('LectureChatbotComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [LectureChatbotComponent],
-            providers: [MockProvider(IrisChatService, { switchTo: vi.fn() })],
+            providers: [MockProvider(IrisChatService, { openChatForContext: vi.fn() })],
         })
             .overrideComponent(LectureChatbotComponent, {
                 set: {
@@ -29,12 +29,12 @@ describe('LectureChatbotComponent', () => {
         irisChatService = TestBed.inject(IrisChatService);
     });
 
-    it('switches to lecture chat mode when lectureId is provided', async () => {
+    it('opens the lecture chat context when lectureId is provided', async () => {
         fixture.componentRef.setInput('lectureId', 42);
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(irisChatService.switchTo).toHaveBeenCalledWith(ChatServiceMode.LECTURE, 42);
+        expect(irisChatService.openChatForContext).toHaveBeenCalledWith(ChatServiceMode.LECTURE, 42);
     });
 
     it('toggleChatHistory does nothing when base chatbot is not available', () => {

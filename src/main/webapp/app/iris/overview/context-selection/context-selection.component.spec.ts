@@ -21,7 +21,7 @@ describe('ContextSelectionComponent', () => {
     let chatServiceMock: {
         getCourseId: ReturnType<typeof vi.fn>;
         displayContext: WritableSignal<SessionContext | undefined>;
-        switchContextOfCurrentSession: ReturnType<typeof vi.fn>;
+        stagePendingContext: ReturnType<typeof vi.fn>;
     };
     let courseStorageServiceMock: { getCourse: ReturnType<typeof vi.fn> };
 
@@ -48,7 +48,7 @@ describe('ContextSelectionComponent', () => {
         chatServiceMock = {
             getCourseId: vi.fn().mockReturnValue(courseId),
             displayContext: signal<SessionContext | undefined>({ mode: ChatServiceMode.COURSE, entityId: courseId }),
-            switchContextOfCurrentSession: vi.fn(),
+            stagePendingContext: vi.fn(),
         };
 
         courseStorageServiceMock = {
@@ -202,23 +202,42 @@ describe('ContextSelectionComponent', () => {
     });
 
     describe('onSelectionChange', () => {
-        it('should call chatService.switchContextOfCurrentSession with the correct mode, entityId and label', () => {
+        it('should call chatService.stagePendingContext with the correct mode, entityId and label', () => {
             const value = `${ChatServiceMode.TEXT_EXERCISE}:11`;
             component.onSelectionChange(value);
 
-            expect(chatServiceMock.switchContextOfCurrentSession).toHaveBeenCalledWith(ChatServiceMode.TEXT_EXERCISE, 11, 'Text Ex');
+            expect(chatServiceMock.stagePendingContext).toHaveBeenCalledWith(ChatServiceMode.TEXT_EXERCISE, 11, 'Text Ex');
         });
 
-        it('should call switchContextOfCurrentSession for a lecture option', () => {
+        it('should call stagePendingContext for a lecture option', () => {
             const value = `${ChatServiceMode.LECTURE}:1`;
             component.onSelectionChange(value);
 
-            expect(chatServiceMock.switchContextOfCurrentSession).toHaveBeenCalledWith(ChatServiceMode.LECTURE, 1, 'Lecture 1');
+            expect(chatServiceMock.stagePendingContext).toHaveBeenCalledWith(ChatServiceMode.LECTURE, 1, 'Lecture 1');
         });
 
-        it('should not call switchContextOfCurrentSession when value does not match any option', () => {
+        it('should not call stagePendingContext when value does not match any option', () => {
             component.onSelectionChange('UNKNOWN_MODE:999');
-            expect(chatServiceMock.switchContextOfCurrentSession).not.toHaveBeenCalled();
+            expect(chatServiceMock.stagePendingContext).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('onChipRemove', () => {
+        it('should stage the COURSE context as pending when a chip is removed and a courseId is available', () => {
+            component.onChipRemove();
+
+            expect(chatServiceMock.stagePendingContext).toHaveBeenCalledWith(ChatServiceMode.COURSE, courseId);
+        });
+
+        it('should not stage a pending context when courseId is undefined', () => {
+            chatServiceMock.getCourseId.mockReturnValue(undefined);
+            fixture = TestBed.createComponent(ContextSelectionComponent);
+            component = fixture.componentInstance;
+            chatServiceMock.stagePendingContext.mockClear();
+
+            component.onChipRemove();
+
+            expect(chatServiceMock.stagePendingContext).not.toHaveBeenCalled();
         });
     });
 });
