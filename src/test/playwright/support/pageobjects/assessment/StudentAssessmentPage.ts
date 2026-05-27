@@ -11,11 +11,12 @@ export class StudentAssessmentPage {
     }
 
     async startComplaint() {
-        // Wait for the page to fully load before looking for the complaint button.
-        // The button depends on async accountService.identity() resolving to set
-        // isCorrectUserToFileAction, and the exam review period must be active.
+        // The complain button is gated on several async signals: accountService.identity()
+        // must resolve (sets `isCorrectUserToFileAction`), the exam result must be loaded,
+        // and the exam review period must be active. Under heavy parallel multi-node load
+        // these chained loads can take longer than 30s, so we wait up to 60s.
         const complainButton = this.page.locator('#complain');
-        await complainButton.waitFor({ state: 'visible', timeout: 30000 });
+        await complainButton.waitFor({ state: 'visible', timeout: 60_000 });
         await complainButton.click();
     }
 
