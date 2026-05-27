@@ -136,7 +136,7 @@ public class ContentChangeAccumulatorService {
     public Optional<BatchClaim> claimDueBatch(long courseId) {
         Instant now = Instant.now(clock);
         LocalDate today = LocalDate.now(clock);
-        BatchClaim claim = map.executeOnKey(courseId, new ClaimEntryProcessor(now, Duration.ofSeconds(debounceWindowSeconds), dailyCap, today));
+        BatchClaim claim = map.executeOnKey(courseId, new ClaimEntryProcessor(now, Duration.ofSeconds(debounceWindowSeconds), dailyCap, today, true));
         return Optional.ofNullable(claim);
     }
 
@@ -152,7 +152,7 @@ public class ContentChangeAccumulatorService {
      */
     public Optional<BatchClaim> claimBatchNow(long courseId) {
         LocalDate today = LocalDate.now(clock);
-        BatchClaim claim = map.executeOnKey(courseId, new ClaimEntryProcessor(null, null, Integer.MAX_VALUE, today));
+        BatchClaim claim = map.executeOnKey(courseId, new ClaimEntryProcessor(null, null, Integer.MAX_VALUE, today, false));
         return Optional.ofNullable(claim);
     }
 
@@ -258,11 +258,14 @@ public class ContentChangeAccumulatorService {
 
         private final LocalDate today;
 
-        ClaimEntryProcessor(@Nullable Instant now, @Nullable Duration debounceWindow, int dailyCap, LocalDate today) {
+        private final boolean countQuota;
+
+        ClaimEntryProcessor(@Nullable Instant now, @Nullable Duration debounceWindow, int dailyCap, LocalDate today, boolean countQuota) {
             this.now = now;
             this.debounceWindow = debounceWindow;
             this.dailyCap = dailyCap;
             this.today = today;
+            this.countQuota = countQuota;
         }
 
         @Override
@@ -279,11 +282,11 @@ public class ContentChangeAccumulatorService {
             // would leave the bucket re-firing every tick until its TTL expires.
             boolean batchTriggersOrchestration = !current.exerciseIds().isEmpty();
             int effectiveDailyCount = today.equals(current.dailyRunCountDate()) ? current.dailyRunCount() : 0;
-            if (batchTriggersOrchestration && effectiveDailyCount >= dailyCap) {
+            if (countQuota && batchTriggersOrchestration && effectiveDailyCount >= dailyCap) {
                 return null;
             }
             BatchClaim claim = new BatchClaim(current.exerciseIds(), current.lectureUnitIds());
-            entry.setValue(current.claim(today, batchTriggersOrchestration));
+            entry.setValue(current.claim(today, countQuota && batchTriggersOrchestration));
             return claim;
         }
     }
