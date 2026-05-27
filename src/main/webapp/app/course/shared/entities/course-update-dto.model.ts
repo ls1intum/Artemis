@@ -54,6 +54,12 @@ export interface CourseCreateDTO {
     maxPoints?: number;
     accuracyOfScores?: number;
     restrictedAthenaModulesAccess: boolean;
+    athenaTextGradingEnabled: boolean;
+    athenaTextPreliminaryEnabled: boolean;
+    athenaModelingGradingEnabled: boolean;
+    athenaModelingPreliminaryEnabled: boolean;
+    athenaProgrammingGradingEnabled: boolean;
+    athenaProgrammingPreliminaryEnabled: boolean;
     timeZone?: string;
     courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
 }
@@ -112,6 +118,12 @@ export function toCourseCreateDTO(course: Course): CourseCreateDTO {
         maxPoints: course.maxPoints,
         accuracyOfScores: course.accuracyOfScores,
         restrictedAthenaModulesAccess: course.restrictedAthenaModulesAccess ?? false,
+        athenaTextGradingEnabled: course.athenaTextGradingEnabled ?? false,
+        athenaTextPreliminaryEnabled: course.athenaTextPreliminaryEnabled ?? false,
+        athenaModelingGradingEnabled: course.athenaModelingGradingEnabled ?? false,
+        athenaModelingPreliminaryEnabled: course.athenaModelingPreliminaryEnabled ?? false,
+        athenaProgrammingGradingEnabled: course.athenaProgrammingGradingEnabled ?? false,
+        athenaProgrammingPreliminaryEnabled: course.athenaProgrammingPreliminaryEnabled ?? false,
         timeZone: course.timeZone,
         courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
     };
@@ -173,6 +185,12 @@ export interface CourseUpdateDTO {
     maxPoints?: number;
     accuracyOfScores?: number;
     restrictedAthenaModulesAccess: boolean;
+    athenaTextGradingEnabled: boolean;
+    athenaTextPreliminaryEnabled: boolean;
+    athenaModelingGradingEnabled: boolean;
+    athenaModelingPreliminaryEnabled: boolean;
+    athenaProgrammingGradingEnabled: boolean;
+    athenaProgrammingPreliminaryEnabled: boolean;
     timeZone?: string;
     courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
     onboardingDone: boolean;
@@ -237,6 +255,12 @@ export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
         maxPoints: course.maxPoints,
         accuracyOfScores: course.accuracyOfScores,
         restrictedAthenaModulesAccess: course.restrictedAthenaModulesAccess ?? false,
+        athenaTextGradingEnabled: course.athenaTextGradingEnabled ?? false,
+        athenaTextPreliminaryEnabled: course.athenaTextPreliminaryEnabled ?? false,
+        athenaModelingGradingEnabled: course.athenaModelingGradingEnabled ?? false,
+        athenaModelingPreliminaryEnabled: course.athenaModelingPreliminaryEnabled ?? false,
+        athenaProgrammingGradingEnabled: course.athenaProgrammingGradingEnabled ?? false,
+        athenaProgrammingPreliminaryEnabled: course.athenaProgrammingPreliminaryEnabled ?? false,
         timeZone: course.timeZone,
         courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
         onboardingDone: course.onboardingDone ?? false,

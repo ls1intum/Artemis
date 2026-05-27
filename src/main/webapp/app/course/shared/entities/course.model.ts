@@ -91,6 +91,12 @@ export class Course implements BaseEntity {
     public maxPoints?: number;
     public accuracyOfScores?: number;
     public restrictedAthenaModulesAccess?: boolean;
+    public athenaTextGradingEnabled?: boolean;
+    public athenaTextPreliminaryEnabled?: boolean;
+    public athenaModelingGradingEnabled?: boolean;
+    public athenaModelingPreliminaryEnabled?: boolean;
+    public athenaProgrammingGradingEnabled?: boolean;
+    public athenaProgrammingPreliminaryEnabled?: boolean;
     public tutorialGroupsConfiguration?: TutorialGroupsConfiguration;
     // Note: Currently just used in the scope of the tutorial groups feature
     public timeZone?: string;
@@ -152,6 +158,12 @@ export class Course implements BaseEntity {
         this.maxRequestMoreFeedbackTimeDays = 7; // default value
         this.accuracyOfScores = 1; // default value
         this.restrictedAthenaModulesAccess = false; // default value
+        this.athenaTextGradingEnabled = false;
+        this.athenaTextPreliminaryEnabled = false;
+        this.athenaModelingGradingEnabled = false;
+        this.athenaModelingPreliminaryEnabled = false;
+        this.athenaProgrammingGradingEnabled = false;
+        this.athenaProgrammingPreliminaryEnabled = false;
         this.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING; // default value
 
         this.courseIconPath = addPublicFilePrefix(this.courseIcon);
