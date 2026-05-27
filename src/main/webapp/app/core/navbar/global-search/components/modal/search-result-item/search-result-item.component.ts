@@ -10,6 +10,50 @@ import dayjs from 'dayjs/esm';
 /** Format for displaying dates in search results, e.g. "Apr 19, 14:30" */
 const SEARCH_RESULT_DATE_FORMAT = 'MMM D, HH:mm';
 
+/**
+ * Matches Markdown headings.
+ * @example "## Title" → "Title"
+ */
+const MARKDOWN_HEADING_PATTERN = /^#{1,6}\s+/;
+
+/**
+ * Matches Markdown bold.
+ * @example "**Title**" → "Title"
+ */
+const MARKDOWN_BOLD_PATTERN = /\*\*(.*?)\*\*/g;
+
+/**
+ * Matches Markdown bold (alt syntax).
+ * @example "__Title__" → "Title"
+ */
+const MARKDOWN_BOLD_ALT_PATTERN = /__(.*?)__/g;
+
+/**
+ * Matches Markdown italic.
+ * @example "*Title*" → "Title"
+ */
+const MARKDOWN_ITALIC_PATTERN = /\*(.*?)\*/g;
+
+/**
+ * Matches Markdown italic (alt syntax).
+ * @example "_Title_" → "Title"
+ */
+const MARKDOWN_ITALIC_ALT_PATTERN = /_(.*?)_/g;
+
+/**
+ * Removes common Markdown formatting (headings, bold, italic) from a line of text.
+ */
+function stripMarkdownFormatting(text: string): string {
+    return text
+        .trim()
+        .replace(MARKDOWN_HEADING_PATTERN, '')
+        .replace(MARKDOWN_BOLD_PATTERN, '$1')
+        .replace(MARKDOWN_BOLD_ALT_PATTERN, '$1')
+        .replace(MARKDOWN_ITALIC_PATTERN, '$1')
+        .replace(MARKDOWN_ITALIC_ALT_PATTERN, '$1')
+        .trim();
+}
+
 @Component({
     selector: 'jhi-global-search-result-item',
     standalone: true,
@@ -65,20 +109,11 @@ export class SearchResultItemComponent {
         }
 
         const lines = description.split('\n');
-        const firstLine = lines[0].trim();
-
-        // Strip common markdown formatting from the first line
-        const stripped = firstLine
-            .replace(/^#{1,6}\s+/, '') // headings
-            .replace(/\*\*(.*?)\*\*/g, '$1') // bold
-            .replace(/__(.*?)__/g, '$1') // bold alt
-            .replace(/\*(.*?)\*/g, '$1') // italic
-            .replace(/_(.*?)_/g, '$1') // italic alt
-            .trim();
-
-        if (title && stripped.toLowerCase() === title.trim().toLowerCase()) {
-            const rest = lines.slice(1).join('\n').trim();
-            return rest || undefined;
+        const strippedFirstLine = stripMarkdownFormatting(lines[0]);
+        const firstLineMatchesTitle = title && strippedFirstLine.toLowerCase() === title.trim().toLowerCase();
+        if (firstLineMatchesTitle) {
+            const descriptionWithoutFirstLine = lines.slice(1).join('\n').trim();
+            return descriptionWithoutFirstLine || undefined;
         }
 
         return description;
