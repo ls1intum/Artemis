@@ -30,6 +30,9 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardBreakdownEntryDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardConfigDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisDashboardDigestChatModeDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisDashboardDigestCourseDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisDashboardDigestDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardOverviewDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardTimeSeriesDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardTimeSeriesEntryDTO;
@@ -131,6 +134,53 @@ public class IrisAdminDashboardService {
         return new IrisDashboardOverviewDTO(totalSessions, activeSessions, engagementRate, totalMessages, uniqueUsers, noResponseRate, noResponseMessageCount,
                 noResponseSessionIds.size(), thumbsUpRatio, thumbsDownRatio, thumbsUpAbsoluteRate, thumbsDownAbsoluteRate, sessionsWithThumbsUp, sessionsWithThumbsDown,
                 avgResponseTime, p50ResponseTime, p95ResponseTime, totalTokenCostEur);
+    }
+
+    // -- Digest -----------------------------------------------------------------
+
+    /**
+     * Computes the full digest data for the given time window.
+     * <p>
+     * Combines overview KPIs with a per-chat-mode breakdown and a top-5 course list.
+     *
+     * @param from        start of the window (inclusive)
+     * @param to          end of the window (exclusive)
+     * @param staleBefore cutoff for no-response computation (messages after this may still receive a response)
+     * @return the digest DTO containing all overview fields, chat-mode breakdown, and top courses
+     */
+    public IrisDashboardDigestDTO computeDigestData(Instant from, Instant to, Instant staleBefore) {
+        IrisDashboardOverviewDTO overview = computeOverview(from, to, null);
+
+        // Chat-mode breakdown: group sessions by mode, zero out per-mode message/rating counts
+        List<Object[]> sessionRows = dashboardRepository.findSessionsWithMode(from, to);
+        Map<String, Long> sessionsByMode = new HashMap<>();
+        for (Object[] row : sessionRows) {
+            String mode = row[2] != null ? row[2].toString() : "UNKNOWN";
+            sessionsByMode.merge(mode, 1L, Long::sum);
+        }
+        List<IrisDashboardDigestChatModeDTO> chatModeBreakdown = new ArrayList<>();
+        for (Map.Entry<String, Long> entry : sessionsByMode.entrySet()) {
+            chatModeBreakdown.add(new IrisDashboardDigestChatModeDTO(entry.getKey(), entry.getValue(), 0L, 0.0, 0L, 0L));
+        }
+
+        // Top-5 courses by session count
+        List<Object[]> courseRows = dashboardRepository.findTopCoursesBySessionCount(from, to, 5);
+        List<IrisDashboardDigestCourseDTO> topCourses = new ArrayList<>();
+        for (Object[] row : courseRows) {
+            long courseId = ((Number) row[0]).longValue();
+            long sessionCount = ((Number) row[1]).longValue();
+            String courseName = courseRepository.findById(courseId).map(Course::getTitle).orElse("Course #" + courseId);
+            topCourses.add(new IrisDashboardDigestCourseDTO(courseName, sessionCount, 0L, 0.0, 0.0));
+        }
+
+        long thumbsUpCount = dashboardRepository.countThumbsUp(from, to);
+        long thumbsDownCount = dashboardRepository.countThumbsDown(from, to);
+
+        return new IrisDashboardDigestDTO(from, to, staleBefore, overview.totalSessions(), overview.activeSessions(), overview.engagementRate(), overview.totalMessages(),
+                overview.uniqueUsers(), overview.noResponseRate(), overview.noResponseMessageCount(), overview.noResponseSessionCount(), overview.thumbsUpRatio(),
+                overview.thumbsDownRatio(), overview.thumbsUpAbsoluteRate(), overview.thumbsDownAbsoluteRate(), thumbsUpCount, thumbsDownCount, overview.sessionsWithThumbsUp(),
+                overview.sessionsWithThumbsDown(), overview.avgResponseTimeSeconds(), overview.p50ResponseTimeSeconds(), overview.p95ResponseTimeSeconds(),
+                overview.totalTokenCostEur(), chatModeBreakdown, topCourses, "/admin/iris-dashboard");
     }
 
     // -- Config -----------------------------------------------------------------
