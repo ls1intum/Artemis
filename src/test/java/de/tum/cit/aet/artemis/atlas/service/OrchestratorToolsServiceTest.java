@@ -539,10 +539,8 @@ class OrchestratorToolsServiceTest {
 
     @Test
     void writeQuota_allowsFullCapWorthOfAppendsBeforeBlocking() {
-        // Regression: an earlier version summed actions.size() with reservedSlots in the cap check,
-        // so the effective cap was MAX_WRITE_CALLS / 2. Verify the buffer accepts exactly the cap
-        // and rejects the next reservation. Eight different write types are exercised below to
-        // confirm the cap is shared across tool kinds, not per-tool.
+        // Verify the buffer accepts exactly the cap and rejects the next reservation.
+        // Eight different write types confirm the cap is shared across tool kinds, not per-tool.
         Course course = courseWithId(COURSE_ID);
         when(courseRepository.findById(COURSE_ID)).thenReturn(Optional.of(course));
         Competency created = new Competency("Created", "Desc", null, CourseCompetency.DEFAULT_MASTERY_THRESHOLD, CompetencyTaxonomy.UNDERSTAND, false);
