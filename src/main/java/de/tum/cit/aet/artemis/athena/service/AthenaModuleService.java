@@ -42,6 +42,15 @@ public class AthenaModuleService {
     @Value("#{'${artemis.athena.restricted-modules:}'}")
     private List<String> restrictedModules;
 
+    @Value("${artemis.athena.default-text-module:}")
+    private String defaultTextModule;
+
+    @Value("${artemis.athena.default-programming-module:}")
+    private String defaultProgrammingModule;
+
+    @Value("${artemis.athena.default-modeling-module:}")
+    private String defaultModelingModule;
+
     private static final String ENTITY_NAME = "exercise";
 
     private static final Logger log = LoggerFactory.getLogger(AthenaModuleService.class);
@@ -173,5 +182,69 @@ public class AthenaModuleService {
      */
     public void revokeAccessToRestrictedFeedbackSuggestionModules(Course course) {
         exerciseRepository.revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(course.getId(), restrictedModules);
+    }
+
+    public String getDefaultModule(ExerciseType exerciseType) {
+        return switch (exerciseType) {
+            case TEXT -> {
+                if (defaultTextModule.isBlank()) {
+                    throw new IllegalStateException("artemis.athena.default-text-module is not configured");
+                }
+                yield defaultTextModule;
+            }
+            case PROGRAMMING -> {
+                if (defaultProgrammingModule.isBlank()) {
+                    throw new IllegalStateException("artemis.athena.default-programming-module is not configured");
+                }
+                yield defaultProgrammingModule;
+            }
+            case MODELING -> {
+                if (defaultModelingModule.isBlank()) {
+                    throw new IllegalStateException("artemis.athena.default-modeling-module is not configured");
+                }
+                yield defaultModelingModule;
+            }
+            default -> throw new IllegalArgumentException("No default Athena module for exercise type: " + exerciseType);
+        };
+    }
+
+    public void applyAthenaCourseSettings(Exercise exercise, Course course) {
+        boolean gradingEnabled = switch (exercise.getExerciseType()) {
+            case TEXT -> course.isAthenaTextGradingEnabled();
+            case MODELING -> course.isAthenaModelingGradingEnabled();
+            case PROGRAMMING -> course.isAthenaProgrammingGradingEnabled();
+            default -> false;
+        };
+        boolean preliminaryEnabled = switch (exercise.getExerciseType()) {
+            case TEXT -> course.isAthenaTextPreliminaryEnabled();
+            case MODELING -> course.isAthenaModelingPreliminaryEnabled();
+            case PROGRAMMING -> course.isAthenaProgrammingPreliminaryEnabled();
+            default -> false;
+        };
+
+        if (gradingEnabled) {
+            exercise.setFeedbackSuggestionModule(getDefaultModule(exercise.getExerciseType()));
+        }
+        if (preliminaryEnabled) {
+            exercise.setAllowFeedbackRequests(true);
+        }
+    }
+
+    public void clearFeedbackSuggestionModuleForCourse(Long courseId, ExerciseType exerciseType) {
+        switch (exerciseType) {
+            case TEXT -> exerciseRepository.clearTextExerciseFeedbackSuggestionModuleByCourseId(courseId);
+            case MODELING -> exerciseRepository.clearModelingExerciseFeedbackSuggestionModuleByCourseId(courseId);
+            case PROGRAMMING -> exerciseRepository.clearProgrammingExerciseFeedbackSuggestionModuleByCourseId(courseId);
+            default -> throw new IllegalArgumentException("Unsupported exercise type: " + exerciseType);
+        }
+    }
+
+    public void clearAllowFeedbackRequestsForCourse(Long courseId, ExerciseType exerciseType) {
+        switch (exerciseType) {
+            case TEXT -> exerciseRepository.clearTextExerciseAllowFeedbackRequestsByCourseId(courseId);
+            case MODELING -> exerciseRepository.clearModelingExerciseAllowFeedbackRequestsByCourseId(courseId);
+            case PROGRAMMING -> exerciseRepository.clearProgrammingExerciseAllowFeedbackRequestsByCourseId(courseId);
+            default -> throw new IllegalArgumentException("Unsupported exercise type: " + exerciseType);
+        }
     }
 }
