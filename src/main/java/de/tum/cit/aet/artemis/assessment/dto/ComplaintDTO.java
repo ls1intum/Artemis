@@ -4,13 +4,11 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
-
 import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
@@ -18,8 +16,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
-import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithParticipationDTO;
 
@@ -39,8 +35,7 @@ public record ComplaintDTO(Long id, String complaintText, ZonedDateTime submitte
      * DTO containing the minimal information of the participant needed in the complaint.
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public record ParticipantDTO(Long id, String name,
-            @Pattern(regexp = Constants.LOGIN_REGEX) @Size(min = Constants.USERNAME_MIN_LENGTH, max = Constants.USERNAME_MAX_LENGTH) String login, Boolean isStudent) {
+    public record ParticipantDTO(Long id, String name, String login, Boolean isStudent) {
     }
 
     /**

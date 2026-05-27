@@ -6,10 +6,10 @@ import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complai
 import { ComplaintResponseService } from 'app/assessment/manage/services/complaint-response.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Result, ResultSimpleDTO } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ComplaintRequestDTO } from 'app/assessment/shared/entities/complaint-request-dto.model';
-import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import { ComplaintDTO, ParticipantDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { User } from 'app/account/user/user.model';
@@ -241,37 +241,32 @@ export class ComplaintService implements IComplaintService {
         return this.http.get<ComplaintDTO[]>(url, { observe: 'response' });
     }
 
+    /**
+     * Converts a complaint DTO into a {@link Complaint}, attaching the already-loaded result the complaint belongs to.
+     * Used when the surrounding component already holds the full result (e.g. assessment editors).
+     */
     public convertComplaintFromServer(dto: ComplaintDTO, result: Result): Complaint {
-        const complaint = new Complaint();
-        complaint.id = dto.id;
-        complaint.complaintText = dto.complaintText;
-        complaint.complaintType = dto.complaintType;
-        complaint.accepted = dto.complaintIsAccepted;
-        complaint.submittedTime = dto.submittedTime ? dayjs(dto.submittedTime) : undefined;
-
-        if (dto.complaintResponse) {
-            complaint.complaintResponse = this.complaintResponseService.convertComplaintResponseFromServer(dto.complaintResponse);
-        }
+        const complaint = this.convertComplaintBaseFromServer(dto);
         complaint.result = result;
-        if (dto.participant) {
-            if (dto.participant.isStudent === true) {
-                complaint.student = Object.assign(new User(), {
-                    id: dto.participant.id,
-                    name: dto.participant.name,
-                    login: dto.participant.login,
-                });
-            } else if (dto.participant.isStudent === false) {
-                complaint.team = Object.assign(new Team(), {
-                    id: dto.participant.id,
-                    name: dto.participant.name,
-                    shortName: dto.participant.login,
-                });
-            }
+        return complaint;
+    }
+
+    /**
+     * Converts a complaint DTO into a {@link Complaint}, reconstructing the reduced result from the DTO.
+     * Used for complaint lists where only the slim {@link ResultSimpleDTO} is available.
+     */
+    public convertComplaintFromServerInList(dto: ComplaintDTO): Complaint {
+        const complaint = this.convertComplaintBaseFromServer(dto);
+        if (dto.result) {
+            complaint.result = this.convertResultSimpleFromServer(dto.result);
         }
         return complaint;
     }
 
-    public convertComplaintFromServerInList(dto: ComplaintDTO): Complaint {
+    /**
+     * Converts the fields shared by both complaint conversions (without the result, which differs between the two).
+     */
+    private convertComplaintBaseFromServer(dto: ComplaintDTO): Complaint {
         const complaint = new Complaint();
         complaint.id = dto.id;
         complaint.complaintText = dto.complaintText;
@@ -282,69 +277,74 @@ export class ComplaintService implements IComplaintService {
         if (dto.complaintResponse) {
             complaint.complaintResponse = this.complaintResponseService.convertComplaintResponseFromServer(dto.complaintResponse);
         }
-
-        if (dto.result) {
-            const result = new Result();
-            result.id = dto.result.id;
-            result.completionDate = dto.result.completionDate ? dayjs(dto.result.completionDate) : undefined;
-            result.score = dto.result.score;
-            result.rated = dto.result.rated;
-            result.assessmentType = dto.result.assessmentType;
-
-            if (dto.result.assessor) {
-                result.assessor = Object.assign(new User(), {
-                    id: dto.result.assessor.id,
-                    login: dto.result.assessor.login,
-                    name: dto.result.assessor.name,
-                    email: dto.result.assessor.email,
-                });
-            }
-
-            if (dto.result.feedbacks) {
-                result.feedbacks = convertFeedbacksFromServer(dto.result.feedbacks);
-            }
-
-            if (dto.result.submission) {
-                const submission = {
-                    id: dto.result.submission.id,
-                } as Submission;
-
-                if (dto.result.submission.participation) {
-                    const participation = Object.assign(new StudentParticipation(), {
-                        id: dto.result.submission.participation.id,
-                    });
-
-                    const exerciseDto = dto.result.submission.participation.exercise;
-
-                    if (exerciseDto || dto.result.exerciseTitle) {
-                        participation.exercise = {
-                            id: exerciseDto?.id,
-                            type: exerciseDto?.type,
-                            title: dto.result.exerciseTitle,
-                        } as Exercise;
-                    }
-                    submission.participation = participation;
-                }
-                result.submission = submission;
-            }
-            complaint.result = result;
-        }
-        if (dto.participant) {
-            if (dto.participant.isStudent === true) {
-                complaint.student = Object.assign(new User(), {
-                    id: dto.participant.id,
-                    name: dto.participant.name,
-                    login: dto.participant.login,
-                });
-            } else if (dto.participant.isStudent === false) {
-                complaint.team = Object.assign(new Team(), {
-                    id: dto.participant.id,
-                    name: dto.participant.name,
-                    shortName: dto.participant.login,
-                });
-            }
-        }
+        this.assignParticipant(complaint, dto.participant);
         return complaint;
+    }
+
+    /**
+     * Assigns the participant of the complaint as either a student or a team, depending on the DTO flag.
+     */
+    private assignParticipant(complaint: Complaint, participant?: ParticipantDTO): void {
+        if (participant?.isStudent === true) {
+            complaint.student = Object.assign(new User(), {
+                id: participant.id,
+                name: participant.name,
+                login: participant.login,
+            });
+        } else if (participant?.isStudent === false) {
+            complaint.team = Object.assign(new Team(), {
+                id: participant.id,
+                name: participant.name,
+                shortName: participant.login,
+            });
+        }
+    }
+
+    /**
+     * Reconstructs a {@link Result} from the slim {@link ResultSimpleDTO} contained in a complaint list response.
+     */
+    private convertResultSimpleFromServer(resultDto: ResultSimpleDTO): Result {
+        const result = new Result();
+        result.id = resultDto.id;
+        result.completionDate = resultDto.completionDate ? dayjs(resultDto.completionDate) : undefined;
+        result.score = resultDto.score;
+        result.rated = resultDto.rated;
+        result.assessmentType = resultDto.assessmentType;
+
+        if (resultDto.assessor) {
+            result.assessor = Object.assign(new User(), {
+                id: resultDto.assessor.id,
+                login: resultDto.assessor.login,
+                name: resultDto.assessor.name,
+                email: resultDto.assessor.email,
+            });
+        }
+
+        if (resultDto.feedbacks) {
+            result.feedbacks = convertFeedbacksFromServer(resultDto.feedbacks);
+        }
+
+        if (resultDto.submission) {
+            const submission = { id: resultDto.submission.id } as Submission;
+
+            if (resultDto.submission.participation) {
+                const participation = Object.assign(new StudentParticipation(), {
+                    id: resultDto.submission.participation.id,
+                });
+
+                const exerciseDto = resultDto.submission.participation.exercise;
+                if (exerciseDto || resultDto.exerciseTitle) {
+                    participation.exercise = {
+                        id: exerciseDto?.id,
+                        type: exerciseDto?.type,
+                        title: resultDto.exerciseTitle,
+                    } as Exercise;
+                }
+                submission.participation = participation;
+            }
+            result.submission = submission;
+        }
+        return result;
     }
 
     /**

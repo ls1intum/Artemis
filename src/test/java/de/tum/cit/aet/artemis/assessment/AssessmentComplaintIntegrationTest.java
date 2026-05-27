@@ -600,6 +600,11 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(complaintsByExercise).hasSameSizeAs(complaintsByCourse).hasSize(1);
         assertThat(complaintsByCourse).hasSize(1).allMatch(complaint -> complaint.complaintType() == ComplaintType.COMPLAINT);
 
+        // The exercise (eagerly loaded via the complaint entity graph) must be exposed in the reduced result DTO so the client can render the exercise title.
+        ComplaintDTO.ResultSimpleDTO resultDTO = complaintsByCourse.getFirst().result();
+        assertThat(resultDTO.exerciseTitle()).as("Exercise title is exposed for complaint lists").isEqualTo(modelingExercise.getTitle());
+        assertThat(resultDTO.submission().participation().exercise().id()).as("Exercise id is exposed for complaint lists").isEqualTo(modelingExercise.getId());
+
         paramsCourse.set("complaintType", ComplaintType.MORE_FEEDBACK.toString());
         paramsExercise.set("complaintType", ComplaintType.MORE_FEEDBACK.toString());
         complaintsByCourse = request.getList(complaintsUrl, HttpStatus.OK, ComplaintDTO.class, paramsCourse);

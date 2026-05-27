@@ -43,18 +43,9 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
-import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 /**
  * REST controller for managing complaints.
@@ -233,17 +224,17 @@ public class ComplaintResource {
 
         if (tutorId == null) {
             complaints = complaintService.getAllComplaintsByCourseId(courseId);
-            filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
+            filterStudentInformationFromComplaints(complaints, !isAtLeastInstructor);
         }
         else if (allComplaintsForTutor) {
             complaints = complaintService.getAllComplaintsByCourseId(courseId);
-            filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
+            filterStudentInformationFromComplaints(complaints, !isAtLeastInstructor);
             // For a tutor, all foreign reviewers are filtered out
             complaints.forEach(complaint -> complaint.filterForeignReviewer(user));
         }
         else {
             complaints = complaintService.getAllComplaintsByCourseIdAndTutorId(courseId, tutorId);
-            filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
+            filterStudentInformationFromComplaints(complaints, !isAtLeastInstructor);
         }
 
         return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
@@ -277,11 +268,11 @@ public class ComplaintResource {
 
         if (tutorId == null) {
             complaints = complaintService.getAllComplaintsByExerciseId(exerciseId);
-            filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
+            filterStudentInformationFromComplaints(complaints, !isAtLeastInstructor);
         }
         else {
             complaints = complaintService.getAllComplaintsByExerciseIdAndTutorId(exerciseId, tutorId);
-            filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
+            filterStudentInformationFromComplaints(complaints, !isAtLeastInstructor);
         }
 
         return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
@@ -302,7 +293,7 @@ public class ComplaintResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
         List<Complaint> complaints = complaintService.getAllComplaintsByExamId(examId);
-        filterOutUselessDataFromComplaints(complaints, false);
+        filterStudentInformationFromComplaints(complaints, false);
 
         return ResponseEntity.ok(getComplaintsByComplaintType(complaints, ComplaintType.COMPLAINT));
     }
@@ -327,57 +318,17 @@ public class ComplaintResource {
         }
     }
 
-    private void filterOutUselessDataFromComplaint(Complaint complaint) {
-        if (complaint.getResult() == null) {
-            return;
-        }
-
-        StudentParticipation originalParticipation = (StudentParticipation) complaint.getResult().getSubmission().getParticipation();
-        if (originalParticipation != null && originalParticipation.getExercise() != null) {
-            final var exerciseWithOnlyTitle = getExercise(originalParticipation);
-
-            originalParticipation.setExercise(exerciseWithOnlyTitle);
-            originalParticipation.setSubmissions(null);
-        }
-
-        Submission originalSubmission = complaint.getResult().getSubmission();
-        if (originalSubmission != null) {
-            Submission submissionWithOnlyId;
-            switch (originalSubmission) {
-                case TextSubmission ignored -> submissionWithOnlyId = new TextSubmission();
-                case ModelingSubmission ignored -> submissionWithOnlyId = new ModelingSubmission();
-                case FileUploadSubmission ignored -> submissionWithOnlyId = new FileUploadSubmission();
-                case ProgrammingSubmission ignored -> submissionWithOnlyId = new ProgrammingSubmission();
-                default -> {
-                    return;
-                }
-            }
-            submissionWithOnlyId.setId(originalSubmission.getId());
-            submissionWithOnlyId.setParticipation(originalSubmission.getParticipation());
-            complaint.getResult().setSubmission(submissionWithOnlyId);
-        }
-    }
-
-    private static Exercise getExercise(StudentParticipation originalParticipation) {
-        Exercise exerciseFromParticipation = originalParticipation.getExercise();
-        Exercise exerciseWithOnlyTitle = switch (exerciseFromParticipation) {
-            case TextExercise ignored -> new TextExercise();
-            case ModelingExercise ignored -> new ModelingExercise();
-            case FileUploadExercise ignored -> new FileUploadExercise();
-            case ProgrammingExercise ignored -> new ProgrammingExercise();
-            default -> exerciseFromParticipation;
-        };
-
-        exerciseWithOnlyTitle.setTitle(originalParticipation.getExercise().getTitle());
-        exerciseWithOnlyTitle.setId(originalParticipation.getExercise().getId());
-        return exerciseWithOnlyTitle;
-    }
-
-    private void filterOutUselessDataFromComplaints(List<Complaint> complaints, boolean filterOutStudentFromComplaints) {
+    /**
+     * Removes the participant (i.e. student or team) information from the given complaints when the caller is not allowed to see it.
+     * The remaining reduction of the object graph (exercise, submission, participation) is handled by {@link ComplaintDTO#of}, which only exposes a minimal set of fields.
+     *
+     * @param complaints                     the complaints to filter
+     * @param filterOutStudentFromComplaints whether the participant information should be removed
+     */
+    private void filterStudentInformationFromComplaints(List<Complaint> complaints, boolean filterOutStudentFromComplaints) {
         if (filterOutStudentFromComplaints) {
             complaints.forEach(this::filterOutStudentFromComplaint);
         }
-        complaints.forEach(this::filterOutUselessDataFromComplaint);
     }
 
     private List<Complaint> buildComplaintsListForAssessor(List<Complaint> complaints, Principal principal, boolean assessorSameAsCaller, boolean isTestRun,
