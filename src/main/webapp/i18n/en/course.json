@@ -242,6 +242,17 @@
                 "label": "Access to Restricted Athena Modules Enabled",
                 "tooltip": "If this option is selected, the course's exercises can also use restricted Athena modules for feedback generation."
             },
+            "athena": {
+                "textExercises": "Text Exercises",
+                "textGradingEnabled": "Enable grading feedback suggestions",
+                "textPreliminaryEnabled": "Enable preliminary feedback requests",
+                "modelingExercises": "Modeling Exercises",
+                "modelingGradingEnabled": "Enable grading feedback suggestions",
+                "modelingPreliminaryEnabled": "Enable preliminary feedback requests",
+                "programmingExercises": "Programming Exercises",
+                "programmingGradingEnabled": "Enable grading feedback suggestions",
+                "programmingPreliminaryEnabled": "Enable preliminary feedback requests"
+            },
             "onlineCourse": {
                 "title": "Online Course",
                 "description": "Activate this checkbox for external online courses (e.g. on edX/Moodle) so that students can use this Artemis course (via the LTI interface). This also allows automatic account creation if enabled by the Artemis system administrator. You can further configure this in the LTI Configuration page."

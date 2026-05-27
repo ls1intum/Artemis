@@ -400,6 +400,92 @@
                         <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.restrictedAthenaModulesAccess.tooltip' | artemisTranslate }}" />
                     </div>
                 }
+                @if (isAthenaEnabled) {
+                    <!-- Text exercises -->
+                    <div class="mt-3">
+                        <strong jhiTranslate="artemisApp.course.athena.textExercises"></strong>
+                    </div>
+                    <div class="form-check">
+                        <input
+                            type="checkbox"
+                            class="form-check-input"
+                            name="athenaTextGradingEnabled"
+                            id="field_athenaTextGradingEnabled"
+                            [checked]="course.athenaTextGradingEnabled"
+                            (change)="toggleAthenaTextGradingEnabled()"
+                        />
+                        <label class="form-control-label" jhiTranslate="artemisApp.course.athena.textGradingEnabled" for="field_athenaTextGradingEnabled"></label>
+                    </div>
+                    <div class="form-check">
+                        <input
+                            type="checkbox"
+                            class="form-check-input"
+                            name="athenaTextPreliminaryEnabled"
+                            id="field_athenaTextPreliminaryEnabled"
+                            [checked]="course.athenaTextPreliminaryEnabled"
+                            (change)="toggleAthenaTextPreliminaryEnabled()"
+                        />
+                        <label class="form-control-label" jhiTranslate="artemisApp.course.athena.textPreliminaryEnabled" for="field_athenaTextPreliminaryEnabled"></label>
+                    </div>
+
+                    <!-- Modeling exercises -->
+                    <div class="mt-3">
+                        <strong jhiTranslate="artemisApp.course.athena.modelingExercises"></strong>
+                    </div>
+                    <div class="form-check">
+                        <input
+                            type="checkbox"
+                            class="form-check-input"
+                            name="athenaModelingGradingEnabled"
+                            id="field_athenaModelingGradingEnabled"
+                            [checked]="course.athenaModelingGradingEnabled"
+                            (change)="toggleAthenaModelingGradingEnabled()"
+                        />
+                        <label class="form-control-label" jhiTranslate="artemisApp.course.athena.modelingGradingEnabled" for="field_athenaModelingGradingEnabled"></label>
+                    </div>
+                    <div class="form-check">
+                        <input
+                            type="checkbox"
+                            class="form-check-input"
+                            name="athenaModelingPreliminaryEnabled"
+                            id="field_athenaModelingPreliminaryEnabled"
+                            [checked]="course.athenaModelingPreliminaryEnabled"
+                            (change)="toggleAthenaModelingPreliminaryEnabled()"
+                        />
+                        <label class="form-control-label" jhiTranslate="artemisApp.course.athena.modelingPreliminaryEnabled" for="field_athenaModelingPreliminaryEnabled"></label>
+                    </div>
+
+                    <!-- Programming exercises -->
+                    <div class="mt-3">
+                        <strong jhiTranslate="artemisApp.course.athena.programmingExercises"></strong>
+                    </div>
+                    <div class="form-check">
+                        <input
+                            type="checkbox"
+                            class="form-check-input"
+                            name="athenaProgrammingGradingEnabled"
+                            id="field_athenaProgrammingGradingEnabled"
+                            [checked]="course.athenaProgrammingGradingEnabled"
+                            (change)="toggleAthenaProgrammingGradingEnabled()"
+                        />
+                        <label class="form-control-label" jhiTranslate="artemisApp.course.athena.programmingGradingEnabled" for="field_athenaProgrammingGradingEnabled"></label>
+                    </div>
+                    <div class="form-check">
+                        <input
+                            type="checkbox"
+                            class="form-check-input"
+                            name="athenaProgrammingPreliminaryEnabled"
+                            id="field_athenaProgrammingPreliminaryEnabled"
+                            [checked]="course.athenaProgrammingPreliminaryEnabled"
+                            (change)="toggleAthenaProgrammingPreliminaryEnabled()"
+                        />
+                        <label
+                            class="form-control-label"
+                            jhiTranslate="artemisApp.course.athena.programmingPreliminaryEnabled"
+                            for="field_athenaProgrammingPreliminaryEnabled"
+                        ></label>
+                    </div>
+                }
                 <!-- Not part of model -->
                 <div class="nested-form-group-head form-check">
                     <input

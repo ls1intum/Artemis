@@ -256,6 +256,12 @@ export class CourseUpdateComponent implements OnInit {
                     validators: [Validators.required, Validators.min(0)],
                 }),
                 restrictedAthenaModulesAccess: new FormControl(this.course.restrictedAthenaModulesAccess),
+                athenaTextGradingEnabled: new FormControl(this.course.athenaTextGradingEnabled),
+                athenaTextPreliminaryEnabled: new FormControl(this.course.athenaTextPreliminaryEnabled),
+                athenaModelingGradingEnabled: new FormControl(this.course.athenaModelingGradingEnabled),
+                athenaModelingPreliminaryEnabled: new FormControl(this.course.athenaModelingPreliminaryEnabled),
+                athenaProgrammingGradingEnabled: new FormControl(this.course.athenaProgrammingGradingEnabled),
+                athenaProgrammingPreliminaryEnabled: new FormControl(this.course.athenaProgrammingPreliminaryEnabled),
                 enrollmentEnabled: new FormControl(this.course.enrollmentEnabled),
                 enrollmentStartDate: new FormControl(this.course.enrollmentStartDate),
                 enrollmentEndDate: new FormControl(this.course.enrollmentEndDate),
@@ -574,6 +580,36 @@ export class CourseUpdateComponent implements OnInit {
     changeRestrictedAthenaModulesEnabled() {
         this.course.restrictedAthenaModulesAccess = !this.course.restrictedAthenaModulesAccess;
         this.courseForm.controls['restrictedAthenaModulesAccess'].setValue(this.course.restrictedAthenaModulesAccess);
+    }
+
+    toggleAthenaTextGradingEnabled(): void {
+        this.course.athenaTextGradingEnabled = !this.course.athenaTextGradingEnabled;
+        this.courseForm.controls['athenaTextGradingEnabled'].setValue(this.course.athenaTextGradingEnabled);
+    }
+
+    toggleAthenaTextPreliminaryEnabled(): void {
+        this.course.athenaTextPreliminaryEnabled = !this.course.athenaTextPreliminaryEnabled;
+        this.courseForm.controls['athenaTextPreliminaryEnabled'].setValue(this.course.athenaTextPreliminaryEnabled);
+    }
+
+    toggleAthenaModelingGradingEnabled(): void {
+        this.course.athenaModelingGradingEnabled = !this.course.athenaModelingGradingEnabled;
+        this.courseForm.controls['athenaModelingGradingEnabled'].setValue(this.course.athenaModelingGradingEnabled);
+    }
+
+    toggleAthenaModelingPreliminaryEnabled(): void {
+        this.course.athenaModelingPreliminaryEnabled = !this.course.athenaModelingPreliminaryEnabled;
+        this.courseForm.controls['athenaModelingPreliminaryEnabled'].setValue(this.course.athenaModelingPreliminaryEnabled);
+    }
+
+    toggleAthenaProgrammingGradingEnabled(): void {
+        this.course.athenaProgrammingGradingEnabled = !this.course.athenaProgrammingGradingEnabled;
+        this.courseForm.controls['athenaProgrammingGradingEnabled'].setValue(this.course.athenaProgrammingGradingEnabled);
+    }
+
+    toggleAthenaProgrammingPreliminaryEnabled(): void {
+        this.course.athenaProgrammingPreliminaryEnabled = !this.course.athenaProgrammingPreliminaryEnabled;
+        this.courseForm.controls['athenaProgrammingPreliminaryEnabled'].setValue(this.course.athenaProgrammingPreliminaryEnabled);
     }
 
     /**
