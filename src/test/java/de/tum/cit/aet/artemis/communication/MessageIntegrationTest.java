@@ -43,11 +43,14 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.dto.AnswerPostResponseDTO;
+import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreatePostConversationDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
+import de.tum.cit.aet.artemis.communication.dto.ParentPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
+import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
@@ -571,7 +574,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         conversationPostToUpdate.setContent("User changes one of their conversation posts");
 
         PostResponseDTO updatedPost = request.putWithResponseBody("/api/communication/courses/" + courseId + "/messages/" + conversationPostToUpdate.getId(),
-                conversationPostToUpdate, PostResponseDTO.class, HttpStatus.OK);
+                toUpdatePostingDTO(conversationPostToUpdate), PostResponseDTO.class, HttpStatus.OK);
 
         assertThat(updatedPost.id()).isEqualTo(conversationPostToUpdate.getId());
         assertThat(updatedPost.content()).isEqualTo(conversationPostToUpdate.getContent());
@@ -605,13 +608,13 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         postToUpdate.setContent("User changes one of their conversation posts" + userMention);
 
         if (!isUserMentionValid) {
-            request.putWithResponseBody("/api/communication/courses/" + courseId + "/messages/" + postToUpdate.getId(), postToUpdate, PostResponseDTO.class,
+            request.putWithResponseBody("/api/communication/courses/" + courseId + "/messages/" + postToUpdate.getId(), toUpdatePostingDTO(postToUpdate), PostResponseDTO.class,
                     HttpStatus.BAD_REQUEST);
             verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
             return;
         }
 
-        PostResponseDTO updatedPost = request.putWithResponseBody("/api/communication/courses/" + courseId + "/messages/" + postToUpdate.getId(), postToUpdate,
+        PostResponseDTO updatedPost = request.putWithResponseBody("/api/communication/courses/" + courseId + "/messages/" + postToUpdate.getId(), toUpdatePostingDTO(postToUpdate),
                 PostResponseDTO.class, HttpStatus.OK);
 
         assertThat(updatedPost.id()).isEqualTo(postToUpdate.getId());
@@ -630,7 +633,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         conversationPostToUpdate.setContent("Tutor attempts to change some other user's conversation post");
 
         PostResponseDTO notUpdatedPost = request.putWithResponseBody("/api/communication/courses/" + courseId + "/messages/" + conversationPostToUpdate.getId(),
-                conversationPostToUpdate, PostResponseDTO.class, HttpStatus.FORBIDDEN);
+                toUpdatePostingDTO(conversationPostToUpdate), PostResponseDTO.class, HttpStatus.FORBIDDEN);
 
         assertThat(notUpdatedPost).isNull();
 
@@ -861,14 +864,14 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Post unpinnedPost = new Post();
         unpinnedPost.setAuthor(instructorParticipant.getUser());
         unpinnedPost.setConversation(channel);
-        PostResponseDTO createdUnpinnedPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", unpinnedPost, PostResponseDTO.class,
-                HttpStatus.CREATED);
+        PostResponseDTO createdUnpinnedPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", toCreatePostDTO(unpinnedPost),
+                PostResponseDTO.class, HttpStatus.CREATED);
 
         Post pinnedPost = new Post();
         pinnedPost.setAuthor(instructorParticipant.getUser());
         pinnedPost.setConversation(channel);
-        PostResponseDTO createdPinnedPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", pinnedPost, PostResponseDTO.class,
-                HttpStatus.CREATED);
+        PostResponseDTO createdPinnedPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", toCreatePostDTO(pinnedPost),
+                PostResponseDTO.class, HttpStatus.CREATED);
 
         MultiValueMap<String, String> paramsPin = new LinkedMultiValueMap<>();
         paramsPin.add("displayPriority", DisplayPriority.PINNED.toString());
@@ -932,7 +935,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void shouldIncludeDirectMessagesWhenFindingMessages() throws Exception {
         Post directPost = createPostWithOneToOneChat(TEST_PREFIX);
         directPost.setContent("SearchTestDirect");
-        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", directPost, PostResponseDTO.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", toCreatePostDTO(directPost), PostResponseDTO.class, HttpStatus.CREATED);
 
         // include the newly created conversation into all course-wide conversations
         long[] conversationIds = Stream.concat(existingCourseWideChannelIds.stream(), Stream.of(directPost.getConversation().getId())).mapToLong(Long::longValue).toArray();
@@ -952,7 +955,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void shouldIncludeDirectMessagesWhenFindingMessagesUsingGetRequest() throws Exception {
         Post directPost = createPostWithOneToOneChat(TEST_PREFIX);
         directPost.setContent("SearchTestDirect");
-        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", directPost, PostResponseDTO.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", toCreatePostDTO(directPost), PostResponseDTO.class, HttpStatus.CREATED);
 
         // include the newly created conversation into all conversations
         String conversationIds = Stream.concat(existingCourseWideChannelIds.stream(), Stream.of(directPost.getConversation().getId())).map(String::valueOf)
@@ -978,7 +981,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         groupPost.setAuthor(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
         groupPost.setConversation(nonCourseWideChannel);
         groupPost.setContent("SearchTestGroup");
-        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", groupPost, PostResponseDTO.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", toCreatePostDTO(groupPost), PostResponseDTO.class, HttpStatus.CREATED);
 
         // include the newly created conversation into all course-wide conversations
         long[] conversationIds = Stream.concat(existingCourseWideChannelIds.stream(), Stream.of(nonCourseWideChannel.getId())).mapToLong(Long::longValue).toArray();
@@ -1045,7 +1048,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         postToSave.setConversation(channel);
         postToSave.setContent("Test content for notification");
 
-        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postToSave, PostResponseDTO.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", toCreatePostDTO(postToSave), PostResponseDTO.class, HttpStatus.CREATED);
 
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
             List<CourseNotification> notifications = courseNotificationRepository.findAll();
@@ -1186,7 +1189,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      * @return saved answer post
      */
     private AnswerPostResponseDTO createAnswerPostAndAwaitAsyncCode(AnswerPost answerPostToSave) throws Exception {
-        return request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPostResponseDTO.class, HttpStatus.CREATED);
+        return request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", toCreateAnswerPostDTO(answerPostToSave), AnswerPostResponseDTO.class,
+                HttpStatus.CREATED);
     }
 
     private static List<CourseInformationSharingConfiguration> courseInformationSharingConfigurationProvider() {
@@ -1211,6 +1215,18 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             case PostResponseDTO dto -> dto.id();
             case null, default -> null;
         };
+    }
+
+    private CreatePostDTO toCreatePostDTO(Post post) {
+        return new CreatePostDTO(post.getContent(), post.getTitle(), false, new CreatePostConversationDTO(post.getConversation().getId()));
+    }
+
+    private UpdatePostingDTO toUpdatePostingDTO(Post post) {
+        return new UpdatePostingDTO(post.getId(), post.getContent(), post.getTitle(), false);
+    }
+
+    private CreateAnswerPostDTO toCreateAnswerPostDTO(AnswerPost answerPost) {
+        return new CreateAnswerPostDTO(answerPost.getContent(), new ParentPostDTO(answerPost.getPost().getId()));
     }
 
 }

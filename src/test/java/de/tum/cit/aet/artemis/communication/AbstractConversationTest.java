@@ -26,6 +26,8 @@ import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.ConversationWebsocketDTO;
+import de.tum.cit.aet.artemis.communication.dto.CreatePostConversationDTO;
+import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
@@ -97,8 +99,9 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationLocalCI
 
         var numberBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).stream().toList().size();
         Post postToSave = createPostWithConversation(conversationId, authorLoginWithoutPrefix);
+        CreatePostDTO postToCreate = new CreatePostDTO(postToSave.getContent(), postToSave.getTitle(), false, new CreatePostConversationDTO(conversationId));
 
-        PostResponseDTO createdPost = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/messages", postToSave, PostResponseDTO.class, HttpStatus.CREATED);
+        PostResponseDTO createdPost = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/messages", postToCreate, PostResponseDTO.class, HttpStatus.CREATED);
         assertThat(createdPost.conversation().id()).isEqualTo(conversationId);
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(numberBefore + 1);
         return createdPost;

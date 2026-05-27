@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationResponseDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostUpdateRequestDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
@@ -224,7 +225,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testEditPost_asTutor() throws Exception {
         Post postToUpdate = editExistingPost(existingPlagiarismPosts.getFirst());
-        PostResponseDTO notUpdatedPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, PostResponseDTO.class,
+        PostResponseDTO notUpdatedPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToUpdate.getId(), new PlagiarismPostUpdateRequestDTO(postToUpdate.getTitle(), postToUpdate.getContent()), PostResponseDTO.class,
                 HttpStatus.FORBIDDEN);
         assertThat(notUpdatedPost).isNull();
     }
@@ -238,11 +239,11 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         postToUpdate.setContent(userMention);
 
         if (!isUserMentionValid) {
-            request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, PostResponseDTO.class, HttpStatus.BAD_REQUEST);
+            request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToUpdate.getId(), new PlagiarismPostUpdateRequestDTO(postToUpdate.getTitle(), postToUpdate.getContent()), PostResponseDTO.class, HttpStatus.BAD_REQUEST);
             return;
         }
 
-        PostResponseDTO updatedPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, PostResponseDTO.class,
+        PostResponseDTO updatedPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToUpdate.getId(), new PlagiarismPostUpdateRequestDTO(postToUpdate.getTitle(), postToUpdate.getContent()), PostResponseDTO.class,
                 HttpStatus.OK);
         conversationUtilService.assertSensitiveInformationHidden(updatedPost);
         assertThat(updatedPost.id()).isEqualTo(postToUpdate.getId());
@@ -256,7 +257,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         // update post from another student (index 1)--> forbidden
         Post postToNotUpdate = editExistingPost(existingPosts.getFirst());
 
-        PostResponseDTO notUpdatedPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToNotUpdate.getId(), postToNotUpdate,
+        PostResponseDTO notUpdatedPost = request.putWithResponseBody("/api/plagiarism/courses/" + courseId + "/posts/" + postToNotUpdate.getId(), new PlagiarismPostUpdateRequestDTO(postToNotUpdate.getTitle(), postToNotUpdate.getContent()),
                 PostResponseDTO.class, HttpStatus.FORBIDDEN);
         assertThat(notUpdatedPost).isNull();
     }

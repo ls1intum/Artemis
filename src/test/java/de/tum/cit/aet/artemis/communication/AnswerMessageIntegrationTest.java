@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.ParentPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
+import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
@@ -232,12 +233,13 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         var countBefore = answerPostRepository.count();
 
         if (!isUserMentionValid) {
-            request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPostResponseDTO.class, HttpStatus.BAD_REQUEST);
+            request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", toCreateAnswerPostDTO(answerPostToSave), AnswerPostResponseDTO.class,
+                    HttpStatus.BAD_REQUEST);
             verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
             return;
         }
 
-        AnswerPostResponseDTO createdAnswerPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", answerPostToSave,
+        AnswerPostResponseDTO createdAnswerPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", toCreateAnswerPostDTO(answerPostToSave),
                 AnswerPostResponseDTO.class, HttpStatus.CREATED);
         conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
         // should not be automatically post resolving
@@ -326,7 +328,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         conversationAnswerPostToUpdate.setContent("User changes one of their conversation answerPosts");
 
         AnswerPostResponseDTO updatedAnswerPost = request.putWithResponseBody(
-                "/api/communication/courses/" + courseId + "/answer-messages/" + conversationAnswerPostToUpdate.getId(), conversationAnswerPostToUpdate,
+                "/api/communication/courses/" + courseId + "/answer-messages/" + conversationAnswerPostToUpdate.getId(), toUpdatePostingDTO(conversationAnswerPostToUpdate),
                 AnswerPostResponseDTO.class, HttpStatus.OK);
 
         assertThat(updatedAnswerPost.id()).isEqualTo(conversationAnswerPostToUpdate.getId());
@@ -345,14 +347,14 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         conversationAnswerPostToUpdate.setContent("User changes one of their conversation answerPosts" + userMention);
 
         if (!isUserMentionValid) {
-            request.putWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + conversationAnswerPostToUpdate.getId(), conversationAnswerPostToUpdate,
-                    AnswerPostResponseDTO.class, HttpStatus.BAD_REQUEST);
+            request.putWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + conversationAnswerPostToUpdate.getId(),
+                    toUpdatePostingDTO(conversationAnswerPostToUpdate), AnswerPostResponseDTO.class, HttpStatus.BAD_REQUEST);
             verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
             return;
         }
 
         AnswerPostResponseDTO updatedAnswerPost = request.putWithResponseBody(
-                "/api/communication/courses/" + courseId + "/answer-messages/" + conversationAnswerPostToUpdate.getId(), conversationAnswerPostToUpdate,
+                "/api/communication/courses/" + courseId + "/answer-messages/" + conversationAnswerPostToUpdate.getId(), toUpdatePostingDTO(conversationAnswerPostToUpdate),
                 AnswerPostResponseDTO.class, HttpStatus.OK);
 
         assertThat(updatedAnswerPost.id()).isEqualTo(conversationAnswerPostToUpdate.getId());
@@ -370,7 +372,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         resolvingAnswerPost.setResolvesPost(true);
 
         AnswerPostResponseDTO updatedAnswerPost = request.putWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + resolvingAnswerPost.getId(),
-                resolvingAnswerPost, AnswerPostResponseDTO.class, HttpStatus.OK);
+                toUpdatePostingDTO(resolvingAnswerPost), AnswerPostResponseDTO.class, HttpStatus.OK);
 
         assertThat(updatedAnswerPost.id()).isEqualTo(resolvingAnswerPost.getId());
 
@@ -554,7 +556,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         conversationAnswerPostToUpdate.setContent("Tutor attempts to change some other user's conversation answerPost");
 
         AnswerPostResponseDTO notUpdatedAnswerPost = request.putWithResponseBody(
-                "/api/communication/courses/" + courseId + "/answer-messages/" + conversationAnswerPostToUpdate.getId(), conversationAnswerPostToUpdate,
+                "/api/communication/courses/" + courseId + "/answer-messages/" + conversationAnswerPostToUpdate.getId(), toUpdatePostingDTO(conversationAnswerPostToUpdate),
                 AnswerPostResponseDTO.class, HttpStatus.FORBIDDEN);
 
         assertThat(notUpdatedAnswerPost).isNull();
@@ -573,7 +575,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         var countBefore = answerPostRepository.count();
 
         AnswerPostResponseDTO notUpdatedAnswerPost = request.putWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + 999L,
-                conversationAnswerPostToUpdate, AnswerPostResponseDTO.class, HttpStatus.BAD_REQUEST);
+                toUpdatePostingDTO(conversationAnswerPostToUpdate), AnswerPostResponseDTO.class, HttpStatus.BAD_REQUEST);
 
         assertThat(notUpdatedAnswerPost).isNull();
         assertThat(answerPostRepository.count()).isEqualTo(countBefore);
@@ -588,7 +590,8 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.getFirst());
 
         AnswerPostResponseDTO updatedAnswerPostServer = request.putWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages/" + answerPostToUpdate.getId(),
-                answerPostToUpdate, AnswerPostResponseDTO.class, HttpStatus.BAD_REQUEST);
+                // answerPostToUpdate is unsaved (id == null), so the 400 is driven by the path variable; the body id is irrelevant here.
+                new UpdatePostingDTO(0L, answerPostToUpdate.getContent(), null, false), AnswerPostResponseDTO.class, HttpStatus.BAD_REQUEST);
         assertThat(updatedAnswerPostServer).isNull();
 
         // conversation participants should not be notified
@@ -602,8 +605,9 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         Course dummyCourse = courseUtilService.createCourse();
 
         AnswerPostResponseDTO updatedAnswerPostServer = request.putWithResponseBody(
-                "/api/communication/courses/" + dummyCourse.getId() + "/answer-messages/" + answerPostToUpdate.getId(), answerPostToUpdate, AnswerPostResponseDTO.class,
-                HttpStatus.BAD_REQUEST);
+                "/api/communication/courses/" + dummyCourse.getId() + "/answer-messages/" + answerPostToUpdate.getId(),
+                // answerPostToUpdate is unsaved (id == null); the 400 stems from the course/answer mismatch, so the body id is irrelevant.
+                new UpdatePostingDTO(0L, answerPostToUpdate.getContent(), null, false), AnswerPostResponseDTO.class, HttpStatus.BAD_REQUEST);
         assertThat(updatedAnswerPostServer).isNull();
 
         // conversation participants should not be notified
@@ -752,6 +756,14 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
             case PostResponseDTO dto -> dto.id();
             case null, default -> null;
         };
+    }
+
+    private CreateAnswerPostDTO toCreateAnswerPostDTO(AnswerPost answerPost) {
+        return new CreateAnswerPostDTO(answerPost.getContent(), new ParentPostDTO(answerPost.getPost().getId()));
+    }
+
+    private UpdatePostingDTO toUpdatePostingDTO(AnswerPost answerPost) {
+        return new UpdatePostingDTO(answerPost.getId(), answerPost.getContent(), null, Boolean.TRUE.equals(answerPost.doesResolvePost()));
     }
 
 }

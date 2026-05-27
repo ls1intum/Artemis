@@ -29,6 +29,8 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.dto.AnswerPostResponseDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
+import de.tum.cit.aet.artemis.communication.dto.CreatePostConversationDTO;
+import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
 import de.tum.cit.aet.artemis.communication.dto.ParentPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
@@ -130,10 +132,8 @@ class AnswerPostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     private PostResponseDTO createPostViaApi(Conversation conversation) throws Exception {
-        Post post = new Post();
-        post.setConversation(conversation);
-        post.setContent("Test message in " + conversation.getClass().getSimpleName());
-        return request.postWithResponseBody("/api/communication/courses/" + course.getId() + "/messages", post, PostResponseDTO.class, HttpStatus.CREATED);
+        CreatePostDTO postToCreate = new CreatePostDTO("Test message in " + conversation.getClass().getSimpleName(), null, false, new CreatePostConversationDTO(conversation.getId()));
+        return request.postWithResponseBody("/api/communication/courses/" + course.getId() + "/messages", postToCreate, PostResponseDTO.class, HttpStatus.CREATED);
     }
 
     private AnswerPostResponseDTO createAnswerPostViaApi(PostResponseDTO parentPost) throws Exception {
