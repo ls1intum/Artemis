@@ -34,7 +34,7 @@ class IrisLectureSearchIntegrationTest extends AbstractIrisIntegrationTest {
                         new PyrisLectureSearchResultDTO.LectureUnitDTO(2L, "Neural Networks", "/link/2", 7), "backpropagation snippet"));
         irisRequestMockProvider.mockSearchLectures(results);
 
-        var requestDTO = new PyrisLectureSearchRequestDTO("machine learning", 5);
+        var requestDTO = new PyrisLectureSearchRequestDTO("machine learning", 5, null);
         List<PyrisLectureSearchResultDTO> response = request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
 
         assertThat(response).hasSize(2);
@@ -48,7 +48,7 @@ class IrisLectureSearchIntegrationTest extends AbstractIrisIntegrationTest {
     void search_shouldReturnEmptyList() throws Exception {
         irisRequestMockProvider.mockSearchLectures(List.of());
 
-        var requestDTO = new PyrisLectureSearchRequestDTO("nonexistent topic", 5);
+        var requestDTO = new PyrisLectureSearchRequestDTO("nonexistent topic", 5, null);
         List<PyrisLectureSearchResultDTO> response = request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
 
         assertThat(response).isEmpty();
@@ -59,14 +59,30 @@ class IrisLectureSearchIntegrationTest extends AbstractIrisIntegrationTest {
     void search_whenPyrisFails_shouldReturnInternalServerError() throws Exception {
         irisRequestMockProvider.mockSearchLecturesError(HttpStatus.INTERNAL_SERVER_ERROR);
 
-        var requestDTO = new PyrisLectureSearchRequestDTO("machine learning", 5);
+        var requestDTO = new PyrisLectureSearchRequestDTO("machine learning", 5, null);
         request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
     void search_asUnauthenticated_shouldReturnUnauthorized() throws Exception {
-        var requestDTO = new PyrisLectureSearchRequestDTO("machine learning", 5);
+        var requestDTO = new PyrisLectureSearchRequestDTO("machine learning", 5, null);
         request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void search_withCourseIdFilter_shouldReturnFilteredResults() throws Exception {
+        var results = List
+                .of(new PyrisLectureSearchResultDTO(new PyrisLectureSearchResultDTO.CourseDTO(42L, "Algorithms"), new PyrisLectureSearchResultDTO.LectureDTO(10L, "Sorting"),
+                        new PyrisLectureSearchResultDTO.LectureUnitDTO(1L, "QuickSort Slide", "/link/1", 2), "quicksort snippet"));
+        irisRequestMockProvider.mockSearchLectures(results);
+
+        var requestDTO = new PyrisLectureSearchRequestDTO("sorting algorithms", 5, List.of(42L));
+        List<PyrisLectureSearchResultDTO> response = request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
+
+        assertThat(response).hasSize(1);
+        assertThat(response.get(0).course().id()).isEqualTo(42L);
+        assertThat(response.get(0).lectureUnit().id()).isEqualTo(1L);
     }
 
     @Test
