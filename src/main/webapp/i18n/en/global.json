@@ -220,7 +220,8 @@
                     "privacy": "Privacy",
                     "notifications": "Notifications",
                     "examRooms": "Exam Rooms",
-                    "dependencies": "Dependencies"
+                    "dependencies": "Dependencies",
+                    "irisDashboard": "Iris Dashboard"
                 },
                 "collapseMenu": "Collapse Menu (Ctrl + M)",
                 "expandMenu": "Expand Menu (Ctrl + M)",
