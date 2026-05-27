@@ -13,7 +13,6 @@ import { UserService } from 'app/account/user/shared/user.service';
 import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { getLatestResultOfStudentParticipation } from 'app/exercise/participation/participation.utils';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
@@ -119,10 +118,18 @@ export class ExamRequestAiFeedbackButtonComponent {
             if (exercise.type !== ExerciseType.TEXT && exercise.type !== ExerciseType.MODELING) {
                 return false;
             }
-            const latestResult = getLatestResultOfStudentParticipation(exercise.studentParticipations?.[0], false);
-            return latestResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
+            return this.hasAnyAthenaResultForLatestSubmission(exercise);
         });
     });
+
+    private hasAnyAthenaResultForLatestSubmission(exercise: Exercise): boolean {
+        const submissions = exercise.studentParticipations?.[0]?.submissions ?? [];
+        if (submissions.length === 0) {
+            return false;
+        }
+        const currentSubmission = submissions.reduce<Submission>((acc, s) => ((s.id ?? 0) > (acc.id ?? 0) ? s : acc), submissions[0]);
+        return (currentSubmission.results ?? []).some((result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA);
+    }
 
     private athenaResultSubscriptions: Subscription[] = [];
     private currentAttemptCounted = false;
@@ -268,8 +275,7 @@ export class ExamRequestAiFeedbackButtonComponent {
             if ((exercise.type !== ExerciseType.TEXT && exercise.type !== ExerciseType.MODELING) || exercise.id === undefined) {
                 continue;
             }
-            const latestResult = getLatestResultOfStudentParticipation(exercise.studentParticipations?.[0], false);
-            if (latestResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
+            if (this.hasAnyAthenaResultForLatestSubmission(exercise)) {
                 initialReceived.add(exercise.id);
             }
         }
