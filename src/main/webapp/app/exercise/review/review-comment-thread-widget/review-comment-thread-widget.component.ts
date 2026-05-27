@@ -54,6 +54,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly thread = input.required<CommentThread>();
     readonly initialCollapsed = input<boolean>(false);
     readonly showLocationWarning = input<boolean>(false);
+    readonly showFeedbackAction = input<boolean>(false);
 
     readonly onToggleCollapse = output<boolean>();
     readonly onNavigateToLocation = output<ReviewThreadLocation>();
@@ -93,6 +94,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             displayText: this.formatReviewCommentText(comment),
         }));
     });
+    readonly isSelectedAsFeedback = computed(() => this.reviewCommentService.isThreadSelectedAsFeedback(this.thread().id));
     readonly firstComment = computed(() => this.orderedComments()[0]);
     readonly firstConsistencyIssueContent = computed<ConsistencyIssueCommentContent | undefined>(() => {
         const firstComment = this.firstComment();
@@ -249,6 +251,16 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             this.showThreadBody.set(false);
             this.onToggleCollapse.emit(true);
         }
+    }
+
+    /**
+     * Toggles whether the current thread should be included as feedback in the next Hyperion generation request.
+     */
+    toggleFeedbackSelection(): void {
+        if (!this.showFeedbackAction()) {
+            return;
+        }
+        this.reviewCommentService.toggleThreadFeedbackSelection(this.thread().id);
     }
 
     /**
