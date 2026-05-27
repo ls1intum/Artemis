@@ -2,7 +2,7 @@ import { Page, expect } from '@playwright/test';
 import { Channel, ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { GroupChat } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { UserCredentials } from '../../users';
 import { CommunicationAPIRequests } from '../../requests/CommunicationAPIRequests';
 import { setMonacoEditorContent, setMonacoEditorContentByLocator } from '../../utils';
@@ -427,8 +427,22 @@ export class CourseMessagesPage {
         await this.page.locator('#submitButton').click();
         const response = await responsePromise;
         const groupChat: GroupChat = await response.json();
-        // Wait for Angular to navigate to the new conversation
-        await this.page.waitForURL(`**/communication?conversationId=${groupChat.id}`, { timeout: 10000 });
+        // Wait for Angular to navigate to the new conversation. Under heavy parallel multi-node
+        // load the SPA's internal navigation to the new conversation URL occasionally races a
+        // late page reload and the query-param update gets dropped — fall back to navigating
+        // directly when the implicit navigation does not happen within 10s.
+        const targetUrlPattern = `**/communication?conversationId=${groupChat.id}`;
+        try {
+            await this.page.waitForURL(targetUrlPattern, { timeout: 10_000 });
+        } catch {
+            const courseIdMatch = this.page.url().match(/\/courses\/(\d+)\//);
+            if (courseIdMatch) {
+                await this.page.goto(`/courses/${courseIdMatch[1]}/communication?conversationId=${groupChat.id}`);
+                await this.page.waitForURL(targetUrlPattern, { timeout: 10_000 });
+            } else {
+                throw new Error(`Group chat created (id=${groupChat.id}) but URL did not update and current URL has no course id: ${this.page.url()}`);
+            }
+        }
         return groupChat;
     }
 

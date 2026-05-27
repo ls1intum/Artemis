@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { AbstractDialogComponent } from 'app/communication/course-conversations-components/abstract-dialog.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseUsersSelectorComponent } from 'app/communication/course-users-selector/course-users-selector.component';

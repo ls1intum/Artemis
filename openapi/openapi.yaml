@@ -7,7 +7,8 @@ servers:
 - {url: 'http://localhost:8080', description: Generated server url}
 tags:
 - {name: Global Search Resource, description: 'Weaviate-based semantic search across
-    exercises, lectures, lecture units, exams, FAQs, and public communication channels'}
+    courses, exercises, lectures, lecture units, exams, FAQs, and public communication
+    channels including their messages and replies'}
 paths:
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}:
     get:
@@ -853,7 +854,7 @@ paths:
       tags: [Global Search]
       summary: Perform a unified semantic search across entity types
       description: |-
-        Searches across multiple entity types (exercises, lectures, lecture units, exams, FAQs, channels)
+        Searches across multiple entity types (exercises, lectures, lecture units, exams, FAQs, channels, courses, posts, answer posts)
         with a consistent response format. When courseId is not specified, the search is performed
         globally across all courses the authenticated user has access to. Per-type access rules are
         enforced server-side via compound Weaviate filters.
@@ -867,7 +868,7 @@ paths:
       - name: types
         in: query
         description: Comma-separated entity type filter (exercise, lecture, lecture_unit,
-          exam, faq, channel) or 'all'; default 'all'
+          exam, faq, channel, course, post, answer_post) or 'all'; default 'all'
         required: false
         schema: {type: string}
       - name: courseId
@@ -895,7 +896,42 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/GlobalSearchResult'}
-  /api/core/calendar/subscription-token:
+  /api/core/calendar/courses/{courseId}/calendar-events-ics:
+    get:
+      tags: [legacy-calendar]
+      operationId: getLegacyCalendarEventSubscriptionFile
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: token
+        in: query
+        required: true
+        schema: {type: string}
+      - name: filterOptions
+        in: query
+        required: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum: [LECTURES, TUTORIALS, EXAMS, EXERCISES]
+          uniqueItems: true
+      - name: language
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [ENGLISH, GERMAN]
+      responses:
+        '200':
+          description: OK
+          content:
+            text/calendar:
+              schema: {type: string}
+      deprecated: true
+  /api/calendar/subscription-token:
     get:
       tags: [calendar]
       operationId: getCalendarEventSubscriptionToken
@@ -903,9 +939,9 @@ paths:
         '200':
           description: OK
           content:
-            application/json:
+            text/plain:
               schema: {type: string}
-  /api/core/calendar/courses/{courseId}/calendar-events:
+  /api/calendar/courses/{courseId}/calendar-events:
     get:
       tags: [calendar]
       summary: Get calendar events grouped by month
@@ -938,8 +974,10 @@ paths:
             application/json:
               schema:
                 type: object
-                additionalProperties: {type: array}
-  /api/core/calendar/courses/{courseId}/calendar-events-ics:
+                additionalProperties:
+                  type: array
+                  items: {$ref: '#/components/schemas/CalendarEvent'}
+  /api/calendar/courses/{courseId}/calendar-events-ics:
     get:
       tags: [calendar]
       operationId: getCalendarEventSubscriptionFile

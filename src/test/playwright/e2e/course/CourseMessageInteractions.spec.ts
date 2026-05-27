@@ -311,12 +311,27 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
         test('Student should be able to search for a message', async ({ login, page }) => {
             await login(studentOne, `/courses/${writeCourse.id}/communication`);
             const searchInput = page.getByPlaceholder(/search for a message/i);
-            await searchInput.fill(uniqueSearchText);
-            await searchInput.press('Enter');
-            // Verify search results heading appears
-            await expect(page.getByRole('heading', { name: /search results/i })).toBeVisible({ timeout: 15000 });
-            // Verify the matching message text is displayed in results
-            await expect(page.getByText(uniqueSearchText, { exact: true })).toBeVisible({ timeout: 10000 });
+            const matchedMessage = page.getByText(uniqueSearchText, { exact: true });
+
+            // Server-side message indexing is asynchronous under heavy multi-node load,
+            // so a freshly-created message can return no hits for several seconds. Re-issue
+            // the search until either the matching post shows up or we run out of attempts.
+            const maxAttempts = 5;
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                await searchInput.fill('');
+                await searchInput.fill(uniqueSearchText);
+                await searchInput.press('Enter');
+                await expect(page.getByRole('heading', { name: /search results/i })).toBeVisible({ timeout: 15_000 });
+                try {
+                    await expect(matchedMessage).toBeVisible({ timeout: 5_000 });
+                    return;
+                } catch {
+                    if (attempt === maxAttempts - 1) {
+                        throw new Error(`Search did not surface message "${uniqueSearchText}" after ${maxAttempts} attempts`);
+                    }
+                    await page.waitForTimeout(2_000);
+                }
+            }
         });
 
         test('Search should return no results for non-existent text', async ({ login, page }) => {

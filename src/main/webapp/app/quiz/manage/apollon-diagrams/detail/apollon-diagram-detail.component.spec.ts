@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
@@ -19,7 +19,7 @@ import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import * as testClassDiagramV3 from 'src/test/javascript/spec/helpers/sample/modeling/test-models/class-diagram.json';
 import * as testClassDiagramV4 from 'src/test/javascript/spec/helpers/sample/modeling/test-models/class-diagram-v4.json';
 import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import * as SVGRendererAPI from 'app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
 import { AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
@@ -43,6 +43,10 @@ function setupCanvasAndImageMocks() {
         } as unknown as HTMLCanvasElement;
     };
 
+    // The createElement overload union contains a @deprecated entry for legacy elements like
+    // <applet>; the canvas-mocking pattern itself isn't deprecated, but TS-ESLint can't
+    // disambiguate the overloads when we hold a reference to the bound method.
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     const originalCreateElement = document.createElement.bind(document);
     const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
         if (tagName === 'canvas') {

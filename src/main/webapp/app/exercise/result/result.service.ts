@@ -106,14 +106,13 @@ export class ResultService implements IResultService {
      * @param short flag that indicates if the resultString should use the short format
      */
     private getResultStringNonProgrammingExerciseWithAIFeedback(result: Result, relativeScore: number, points: number, short: boolean | undefined): string {
-        let aiFeedbackMessage: string = '';
         if (result && isAthenaAIResult(result) && result.successful === undefined) {
             return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackInProgress');
         }
         if (result && isAthenaAIResult(result) && result.successful === false) {
             return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackFailed');
         }
-        aiFeedbackMessage = this.getResultStringNonProgrammingExercise(relativeScore, points, short);
+        const aiFeedbackMessage = this.getResultStringNonProgrammingExercise(relativeScore, points, short);
         return `${aiFeedbackMessage} (${this.translateService.instant('artemisApp.result.preliminary')})`;
     }
 
