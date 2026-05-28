@@ -1,6 +1,6 @@
-import { Component, Input, OnInit, ViewEncapsulation, inject, input, viewChild } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, inject, signal, viewChild } from '@angular/core';
 import { AbstractControl, FormsModule, NgForm } from '@angular/forms';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
 import { TeamService } from 'app/exercise/team/team.service';
@@ -31,16 +31,15 @@ export type StudentTeamConflict = { studentLogin: string; teamId: string };
 })
 export class TeamUpdateDialogComponent implements OnInit {
     private teamService = inject(TeamService);
-    private activeModal = inject(NgbActiveModal);
+    private dialogRef = inject(DynamicDialogRef);
+    private dialogConfig = inject(DynamicDialogConfig);
 
     readonly editForm = viewChild.required<NgForm>('editForm');
 
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() team: Team;
-    readonly exercise = input<Exercise>(undefined!);
+    team: Team = new Team();
+    readonly exercise = signal<Exercise>(undefined!);
 
-    pendingTeam: Team;
+    pendingTeam: Team = new Team();
     isSaving = false;
 
     searchingStudents = false;
@@ -71,6 +70,11 @@ export class TeamUpdateDialogComponent implements OnInit {
      * Life cycle hook to indicate component creation is done
      */
     ngOnInit(): void {
+        const data = this.dialogConfig.data as { team?: Team; exercise?: Exercise } | undefined;
+        this.team = data?.team ?? new Team();
+        if (data?.exercise) {
+            this.exercise.set(data.exercise);
+        }
         this.initPendingTeam();
         this.shortNameValidation(this.shortNameValidator);
     }
@@ -192,7 +196,7 @@ export class TeamUpdateDialogComponent implements OnInit {
      * Cancel the update-dialog
      */
     clear() {
-        this.activeModal.dismiss('cancel');
+        this.dialogRef.close(undefined);
     }
 
     /**
@@ -225,7 +229,7 @@ export class TeamUpdateDialogComponent implements OnInit {
      * @param {HttpResponse<Team>}team - The successful updated team
      */
     onSaveSuccess(team: HttpResponse<Team>) {
-        this.activeModal.close(team.body);
+        this.dialogRef.close(team.body);
         this.isSaving = false;
     }
 

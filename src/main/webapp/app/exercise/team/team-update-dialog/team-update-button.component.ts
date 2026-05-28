@@ -1,5 +1,5 @@
 import { Component, inject, input, output } from '@angular/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { TeamUpdateDialogComponent } from 'app/exercise/team/team-update-dialog/team-update-dialog.component';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -21,7 +21,7 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
     imports: [ButtonComponent],
 })
 export class TeamUpdateButtonComponent {
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
 
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
@@ -42,13 +42,20 @@ export class TeamUpdateButtonComponent {
      */
     openTeamCreateDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(TeamUpdateDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.team = this.team() || new Team();
-        modalRef.componentInstance.exercise = this.exercise;
+        const dialogRef = this.dialogService.open(TeamUpdateDialogComponent, {
+            showHeader: false,
+            width: '50rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            data: { team: this.team() || new Team(), exercise: this.exercise() },
+        });
 
-        modalRef.result.then(
-            (team: Team) => this.save.emit(team),
-            () => {},
-        );
+        dialogRef?.onClose.subscribe((team: Team | undefined) => {
+            if (team) {
+                this.save.emit(team);
+            }
+        });
     }
 }
