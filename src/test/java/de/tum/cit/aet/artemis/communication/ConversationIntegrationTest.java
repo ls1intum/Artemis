@@ -144,7 +144,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
             assertConversationDTOTransientProperties(conv, true, true, true, true);
         }
         // cleanup
-        conversationMessageRepository.deleteById(post.getId());
+        conversationMessageRepository.deleteById(post.id());
         conversationRepository.deleteById(groupChat.getId());
         conversationRepository.deleteById(oneToOneChat.getId());
         conversationRepository.deleteById(channel.getId());
@@ -176,7 +176,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         assertThatDb(() -> request.getList("/api/communication/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class)).hasBeenCalledTimes(11);
 
         // cleanup
-        conversationMessageRepository.deleteById(post.getId());
+        conversationMessageRepository.deleteById(post.id());
         conversationRepository.deleteById(groupChat.getId());
         conversationRepository.deleteById(oneToOneChat.getId());
         conversationRepository.deleteById(channel.getId());
@@ -208,7 +208,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         assertThat(channels).allSatisfy(ch -> assertThat(ch).isInstanceOf(ChannelDTO.class));
 
         // cleanup
-        conversationMessageRepository.deleteById(post.getId());
+        conversationMessageRepository.deleteById(post.id());
         conversationRepository.deleteById(groupChat.getId());
         conversationRepository.deleteById(oneToOneChat.getId());
         conversationRepository.deleteById(channel.getId());

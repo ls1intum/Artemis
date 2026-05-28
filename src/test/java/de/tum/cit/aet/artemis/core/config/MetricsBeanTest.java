@@ -292,11 +292,9 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         assertMetricEquals(1, "artemis.statistics.public.active_exercises", "exerciseType", ExerciseType.QUIZ.toString());
         assertMetricEquals(1, "artemis.statistics.public.active_exercises", "exerciseType", ExerciseType.TEXT.toString());
 
-        assertMetricEquals(
-                exerciseRepository.countExercisesGroupByExerciseType().stream().filter(e -> e.exerciseType() == ExerciseType.QUIZ.getExerciseClass()).findFirst().get().value(),
+        assertMetricEquals(exerciseRepository.countExercisesGroupByExerciseType().stream().filter(e -> e.exerciseType() == ExerciseType.QUIZ).findFirst().get().value(),
                 "artemis.statistics.public.exercises", "exerciseType", ExerciseType.QUIZ.toString());
-        assertMetricEquals(
-                exerciseRepository.countExercisesGroupByExerciseType().stream().filter(e -> e.exerciseType() == ExerciseType.TEXT.getExerciseClass()).findFirst().get().value(),
+        assertMetricEquals(exerciseRepository.countExercisesGroupByExerciseType().stream().filter(e -> e.exerciseType() == ExerciseType.TEXT).findFirst().get().value(),
                 "artemis.statistics.public.exercises", "exerciseType", ExerciseType.TEXT.toString());
     }
 

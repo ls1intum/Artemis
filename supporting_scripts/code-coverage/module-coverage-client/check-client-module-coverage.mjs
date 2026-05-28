@@ -77,10 +77,12 @@ const moduleThresholds = {
         lines:      89.90,
     },
     communication: {
-        statements: 92.40,
-        branches:   74.10,
-        functions:  89.50,
-        lines:      92.70,
+        // Lowered after notification extraction moved ~5k lines (course-notification subtree)
+        // and its associated coverage out. Ratchet back up once messaging side is measured.
+        statements: 85.00,
+        branches:   65.00,
+        functions:  80.00,
+        lines:      85.00,
     },
     core: {
         // Statements/lines lowered (course + admin moved out — their well-covered code lifted
@@ -149,6 +151,14 @@ const moduleThresholds = {
         branches:   72.20,
         functions:  84.40,
         lines:      87.30,
+    },
+    notification: {
+        // New module extracted from communication in this PR. Conservative initial baseline;
+        // ratchet up once CI measures the actual coverage of the extracted UI.
+        statements: 80.00,
+        branches:   60.00,
+        functions:  75.00,
+        lines:      80.00,
     },
     plagiarism: {
         statements: 93.30,

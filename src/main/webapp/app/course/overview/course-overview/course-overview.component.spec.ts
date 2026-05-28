@@ -57,11 +57,11 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { generateExampleTutorialGroupsConfigurationDTO } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
-import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
-import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
-import { CourseNotificationSettingPreset } from 'app/communication/shared/entities/course-notification/course-notification-setting-preset';
-import { CourseNotificationSettingInfo } from 'app/communication/shared/entities/course-notification/course-notification-setting-info';
-import { CourseNotificationInfo } from 'app/communication/shared/entities/course-notification/course-notification-info';
+import { CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
+import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
+import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
+import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/course-notification/course-notification-setting-info';
+import { CourseNotificationInfo } from 'app/notification/shared/entities/course-notification/course-notification-info';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';

@@ -25,7 +25,7 @@ import { ExerciseType, ScoresPerExerciseType } from 'app/exercise/shared/entitie
 import { OnlineCourseDtoModel } from 'app/lti/shared/entities/online-course-dto.model';
 import { CourseForArchiveDTO } from '../../shared/entities/course-for-archive-dto';
 import { addPublicFilePrefix } from 'app/app.constants';
-import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
+import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { convertTutorialGroupArrayDatesFromServer, convertTutorialGroupsConfigurationDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
@@ -70,7 +70,7 @@ export class CourseManagementService implements OnDestroy {
     private courseNotificationService = inject(CourseNotificationService);
     private localStorageService = inject(LocalStorageService);
 
-    private resourceUrl = 'api/core/courses';
+    private resourceUrl = 'api/course/courses';
 
     private coursesForNotifications: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
 

@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.core.dto.StudentGroupCountDTO;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseManagementDetailViewDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -43,7 +44,8 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/core/")
+@SuppressWarnings("deprecation")
+@RequestMapping({ "api/course/", CourseLegacyRestPaths.CORE_PREFIX })
 @Lazy
 public class CourseStatsResource {
 
