@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Profile;
 @ConfigurationProperties(prefix = "artemis.iris.dashboard")
 public class IrisDashboardProperties {
 
-    private int maxQueryWindowDays = 365;
+    private int maxQueryWindowDays = 90;
 
     private int staleThresholdMinutes = 5;
 

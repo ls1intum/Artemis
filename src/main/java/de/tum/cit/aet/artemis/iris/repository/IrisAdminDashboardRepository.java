@@ -30,6 +30,7 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
             FROM iris_message m
             JOIN iris_session s ON s.id = m.session_id
             WHERE m.sender = 'USER'
+              AND s.creation_date >= :from AND s.creation_date < :to
               AND m.sent_at >= :from AND m.sent_at < :to
               AND s.discriminator IN ('CHAT', 'TUTOR_SUGGESTION')
             """)
@@ -92,6 +93,7 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
             JOIN iris_session s ON s.id = m.session_id
             WHERE m.sender = 'LLM'
               AND m.helpful = true
+              AND s.creation_date >= :from AND s.creation_date < :to
               AND m.sent_at >= :from AND m.sent_at < :to
               AND s.discriminator IN ('CHAT', 'TUTOR_SUGGESTION')
             """)
@@ -103,6 +105,7 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
             JOIN iris_session s ON s.id = m.session_id
             WHERE m.sender = 'LLM'
               AND m.helpful = false
+              AND s.creation_date >= :from AND s.creation_date < :to
               AND m.sent_at >= :from AND m.sent_at < :to
               AND s.discriminator IN ('CHAT', 'TUTOR_SUGGESTION')
             """)

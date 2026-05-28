@@ -6,14 +6,16 @@
         </div>
         <div class="d-flex align-items-center gap-2">
             <p-select [ngModel]="selectedTimeSpan()" [options]="timeSpanOptions" optionLabel="label" (ngModelChange)="onTimeSpanChange($event)" size="small" styleClass="w-auto" />
-            <button
-                class="btn btn-sm btn-outline-secondary"
-                (click)="refresh()"
+            <p-button
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (onClick)="refresh()"
                 [attr.aria-label]="'artemisApp.irisDashboard.refresh' | artemisTranslate"
                 [title]="'artemisApp.irisDashboard.refresh' | artemisTranslate"
             >
                 <fa-icon [icon]="faSync" />
-            </button>
+            </p-button>
         </div>
     </div>
 

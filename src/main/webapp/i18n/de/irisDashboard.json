@@ -38,8 +38,7 @@
                 "day": "Tag",
                 "week": "Woche",
                 "month": "Monat",
-                "quarter": "Quartal",
-                "year": "Jahr"
+                "quarter": "Quartal"
             }
         }
     }

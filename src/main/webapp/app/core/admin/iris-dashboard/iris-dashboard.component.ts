@@ -6,6 +6,7 @@ import { TableModule } from 'primeng/table';
 import { TabsModule } from 'primeng/tabs';
 import { PanelModule } from 'primeng/panel';
 import { SelectModule } from 'primeng/select';
+import { ButtonModule } from 'primeng/button';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
@@ -19,7 +20,20 @@ import { Subscription } from 'rxjs';
 @Component({
     selector: 'jhi-iris-dashboard',
     standalone: true,
-    imports: [DecimalPipe, JsonPipe, CardModule, TableModule, TabsModule, PanelModule, SelectModule, FormsModule, TranslateDirective, ArtemisTranslatePipe, FaIconComponent],
+    imports: [
+        DecimalPipe,
+        JsonPipe,
+        CardModule,
+        TableModule,
+        TabsModule,
+        PanelModule,
+        SelectModule,
+        ButtonModule,
+        FormsModule,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        FaIconComponent,
+    ],
     templateUrl: './iris-dashboard.component.html',
     styleUrls: ['./iris-dashboard.component.scss'],
 })
@@ -63,7 +77,6 @@ export class IrisDashboardComponent implements OnInit, OnDestroy {
             { label: this.translateService.instant('artemisApp.irisDashboard.timeSpan.week'), value: 'WEEK', days: 7 },
             { label: this.translateService.instant('artemisApp.irisDashboard.timeSpan.month'), value: 'MONTH', days: 30 },
             { label: this.translateService.instant('artemisApp.irisDashboard.timeSpan.quarter'), value: 'QUARTER', days: 90 },
-            { label: this.translateService.instant('artemisApp.irisDashboard.timeSpan.year'), value: 'YEAR', days: 365 },
         ];
         this.selectedTimeSpan.set(this.timeSpanOptions[2]);
         this.loadData();

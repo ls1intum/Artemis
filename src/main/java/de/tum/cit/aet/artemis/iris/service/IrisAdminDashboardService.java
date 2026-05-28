@@ -72,6 +72,10 @@ public class IrisAdminDashboardService {
      * @return the overview DTO
      */
     public IrisDashboardOverviewDTO computeOverview(Instant from, Instant to) {
+        return computeOverview(from, to, computeStaleBefore(to, TimeUtil.now().toInstant()));
+    }
+
+    private IrisDashboardOverviewDTO computeOverview(Instant from, Instant to, Instant staleBefore) {
         long totalSessions = dashboardRepository.countTotalSessions(from, to);
         long activeSessions = dashboardRepository.countActiveSessions(from, to);
         double engagementRate = totalSessions > 0 ? (double) activeSessions / totalSessions * 100.0 : 0.0;
@@ -80,7 +84,6 @@ public class IrisAdminDashboardService {
         long uniqueUsers = dashboardRepository.countUniqueUsers(from, to);
 
         // Single fetch of user messages for both no-response and response-time computation
-        Instant staleBefore = computeStaleBefore(to, TimeUtil.now().toInstant());
         List<IrisDashboardUserMessageResultDTO> allUserMessages = mapResults(dashboardRepository.findUserMessagesWithNextMessageFullRange(from, to));
 
         // No-response: only consider messages before staleBefore
@@ -148,7 +151,7 @@ public class IrisAdminDashboardService {
      * @return the digest DTO containing all overview fields, chat-mode breakdown, and top courses
      */
     public IrisDashboardDigestDTO computeDigestData(Instant from, Instant to, Instant staleBefore) {
-        IrisDashboardOverviewDTO overview = computeOverview(from, to);
+        IrisDashboardOverviewDTO overview = computeOverview(from, to, staleBefore);
 
         // Chat-mode breakdown: group sessions by mode, zero out per-mode message/rating counts
         List<Object[]> sessionRows = dashboardRepository.findSessionsWithMode(from, to);

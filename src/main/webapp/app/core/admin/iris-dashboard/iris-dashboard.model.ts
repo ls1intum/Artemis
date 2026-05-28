@@ -50,7 +50,7 @@ export interface IrisDashboardConfig {
     alertMinimumUserMessages: number;
 }
 
-export type IrisDashboardTimeSpan = 'DAY' | 'WEEK' | 'MONTH' | 'QUARTER' | 'YEAR';
+export type IrisDashboardTimeSpan = 'DAY' | 'WEEK' | 'MONTH' | 'QUARTER';
 
 export type IrisDashboardMetric = 'SESSIONS' | 'MESSAGES' | 'NO_RESPONSE_RATE' | 'RESPONSE_TIME' | 'RATINGS' | 'TOKEN_COST' | 'ENGAGEMENT';
 

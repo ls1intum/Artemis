@@ -117,10 +117,10 @@ public class IrisDashboardEmailService {
     }
 
     /**
-     * Sends the given digest to all resolved digest recipients and returns the number of successfully sent emails.
+     * Sends the given digest to all resolved digest recipients and returns the number of emails queued for async delivery.
      *
      * @param digest the digest data to send
-     * @return the number of emails successfully sent
+     * @return the number of emails queued for async delivery
      */
     public int sendDigest(IrisDashboardDigestDTO digest) {
         int sent = 0;
@@ -137,10 +137,10 @@ public class IrisDashboardEmailService {
     }
 
     /**
-     * Sends the given alert to all resolved alert recipients (falling back to digest recipients) and returns the number of successfully sent emails.
+     * Sends the given alert to all resolved alert recipients (falling back to digest recipients) and returns the number of emails queued for async delivery.
      *
      * @param alert the alert data to send
-     * @return the number of emails successfully sent
+     * @return the number of emails queued for async delivery
      */
     public int sendAlert(IrisDashboardAlertDTO alert) {
         int sent = 0;
@@ -161,8 +161,14 @@ public class IrisDashboardEmailService {
     }
 
     private List<String> validateAndDedup(List<String> raw) {
+        if (raw == null || raw.isEmpty()) {
+            return List.of();
+        }
         var seen = new LinkedHashMap<String, String>();
         for (String entry : raw) {
+            if (entry == null) {
+                continue;
+            }
             String trimmed = entry.trim();
             if (trimmed.isEmpty()) {
                 continue;
