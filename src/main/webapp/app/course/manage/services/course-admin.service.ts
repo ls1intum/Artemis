@@ -18,7 +18,7 @@ export class CourseAdminService {
     private http = inject(HttpClient);
     private courseManagementService = inject(CourseManagementService);
 
-    private resourceUrl = 'api/core/admin/courses';
+    private resourceUrl = 'api/admin/courses';
 
     /**
      * finds all groups for all courses using a GET request

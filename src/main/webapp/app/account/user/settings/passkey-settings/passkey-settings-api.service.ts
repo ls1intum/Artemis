@@ -4,7 +4,7 @@ import { PasskeyDTO } from 'app/account/user/settings/passkey-settings/dto/passk
 
 @Injectable({ providedIn: 'root' })
 export class PasskeySettingsApiService extends BaseApiHttpService {
-    private readonly basePath = `core/passkey`;
+    private readonly basePath = `account/passkey`;
 
     async getRegisteredPasskeys(): Promise<PasskeyDTO[]> {
         return await this.get<PasskeyDTO[]>(`${this.basePath}/user`);
