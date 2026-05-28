@@ -473,7 +473,7 @@ dependencies {
     implementation "net.lingala.zip4j:zip4j:2.11.6"
 
     // use newest version of guava to avoid security issues through outdated dependencies
-    implementation "com.google.guava:guava:33.5.0-jre"
+    implementation "com.google.guava:guava:33.6.0-jre"
 
     // explicitly only use this at runtime (required by liquibase, because developers should prefer org.apache.commons:csv
     runtimeOnly "com.opencsv:opencsv:5.12.0"
