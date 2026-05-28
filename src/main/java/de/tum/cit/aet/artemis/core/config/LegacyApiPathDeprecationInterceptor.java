@@ -64,9 +64,12 @@ public class LegacyApiPathDeprecationInterceptor implements HandlerInterceptor {
             return true;
         }
         // HttpServletRequest#getRequestURI() includes the servlet context path. Strip it so the
-        // legacy-prefix match works under a non-root deployment (server.servlet.context-path).
-        String contextPath = request.getContextPath();
-        if (contextPath != null && !contextPath.isEmpty() && requestPath.startsWith(contextPath)) {
+        // legacy-prefix match works under a non-root deployment (server.servlet.context-path), but
+        // keep the original prefix to prepend to the successor URI we advertise — otherwise the
+        // Link header would point clients away from the deployment root.
+        String contextPath = "";
+        if (request.getContextPath() != null && !request.getContextPath().isEmpty() && requestPath.startsWith(request.getContextPath())) {
+            contextPath = request.getContextPath();
             requestPath = requestPath.substring(contextPath.length());
         }
         String successorPrefix = withLeadingSlash(paths[0]);
@@ -81,7 +84,7 @@ public class LegacyApiPathDeprecationInterceptor implements HandlerInterceptor {
             response.setHeader("Sunset", SUNSET_DATE);
             // Link is multi-valued (RFC 8288): use addHeader so a pagination Link emitted by the
             // controller (PaginationUtil) is preserved alongside the successor-version Link.
-            String successor = successorPrefix + requestPath.substring(legacyPrefix.length());
+            String successor = contextPath + successorPrefix + requestPath.substring(legacyPrefix.length());
             response.addHeader("Link", "<" + successor + ">; rel=\"successor-version\"");
             return true;
         }
