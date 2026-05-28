@@ -18,7 +18,7 @@ class AssessmentEntityUsageArchitectureTest extends AbstractModuleEntityUsageArc
     // TODO: Reduce this to 0 by returning DTOs instead of entities
     @Override
     protected int getExpectedEntityReturnViolations() {
-        return 15;
+        return 9;
     }
 
     // TODO: Reduce this to 0 by accepting DTOs instead of entities in @RequestBody/@RequestPart
