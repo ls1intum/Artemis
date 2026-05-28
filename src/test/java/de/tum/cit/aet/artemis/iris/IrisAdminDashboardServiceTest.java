@@ -19,9 +19,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardBreakdownDimension;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardMetric;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardProperties;
@@ -34,7 +34,7 @@ class IrisAdminDashboardServiceTest {
 
     private IrisDashboardProperties properties;
 
-    private CourseRepository courseRepository;
+    private CourseTestRepository courseRepository;
 
     private IrisAdminDashboardService service;
 
@@ -42,7 +42,7 @@ class IrisAdminDashboardServiceTest {
     void setUp() {
         repository = mock(IrisAdminDashboardRepository.class);
         properties = new IrisDashboardProperties();
-        courseRepository = mock(CourseRepository.class);
+        courseRepository = mock(CourseTestRepository.class);
         service = new IrisAdminDashboardService(repository, properties, courseRepository);
         TimeUtil.setClock(Clock.fixed(ZonedDateTime.of(2026, 5, 27, 12, 0, 0, 0, ZoneOffset.UTC).toInstant(), ZoneOffset.UTC));
     }
