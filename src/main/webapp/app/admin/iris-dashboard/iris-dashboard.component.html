@@ -132,7 +132,7 @@
         </div>
 
         <!-- Breakdown Tables -->
-        <p-tabs [value]="activeBreakdownTab()" (valueChange)="activeBreakdownTab.set($event)">
+        <p-tabs [value]="activeBreakdownTab()" (valueChange)="activeBreakdownTab.set($any($event))">
             <p-tablist>
                 <p-tab [value]="0" jhiTranslate="artemisApp.irisDashboard.breakdown.byChatMode">By Chat Mode</p-tab>
                 <p-tab [value]="1" jhiTranslate="artemisApp.irisDashboard.breakdown.byCourse">By Course (Top 10)</p-tab>
