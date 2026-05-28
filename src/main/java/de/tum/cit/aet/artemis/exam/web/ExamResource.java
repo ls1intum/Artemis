@@ -950,15 +950,18 @@ public class ExamResource {
         var student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin)
                 .orElseThrow(() -> new EntityNotFoundException("User with login: \"" + studentLogin + "\" does not exist"));
 
-        if (student.getGroups().contains(exam.getCourse().getInstructorGroupName()) || authCheckService.isAdmin(student)) {
+        var studentGroups = student.getGroups();
+
+        var instructorGroupName = course.getInstructorGroupName();
+        var editorGroupName = course.getEditorGroupName();
+        var teachingAssistantGroupName = course.getTeachingAssistantGroupName();
+
+        if (studentGroups.contains(instructorGroupName) || authCheckService.isAdmin(student)) {
             throw new AccessForbiddenAlertException("You cannot register instructors or administrators to exams.", ENTITY_NAME, "cannotRegisterInstructor");
         }
 
-        if (student.getGroups().contains(exam.getCourse().getEditorGroupName()) || authCheckService.isEditorInCourse(exam.getCourse(), student)) {
-            throw new AccessForbiddenAlertException("You cannot register editors or tutors to exams.", ENTITY_NAME, "cannotRegisterEditor");
-        }
-
-        if (student.getGroups().contains(exam.getCourse().getTeachingAssistantGroupName()) || authCheckService.isTeachingAssistantInCourse(exam.getCourse(), student)) {
+        if (studentGroups.contains(editorGroupName) || studentGroups.contains(teachingAssistantGroupName) || authCheckService.isEditorInCourse(course, student)
+                || authCheckService.isTeachingAssistantInCourse(course, student)) {
             throw new AccessForbiddenAlertException("You cannot register editors or tutors to exams.", ENTITY_NAME, "cannotRegisterEditor");
         }
 
