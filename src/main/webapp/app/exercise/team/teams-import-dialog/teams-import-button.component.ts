@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -12,7 +12,7 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
     template: `
         <jhi-button
             [btnType]="ButtonType.PRIMARY"
-            [btnSize]="buttonSize"
+            [btnSize]="buttonSize()"
             [icon]="faPlus"
             [title]="'artemisApp.team.importTeams.buttonLabel'"
             (onClick)="openTeamsImportDialog($event)"
@@ -26,11 +26,11 @@ export class TeamsImportButtonComponent {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
-    @Input() exercise: Exercise;
-    @Input() teams: Team[];
-    @Input() buttonSize: ButtonSize = ButtonSize.SMALL;
+    readonly exercise = input<Exercise>(undefined!);
+    readonly teams = input<Team[]>(undefined!);
+    readonly buttonSize = input<ButtonSize>(ButtonSize.SMALL);
 
-    @Output() save: EventEmitter<Team[]> = new EventEmitter();
+    readonly save = output<Team[]>();
 
     // Icons
     faPlus = faPlus;

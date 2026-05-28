@@ -17,7 +17,7 @@
         (click)="change(IncludedInOverallScore.INCLUDED_AS_BONUS)"
         jhiTranslate="artemisApp.exercise.bonus"
     ></div>
-    @if (allowNotIncluded) {
+    @if (allowNotIncluded()) {
         <div
             class="btn btn-default"
             [ngClass]="{

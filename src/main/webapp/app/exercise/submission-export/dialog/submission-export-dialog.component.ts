@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { catchError, tap } from 'rxjs/operators';
@@ -27,8 +27,8 @@ export class SubmissionExportDialogComponent implements OnInit {
     activeModal = inject(NgbActiveModal);
     private alertService = inject(AlertService);
 
-    @Input() exerciseId: number;
-    @Input() exerciseType: ExerciseType;
+    readonly exerciseId = input<number>(undefined!);
+    readonly exerciseType = input<ExerciseType>(undefined!);
 
     exercise: Exercise;
     exportInProgress: boolean;
@@ -48,7 +48,7 @@ export class SubmissionExportDialogComponent implements OnInit {
             participantIdentifierList: '',
         };
         this.exerciseService
-            .find(this.exerciseId)
+            .find(this.exerciseId())
             .pipe(
                 tap(({ body: exercise }) => {
                     this.exercise = exercise!;
@@ -70,7 +70,7 @@ export class SubmissionExportDialogComponent implements OnInit {
 
     exportSubmissions(exerciseId: number) {
         this.exportInProgress = true;
-        this.submissionExportService.exportSubmissions(exerciseId, this.exerciseType, this.submissionExportOptions).subscribe({
+        this.submissionExportService.exportSubmissions(exerciseId, this.exerciseType(), this.submissionExportOptions).subscribe({
             next: this.handleExportResponse,
             error: () => {
                 this.exportInProgress = false;

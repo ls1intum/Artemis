@@ -34,12 +34,16 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
     private injector = inject(Injector);
     readonly ExerciseType = ExerciseType;
 
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() exerciseType?: ExerciseType;
 
     /**
      * The programming language is only set when filtering for exercises with SCA enabled.
      * In this case we only want to display exercises with the given language
      */
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input()
     programmingLanguage?: ProgrammingLanguage;
 

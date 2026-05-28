@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, inject, input, output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, Subject, Subscription, merge } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -21,11 +21,13 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
 
     private eventSubscriber: Subscription;
-    @Input() embedded = false;
+    readonly embedded = input(false);
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() course: Course;
     filter: ExerciseFilter;
-    @Output() exerciseCount = new EventEmitter<number>();
-    @Output() filteredExerciseCount = new EventEmitter<number>();
+    readonly exerciseCount = output<number>();
+    readonly filteredExerciseCount = output<number>();
     showHeading: boolean;
     courseId: number;
     predicate: string = 'id';
@@ -44,7 +46,7 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
      * Fetches an exercise from the server (and if needed the course as well)
      */
     ngOnInit(): void {
-        this.showHeading = this.embedded;
+        this.showHeading = this.embedded();
         this.filter = new ExerciseFilter();
         this.load();
         this.registerChangeInExercises();
@@ -58,6 +60,8 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
         this.dialogErrorSource.unsubscribe();
     }
 
+    // TODO: Skipped for migration because:
+    //  Accessor inputs cannot be migrated as they are too complex.
     @Input()
     set exerciseFilter(value: ExerciseFilter) {
         this.filter = value;

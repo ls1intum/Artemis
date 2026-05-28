@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, inject, input } from '@angular/core';
 import { SortService } from 'app/foundation/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -51,12 +51,23 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     readonly getIconTooltip = getIconTooltip;
     readonly dayjs = dayjs;
 
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() public exercise: Exercise;
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() public studentParticipation?: StudentParticipation;
-    @Input() public title: string;
-    @Input() public exam?: Exam;
+    public readonly title = input<string>(undefined!);
+    public readonly exam = input<Exam>();
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() public course?: Course;
-    @Input() public isTestRun = false;
+    public readonly isTestRun = input(false);
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() public submissionPolicy?: SubmissionPolicy;
 
     public exerciseCategories: ExerciseCategory[];
@@ -86,7 +97,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
 
         this.programmingExercise = this.exercise.type === ExerciseType.PROGRAMMING ? (this.exercise as ProgrammingExercise) : undefined;
 
-        if (this.exam) {
+        if (this.exam()) {
             this.determineNextRelevantDateExamMode();
         } else {
             this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
@@ -135,7 +146,8 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
      * Determines the next date of the exam cycle. If none exists the latest date in the past is determined
      */
     private determineNextRelevantDateExamMode() {
-        const possibleDates = [this.exam?.endDate, this.exam?.publishResultsDate];
+        const exam = this.exam();
+        const possibleDates = [exam?.endDate, exam?.publishResultsDate];
         const possibleDatesLabels = ['endDate', 'publishResultsDate'];
 
         this.determineNextDate(possibleDates, possibleDatesLabels, dayjs());

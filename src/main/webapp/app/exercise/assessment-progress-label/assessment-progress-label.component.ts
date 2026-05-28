@@ -10,6 +10,9 @@ import { DecimalPipe, NgClass } from '@angular/common';
     imports: [TranslateDirective, NgClass, DecimalPipe],
 })
 export class AssessmentProgressLabelComponent implements OnChanges {
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input()
     submissions: Submission[] = [];
     numberAssessedSubmissions: number;

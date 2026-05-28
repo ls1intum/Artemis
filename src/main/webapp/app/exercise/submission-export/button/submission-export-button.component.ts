@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { SubmissionExportDialogComponent } from '../dialog/submission-export-dialog.component';
@@ -12,7 +12,7 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
     template: `
         <jhi-button
             [featureToggle]="FeatureToggle.Exports"
-            [disabled]="!exerciseId"
+            [disabled]="!exerciseId()"
             [btnType]="ButtonType.INFO"
             [btnSize]="ButtonSize.SMALL"
             [shouldSubmit]="false"
@@ -30,8 +30,8 @@ export class SubmissionExportButtonComponent {
     readonly ButtonSize = ButtonSize;
     readonly FeatureToggle = FeatureToggle;
 
-    @Input() exerciseId: number;
-    @Input() exerciseType: ExerciseType;
+    readonly exerciseId = input<number>(undefined!);
+    readonly exerciseType = input<ExerciseType>(undefined!);
 
     // Icons
     faDownload = faDownload;

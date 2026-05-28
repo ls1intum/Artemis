@@ -1,4 +1,4 @@
-import { AfterContentInit, ChangeDetectorRef, Component, Input, OnInit, QueryList, ViewChild, ViewChildren, inject } from '@angular/core';
+import { AfterContentInit, ChangeDetectorRef, Component, Input, OnInit, inject, viewChild, viewChildren } from '@angular/core';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -30,10 +30,11 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 export class GradingInstructionsDetailsComponent implements OnInit, AfterContentInit {
     private changeDetector = inject(ChangeDetectorRef);
 
-    @ViewChildren('markdownEditors')
-    private markdownEditors: QueryList<MarkdownEditorMonacoComponent>;
-    @ViewChild('markdownEditor', { static: false })
-    private markdownEditor: MarkdownEditorMonacoComponent;
+    private readonly markdownEditors = viewChildren<MarkdownEditorMonacoComponent>('markdownEditors');
+    private readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input()
     exercise: Exercise;
     private instructions: GradingInstruction[];
@@ -95,7 +96,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         this.changeDetector.detectChanges();
         this.criteria!.forEach((criterion) => {
             criterion.structuredGradingInstructions.forEach((instruction) => {
-                this.markdownEditors.get(index)!.markdown = this.generateInstructionText(instruction);
+                this.markdownEditors().at(index)!.markdown = this.generateInstructionText(instruction);
                 index += 1;
             });
         });
@@ -201,9 +202,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
 
     prepareForSave(): void {
         this.cleanupExerciseGradingInstructions();
-        this.markdownEditor.parseMarkdown();
+        this.markdownEditor().parseMarkdown();
         if (this.exercise.gradingInstructionFeedbackUsed) {
-            this.markdownEditors.forEach((component) => {
+            this.markdownEditors().forEach((component) => {
                 component.parseMarkdown(this.domainActionsForGradingInstructionParsing);
             });
         }

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, Input, input, output } from '@angular/core';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgClass } from '@angular/common';
@@ -11,13 +11,13 @@ import { NgClass } from '@angular/common';
 export class IncludedInOverallScorePickerComponent {
     readonly IncludedInOverallScore = IncludedInOverallScore;
 
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input()
     includedInOverallScore?: IncludedInOverallScore;
     // Option to disallow the NOT_INCLUDED option (used for exam exercises)
-    @Input()
-    allowNotIncluded: boolean;
-    @Output()
-    includedInOverallScoreChange = new EventEmitter();
+    readonly allowNotIncluded = input<boolean>(undefined!);
+    readonly includedInOverallScoreChange = output();
 
     change(newValue: IncludedInOverallScore) {
         this.includedInOverallScore = newValue;

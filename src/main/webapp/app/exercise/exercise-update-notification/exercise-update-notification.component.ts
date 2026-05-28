@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, Input, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
@@ -8,10 +8,12 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     imports: [FormsModule, ArtemisTranslatePipe],
 })
 export class ExerciseUpdateNotificationComponent {
-    @Input() isCreation = false;
-    @Input() isImport: boolean;
+    readonly isCreation = input(false);
+    readonly isImport = input<boolean>(undefined!);
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() notificationText?: string;
-    @Output() notificationTextChange: EventEmitter<string> = new EventEmitter<string>();
+    readonly notificationTextChange = output<string>();
 
     onInputChanged() {
         this.notificationTextChange.emit(this.notificationText);

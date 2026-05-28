@@ -26,6 +26,8 @@ export class ExerciseImportTabsComponent implements OnInit {
     private dialogConfig = inject(DynamicDialogConfig, { optional: true });
 
     activeTab = 1;
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() exerciseType: ExerciseType;
 
     ngOnInit(): void {

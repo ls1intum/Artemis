@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { Component, Input, OnInit, inject, input, output } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
 import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -41,12 +41,18 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     private eventManager = inject(EventManager);
     private profileService = inject(ProfileService);
 
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() course: Course;
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() exercise: Exercise;
-    @Input() exam: Exam;
-    @Input() exerciseGroupId: number;
-    @Input() latestIndividualEndDate: dayjs.Dayjs | undefined;
-    @Output() onDeleteExercise = new EventEmitter<void>();
+    readonly exam = input<Exam>(undefined!);
+    readonly exerciseGroupId = input<number>(undefined!);
+    readonly latestIndividualEndDate = input<dayjs.Dayjs>();
+    readonly onDeleteExercise = output<void>();
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
     exerciseType = ExerciseType;
@@ -75,14 +81,16 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
      * Checks whether the exam is over using the latestIndividualEndDate
      */
     isExamOver() {
-        return this.latestIndividualEndDate ? this.latestIndividualEndDate.isBefore(dayjs()) : false;
+        const latestIndividualEndDate = this.latestIndividualEndDate();
+        return latestIndividualEndDate ? latestIndividualEndDate.isBefore(dayjs()) : false;
     }
 
     /**
      * Checks whether the exam has started
      */
     hasExamStarted() {
-        return this.exam.startDate ? this.exam.startDate.isBefore(dayjs()) : false;
+        const exam = this.exam();
+        return exam.startDate ? exam.startDate.isBefore(dayjs()) : false;
     }
 
     /**
@@ -113,6 +121,7 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
                     content: 'Deleted a textExercise',
                 });
                 this.dialogErrorSource.next('');
+                // TODO: The 'emit' function requires a mandatory void argument
                 this.onDeleteExercise.emit();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -127,6 +136,7 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
                     content: 'Deleted a modelingExercise',
                 });
                 this.dialogErrorSource.next('');
+                // TODO: The 'emit' function requires a mandatory void argument
                 this.onDeleteExercise.emit();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -141,6 +151,7 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
                     content: 'Deleted a fileUploadExercise',
                 });
                 this.dialogErrorSource.next('');
+                // TODO: The 'emit' function requires a mandatory void argument
                 this.onDeleteExercise.emit();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -155,6 +166,7 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
                     content: 'Deleted a quiz',
                 });
                 this.dialogErrorSource.next('');
+                // TODO: The 'emit' function requires a mandatory void argument
                 this.onDeleteExercise.emit();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -169,6 +181,7 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
                     content: 'Deleted a programming exercise',
                 });
                 this.dialogErrorSource.next('');
+                // TODO: The 'emit' function requires a mandatory void argument
                 this.onDeleteExercise.emit();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),

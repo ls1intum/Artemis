@@ -3,7 +3,7 @@ import { roundValueSpecifiedByCourseSettings, scrollToTopOfPage } from 'app/foun
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, Input, OnInit, inject, input } from '@angular/core';
 import { ResultService } from 'app/exercise/result/result.service';
 import { getTestCaseNamesFromResults, getTestCaseResults } from 'app/exercise/result/result.utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -26,8 +26,10 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
     private resultService = inject(ResultService);
     private alertService = inject(AlertService);
 
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() exercises: Exercise[] = []; // Used to export multiple scores together
-    @Input() exercise: Exercise | ProgrammingExercise;
+    readonly exercise = input<Exercise | ProgrammingExercise>(undefined!);
 
     isProgrammingExerciseResults = false;
 
@@ -35,7 +37,7 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
     faDownload = faDownload;
 
     ngOnInit(): void {
-        this.isProgrammingExerciseResults = this.exercises.concat(this.exercise).every((exercise) => exercise?.type === ExerciseType.PROGRAMMING);
+        this.isProgrammingExerciseResults = this.exercises.concat(this.exercise()).every((exercise) => exercise?.type === ExerciseType.PROGRAMMING);
     }
 
     /**
@@ -44,8 +46,9 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
      * @param withFeedback parameter including the feedback's full text in case of failed test case
      */
     exportResults(withTestCases: boolean, withFeedback: boolean) {
-        if (this.exercises.length === 0 && this.exercise !== undefined) {
-            this.exercises = this.exercises.concat(this.exercise);
+        const exerciseValue = this.exercise();
+        if (this.exercises.length === 0 && exerciseValue !== undefined) {
+            this.exercises = this.exercises.concat(exerciseValue);
         }
 
         this.exercises.forEach((exercise) => this.constructCSV(exercise, withTestCases, withFeedback));

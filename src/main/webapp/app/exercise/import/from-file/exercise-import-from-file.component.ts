@@ -22,7 +22,11 @@ export class ExerciseImportFromFileComponent implements OnInit {
     private dialogConfig = inject(DynamicDialogConfig, { optional: true });
     private alertService = inject(AlertService);
 
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() exerciseType: ExerciseType;
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() exercise: Exercise;
 
     titleKey: string;

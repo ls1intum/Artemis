@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Output, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, output } from '@angular/core';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/account/user/user.model';
@@ -42,7 +42,7 @@ export class TeamsImportFromFileFormComponent {
     private changeDetector = inject(ChangeDetectorRef);
     private translateService = inject(TranslateService);
 
-    @Output() teamsChanged = new EventEmitter<Team[]>();
+    readonly teamsChanged = output<Team[]>();
     sourceTeams?: Team[];
     importedTeams: StudentWithTeam[] = [];
     importFile?: File;

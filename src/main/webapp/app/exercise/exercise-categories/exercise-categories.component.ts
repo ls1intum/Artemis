@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, input } from '@angular/core';
 import { Exercise, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -28,9 +28,15 @@ export class ExerciseCategoriesComponent {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly dayjs = dayjs;
 
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() exercise: Exercise;
-    @Input() isSmall = false;
+    readonly isSmall = input(false);
 
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input()
     showTags: ShowTagsConfig = {
         notReleased: false,

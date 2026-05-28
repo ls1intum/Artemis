@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TeamUpdateDialogComponent } from 'app/exercise/team/team-update-dialog/team-update-dialog.component';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
@@ -12,9 +12,9 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
     template: `
         <jhi-button
             [btnType]="ButtonType.PRIMARY"
-            [btnSize]="buttonSize"
-            [icon]="team ? faPencilAlt : faPlus"
-            [title]="team ? 'artemisApp.team.updateTeam.label' : 'artemisApp.team.createTeam.label'"
+            [btnSize]="buttonSize()"
+            [icon]="team() ? faPencilAlt : faPlus"
+            [title]="team() ? 'artemisApp.team.updateTeam.label' : 'artemisApp.team.createTeam.label'"
             (onClick)="openTeamCreateDialog($event)"
         />
     `,
@@ -26,11 +26,11 @@ export class TeamUpdateButtonComponent {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
-    @Input() team: Team | undefined;
-    @Input() exercise: Exercise;
-    @Input() buttonSize: ButtonSize = ButtonSize.SMALL;
+    readonly team = input<Team>();
+    readonly exercise = input<Exercise>(undefined!);
+    readonly buttonSize = input<ButtonSize>(ButtonSize.SMALL);
 
-    @Output() save: EventEmitter<Team> = new EventEmitter();
+    readonly save = output<Team>();
 
     // Icons
     faPencilAlt = faPencilAlt;
@@ -43,7 +43,7 @@ export class TeamUpdateButtonComponent {
     openTeamCreateDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(TeamUpdateDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.team = this.team || new Team();
+        modalRef.componentInstance.team = this.team() || new Team();
         modalRef.componentInstance.exercise = this.exercise;
 
         modalRef.result.then(

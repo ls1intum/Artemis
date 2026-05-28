@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, OnChanges, SimpleChanges, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TitleChannelNamePrimengComponent } from 'app/shared-ui/form/title-channel-name-primeng/title-channel-name-primeng.component';
@@ -15,15 +15,15 @@ export class ExerciseTitleChannelNamePrimengComponent implements OnChanges {
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
     courseId = input<number>();
 
-    @Input() exercise: Exercise;
-    @Input() titlePattern: string;
-    @Input() minTitleLength: number;
-    @Input() isExamMode: boolean;
-    @Input() isImport: boolean;
-    @Input() hideTitleLabel: boolean;
-    @Input() hideChannelNameLabel: boolean;
-    @Input() titleHelpIconText: string;
-    @Input() channelNameHelpIconText: string;
+    readonly exercise = input<Exercise>(undefined!);
+    readonly titlePattern = input<string>(undefined!);
+    readonly minTitleLength = input<number>(undefined!);
+    readonly isExamMode = input<boolean>(undefined!);
+    readonly isImport = input<boolean>(undefined!);
+    readonly hideTitleLabel = input<boolean>(undefined!);
+    readonly hideChannelNameLabel = input<boolean>(undefined!);
+    readonly titleHelpIconText = input<string>(undefined!);
+    readonly channelNameHelpIconText = input<string>(undefined!);
 
     readonly titleChannelNameComponent = viewChild.required(TitleChannelNamePrimengComponent);
 
@@ -49,18 +49,19 @@ export class ExerciseTitleChannelNamePrimengComponent implements OnChanges {
     }
 
     ngOnChanges(changes: SimpleChanges) {
-        if (changes.exercise || changes.course || changes.isExamMode || this.isImport) {
-            this.hideChannelNameInput = !this.requiresChannelName(this.exercise, this.course(), this.isExamMode, this.isImport);
+        const isImport = this.isImport();
+        if (changes.exercise || changes.course || changes.isExamMode || isImport) {
+            this.hideChannelNameInput = !this.requiresChannelName(this.exercise(), this.course(), this.isExamMode(), isImport);
         }
     }
 
     updateTitle(newTitle: string | undefined) {
-        this.exercise.title = newTitle;
+        this.exercise().title = newTitle;
         this.onTitleChange.emit(newTitle ?? '');
     }
 
     updateChannelName(newName: string | undefined) {
-        this.exercise.channelName = newName;
+        this.exercise().channelName = newName;
         this.onChannelNameChange.emit(newName ?? '');
     }
 

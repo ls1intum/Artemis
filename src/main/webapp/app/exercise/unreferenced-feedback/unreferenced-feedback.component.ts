@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, Input, inject, input, output } from '@angular/core';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -18,25 +18,29 @@ export class UnreferencedFeedbackComponent {
     unreferencedFeedback: Feedback[] = [];
     assessmentsAreValid: boolean;
 
-    @Input() readOnly: boolean;
-    @Input() highlightDifferences: boolean;
-    @Input() useDefaultFeedbackSuggestionBadgeText = false;
-    @Input() resultId: number;
+    readonly readOnly = input<boolean>(undefined!);
+    readonly highlightDifferences = input<boolean>(undefined!);
+    readonly useDefaultFeedbackSuggestionBadgeText = input(false);
+    readonly resultId = input<number>(undefined!);
 
     /**
      * In order to make it possible to mark unreferenced feedback based on the correction status, we assign reference ids to the unreferenced feedback
      */
-    @Input() addReferenceIdForExampleSubmission = false;
+    readonly addReferenceIdForExampleSubmission = input(false);
 
+    // TODO: Skipped for migration because:
+    //  Accessor inputs cannot be migrated as they are too complex.
     @Input() set feedbacks(feedbacks: Feedback[]) {
         this.unreferencedFeedback = [...feedbacks];
     }
 
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() feedbackSuggestions: Feedback[] = [];
 
-    @Output() feedbacksChange = new EventEmitter<Feedback[]>();
-    @Output() onAcceptSuggestion = new EventEmitter<Feedback>();
-    @Output() onDiscardSuggestion = new EventEmitter<Feedback>();
+    readonly feedbacksChange = output<Feedback[]>();
+    readonly onAcceptSuggestion = output<Feedback>();
+    readonly onDiscardSuggestion = output<Feedback>();
 
     public deleteFeedback(feedbackToDelete: Feedback): void {
         const indexToDelete = this.unreferencedFeedback.indexOf(feedbackToDelete);
@@ -84,7 +88,7 @@ export class UnreferencedFeedbackComponent {
         feedback.type = FeedbackType.MANUAL_UNREFERENCED;
 
         // Assign the next id to the unreferenced feedback
-        if (this.addReferenceIdForExampleSubmission) {
+        if (this.addReferenceIdForExampleSubmission()) {
             feedback.reference = this.generateNewUnreferencedFeedbackReference().toString();
         }
 

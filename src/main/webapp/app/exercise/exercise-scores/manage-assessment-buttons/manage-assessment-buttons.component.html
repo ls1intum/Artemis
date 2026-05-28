@@ -52,7 +52,7 @@
                 ) {
                     <button
                         (click)="cancelAssessment(participation.submissions![0].results?.[correctionRound]!, participation)"
-                        [disabled]="isLoading"
+                        [disabled]="isLoading()"
                         class="btn btn-sm btn-danger"
                     >
                         <fa-icon [fixedWidth]="true" [icon]="faBan" />

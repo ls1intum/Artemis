@@ -67,7 +67,7 @@
         <div class="right-col">
             @if (!nextRelevantDateLabel || (nextRelevantDateLabel !== 'releaseDate' && nextRelevantDateLabel !== 'startDate')) {
             } @else {
-                @if (nextRelevantDate && (!exam || !isTestRun)) {
+                @if (nextRelevantDate && (!exam() || !isTestRun())) {
                     <div class="fw-500">
                         {{ 'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel | artemisTranslate }}
                         <span
@@ -119,7 +119,7 @@
             }
             @if (!nextRelevantDateLabel || (nextRelevantDateLabel !== 'assessmentDue' && nextRelevantDateLabel !== 'complaintDue')) {
             } @else {
-                @if (nextRelevantDate && (!exam || !isTestRun)) {
+                @if (nextRelevantDate && (!exam() || !isTestRun())) {
                     <div class="fw-500">
                         {{ 'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel | artemisTranslate }}
                         <span

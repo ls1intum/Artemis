@@ -1,4 +1,4 @@
-import { Component, Injector, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
+import { Component, Injector, Input, OnChanges, OnInit, SimpleChanges, inject, input } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -76,20 +76,34 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
     private showTestDetails = false;
 
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() exercise?: Exercise;
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() result: Result;
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() participation: Participation;
 
     /**
      * Specify the feedback.testCase.id values that should be shown, all other values will not be visible.
      * Used to show only feedback related to a specific task.
      */
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() feedbackFilter: number[];
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() showScoreChart = false;
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() exerciseType: ExerciseType;
     /**
      * Translate key for an HTML message that is displayed at the top of the result details, if defined.
      */
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() messageKey?: string = undefined;
     /**
      * For programming exercises with individual due dates automatic feedbacks
@@ -98,12 +112,20 @@ export class FeedbackComponent implements OnInit, OnChanges {
      * Students should be informed why some feedbacks seem to be missing from
      * the result.
      */
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() showMissingAutomaticFeedbackInformation = false;
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() latestDueDate?: dayjs.Dayjs;
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() taskName?: string;
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() numberOfNotExecutedTests?: number;
-    @Input() isExamReviewPage = false;
-    @Input() isPrinting = false;
+    readonly isExamReviewPage = input(false);
+    readonly isPrinting = input(false);
 
     // Icons
     faXmark = faXmark;
@@ -231,7 +253,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
                         checkSubsequentFeedbackInAssessment(filteredFeedback);
                         const feedbackItems = this.feedbackItemService.create(filteredFeedback, this.showTestDetails);
                         this.feedbackItemNodes = this.feedbackItemService.group(feedbackItems, this.exercise!);
-                        if (this.isExamReviewPage) {
+                        if (this.isExamReviewPage()) {
                             this.expandFeedbackItemGroups();
                         }
                     }

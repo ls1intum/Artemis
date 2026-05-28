@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -24,12 +24,12 @@ export class ExampleSolutionComponent implements OnInit {
     public exercise?: Exercise;
     public exampleSolutionInfo?: ExampleSolutionInfo;
 
-    @Input() exerciseId?: number;
-    @Input() displayHeader = true;
+    readonly exerciseId = input<number>();
+    readonly displayHeader = input(true);
 
     ngOnInit() {
         this.route.params.subscribe((params) => {
-            const exerciseId = this.exerciseId || parseInt(params['exerciseId'], 10);
+            const exerciseId = this.exerciseId() || parseInt(params['exerciseId'], 10);
 
             const didExerciseChange = this.displayedExerciseId !== exerciseId;
             this.displayedExerciseId = exerciseId;

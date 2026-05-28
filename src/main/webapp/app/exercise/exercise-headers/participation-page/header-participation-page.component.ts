@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, ViewEncapsulation, input } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { Exercise, IncludedInOverallScore, getCourseFromExercise, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -36,8 +36,14 @@ import { getLatestResultOfStudentParticipation } from 'app/exercise/participatio
 export class HeaderParticipationPageComponent implements OnInit, OnChanges {
     readonly ButtonType = ButtonType;
     readonly IncludedInOverallScore = IncludedInOverallScore;
-    @Input() title: string;
+    readonly title = input<string>(undefined!);
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() exercise: Exercise;
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() participation: StudentParticipation;
 
     public exerciseStatusBadge = 'bg-success';

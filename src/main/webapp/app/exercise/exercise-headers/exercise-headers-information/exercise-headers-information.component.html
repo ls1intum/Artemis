@@ -18,9 +18,9 @@
                                 <jhi-submission-result-status
                                     class="text-truncate result"
                                     [exercise]="informationBoxItem.content.value"
-                                    [studentParticipation]="studentParticipation"
-                                    [triggerLastGraded]="!isPractice"
-                                    [showUngradedResults]="isPractice"
+                                    [studentParticipation]="studentParticipation()"
+                                    [triggerLastGraded]="!isPractice()"
+                                    [showUngradedResults]="isPractice()"
                                     [showCompletion]="false"
                                     [showBadge]="false"
                                     [showProgressBar]="true"
@@ -31,8 +31,8 @@
                                 #resultHistoryDropdown
                                 [exercise]="exercise"
                                 [sortedHistoryResults]="sortedHistoryResults"
-                                [studentParticipation]="studentParticipation"
-                                [showUngradedResults]="isPractice"
+                                [studentParticipation]="studentParticipation()"
+                                [showUngradedResults]="isPractice()"
                                 (viewingSubmissionChange)="viewingSubmissionChange.emit($event)"
                             />
                         </span>

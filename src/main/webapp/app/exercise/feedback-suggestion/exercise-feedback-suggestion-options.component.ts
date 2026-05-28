@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, inject, input } from '@angular/core';
 import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -21,9 +21,11 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
     private profileService = inject(ProfileService);
     private activatedRoute = inject(ActivatedRoute);
 
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() exercise: Exercise;
-    @Input() dueDate?: dayjs.Dayjs;
-    @Input() readOnly = false;
+    readonly dueDate = input<dayjs.Dayjs>();
+    readonly readOnly = input(false);
 
     protected readonly ExerciseType = ExerciseType;
     protected readonly AssessmentType = AssessmentType;
@@ -59,7 +61,7 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
      */
     inputControlsDisabled() {
         if (this.exercise.type == ExerciseType.PROGRAMMING) {
-            return this.exercise.assessmentType == AssessmentType.AUTOMATIC || this.readOnly || this.exercise.dueDate == undefined || this.hasDueDatePassed();
+            return this.exercise.assessmentType == AssessmentType.AUTOMATIC || this.readOnly() || this.exercise.dueDate == undefined || this.hasDueDatePassed();
         }
         return this.hasDueDatePassed();
     }

@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -27,7 +27,7 @@ export class ExternalSubmissionButtonComponent {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
-    @Input() exercise: Exercise;
+    readonly exercise = input<Exercise>(undefined!);
 
     // Icons
     faPlus = faPlus;
@@ -39,6 +39,6 @@ export class ExternalSubmissionButtonComponent {
     openExternalSubmissionDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ExternalSubmissionDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.exercise = this.exercise;
+        modalRef.componentInstance.exercise = this.exercise();
     }
 }

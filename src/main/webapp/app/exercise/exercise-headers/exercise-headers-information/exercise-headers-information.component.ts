@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, inject, output, viewChild } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, inject, input, output, viewChild } from '@angular/core';
 import { SortService } from 'app/foundation/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -57,14 +57,21 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly dayjs = dayjs;
 
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() exercise: Exercise;
-    @Input() studentParticipation?: StudentParticipation;
+    readonly studentParticipation = input<StudentParticipation>();
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() course?: Course;
-    @Input() submissionPolicy?: SubmissionPolicy;
+    readonly submissionPolicy = input<SubmissionPolicy>();
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() sortedHistoryResults: Result[] = [];
-    @Input() isPractice: boolean = false;
-    @Input() athenaEnabled: boolean = false;
-    @Input() feedbackRequestLimit: number = DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT;
+    readonly isPractice = input<boolean>(false);
+    readonly athenaEnabled = input<boolean>(false);
+    readonly feedbackRequestLimit = input<number>(DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT);
 
     dueDate?: dayjs.Dayjs;
     programmingExercise?: ProgrammingExercise;
@@ -76,14 +83,15 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     informationBoxItems: InformationBox[] = [];
 
     ngOnInit() {
-        this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
+        this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation());
         this.now = this.serverDateService.now();
         if (this.course?.maxComplaintTimeDays) {
+            const studentParticipation = this.studentParticipation();
             this.individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(
                 this.exercise,
                 this.course.maxComplaintTimeDays,
-                getAllResultsOfAllSubmissions(this.studentParticipation?.submissions).last(),
-                this.studentParticipation,
+                getAllResultsOfAllSubmissions(studentParticipation?.submissions).last(),
+                studentParticipation,
             );
         }
         this.createInformationBoxItems();
@@ -92,10 +100,11 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     ngOnChanges() {
         this.course = this.course ?? getCourseFromExercise(this.exercise);
 
-        if (this.submissionPolicy?.active && this.submissionPolicy?.submissionLimit) {
+        const submissionPolicy = this.submissionPolicy();
+        if (submissionPolicy?.active && submissionPolicy?.submissionLimit) {
             this.updateSubmissionPolicyItem();
         }
-        const results = getAllResultsOfAllSubmissions(this.studentParticipation?.submissions);
+        const results = getAllResultsOfAllSubmissions(this.studentParticipation()?.submissions);
         // The updated participation by the websocket is not guaranteed to be sorted, find the newest result (highest id)
         this.sortService.sortByProperty(results, 'id', false);
         this.sortedHistoryResults = results;
@@ -113,7 +122,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
             this.achievedPoints = 0;
             this.updatePointsItem();
         }
-        if (this.athenaEnabled && this.exercise.allowFeedbackRequests) {
+        if (this.athenaEnabled() && this.exercise.allowFeedbackRequests) {
             this.updateAiFeedbackItem();
         }
     }
@@ -283,27 +292,30 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     }
 
     addSubmissionPolicyItem() {
-        if (this.submissionPolicy?.active && this.submissionPolicy?.submissionLimit) {
+        const submissionPolicy = this.submissionPolicy();
+        if (submissionPolicy?.active && submissionPolicy?.submissionLimit) {
             this.informationBoxItems.push(this.getSubmissionPolicyItem());
         }
     }
 
     getSubmissionPolicyItem(): InformationBox {
+        const submissionPolicy = this.submissionPolicy();
         return {
             title: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle',
             content: {
                 type: 'string',
-                value: `${this.numberOfSubmissions} /  ${this.submissionPolicy?.submissionLimit}`,
+                value: `${this.numberOfSubmissions} /  ${submissionPolicy?.submissionLimit}`,
             },
-            contentColor: this.submissionPolicy?.submissionLimit ? this.getSubmissionColor() : 'body-color',
-            tooltip: 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + this.submissionPolicy?.type + '.tooltip',
-            tooltipParams: { points: this.submissionPolicy?.exceedingPenalty?.toString() },
+            contentColor: submissionPolicy?.submissionLimit ? this.getSubmissionColor() : 'body-color',
+            tooltip: 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + submissionPolicy?.type + '.tooltip',
+            tooltipParams: { points: submissionPolicy?.exceedingPenalty?.toString() },
         };
     }
 
     getSubmissionColor(): string {
         // default color should be 'body-color', thats why the default submissionsLeft is 2
-        const submissionsLeft = this.submissionPolicy?.submissionLimit ? this.submissionPolicy?.submissionLimit - this.numberOfSubmissions : 2;
+        const submissionPolicy = this.submissionPolicy();
+        const submissionsLeft = submissionPolicy?.submissionLimit ? submissionPolicy?.submissionLimit - this.numberOfSubmissions : 2;
         let submissionColor = 'body-color';
         if (submissionsLeft === 1) submissionColor = 'warning';
         // 0 submissions left or limit is already reached
@@ -332,7 +344,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     }
 
     countSubmissions() {
-        this.numberOfSubmissions = countSubmissions(this.studentParticipation);
+        this.numberOfSubmissions = countSubmissions(this.studentParticipation());
     }
 
     addStaticCodeAnalysisItem() {
@@ -363,7 +375,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     }
 
     addAiFeedbackItem() {
-        if (this.athenaEnabled && this.exercise.allowFeedbackRequests) {
+        if (this.athenaEnabled() && this.exercise.allowFeedbackRequests) {
             this.countAiFeedbackRequests();
             this.informationBoxItems.push(this.getAiFeedbackItem());
         }
@@ -374,16 +386,16 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
             title: 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequests',
             content: {
                 type: 'string',
-                value: `${this.currentFeedbackRequestCount} / ${this.feedbackRequestLimit}`,
+                value: `${this.currentFeedbackRequestCount} / ${this.feedbackRequestLimit()}`,
             },
-            contentColor: this.currentFeedbackRequestCount >= this.feedbackRequestLimit ? 'danger' : 'warning',
+            contentColor: this.currentFeedbackRequestCount >= this.feedbackRequestLimit() ? 'danger' : 'warning',
             tooltip: 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequestsTooltip',
         };
     }
 
     countAiFeedbackRequests() {
         this.currentFeedbackRequestCount =
-            getAllResultsOfAllSubmissions(this.studentParticipation?.submissions)?.filter(
+            getAllResultsOfAllSubmissions(this.studentParticipation()?.submissions)?.filter(
                 (result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful === true,
             ).length ?? 0;
     }
