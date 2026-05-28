@@ -386,7 +386,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
      * @param resultId The ID of the result whose build logs to view
      */
     viewBuildLogs(resultId: string): void {
-        const url = `/api/programming/build-log/${resultId}`;
+        const url = `/api/localci/build-log/${resultId}`;
         window.open(url, '_blank');
     }
 

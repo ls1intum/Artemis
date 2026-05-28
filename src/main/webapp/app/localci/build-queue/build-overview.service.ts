@@ -12,7 +12,7 @@ import { FinishedBuildJobFilter } from 'app/localci/build-queue/finished-builds-
 export class BuildOverviewService {
     private http = inject(HttpClient);
 
-    public resourceUrl = 'api/programming';
+    public resourceUrl = 'api/localci';
     public adminResourceUrl = 'api/admin';
     nestedDtoKey = 'pageable';
 

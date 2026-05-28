@@ -18,12 +18,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.localci.config.LocalCILegacyRestPaths;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 
 @Profile(PROFILE_LOCALCI)
 @Lazy
 @RestController
-@RequestMapping("api/programming/")
+@RequestMapping({ "api/localci/", LocalCILegacyRestPaths.PROGRAMMING_PREFIX })
 public class BuildLogResource {
 
     private static final Logger log = LoggerFactory.getLogger(BuildLogResource.class);

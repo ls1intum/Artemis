@@ -17,7 +17,7 @@ class SshFingerprintsProviderIntegrationTest extends AbstractSpringIntegrationLo
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnFingerprints() throws Exception {
-        var response = request.get("/api/programming/ssh-fingerprints", HttpStatus.OK, Map.class);
+        var response = request.get("/api/localvc/ssh-fingerprints", HttpStatus.OK, Map.class);
         assertThat(response.get("EC")).isNotNull();
     }
 }
