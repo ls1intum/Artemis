@@ -408,7 +408,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.getQuizQuestions().stream().filter(q -> q instanceof DragAndDropQuestion).findFirst().ifPresent(q -> {
             DragAndDropQuestion dnd = (DragAndDropQuestion) q;
-            dnd.setCorrectMappings(List.of());
+            dnd.setCorrectMappings(Set.of());
         });
         createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
     }
@@ -441,7 +441,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.getQuizQuestions().stream().filter(q -> q instanceof ShortAnswerQuestion).findFirst().ifPresent(q -> {
             ShortAnswerQuestion sa = (ShortAnswerQuestion) q;
-            sa.setCorrectMappings(List.of());
+            sa.setCorrectMappings(Set.of());
         });
         createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
     }
@@ -2468,7 +2468,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         DropLocation removedDropLocation = dnd.getDropLocations().removeFirst();
         DragItem removedDragItem = dnd.getDragItems().removeFirst();
         // Remove any mapping that references the removed drag item or drop location to keep the graph consistent.
-        // (correctMappings is a Bag; iteration order is not guaranteed across loads, so we filter by reference equality
+        // (correctMappings is a Set; iteration order is not guaranteed across loads, so we filter by reference equality
         // instead of relying on positional removeFirst.)
         dnd.getCorrectMappings().removeIf(m -> m.getDragItem() == removedDragItem || m.getDropLocation() == removedDropLocation);
 

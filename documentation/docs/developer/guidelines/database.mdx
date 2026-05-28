@@ -615,6 +615,53 @@ private int lectureUnitOrder;
 
 </details>
 
+#### Unordered child collection: `Set` + constant `hashCode()`
+
+When the child collection has no semantically meaningful order (e.g. each row is identified by a tuple of associations, like `(dragItem, dropLocation)` or `(spot, solution)`), prefer `Set<Child>` over `List<Child>`. A `Set`:
+
+- dedupes Cartesian products that appear when callers `JOIN FETCH` the collection alongside another collection;
+- avoids `MultipleBagFetchException` if a sibling collection later drops `@OrderColumn`;
+- matches the conceptual model and reads honestly in code.
+
+However, `DomainObject.hashCode()` is id-based by default, and `id` is `null` for transient entities. Adding a transient child to a `HashSet` places it in bucket `0`; once Hibernate assigns the id on persist, the hashCode changes, the entity is now in the wrong bucket, and `set.contains(...)` / `set.remove(...)` silently fail. This violates the `equals` ⇒ `hashCode` contract at the worst possible moment.
+
+**Fix it by overriding `hashCode()` on the child to a class constant**, mirroring the [`Feedback`](https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/assessment/domain/Feedback.java) pattern. All instances collide into a single bucket; the id-based `equals` still discriminates them; the `Set` lookup degrades to a linear scan, which is free for the small collections this pattern targets.
+
+<details>
+<summary>Example: Set + constant <code>hashCode()</code></summary>
+
+```java
+// DragAndDropQuestion.java — parent declares the relationship as a Set
+@OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+private Set<DragAndDropMapping> correctMappings = new HashSet<>();
+```
+
+```java
+// DragAndDropMapping.java — child owns the FK and provides a stable hashCode
+@ManyToOne(fetch = FetchType.LAZY)
+@JoinColumn(name = "question_id")
+@JsonIgnore
+private DragAndDropQuestion question;
+
+/**
+ * Stable, constant hashCode that does not change when Hibernate assigns the id on persist.
+ * Required because DragAndDropQuestion.correctMappings is a Set: factories and DTO mappers add
+ * transient mappings (id == null), and the id-based default would change after persist and
+ * silently break HashSet membership. The (id-based) equals contract still distinguishes instances.
+ * Mirrors the same pattern on Feedback.
+ */
+@Override
+public int hashCode() {
+    return DragAndDropMapping.class.hashCode();
+}
+```
+
+</details>
+
+<Callout variant={CalloutVariant.info}>
+    Apply the constant <code>hashCode()</code> override <em>only</em> on entities that are the child side of a <code>Set</code>-mapped <code>@OneToMany</code> and may be constructed transient by application code (importers, DTO mappers, factories). Entities used as keys in large <code>HashMap</code>s or caches should keep the id-based default, since the linear-scan degradation matters at scale.
+</Callout>
+
 ## Solutions for Known Issues
 
 ### LazyInitializationException

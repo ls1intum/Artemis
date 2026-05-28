@@ -66,16 +66,18 @@ public class DragAndDropQuestion extends QuizQuestion {
     @OrderColumn(name = "drag_items_order")
     private List<DragItem> dragItems = new ArrayList<>();
 
-    // Stored as a Bag (List without @OrderColumn): position carries no semantic meaning — each mapping is identified by its
-    // (dragItem, dropLocation) pair. QuizService.{save,restore}CorrectMappingsFromIndices… looks up positions in the
-    // sibling dragItems / dropLocations Lists, never in correctMappings itself. We deliberately avoid HashSet here
-    // because DomainObject.hashCode is id-based and ids are null for transient entities; HashSet would silently break
-    // contains/remove after Hibernate assigns ids on persist (see DomainObject.java:60-61). The Bag has no @OrderColumn,
-    // so Hibernate does not DELETE+INSERT on parent save (the #12584 failure mode requires the unidirectional + @JoinColumn shape).
-    // No MultipleBagFetchException risk: dragItems and dropLocations are indexed Lists (@OrderColumn), not bags.
+    // Stored as a Set: position carries no semantic meaning — each mapping is identified by its (dragItem, dropLocation)
+    // pair. QuizService.{save,restore}CorrectMappingsFromIndices… looks up positions in the sibling dragItems /
+    // dropLocations Lists, never in correctMappings itself. Using a Set (instead of a List/Bag) dedupes Cartesian
+    // products that would otherwise appear when callers JOIN FETCH correctMappings alongside another collection,
+    // avoids MultipleBagFetchException risk if a sibling ever drops @OrderColumn, and matches the conceptual model
+    // (a set of mapping pairs). HashSet membership is contract-safe across transient → persisted transitions because
+    // DragAndDropMapping overrides hashCode() to a class constant (see DragAndDropMapping.hashCode); id-based equality
+    // still discriminates instances. With this shape Hibernate does not DELETE+INSERT on parent save (the #12584
+    // failure mode requires the unidirectional + @JoinColumn shape).
     // The legacy correct_mappings_order column on drag_and_drop_mapping is now orphaned; tracked in #12807 for a follow-up Liquibase changeset.
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    private List<DragAndDropMapping> correctMappings = new ArrayList<>();
+    private Set<DragAndDropMapping> correctMappings = new HashSet<>();
 
     public String getBackgroundFilePath() {
         return backgroundFilePath;
@@ -161,11 +163,11 @@ public class DragAndDropQuestion extends QuizQuestion {
         return this;
     }
 
-    public List<DragAndDropMapping> getCorrectMappings() {
+    public Set<DragAndDropMapping> getCorrectMappings() {
         return correctMappings;
     }
 
-    public void setCorrectMappings(List<DragAndDropMapping> dragAndDropMappings) {
+    public void setCorrectMappings(Set<DragAndDropMapping> dragAndDropMappings) {
         // Direct field assignment; back-references are set defensively via @PrePersist / @PreUpdate hooks.
         this.correctMappings = dragAndDropMappings;
     }
@@ -178,7 +180,7 @@ public class DragAndDropQuestion extends QuizQuestion {
      */
     public DragAndDropQuestion addCorrectMapping(DragAndDropMapping dragAndDropMapping) {
         if (this.correctMappings == null) {
-            this.correctMappings = new ArrayList<>();
+            this.correctMappings = new HashSet<>();
         }
         this.correctMappings.add(dragAndDropMapping);
         dragAndDropMapping.setQuestion(this);
@@ -419,10 +421,10 @@ public class DragAndDropQuestion extends QuizQuestion {
     @Override
     public boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion) {
         if (originalQuizQuestion instanceof DragAndDropQuestion dndOriginalQuestion) {
-            // correctMappings is a Bag (List without @OrderColumn); Hibernate may return rows in any order on reload,
-            // so use Set equality to avoid spuriously triggering recalculation when the only difference is row order.
+            // correctMappings is a Set: Hibernate may return rows in any order on reload, so Set equality avoids
+            // spuriously triggering recalculation when the only difference is row order.
             return checkDragItemsIfRecalculationIsNecessary(dndOriginalQuestion) || checkDropLocationsIfRecalculationIsNecessary(dndOriginalQuestion)
-                    || !new HashSet<>(getCorrectMappings()).equals(new HashSet<>(dndOriginalQuestion.getCorrectMappings()));
+                    || !getCorrectMappings().equals(dndOriginalQuestion.getCorrectMappings());
         }
         return false;
     }

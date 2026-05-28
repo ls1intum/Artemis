@@ -45,13 +45,14 @@ public class ShortAnswerQuestion extends QuizQuestion {
     @OrderColumn(name = "solutions_order")
     private List<ShortAnswerSolution> solutions = new ArrayList<>();
 
-    // Stored as a Bag (List without @OrderColumn): see DragAndDropQuestion.correctMappings rationale. Position carries no
-    // semantic meaning — each mapping is identified by its (spot, solution) pair. We avoid HashSet because
-    // DomainObject.hashCode is id-based and breaks for transient entities. The Bag has no @OrderColumn, so Hibernate
-    // does not DELETE+INSERT on parent save (the #12584 failure mode requires the unidirectional + @JoinColumn shape).
+    // Stored as a Set: see DragAndDropQuestion.correctMappings rationale. Position carries no semantic meaning — each
+    // mapping is identified by its (spot, solution) pair. HashSet membership is contract-safe across transient →
+    // persisted transitions because ShortAnswerMapping overrides hashCode() to a class constant (see
+    // ShortAnswerMapping.hashCode). With this shape Hibernate does not DELETE+INSERT on parent save (the #12584
+    // failure mode requires the unidirectional + @JoinColumn shape).
     // The legacy correct_mappings_order column on short_answer_mapping is now orphaned; tracked in #12807 for a follow-up Liquibase changeset.
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    private List<ShortAnswerMapping> correctMappings = new ArrayList<>();
+    private Set<ShortAnswerMapping> correctMappings = new HashSet<>();
 
     @Column(name = "similarity_value")
     private Integer similarityValue = 85;
@@ -135,11 +136,11 @@ public class ShortAnswerQuestion extends QuizQuestion {
         return this;
     }
 
-    public List<ShortAnswerMapping> getCorrectMappings() {
+    public Set<ShortAnswerMapping> getCorrectMappings() {
         return correctMappings;
     }
 
-    public void setCorrectMappings(List<ShortAnswerMapping> shortAnswerMappings) {
+    public void setCorrectMappings(Set<ShortAnswerMapping> shortAnswerMappings) {
         // Direct field assignment; back-references are set defensively via @PrePersist / @PreUpdate hooks.
         this.correctMappings = shortAnswerMappings;
     }
@@ -152,7 +153,7 @@ public class ShortAnswerQuestion extends QuizQuestion {
      */
     public ShortAnswerQuestion addCorrectMapping(ShortAnswerMapping shortAnswerMapping) {
         if (this.correctMappings == null) {
-            this.correctMappings = new ArrayList<>();
+            this.correctMappings = new HashSet<>();
         }
         this.correctMappings.add(shortAnswerMapping);
         shortAnswerMapping.setQuestion(this);
@@ -324,10 +325,10 @@ public class ShortAnswerQuestion extends QuizQuestion {
     @Override
     public boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion) {
         if (originalQuizQuestion instanceof ShortAnswerQuestion shortAnswerOriginalQuestion) {
-            // correctMappings is a Bag (List without @OrderColumn); Hibernate may return rows in any order on reload,
-            // so use Set equality to avoid spuriously triggering recalculation when the only difference is row order.
+            // correctMappings is a Set: Hibernate may return rows in any order on reload, so Set equality avoids
+            // spuriously triggering recalculation when the only difference is row order.
             return checkSolutionsIfRecalculationIsNecessary(shortAnswerOriginalQuestion) || checkSpotsIfRecalculationIsNecessary(shortAnswerOriginalQuestion)
-                    || !new HashSet<>(getCorrectMappings()).equals(new HashSet<>(shortAnswerOriginalQuestion.getCorrectMappings()));
+                    || !getCorrectMappings().equals(shortAnswerOriginalQuestion.getCorrectMappings());
         }
         return false;
     }
