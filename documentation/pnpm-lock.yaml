@@ -79,8 +79,8 @@ importers:
         specifier: 8.59.3
         version: 8.59.3(eslint@10.3.0(jiti@1.21.7))(typescript@6.0.3)
       baseline-browser-mapping:
-        specifier: 2.10.29
-        version: 2.10.29
+        specifier: 2.10.32
+        version: 2.10.32
       eslint:
         specifier: 10.3.0
         version: 10.3.0(jiti@1.21.7)
@@ -2505,6 +2505,11 @@ packages:
 
   baseline-browser-mapping@2.10.29:
     resolution: {integrity: sha512-Asa2krT+XTPZINCS+2QcyS8WTkObE77RwkydwF7h6DmnKqbvlalz93m/dnphUyCa6SWSP51VgtEUf2FN+gelFQ==}
+    engines: {node: '>=6.0.0'}
+    hasBin: true
+
+  baseline-browser-mapping@2.10.32:
+    resolution: {integrity: sha512-wbPvpyjJPC0zdfdKXxqEL3Ea+bOMD/87X4lftiJkkaBiuG6ALQy1SLmEd7BSmVCuwCQsBrCamgBoLyfFDD1EPg==}
     engines: {node: '>=6.0.0'}
     hasBin: true
 
@@ -9455,6 +9460,8 @@ snapshots:
   balanced-match@4.0.4: {}
 
   baseline-browser-mapping@2.10.29: {}
+
+  baseline-browser-mapping@2.10.32: {}
 
   batch@0.6.1: {}
 

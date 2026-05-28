@@ -39,7 +39,7 @@
         "@types/prop-types": "15.7.15",
         "@typescript-eslint/eslint-plugin": "8.59.3",
         "@typescript-eslint/parser": "8.59.3",
-        "baseline-browser-mapping": "2.10.29",
+        "baseline-browser-mapping": "2.10.32",
         "eslint": "10.3.0",
         "prettier": "3.8.3",
         "typescript": "6.0.3"
