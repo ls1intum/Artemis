@@ -96,7 +96,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
                 exercise.title,
                 exercise.releaseDate,
                 exercise.dueDate,
-                batch,
+                batch.startTime,
                 exercise.duration
             )
             FROM QuizExercise exercise

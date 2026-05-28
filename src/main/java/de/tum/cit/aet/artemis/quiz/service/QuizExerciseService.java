@@ -1234,13 +1234,13 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             return Optional.empty();
         }
 
-        QuizBatch synchronizedBatch = dto.quizBatch();
-        if (synchronizedBatch == null || synchronizedBatch.getStartTime() == null || dto.duration() == null) {
+        ZonedDateTime synchronizedBatchStartTime = dto.quizBatchStartTime();
+        if (synchronizedBatchStartTime == null || dto.duration() == null) {
             return Optional.empty();
         }
 
-        return Optional.of(new CalendarEventDTO("exerciseStartAndEndEvent-" + dto.originEntityId(), CalendarEventType.QUIZ_EXERCISE, dto.title(), synchronizedBatch.getStartTime(),
-                synchronizedBatch.getStartTime().plusSeconds(dto.duration()), null, null));
+        return Optional.of(new CalendarEventDTO("exerciseStartAndEndEvent-" + dto.originEntityId(), CalendarEventType.QUIZ_EXERCISE, dto.title(), synchronizedBatchStartTime,
+                synchronizedBatchStartTime.plusSeconds(dto.duration()), null, null));
     }
 
     /**

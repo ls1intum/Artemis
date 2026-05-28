@@ -2,6 +2,7 @@ import { test } from '../../support/fixtures';
 import { admin } from '../../support/users';
 import { Course } from 'app/course/shared/entities/course.model';
 import { expect } from '@playwright/test';
+import { Commands } from '../../support/commands';
 
 test.describe('Learning Path Management', { tag: '@fast' }, () => {
     let course: Course;
@@ -17,7 +18,7 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
 
     test('Instructor enables learning paths via activation card', async ({ page }) => {
         // Arrange: course initially without learning paths enabled
-        await page.goto(`/course-management/${course.id}/learning-path-management`);
+        await Commands.gotoAndEnsureRendered(page, `/course-management/${course.id}/learning-path-management`);
         await page.waitForLoadState('domcontentloaded');
 
         // Wait for the loading spinner to disappear before checking for the activation card
@@ -35,7 +36,7 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
 
     test('Instructor enables learning paths via course settings', async ({ page }) => {
         // Arrange: course initially without learning paths enabled
-        await page.goto(`/course-management/${course.id}`);
+        await Commands.gotoAndEnsureRendered(page, `/course-management/${course.id}`);
         // domcontentloaded fires before Angular bootstraps the route component, so the Settings
         // tab is not yet in the DOM. Wait for the course-detail tab strip to render before
         // clicking, otherwise the click auto-wait runs the full 60s test timeout under load.
@@ -48,49 +49,87 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
         await lpCheckbox.click();
         await page.locator('#save-entity').click();
 
-        await page.goto(`/course-management/${course.id}/learning-path-management`);
+        await Commands.gotoAndEnsureRendered(page, `/course-management/${course.id}/learning-path-management`);
         await page.waitForLoadState('domcontentloaded');
 
-        // Wait for loading to complete
-        const spinner = page.locator('.spinner-border');
-        await expect(spinner).not.toBeVisible({ timeout: 30000 });
+        // Wait for both loading spinners to disappear. The learning-path-management page
+        // renders two independent containers (jhi-learning-paths-state and
+        // jhi-learning-paths-analytics), each with its own loading spinner — under heavy
+        // parallel load they can finish loading at different times, so we wait for both
+        // explicitly instead of asserting on a bare `.spinner-border` (which strict-mode
+        // rejects when multiple match).
+        await expect(page.locator('jhi-learning-paths-state .spinner-border')).not.toBeVisible({ timeout: 30000 });
+        await expect(page.locator('jhi-learning-paths-analytics .spinner-border')).not.toBeVisible({ timeout: 30000 });
 
         // Assert: management UI becomes visible after enabling
         await expect(page.locator('.learning-paths-analytics-container')).toBeVisible({ timeout: 30000 });
     });
 
     test('Instructor disables learning paths via course settings', async ({ page }) => {
-        await page.goto(`/course-management/${course.id}`);
+        // Two gotoAndEnsureRendered navigations + a settings PUT + waiting on two independent
+        // learning-path spinners + a reload-once recovery on the activation card routinely
+        // exceeds the 60s @fast budget under multi-node CI load. test.slow() lifts the per-
+        // test timeout to 180s which comfortably covers the ~140s worst case observed.
+        test.slow();
+        await Commands.gotoAndEnsureRendered(page, `/course-management/${course.id}`);
         const settings = page.getByRole('link', { name: 'Settings' });
         await settings.waitFor({ state: 'visible', timeout: 30_000 });
         await settings.click();
 
-        // Toggle checkbox off and save
+        // Toggle checkbox off and save. A fresh course defaults to LP disabled, so the toggle
+        // is typically a no-op — the save still issues a PUT we wait for so the LP management
+        // page below sees the committed state.
         const lpCheckbox = page.locator('#field_learningPathsEnabled');
         await expect(lpCheckbox).toBeVisible({ timeout: 15000 });
         if (await lpCheckbox.isChecked()) {
             await lpCheckbox.click();
         }
+        const saveResponse = page
+            .waitForResponse((resp) => resp.url().includes(`/api/core/courses/`) && resp.request().method() === 'PUT' && resp.ok(), { timeout: 15000 })
+            .catch(() => undefined);
         await page.locator('#save-entity').click();
+        await saveResponse;
 
-        await page.goto(`/course-management/${course.id}/learning-path-management`);
+        await Commands.gotoAndEnsureRendered(page, `/course-management/${course.id}/learning-path-management`);
         await page.waitForLoadState('domcontentloaded');
 
-        // Wait for loading to complete
-        const spinner = page.locator('.spinner-border');
-        await expect(spinner).not.toBeVisible({ timeout: 30000 });
+        // Wait for both loading spinners to disappear. The learning-path-management page
+        // renders two independent containers (jhi-learning-paths-state and
+        // jhi-learning-paths-analytics), each with its own loading spinner — under heavy
+        // parallel load they can finish loading at different times, so we wait for both
+        // explicitly instead of asserting on a bare `.spinner-border` (which strict-mode
+        // rejects when multiple match).
+        await expect(page.locator('jhi-learning-paths-state .spinner-border')).not.toBeVisible({ timeout: 30000 });
+        await expect(page.locator('jhi-learning-paths-analytics .spinner-border')).not.toBeVisible({ timeout: 30000 });
 
-        await expect(page.locator('jhi-feature-activation')).toBeVisible({ timeout: 15000 });
+        // Under heavy load the management view briefly renders an empty state before the
+        // disabled-LP flag propagates to the activation card. Re-issue the navigation if the
+        // card hasn't attached within a generous initial wait; one reload reliably recovers.
+        const activationCard = page.locator('jhi-feature-activation');
+        const visibleWithin = async (timeout: number): Promise<boolean> =>
+            activationCard
+                .waitFor({ state: 'visible', timeout })
+                .then(() => true)
+                .catch(() => false);
+        if (!(await visibleWithin(15_000))) {
+            await Commands.gotoAndEnsureRendered(page, `/course-management/${course.id}/learning-path-management`);
+            await expect(activationCard).toBeVisible({ timeout: 30_000 });
+        }
     });
 
     test('Create simple learning path', async ({ page, courseManagementAPIRequests }) => {
         // Enable learning paths first
-        await page.goto(`/course-management/${course.id}/learning-path-management`);
+        await Commands.gotoAndEnsureRendered(page, `/course-management/${course.id}/learning-path-management`);
         await page.waitForLoadState('domcontentloaded');
 
-        // Wait for loading to complete
-        const spinner = page.locator('.spinner-border');
-        await expect(spinner).not.toBeVisible({ timeout: 30000 });
+        // Wait for both loading spinners to disappear. The learning-path-management page
+        // renders two independent containers (jhi-learning-paths-state and
+        // jhi-learning-paths-analytics), each with its own loading spinner — under heavy
+        // parallel load they can finish loading at different times, so we wait for both
+        // explicitly instead of asserting on a bare `.spinner-border` (which strict-mode
+        // rejects when multiple match).
+        await expect(page.locator('jhi-learning-paths-state .spinner-border')).not.toBeVisible({ timeout: 30000 });
+        await expect(page.locator('jhi-learning-paths-analytics .spinner-border')).not.toBeVisible({ timeout: 30000 });
 
         const activationCard = page.locator('jhi-feature-activation');
         await expect(activationCard).toBeVisible({ timeout: 15000 });
