@@ -3,7 +3,7 @@ import { catchError, of } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute } from '@angular/router';
 import { Router } from '@angular/router';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import {
     CreateTutorialGroupSessionEvent,
     DeleteTutorialGroupEvent,
@@ -20,7 +20,7 @@ import { getRouteData } from 'app/shared/route/getRouteData';
 import { TutorialGroupCourseAndGroupService } from 'app/tutorialgroup/shared/service/tutorial-group-course-and-group.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariable';
-import { isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
+import { isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorialGroupSession';
 

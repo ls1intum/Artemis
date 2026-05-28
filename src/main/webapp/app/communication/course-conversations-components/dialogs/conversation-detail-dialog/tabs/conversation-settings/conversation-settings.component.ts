@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, inject, input, output } from '@angular/core';
 import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { DialogService } from 'primeng/dynamicdialog';
 import type { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations-components/generic-confirmation-dialog/generic-confirmation-dialog.component';

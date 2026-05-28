@@ -5,12 +5,12 @@ import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { BehaviorSubject, firstValueFrom, of, throwError } from 'rxjs';
 import { outputToObservable } from '@angular/core/rxjs-interop';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { By } from '@angular/platform-browser';
 import { MockComponent } from 'ng-mocks';
@@ -29,7 +29,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { delay } from 'rxjs/operators';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
@@ -56,6 +56,7 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
@@ -193,7 +194,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         lockAndGetProgrammingSubmissionParticipationStub = jest
             .spyOn(programmingSubmissionService, 'lockAndGetProgrammingSubmissionParticipation')
             .mockReturnValue(of(submission).pipe(delay(100)));
-        findBySubmissionIdStub = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as HttpResponse<Complaint>));
+        findBySubmissionIdStub = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as HttpResponse<ComplaintDTO>));
         getIdentityStub = jest.spyOn(accountService, 'identity').mockReturnValue(new Promise((promise) => promise(user)));
         getProgrammingSubmissionForExerciseWithoutAssessmentStub = jest
             .spyOn(programmingSubmissionService, 'getSubmissionWithoutAssessment')
@@ -649,6 +650,33 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             }
         }),
     );
+
+    it('should send the reassembled feedbacks (not a stale snapshot) when resolving a complaint', fakeAsync(() => {
+        comp.ngOnInit();
+        tick(100);
+
+        // The editor state holds the up-to-date feedbacks the tutor just edited...
+        comp.referencedFeedback = [{ detailText: 'REF', credits: 1, reference: 'file:1', type: FeedbackType.MANUAL } as Feedback];
+        comp.unreferencedFeedback = [{ detailText: 'UNREF', credits: 1, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback];
+        comp.automaticFeedback = [{ detailText: 'AUTO', credits: 0, type: FeedbackType.AUTOMATIC } as Feedback];
+        // ...while the manual result still carries a stale feedback list that must NOT be the one sent to the server.
+        comp.manualResult!.feedbacks = [{ detailText: 'STALE', credits: 99, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback];
+
+        jest.spyOn(comp, 'validateFeedback').mockImplementation(() => (comp.assessmentsAreValid = true));
+        const assessmentAfterComplaint: AssessmentAfterComplaint = {
+            complaintResponse: new ComplaintResponse(),
+            onSuccess: () => {},
+            onError: () => {},
+        };
+
+        comp.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
+        flush();
+
+        expect(updateAfterComplaintStub).toHaveBeenCalledOnce();
+        const sentFeedbacks: Feedback[] = updateAfterComplaintStub.mock.calls[0][0];
+        expect(sentFeedbacks.map((feedback) => feedback.detailText)).toEqual(['REF', 'UNREF', 'AUTO']);
+        expect(sentFeedbacks.some((feedback) => feedback.detailText === 'STALE')).toBeFalse();
+    }));
 
     it('should validate assessments after submission is received during component init', async () => {
         // make assessment valid

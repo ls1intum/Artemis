@@ -1,6 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 
 export class MockConversationService {

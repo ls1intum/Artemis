@@ -12,15 +12,16 @@ import { DialogModule } from 'primeng/dialog';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { GlobalSearchNavigationViewComponent } from 'app/core/navbar/global-search/components/views/navigation-view/global-search-navigation-view.component';
 import { SEARCH_DEBOUNCE_MS, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
-import { GlobalSearchOptions, GlobalSearchResult, GlobalSearchService } from '../../services/global-search.service';
+import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
+import { GlobalSearchApiService } from 'app/openapi/api/globalSearchApi.service';
 import { SearchInputComponent } from './search-input/search-input.component';
-import { SearchableEntity } from '../../models/searchable-entity.model';
+import { SearchEntityType, SearchableEntity } from '../../models/searchable-entity.model';
 import { GlobalSearchLectureResultsComponent } from 'app/core/navbar/global-search/components/views/lecture-results/global-search-lecture-results.component';
 import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/components/views/iris-answer/global-search-iris-answer.component';
 
 interface SearchState {
     query: string;
-    filters: string[];
+    filters: SearchEntityType[];
 }
 
 @Component({
@@ -44,7 +45,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     private readonly osDetector = inject(OsDetectorService);
     private readonly accountService = inject(AccountService);
     private readonly router = inject(Router);
-    private readonly searchService = inject(GlobalSearchService);
+    private readonly searchService = inject(GlobalSearchApiService);
     protected readonly faArrowUp = faArrowUp;
     protected readonly faArrowDown = faArrowDown;
     protected readonly searchInputComponent = viewChild<SearchInputComponent>(SearchInputComponent);
@@ -53,7 +54,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly activeSplitPanel = signal<'left' | 'right'>('left');
     protected readonly SearchView = SearchView;
     protected readonly searchQuery = signal('');
-    protected readonly activeFilters = signal<string[]>([]);
+    protected readonly activeFilters = signal<SearchEntityType[]>([]);
     protected readonly results = signal<GlobalSearchResult[]>([]);
     protected readonly isLoading = signal<boolean>(false);
     protected readonly hasSearched = signal<boolean>(false);
@@ -116,15 +117,11 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     }
 
                     this.searchError.set(undefined);
-                    const typeFilter = hasFilter ? filters[0] : undefined;
+                    const typeFilter = hasFilter ? filters.join(',') : undefined;
                     const searchQuery = hasValidQuery ? trimmedQuery : '';
-                    const options: GlobalSearchOptions = { type: typeFilter };
 
                     // Empty query with filter — serve from cache synchronously if available
                     if (!hasValidQuery && hasFilter) {
-                        options.sortBy = 'dueDate';
-                        options.limit = 10;
-
                         const cached = this.placeholderCache.get(typeFilter!);
                         if (cached) {
                             this.isLoading.set(false);
@@ -136,7 +133,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     this.isLoading.set(true);
                     return timer(SEARCH_DEBOUNCE_MS).pipe(
                         switchMap(() =>
-                            this.searchService.search(searchQuery, options).pipe(
+                            this.searchService.globalSearch(searchQuery, typeFilter).pipe(
                                 tap((results) => {
                                     if (!hasValidQuery && hasFilter && typeFilter) {
                                         this.placeholderCache.set(typeFilter, results);
@@ -205,25 +202,26 @@ export class GlobalSearchModalComponent implements OnDestroy {
         }
     }
 
-    protected addFilter(filterType: string) {
-        // For now, only one filter at a time (can be extended later)
-        if (!this.activeFilters().includes(filterType)) {
-            const newFilters = [filterType];
-            this.activeFilters.set(newFilters);
+    protected addFilter(filterTypes: SearchEntityType[]) {
+        // For now, only one filter group at a time (can be extended later)
+        const current = this.activeFilters();
+        if (filterTypes.length !== current.length || filterTypes.some((t) => !current.includes(t))) {
+            this.activeFilters.set(filterTypes);
 
             // Only show loading if we don't have cached placeholder results
             const query = this.searchQuery()?.trim() || '';
-            const hasCached = !query && this.placeholderCache.has(filterType);
+            const cacheKey = filterTypes.join(',');
+            const hasCached = !query && this.placeholderCache.has(cacheKey);
             if (!hasCached) {
                 this.isLoading.set(true);
             }
 
             // Re-trigger search with new filter
-            this.searchSubject.next({ query: this.searchQuery(), filters: newFilters });
+            this.searchSubject.next({ query: this.searchQuery(), filters: filterTypes });
         }
     }
 
-    protected removeFilter(filterType: string) {
+    protected removeFilter(filterType: SearchEntityType) {
         const newFilters = this.activeFilters().filter((f) => f !== filterType);
         this.activeFilters.set(newFilters);
         this.searchSubject.next({ query: this.searchQuery(), filters: newFilters });
@@ -235,8 +233,8 @@ export class GlobalSearchModalComponent implements OnDestroy {
         }
 
         // Add the filter — this pushes through the main debounced pipeline
-        if (entity.filterTag) {
-            this.addFilter(entity.filterTag);
+        if (entity.filterTags?.length) {
+            this.addFilter(entity.filterTags);
         }
 
         // Keep search input focused so user can start typing immediately

@@ -11,6 +11,8 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
@@ -18,22 +20,20 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnswerNotification;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
-import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
-import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewAnswerNotification;
+import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
 
 /**
  * Service that handles the autonomous tutor pipeline status updates.
@@ -174,19 +174,19 @@ public class AutonomousTutorService {
         broadcastPost.setIsSaved(false);
         broadcastPost.getAnswers().forEach(answer -> answer.setIsSaved(false));
 
-        // Reduce payload for websocket
-        conversation.hideDetails();
-        broadcastPost.getAnswers().forEach(answer -> answer.setPost(new Post(answer.getPost().getId())));
-
-        PostDTO postDTO = new PostDTO(broadcastPost, MetisCrudAction.UPDATE);
+        // Build a cycle-free wire payload — same reason as PostingService.broadcastForPost: sending the raw Post
+        // entity over STOMP previously walked the cyclic reactions → user → User chain that fires Jackson's
+        // DeserializerCache race on the receive side.
+        PostBroadcastDTO broadcastPayload = PostBroadcastDTO.from(broadcastPost, MetisCrudAction.UPDATE);
         String courseConversationTopic = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId;
 
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-            websocketMessagingService.sendMessage(courseConversationTopic, postDTO);
+            websocketMessagingService.sendMessage(courseConversationTopic, broadcastPayload);
         }
         else {
             var participants = conversationParticipantRepository.findConversationParticipantsByConversationId(conversation.getId());
-            participants.forEach(participant -> websocketMessagingService.sendMessage("/topic/user/" + participant.getUser().getId() + "/notifications/conversations", postDTO));
+            participants.forEach(
+                    participant -> websocketMessagingService.sendMessage("/topic/user/" + participant.getUser().getId() + "/notifications/conversations", broadcastPayload));
         }
     }
 }

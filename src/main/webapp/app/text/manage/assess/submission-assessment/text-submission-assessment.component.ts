@@ -29,7 +29,7 @@ import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/sha
 import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
@@ -436,11 +436,14 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
             return;
         }
 
+        const feedbacks = this.complaintService.getFeedbacksForUpdateAfterComplaint(this.assessments);
+        const complaintResponse = this.complaintService.getComplaintResponseForUpdateAfterComplaint(assessmentAfterComplaint.complaintResponse);
+
         this.assessmentsService
             .updateAssessmentAfterComplaint(
-                this.assessments,
+                feedbacks,
                 this.textBlocksWithFeedback,
-                assessmentAfterComplaint.complaintResponse,
+                complaintResponse,
                 this.submission?.id!, // eslint-disable-line @typescript-eslint/no-non-null-asserted-optional-chain
                 this.participation?.id!, // eslint-disable-line @typescript-eslint/no-non-null-asserted-optional-chain
                 this.result?.assessmentNote?.note,
@@ -505,7 +508,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                 if (!res.body) {
                     return;
                 }
-                this.complaint = res.body;
+                this.complaint = this.complaintService.convertComplaintFromServer(res.body, this.result);
                 this.isLoading.set(false);
             },
             error: (err: HttpErrorResponse) => {

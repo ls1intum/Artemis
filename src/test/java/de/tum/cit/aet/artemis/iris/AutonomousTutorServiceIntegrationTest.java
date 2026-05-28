@@ -14,17 +14,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.service.AutonomousTutorService;
 import de.tum.cit.aet.artemis.iris.service.IrisBotUserService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineStatusUpdateDTO;
@@ -125,7 +125,8 @@ class AutonomousTutorServiceIntegrationTest extends AbstractIrisIntegrationTest 
 
         autonomousTutorService.handleStatusUpdate(job, statusUpdate);
 
-        verify(websocketMessagingService, timeout(2000)).sendMessage(contains("/topic/metis/courses/" + course.getId()), any(PostDTO.class));
+        // The broadcast is now wrapped in PostBroadcastDTO (cycle-free wire payload)
+        verify(websocketMessagingService, timeout(2000)).sendMessage(contains("/topic/metis/courses/" + course.getId()), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -140,7 +141,7 @@ class AutonomousTutorServiceIntegrationTest extends AbstractIrisIntegrationTest 
         autonomousTutorService.handleStatusUpdate(job, statusUpdate);
 
         assertThat(answerPostRepository.findAnswerPostsByAuthorId(botUser.getId())).hasSize(initialCount);
-        verify(websocketMessagingService, never()).sendMessage(any(String.class), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessage(any(String.class), any(PostBroadcastDTO.class));
     }
 
     @Test

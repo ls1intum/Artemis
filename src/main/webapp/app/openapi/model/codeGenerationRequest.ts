@@ -12,6 +12,8 @@
 export interface CodeGenerationRequest { 
     repositoryType?: CodeGenerationRequest.RepositoryTypeEnum;
     checkOnly?: boolean;
+    initialAutoGeneration?: boolean;
+    selectedFeedbackThreadIds?: Array<number>;
 }
 export namespace CodeGenerationRequest {
     export const RepositoryTypeEnum = {
@@ -23,5 +25,4 @@ export namespace CodeGenerationRequest {
     } as const;
     export type RepositoryTypeEnum = typeof RepositoryTypeEnum[keyof typeof RepositoryTypeEnum];
 }
-
 

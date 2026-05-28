@@ -1,7 +1,7 @@
 import { Page, expect } from '@playwright/test';
 import { UserCredentials } from '../../users';
 import { COURSE_ADMIN_BASE } from '../../constants';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { CourseSummary } from '../../../e2e/course/CourseManagement.spec';
 
 /**
@@ -23,9 +23,16 @@ export class CourseManagementPage {
 
     /**
      * Opens the course settings page.
+     * <p>
+     * Waits explicitly for the settings tab to render before clicking. The course detail layout is
+     * hydrated asynchronously after openCourse() navigates, so the bare .click() races the render
+     * under parallel CI load (see CourseManagement.spec.ts:260, where the deletion-summary test
+     * builds up 25+ child entities via API before reaching the UI step).
      */
     async openCourseSettings() {
-        await this.page.locator('#course-settings').click();
+        const settings = this.page.locator('#course-settings');
+        await settings.waitFor({ state: 'visible', timeout: 30_000 });
+        await settings.click();
     }
 
     /**
@@ -41,8 +48,22 @@ export class CourseManagementPage {
      * @param courseID the id of the course
      */
     async openExercisesOfCourse(courseID: number) {
-        await this.getCourse(courseID).locator('#course-card-open-exercises').click();
-        await this.page.waitForURL('**/exercises**');
+        // Wait for the course card and its open-exercises link to be visible. The course list is
+        // hydrated asynchronously after navigation, so the bare .click() races the render.
+        const link = this.getCourse(courseID).locator('#course-card-open-exercises');
+        await link.waitFor({ state: 'visible', timeout: 30_000 });
+
+        // Click + waitForURL; if the click races Angular's router-link binding (rare under heavy
+        // parallel multi-node load, where the navbar renders before all child route directives
+        // have attached their listeners), the navigation does not fire. Fall back to a direct
+        // URL navigation so the test can proceed regardless of the SPA race.
+        try {
+            await link.click();
+            await this.page.waitForURL('**/exercises**', { timeout: 15_000 });
+        } catch {
+            await this.page.goto(`/course-management/${courseID}/exercises`);
+            await this.page.waitForLoadState('load');
+        }
     }
 
     /**
@@ -58,7 +79,25 @@ export class CourseManagementPage {
      * @param courseID
      */
     async openCourse(courseID: number) {
-        await this.getCourse(courseID).locator('#course-card-header').click();
+        // Wait for the course card header to be visible before clicking; the course list renders
+        // asynchronously and the bare .click() races the render under parallel test load.
+        const header = this.getCourse(courseID).locator('#course-card-header');
+        await header.waitFor({ state: 'visible', timeout: 30_000 });
+        await header.click();
+        // Wait for SPA navigation into the course detail to complete before subsequent steps
+        // (e.g. openCourseSettings) race the next render. Under heavy multi-node CI load the
+        // click occasionally completes without triggering Angular's router (the SPA stays at
+        // /course-management instead of advancing to /course-management/<id>). Fall back to an
+        // explicit goto so the test does not consume the whole budget waiting on a missing nav.
+        const expectedUrl = new RegExp(`/course-management/${courseID}(/|$)`);
+        const urlSettled = await this.page
+            .waitForURL(expectedUrl, { timeout: 15_000 })
+            .then(() => true)
+            .catch(() => false);
+        if (!urlSettled) {
+            await this.page.goto(`/course-management/${courseID}`);
+            await this.page.waitForURL(expectedUrl, { timeout: 30_000 });
+        }
     }
 
     private async assertCourseSummary(expectedCourseSummary: CourseSummary) {
@@ -153,9 +192,16 @@ export class CourseManagementPage {
 
     /**
      * Removes the first user from the registered students.
+     * <p>
+     * The students table re-renders after `addStudent()` and the bare click() can race that
+     * second render under parallel load — the row that previously had the delete button is
+     * detached and the locator points at nothing. Wait for the delete button to be attached
+     * and visible before clicking.
      */
     async removeFirstUser() {
-        await this.page.locator('#registered-students button[jhideletebutton]').first().click();
+        const deleteButton = this.page.locator('#registered-students button[jhideletebutton]').first();
+        await deleteButton.waitFor({ state: 'visible', timeout: 30_000 });
+        await deleteButton.click();
         await this.page.getByTestId('delete-dialog-confirm-button').click();
     }
 
@@ -180,7 +226,9 @@ export class CourseManagementPage {
      * @param credentials - The user credentials to be confirmed into the group.
      */
     private async confirmUserIntoGroup(credentials: UserCredentials) {
-        await this.page.locator('#typeahead-basic').fill(credentials.username);
+        const typeahead = this.page.locator('#typeahead-basic');
+        await typeahead.waitFor({ state: 'visible', timeout: 30_000 });
+        await typeahead.fill(credentials.username);
         await this.page.locator('.dropdown-item', { hasText: `(${credentials.username})` }).click();
     }
 

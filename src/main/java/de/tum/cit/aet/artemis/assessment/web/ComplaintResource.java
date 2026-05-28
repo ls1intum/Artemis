@@ -22,38 +22,30 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.ComplaintDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintRequestDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ComplaintService;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
-import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 /**
  * REST controller for managing complaints.
@@ -108,7 +100,7 @@ public class ComplaintResource {
      */
     @PostMapping("complaints")
     @EnforceAtLeastStudent
-    public ResponseEntity<Complaint> createComplaint(@RequestBody ComplaintRequestDTO complaint, Principal principal) throws URISyntaxException {
+    public ResponseEntity<ComplaintDTO> createComplaint(@RequestBody ComplaintRequestDTO complaint, Principal principal) throws URISyntaxException {
         log.debug("REST request to save Complaint: {}", complaint);
 
         if (complaintRepository.findByResultId(complaint.resultId()).isPresent()) {
@@ -136,23 +128,23 @@ public class ComplaintResource {
         }
         savedComplaint = complaintService.createComplaint(complaint, complaint.examId(), principal);
 
-        // Remove assessor information from client request
+        // Remove assessor information from the client request
         savedComplaint.getResult().filterSensitiveInformation();
 
         return ResponseEntity.created(new URI("/api/complaints/" + savedComplaint.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaint.getId().toString())).body(savedComplaint);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaint.getId().toString())).body(ComplaintDTO.of(savedComplaint));
     }
 
     /**
      * GET complaints: get a complaint associated with a result of the submission "id"
      *
      * @param submissionId the id of the submission for whose results we want to find a linked complaint
-     * @return the ResponseEntity with status 200 (OK) and either with the complaint as body or an empty body, if no complaint was found for the result
+     * @return the ResponseEntity with status 200 (OK) and either with the complaint as a body or an empty body, if no complaint was found for the result
      */
 
     @GetMapping(value = "complaints", params = { "submissionId" })
     @EnforceAtLeastStudent
-    public ResponseEntity<Complaint> getComplaintBySubmissionId(@RequestParam Long submissionId) {
+    public ResponseEntity<ComplaintDTO> getComplaintBySubmissionId(@RequestParam Long submissionId) {
         log.debug("REST request to get latest Complaint associated with a result of submission : {}", submissionId);
 
         Optional<Complaint> optionalComplaint = complaintRepository.findByResultSubmissionId(submissionId);
@@ -183,11 +175,11 @@ public class ComplaintResource {
         }
         // hide participation + exercise + course which might include sensitive information
         complaint.getResult().getSubmission().setParticipation(null);
-        return ResponseEntity.ok(complaint);
+        return ResponseEntity.ok(ComplaintDTO.of(complaint));
     }
 
     /**
-     * GET complaints: get all the complaints associated to a test run exercise, but filter out the ones that are not about the tutor who is doing the request,
+     * GET complaints: get all the complaints associated with a test run exercise, but filter out the ones that are not about the tutor who is doing the request,
      * since this indicates test run
      * exercises
      *
@@ -197,26 +189,26 @@ public class ComplaintResource {
      */
     @GetMapping(value = "complaints", params = { "exerciseId" })
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<Complaint>> getComplaintsForTestRunDashboard(Principal principal, @RequestParam Long exerciseId) {
+    public ResponseEntity<List<ComplaintDTO>> getComplaintsForTestRunDashboard(Principal principal, @RequestParam Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         List<Complaint> responseComplaints = complaintRepository.getAllComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
         responseComplaints = buildComplaintsListForAssessor(responseComplaints, principal, true, true, true);
-        return ResponseEntity.ok(responseComplaints);
+        return ResponseEntity.ok(responseComplaints.stream().map(ComplaintDTO::of).toList());
     }
 
     /**
-     * GET complaints: get all the complaints filtered by courseId, complaintType and optionally tutorId.
+     * GET complaints: get all the complaints filtered by courseId, complaintType, and optionally tutorId.
      *
      * @param tutorId               the id of the tutor by which we want to filter
      * @param courseId              the id of the course we are interested in
      * @param complaintType         the type of complaints we are interested in
-     * @param allComplaintsForTutor flag if all complaints should be send for a tutor
+     * @param allComplaintsForTutor flag if all complaints should be sent to a tutor
      * @return the ResponseEntity with status 200 (OK) and a list of complaints. The list can be empty
      */
     @GetMapping(value = "complaints", params = { "courseId", "complaintType" })
     @EnforceAtLeastTutor
-    public ResponseEntity<List<Complaint>> getComplaintsByCourseId(@RequestParam Long courseId, @RequestParam ComplaintType complaintType,
+    public ResponseEntity<List<ComplaintDTO>> getComplaintsByCourseId(@RequestParam Long courseId, @RequestParam ComplaintType complaintType,
             @RequestParam(required = false) Long tutorId, @RequestParam(required = false) boolean allComplaintsForTutor) {
         // Filtering by courseId
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -232,24 +224,24 @@ public class ComplaintResource {
 
         if (tutorId == null) {
             complaints = complaintService.getAllComplaintsByCourseId(courseId);
-            filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
+            filterStudentInformationFromComplaints(complaints, !isAtLeastInstructor);
         }
         else if (allComplaintsForTutor) {
             complaints = complaintService.getAllComplaintsByCourseId(courseId);
-            filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
+            filterStudentInformationFromComplaints(complaints, !isAtLeastInstructor);
             // For a tutor, all foreign reviewers are filtered out
             complaints.forEach(complaint -> complaint.filterForeignReviewer(user));
         }
         else {
             complaints = complaintService.getAllComplaintsByCourseIdAndTutorId(courseId, tutorId);
-            filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
+            filterStudentInformationFromComplaints(complaints, !isAtLeastInstructor);
         }
 
         return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
     }
 
     /**
-     * GET complaints: get all the complaints filtered by exerciseId, complaintType and optionally tutorId.
+     * GET complaints: get all the complaints filtered by exerciseId, complaintType, and optionally tutorId.
      *
      * @param tutorId       the id of the tutor by which we want to filter
      * @param exerciseId    the id of the exercise we are interested in
@@ -258,7 +250,7 @@ public class ComplaintResource {
      */
     @GetMapping(value = "complaints", params = { "exerciseId", "complaintType" })
     @EnforceAtLeastTutor
-    public ResponseEntity<List<Complaint>> getComplaintsByExerciseId(@RequestParam Long exerciseId, @RequestParam ComplaintType complaintType,
+    public ResponseEntity<List<ComplaintDTO>> getComplaintsByExerciseId(@RequestParam Long exerciseId, @RequestParam ComplaintType complaintType,
             @RequestParam(required = false) Long tutorId) {
         // Filtering by exerciseId
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -276,18 +268,18 @@ public class ComplaintResource {
 
         if (tutorId == null) {
             complaints = complaintService.getAllComplaintsByExerciseId(exerciseId);
-            filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
+            filterStudentInformationFromComplaints(complaints, !isAtLeastInstructor);
         }
         else {
             complaints = complaintService.getAllComplaintsByExerciseIdAndTutorId(exerciseId, tutorId);
-            filterOutUselessDataFromComplaints(complaints, !isAtLeastInstructor);
+            filterStudentInformationFromComplaints(complaints, !isAtLeastInstructor);
         }
 
         return ResponseEntity.ok(getComplaintsByComplaintType(complaints, complaintType));
     }
 
     /**
-     * GET complaints: get all the complaints filtered by courseId, complaintType and optionally tutorId.
+     * GET complaints: get all the complaints filtered by courseId, complaintType, and optionally tutorId.
      *
      * @param examId   the id of the tutor by which we want to filter
      * @param courseId the id of the course we are interested in
@@ -295,13 +287,13 @@ public class ComplaintResource {
      */
     @GetMapping(value = "complaints", params = { "courseId", "examId" })
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<Complaint>> getComplaintsByCourseIdAndExamId(@RequestParam Long courseId, @RequestParam Long examId) {
+    public ResponseEntity<List<ComplaintDTO>> getComplaintsByCourseIdAndExamId(@RequestParam Long courseId, @RequestParam Long examId) {
         // Filtering by courseId
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
         List<Complaint> complaints = complaintService.getAllComplaintsByExamId(examId);
-        filterOutUselessDataFromComplaints(complaints, false);
+        filterStudentInformationFromComplaints(complaints, false);
 
         return ResponseEntity.ok(getComplaintsByComplaintType(complaints, ComplaintType.COMPLAINT));
     }
@@ -313,8 +305,8 @@ public class ComplaintResource {
      * @param complaintType the type of complaints we want to get
      * @return an unmodifiable list of the complaints
      */
-    private List<Complaint> getComplaintsByComplaintType(List<Complaint> complaints, ComplaintType complaintType) {
-        return complaints.stream().filter(complaint -> complaint.getComplaintType() == complaintType).toList();
+    private List<ComplaintDTO> getComplaintsByComplaintType(List<Complaint> complaints, ComplaintType complaintType) {
+        return complaints.stream().filter(complaint -> complaint.getComplaintType() == complaintType).map(ComplaintDTO::of).toList();
     }
 
     private void filterOutStudentFromComplaint(Complaint complaint) {
@@ -326,57 +318,17 @@ public class ComplaintResource {
         }
     }
 
-    private void filterOutUselessDataFromComplaint(Complaint complaint) {
-        if (complaint.getResult() == null) {
-            return;
-        }
-
-        StudentParticipation originalParticipation = (StudentParticipation) complaint.getResult().getSubmission().getParticipation();
-        if (originalParticipation != null && originalParticipation.getExercise() != null) {
-            final var exerciseWithOnlyTitle = getExercise(originalParticipation);
-
-            originalParticipation.setExercise(exerciseWithOnlyTitle);
-            originalParticipation.setSubmissions(null);
-        }
-
-        Submission originalSubmission = complaint.getResult().getSubmission();
-        if (originalSubmission != null) {
-            Submission submissionWithOnlyId;
-            switch (originalSubmission) {
-                case TextSubmission ignored -> submissionWithOnlyId = new TextSubmission();
-                case ModelingSubmission ignored -> submissionWithOnlyId = new ModelingSubmission();
-                case FileUploadSubmission ignored -> submissionWithOnlyId = new FileUploadSubmission();
-                case ProgrammingSubmission ignored -> submissionWithOnlyId = new ProgrammingSubmission();
-                default -> {
-                    return;
-                }
-            }
-            submissionWithOnlyId.setId(originalSubmission.getId());
-            submissionWithOnlyId.setParticipation(originalSubmission.getParticipation());
-            complaint.getResult().setSubmission(submissionWithOnlyId);
-        }
-    }
-
-    private static Exercise getExercise(StudentParticipation originalParticipation) {
-        Exercise exerciseFromParticipation = originalParticipation.getExercise();
-        Exercise exerciseWithOnlyTitle = switch (exerciseFromParticipation) {
-            case TextExercise ignored -> new TextExercise();
-            case ModelingExercise ignored -> new ModelingExercise();
-            case FileUploadExercise ignored -> new FileUploadExercise();
-            case ProgrammingExercise ignored -> new ProgrammingExercise();
-            default -> exerciseFromParticipation;
-        };
-
-        exerciseWithOnlyTitle.setTitle(originalParticipation.getExercise().getTitle());
-        exerciseWithOnlyTitle.setId(originalParticipation.getExercise().getId());
-        return exerciseWithOnlyTitle;
-    }
-
-    private void filterOutUselessDataFromComplaints(List<Complaint> complaints, boolean filterOutStudentFromComplaints) {
+    /**
+     * Removes the participant (i.e. student or team) information from the given complaints when the caller is not allowed to see it.
+     * The remaining reduction of the object graph (exercise, submission, participation) is handled by {@link ComplaintDTO#of}, which only exposes a minimal set of fields.
+     *
+     * @param complaints                     the complaints to filter
+     * @param filterOutStudentFromComplaints whether the participant information should be removed
+     */
+    private void filterStudentInformationFromComplaints(List<Complaint> complaints, boolean filterOutStudentFromComplaints) {
         if (filterOutStudentFromComplaints) {
             complaints.forEach(this::filterOutStudentFromComplaint);
         }
-        complaints.forEach(this::filterOutUselessDataFromComplaint);
     }
 
     private List<Complaint> buildComplaintsListForAssessor(List<Complaint> complaints, Principal principal, boolean assessorSameAsCaller, boolean isTestRun,

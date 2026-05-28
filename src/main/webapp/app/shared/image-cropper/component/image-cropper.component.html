@@ -1,4 +1,4 @@
-<div [style.background]="imageVisible && backgroundColor" #wrapper>
+<div [style.background]="imageVisible && backgroundColor()" #wrapper>
     @if (safeImgDataUrl) {
         <img
             #sourceImage
@@ -9,22 +9,22 @@
             (load)="imageLoadedInView()"
         />
     }
-    <div class="ngx-ic-overlay" [style.width.px]="maxSize.width" [style.height.px]="maxSize.height" [style.margin-left]="alignImage === 'center' ? marginLeft : null"></div>
+    <div class="ngx-ic-overlay" [style.width.px]="maxSize.width" [style.height.px]="maxSize.height" [style.margin-left]="alignImage() === 'center' ? marginLeft : null"></div>
     @if (imageVisible) {
         <div
             class="ngx-ic-cropper"
-            [class.ngx-ic-round]="roundCropper"
+            [class.ngx-ic-round]="roundCropper()"
             [style.top.px]="cropper.y1"
             [style.left.px]="cropper.x1"
             [style.width.px]="cropper.x2 - cropper.x1"
             [style.height.px]="cropper.y2 - cropper.y1"
-            [style.margin-left]="alignImage === 'center' ? marginLeft : null"
+            [style.margin-left]="alignImage() === 'center' ? marginLeft : null"
             [style.visibility]="imageVisible ? 'visible' : 'hidden'"
             (keydown)="keyboardAccess($event)"
             tabindex="0"
         >
             <div (mousedown)="startMove($event, moveTypes.Move)" (touchstart)="startMove($event, moveTypes.Move)" class="ngx-ic-move"></div>
-            @if (!hideResizeSquares) {
+            @if (!hideResizeSquares()) {
                 <span
                     class="ngx-ic-resize ngx-ic-topleft"
                     (mousedown)="startMove($event, moveTypes.Resize, 'topleft')"

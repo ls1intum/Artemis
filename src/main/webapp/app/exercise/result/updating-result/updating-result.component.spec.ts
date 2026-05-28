@@ -6,7 +6,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import dayjs from 'dayjs/esm';
 import { BehaviorSubject, of } from 'rxjs';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import {
     BuildTimingInfo,
     ProgrammingSubmissionService,

@@ -37,7 +37,11 @@ export default defineConfig({
         setupFiles: ['src/test/javascript/spec/vitest-test-setup.ts'],
         include: [
             'src/main/webapp/app/fileupload/**/*.spec.ts', // include fileupload tests
+            'src/main/webapp/app/account/**/*.spec.ts', // include all account tests
+            'src/main/webapp/app/admin/**/*.spec.ts', // include all admin tests
             'src/main/webapp/app/core/**/*.spec.ts', // include all core tests
+            'src/main/webapp/app/course/**/*.spec.ts', // include all course tests
+            'src/main/webapp/app/calendar/**/*.spec.ts', // include all calendar tests
             'src/main/webapp/app/buildagent/**/*.spec.ts', // include build agent tests
             'src/main/webapp/app/text/**/*.spec.ts', // include text module tests
             'src/main/webapp/app/assessment/**/*.spec.ts', // include assessment tests
@@ -49,6 +53,7 @@ export default defineConfig({
             'src/main/webapp/app/atlas/**/*.spec.ts', // include atlas tests
             'src/main/webapp/app/iris/**/*.spec.ts', // include iris tests
             'src/main/webapp/app/exam/manage/students/**/*.spec.ts', // include exam manage students tests
+            'src/main/webapp/app/exam/overview/summary/exam-request-ai-feedback-button/**/*.spec.ts', // include exam request AI feedback button tests
             'src/main/webapp/app/exam/manage/student-exams/**/*.spec.ts', // include exam manage student-exams tests
             'src/main/webapp/app/exam/manage/test-runs/**/*.spec.ts', // include exam manage test-runs tests
             'src/main/webapp/app/exam/manage/exercise-groups/**/*.spec.ts', // include exam manage exercise groups tests
@@ -65,6 +70,9 @@ export default defineConfig({
             'src/main/webapp/app/shared/feature-toggle/**/*.spec.ts', // include feature-toggle service tests
             'src/main/webapp/app/shared/sort/**/*.directive.spec.ts', // include sort directives
             'src/main/webapp/app/shared/user-import/util/**/*.spec.ts', // include user import util tests
+            'src/main/webapp/app/shared/range-slider/**/*.spec.ts', // include range slider tests
+            'src/main/webapp/app/shared/dashboards/**/*.spec.ts', // include dashboards tests
+            'src/main/webapp/app/shared/image-cropper/**/*.spec.ts', // include image cropper tests
             'src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts', // include problem statement service tests
             'src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts', // include problem statement utils tests
             'src/main/webapp/app/shared/monaco-editor/inline-refinement-button/*.spec.ts', // include inline refinement button tests
@@ -77,6 +85,7 @@ export default defineConfig({
             'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**/*.spec.ts', // include build phases editor tests
             'src/main/webapp/app/programming/manage/version-history/**/*.spec.ts', // include programming version history tests
             'src/main/webapp/app/communication/**/*.spec.ts', // include all communication module tests
+            'src/main/webapp/app/notification/**/*.spec.ts', // include all notification module tests
             'src/main/webapp/app/exercise/participation/**/*.spec.ts', // include participation tests
             'src/main/webapp/app/exercise/participation-submission/**/*.spec.ts', // include participation-submission tests
             'src/main/webapp/app/exercise/exercise-scores/**/*.spec.ts', // include exercise-scores tests
@@ -86,6 +95,7 @@ export default defineConfig({
             'src/main/webapp/app/programming/shared/services/build-phases-template.service.spec.ts', // include build phases template service tests
             'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.spec.ts', // include build plan phases model tests
             'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.spec.ts', // include legacy build plan converter service tests
+            'src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**/*.spec.ts', // include programming exercise update timeline tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -93,7 +103,7 @@ export default defineConfig({
         outputFile: './build/test-results/vitest/junit.xml',
         server: {
             deps: {
-                inline: [/@ls1intum\/apollon/, /html-diff-ts/, /monaco-editor/],
+                inline: [/@tumaet\/apollon/, /html-diff-ts/, /monaco-editor/],
             },
         },
         coverage: {
@@ -101,9 +111,13 @@ export default defineConfig({
             reporter: isCI ? ['text', 'lcov', 'json-summary'] : ['text', 'lcov', 'html', 'json-summary'],
             reportsDirectory: 'build/test-results/vitest/coverage',
             include: [
+                'src/main/webapp/app/account/**/*.ts', // include all account for code coverage
+                'src/main/webapp/app/admin/**/*.ts', // include all admin for code coverage
                 'src/main/webapp/app/assessment/**/*.ts', // include assessment for code coverage
                 'src/main/webapp/app/buildagent/**/*.ts', // include buildagent for code coverage
                 'src/main/webapp/app/core/**/*.ts', // include all core for code coverage
+                'src/main/webapp/app/course/**/*.ts', // include all course for code coverage
+                'src/main/webapp/app/calendar/**/*.ts', // include all calendar for code coverage
                 'src/main/webapp/app/fileupload/**/*.ts', // include fileupload for code coverage
                 'src/main/webapp/app/lecture/**/*.ts', // include lecture for code coverage
                 'src/main/webapp/app/quiz/**/*.ts', // include quiz for code coverage
@@ -114,6 +128,7 @@ export default defineConfig({
                 'src/main/webapp/app/atlas/**/*.ts', // include atlas for code coverage
                 'src/main/webapp/app/iris/**/*.ts', // include iris for code coverage
                 'src/main/webapp/app/exam/manage/students/**/*.ts', // include exam manage students for code coverage
+                'src/main/webapp/app/exam/overview/summary/exam-request-ai-feedback-button/**/*.ts', // include exam request AI feedback button for code coverage
                 'src/main/webapp/app/exam/manage/student-exams/**/*.ts', // include exam manage student-exams for code coverage
                 'src/main/webapp/app/exam/manage/test-runs/**/*.ts', // include exam manage test-runs for code coverage
                 'src/main/webapp/app/exam/manage/exercise-groups/**/*.ts', // include exam manage exercise groups for code coverage
@@ -130,6 +145,9 @@ export default defineConfig({
                 'src/main/webapp/app/shared/user-import/util/**/*.ts', // include user import utils for code coverage
                 'src/main/webapp/app/shared/table-view/**/*.ts', // include shared table view for code coverage
                 'src/main/webapp/app/shared/sort/**/*.directive.ts', // include sort directives for code coverage
+                'src/main/webapp/app/shared/range-slider/**/*.ts', // include range slider for code coverage
+                'src/main/webapp/app/shared/dashboards/**/*.ts', // include dashboards for code coverage
+                'src/main/webapp/app/shared/image-cropper/**/*.ts', // include image cropper for code coverage
                 'src/main/webapp/app/programming/manage/services/problem-statement.service.ts', // include problem statement service for code coverage
                 'src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts', // include problem statement utils for code coverage
                 'src/main/webapp/app/shared/monaco-editor/inline-refinement-button/*.ts', // include inline refinement button for code coverage
@@ -142,6 +160,7 @@ export default defineConfig({
                 'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**/*.ts', // include build phases editor for code coverage
                 'src/main/webapp/app/programming/manage/version-history/**/*.ts', // include programming version history for code coverage
                 'src/main/webapp/app/communication/**/*.ts', // include all communication module for code coverage
+                'src/main/webapp/app/notification/**/*.ts', // include all notification module for code coverage
                 'src/main/webapp/app/exercise/participation/**/*.ts', // include participation for code coverage
                 'src/main/webapp/app/exercise/participation-submission/**/*.ts', // include participation-submission for code coverage
                 'src/main/webapp/app/exercise/exercise-scores/**/*.ts', // include exercise-scores for code coverage
@@ -151,6 +170,7 @@ export default defineConfig({
                 'src/main/webapp/app/programming/shared/services/build-phases-template.service.ts', // include build phases template service for code coverage
                 'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts', // include legacy build plan converter service for code coverage
                 'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // include build plan phases model for code coverage
+                'src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**/*.ts', // include programming exercise update timeline for code coverage
             ],
             exclude: [
                 '**/node_modules/**', // exclude node_modules with third-party code

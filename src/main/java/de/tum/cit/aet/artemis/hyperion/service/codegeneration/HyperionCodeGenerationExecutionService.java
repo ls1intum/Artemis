@@ -19,9 +19,9 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.HyperionCodeGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionConsistencyCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRendererService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -124,6 +125,8 @@ public class HyperionCodeGenerationExecutionService {
 
     private final HyperionConsistencyCheckService consistencyCheckService;
 
+    private final HyperionReviewCommentContextRendererService reviewCommentContextRendererService;
+
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
@@ -148,7 +151,8 @@ public class HyperionCodeGenerationExecutionService {
             ResultRepository resultRepository, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, HyperionProgrammingExerciseContextRendererService repositoryStructureService,
             HyperionSolutionRepositoryService solutionStrategy, HyperionTemplateRepositoryService templateStrategy, HyperionTestRepositoryService testStrategy,
-            ProgrammingSubmissionService programmingSubmissionService, HyperionConsistencyCheckService consistencyCheckService, ExerciseVersionService exerciseVersionService) {
+            ProgrammingSubmissionService programmingSubmissionService, HyperionConsistencyCheckService consistencyCheckService,
+            HyperionReviewCommentContextRendererService reviewCommentContextRendererService, ExerciseVersionService exerciseVersionService) {
         this.defaultBranch = defaultBranch;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
@@ -164,6 +168,7 @@ public class HyperionCodeGenerationExecutionService {
         this.testStrategy = testStrategy;
         this.programmingSubmissionService = programmingSubmissionService;
         this.consistencyCheckService = consistencyCheckService;
+        this.reviewCommentContextRendererService = reviewCommentContextRendererService;
         this.exerciseVersionService = exerciseVersionService;
     }
 
@@ -323,16 +328,17 @@ public class HyperionCodeGenerationExecutionService {
     /**
      * Generates and compiles code with websocket publisher callbacks.
      *
-     * @param exercise              the programming exercise
-     * @param user                  the initiating user
-     * @param courseId              the resolved course id for telemetry attribution
-     * @param repositoryType        repository type to generate
-     * @param initialAutoGeneration whether the request belongs to the initial automatically-triggered generation flow
-     * @param publisher             event publisher for websocket updates
+     * @param exercise                  the programming exercise
+     * @param user                      the initiating user
+     * @param courseId                  the resolved course id for telemetry attribution
+     * @param repositoryType            repository type to generate
+     * @param initialAutoGeneration     whether the request belongs to the initial automatically-triggered generation flow
+     * @param selectedFeedbackThreadIds selected review-thread ids to forward into the prompt context
+     * @param publisher                 event publisher for websocket updates
      * @return the latest build result or null
      */
     public Result generateAndCompileCode(ProgrammingExercise exercise, User user, Long courseId, RepositoryType repositoryType, boolean initialAutoGeneration,
-            HyperionCodeGenerationEventPublisher publisher) {
+            List<Long> selectedFeedbackThreadIds, HyperionCodeGenerationEventPublisher publisher) {
         RepositorySetupResult setupResult = setupRepository(exercise, repositoryType);
         if (!setupResult.success()) {
             publisher.error("Repository setup failed");
@@ -345,8 +351,8 @@ public class HyperionCodeGenerationExecutionService {
         GenerationExecutionResult executionResult;
 
         try {
-            executionResult = executeGenerationAttempts(exercise, user, courseId, repositoryType, initialAutoGeneration, publisher, setupResult.repository(), repositoryUri,
-                    executionProgress);
+            executionResult = executeGenerationAttempts(exercise, user, courseId, repositoryType, initialAutoGeneration, selectedFeedbackThreadIds, publisher,
+                    setupResult.repository(), repositoryUri, executionProgress);
         }
         catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -382,19 +388,26 @@ public class HyperionCodeGenerationExecutionService {
         return executionResult.result;
     }
 
+    public Result generateAndCompileCode(ProgrammingExercise exercise, User user, Long courseId, RepositoryType repositoryType, boolean initialAutoGeneration,
+            HyperionCodeGenerationEventPublisher publisher) {
+        return generateAndCompileCode(exercise, user, courseId, repositoryType, initialAutoGeneration, null, publisher);
+    }
+
     private GenerationExecutionResult executeGenerationAttempts(ProgrammingExercise exercise, User user, Long courseId, RepositoryType repositoryType,
-            boolean initialAutoGeneration, HyperionCodeGenerationEventPublisher publisher, Repository repository, LocalVCRepositoryUri repositoryUri,
-            GenerationExecutionProgress executionProgress) throws Exception {
+            boolean initialAutoGeneration, List<Long> selectedFeedbackThreadIds, HyperionCodeGenerationEventPublisher publisher, Repository repository,
+            LocalVCRepositoryUri repositoryUri, GenerationExecutionProgress executionProgress) throws Exception {
         HyperionCodeGenerationService strategy = resolveStrategy(repositoryType);
         String consistencyIssues = buildConsistencyIssuesPrompt(exercise);
         String buildEnvironmentContext = repositoryStructureService.getBuildEnvironmentContext(repository);
+        String selectedFeedbackThreads = buildSelectedFeedbackPrompt(exercise, repositoryType, selectedFeedbackThreadIds);
+        boolean useSelectedFeedback = selectedFeedbackThreadIds != null;
         String lastBuildLogs = null;
         int maxIterations = resolveMaxIterations(repositoryType, initialAutoGeneration);
 
         for (int attempt = 0; attempt < maxIterations; attempt++) {
             executionProgress.attemptsUsed = attempt + 1;
             GenerationAttemptResult attemptResult = executeGenerationAttempt(strategy, exercise, user, courseId, repositoryType, publisher, repository, repositoryUri,
-                    lastBuildLogs, buildEnvironmentContext, consistencyIssues, executionProgress);
+                    lastBuildLogs, buildEnvironmentContext, consistencyIssues, selectedFeedbackThreads, useSelectedFeedback, executionProgress);
             if (attemptResult != null) {
                 executionProgress.buildResultOutcome = attemptResult.buildResultOutcome();
                 executionProgress.result = executionProgress.buildResultOutcome.result();
@@ -420,9 +433,12 @@ public class HyperionCodeGenerationExecutionService {
 
     private GenerationAttemptResult executeGenerationAttempt(HyperionCodeGenerationService strategy, ProgrammingExercise exercise, User user, Long courseId,
             RepositoryType repositoryType, HyperionCodeGenerationEventPublisher publisher, Repository repository, LocalVCRepositoryUri repositoryUri, String lastBuildLogs,
-            String buildEnvironmentContext, String consistencyIssues, GenerationExecutionProgress executionProgress) throws Exception {
+            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads, boolean useSelectedFeedback, GenerationExecutionProgress executionProgress)
+            throws Exception {
         String repositoryStructure = repositoryStructureService.getRepositoryStructure(repository);
-        List<GeneratedFileDTO> generatedFiles = strategy.generateCode(user, exercise, courseId, lastBuildLogs, repositoryStructure, buildEnvironmentContext, consistencyIssues);
+        List<GeneratedFileDTO> generatedFiles = useSelectedFeedback
+                ? strategy.generateCode(user, exercise, courseId, lastBuildLogs, repositoryStructure, buildEnvironmentContext, consistencyIssues, selectedFeedbackThreads)
+                : strategy.generateCode(user, exercise, courseId, lastBuildLogs, repositoryStructure, buildEnvironmentContext, consistencyIssues);
         if (generatedFiles == null || generatedFiles.isEmpty()) {
             return null;
         }
@@ -551,6 +567,27 @@ public class HyperionCodeGenerationExecutionService {
             log.warn("Consistency check failed for exercise {}: {}", exercise.getId(), e.getMessage(), e);
             // Best-effort context for code generation only; don't surface this to the client (not a consistency check flow).
             return "Unavailable (consistency check failed)";
+        }
+    }
+
+    /**
+     * Builds a prompt-friendly JSON payload for explicitly selected review threads.
+     *
+     * @param exercise                  the programming exercise to analyze
+     * @param repositoryType            the target repository type
+     * @param selectedFeedbackThreadIds the explicitly selected review-thread ids
+     * @return serialized selected-thread prompt context
+     */
+    private String buildSelectedFeedbackPrompt(ProgrammingExercise exercise, RepositoryType repositoryType, List<Long> selectedFeedbackThreadIds) {
+        if (reviewCommentContextRendererService == null) {
+            return "{\"repositoryType\":\"" + repositoryType.name() + "\",\"threads\":[]}";
+        }
+        try {
+            return reviewCommentContextRendererService.renderCodeGenerationSelectedFeedback(exercise.getId(), repositoryType, selectedFeedbackThreadIds);
+        }
+        catch (RuntimeException e) {
+            log.warn("Selected feedback thread rendering failed for exercise {}: {}", exercise.getId(), e.getMessage(), e);
+            return "{\"repositoryType\":\"" + repositoryType.name() + "\",\"threads\":[]}";
         }
     }
 

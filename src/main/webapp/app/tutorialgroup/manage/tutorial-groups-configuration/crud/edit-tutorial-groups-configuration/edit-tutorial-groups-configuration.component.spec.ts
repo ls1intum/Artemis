@@ -15,8 +15,8 @@ import {
     tutorialsGroupsConfigurationDtoToFormData,
 } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { Course } from 'app/course/shared/entities/course.model';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
