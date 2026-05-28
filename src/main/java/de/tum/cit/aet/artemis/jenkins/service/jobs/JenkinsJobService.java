@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.jenkins.jobs;
+package de.tum.cit.aet.artemis.jenkins.service.jobs;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 
@@ -26,8 +26,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.exception.JenkinsException;
-import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsEndpoints;
-import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlFileUtils;
+import de.tum.cit.aet.artemis.jenkins.service.JenkinsEndpoints;
+import de.tum.cit.aet.artemis.jenkins.service.JenkinsXmlFileUtils;
 
 @Lazy
 @Service

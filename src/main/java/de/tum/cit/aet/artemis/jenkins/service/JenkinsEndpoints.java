@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.jenkins;
+package de.tum.cit.aet.artemis.jenkins.service;
 
 import java.net.URI;
 import java.util.Arrays;
