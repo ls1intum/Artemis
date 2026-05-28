@@ -428,7 +428,7 @@ dependencies {
     // Weaviate vector database client for semantic search
     implementation "io.weaviate:client6:${weaviate_client_version}"
     constraints {
-        implementation("com.google.code.gson:gson:2.13.2") {
+        implementation("com.google.code.gson:gson:2.14.0") {
             because("Required by Weaviate client v6 for JSON serialization")
         }
     }
