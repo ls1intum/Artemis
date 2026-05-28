@@ -1150,7 +1150,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
 
     private void waitForParticipantScores() {
         participantScoreScheduleService.executeScheduledTasks();
-        await().until(() -> participantScoreScheduleService.isIdle());
+        await().atMost(Duration.ofMinutes(1)).until(() -> participantScoreScheduleService.isIdle());
     }
 
     private double calculateOverallPoints(Double correctionResultScore, StudentExam studentExamOfUser) {

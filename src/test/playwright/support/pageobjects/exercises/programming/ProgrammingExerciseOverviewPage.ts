@@ -6,6 +6,8 @@ import { CourseOverviewPage } from '../../course/CourseOverviewPage';
 import { BUILD_RESULT_TIMEOUT, POLLING_INTERVAL } from '../../../timeouts';
 
 export class ProgrammingExerciseOverviewPage {
+    private static readonly NON_ZERO_RESULT_SCORE_PATTERN = /(?:[1-9]\d*(?:\.\d+)?|0\.\d*[1-9]\d*)%/;
+
     private readonly page: Page;
     private readonly courseOverview: CourseOverviewPage;
 
@@ -18,8 +20,7 @@ export class ProgrammingExerciseOverviewPage {
         const resultScore = this.page.locator('#exercise-headers-information').locator('#result-score');
         // Use > semantics: accept any non-zero score rather than an exact string match,
         // consistent with verifyResultScore. A '0%' expectation is matched literally.
-        const isZeroExpected = expectedResult === '0%';
-        const textPattern = isZeroExpected ? '0%' : /[1-9]/;
+        const textPattern = ProgrammingExerciseOverviewPage.buildResultScorePattern(expectedResult);
         await Commands.reloadUntilTextFound(this.page, resultScore, textPattern, POLLING_INTERVAL, BUILD_RESULT_TIMEOUT * 2);
         await expect(resultScore).toContainText(textPattern);
     }
@@ -35,8 +36,7 @@ export class ProgrammingExerciseOverviewPage {
         const resultScore = this.page.locator('#exercise-headers-information').locator('#result-score');
         // Use > semantics: accept any non-zero score rather than an exact string match,
         // consistent with verifyResultScore. A '0%' expectation is matched literally.
-        const isZeroExpected = expectedResult === '0%';
-        const textPattern = isZeroExpected ? '0%' : /[1-9]/;
+        const textPattern = ProgrammingExerciseOverviewPage.buildResultScorePattern(expectedResult);
 
         // Try up to 6 full navigations over ~90s (each with 15s wait for score to appear)
         for (let attempt = 0; attempt < 6; attempt++) {
@@ -54,6 +54,11 @@ export class ProgrammingExerciseOverviewPage {
         await this.page.goto(url);
         await this.page.waitForLoadState('domcontentloaded');
         await expect(resultScore).toContainText(textPattern, { timeout: 30000 });
+    }
+
+    static buildResultScorePattern(expectedResult: string): string | RegExp {
+        const isZeroExpected = expectedResult === '0%' || expectedResult === '0';
+        return isZeroExpected ? '0%' : ProgrammingExerciseOverviewPage.NON_ZERO_RESULT_SCORE_PATTERN;
     }
 
     async startParticipation(courseId: number, exerciseId: number, credentials: UserCredentials): Promise<number> {

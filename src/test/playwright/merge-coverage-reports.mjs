@@ -2,7 +2,7 @@
 /* global console, process */
 import path from 'path';
 import { fileURLToPath } from 'url';
-import archiver from 'archiver';
+import { ZipArchive } from 'archiver';
 import coverage from 'istanbul-lib-coverage';
 import reports from 'istanbul-reports';
 import libReport from 'istanbul-lib-report';
@@ -100,7 +100,7 @@ if (process.env.CI === 'true') {
 // Archives the directory
 async function createArchive(outputPath, inputDirectory) {
     const output = await fs.createWriteStream(outputPath);
-    const archive = archiver('zip', { zlib: { level: 9 } });
+    const archive = new ZipArchive({ zlib: { level: 9 } });
 
     output.on('close', () => {
         console.log(`Coverage report archived on: ${outputPath}`);
