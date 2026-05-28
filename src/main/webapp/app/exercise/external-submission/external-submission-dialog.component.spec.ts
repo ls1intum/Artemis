@@ -59,8 +59,7 @@ describe('External Submission Dialog', () => {
 
     it('should dismiss the modal on clear', () => {
         component.clear();
-        expect(activeModal.dismiss).toHaveBeenCalledOnce();
-        expect(activeModal.dismiss).toHaveBeenCalledWith('cancel');
+        expect(activeModal.dismiss).toHaveBeenCalledExactlyOnceWith('cancel');
     });
 
     it('should save feedback correctly', () => {
@@ -85,17 +84,14 @@ describe('External Submission Dialog', () => {
         expect(component.isSaving).toBe(true);
         expect(result.feedbacks).toBe(component.feedbacks);
         expect(result.feedbacks).toSatisfy((feedbacks: Feedback[]) => feedbacks.every((feedback: Feedback) => feedback.type === FeedbackType.MANUAL));
-        expect(createMock).toHaveBeenCalledOnce();
-        expect(createMock).toHaveBeenCalledWith(component.exercise, component.student, result);
+        expect(createMock).toHaveBeenCalledExactlyOnceWith(component.exercise, component.student, result);
         expect(activeModal.close).not.toHaveBeenCalled();
 
         subject.next(new HttpResponse<Result>({ body: result }));
 
-        expect(activeModal.close).toHaveBeenCalledOnce();
-        expect(activeModal.close).toHaveBeenCalledWith(result);
+        expect(activeModal.close).toHaveBeenCalledExactlyOnceWith(result);
         expect(component.isSaving).toBe(false);
-        expect(eventManagerSpy).toHaveBeenCalledOnce();
-        expect(eventManagerSpy).toHaveBeenCalledWith({ name: 'resultListModification', content: 'Added a manual result' });
+        expect(eventManagerSpy).toHaveBeenCalledExactlyOnceWith({ name: 'resultListModification', content: 'Added a manual result' });
     });
 
     it('should set isSaving to false on saveError', () => {

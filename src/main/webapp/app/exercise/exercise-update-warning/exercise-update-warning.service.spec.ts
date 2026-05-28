@@ -170,8 +170,7 @@ describe('Exercise Update Warning Service', () => {
         expect(updateWarningService.usageCountChanged).toBe(false);
         expect(updateWarningService.immediateReleaseWarning).toBe('');
 
-        expect(loadExerciseSpy).toHaveBeenCalledOnce();
-        expect(loadExerciseSpy).toHaveBeenCalledWith(exercise, backupExercise);
+        expect(loadExerciseSpy).toHaveBeenCalledExactlyOnceWith(exercise, backupExercise);
         expect(openSpy).not.toHaveBeenCalled();
     });
 
@@ -180,8 +179,7 @@ describe('Exercise Update Warning Service', () => {
         backupExercise.gradingCriteria = [gradingCriterion];
         updateWarningService.checkExerciseBeforeUpdate(exercise, backupExercise, false);
 
-        expect(loadExerciseSpy).toHaveBeenCalledOnce();
-        expect(loadExerciseSpy).toHaveBeenCalledWith(exercise, backupExercise);
+        expect(loadExerciseSpy).toHaveBeenCalledExactlyOnceWith(exercise, backupExercise);
         expect(openSpy).toHaveBeenCalledWith(ExerciseUpdateWarningComponent as Component);
         expect(openSpy).toHaveBeenCalledOnce();
     });

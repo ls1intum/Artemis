@@ -129,8 +129,7 @@ describe('ExerciseImportComponent', () => {
         comp.selectImport(exercise);
 
         // THEN
-        expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
-        expect(dialogRefCloseSpy).toHaveBeenCalledWith(exercise);
+        expect(dialogRefCloseSpy).toHaveBeenCalledExactlyOnceWith(exercise);
     });
 
     it('should change the page on active modal', () => {
@@ -171,8 +170,7 @@ describe('ExerciseImportComponent', () => {
         fixture.detectChanges();
         comp.sortRows();
 
-        expect(sortServiceSpy).toHaveBeenCalledOnce();
-        expect(sortServiceSpy).toHaveBeenCalledWith([], 'ID', false);
+        expect(sortServiceSpy).toHaveBeenCalledExactlyOnceWith([], 'ID', false);
     });
 
     it('should set search term and search', () => {

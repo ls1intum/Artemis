@@ -300,8 +300,7 @@ describe('FeedbackComponent', () => {
 
         comp.ngOnInit();
 
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(55, comp.result);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledExactlyOnceWith(55, comp.result);
         expect(comp.isLoading).toBe(false);
     });
 
@@ -310,8 +309,7 @@ describe('FeedbackComponent', () => {
 
         comp.ngOnInit();
 
-        expect(buildlogsStub).toHaveBeenCalledOnce();
-        expect(buildlogsStub).toHaveBeenCalledWith(55, 89);
+        expect(buildlogsStub).toHaveBeenCalledExactlyOnceWith(55, 89);
         expect(comp.buildLogs).toHaveLength(0);
         expect(comp.isLoading).toBe(false);
     });
@@ -345,8 +343,7 @@ describe('FeedbackComponent', () => {
 
         comp.ngOnInit();
 
-        expect(buildlogsStub).toHaveBeenCalledOnce();
-        expect(buildlogsStub).toHaveBeenCalledWith(55, 89);
+        expect(buildlogsStub).toHaveBeenCalledExactlyOnceWith(55, 89);
         expect(comp.loadingFailed).toBe(false);
         expect(comp.isLoading).toBe(false);
     });
@@ -357,8 +354,7 @@ describe('FeedbackComponent', () => {
         buildlogsStub.mockReturnValue(throwError(() => response));
         comp.ngOnInit();
 
-        expect(buildlogsStub).toHaveBeenCalledOnce();
-        expect(buildlogsStub).toHaveBeenCalledWith(55, 89);
+        expect(buildlogsStub).toHaveBeenCalledExactlyOnceWith(55, 89);
         expect(comp.loadingFailed).toBe(true);
         expect(comp.isLoading).toBe(false);
     });

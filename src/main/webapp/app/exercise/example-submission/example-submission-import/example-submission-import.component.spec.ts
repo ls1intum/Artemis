@@ -102,16 +102,14 @@ describe('ExampleSubmissionImportComponent', () => {
         vi.useFakeTimers();
         component.searchTerm = 'search';
         vi.advanceTimersByTime(300);
-        expect(searchSpy).toHaveBeenCalledOnce();
-        expect(searchSpy).toHaveBeenCalledWith(component.state, { exerciseId: 3 });
+        expect(searchSpy).toHaveBeenCalledExactlyOnceWith(component.state, { exerciseId: 3 });
     });
 
     it('should set the submission size when retrieving search results', () => {
         vi.useFakeTimers();
         component.searchTerm = 'search';
         vi.advanceTimersByTime(300);
-        expect(getSubmissionSizeSpy).toHaveBeenCalledOnce();
-        expect(getSubmissionSizeSpy).toHaveBeenCalledWith(submission, exercise);
+        expect(getSubmissionSizeSpy).toHaveBeenCalledExactlyOnceWith(submission, exercise);
         expect(component.content.resultsOnPage[0].submissionSize).toBe(2);
     });
 });

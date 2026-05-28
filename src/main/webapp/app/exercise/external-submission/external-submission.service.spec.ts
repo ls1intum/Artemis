@@ -49,8 +49,7 @@ describe('External Submission Service', () => {
         const req = httpMock.expectOne({ url: `api/assessment/exercises/1/external-submission-results?studentLogin=ab12cde`, method: 'POST' });
         const returned = { ...result, id: 4 };
         req.flush(returned);
-        expect(convertDateFromServerSpy).toHaveBeenCalledOnce();
-        expect(convertDateFromServerSpy).toHaveBeenCalledWith(createResult);
+        expect(convertDateFromServerSpy).toHaveBeenCalledExactlyOnceWith(createResult);
         expect(createResult).toBeDefined();
         expect(createResult!.body).toEqual(returned);
     });

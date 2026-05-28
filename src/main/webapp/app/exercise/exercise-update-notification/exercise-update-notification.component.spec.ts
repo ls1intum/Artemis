@@ -31,8 +31,7 @@ describe('ExerciseUpdateNotificationComponent', () => {
     it('should emit event on inputChange', () => {
         const emitSpy = vi.spyOn(component.notificationTextChange, 'emit');
         component.onInputChanged();
-        expect(emitSpy).toHaveBeenCalledOnce();
-        expect(emitSpy).toHaveBeenCalledWith(component.notificationText);
+        expect(emitSpy).toHaveBeenCalledExactlyOnceWith(component.notificationText);
     });
 
     it('should have the correct minlength, type, class, name, and id', () => {

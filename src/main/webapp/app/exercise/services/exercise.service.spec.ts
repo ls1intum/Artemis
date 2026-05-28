@@ -272,8 +272,7 @@ describe('Exercise Service', () => {
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionPublished).toBe(true);
-        expect(artemisMarkdownSpy).toHaveBeenCalledOnce();
-        expect(artemisMarkdownSpy).toHaveBeenCalledWith(textExercise.exampleSolution);
+        expect(artemisMarkdownSpy).toHaveBeenCalledExactlyOnceWith(textExercise.exampleSolution);
 
         exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...exercise }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
@@ -290,8 +289,7 @@ describe('Exercise Service', () => {
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionPublished).toBe(true);
-        expect(artemisMarkdownSpy).toHaveBeenCalledOnce();
-        expect(artemisMarkdownSpy).toHaveBeenCalledWith(fileUploadExercise.exampleSolution);
+        expect(artemisMarkdownSpy).toHaveBeenCalledExactlyOnceWith(fileUploadExercise.exampleSolution);
 
         exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...exercise }, artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
@@ -390,11 +388,9 @@ describe('Exercise Service', () => {
         expect(processedExercise.releaseDate).toEqual(releaseDate);
         expect(processedExercise.startDate).toBeUndefined();
 
-        expect(accountServiceSpy).toHaveBeenCalledOnce();
-        expect(accountServiceSpy).toHaveBeenCalledWith(expect.objectContaining({ id: exerciseFromServer.id }));
+        expect(accountServiceSpy).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ id: exerciseFromServer.id }));
 
-        expect(entityTitleServiceSpy).toHaveBeenCalledOnce();
-        expect(entityTitleServiceSpy).toHaveBeenCalledWith(exerciseFromServer);
+        expect(entityTitleServiceSpy).toHaveBeenCalledExactlyOnceWith(exerciseFromServer);
 
         expect(profileServiceSpy).not.toHaveBeenCalled();
     });
@@ -471,8 +467,7 @@ describe('Exercise Service', () => {
 
         testRequest.flush(expectedReturnedExercise);
 
-        expect(serviceSpy).toHaveBeenCalledOnce();
-        expect(serviceSpy).toHaveBeenCalledWith(expect.objectContaining({ body: expectedReturnedExercise }));
+        expect(serviceSpy).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ body: expectedReturnedExercise }));
         expect(actualReturnedExercise).toEqual(expectedReturnedExercise);
     });
 

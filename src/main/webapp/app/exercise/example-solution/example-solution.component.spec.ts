@@ -66,11 +66,9 @@ describe('Example Solution Component', () => {
 
         const extractExampleSolutionInfoSpy = vi.spyOn(ExerciseService, 'extractExampleSolutionInfo').mockReturnValue(exampleSolutionInfo);
         fixture.detectChanges();
-        expect(exerciseServiceSpy).toHaveBeenCalledOnce();
-        expect(exerciseServiceSpy).toHaveBeenCalledWith(exercise.id);
+        expect(exerciseServiceSpy).toHaveBeenCalledExactlyOnceWith(exercise.id);
 
-        expect(extractExampleSolutionInfoSpy).toHaveBeenCalledOnce();
-        expect(extractExampleSolutionInfoSpy).toHaveBeenCalledWith(exercise, artemisMarkdownService);
+        expect(extractExampleSolutionInfoSpy).toHaveBeenCalledExactlyOnceWith(exercise, artemisMarkdownService);
 
         expect(comp.exampleSolutionInfo).toEqual(exampleSolutionInfo);
     });

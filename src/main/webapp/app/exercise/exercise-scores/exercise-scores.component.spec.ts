@@ -128,10 +128,8 @@ describe('Exercise Scores Component', () => {
 
             component.ngOnInit();
 
-            expect(findCourseSpy).toHaveBeenCalledOnce();
-            expect(findCourseSpy).toHaveBeenCalledWith(1);
-            expect(findExerciseSpy).toHaveBeenCalledOnce();
-            expect(findExerciseSpy).toHaveBeenCalledWith(2);
+            expect(findCourseSpy).toHaveBeenCalledExactlyOnceWith(1);
+            expect(findExerciseSpy).toHaveBeenCalledExactlyOnceWith(2);
         });
     });
 
@@ -357,8 +355,7 @@ describe('Exercise Scores Component', () => {
 
             component.exportNames();
 
-            expect(resultServiceStub).toHaveBeenCalledOnce();
-            expect(resultServiceStub).toHaveBeenCalledWith(['participantName'], 'results-names.csv');
+            expect(resultServiceStub).toHaveBeenCalledExactlyOnceWith(['participantName'], 'results-names.csv');
         });
 
         it('should export names with team students format', () => {

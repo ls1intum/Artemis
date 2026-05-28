@@ -55,8 +55,7 @@ describe('ExerciseTitleChannelNameComponent', () => {
         const exerciseServiceSpy = vi.spyOn(exerciseService, 'getExistingExerciseDetailsInCourse');
         fixture.detectChanges();
 
-        expect(exerciseServiceSpy).toHaveBeenCalledOnce();
-        expect(exerciseServiceSpy).toHaveBeenCalledWith(courseId, exerciseType);
+        expect(exerciseServiceSpy).toHaveBeenCalledExactlyOnceWith(courseId, exerciseType);
     });
 
     it('should hide channel name input if messaging and communication disabled', () => {

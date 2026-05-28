@@ -71,8 +71,7 @@ describe('Submission Export Dialog Component', () => {
         expect(component.exportInProgress).toBe(false);
         expect(component.submissionExportOptions).toEqual(submissionExportOptions);
         expect(component.exercise).toEqual({ id: exerciseId } as Exercise);
-        expect(findSpy).toHaveBeenCalledOnce();
-        expect(findSpy).toHaveBeenCalledWith(exerciseId);
+        expect(findSpy).toHaveBeenCalledExactlyOnceWith(exerciseId);
     });
 
     it('should handle export response', () => {
@@ -83,21 +82,17 @@ describe('Submission Export Dialog Component', () => {
 
         component.handleExportResponse(response);
 
-        expect(alertSpy).toHaveBeenCalledOnce();
-        expect(alertSpy).toHaveBeenCalledWith('artemisApp.instructorDashboard.exportSubmissions.successMessage');
-        expect(modalSpy).toHaveBeenCalledOnce();
-        expect(modalSpy).toHaveBeenCalledWith(true);
+        expect(alertSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.instructorDashboard.exportSubmissions.successMessage');
+        expect(modalSpy).toHaveBeenCalledExactlyOnceWith(true);
         expect(component.exportInProgress).toBe(false);
-        expect(downloadSpy).toHaveBeenCalledOnce();
-        expect(downloadSpy).toHaveBeenCalledWith(response);
+        expect(downloadSpy).toHaveBeenCalledExactlyOnceWith(response);
     });
 
     it('should clear dialog', () => {
         const modalSpy = vi.spyOn(component.activeModal, 'dismiss');
         component.clear();
 
-        expect(modalSpy).toHaveBeenCalledOnce();
-        expect(modalSpy).toHaveBeenCalledWith('cancel');
+        expect(modalSpy).toHaveBeenCalledExactlyOnceWith('cancel');
     });
 
     describe('Exporting Submission', () => {
@@ -115,11 +110,9 @@ describe('Submission Export Dialog Component', () => {
 
             component.exportSubmissions(exerciseId);
 
-            expect(exportSubmissionServiceMock).toHaveBeenCalledOnce();
-            expect(exportSubmissionServiceMock).toHaveBeenCalledWith(exerciseId, validExerciseType, submissionExportOptions);
+            expect(exportSubmissionServiceMock).toHaveBeenCalledExactlyOnceWith(exerciseId, validExerciseType, submissionExportOptions);
             expect(component.exportInProgress).toBe(true);
-            expect(handleExportResponseMock).toHaveBeenCalledOnce();
-            expect(handleExportResponseMock).toHaveBeenCalledWith({ body: {} });
+            expect(handleExportResponseMock).toHaveBeenCalledExactlyOnceWith({ body: {} });
         });
 
         it('should handle error exporting submission for unsupported exercise types', () => {
@@ -133,8 +126,7 @@ describe('Submission Export Dialog Component', () => {
                 component.exportSubmissions(exerciseId);
             }).toThrow('Export not implemented for exercise type ' + invalidExerciseType);
 
-            expect(exportSubmissionServiceMock).toHaveBeenCalledOnce();
-            expect(exportSubmissionServiceMock).toHaveBeenCalledWith(exerciseId, invalidExerciseType, submissionExportOptions);
+            expect(exportSubmissionServiceMock).toHaveBeenCalledExactlyOnceWith(exerciseId, invalidExerciseType, submissionExportOptions);
             expect(handleExportResponseMock).not.toHaveBeenCalled();
         });
     });

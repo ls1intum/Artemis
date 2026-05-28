@@ -195,8 +195,7 @@ describe('ResultService', () => {
             expect(receivedResult2!.pointsPerCriterion).toEqual(expectedPointsMap);
         });
 
-        expect(httpStub).toHaveBeenCalledOnce();
-        expect(httpStub).toHaveBeenCalledWith(`api/assessment/exercises/${programmingExercise.id}/results-with-points-per-criterion`, expect.anything());
+        expect(httpStub).toHaveBeenCalledExactlyOnceWith(`api/assessment/exercises/${programmingExercise.id}/results-with-points-per-criterion`, expect.anything());
     });
 
     it('should convert Result Response from Server', () => {
@@ -225,14 +224,12 @@ describe('ResultService', () => {
 
         it('should return correct string for non programming exercise long format', () => {
             expect(resultService.getResultString(modelingResult, modelingExercise, modelingParticipation)).toBe('artemisApp.result.resultString.nonProgramming');
-            expect(translateServiceSpy).toHaveBeenCalledOnce();
-            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.nonProgramming', { relativeScore: 42, points: 21 });
+            expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.nonProgramming', { relativeScore: 42, points: 21 });
         });
 
         it('should return correct string for non programming exercise short format', () => {
             expect(resultService.getResultString(modelingResult, modelingExercise, modelingParticipation, true)).toBe('artemisApp.result.resultString.short');
-            expect(translateServiceSpy).toHaveBeenCalledOnce();
-            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.short', { relativeScore: 42 });
+            expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.short', { relativeScore: 42 });
         });
 
         it.each([true, false])('should return correct string for programming exercise with build failure', (short: boolean) => {
@@ -357,16 +354,14 @@ describe('ResultService', () => {
             programmingExercise.assessmentDueDate = dayjs().add(5, 'minutes');
 
             expect(resultService.getResultString(result8, programmingExercise, participation1)).toBe('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
-            expect(translateServiceSpy).toHaveBeenCalledOnce();
-            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
+            expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
         });
 
         it('should return correct string for in progress Athena non-graded feedback', () => {
             programmingExercise.assessmentDueDate = dayjs().add(5, 'minutes');
 
             expect(resultService.getResultString(result9, programmingExercise, participation1)).toBe('artemisApp.result.resultString.automaticAIFeedbackInProgress');
-            expect(translateServiceSpy).toHaveBeenCalledOnce();
-            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.automaticAIFeedbackInProgress');
+            expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.automaticAIFeedbackInProgress');
         });
 
         it('reports to Sentry if result or exercise is undefined', () => {
@@ -374,8 +369,7 @@ describe('ResultService', () => {
             const captureExceptionSpy = vi.spyOn(Sentry, 'captureException');
             captureExceptionSpy.mockClear();
             expect(resultService.getResultString(undefined, undefined, undefined)).toBe('');
-            expect(captureExceptionSpy).toHaveBeenCalledOnce();
-            expect(captureExceptionSpy).toHaveBeenCalledWith('Tried to generate a result string, but either the result or exercise was undefined');
+            expect(captureExceptionSpy).toHaveBeenCalledExactlyOnceWith('Tried to generate a result string, but either the result or exercise was undefined');
         });
     });
 

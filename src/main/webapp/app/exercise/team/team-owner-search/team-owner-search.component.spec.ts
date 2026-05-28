@@ -67,15 +67,13 @@ describe('Team Owner Search Component', () => {
         // The text$ stream is debounced (200 ms) to coalesce rapid keystrokes.
         vi.advanceTimersByTime(200);
 
-        expect(searchFailedSpy).toHaveBeenCalledOnce();
-        expect(searchFailedSpy).toHaveBeenCalledWith(false);
+        expect(searchFailedSpy).toHaveBeenCalledExactlyOnceWith(false);
 
         expect(searchingSpy).toHaveBeenCalledTimes(2);
         expect(searchingSpy).toHaveBeenNthCalledWith(1, true);
         expect(searchingSpy).toHaveBeenNthCalledWith(2, false);
 
-        expect(searchNoResultsSpy).toHaveBeenCalledOnce();
-        expect(searchNoResultsSpy).toHaveBeenCalledWith(undefined);
+        expect(searchNoResultsSpy).toHaveBeenCalledExactlyOnceWith(undefined);
 
         expect(onSearchResult).toEqual([owner]);
     });
@@ -99,8 +97,7 @@ describe('Team Owner Search Component', () => {
         // The text$ stream is debounced (200 ms) to coalesce rapid keystrokes.
         vi.advanceTimersByTime(200);
 
-        expect(searchFailedSpy).toHaveBeenCalledOnce();
-        expect(searchFailedSpy).toHaveBeenCalledWith(false);
+        expect(searchFailedSpy).toHaveBeenCalledExactlyOnceWith(false);
 
         expect(searchingSpy).toHaveBeenCalledTimes(2);
         expect(searchingSpy).toHaveBeenNthCalledWith(1, true);
@@ -124,8 +121,7 @@ describe('Team Owner Search Component', () => {
         let loadOwnerOptionsResult: User[] | undefined = [owner];
         comp.loadOwnerOptions().subscribe((result) => (loadOwnerOptionsResult = result));
 
-        expect(searchFailedSpy).toHaveBeenCalledOnce();
-        expect(searchFailedSpy).toHaveBeenCalledWith(true);
+        expect(searchFailedSpy).toHaveBeenCalledExactlyOnceWith(true);
 
         expect(comp.ownerOptionsLoaded).toBe(false);
         expect(loadOwnerOptionsResult).toBeUndefined();

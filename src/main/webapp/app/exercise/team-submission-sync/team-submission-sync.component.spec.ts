@@ -90,12 +90,10 @@ describe('Team Submission Sync Component', () => {
         component.ngOnInit();
 
         expect(component.websocketTopic).toBe(expectedWebsocketTopic);
-        expect(websocketSubscribeSpy).toHaveBeenCalledOnce();
-        expect(websocketSubscribeSpy).toHaveBeenCalledWith(expectedWebsocketTopic);
+        expect(websocketSubscribeSpy).toHaveBeenCalledExactlyOnceWith(expectedWebsocketTopic);
 
         // checks for setupReceiver
-        expect(receiveSubmissionEventEmitter).toHaveBeenCalledOnce();
-        expect(receiveSubmissionEventEmitter).toHaveBeenCalledWith(submissionSyncPayload?.submission);
+        expect(receiveSubmissionEventEmitter).toHaveBeenCalledExactlyOnceWith(submissionSyncPayload?.submission);
 
         // checks for setupSender
         expect(textSubmissionWithParticipation).toBeDefined();
@@ -141,14 +139,14 @@ describe('Team Submission Sync Component', () => {
     it('should re-broadcast the initial Yjs sync message and emit `reconnected` on every STOMP (re)connect', () => {
         const mock = websocketService as unknown as MockWebsocketService;
         const expectedTopic = '/topic/participations/3/team/text-submissions/patch';
-        const generateInitialSyncSpy = jest.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
-        const reconnectedSpy = jest.fn();
+        const generateInitialSyncSpy = vi.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
+        const reconnectedSpy = vi.fn();
         component.reconnected.subscribe(reconnectedSpy);
 
         // Drop the submissionObservable so the only thing that produces /patch sends is the reconnect path
         component.submissionObservable = undefined;
-        const sendSpy = jest.spyOn(websocketService, 'send');
-        jest.spyOn(websocketService, 'subscribe').mockReturnValue(of());
+        const sendSpy = vi.spyOn(websocketService, 'send');
+        vi.spyOn(websocketService, 'subscribe').mockReturnValue(of());
 
         component.ngOnInit();
 
@@ -180,11 +178,11 @@ describe('Team Submission Sync Component', () => {
 
     it('should stop reacting to connection-state changes after ngOnDestroy', () => {
         const mock = websocketService as unknown as MockWebsocketService;
-        jest.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
-        const reconnectedSpy = jest.fn();
+        vi.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
+        const reconnectedSpy = vi.fn();
         component.reconnected.subscribe(reconnectedSpy);
         component.submissionObservable = undefined;
-        jest.spyOn(websocketService, 'subscribe').mockReturnValue(of());
+        vi.spyOn(websocketService, 'subscribe').mockReturnValue(of());
 
         component.ngOnInit();
         expect(reconnectedSpy).toHaveBeenCalledOnce();

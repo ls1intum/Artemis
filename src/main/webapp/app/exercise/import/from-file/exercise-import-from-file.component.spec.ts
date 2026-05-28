@@ -53,8 +53,7 @@ describe('ExerciseImportFromFileComponent', () => {
         component.openImport(exercise);
 
         // THEN
-        expect(dialogRefSpy).toHaveBeenCalledOnce();
-        expect(dialogRefSpy).toHaveBeenCalledWith(exercise);
+        expect(dialogRefSpy).toHaveBeenCalledExactlyOnceWith(exercise);
     });
 
     // using fakeasync and tick didn't work here, that's why I used whenStable and async
@@ -73,8 +72,7 @@ describe('ExerciseImportFromFileComponent', () => {
             await fixture.whenStable();
             fixture.changeDetectorRef.detectChanges();
             // THEN
-            expect(alertServiceSpy).toHaveBeenCalledOnce();
-            expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.importFromFile.notSupportedExerciseType', { exerciseType: exerciseType });
+            expect(alertServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.importFromFile.notSupportedExerciseType', { exerciseType: exerciseType });
             expect(component.exercise).toBeUndefined();
         },
     );
@@ -101,8 +99,7 @@ describe('ExerciseImportFromFileComponent', () => {
         await fixture.whenStable();
         fixture.changeDetectorRef.detectChanges();
         // THEN
-        expect(alertServiceSpy).toHaveBeenCalledOnce();
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.importFromFile.exerciseTypeDoesntMatch');
+        expect(alertServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.importFromFile.exerciseTypeDoesntMatch');
     });
 
     it('should set exercise attributes and open import dialog', async () => {
@@ -119,8 +116,7 @@ describe('ExerciseImportFromFileComponent', () => {
         expect(component.exercise.id).toBeUndefined();
         expect(component.exercise.zipFileForImport).toBe(component.fileForImport);
         expect(component.exercise).toMatchObject({ type: 'programming', id: undefined, title: 'Test exercise' });
-        expect(openImportSpy).toHaveBeenCalledOnce();
-        expect(openImportSpy).toHaveBeenCalledWith(component.exercise);
+        expect(openImportSpy).toHaveBeenCalledExactlyOnceWith(component.exercise);
     });
 
     it('should load build configs in the old format', async () => {
@@ -160,8 +156,7 @@ describe('ExerciseImportFromFileComponent', () => {
         await fixture.whenStable();
         fixture.changeDetectorRef.detectChanges();
         // THEN
-        expect(alertServiceSpy).toHaveBeenCalledOnce();
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.importFromFile.noExerciseDetailsJsonAtRootLevel');
+        expect(alertServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.programmingExercise.importFromFile.noExerciseDetailsJsonAtRootLevel');
         alertServiceSpy.mockClear();
     }
 
@@ -178,8 +173,7 @@ describe('ExerciseImportFromFileComponent', () => {
         // WHEN
         component.setFileForExerciseImport(event);
         // THEN
-        expect(alertServiceSpy).toHaveBeenCalledOnce();
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.importFromFile.fileCountError');
+        expect(alertServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.programmingExercise.importFromFile.fileCountError');
         expect(component.fileForImport).toBeUndefined();
     });
 
@@ -195,8 +189,7 @@ describe('ExerciseImportFromFileComponent', () => {
         // WHEN
         component.setFileForExerciseImport(event);
         // THEN
-        expect(alertServiceSpy).toHaveBeenCalledOnce();
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.importFromFile.fileExtensionError');
+        expect(alertServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.programmingExercise.importFromFile.fileExtensionError');
         expect(component.fileForImport).toBeUndefined();
     });
 
@@ -255,8 +248,7 @@ describe('ExerciseImportFromFileComponent', () => {
         expect(importedEx.categories![1].category).toBe('Issue');
         expect(importedEx.categories![1].color).toBe('#691b0b');
 
-        expect(openImportSpy).toHaveBeenCalledOnce();
-        expect(openImportSpy).toHaveBeenCalledWith(importedEx);
+        expect(openImportSpy).toHaveBeenCalledExactlyOnceWith(importedEx);
     });
 
     // Ensures backward compatibility when old exercise JSONs do not contain 'categories' field.
@@ -291,8 +283,7 @@ describe('ExerciseImportFromFileComponent', () => {
 
         expect(importedEx.categories).toBeUndefined();
 
-        expect(openImportSpy).toHaveBeenCalledOnce();
-        expect(openImportSpy).toHaveBeenCalledWith(importedEx);
+        expect(openImportSpy).toHaveBeenCalledExactlyOnceWith(importedEx);
     });
 });
 

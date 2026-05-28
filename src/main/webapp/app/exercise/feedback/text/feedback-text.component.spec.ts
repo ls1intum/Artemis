@@ -65,8 +65,7 @@ describe('FeedbackTextComponent', () => {
 
         fixture.componentRef.setInput('feedback', getFeedbackItem('', getFeedbackReference(1, 2, true)));
         fixture.detectChanges();
-        expect(getLongFeedbackStub).toHaveBeenCalledOnce();
-        expect(getLongFeedbackStub).toHaveBeenCalledWith(2);
+        expect(getLongFeedbackStub).toHaveBeenCalledExactlyOnceWith(2);
         expect(comp.text).toBe(longFeedbackText);
         expect(comp.downloadText).toBeDefined();
         expect(comp.downloadFilename).toBeDefined();

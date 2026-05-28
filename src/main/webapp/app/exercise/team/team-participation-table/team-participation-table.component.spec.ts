@@ -218,8 +218,7 @@ describe('TeamParticipationTableComponent', () => {
     it('Navigate to assessment editor when opening exercise submission', async () => {
         const participation = exercise2.studentParticipations![0];
         await comp.openAssessmentEditor(exercise2, participation, 'new');
-        expect(router.navigate).toHaveBeenCalledOnce();
-        expect(router.navigate).toHaveBeenCalledWith([
+        expect(router.navigate).toHaveBeenCalledExactlyOnceWith([
             '/course-management',
             course.id!.toString(),
             exercise2.type! + '-exercises',

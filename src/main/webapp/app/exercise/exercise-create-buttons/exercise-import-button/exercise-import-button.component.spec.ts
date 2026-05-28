@@ -60,8 +60,7 @@ describe('ExerciseImportButtonComponent', () => {
         component.openImportModal();
 
         expect(beforeNavigateSpy).toHaveBeenCalledOnce();
-        expect(openSpy).toHaveBeenCalledOnce();
-        expect(openSpy).toHaveBeenCalledWith(
+        expect(openSpy).toHaveBeenCalledExactlyOnceWith(
             expectedComponent,
             expect.objectContaining({
                 data: { exerciseType },
@@ -76,15 +75,13 @@ describe('ExerciseImportButtonComponent', () => {
         await fixture.whenStable();
 
         if (id && exerciseType === ExerciseType.PROGRAMMING) {
-            expect(routerSpy).toHaveBeenCalledOnce();
-            expect(routerSpy).toHaveBeenCalledWith(['/course-management', 123, `${exerciseType}-exercises`, 'import', 2]);
+            expect(routerSpy).toHaveBeenCalledExactlyOnceWith(['/course-management', 123, `${exerciseType}-exercises`, 'import', 2]);
         } else if (!id && exerciseType === ExerciseType.PROGRAMMING) {
             expect(routerSpy).toHaveBeenCalledWith(['/course-management', 123, 'programming-exercises', 'import-from-file'], {
                 state: { programmingExerciseForImportFromFile: { id: undefined, maxPoints: 1 } },
             });
         } else {
-            expect(routerSpy).toHaveBeenCalledOnce();
-            expect(routerSpy).toHaveBeenCalledWith(['/course-management', 123, `${exerciseType}-exercises`, 2, 'import']);
+            expect(routerSpy).toHaveBeenCalledExactlyOnceWith(['/course-management', 123, `${exerciseType}-exercises`, 2, 'import']);
         }
     });
 });

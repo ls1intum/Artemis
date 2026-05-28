@@ -125,15 +125,13 @@ describe('UpdatingResultComponent', () => {
 
     it('should use the newest rated result of the provided participation and subscribe for new results', () => {
         cleanInitializeGraded();
-        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
-        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(initialParticipation.id, true, undefined);
+        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledExactlyOnceWith(initialParticipation.id, true, undefined);
         expect(comp.result!.id).toBe(gradedResult2.id);
     });
 
     it('should use the newest (un)rated result of the provided participation and subscribe for new results', () => {
         cleanInitializeUngraded();
-        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
-        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(initialParticipation.id, true, undefined);
+        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledExactlyOnceWith(initialParticipation.id, true, undefined);
         expect(comp.result!.id).toBe(ungradedResult2.id);
     });
 
@@ -172,8 +170,7 @@ describe('UpdatingResultComponent', () => {
     it('should subscribe to fetching the latest pending submission when the exerciseType is PROGRAMMING', () => {
         comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING } as Exercise;
         cleanInitializeGraded();
-        expect(getLatestPendingSubmissionStub).toHaveBeenCalledOnce();
-        expect(getLatestPendingSubmissionStub).toHaveBeenCalledWith(comp.participation.id, comp.exercise.id, true);
+        expect(getLatestPendingSubmissionStub).toHaveBeenCalledExactlyOnceWith(comp.participation.id, comp.exercise.id, true);
         expect(comp.isBuilding).toBe(false);
     });
 
@@ -185,8 +182,7 @@ describe('UpdatingResultComponent', () => {
             of({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: 3, buildTimingInfo }),
         );
         cleanInitializeGraded();
-        expect(getLatestPendingSubmissionStub).toHaveBeenCalledOnce();
-        expect(getLatestPendingSubmissionStub).toHaveBeenCalledWith(comp.participation.id, comp.exercise.id, true);
+        expect(getLatestPendingSubmissionStub).toHaveBeenCalledExactlyOnceWith(comp.participation.id, comp.exercise.id, true);
         expect(comp.isBuilding).toBe(true);
         expect(comp.missingResultInfo).toBe(MissingResultInformation.NONE);
         // LocalCI is not enabled, so the buildStartDate and estimatedCompletionDate should not be set
@@ -199,8 +195,7 @@ describe('UpdatingResultComponent', () => {
         comp.isBuilding = true;
         getLatestPendingSubmissionStub.mockReturnValue(of({ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId: 3 }));
         cleanInitializeGraded();
-        expect(getLatestPendingSubmissionStub).toHaveBeenCalledOnce();
-        expect(getLatestPendingSubmissionStub).toHaveBeenCalledWith(comp.participation.id, comp.exercise.id, true);
+        expect(getLatestPendingSubmissionStub).toHaveBeenCalledExactlyOnceWith(comp.participation.id, comp.exercise.id, true);
         expect(comp.isBuilding).toBe(false);
         expect(comp.missingResultInfo).toBe(MissingResultInformation.NONE);
     });
@@ -210,8 +205,7 @@ describe('UpdatingResultComponent', () => {
         comp.isBuilding = true;
         getLatestPendingSubmissionStub.mockReturnValue(of({ submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: undefined, participationId: 3 }));
         cleanInitializeGraded();
-        expect(getLatestPendingSubmissionStub).toHaveBeenCalledOnce();
-        expect(getLatestPendingSubmissionStub).toHaveBeenCalledWith(comp.participation.id, comp.exercise.id, true);
+        expect(getLatestPendingSubmissionStub).toHaveBeenCalledExactlyOnceWith(comp.participation.id, comp.exercise.id, true);
         expect(comp.isBuilding).toBe(false);
         expect(comp.missingResultInfo).toBe(MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE);
     });
@@ -220,8 +214,7 @@ describe('UpdatingResultComponent', () => {
         comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING, allowOfflineIde: false } as ProgrammingExercise;
         getLatestPendingSubmissionStub.mockReturnValue(of({ submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: undefined, participationId: 3 }));
         cleanInitializeGraded();
-        expect(getLatestPendingSubmissionStub).toHaveBeenCalledOnce();
-        expect(getLatestPendingSubmissionStub).toHaveBeenCalledWith(comp.participation.id, comp.exercise.id, true);
+        expect(getLatestPendingSubmissionStub).toHaveBeenCalledExactlyOnceWith(comp.participation.id, comp.exercise.id, true);
         expect(comp.missingResultInfo).toBe(MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE);
     });
 
@@ -264,8 +257,7 @@ describe('UpdatingResultComponent', () => {
         const queueReleaseDate = dayjs().add(3, 'second');
         fetchQueueReleaseDateEstimationByParticipationIdStub.mockReturnValue(of(queueReleaseDate));
         cleanInitializeGraded();
-        expect(getLatestPendingSubmissionStub).toHaveBeenCalledOnce();
-        expect(getLatestPendingSubmissionStub).toHaveBeenCalledWith(comp.participation.id, comp.exercise.id, true);
+        expect(getLatestPendingSubmissionStub).toHaveBeenCalledExactlyOnceWith(comp.participation.id, comp.exercise.id, true);
 
         expect(comp.isBuilding).toBeFalsy();
         expect(comp.isQueued).toBeTruthy();
