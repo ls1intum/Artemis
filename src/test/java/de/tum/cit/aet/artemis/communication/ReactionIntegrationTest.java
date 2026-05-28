@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostSortCriterion;
 import de.tum.cit.aet.artemis.communication.domain.Reaction;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.dto.ReactionDTO;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ReactionTestRepository;
@@ -320,11 +321,12 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         params.add("filterToCourseWide", "true");
         params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
 
-        List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        List<PostResponseDTO> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
 
-        Long numberOfMaxVotesSeenOnAnyPost = Long.MAX_VALUE;
-        for (Post post : returnedPosts) {
-            Long numberOfVotes = post.getReactions().stream().filter(reaction -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).count();
+        long numberOfMaxVotesSeenOnAnyPost = Long.MAX_VALUE;
+        for (PostResponseDTO post : returnedPosts) {
+            // reactions() is null when a post has no reactions, since the DTO is serialized with @JsonInclude(NON_EMPTY).
+            long numberOfVotes = post.reactions() == null ? 0L : post.reactions().stream().filter(reaction -> reaction.emojiId().equals(VOTE_EMOJI_ID)).count();
             assertThat(numberOfVotes).isLessThanOrEqualTo(numberOfMaxVotesSeenOnAnyPost);
             numberOfMaxVotesSeenOnAnyPost = numberOfVotes;
         }
@@ -358,11 +360,12 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         params.add("filterToCourseWide", "true");
         params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
 
-        List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        List<PostResponseDTO> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
 
-        Long numberOfMaxVotesSeenOnAnyPost = 0L;
-        for (Post post : returnedPosts) {
-            Long numberOfVotes = post.getReactions().stream().filter(reaction -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).count();
+        long numberOfMaxVotesSeenOnAnyPost = 0L;
+        for (PostResponseDTO post : returnedPosts) {
+            // reactions() is null when a post has no reactions, since the DTO is serialized with @JsonInclude(NON_EMPTY).
+            long numberOfVotes = post.reactions() == null ? 0L : post.reactions().stream().filter(reaction -> reaction.emojiId().equals(VOTE_EMOJI_ID)).count();
             assertThat(numberOfVotes).isGreaterThanOrEqualTo(numberOfMaxVotesSeenOnAnyPost);
             numberOfMaxVotesSeenOnAnyPost = numberOfVotes;
         }

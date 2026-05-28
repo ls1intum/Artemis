@@ -35,20 +35,23 @@ import org.springframework.util.MultiValueMap;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
-import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostSortCriterion;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
+import de.tum.cit.aet.artemis.communication.dto.AnswerPostResponseDTO;
+import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreatePostConversationDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
+import de.tum.cit.aet.artemis.communication.dto.ParentPostDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
-import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
+import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
-import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
@@ -56,6 +59,8 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
+import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -149,18 +154,18 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
 
-        Post createdPost = createPostAndAwaitAsyncCode(postToSave);
+        PostResponseDTO createdPost = createPostAndAwaitAsyncCode(postToSave);
         checkCreatedMessagePost(postToSave, createdPost);
-        assertThat(createdPost.getConversation().getId()).isNotNull();
+        assertThat(createdPost.conversation().id()).isNotNull();
         var requestingUser = userTestRepository.getUser();
 
-        long[] conversationIds = new long[] { createdPost.getConversation().getId() };
+        long[] conversationIds = new long[] { createdPost.conversation().id() };
         PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, conversationIds, null, null, false, false, false, null, null);
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(1);
 
         // both conversation participants should be notified
         verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(anyString(),
-                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(createdPost)));
+                (Object) argThat(argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(createdPost))));
     }
 
     @ParameterizedTest
@@ -176,12 +181,12 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         postToSave.setConversation(channel);
         postToSave.setContent("message");
 
-        Post createdPost = createPostAndAwaitAsyncCode(postToSave);
+        PostResponseDTO createdPost = createPostAndAwaitAsyncCode(postToSave);
         checkCreatedMessagePost(postToSave, createdPost);
 
         // conversation participants should be notified via one broadcast
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
-        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/metis/courses/" + courseId), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/metis/courses/" + courseId), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -196,13 +201,13 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         postToSave.setConversation(channel);
         postToSave.setContent("message");
 
-        Post createdPost = createPostAndAwaitAsyncCode(postToSave);
+        PostResponseDTO createdPost = createPostAndAwaitAsyncCode(postToSave);
         checkCreatedMessagePost(postToSave, createdPost);
 
         // conversation participants should be notified individually
         verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(anyString(),
-                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(createdPost)));
-        verify(websocketMessagingService, never()).sendMessage(eq("/topic/metis/courses/" + courseId), any(PostDTO.class));
+                (Object) argThat(argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(createdPost))));
+        verify(websocketMessagingService, never()).sendMessage(eq("/topic/metis/courses/" + courseId), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -220,7 +225,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // 4 calls are for user authentication checks, 3 calls to update database
         // + 1 additional query from Hibernate 7 entity/collection loading changes
         // further database calls are made in async code
-        assertThatDb(() -> request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, Post.class, HttpStatus.CREATED))
+        assertThatDb(() -> request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, PostResponseDTO.class, HttpStatus.CREATED))
                 .hasBeenCalledTimes(8);
     }
 
@@ -239,18 +244,18 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         CreatePostDTO postDTOToSave = new CreatePostDTO(postToSave.getContent(), "", false, new CreatePostConversationDTO(postToSave.getConversation().getId()));
 
         if (!isUserMentionValid) {
-            request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, Post.class, HttpStatus.BAD_REQUEST);
-            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
-            verify(websocketMessagingService, never()).sendMessage(anyString(), any(PostDTO.class));
+            request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, PostResponseDTO.class, HttpStatus.BAD_REQUEST);
+            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+            verify(websocketMessagingService, never()).sendMessage(anyString(), any(PostBroadcastDTO.class));
             return;
         }
 
-        Post createdPost = createPostAndAwaitAsyncCode(postToSave);
+        PostResponseDTO createdPost = createPostAndAwaitAsyncCode(postToSave);
         checkCreatedMessagePost(postToSave, createdPost);
 
         // conversation participants should be notified via one broadcast
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
-        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/metis/courses/" + courseId), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/metis/courses/" + courseId), any(PostBroadcastDTO.class));
     }
 
     @ParameterizedTest
@@ -268,14 +273,14 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         String authorMention = "[user]" + author.getUser().getName() + "(" + author.getUser().getLogin() + ")[/user]";
         postToSave.setContent(userMention + authorMention);
 
-        Post createdPost = createPostAndAwaitAsyncCode(postToSave);
+        PostResponseDTO createdPost = createPostAndAwaitAsyncCode(postToSave);
         checkCreatedMessagePost(postToSave, createdPost);
 
         // both users are updated
         verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/user/" + author.getUser().getId() + "/notifications/conversations"),
-                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(createdPost)));
+                (Object) argThat(argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(createdPost))));
         verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/user/" + mentionedUserParticipant.getUser().getId() + "/notifications/conversations"),
-                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(createdPost)));
+                (Object) argThat(argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(createdPost))));
     }
 
     @Test
@@ -291,11 +296,11 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         postToSave.setAuthor(author.getUser());
         postToSave.setConversation(channel);
 
-        Post createdPost = createPostAndAwaitAsyncCode(postToSave);
+        PostResponseDTO createdPost = createPostAndAwaitAsyncCode(postToSave);
         checkCreatedMessagePost(postToSave, createdPost);
 
         verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/metis/courses/" + course.getId()),
-                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(createdPost)));
+                (Object) argThat(argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(createdPost))));
     }
 
     @ParameterizedTest
@@ -339,13 +344,14 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, conversationIds, null, null, false, false, false, null, null);
         var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).getSize();
 
-        Post notCreatedPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, Post.class, HttpStatus.BAD_REQUEST);
+        PostResponseDTO notCreatedPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, PostResponseDTO.class,
+                HttpStatus.BAD_REQUEST);
 
         assertThat(notCreatedPost).isNull();
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(numberOfPostsBefore);
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
 
         // active messaging again
         persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
@@ -368,12 +374,13 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, conversationIds, null, null, false, false, false, null, null);
         var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).getSize();
 
-        Post notCreatedPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, Post.class, HttpStatus.FORBIDDEN);
+        PostResponseDTO notCreatedPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, PostResponseDTO.class,
+                HttpStatus.FORBIDDEN);
         assertThat(notCreatedPost).isNull();
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(numberOfPostsBefore);
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -385,8 +392,10 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("conversationIds", channel.getId().toString());
 
-        List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
-        // get amount of posts with that certain
+        // Deserialize into the cycle-free DTO so this test never enters Jackson's
+        // DeserializerCache._createAndCache2 window — the previous Post.class deserialization
+        // intermittently fired the "No _valueDeserializer assigned" race via reactions → user → User["id"].
+        List<PostResponseDTO> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
         assertThat(returnedPosts).hasSize(1);
     }
 
@@ -398,7 +407,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Long conversationId = existingConversationMessages.getFirst().getConversation().getId();
         params.add("conversationIds", conversationId.toString());
 
-        List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        List<PostResponseDTO> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
         // get amount of posts with that certain
         assertThat(returnedPosts).hasSize(existingConversationMessages.stream().filter(post -> Objects.equals(post.getConversation().getId(), conversationId)).toList().size());
     }
@@ -412,7 +421,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         params.add("filterToCourseWide", "true");
         params.add("size", "50");
 
-        List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        List<PostResponseDTO> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
 
         assertThat(returnedPosts).isNotEmpty();
         assertThat(returnedPosts).hasSize(existingCourseWideMessages.size());
@@ -431,7 +440,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         params.add("authorIds", String.valueOf(userId));
         params.add("size", "50");
 
-        List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        List<PostResponseDTO> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
         // get amount of posts with that certain
         assertThat(returnedPosts).hasSize(existingCourseWideMessages.stream()
                 .filter(post -> post.getConversation().getId().equals(courseWideChannelId) && post.getAuthor().getLogin().equals(TEST_PREFIX + "student1")).toList().size());
@@ -454,13 +463,14 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         params.add("postSortCriterion", PostSortCriterion.CREATION_DATE.toString());
         params.add("sortingOrder", SortingOrder.DESCENDING.toString());
 
-        List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        List<PostResponseDTO> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
 
         int numberOfMaxAnswersSeenOnAnyPost = Integer.MAX_VALUE;
-        for (Post post : returnedPosts) {
-            assertThat(post.getAnswers().size()).isLessThanOrEqualTo(numberOfMaxAnswersSeenOnAnyPost);
-            numberOfMaxAnswersSeenOnAnyPost = post.getAnswers().size();
+        for (PostResponseDTO post : returnedPosts) {
+            int answerCount = post.answers() == null ? 0 : post.answers().size();
+            assertThat(answerCount).isLessThanOrEqualTo(numberOfMaxAnswersSeenOnAnyPost);
+            numberOfMaxAnswersSeenOnAnyPost = answerCount;
         }
     }
 
@@ -479,13 +489,14 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         params.add("postSortCriterion", PostSortCriterion.CREATION_DATE.toString());
         params.add("sortingOrder", SortingOrder.ASCENDING.toString());
 
-        List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        List<PostResponseDTO> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
 
         int numberOfMaxAnswersSeenOnAnyPost = 0;
-        for (Post post : returnedPosts) {
-            assertThat(post.getAnswers().size()).isGreaterThanOrEqualTo(numberOfMaxAnswersSeenOnAnyPost);
-            numberOfMaxAnswersSeenOnAnyPost = post.getAnswers().size();
+        for (PostResponseDTO post : returnedPosts) {
+            int answerCount = post.answers() == null ? 0 : post.answers().size();
+            assertThat(answerCount).isGreaterThanOrEqualTo(numberOfMaxAnswersSeenOnAnyPost);
+            numberOfMaxAnswersSeenOnAnyPost = answerCount;
         }
     }
 
@@ -499,7 +510,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         params.add("conversationIds", courseWideChannelId.toString());
         params.add("filterToCourseWide", "true");
 
-        List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        List<PostResponseDTO> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
         // get amount of posts with that certain
         assertThat(returnedPosts)
                 .hasSize(existingConversationMessages.stream().filter(post -> Objects.equals(post.getConversation().getId(), courseWideChannelId)).toList().size());
@@ -520,7 +531,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         params.add("size", "50");
         params.add("searchText", "Content");
 
-        List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        List<PostResponseDTO> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
         // get amount of posts with that certain
         assertThat(returnedPosts).hasSize(existingCourseWideMessages.stream().filter(post -> post.getConversation().getId().equals(courseWideChannelId)
                 && post.getAuthor().getLogin().equals(TEST_PREFIX + "student1") && (post.getContent().contains("Content") || answerHasContext(post.getAnswers(), "Content")))
@@ -547,7 +558,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         params.add("size", "50");
         params.add("searchText", "Answer");
 
-        List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        List<PostResponseDTO> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
         // get amount of posts with that certain
         assertThat(returnedPosts).hasSize(existingCourseWideMessages.stream().filter(post -> post.getConversation().getId().equals(courseWideChannelId)
                 && post.getAuthor().getLogin().equals(TEST_PREFIX + "student1") && (post.getContent().contains("answer") || answerHasContext(post.getAnswers(), "Content")))
@@ -562,14 +573,15 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Post conversationPostToUpdate = existingConversationMessages.getFirst();
         conversationPostToUpdate.setContent("User changes one of their conversation posts");
 
-        Post updatedPost = request.putWithResponseBody("/api/communication/courses/" + courseId + "/messages/" + conversationPostToUpdate.getId(), conversationPostToUpdate,
-                Post.class, HttpStatus.OK);
+        PostResponseDTO updatedPost = request.putWithResponseBody("/api/communication/courses/" + courseId + "/messages/" + conversationPostToUpdate.getId(),
+                toUpdatePostingDTO(conversationPostToUpdate), PostResponseDTO.class, HttpStatus.OK);
 
-        assertThat(conversationPostToUpdate).isEqualTo(updatedPost);
+        assertThat(updatedPost.id()).isEqualTo(conversationPostToUpdate.getId());
+        assertThat(updatedPost.content()).isEqualTo(conversationPostToUpdate.getContent());
 
         // both conversation participants should be notified about the update
         verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(anyString(),
-                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(updatedPost)));
+                (Object) argThat(argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(updatedPost))));
     }
 
     @Test
@@ -580,10 +592,11 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         params.add("displayPriority", DisplayPriority.PINNED.toString());
 
         // change display priority to PINNED
-        Post updatedPost = request.putWithResponseBodyAndParams("/api/communication/courses/" + courseId + "/messages/" + postToPin.getId() + "/display-priority", null, Post.class,
-                HttpStatus.OK, params);
+        PostResponseDTO updatedPost = request.putWithResponseBodyAndParams("/api/communication/courses/" + courseId + "/messages/" + postToPin.getId() + "/display-priority", null,
+                PostResponseDTO.class, HttpStatus.OK, params);
         conversationUtilService.assertSensitiveInformationHidden(updatedPost);
-        assertThat(updatedPost).isEqualTo(postToPin);
+        assertThat(updatedPost.id()).isEqualTo(postToPin.getId());
+        assertThat(updatedPost.displayPriority()).isEqualTo(DisplayPriority.PINNED);
     }
 
     @ParameterizedTest
@@ -595,18 +608,21 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         postToUpdate.setContent("User changes one of their conversation posts" + userMention);
 
         if (!isUserMentionValid) {
-            request.putWithResponseBody("/api/communication/courses/" + courseId + "/messages/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.BAD_REQUEST);
-            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+            request.putWithResponseBody("/api/communication/courses/" + courseId + "/messages/" + postToUpdate.getId(), toUpdatePostingDTO(postToUpdate), PostResponseDTO.class,
+                    HttpStatus.BAD_REQUEST);
+            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
             return;
         }
 
-        Post updatedPost = request.putWithResponseBody("/api/communication/courses/" + courseId + "/messages/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
+        PostResponseDTO updatedPost = request.putWithResponseBody("/api/communication/courses/" + courseId + "/messages/" + postToUpdate.getId(), toUpdatePostingDTO(postToUpdate),
+                PostResponseDTO.class, HttpStatus.OK);
 
-        assertThat(postToUpdate).isEqualTo(updatedPost);
+        assertThat(updatedPost.id()).isEqualTo(postToUpdate.getId());
+        assertThat(updatedPost.content()).isEqualTo(postToUpdate.getContent());
 
         // both conversation participants should be notified about the update
         verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(anyString(),
-                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(updatedPost)));
+                (Object) argThat(argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(updatedPost))));
     }
 
     @Test
@@ -616,13 +632,13 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Post conversationPostToUpdate = existingConversationMessages.getFirst();
         conversationPostToUpdate.setContent("Tutor attempts to change some other user's conversation post");
 
-        Post notUpdatedPost = request.putWithResponseBody("/api/communication/courses/" + courseId + "/messages/" + conversationPostToUpdate.getId(), conversationPostToUpdate,
-                Post.class, HttpStatus.FORBIDDEN);
+        PostResponseDTO notUpdatedPost = request.putWithResponseBody("/api/communication/courses/" + courseId + "/messages/" + conversationPostToUpdate.getId(),
+                toUpdatePostingDTO(conversationPostToUpdate), PostResponseDTO.class, HttpStatus.FORBIDDEN);
 
         assertThat(notUpdatedPost).isNull();
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -635,7 +651,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(conversationMessageRepository.findById(conversationPostToDelete.getId())).isEmpty();
         // both conversation participants should be notified
         verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(anyString(),
-                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(conversationPostToDelete)));
+                (Object) argThat(argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(conversationPostToDelete))));
     }
 
     @Test
@@ -647,7 +663,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(conversationMessageRepository.findById(conversationPostToDelete.getId())).isPresent();
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -657,13 +673,13 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var student2 = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
 
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
-        Post createdPost = createPostAndAwaitAsyncCode(postToSave);
+        PostResponseDTO createdPost = createPostAndAwaitAsyncCode(postToSave);
 
         await().untilAsserted(() -> {
             SecurityUtils.setAuthorizationObject();
             // student1 (author) should have 0 unread messages, student2 (conversation participant) should have 1 unread message
-            assertThat(getUnreadMessagesCount(createdPost.getConversation(), student1)).isZero();
-            assertThat(getUnreadMessagesCount(createdPost.getConversation(), student2)).isEqualTo(1);
+            assertThat(getUnreadMessagesCount(createdPost.conversation().id(), student1)).isZero();
+            assertThat(getUnreadMessagesCount(createdPost.conversation().id(), student2)).isEqualTo(1);
         });
     }
 
@@ -675,21 +691,22 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         Post postToSave1 = createPostWithOneToOneChat(TEST_PREFIX);
         CreatePostDTO postDTOToSave1 = new CreatePostDTO(postToSave1.getContent(), "", false, new CreatePostConversationDTO(postToSave1.getConversation().getId()));
-        Post createdPost1 = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave1, Post.class, HttpStatus.CREATED);
+        PostResponseDTO createdPost1 = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave1, PostResponseDTO.class,
+                HttpStatus.CREATED);
 
         userUtilService.changeUser(TEST_PREFIX + "student2");
         // we read the messages by "getting" them from the server as student
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("conversationIds", createdPost1.getConversation().getId().toString());
+        params.add("conversationIds", createdPost1.conversation().id().toString());
         params.add("pagingEnabled", "true");
         params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
-        Set<Post> returnedPosts = request.getSet("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        Set<PostResponseDTO> returnedPosts = request.getSet("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
         assertThat(returnedPosts).hasSize(1);
 
         await().untilAsserted(() -> {
             SecurityUtils.setAuthorizationObject();
-            assertThat(getUnreadMessagesCount(createdPost1.getConversation(), student2)).isZero();
-            assertThat(getUnreadMessagesCount(createdPost1.getConversation(), student1)).isZero();
+            assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student2)).isZero();
+            assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student1)).isZero();
         });
     }
 
@@ -702,21 +719,22 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Post postToSave1 = createPostWithOneToOneChat(TEST_PREFIX);
         CreatePostDTO postToSaveDTO1 = new CreatePostDTO(postToSave1.getContent(), "", false, new CreatePostConversationDTO(postToSave1.getConversation().getId()));
 
-        Post createdPost1 = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postToSaveDTO1, Post.class, HttpStatus.CREATED);
-        final var oneToOneChat1 = createdPost1.getConversation();
+        PostResponseDTO createdPost1 = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postToSaveDTO1, PostResponseDTO.class,
+                HttpStatus.CREATED);
+        final long oneToOneChat1Id = createdPost1.conversation().id();
         // student 1 adds a message, so the unread count for student 2 should be 1
         await().untilAsserted(() -> {
             SecurityUtils.setAuthorizationObject();
-            assertThat(getUnreadMessagesCount(oneToOneChat1, student1)).isZero();
-            assertThat(getUnreadMessagesCount(oneToOneChat1, student2)).isEqualTo(1);
+            assertThat(getUnreadMessagesCount(oneToOneChat1Id, student1)).isZero();
+            assertThat(getUnreadMessagesCount(oneToOneChat1Id, student2)).isEqualTo(1);
         });
 
-        request.delete("/api/communication/courses/" + courseId + "/messages/" + createdPost1.getId(), HttpStatus.OK);
+        request.delete("/api/communication/courses/" + courseId + "/messages/" + createdPost1.id(), HttpStatus.OK);
         // After deleting the message in the chat, the unread count in the chat should become 0
         await().untilAsserted(() -> {
             SecurityUtils.setAuthorizationObject();
-            assertThat(getUnreadMessagesCount(oneToOneChat1, student2)).isZero();
-            assertThat(getUnreadMessagesCount(oneToOneChat1, student1)).isZero();
+            assertThat(getUnreadMessagesCount(oneToOneChat1Id, student2)).isZero();
+            assertThat(getUnreadMessagesCount(oneToOneChat1Id, student1)).isZero();
         });
     }
 
@@ -728,17 +746,19 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         Post postToSave1 = createPostWithOneToOneChat(TEST_PREFIX);
         CreatePostDTO postDTOToSave1 = new CreatePostDTO(postToSave1.getContent(), "", false, new CreatePostConversationDTO(postToSave1.getConversation().getId()));
-        Post createdPost1 = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave1, Post.class, HttpStatus.CREATED);
+        PostResponseDTO createdPost1 = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave1, PostResponseDTO.class,
+                HttpStatus.CREATED);
 
         // Create a second message in the same conversation to validate that marking one as unread increments the unread count
         Post postToSave2 = createPostWithOneToOneChat(TEST_PREFIX);
         CreatePostDTO postDTOToSave2 = new CreatePostDTO(postToSave2.getContent(), "", false, new CreatePostConversationDTO(postToSave1.getConversation().getId()));
-        Post createdPost2 = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave2, Post.class, HttpStatus.CREATED);
+        PostResponseDTO createdPost2 = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave2, PostResponseDTO.class,
+                HttpStatus.CREATED);
 
         userUtilService.changeUser(TEST_PREFIX + "student2");
         // we read the messages by "getting" them from the server as student
-        String conversationId = createdPost1.getConversation().getId().toString();
-        String messageId = createdPost1.getId().toString();
+        String conversationId = createdPost1.conversation().id().toString();
+        String messageId = createdPost1.id().toString();
 
         // Wait for both post-creation @Async increments to settle: count must reach 2 before we proceed.
         // Without this gate, the subsequent mark-as-read @Async could race with stale post-creation increments,
@@ -746,22 +766,22 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // that mark-as-read actually ran).
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
             SecurityUtils.setAuthorizationObject();
-            assertThat(getUnreadMessagesCount(createdPost1.getConversation(), student2)).isEqualTo(2);
+            assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student2)).isEqualTo(2);
         });
 
         // establish baseline: mark conversation as read and verify unread count is 0
         request.patch("/api/communication/courses/" + courseId + "/conversations/" + conversationId + "/mark-as-read", null, HttpStatus.OK);
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
             SecurityUtils.setAuthorizationObject();
-            assertThat(getUnreadMessagesCount(createdPost1.getConversation(), student2)).isZero();
+            assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student2)).isZero();
         });
 
         request.patch("/api/communication/courses/" + courseId + "/conversations/" + conversationId + "/messages/" + messageId + "/mark-as-unread", null, HttpStatus.OK);
 
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
             SecurityUtils.setAuthorizationObject();
-            assertThat(getUnreadMessagesCount(createdPost1.getConversation(), student2)).isEqualTo(2);
-            assertThat(getUnreadMessagesCount(createdPost1.getConversation(), student1)).isZero();
+            assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student2)).isEqualTo(2);
+            assertThat(getUnreadMessagesCount(createdPost1.conversation().id(), student1)).isZero();
         });
     }
 
@@ -770,10 +790,11 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testMarkMessageAsUnreadNonMemberForbidden() throws Exception {
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
         CreatePostDTO postDTOToSave = new CreatePostDTO(postToSave.getContent(), "", false, new CreatePostConversationDTO(postToSave.getConversation().getId()));
-        Post createdPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, Post.class, HttpStatus.CREATED);
+        PostResponseDTO createdPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, PostResponseDTO.class,
+                HttpStatus.CREATED);
 
-        String conversationId = createdPost.getConversation().getId().toString();
-        String messageId = createdPost.getId().toString();
+        String conversationId = createdPost.conversation().id().toString();
+        String messageId = createdPost.id().toString();
 
         userUtilService.changeUser(TEST_PREFIX + "student3");
         // student3 is not a participant in this conversation, should get 403 Forbidden
@@ -785,9 +806,10 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testMarkMessageAsUnreadInvalidMessageIdNotFound() throws Exception {
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
         CreatePostDTO postDTOToSave = new CreatePostDTO(postToSave.getContent(), "", false, new CreatePostConversationDTO(postToSave.getConversation().getId()));
-        Post createdPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, Post.class, HttpStatus.CREATED);
+        PostResponseDTO createdPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, PostResponseDTO.class,
+                HttpStatus.CREATED);
 
-        String conversationId = createdPost.getConversation().getId().toString();
+        String conversationId = createdPost.conversation().id().toString();
         long invalidMessageId = 99999L; // Non-existent message ID
 
         // Attempt to mark a non-existent message as unread, should get 404 Not Found
@@ -801,15 +823,17 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // Create message in first conversation
         Post postToSave1 = createPostWithOneToOneChat(TEST_PREFIX);
         CreatePostDTO postDTOToSave1 = new CreatePostDTO(postToSave1.getContent(), "", false, new CreatePostConversationDTO(postToSave1.getConversation().getId()));
-        Post createdPost1 = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave1, Post.class, HttpStatus.CREATED);
+        PostResponseDTO createdPost1 = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave1, PostResponseDTO.class,
+                HttpStatus.CREATED);
 
         // Create message in a different conversation
         Post postToSave2 = createPostWithOneToOneChat(TEST_PREFIX);
         CreatePostDTO postDTOToSave2 = new CreatePostDTO(postToSave2.getContent(), "", false, new CreatePostConversationDTO(postToSave2.getConversation().getId()));
-        Post createdPost2 = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave2, Post.class, HttpStatus.CREATED);
+        PostResponseDTO createdPost2 = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave2, PostResponseDTO.class,
+                HttpStatus.CREATED);
 
-        String conversationId1 = createdPost1.getConversation().getId().toString();
-        String messageId2 = createdPost2.getId().toString();
+        String conversationId1 = createdPost1.conversation().id().toString();
+        String messageId2 = createdPost2.id().toString();
 
         // Try to mark a message from a different conversation as unread, should get 404 Not Found
         request.patch("/api/communication/courses/" + courseId + "/conversations/" + conversationId1 + "/messages/" + messageId2 + "/mark-as-unread", null, HttpStatus.NOT_FOUND);
@@ -821,10 +845,11 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
         postToSave.setAuthor(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
         CreatePostDTO postDTOToSave = new CreatePostDTO(postToSave.getContent(), "", false, new CreatePostConversationDTO(postToSave.getConversation().getId()));
-        Post createdPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, Post.class, HttpStatus.CREATED);
+        PostResponseDTO createdPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, PostResponseDTO.class,
+                HttpStatus.CREATED);
 
-        String conversationId = createdPost.getConversation().getId().toString();
-        String messageId = createdPost.getId().toString();
+        String conversationId = createdPost.conversation().id().toString();
+        String messageId = createdPost.id().toString();
 
         // Author attempting to mark their own message as unread should get 400 Bad Request
         request.patch("/api/communication/courses/" + courseId + "/conversations/" + conversationId + "/messages/" + messageId + "/mark-as-unread", null, HttpStatus.BAD_REQUEST);
@@ -839,19 +864,21 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Post unpinnedPost = new Post();
         unpinnedPost.setAuthor(instructorParticipant.getUser());
         unpinnedPost.setConversation(channel);
-        Post createdUnpinnedPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", unpinnedPost, Post.class, HttpStatus.CREATED);
+        PostResponseDTO createdUnpinnedPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", toCreatePostDTO(unpinnedPost),
+                PostResponseDTO.class, HttpStatus.CREATED);
 
         Post pinnedPost = new Post();
         pinnedPost.setAuthor(instructorParticipant.getUser());
         pinnedPost.setConversation(channel);
-        Post createdPinnedPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", pinnedPost, Post.class, HttpStatus.CREATED);
+        PostResponseDTO createdPinnedPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", toCreatePostDTO(pinnedPost), PostResponseDTO.class,
+                HttpStatus.CREATED);
 
         MultiValueMap<String, String> paramsPin = new LinkedMultiValueMap<>();
         paramsPin.add("displayPriority", DisplayPriority.PINNED.toString());
-        Post updatedPinnedPost = request.putWithResponseBodyAndParams("/api/communication/courses/" + courseId + "/messages/" + createdPinnedPost.getId() + "/display-priority",
-                null, Post.class, HttpStatus.OK, paramsPin);
+        PostResponseDTO updatedPinnedPost = request.putWithResponseBodyAndParams(
+                "/api/communication/courses/" + courseId + "/messages/" + createdPinnedPost.id() + "/display-priority", null, PostResponseDTO.class, HttpStatus.OK, paramsPin);
 
-        assertThat(updatedPinnedPost.getDisplayPriority()).isEqualTo(DisplayPriority.PINNED);
+        assertThat(updatedPinnedPost.displayPriority()).isEqualTo(DisplayPriority.PINNED);
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("conversationIds", channel.getId().toString());
@@ -859,16 +886,16 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         params.add("pinnedOnly", "true");
         params.add("size", "10");
 
-        List<Post> pinnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        List<PostResponseDTO> pinnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
 
         assertThat(pinnedPosts).hasSize(1);
-        assertThat(pinnedPosts.getFirst().getId()).isEqualTo(updatedPinnedPost.getId());
+        assertThat(pinnedPosts.getFirst().id()).isEqualTo(updatedPinnedPost.id());
 
         params.set("pinnedOnly", "false");
-        List<Post> allPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        List<PostResponseDTO> allPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
 
         assertThat(allPosts).hasSize(2);
-        assertThat(allPosts).extracting(Post::getId).containsExactlyInAnyOrder(createdPinnedPost.getId(), createdUnpinnedPost.getId());
+        assertThat(allPosts).extracting(PostResponseDTO::id).containsExactlyInAnyOrder(createdPinnedPost.id(), createdUnpinnedPost.id());
     }
 
     @Test
@@ -883,7 +910,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         params.add("authorIds", authorId.toString());
         params.add("size", "50");
 
-        List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        List<PostResponseDTO> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
         // get amount of posts with that certain
         assertThat(returnedPosts).hasSize(existingCourseWideMessages.stream()
                 .filter(post -> post.getConversation().getId().equals(courseWideChannelId) && post.getAuthor().getId().equals(authorId)).toList().size());
@@ -900,7 +927,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         params.add("conversationIds", oneToOneChat.getId().toString());
         params.add("size", "50");
 
-        request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.FORBIDDEN, Post.class, params);
+        request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.FORBIDDEN, PostResponseDTO.class, params);
     }
 
     @Test
@@ -908,7 +935,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void shouldIncludeDirectMessagesWhenFindingMessages() throws Exception {
         Post directPost = createPostWithOneToOneChat(TEST_PREFIX);
         directPost.setContent("SearchTestDirect");
-        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", directPost, Post.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", toCreatePostDTO(directPost), PostResponseDTO.class, HttpStatus.CREATED);
 
         // include the newly created conversation into all course-wide conversations
         long[] conversationIds = Stream.concat(existingCourseWideChannelIds.stream(), Stream.of(directPost.getConversation().getId())).mapToLong(Long::longValue).toArray();
@@ -928,7 +955,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void shouldIncludeDirectMessagesWhenFindingMessagesUsingGetRequest() throws Exception {
         Post directPost = createPostWithOneToOneChat(TEST_PREFIX);
         directPost.setContent("SearchTestDirect");
-        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", directPost, Post.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", toCreatePostDTO(directPost), PostResponseDTO.class, HttpStatus.CREATED);
 
         // include the newly created conversation into all conversations
         String conversationIds = Stream.concat(existingCourseWideChannelIds.stream(), Stream.of(directPost.getConversation().getId())).map(String::valueOf)
@@ -938,9 +965,9 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         params.add("searchText", "SearchTest");
         params.add("conversationIds", conversationIds);
 
-        List<Post> resultPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        List<PostResponseDTO> resultPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, PostResponseDTO.class, params);
 
-        assertThat(resultPosts).extracting(Post::getContent).contains("SearchTestDirect");
+        assertThat(resultPosts).extracting(PostResponseDTO::content).contains("SearchTestDirect");
     }
 
     @Test
@@ -954,7 +981,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         groupPost.setAuthor(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
         groupPost.setConversation(nonCourseWideChannel);
         groupPost.setContent("SearchTestGroup");
-        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", groupPost, Post.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", toCreatePostDTO(groupPost), PostResponseDTO.class, HttpStatus.CREATED);
 
         // include the newly created conversation into all course-wide conversations
         long[] conversationIds = Stream.concat(existingCourseWideChannelIds.stream(), Stream.of(nonCourseWideChannel.getId())).mapToLong(Long::longValue).toArray();
@@ -974,19 +1001,21 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testWhetherShouldIncludeBasePostWhenSearchingMessagesByContentAndAuthor(String searchQuery, String authorLogin, boolean shouldBeIncluded) throws Exception {
         // Create base post by student1 with content "base"
-        Post basePost = createPostWithOneToOneChat(TEST_PREFIX);
-        basePost.setContent("base");
-        basePost = createPostAndAwaitAsyncCode(basePost);
+        Post basePostEntity = createPostWithOneToOneChat(TEST_PREFIX);
+        basePostEntity.setContent("base");
+        PostResponseDTO basePost = createPostAndAwaitAsyncCode(basePostEntity);
+        // propagate the persisted id back to the entity so subsequent answer-post creation can resolve the parent
+        basePostEntity.setId(basePost.id());
 
         // Add an answer from student2 with content "answer" to the base post
         userUtilService.changeUser(TEST_PREFIX + "student2");
         AnswerPost answer = new AnswerPost();
         answer.setContent("answer");
-        answer.setPost(basePost);
+        answer.setPost(basePostEntity);
         createAnswerPostAndAwaitAsyncCode(answer);
 
         // Use PostContextFilterDTO and conversationMessageRepository.findMessages
-        long conversationId = basePost.getConversation().getId();
+        long conversationId = basePost.conversation().id();
         long authorId = userTestRepository.findOneByLogin(authorLogin).orElseThrow().getId();
         PostContextFilterDTO filter = new PostContextFilterDTO(courseId, null, new long[] { conversationId }, new long[] { authorId }, searchQuery, false, false, false,
                 PostSortCriterion.CREATION_DATE, SortingOrder.DESCENDING);
@@ -1019,7 +1048,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         postToSave.setConversation(channel);
         postToSave.setContent("Test content for notification");
 
-        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", toCreatePostDTO(postToSave), PostResponseDTO.class, HttpStatus.CREATED);
 
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
             List<CourseNotification> notifications = courseNotificationRepository.findAll();
@@ -1042,7 +1071,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         CreatePostDTO postDTOToSave = new CreatePostDTO(postToSave.getContent(), postToSave.getTitle(), postToSave.getHasForwardedMessages(),
                 new CreatePostConversationDTO(postToSave.getConversation().getId()));
 
-        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, Post.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, PostResponseDTO.class, HttpStatus.CREATED);
 
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
             List<CourseNotification> notifications = courseNotificationRepository.findAll();
@@ -1066,7 +1095,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         CreatePostDTO postDTOToSave = new CreatePostDTO(postToSave.getContent(), postToSave.getTitle(), postToSave.getHasForwardedMessages(),
                 new CreatePostConversationDTO(postToSave.getConversation().getId()));
 
-        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, Post.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, PostResponseDTO.class, HttpStatus.CREATED);
 
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
             List<CourseNotification> notifications = courseNotificationRepository.findAll();
@@ -1084,7 +1113,16 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private long getUnreadMessagesCount(Conversation conversation, User user) {
-        return oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(conversation.getId()).orElseThrow().getConversationParticipants().stream()
+        return getUnreadMessagesCount(conversation.getId(), user);
+    }
+
+    /**
+     * Long-id overload of {@link #getUnreadMessagesCount(Conversation, User)} so test sites that have only the
+     * {@link de.tum.cit.aet.artemis.communication.dto.ConversationRefDTO} from a {@code PostResponseDTO} can
+     * still query unread-message counts without re-resolving the conversation entity.
+     */
+    private long getUnreadMessagesCount(Long conversationId, User user) {
+        return oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(conversationId).orElseThrow().getConversationParticipants().stream()
                 .filter(conversationParticipant -> Objects.equals(conversationParticipant.getUser().getId(), user.getId())).findFirst().orElseThrow().getUnreadMessagesCount();
     }
 
@@ -1117,23 +1155,15 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         return post;
     }
 
-    private void checkCreatedMessagePost(Post expectedMessagePost, Post createdMessagePost) {
-        // check if message post was created with id
+    private void checkCreatedMessagePost(Post expectedMessagePost, PostResponseDTO createdMessagePost) {
         assertThat(createdMessagePost).isNotNull();
-        assertThat(createdMessagePost.getId()).isNotNull();
-
-        // check if content and creation date are set correctly on creation
-        assertThat(createdMessagePost.getContent()).isEqualTo(expectedMessagePost.getContent());
-        assertThat(createdMessagePost.getCreationDate()).isNotNull();
-
-        // check if default values are set correctly on creation
-        assertThat(createdMessagePost.getAnswers()).isEmpty();
-        assertThat(createdMessagePost.getReactions()).isEmpty();
-        assertThat(createdMessagePost.getDisplayPriority()).isEqualTo(expectedMessagePost.getDisplayPriority());
-
-        // check if conversation is set correctly on creation
-        assertThat(createdMessagePost.getConversation()).isNotNull();
-        assertThat(createdMessagePost.getConversation().getId()).isNotNull();
+        assertThat(createdMessagePost.id()).isNotNull();
+        assertThat(createdMessagePost.content()).isEqualTo(expectedMessagePost.getContent());
+        assertThat(createdMessagePost.creationDate()).isNotNull();
+        // @JsonInclude(NON_EMPTY) on PostResponseDTO strips empty collections from the wire payload,
+        // so the reactions and answers fields come back as null when there are none.
+        assertThat(createdMessagePost.reactions()).isNullOrEmpty();
+        assertThat(createdMessagePost.answers()).isNullOrEmpty();
     }
 
     protected static List<Arguments> userMentionProvider() {
@@ -1146,10 +1176,10 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      * @param postToSave post to save in the database
      * @return saved post
      */
-    private Post createPostAndAwaitAsyncCode(Post postToSave) throws Exception {
+    private PostResponseDTO createPostAndAwaitAsyncCode(Post postToSave) throws Exception {
         var postDTOToSave = new CreatePostDTO(postToSave.getContent(), postToSave.getTitle(), postToSave.getHasForwardedMessages(),
                 new CreatePostConversationDTO(postToSave.getConversation().getId()));
-        return request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, Post.class, HttpStatus.CREATED);
+        return request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, PostResponseDTO.class, HttpStatus.CREATED);
     }
 
     /**
@@ -1158,11 +1188,45 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      * @param answerPostToSave answer post to save in the database
      * @return saved answer post
      */
-    private AnswerPost createAnswerPostAndAwaitAsyncCode(AnswerPost answerPostToSave) throws Exception {
-        return request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
+    private AnswerPostResponseDTO createAnswerPostAndAwaitAsyncCode(AnswerPost answerPostToSave) throws Exception {
+        return request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", toCreateAnswerPostDTO(answerPostToSave), AnswerPostResponseDTO.class,
+                HttpStatus.CREATED);
     }
 
     private static List<CourseInformationSharingConfiguration> courseInformationSharingConfigurationProvider() {
         return List.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
     }
+
+    /**
+     * Helper for mock-verification predicates that compare the cycle-free PostBroadcastDTO payload
+     * sent over STOMP against either a {@link de.tum.cit.aet.artemis.communication.domain.Post}
+     * entity, an {@link de.tum.cit.aet.artemis.communication.domain.AnswerPost} entity, or a
+     * {@link de.tum.cit.aet.artemis.communication.dto.PostResponseDTO}. Both shapes carry the
+     * post id; this helper extracts it regardless of which side the test is comparing.
+     *
+     * @param postLike either a Post entity, an AnswerPost entity, or a PostResponseDTO
+     * @return the id, or {@code null} for unknown shapes
+     */
+    private static Long idOf(Object postLike) {
+        return switch (postLike) {
+            case Post post -> post.getId();
+            // The broadcast carries the *parent* post, so for an AnswerPost input we compare against its parent's id.
+            case AnswerPost answerPost -> answerPost.getPost() == null ? null : answerPost.getPost().getId();
+            case PostResponseDTO dto -> dto.id();
+            case null, default -> null;
+        };
+    }
+
+    private CreatePostDTO toCreatePostDTO(Post post) {
+        return new CreatePostDTO(post.getContent(), post.getTitle(), false, new CreatePostConversationDTO(post.getConversation().getId()));
+    }
+
+    private UpdatePostingDTO toUpdatePostingDTO(Post post) {
+        return new UpdatePostingDTO(post.getId(), post.getContent(), post.getTitle(), false);
+    }
+
+    private CreateAnswerPostDTO toCreateAnswerPostDTO(AnswerPost answerPost) {
+        return new CreateAnswerPostDTO(answerPost.getContent(), new ParentPostDTO(answerPost.getPost().getId()));
+    }
+
 }

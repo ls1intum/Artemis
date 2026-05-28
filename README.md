@@ -150,6 +150,7 @@ The following members of the project management team are responsible for specifi
 | Video source          | Patrick Bassner ([@bassner](https://github.com/bassner))                           |
 | Course                | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
 | Admin                 | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
+| Notification          | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
 
 
 
