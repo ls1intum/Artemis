@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.assessment.dto.score;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
 
 /**
  * DTO to send achieved points and achieved scores of a student to the client for courses / exam

@@ -307,7 +307,7 @@ describe('GlobalSearchModalComponent', () => {
 
             // Now toggle a filter with the same query — should still re-trigger
             mockSearchService.globalSearch.mockReturnValue(of(filteredResults));
-            component['addFilter']('exercise');
+            component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
 
             expect(mockSearchService.globalSearch).toHaveBeenCalledWith('test', 'exercise');
@@ -344,7 +344,7 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchService.globalSearch.mockReturnValue(of(filteredResults));
 
             // Add exercise filter → triggers search → shows results
-            component['addFilter']('exercise');
+            component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
             expect(component['results']()).toEqual(filteredResults);
             expect(component['isLoading']()).toBe(false);
@@ -358,7 +358,7 @@ describe('GlobalSearchModalComponent', () => {
             expect(component['isLoading']()).toBe(false);
 
             // Re-add exercise filter → must use cached results, no new HTTP call
-            component['addFilter']('exercise');
+            component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
             expect(component['results']()).toEqual(filteredResults);
             expect(component['isLoading']()).toBe(false);
@@ -370,7 +370,7 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchService.globalSearch.mockReturnValue(of(filteredResults));
 
             // Add exercise filter and let it complete
-            component['addFilter']('exercise');
+            component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
             expect(component['results']()).toEqual(filteredResults);
             expect(component['isLoading']()).toBe(false);
@@ -378,7 +378,7 @@ describe('GlobalSearchModalComponent', () => {
             // Remove and immediately re-add (within 300ms debounce)
             component['removeFilter']('exercise');
             // Don't wait for debounce — immediately re-add
-            component['addFilter']('exercise');
+            component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
 
             // Must not be stuck loading — should show cached results
@@ -390,7 +390,7 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchService.globalSearch.mockReturnValue(of(filteredResults));
 
             // Populate cache
-            component['addFilter']('exercise');
+            component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
             expect(component['results']()).toEqual(filteredResults);
             expect(mockSearchService.globalSearch).toHaveBeenCalledOnce();
@@ -400,7 +400,7 @@ describe('GlobalSearchModalComponent', () => {
 
             // Re-add filter — cache was cleared, so a new HTTP call should happen
             mockSearchService.globalSearch.mockReturnValue(of(queryResults));
-            component['addFilter']('exercise');
+            component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
             expect(component['results']()).toEqual(queryResults);
             expect(mockSearchService.globalSearch).toHaveBeenCalledTimes(2);
@@ -409,7 +409,7 @@ describe('GlobalSearchModalComponent', () => {
         it('should route onEntityClick through the main pipeline instead of a separate subscription', () => {
             mockSearchService.globalSearch.mockReturnValue(of(filteredResults));
 
-            component['onEntityClick']({ id: 'ex', title: 'Exercises', description: '', icon: {} as any, type: 'feature', enabled: true, filterTag: 'exercise' });
+            component['onEntityClick']({ id: 'ex', title: 'Exercises', description: '', icon: {} as any, type: 'feature', enabled: true, filterTags: ['exercise'] });
             vi.advanceTimersByTime(300);
 
             expect(mockSearchService.globalSearch).toHaveBeenCalledOnce();
@@ -421,7 +421,7 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchService.globalSearch.mockReturnValue(of(filteredResults));
 
             // First add: needs debounce + HTTP
-            component['addFilter']('exercise');
+            component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
             expect(component['results']()).toEqual(filteredResults);
             expect(mockSearchService.globalSearch).toHaveBeenCalledOnce();
@@ -434,7 +434,7 @@ describe('GlobalSearchModalComponent', () => {
             expect(component['hasSearched']()).toBe(false);
 
             // Re-add filter — cached branch should also run synchronously
-            component['addFilter']('exercise');
+            component['addFilter'](['exercise']);
             // At time 0 (no timer advancement), results should already appear from cache
             expect(component['results']()).toEqual(filteredResults);
             expect(component['isLoading']()).toBe(false);

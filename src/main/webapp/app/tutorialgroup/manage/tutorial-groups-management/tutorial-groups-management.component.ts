@@ -5,7 +5,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Subject, combineLatest, finalize } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faPlus, faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
-import { Course, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
+import { Course, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { takeUntil } from 'rxjs/operators';
@@ -22,6 +22,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TutorialGroupsTableComponent } from 'app/tutorialgroup/manage/tutorial-groups-table/tutorial-groups-table.component';
 import { TutorialGroupFreeDaysOverviewComponent } from 'app/tutorialgroup/shared/tutorial-group-free-days-overview/tutorial-group-free-days-overview.component';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 import { HttpResponse } from '@angular/common/http';
@@ -49,6 +50,7 @@ import { convertTutorialGroupResponseArrayDatesFromServer } from 'app/tutorialgr
         TutorialGroupsCourseInformationComponent,
         TutorialGroupFreeDaysOverviewComponent,
         ArtemisTranslatePipe,
+        CourseTitleBarActionsDirective,
     ],
 })
 export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {

@@ -28,7 +28,14 @@
                     }
                     @case (DetailType.ProgrammingTimeline) {
                         <dd id="detail-value-{{ detail.title }}">
-                            <jhi-programming-exercise-lifecycle [isExamMode]="detail.data.isExamMode ?? false" [exercise]="detail.data.exercise" [readOnly]="true" />
+                            <jhi-programming-exercise-timeline
+                                [releaseDate]="detail.data.exercise.releaseDate"
+                                [startDate]="detail.data.exercise.startDate"
+                                [dueDate]="detail.data.exercise.dueDate"
+                                [buildAndTestStudentSubmissionsAfterDueDate]="detail.data.exercise.buildAndTestStudentSubmissionsAfterDueDate"
+                                [assessmentDueDate]="detail.data.exercise.assessmentDueDate"
+                                [exampleSolutionPublicationDate]="detail.data.exercise.exampleSolutionPublicationDate"
+                            />
                         </dd>
                     }
                     @case (DetailType.Markdown) {
@@ -48,7 +55,7 @@
                     @case (DetailType.ModelingEditor) {
                         <dd class="p-3 border" id="detail-value-{{ detail.title }}">
                             @if (!isEmpty(detail.data.umlModel?.nodes) && detail.data.diagramType && detail.data.umlModel) {
-                                @if (detail.data.isApollonProfileActive) {
+                                @if (detail.data.isApollonEnabled) {
                                     <button
                                         (click)="downloadApollonDiagramAsPDf(detail.data.umlModel, detail.data.title)"
                                         class="btn btn-primary m-2"

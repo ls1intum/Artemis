@@ -9,11 +9,13 @@ import {
     OutputRefSubscription,
     SimpleChanges,
     ViewEncapsulation,
+    computed,
     inject,
     input,
     output,
     viewChild,
 } from '@angular/core';
+import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { DragAndDropMouseEvent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
 import { DragState } from 'app/quiz/shared/entities/drag-state.enum';
@@ -32,15 +34,21 @@ import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faFileImage } from '@fortawesome/free-regular-svg-icons';
 import { CdkDrag, CdkDragDrop, CdkDragPlaceholder, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
+import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
 import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
 import { MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
 import { QuizScoringInfoModalComponent } from '../quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 import { NgClass, NgStyle, NgTemplateOutlet } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SelectModule } from 'primeng/select';
+import { CheckboxModule } from 'primeng/checkbox';
+import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
 import {
     faAngleDown,
     faAngleRight,
@@ -87,6 +95,10 @@ import { FileService } from 'app/shared/service/file.service';
         CdkDragPlaceholder,
         DragAndDropQuestionComponent,
         ArtemisTranslatePipe,
+        SelectModule,
+        CheckboxModule,
+        InputTextModule,
+        InputNumberModule,
     ],
 })
 export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit, OnDestroy {
@@ -110,7 +122,18 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
 
     readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
 
+    private translateService = inject(TranslateService);
     private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
+    private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
+
+    readonly scoringTypeOptions = computed(() => {
+        this.currentLocale();
+        return [
+            { label: this.translateService.instant('artemisApp.quizExercise.scoringType.all_or_nothing'), value: ScoringType.ALL_OR_NOTHING },
+            { label: this.translateService.instant('artemisApp.quizExercise.scoringType.proportional_with_penalty'), value: ScoringType.PROPORTIONAL_WITH_PENALTY },
+            { label: this.translateService.instant('artemisApp.quizExercise.scoringType.proportional_without_penalty'), value: ScoringType.PROPORTIONAL_WITHOUT_PENALTY },
+        ];
+    });
     private modalService = inject(NgbModal);
     private changeDetector = inject(ChangeDetectorRef);
     private fileService = inject(FileService);

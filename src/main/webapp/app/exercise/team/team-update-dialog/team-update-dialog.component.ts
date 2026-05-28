@@ -5,7 +5,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
 import { TeamService } from 'app/exercise/team/team.service';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { cloneDeep, isEmpty, omit } from 'lodash-es';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { debounceTime, switchMap } from 'rxjs/operators';

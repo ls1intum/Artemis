@@ -8,7 +8,7 @@ import { SessionStorageService } from 'app/shared/service/session-storage.servic
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, Subject, of } from 'rxjs';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import {
     CommitState,

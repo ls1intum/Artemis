@@ -22,7 +22,7 @@ import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/le
 import { AccountService } from 'app/core/auth/account.service';
 import { CompetencyRecommendation } from 'app/atlas/manage/generate-competencies/generate-competencies.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import {
     CompetencyProgressDTO,
     CompetencyWithTailRelationResponseDTO,

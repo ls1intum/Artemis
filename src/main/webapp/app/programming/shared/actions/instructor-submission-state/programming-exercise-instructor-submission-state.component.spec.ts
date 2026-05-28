@@ -9,7 +9,7 @@ import { SessionStorageService } from 'app/shared/service/session-storage.servic
 import { Subject, of } from 'rxjs';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/shared/services/programming-submission.service';
 import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/programming/shared/actions/instructor-submission-state/programming-exercise-instructor-submission-state.component';

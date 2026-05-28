@@ -14,8 +14,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.dto.StudentGroupCountDTO;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeStudentGroupDTO;

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
+import static de.tum.cit.aet.artemis.core.config.Constants.MODULE_FEATURE_ATHENA;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.time.ZonedDateTime.now;
 
@@ -19,6 +19,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
@@ -58,6 +60,8 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
     private final SubmissionService submissionService;
 
+    private final UserRepository userRepository;
+
     private final ResultService resultService;
 
     private final ResultRepository resultRepository;
@@ -67,12 +71,13 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
     private final ProgrammingMessagingService programmingMessagingService;
 
     public ProgrammingExerciseCodeReviewFeedbackService(GroupNotificationService groupNotificationService, Optional<AthenaFeedbackApi> athenaFeedbackApi,
-            SubmissionService submissionService, ResultService resultService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            ResultRepository resultRepository, ProgrammingExerciseParticipationService programmingExerciseParticipationService1,
-            ProgrammingMessagingService programmingMessagingService) {
+            SubmissionService submissionService, UserRepository userRepository, ResultService resultService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ResultRepository resultRepository,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService1, ProgrammingMessagingService programmingMessagingService) {
         this.groupNotificationService = groupNotificationService;
         this.athenaFeedbackApi = athenaFeedbackApi;
         this.submissionService = submissionService;
+        this.userRepository = userRepository;
         this.resultService = resultService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.resultRepository = resultRepository;
@@ -94,7 +99,8 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
             ProgrammingExercise programmingExercise) {
         if (this.athenaFeedbackApi.isPresent()) {
             this.athenaFeedbackApi.get().checkRateLimitOrThrow(participation);
-            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(participation, programmingExercise));
+            User requestingUser = userRepository.getUser();
+            CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(participation, programmingExercise, requestingUser));
             return participation;
         }
         else {
@@ -110,8 +116,9 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
      *
      * @param participation       the student participation associated with the exercise.
      * @param programmingExercise the programming exercise object.
+     * @param requestingUser      the user that requested the feedback generation
      */
-    public void generateAutomaticNonGradedFeedback(ProgrammingExerciseStudentParticipation participation, ProgrammingExercise programmingExercise) {
+    public void generateAutomaticNonGradedFeedback(ProgrammingExerciseStudentParticipation participation, ProgrammingExercise programmingExercise, User requestingUser) {
         log.debug("Using athena to generate (programming exercise) feedback request: {}", programmingExercise.getId());
 
         // athena takes over the control here
@@ -145,8 +152,8 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
             log.debug("Submission id: {}", submission.getId());
 
-            AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA));
-            var athenaResponse = api.getProgrammingFeedbackSuggestions(programmingExercise, (ProgrammingSubmission) submission, false);
+            AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, MODULE_FEATURE_ATHENA));
+            var athenaResponse = api.getProgrammingFeedbackSuggestions(programmingExercise, (ProgrammingSubmission) submission, false, requestingUser);
 
             List<Feedback> feedbacks = athenaResponse.stream().filter(individualFeedbackItem -> individualFeedbackItem.filePath() != null)
                     .filter(individualFeedbackItem -> individualFeedbackItem.description() != null).map(individualFeedbackItem -> {

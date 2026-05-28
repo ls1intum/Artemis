@@ -1,17 +1,10 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
     @if (tutorialGroupsConfiguration && tutorialGroupFreePeriods) {
         <div class="row">
-            <div class="col-12">
-                <div class="d-flex justify-content-between">
-                    <h4 jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.title"></h4>
-                    <div>
-                        <button type="button" class="btn btn-primary" id="create-tutorial-free-day" (click)="openCreateFreePeriodDialog($event)">
-                            <fa-icon [icon]="faPlus" />
-                            <span jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.createFreePeriodButton"></span>
-                        </button>
-                    </div>
-                </div>
-            </div>
+            <button *titleBarActions type="button" class="btn btn-primary btn-sm" id="create-tutorial-free-day" (click)="openCreateFreePeriodDialog($event)">
+                <fa-icon [icon]="faPlus" />
+                <span jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.createFreePeriodButton"></span>
+            </button>
             <div class="col-12 mb-2">
                 <div
                     class="alert alert-info"
