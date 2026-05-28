@@ -110,18 +110,29 @@
     }
     @if (isEditFieldDisplayedRecord().timeline) {
         <div class="form-group">
-            <div>
-                <label jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel" for="timeline"></label>
-                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.timeline.timelineTooltip" />
-            </div>
-            <jhi-programming-exercise-lifecycle
+            @let exampleSolutionPublicationDateSet =
+                !!programmingExercise.exampleSolutionPublicationDate || !!programmingExercise.exerciseGroup?.exam?.exampleSolutionPublicationDate;
+            <jhi-programming-exercise-update-timeline
                 id="timeline"
-                [exercise]="programmingExercise"
                 [isExamMode]="programmingExerciseCreationConfig.isExamMode"
-                [readOnly]="false"
-                [importOptions]="importOptions"
-                [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
+                [complaintsInCourseEnabled]="programmingExercise.course?.complaintsEnabled ?? false"
+                [exampleSolutionPublicationDateSet]="exampleSolutionPublicationDateSet"
+                [isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord]="isEditFieldDisplayedRecord()"
                 [customizeBuildPlan]="programmingExercise.customizeBuildPlan"
+                [exercise]="programmingExercise"
+                [(releaseDate)]="programmingExercise.releaseDate"
+                [(startDate)]="programmingExercise.startDate"
+                [(dueDate)]="programmingExercise.dueDate"
+                [(buildAndTestStudentSubmissionsAfterDueDate)]="programmingExercise.buildAndTestStudentSubmissionsAfterDueDate"
+                [(assessmentDueDate)]="programmingExercise.assessmentDueDate"
+                [(exampleSolutionPublicationDate)]="programmingExercise.exampleSolutionPublicationDate"
+                [(assessmentType)]="programmingExercise.assessmentType"
+                [(allowFeedbackRequests)]="programmingExercise.allowFeedbackRequests"
+                [(setTestCaseVisibilityToAfterDueDate)]="importOptions.setTestCaseVisibilityToAfterDueDate"
+                [(allowComplaintsForAutomaticAssessments)]="programmingExercise.allowComplaintsForAutomaticAssessments"
+                [(releaseTestsWithExampleSolution)]="programmingExercise.releaseTestsWithExampleSolution"
+                [(feedbackSuggestionModule)]="programmingExercise.feedbackSuggestionModule"
+                [(showTestNamesToStudents)]="programmingExercise.showTestNamesToStudents"
             />
         </div>
     }

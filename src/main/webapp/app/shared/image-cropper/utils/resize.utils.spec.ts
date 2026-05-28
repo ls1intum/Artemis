@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest';
 import { resizeCanvas } from './resize.utils';
 
 describe('resizeCanvas', () => {

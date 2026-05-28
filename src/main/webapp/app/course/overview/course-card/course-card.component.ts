@@ -15,7 +15,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { CourseScores } from 'app/course/manage/course-scores/course-scores';
-import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
+import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
 import { filter, switchMap } from 'rxjs';
 
 @Component({

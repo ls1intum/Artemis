@@ -1254,9 +1254,19 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.validateTimeout(validationErrorReasons);
         this.validateCheckoutPaths(validationErrorReasons);
         this.validateExercisePlagiarism(validationErrorReasons);
+        this.validateGradingSection(validationErrorReasons);
         this.validateBuildPhaseNames(validationErrorReasons);
 
         return validationErrorReasons;
+    }
+
+    private validateGradingSection(validationErrorReasons: ValidationReason[]): void {
+        if (this.exerciseGradingComponent?.formValid === false) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.programmingExercise.gradingSection.invalidReason',
+                translateValues: {},
+            });
+        }
     }
 
     private validateExercisePlagiarism(validationErrorReasons: ValidationReason[]) {

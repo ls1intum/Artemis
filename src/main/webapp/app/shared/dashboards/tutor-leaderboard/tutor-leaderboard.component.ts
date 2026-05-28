@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -9,45 +9,46 @@ import { SortDirective } from '../../sort/directive/sort.directive';
 import { SortByDirective } from '../../sort/directive/sort-by.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TooltipModule } from 'primeng/tooltip';
 import { RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-tutor-leaderboard',
     templateUrl: './tutor-leaderboard.component.html',
-    imports: [SortDirective, SortByDirective, TranslateDirective, FaIconComponent, NgbTooltip, RouterLink, ArtemisTranslatePipe],
+    imports: [SortDirective, SortByDirective, TranslateDirective, FaIconComponent, TooltipModule, RouterLink, ArtemisTranslatePipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TutorLeaderboardComponent implements OnInit {
+export class TutorLeaderboardComponent {
     private sortService = inject(SortService);
 
-    @Input() public tutorsData: TutorLeaderboardElement[] = [];
-    @Input() public course?: Course;
-    @Input() public exercise?: Exercise;
-    @Input() public exam?: Exam;
+    readonly tutorsData = input<TutorLeaderboardElement[]>([]);
+    readonly courseInput = input<Course | undefined>(undefined, { alias: 'course' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly exercise = input<Exercise | undefined>();
+    readonly exam = input<Exam | undefined>();
 
-    isExerciseDashboard = false;
-    isExamMode = false;
-    sortPredicate = 'points';
-    reverseOrder = false;
+    /** Resolved course: derived from the exercise when available, otherwise falls back to the input course. */
+    readonly course = computed<Course | undefined>(() => {
+        const exercise = this.exercise();
+        if (exercise) {
+            return getCourseFromExercise(exercise);
+        }
+        return this.courseInput();
+    });
 
-    // Icons
-    faSort = faSort;
-    faExclamationTriangle = faExclamationTriangle;
+    readonly isExerciseDashboard = computed(() => !!(this.exercise() && this.course()));
+    readonly isExamMode = computed(() => !!this.exam());
+
+    readonly sortPredicate = signal<string>('points');
+    readonly reverseOrder = signal<boolean>(false);
 
     /**
-     * Life cycle hook called by Angular to indicate that Angular is done creating the component
+     * Rows sorted by the current predicate and direction. Returns a fresh array (rather than sorting
+     * the input in place) so the new reference re-renders the `@for` and the parent-supplied input is
+     * not mutated as a side effect.
      */
-    ngOnInit(): void {
-        if (this.exercise) {
-            this.course = getCourseFromExercise(this.exercise);
-        }
-        this.isExerciseDashboard = !!(this.exercise && this.course);
-        this.isExamMode = !!this.exam;
-        this.sortRows();
-    }
+    readonly sortedTutorsData = computed<TutorLeaderboardElement[]>(() => this.sortService.sortByProperty([...this.tutorsData()], this.sortPredicate(), this.reverseOrder()));
 
-    sortRows() {
-        this.sortService.sortByProperty(this.tutorsData, this.sortPredicate, this.reverseOrder);
-    }
+    readonly faSort = faSort;
+    readonly faExclamationTriangle = faExclamationTriangle;
 }

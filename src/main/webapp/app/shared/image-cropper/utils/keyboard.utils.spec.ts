@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { getEventForKey, getInvertedPositionForKey, getPositionForKey } from 'app/shared/image-cropper/utils/keyboard.utils';
 
 describe('Keyboard Utils', () => {

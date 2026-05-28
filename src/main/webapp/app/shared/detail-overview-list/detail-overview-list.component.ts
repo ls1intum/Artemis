@@ -10,7 +10,6 @@ import { addPublicFilePrefix } from 'app/app.constants';
 import { DetailOverviewNavigationBarComponent } from '../detail-overview-navigation-bar/detail-overview-navigation-bar.component';
 import { HelpIconComponent } from '../components/help-icon/help-icon.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { ProgrammingExerciseLifecycleComponent } from 'app/programming/shared/lifecycle/programming-exercise-lifecycle.component';
 import { NgStyle, NgTemplateOutlet } from '@angular/common';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -20,7 +19,7 @@ import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update
 import { ExerciseDetailDirective } from './exercise-detail.directive';
 import { NoDataComponent } from '../components/no-data/no-data-component';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
-import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
+import { ProgrammingExerciseTimelineComponent } from '../../programming/shared/programming-exercise-timeline/programming-exercise-timeline.component';
 
 export interface DetailOverviewSection {
     headline: string;
@@ -57,7 +56,6 @@ export enum DetailType {
         DetailOverviewNavigationBarComponent,
         HelpIconComponent,
         ProgrammingExerciseInstructionComponent,
-        ProgrammingExerciseLifecycleComponent,
         NgTemplateOutlet,
         StructuredGradingInstructionsAssessmentLayoutComponent,
         TranslateDirective,
@@ -68,8 +66,8 @@ export enum DetailType {
         ExerciseDetailDirective,
         NoDataComponent,
         ArtemisTranslatePipe,
+        ProgrammingExerciseTimelineComponent,
     ],
-    providers: [BuildPhasesTemplateService],
 })
 export class DetailOverviewListComponent implements OnInit {
     protected readonly isEmpty = isEmpty;

@@ -10,8 +10,7 @@ import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { ProgrammingExerciseLifecycleComponent } from 'app/programming/shared/lifecycle/programming-exercise-lifecycle.component';
+import { ProgrammingExerciseUpdateTimelineComponent } from '../../shared/programming-exercise-update-timeline/programming-exercise-update-timeline.component';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
@@ -19,7 +18,7 @@ import { BuildPhasesTemplateService } from 'app/programming/shared/services/buil
 @Component({
     selector: 'jhi-programming-exercise-edit-selected',
     templateUrl: './programming-exercise-edit-selected.component.html',
-    imports: [TranslateDirective, FormsModule, HelpIconComponent, ProgrammingExerciseLifecycleComponent, ButtonComponent, FaIconComponent],
+    imports: [TranslateDirective, FormsModule, ProgrammingExerciseUpdateTimelineComponent, ButtonComponent, FaIconComponent],
     providers: [BuildPhasesTemplateService],
 })
 export class ProgrammingExerciseEditSelectedComponent implements OnInit {
