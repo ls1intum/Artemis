@@ -18,13 +18,13 @@ class PlagiarismEntityUsageArchitectureTest extends AbstractModuleEntityUsageArc
     // TODO: Reduce this to 0 by returning DTOs instead of entities
     @Override
     protected int getMaxEntityReturnViolations() {
-        return 12;
+        return 8;
     }
 
-    // TODO: Reduce this to 0 by accepting DTOs instead of entities in @RequestBody/@RequestPart
+    // Plagiarism request bodies are fully DTO-based; do not let any new entity @RequestBody slip back in.
     @Override
     protected int getMaxEntityInputViolations() {
-        return 3;
+        return 0;
     }
 
     // TODO: Reduce this to 0 by removing entity references from DTOs
