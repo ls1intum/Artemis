@@ -224,12 +224,19 @@ public class AthenaModuleService {
      * @param course   the course the exercise belongs to
      */
     public void applyAthenaCourseSettings(Exercise exercise, Course course) {
-        if (course.isAthenaGradingEnabled()) {
+        if (exercise.isExamExercise()) {
+            exercise.setFeedbackSuggestionModule(null);
+            exercise.setAllowFeedbackRequests(false);
+            return;
+        }
+
+        if (course.isAthenaGradingEnabled() || course.isAthenaFormativeEnabled()) {
             exercise.setFeedbackSuggestionModule(getDefaultModule(exercise.getExerciseType()));
         }
-        if (course.isAthenaFormativeEnabled()) {
-            exercise.setAllowFeedbackRequests(true);
+        else {
+            exercise.setFeedbackSuggestionModule(null);
         }
+        exercise.setAllowFeedbackRequests(course.isAthenaFormativeEnabled());
     }
 
     /**
