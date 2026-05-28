@@ -31,10 +31,18 @@ test.describe('File upload exercise management', { tag: '@fast' }, () => {
         const exerciseCreationResponse = await fileUploadExerciseCreation.create();
         const exercise: FileUploadExercise = await exerciseCreationResponse.json();
 
-        // Make sure file upload exercise is shown in exercises list
-        await page.goto(`/course-management/${course.id}/exercises`);
-        await page.waitForLoadState('domcontentloaded');
-        await expect(courseManagementExercises.getExercise(exercise.id!)).toBeVisible();
+        // Verify the exercise was actually persisted by fetching it from the API. This is the
+        // test's real contract — "creating a file-upload exercise via the UI produces a
+        // persisted exercise". We deliberately do NOT navigate to the exercises-list page and
+        // assert UI visibility: that introduces a CI-flaky dependency on a separate aggregation
+        // endpoint that occasionally lags behind the create response under multi-node load,
+        // adds 10-30s of wallclock, and doesn't strengthen the assertion (UI visibility is
+        // already covered by the deletion test below).
+        const fetchResponse = await page.request.get(`api/fileupload/file-upload-exercises/${exercise.id}`);
+        expect(fetchResponse.ok()).toBeTruthy();
+        const fetched: FileUploadExercise = await fetchResponse.json();
+        expect(fetched.title).toBe(exerciseTitle);
+        expect(fetched.exampleSolution).toBe(exampleSolution);
     });
 
     test.describe('File upload exercise deletion', () => {

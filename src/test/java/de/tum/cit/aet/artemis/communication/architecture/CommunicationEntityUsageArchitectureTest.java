@@ -15,10 +15,9 @@ class CommunicationEntityUsageArchitectureTest extends AbstractModuleEntityUsage
         return ARTEMIS_PACKAGE + ".communication";
     }
 
-    // TODO: Reduce this to 0 by returning DTOs instead of entities
     @Override
     protected int getMaxEntityReturnViolations() {
-        return 8;
+        return 0;
     }
 
     // This module is already compliant for input violations

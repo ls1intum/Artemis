@@ -424,7 +424,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 if (!res.body) {
                     return;
                 }
-                this.complaint = res.body;
+                this.complaint = this.complaintService.convertComplaintFromServer(res.body, this.result);
             },
             error: (err: HttpErrorResponse) => {
                 onError(this.alertService, err);
@@ -534,9 +534,12 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             return;
         }
 
+        const feedbacks = this.complaintService.getFeedbacksForUpdateAfterComplaint(this.assessments);
+        const complaintResponse = this.complaintService.getComplaintResponseForUpdateAfterComplaint(assessmentAfterComplaint.complaintResponse);
+
         this.isLoading = true;
         this.fileUploadAssessmentService
-            .updateAssessmentAfterComplaint(this.assessments, assessmentAfterComplaint.complaintResponse, submissionId, this.result?.assessmentNote?.note)
+            .updateAssessmentAfterComplaint(feedbacks, complaintResponse, submissionId, this.result?.assessmentNote?.note)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe({
                 next: (response) => {

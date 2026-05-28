@@ -99,10 +99,12 @@ public class ArtemisSuccessfulLoginService {
      * Sends a login notification email to users when they successfully authenticate.
      *
      * <p>
-     * Runs asynchronously: the user lookup, the notification-setting check, and the template-variable
-     * preparation all execute on the async task executor rather than on the login request thread. The
-     * subsequent {@link MailSendingService#buildAndSendAsync} call then schedules the template rendering
-     * and SMTP send on its own async task. None of these steps runs on the login thread.
+     * Runs asynchronously: the user lookup, the notification-setting check, the template-variable
+     * preparation, and the subsequent {@link MailSendingService#buildAndSendSync} call (template
+     * rendering + SMTP send) all execute on the async task executor rather than on the login request
+     * thread. Because this method is already {@code @Async}, the mail send is invoked synchronously
+     * (rather than via {@code buildAndSendAsync}) so it runs on this same async thread instead of
+     * dispatching a second task onto the executor. None of these steps runs on the login thread.
      * <p>
      * This gives two properties:
      * <ul>

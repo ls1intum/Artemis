@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
-import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
@@ -174,19 +174,19 @@ public class AutonomousTutorService {
         broadcastPost.setIsSaved(false);
         broadcastPost.getAnswers().forEach(answer -> answer.setIsSaved(false));
 
-        // Reduce payload for websocket
-        conversation.hideDetails();
-        broadcastPost.getAnswers().forEach(answer -> answer.setPost(new Post(answer.getPost().getId())));
-
-        PostDTO postDTO = new PostDTO(broadcastPost, MetisCrudAction.UPDATE);
+        // Build a cycle-free wire payload — same reason as PostingService.broadcastForPost: sending the raw Post
+        // entity over STOMP previously walked the cyclic reactions → user → User chain that fires Jackson's
+        // DeserializerCache race on the receive side.
+        PostBroadcastDTO broadcastPayload = PostBroadcastDTO.from(broadcastPost, MetisCrudAction.UPDATE);
         String courseConversationTopic = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId;
 
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-            websocketMessagingService.sendMessage(courseConversationTopic, postDTO);
+            websocketMessagingService.sendMessage(courseConversationTopic, broadcastPayload);
         }
         else {
             var participants = conversationParticipantRepository.findConversationParticipantsByConversationId(conversation.getId());
-            participants.forEach(participant -> websocketMessagingService.sendMessage("/topic/user/" + participant.getUser().getId() + "/notifications/conversations", postDTO));
+            participants.forEach(
+                    participant -> websocketMessagingService.sendMessage("/topic/user/" + participant.getUser().getId() + "/notifications/conversations", broadcastPayload));
         }
     }
 }
