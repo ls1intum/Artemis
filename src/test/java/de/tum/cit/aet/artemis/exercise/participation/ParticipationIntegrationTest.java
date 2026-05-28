@@ -1770,7 +1770,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @EnumSource(QuizMode.class)
     void testCheckQuizParticipation(QuizMode quizMode) {
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().minusMinutes(8), quizMode, course);
-        quizExercise.addQuestions(QuizExerciseFactory.createShortAnswerQuestion());
+        quizExercise.addQuestion(QuizExerciseFactory.createShortAnswerQuestion());
         quizExercise.setDuration(600);
         quizExercise.setQuizPointStatistic(new QuizPointStatistic());
         quizExercise = exerciseRepository.save(quizExercise);
