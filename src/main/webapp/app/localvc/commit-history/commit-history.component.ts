@@ -11,7 +11,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
-import { CommitsInfoComponent } from '../commits-info/commits-info.component';
+import { CommitsInfoComponent } from 'app/programming/shared/commits-info/commits-info.component';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
