@@ -28,6 +28,7 @@ import { CompetencyAccordionComponent, CompetencyAccordionToggleEvent } from 'ap
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import dayjs from 'dayjs/esm';
 import { StudentMetrics } from 'app/atlas/shared/entities/student-metrics.model';
+import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { provideNoopAnimationsForTests } from 'test/helpers/animations';
@@ -141,7 +142,7 @@ describe('CourseDashboardComponent', () => {
                     lectureTitle: 'Lecture 1',
                     name: 'Unit 1',
                     releaseDate: dayjs().subtract(2, 'days'),
-                    type: 'TEXT' as any,
+                    type: LectureUnitType.TEXT,
                 },
             },
             completed: [10],
@@ -568,7 +569,7 @@ describe('CourseDashboardComponent', () => {
                         lectureTitle: 'Lecture 1',
                         name: 'Unit 1',
                         releaseDate: dayjs().subtract(2, 'days'),
-                        type: 'TEXT' as any,
+                        type: LectureUnitType.TEXT,
                     },
                     20: {
                         id: 20,
@@ -576,7 +577,7 @@ describe('CourseDashboardComponent', () => {
                         lectureTitle: 'Lecture 2',
                         name: 'Unit 2',
                         releaseDate: dayjs().add(5, 'days'), // Future release date
-                        type: 'TEXT' as any,
+                        type: LectureUnitType.TEXT,
                     },
                 },
             },
