@@ -37,7 +37,7 @@ public class BlockRegistryResource {
     @EnforceAtLeastEditor
     public ResponseEntity<List<BlockDefinitionDTO>> getBlockRegistry() {
         log.debug("REST request to get block registry");
-        List<BlockDefinitionDTO> dtos = blockRegistry.getAllBlocks().stream().map(BlockDefinitionDTO::of).toList();
+        List<BlockDefinitionDTO> dtos = blockRegistry.getAllBlocks().stream().map(b -> BlockDefinitionDTO.of(b, blockRegistry.getNormalizedRulesFor(b))).toList();
         return ResponseEntity.ok(dtos);
     }
 }

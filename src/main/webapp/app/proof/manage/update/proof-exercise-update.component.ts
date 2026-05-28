@@ -14,6 +14,9 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MathNode } from '../../shared/entities/math-node.model';
 import { DerivationStep } from '../../shared/entities/derivation-step.model';
+import { GRADER_TYPES_AVAILABLE, GRADER_TYPE_LABELS, GraderType } from '../../shared/entities/grader-type.model';
+import { GOAL_MODE_LABELS, GoalMode } from '../../shared/entities/goal-mode.model';
+import { ReachabilityReport } from '../../shared/entities/hint-suggestion.model';
 import { ProofBuilderComponent } from './proof-builder/proof-builder.component';
 import { ProofDerivationWorkspaceComponent } from './proof-derivation-workspace/proof-derivation-workspace.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -48,6 +51,21 @@ export class ProofExerciseUpdateComponent implements OnInit {
     existingCategories = signal<ExerciseCategory[]>([]);
     onlyShowApplicableRules = signal(false);
 
+    readonly graderTypeOptions: { value: GraderType; label: string; disabled: boolean }[] = (Object.keys(GRADER_TYPE_LABELS) as GraderType[]).map((value) => ({
+        value,
+        label: GRADER_TYPE_LABELS[value],
+        disabled: !GRADER_TYPES_AVAILABLE.includes(value),
+    }));
+
+    readonly goalModeOptions: { value: GoalMode; label: string }[] = (Object.keys(GOAL_MODE_LABELS) as GoalMode[]).map((value) => ({
+        value,
+        label: GOAL_MODE_LABELS[value],
+    }));
+
+    reachability = signal<ReachabilityReport | undefined>(undefined);
+    reachabilityChecking = signal(false);
+    reachabilityError = signal<string | undefined>(undefined);
+
     releaseDateField = viewChild<FormDateTimePickerComponent>('releaseDate');
     startDateField = viewChild<FormDateTimePickerComponent>('startDate');
     dueDateField = viewChild<FormDateTimePickerComponent>('dueDate');
@@ -80,6 +98,41 @@ export class ProofExerciseUpdateComponent implements OnInit {
     onTargetExpressionChange(node: MathNode | undefined) {
         this.proofExercise.targetExpression = node;
         // Workspaces re-evaluate isComplete automatically via the targetExpression signal input.
+    }
+
+    onGoalExpressionChange(node: MathNode | undefined) {
+        this.proofExercise.goalExpression = node;
+        this.proofExercise.exampleDerivations = [];
+    }
+
+    onGoalModeChange(mode: GoalMode) {
+        this.proofExercise.goalMode = mode;
+        // Reset example derivations — they're tied to the previous start expression.
+        this.proofExercise.exampleDerivations = [];
+        this.reachability.set(undefined);
+    }
+
+    checkReachability(): void {
+        if (!this.proofExercise.id) {
+            this.reachabilityError.set('Save the exercise first to run the reachability check.');
+            return;
+        }
+        this.reachabilityError.set(undefined);
+        this.reachabilityChecking.set(true);
+        this.proofExerciseService.verifyReachability(this.proofExercise.id).subscribe({
+            next: (report) => {
+                this.reachability.set(report);
+                if (!report) {
+                    this.reachabilityError.set('Reachability check is not supported for this exercise.');
+                }
+                this.reachabilityChecking.set(false);
+            },
+            error: () => {
+                this.reachability.set(undefined);
+                this.reachabilityError.set('Reachability check failed.');
+                this.reachabilityChecking.set(false);
+            },
+        });
     }
 
     addExampleDerivation(): void {

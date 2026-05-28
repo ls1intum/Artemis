@@ -1,3 +1,6 @@
+import { RuleConstraint, evaluateConstraint } from './rule-constraint.model';
+import { RuleDirection, StepDirection } from './rule-direction.model';
+
 export interface MathNode {
     type: string;
     value?: string;
@@ -60,10 +63,18 @@ export function mathNodeToLatex(node: MathNode | undefined, lookup: RegistryLook
             }
             break;
         }
+        case 'negation': {
+            const sym = desc?.latexSymbol ?? '-';
+            inner = `${sym}${renderChild(node.slots?.['inner']?.[0], 'inner')}`;
+            break;
+        }
         default:
-            // Handles future BINARY_INFIX node types added via the block registry
+            // Registry-driven dispatch for future blocks added without code changes here
             if (desc?.layoutCategory === 'BINARY_INFIX' && desc.latexSymbol) {
                 inner = `${renderChild(node.slots?.['left']?.[0], 'left')} ${desc.latexSymbol} ${renderChild(node.slots?.['right']?.[0], 'right')}`;
+            } else if (desc?.layoutCategory === 'UNARY_PREFIX' && desc.latexSymbol) {
+                const slotKey = Object.keys(node.slots ?? {})[0] ?? 'inner';
+                inner = `${desc.latexSymbol}${renderChild(node.slots?.[slotKey]?.[0], slotKey)}`;
             } else {
                 inner = `{${node.type}}`;
             }
@@ -181,14 +192,99 @@ function replaceAtPath(root: MathNode, path: number[], replacement: MathNode): M
 
 /**
  * Applies a rewrite rule at `path` in `tree`.
- * Returns the new tree on success, or `undefined` if the pattern does not match.
+ * Returns the new tree on success, or `undefined` if the pattern does not match
+ * or any of the supplied constraints rejects the bindings.
+ *
+ * `direction` selects forward (pattern → template) or reverse (template → pattern) application.
+ * `ruleDirection` lets the caller request the engine reject REVERSE on a FORWARD_ONLY rule.
  */
-export function applyRule(tree: MathNode, path: number[], pattern: MathNode, template: MathNode): MathNode | undefined {
+export function applyRule(
+    tree: MathNode,
+    path: number[],
+    pattern: MathNode,
+    template: MathNode,
+    constraints: RuleConstraint[] = [],
+    direction: StepDirection = 'FORWARD',
+    ruleDirection: RuleDirection = 'BIDIRECTIONAL',
+): MathNode | undefined {
+    if (direction === 'REVERSE' && ruleDirection !== 'BIDIRECTIONAL') return undefined;
+    const patternSide = direction === 'REVERSE' ? template : pattern;
+    const templateSide = direction === 'REVERSE' ? pattern : template;
     const target = nodeAtPath(tree, path);
     const bindings = new Map<string, MathNode>();
-    if (!matchPattern(pattern, target, bindings)) return undefined;
-    const replacement = instantiate(template, bindings);
+    if (!matchPattern(patternSide, target, bindings)) return undefined;
+    for (const constraint of constraints) {
+        if (!evaluateConstraint(constraint, bindings)) return undefined;
+    }
+    const replacement = instantiate(templateSide, bindings);
     return replaceAtPath(tree, path, replacement);
+}
+
+/**
+ * Returns a structurally-equivalent tree with terminal values canonicalised:
+ * numbers are stripped of trailing zeros (so {@code "0.0"}, {@code "-0"}, {@code "00"} all become {@code "0"});
+ * variable / wildcard names are trimmed.
+ * Mirrors `MathNodes.normalize` on the backend.
+ */
+export function normalize(node: MathNode | undefined): MathNode | undefined {
+    if (!node) return node;
+    if (node.type === 'number') {
+        const v = normalizeNumberLiteral(node.value);
+        return v === undefined ? { type: node.type } : { type: node.type, value: v };
+    }
+    if (node.type === 'variable' || node.type === 'wildcard') {
+        const v = node.value?.trim();
+        return v === undefined ? { type: node.type } : { type: node.type, value: v };
+    }
+    if (!node.slots || Object.keys(node.slots).length === 0) {
+        return node.value === undefined ? { type: node.type } : { type: node.type, value: node.value };
+    }
+    const newSlots: Record<string, MathNode[]> = {};
+    for (const key of Object.keys(node.slots)) {
+        newSlots[key] = node.slots[key].map((c) => normalize(c)!);
+    }
+    return node.value === undefined ? { type: node.type, slots: newSlots } : { type: node.type, value: node.value, slots: newSlots };
+}
+
+/**
+ * Throws if any node in the tree has type `'wildcard'`.
+ * Wildcards are valid only inside rule definitions; an instructor-authored or
+ * student-submitted tree containing one would let the matcher bind a metavariable
+ * to a metavariable, which is nonsense.
+ */
+export function assertWildcardFree(node: MathNode | undefined): void {
+    if (!node) return;
+    if (node.type === 'wildcard') {
+        throw new Error('Wildcard nodes are not allowed in submissions or exercise definitions');
+    }
+    if (node.slots) {
+        for (const children of Object.values(node.slots)) {
+            for (const child of children) assertWildcardFree(child);
+        }
+    }
+}
+
+function normalizeNumberLiteral(value: string | undefined): string | undefined {
+    if (value === undefined) return value;
+    const trimmed = value.trim();
+    if (trimmed === '') return value;
+    // accept the same numeric forms the backend BigDecimal does
+    if (!/^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(trimmed)) {
+        return value;
+    }
+    const num = Number(trimmed);
+    if (!Number.isFinite(num)) return value;
+    if (num === 0) return '0';
+    // strip trailing zeros without losing precision for moderate-size numbers
+    let plain = trimmed.startsWith('+') ? trimmed.slice(1) : trimmed;
+    if (plain.includes('e') || plain.includes('E')) {
+        plain = num.toString();
+    }
+    if (plain.includes('.')) {
+        plain = plain.replace(/0+$/, '').replace(/\.$/, '');
+    }
+    if (plain === '-0') plain = '0';
+    return plain;
 }
 
 export function getAllPossibleRewrites(tree: MathNode, pattern: MathNode, template: MathNode): MathNode[] {
@@ -216,4 +312,108 @@ export function isTautology(tree: MathNode): boolean {
     const left = tree.slots?.['left']?.[0];
     const right = tree.slots?.['right']?.[0];
     return !!left && !!right && mathNodesEqual(left, right);
+}
+
+/**
+ * AC-normalised form: chains of `+` or `·` are flattened, their operands sorted by a stable canonical key, and
+ * rebuilt as a left-associative binary tree. Used only for equality comparisons when the exercise has
+ * {@code acNormalization} enabled — submission and exercise trees are never persisted in normalised form.
+ * Mirrors `MathNodes.normalizeAC` on the backend.
+ */
+export function normalizeAC(node: MathNode | undefined): MathNode | undefined {
+    if (!node) return node;
+    if (!node.slots || Object.keys(node.slots).length === 0) return node;
+    if (node.type === 'add' || node.type === 'mul') {
+        const operands: MathNode[] = [];
+        flattenChain(node, node.type, operands);
+        const normalised = operands.map((c) => normalizeAC(c)!) as MathNode[];
+        normalised.sort((a, b) => subtreeKey(a).localeCompare(subtreeKey(b)));
+        return rebuildLeftAssoc(node.type, normalised);
+    }
+    const newSlots: Record<string, MathNode[]> = {};
+    for (const key of Object.keys(node.slots)) {
+        newSlots[key] = node.slots[key].map((c) => normalizeAC(c)!) as MathNode[];
+    }
+    return node.value === undefined ? { type: node.type, slots: newSlots } : { type: node.type, value: node.value, slots: newSlots };
+}
+
+/** Equality with optional AC normalisation. */
+export function equalsAC(a: MathNode | undefined, b: MathNode | undefined, ac: boolean): boolean {
+    if (!ac) return !!a && !!b && mathNodesEqual(a, b);
+    const na = normalizeAC(a);
+    const nb = normalizeAC(b);
+    return !!na && !!nb && mathNodesEqual(na, nb);
+}
+
+function flattenChain(node: MathNode, type: string, out: MathNode[]): void {
+    if (node.type === type && node.slots) {
+        for (const k of Object.keys(node.slots).sort()) {
+            for (const child of node.slots[k]) flattenChain(child, type, out);
+        }
+    } else {
+        out.push(node);
+    }
+}
+
+function rebuildLeftAssoc(type: string, operands: MathNode[]): MathNode {
+    if (operands.length === 0) return { type };
+    let acc = operands[0];
+    for (let i = 1; i < operands.length; i++) {
+        acc = { type, slots: { left: [acc], right: [operands[i]] } };
+    }
+    return acc;
+}
+
+/**
+ * Coarse tree distance between two trees: cardinality of the multiset symmetric difference of subtrees.
+ * Mirrors `MathNodeDistance.distance` on the backend. Zero iff the trees are structurally equal.
+ */
+export function distance(a: MathNode | undefined, b: MathNode | undefined): number {
+    if (!a && !b) return 0;
+    if (!a) return size(b);
+    if (!b) return size(a);
+    if (mathNodesEqual(a, b)) return 0;
+    const ca = new Map<string, number>();
+    const cb = new Map<string, number>();
+    collectSubtrees(a, ca);
+    collectSubtrees(b, cb);
+    const keys = new Set<string>([...ca.keys(), ...cb.keys()]);
+    let total = 0;
+    for (const k of keys) total += Math.abs((ca.get(k) ?? 0) - (cb.get(k) ?? 0));
+    return total;
+}
+
+/** Number of nodes in the tree (1 per node, recursive). */
+export function size(node: MathNode | undefined): number {
+    if (!node) return 0;
+    let count = 1;
+    if (node.slots) {
+        for (const children of Object.values(node.slots)) {
+            for (const c of children) count += size(c);
+        }
+    }
+    return count;
+}
+
+/** Stable key for a MathNode subtree (JSON with sorted slot keys), used to multiset-compare subtrees. */
+function subtreeKey(node: MathNode): string {
+    if (!node.slots || Object.keys(node.slots).length === 0) {
+        return JSON.stringify({ t: node.type, v: node.value ?? null });
+    }
+    const slotKeys = Object.keys(node.slots).sort();
+    const parts: Record<string, string[]> = {};
+    for (const k of slotKeys) {
+        parts[k] = node.slots[k].map(subtreeKey);
+    }
+    return JSON.stringify({ t: node.type, v: node.value ?? null, s: parts });
+}
+
+function collectSubtrees(node: MathNode, counts: Map<string, number>): void {
+    const key = subtreeKey(node);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+    if (node.slots) {
+        for (const children of Object.values(node.slots)) {
+            for (const c of children) collectSubtrees(c, counts);
+        }
+    }
 }

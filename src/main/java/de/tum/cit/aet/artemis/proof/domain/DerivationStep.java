@@ -5,6 +5,8 @@ import java.util.List;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -48,6 +50,16 @@ public class DerivationStep {
     @Convert(converter = MathNodeConverter.class)
     @Column(name = "result_expression", columnDefinition = "longtext")
     private MathNode resultExpression;
+
+    /**
+     * Direction in which the rule was applied. {@link StepDirection#FORWARD} (default) replays
+     * the rule as {@code pattern → template}; {@link StepDirection#REVERSE} replays it as
+     * {@code template → pattern} and is only valid when {@link RewriteRule#direction()} is
+     * {@link RuleDirection#BIDIRECTIONAL}.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "direction", length = 8, nullable = false)
+    private StepDirection direction = StepDirection.FORWARD;
 
     public Long getId() {
         return id;
@@ -95,5 +107,13 @@ public class DerivationStep {
 
     public void setResultExpression(MathNode resultExpression) {
         this.resultExpression = resultExpression;
+    }
+
+    public StepDirection getDirection() {
+        return direction;
+    }
+
+    public void setDirection(StepDirection direction) {
+        this.direction = direction == null ? StepDirection.FORWARD : direction;
     }
 }

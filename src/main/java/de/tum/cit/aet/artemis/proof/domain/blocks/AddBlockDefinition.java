@@ -11,6 +11,7 @@ import de.tum.cit.aet.artemis.proof.domain.BlockDefinition;
 import de.tum.cit.aet.artemis.proof.domain.LayoutCategory;
 import de.tum.cit.aet.artemis.proof.domain.MathNodes;
 import de.tum.cit.aet.artemis.proof.domain.RewriteRule;
+import de.tum.cit.aet.artemis.proof.domain.RuleDirection;
 
 @Conditional(ProofEnabled.class)
 @Component
@@ -71,12 +72,10 @@ public class AddBlockDefinition implements BlockDefinition {
         var a = MathNodes.wc("a");
         var b = MathNodes.wc("b");
         var c = MathNodes.wc("c");
-        return List.of(new RewriteRule("add_comm", "Commutativity", "a + b \\to b + a", MathNodes.add(a, b), MathNodes.add(b, a), false),
-                new RewriteRule("add_assoc_left", "Associativity (left to right)", "(a + b) + c \\to a + (b + c)", MathNodes.add(MathNodes.add(a, b), c),
-                        MathNodes.add(a, MathNodes.add(b, c)), false),
-                new RewriteRule("add_assoc_right", "Associativity (right to left)", "a + (b + c) \\to (a + b) + c", MathNodes.add(a, MathNodes.add(b, c)),
-                        MathNodes.add(MathNodes.add(a, b), c), false),
-                new RewriteRule("add_zero_left", "Identity (left)", "0 + a \\to a", MathNodes.add(MathNodes.num("0"), a), a, true),
-                new RewriteRule("add_zero_right", "Identity (right)", "a + 0 \\to a", MathNodes.add(a, MathNodes.num("0")), a, true));
+        return List.of(new RewriteRule("add_comm", "Commutativity", "a + b \\to b + a", MathNodes.add(a, b), MathNodes.add(b, a), RuleDirection.BIDIRECTIONAL),
+                new RewriteRule("add_assoc", "Associativity", "(a + b) + c \\to a + (b + c)", MathNodes.add(MathNodes.add(a, b), c), MathNodes.add(a, MathNodes.add(b, c)),
+                        RuleDirection.BIDIRECTIONAL),
+                new RewriteRule("add_zero_left", "Identity (left)", "0 + a \\to a", MathNodes.add(MathNodes.num("0"), a), a, RuleDirection.FORWARD_ONLY),
+                new RewriteRule("add_zero_right", "Identity (right)", "a + 0 \\to a", MathNodes.add(a, MathNodes.num("0")), a, RuleDirection.FORWARD_ONLY));
     }
 }

@@ -11,6 +11,7 @@ import de.tum.cit.aet.artemis.proof.domain.BlockDefinition;
 import de.tum.cit.aet.artemis.proof.domain.LayoutCategory;
 import de.tum.cit.aet.artemis.proof.domain.MathNodes;
 import de.tum.cit.aet.artemis.proof.domain.RewriteRule;
+import de.tum.cit.aet.artemis.proof.domain.RuleDirection;
 
 @Conditional(ProofEnabled.class)
 @Component
@@ -70,6 +71,6 @@ public class EqualityBlockDefinition implements BlockDefinition {
     public List<RewriteRule> getRules() {
         var a = MathNodes.wc("a");
         var b = MathNodes.wc("b");
-        return List.of(new RewriteRule("eq_symm", "Symmetry", "a = b \\to b = a", MathNodes.eq(a, b), MathNodes.eq(b, a), false));
+        return List.of(new RewriteRule("eq_symm", "Symmetry", "a = b \\to b = a", MathNodes.eq(a, b), MathNodes.eq(b, a), RuleDirection.BIDIRECTIONAL));
     }
 }

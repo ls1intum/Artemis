@@ -14,8 +14,10 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ExerciseSubmitButtonComponent } from 'app/exercise/shared/exercise-submit-button/exercise-submit-button.component';
 import { MathNodeLatexPipe } from 'app/proof/shared/math-node-latex.pipe';
 import { KatexStringPipe } from 'app/proof/shared/katex-string.pipe';
-import { MathNode, applyRule, isTautology, mathNodesEqual } from 'app/proof/shared/entities/math-node.model';
+import { MathNode, applyRule, distance, equalsAC, isTautology, normalizeAC } from 'app/proof/shared/entities/math-node.model';
 import { BlockDefinitionModel, RewriteRuleModel } from 'app/proof/shared/entities/block-definition.model';
+import { StepDirection } from 'app/proof/shared/entities/rule-direction.model';
+import { HintSuggestion } from 'app/proof/shared/entities/hint-suggestion.model';
 import { ProofBlockRegistryService } from 'app/proof/manage/service/proof-block-registry.service';
 import { MathNodeContext } from 'app/proof/manage/update/proof-math-node/proof-math-node.component';
 import { ProofExpressionCanvasComponent } from 'app/proof/shared/expression-canvas/proof-expression-canvas.component';
@@ -59,13 +61,21 @@ export class ProofSubmissionComponent implements OnInit, OnDestroy {
     steps = signal<DerivationStep[]>([]);
     blocks = signal<BlockDefinitionModel[]>([]);
     selectedRuleId = signal<string>('');
+    selectedDirection = signal<StepDirection>('FORWARD');
     selectedNodePath = signal<number[] | undefined>(undefined);
     ruleApplicationError = signal<string | undefined>(undefined);
     draggingPayload = signal<string | undefined>(undefined);
 
+    selectedRule = computed<RewriteRuleModel | undefined>(() => this.allRules.find((r) => r.id === this.selectedRuleId()));
+
     // Manual mode state
     pendingManualStep = signal(false);
     manualResultExpression = signal<MathNode | undefined>(undefined);
+
+    // Hint state
+    hints = signal<HintSuggestion[]>([]);
+    hintsLoading = signal(false);
+    hintsError = signal<string | undefined>(undefined);
 
     // Rule palette search
     ruleSearch = signal('');
@@ -111,20 +121,66 @@ export class ProofSubmissionComponent implements OnInit, OnDestroy {
 
     isComplete = computed(() => {
         const current = this.currentExpression();
+        if (!current) return false;
+        const ac = !!this.proofExercise?.acNormalization;
+        const mode = this.proofExercise?.goalMode ?? 'TRANSFORMATION';
+        if (mode === 'EQUATION') {
+            return isTautology(canonical(current, ac)!);
+        }
         const target = this.proofExercise?.targetExpression;
-        if (!current || !target) return false;
-        return mathNodesEqual(current, target) || isTautology(current);
+        return !!target && (equalsAC(current, target, ac) || isTautology(canonical(current, ac)!));
     });
 
-    /** Rule IDs that match at the currently selected node path. Empty set when no node is selected. */
+    /** The tree to start the workspace from, based on the exercise's goal mode. */
+    startExpression(): MathNode | undefined {
+        return (this.proofExercise?.goalMode ?? 'TRANSFORMATION') === 'EQUATION' ? this.proofExercise?.goalExpression : this.proofExercise?.sourceExpression;
+    }
+
+    /** Set of trees the student has already visited — start expression + every recorded step result. */
+    private visitedStates = computed<Set<string>>(() => {
+        const ac = !!this.proofExercise?.acNormalization;
+        const set = new Set<string>();
+        const start = this.startExpression();
+        if (start) set.add(JSON.stringify(canonical(start, ac)));
+        for (const step of this.steps()) set.add(JSON.stringify(canonical(step.resultExpression, ac)));
+        return set;
+    });
+
+    /** Progress in [0, 1] toward the goal, or undefined when we can't compute it. */
+    progress = computed<number | undefined>(() => {
+        const cur = this.currentExpression();
+        if (!cur) return undefined;
+        const ac = !!this.proofExercise?.acNormalization;
+        const mode = this.proofExercise?.goalMode ?? 'TRANSFORMATION';
+        if (mode === 'EQUATION') {
+            const goal = this.proofExercise?.goalExpression;
+            if (!goal) return undefined;
+            return computeProgressEquation(goal, cur, ac);
+        }
+        const src = this.proofExercise?.sourceExpression;
+        const tgt = this.proofExercise?.targetExpression;
+        if (!src || !tgt) return undefined;
+        return computeProgressTransformation(src, tgt, cur, ac);
+    });
+
+    /**
+     * Rule IDs that match at the currently selected node path (either direction) AND whose result is not a previously-visited
+     * state under the active AC mode. Empty set when no node is selected.
+     */
     applicableRuleIds = computed<Set<string>>(() => {
         const path = this.selectedNodePath();
         const current = this.currentExpression();
         if (path === undefined || !current) return new Set<string>();
+        const ac = !!this.proofExercise?.acNormalization;
+        const visited = this.visitedStates();
+        const fresh = (tree: MathNode | undefined) => tree !== undefined && !visited.has(JSON.stringify(canonical(tree, ac)));
         const applicable = new Set<string>();
         for (const block of this.blocks()) {
             for (const rule of block.rules ?? []) {
-                if (applyRule(current, path, rule.pattern, rule.template) !== undefined) {
+                const forward = applyRule(current, path, rule.pattern, rule.template, rule.constraints ?? [], 'FORWARD', rule.direction);
+                const reverse =
+                    rule.direction === 'BIDIRECTIONAL' ? applyRule(current, path, rule.pattern, rule.template, rule.constraints ?? [], 'REVERSE', rule.direction) : undefined;
+                if (fresh(forward) || fresh(reverse)) {
                     applicable.add(rule.id);
                 }
             }
@@ -141,6 +197,8 @@ export class ProofSubmissionComponent implements OnInit, OnDestroy {
             if (rule) {
                 this.selectedNodePath.set(path);
                 this.selectedRuleId.set(payload);
+                const current = this.currentExpression();
+                if (current) this.selectedDirection.set(this.pickDirection(rule, current, path));
                 if (this.isManualMode) {
                     this.openManualBuilder();
                 } else {
@@ -176,7 +234,7 @@ export class ProofSubmissionComponent implements OnInit, OnDestroy {
                     const lastStep = this.submission.steps[this.submission.steps.length - 1];
                     this.currentExpression.set(lastStep.resultExpression);
                 } else {
-                    this.currentExpression.set(this.proofExercise.sourceExpression);
+                    this.currentExpression.set(this.startExpression());
                 }
             },
             error: () => this.alertService.error('artemisApp.proofExercise.error'),
@@ -202,6 +260,9 @@ export class ProofSubmissionComponent implements OnInit, OnDestroy {
     }
 
     get hasAstExpressions(): boolean {
+        if ((this.proofExercise?.goalMode ?? 'TRANSFORMATION') === 'EQUATION') {
+            return !!this.proofExercise?.goalExpression;
+        }
         return !!(this.proofExercise?.sourceExpression && this.proofExercise?.targetExpression);
     }
 
@@ -237,6 +298,14 @@ export class ProofSubmissionComponent implements OnInit, OnDestroy {
 
     selectRule(ruleId: string): void {
         this.selectedRuleId.set(ruleId);
+        const rule = this.allRules.find((r) => r.id === ruleId);
+        const cur = this.currentExpression();
+        const path = this.selectedNodePath();
+        if (rule && cur && path !== undefined) {
+            this.selectedDirection.set(this.pickDirection(rule, cur, path));
+        } else {
+            this.selectedDirection.set('FORWARD');
+        }
         this.ruleApplicationError.set(undefined);
         if (this.selectedNodePath() !== undefined) {
             if (this.isManualMode) {
@@ -247,10 +316,21 @@ export class ProofSubmissionComponent implements OnInit, OnDestroy {
         }
     }
 
+    toggleDirection(): void {
+        if (this.selectedRule()?.direction !== 'BIDIRECTIONAL') return;
+        this.selectedDirection.update((d) => (d === 'FORWARD' ? 'REVERSE' : 'FORWARD'));
+        if (this.selectedNodePath() !== undefined && !this.isManualMode) {
+            this.applySelectedRule();
+        }
+    }
+
     selectNode(path: number[]): void {
         this.selectedNodePath.set(path);
         this.ruleApplicationError.set(undefined);
         if (this.selectedRuleId()) {
+            const rule = this.allRules.find((r) => r.id === this.selectedRuleId());
+            const cur = this.currentExpression();
+            if (rule && cur) this.selectedDirection.set(this.pickDirection(rule, cur, path));
             if (this.isManualMode) {
                 this.openManualBuilder();
             } else {
@@ -270,11 +350,16 @@ export class ProofSubmissionComponent implements OnInit, OnDestroy {
             this.ruleApplicationError.set('Please build the result expression first.');
             return;
         }
+        if (this.visitedStates().has(JSON.stringify(canonical(result, !!this.proofExercise?.acNormalization)))) {
+            this.ruleApplicationError.set('This step would return to a previously visited state.');
+            return;
+        }
         const newStep: DerivationStep = {
             stepIndex: this.steps().length,
             appliedRuleId: this.selectedRuleId(),
             targetNodePath: this.selectedNodePath() ?? [],
             resultExpression: result,
+            direction: this.selectedDirection(),
         };
         this.steps.update((s) => [...s, newStep]);
         this.stepStatuses.update((s) => [...s, 'pending']);
@@ -296,6 +381,20 @@ export class ProofSubmissionComponent implements OnInit, OnDestroy {
         this.ruleApplicationError.set(undefined);
     }
 
+    /**
+     * Picks the application direction that actually matches at `path` for `rule` against `current`, preferring FORWARD when
+     * both sides match. Falls back to FORWARD when neither matches so the regular "Rule does not apply" error surfaces.
+     */
+    private pickDirection(rule: RewriteRuleModel, current: MathNode, path: number[]): StepDirection {
+        if (applyRule(current, path, rule.pattern, rule.template, rule.constraints ?? [], 'FORWARD', rule.direction)) {
+            return 'FORWARD';
+        }
+        if (rule.direction === 'BIDIRECTIONAL' && applyRule(current, path, rule.pattern, rule.template, rule.constraints ?? [], 'REVERSE', rule.direction)) {
+            return 'REVERSE';
+        }
+        return 'FORWARD';
+    }
+
     applySelectedRule() {
         this.ruleApplicationError.set(undefined);
         const ruleId = this.selectedRuleId();
@@ -311,9 +410,14 @@ export class ProofSubmissionComponent implements OnInit, OnDestroy {
         }
 
         const path = this.selectedNodePath() ?? [];
-        const newTree = applyRule(current, path, rule.pattern, rule.template);
+        const direction = this.selectedDirection();
+        const newTree = applyRule(current, path, rule.pattern, rule.template, rule.constraints ?? [], direction, rule.direction);
         if (!newTree) {
             this.ruleApplicationError.set('Rule does not apply at the selected node.');
+            return;
+        }
+        if (this.visitedStates().has(JSON.stringify(canonical(newTree, !!this.proofExercise?.acNormalization)))) {
+            this.ruleApplicationError.set('This step would return to a previously visited state.');
             return;
         }
 
@@ -322,6 +426,7 @@ export class ProofSubmissionComponent implements OnInit, OnDestroy {
             appliedRuleId: ruleId,
             targetNodePath: path,
             resultExpression: newTree,
+            direction,
         };
         this.steps.update((s) => [...s, newStep]);
         this.stepStatuses.update((s) => [...s, 'pending']);
@@ -329,6 +434,7 @@ export class ProofSubmissionComponent implements OnInit, OnDestroy {
         this.currentExpression.set(newTree);
         this.selectedNodePath.set(undefined);
         this.selectedRuleId.set('');
+        this.selectedDirection.set('FORWARD');
         this.hasUnsavedChanges.set(true);
     }
 
@@ -404,7 +510,7 @@ export class ProofSubmissionComponent implements OnInit, OnDestroy {
         this.stepStatuses.update((s) => s.slice(0, index));
         this.stepErrors.update((s) => s.slice(0, index));
         const remaining = this.steps();
-        const expr = remaining.length > 0 ? remaining[remaining.length - 1].resultExpression : this.proofExercise?.sourceExpression;
+        const expr = remaining.length > 0 ? remaining[remaining.length - 1].resultExpression : this.startExpression();
         this.currentExpression.set(expr);
         this.selectedNodePath.set(undefined);
         this.selectedRuleId.set('');
@@ -414,8 +520,48 @@ export class ProofSubmissionComponent implements OnInit, OnDestroy {
         this.hasUnsavedChanges.set(true);
     }
 
+    requestHints(): void {
+        const exerciseId = this.proofExercise?.id;
+        const current = this.currentExpression();
+        if (!exerciseId || !current) return;
+        this.hintsError.set(undefined);
+        this.hintsLoading.set(true);
+        this.proofSubmissionService.getHints(exerciseId, current).subscribe({
+            next: (suggestions) => {
+                this.hints.set(suggestions);
+                this.hintsLoading.set(false);
+            },
+            error: () => {
+                this.hints.set([]);
+                this.hintsLoading.set(false);
+                this.hintsError.set('Hints are not available for this exercise.');
+            },
+        });
+    }
+
+    dismissHints(): void {
+        this.hints.set([]);
+        this.hintsError.set(undefined);
+    }
+
+    applyHint(hint: HintSuggestion): void {
+        const rule = this.allRules.find((r) => r.id === hint.ruleId);
+        if (!rule) return;
+        this.selectedRuleId.set(hint.ruleId);
+        this.selectedNodePath.set(hint.path);
+        // Direction is encoded in the rationale string; default to FORWARD unless the hint marks reverse.
+        const reverse = !!hint.rationale && hint.rationale.toLowerCase().includes('reverse');
+        this.selectedDirection.set(reverse ? 'REVERSE' : 'FORWARD');
+        if (this.isManualMode) {
+            this.openManualBuilder();
+        } else {
+            this.applySelectedRule();
+        }
+        this.dismissHints();
+    }
+
     verifyFullProof() {
-        const source = this.proofExercise?.sourceExpression;
+        const source = this.startExpression();
         if (!source) return;
 
         const statuses: StepStatus[] = [];
@@ -430,8 +576,8 @@ export class ProofSubmissionComponent implements OnInit, OnDestroy {
                 return;
             }
             const prev = index === 0 ? source : stepsSnapshot[index - 1].resultExpression;
-            const result = applyRule(prev, step.targetNodePath, rule.pattern, rule.template);
-            const isValid = !!result && mathNodesEqual(result, step.resultExpression);
+            const result = applyRule(prev, step.targetNodePath, rule.pattern, rule.template, rule.constraints ?? [], step.direction ?? 'FORWARD', rule.direction);
+            const isValid = !!result && equalsAC(result, step.resultExpression, !!this.proofExercise?.acNormalization);
             statuses.push(isValid ? 'valid' : 'invalid');
             errors.push(isValid ? undefined : 'Rule does not produce this result from the previous expression.');
         });
@@ -505,4 +651,33 @@ export class ProofSubmissionComponent implements OnInit, OnDestroy {
             },
         });
     }
+}
+
+/** Returns the AC-normalised form when ac is true, the input unchanged otherwise. */
+function canonical(node: MathNode | undefined, ac: boolean): MathNode | undefined {
+    return ac ? normalizeAC(node) : node;
+}
+
+/** Progress in [0, 1] toward the target — how much of the initial source→target distance has been closed. */
+function computeProgressTransformation(source: MathNode, target: MathNode, current: MathNode, ac: boolean): number {
+    const initial = distance(canonical(source, ac), canonical(target, ac));
+    if (initial <= 0) return 1;
+    const remaining = distance(canonical(current, ac), canonical(target, ac));
+    return Math.max(0, Math.min(1, 1 - remaining / initial));
+}
+
+/** Progress in [0, 1] toward tautology — how much of the initial side-distance has been closed. */
+function computeProgressEquation(goal: MathNode, current: MathNode, ac: boolean): number {
+    const initialDist = sideDistance(goal, ac);
+    if (initialDist <= 0) return 1;
+    const remaining = sideDistance(current, ac);
+    return Math.max(0, Math.min(1, 1 - remaining / initialDist));
+}
+
+function sideDistance(node: MathNode, ac: boolean): number {
+    if (node.type !== 'equality' || !node.slots) return 0;
+    const left = node.slots['left']?.[0];
+    const right = node.slots['right']?.[0];
+    if (!left || !right) return 0;
+    return distance(canonical(left, ac), canonical(right, ac));
 }

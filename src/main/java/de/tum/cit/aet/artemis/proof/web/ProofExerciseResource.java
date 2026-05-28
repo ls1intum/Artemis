@@ -34,10 +34,14 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.proof.config.ProofEnabled;
+import de.tum.cit.aet.artemis.proof.domain.MathNodes;
 import de.tum.cit.aet.artemis.proof.domain.ProofExercise;
 import de.tum.cit.aet.artemis.proof.dto.ProofExerciseDTO;
+import de.tum.cit.aet.artemis.proof.dto.ProofSubmissionDTO.DerivationStepDTO;
+import de.tum.cit.aet.artemis.proof.grader.ReachabilityReport;
 import de.tum.cit.aet.artemis.proof.repository.ProofExerciseRepository;
 import de.tum.cit.aet.artemis.proof.service.ProofExerciseImportService;
+import de.tum.cit.aet.artemis.proof.service.ProofGradingService;
 
 @Conditional(ProofEnabled.class)
 @RestController
@@ -61,15 +65,25 @@ public class ProofExerciseResource {
 
     private final ExerciseSpecificationService exerciseSpecificationService;
 
+    private final ProofGradingService proofGradingService;
+
     public ProofExerciseResource(ProofExerciseRepository proofExerciseRepository, ProofExerciseImportService proofExerciseImportService, CourseRepository courseRepository,
-            UserRepository userRepository, ExerciseSpecificationService exerciseSpecificationService) {
+            UserRepository userRepository, ExerciseSpecificationService exerciseSpecificationService, ProofGradingService proofGradingService) {
         this.proofExerciseRepository = proofExerciseRepository;
         this.proofExerciseImportService = proofExerciseImportService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.exerciseSpecificationService = exerciseSpecificationService;
+        this.proofGradingService = proofGradingService;
     }
 
+    /**
+     * POST /proof-exercises : create a new proof exercise.
+     *
+     * @param proofExerciseDTO the exercise to create
+     * @return the created exercise
+     * @throws URISyntaxException if the location URI cannot be constructed
+     */
     @PostMapping("proof-exercises")
     @EnforceAtLeastEditor
     public ResponseEntity<ProofExerciseDTO> createProofExercise(@RequestBody ProofExerciseDTO proofExerciseDTO) throws URISyntaxException {
@@ -77,14 +91,24 @@ public class ProofExerciseResource {
         if (proofExerciseDTO.id() != null) {
             throw new BadRequestAlertException("A new proof exercise cannot already have an ID", ENTITY_NAME, "idexists");
         }
+        validateExpressionsWildcardFree(proofExerciseDTO);
         ProofExercise exercise = new ProofExercise();
         proofExerciseDTO.applyToEntity(exercise);
+        normalizeExpressions(exercise);
         applyCoursOrExerciseGroup(proofExerciseDTO, exercise);
         ProofExercise saved = proofExerciseRepository.findByIdWithCategories(proofExerciseRepository.save(exercise).getId()).orElseThrow();
         return ResponseEntity.created(new URI("/api/proof/proof-exercises/" + saved.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, saved.getTitle())).body(ProofExerciseDTO.of(saved));
     }
 
+    /**
+     * PUT /proof-exercises : update an existing proof exercise. Delegates to create if the
+     * DTO has no id, matching the behaviour of the other exercise resources.
+     *
+     * @param proofExerciseDTO the exercise to update
+     * @return the updated exercise
+     * @throws URISyntaxException if the location URI cannot be constructed
+     */
     @PutMapping("proof-exercises")
     @EnforceAtLeastEditor
     public ResponseEntity<ProofExerciseDTO> updateProofExercise(@RequestBody ProofExerciseDTO proofExerciseDTO) throws URISyntaxException {
@@ -92,8 +116,10 @@ public class ProofExerciseResource {
         if (proofExerciseDTO.id() == null) {
             return createProofExercise(proofExerciseDTO);
         }
+        validateExpressionsWildcardFree(proofExerciseDTO);
         ProofExercise existing = proofExerciseRepository.findByIdWithCategories(proofExerciseDTO.id()).orElseThrow();
         proofExerciseDTO.applyToEntity(existing);
+        normalizeExpressions(existing);
         applyCoursOrExerciseGroup(proofExerciseDTO, existing);
         ProofExercise saved = proofExerciseRepository.findByIdWithCategories(proofExerciseRepository.save(existing).getId()).orElseThrow();
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, saved.getId().toString())).body(ProofExerciseDTO.of(saved));
@@ -170,6 +196,44 @@ public class ProofExerciseResource {
         ProofExercise result = proofExerciseRepository.findByIdWithCategories(proofExerciseImportService.importProofExercise(sourceExercise, target).getId()).orElseThrow();
         return ResponseEntity.created(new URI("/api/proof/proof-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(ProofExerciseDTO.of(result));
+    }
+
+    /**
+     * GET /proof-exercises/{exerciseId}/verify-reachability : run the configured grader's automated reachability
+     * check on the exercise. For rewrite-chain exercises this runs the FORWARD_ONLY reduction strategy from the
+     * source (or goal in EQUATION mode) and reports how close it gets to the target / a tautology.
+     *
+     * @param exerciseId the exercise to analyse
+     * @return the reachability report, or 404 if the grader does not support this check
+     */
+    @GetMapping("proof-exercises/{exerciseId}/verify-reachability")
+    @EnforceAtLeastEditor
+    public ResponseEntity<ReachabilityReport> verifyReachability(@PathVariable Long exerciseId) {
+        log.debug("REST request to verify reachability for ProofExercise : {}", exerciseId);
+        ProofExercise exercise = proofExerciseRepository.findByIdWithCategoriesAndCourse(exerciseId).orElseThrow();
+        return proofGradingService.verifyReachability(exercise).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    private void validateExpressionsWildcardFree(ProofExerciseDTO dto) {
+        try {
+            MathNodes.assertWildcardFree(dto.sourceExpression());
+            MathNodes.assertWildcardFree(dto.targetExpression());
+            if (dto.exampleDerivations() != null) {
+                dto.exampleDerivations().forEach(derivation -> derivation.forEach(step -> MathNodes.assertWildcardFree(step.resultExpression())));
+            }
+        }
+        catch (IllegalArgumentException e) {
+            throw new BadRequestAlertException(e.getMessage(), ENTITY_NAME, "wildcardNotAllowed");
+        }
+    }
+
+    private void normalizeExpressions(ProofExercise exercise) {
+        exercise.setSourceExpression(MathNodes.normalize(exercise.getSourceExpression()));
+        exercise.setTargetExpression(MathNodes.normalize(exercise.getTargetExpression()));
+        if (exercise.getExampleDerivations() != null) {
+            exercise.getExampleDerivations().forEach(derivation -> derivation.replaceAll(
+                    step -> new DerivationStepDTO(step.id(), step.stepIndex(), step.appliedRuleId(), step.targetNodePath(), MathNodes.normalize(step.resultExpression()))));
+        }
     }
 
     private void applyCoursOrExerciseGroup(ProofExerciseDTO dto, ProofExercise exercise) {

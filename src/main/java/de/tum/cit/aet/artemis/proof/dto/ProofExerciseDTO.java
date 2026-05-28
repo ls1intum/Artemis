@@ -8,9 +8,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.proof.domain.GoalMode;
 import de.tum.cit.aet.artemis.proof.domain.MathNode;
 import de.tum.cit.aet.artemis.proof.domain.ProofExercise;
 import de.tum.cit.aet.artemis.proof.dto.ProofSubmissionDTO.DerivationStepDTO;
+import de.tum.cit.aet.artemis.proof.grader.GraderType;
 
 /**
  * Data Transfer Object for {@link ProofExercise}.
@@ -46,6 +48,10 @@ import de.tum.cit.aet.artemis.proof.dto.ProofSubmissionDTO.DerivationStepDTO;
  * @param allowVerification                      whether students may trigger proof verification
  * @param onlyShowApplicableRules                whether the rule palette shows only rules applicable at the selected node
  * @param partialCreditEnabled                   whether partial credit is awarded proportionally based on valid steps completed
+ * @param graderType                             which {@link GraderType} backend grades this exercise (only REWRITE_CHAIN is wired today; M3+ adds Lean / Isabelle / egg)
+ * @param goalMode                               how the goal is encoded: TRANSFORMATION (source→target) or EQUATION (single goal tree closed by tautology)
+ * @param goalExpression                         the goal tree for EQUATION mode (typically an {@code equality(LHS, RHS)}); {@code null} in TRANSFORMATION mode
+ * @param acNormalization                        whether the grader treats {@code +} and {@code ·} as commutative/associative for equality comparisons
  * @param exampleDerivations                     instructor-supplied example derivations (each is an ordered list of steps)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -54,8 +60,13 @@ public record ProofExerciseDTO(Long id, String title, String shortName, String p
         Boolean allowFeedbackRequests, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, String gradingInstructions,
         ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, Long courseId,
         Long exerciseGroupId, MathNode sourceExpression, MathNode targetExpression, Boolean manualDerivation, Boolean allowVerification, Boolean onlyShowApplicableRules,
-        Boolean partialCreditEnabled, List<List<DerivationStepDTO>> exampleDerivations) {
+        Boolean partialCreditEnabled, GraderType graderType, GoalMode goalMode, MathNode goalExpression, Boolean acNormalization,
+        List<List<DerivationStepDTO>> exampleDerivations) {
 
+    /**
+     * @param exercise the entity to project
+     * @return a DTO carrying the entity's user-facing fields
+     */
     public static ProofExerciseDTO of(ProofExercise exercise) {
         Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
@@ -65,7 +76,8 @@ public record ProofExerciseDTO(Long id, String title, String shortName, String p
                 exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), exercise.getGradingInstructions(),
                 exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), courseId,
                 exerciseGroupId, exercise.getSourceExpression(), exercise.getTargetExpression(), exercise.isManualDerivation(), exercise.isAllowVerification(),
-                exercise.isOnlyShowApplicableRules(), exercise.isPartialCreditEnabled(), exercise.getExampleDerivations());
+                exercise.isOnlyShowApplicableRules(), exercise.isPartialCreditEnabled(), exercise.getGraderType(), exercise.getGoalMode(), exercise.getGoalExpression(),
+                exercise.isAcNormalization(), exercise.getExampleDerivations());
     }
 
     /**
@@ -102,6 +114,10 @@ public record ProofExerciseDTO(Long id, String title, String shortName, String p
         exercise.setAllowVerification(allowVerification == null || allowVerification);
         exercise.setOnlyShowApplicableRules(Boolean.TRUE.equals(onlyShowApplicableRules));
         exercise.setPartialCreditEnabled(Boolean.TRUE.equals(partialCreditEnabled));
+        exercise.setGraderType(graderType == null ? GraderType.REWRITE_CHAIN : graderType);
+        exercise.setGoalMode(goalMode == null ? GoalMode.TRANSFORMATION : goalMode);
+        exercise.setGoalExpression(goalExpression);
+        exercise.setAcNormalization(Boolean.TRUE.equals(acNormalization));
         exercise.setExampleDerivations(exampleDerivations);
     }
 }

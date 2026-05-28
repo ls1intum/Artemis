@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.proof.domain.DerivationStep;
 import de.tum.cit.aet.artemis.proof.domain.MathNode;
 import de.tum.cit.aet.artemis.proof.domain.ProofExercise;
 import de.tum.cit.aet.artemis.proof.domain.ProofSubmission;
+import de.tum.cit.aet.artemis.proof.domain.StepDirection;
 
 /**
  * Data Transfer Object for {@link ProofSubmission}.
@@ -39,14 +40,27 @@ public record ProofSubmissionDTO(Long id, Boolean submitted, ZonedDateTime submi
      * @param appliedRuleId    rule ID from the block registry
      * @param targetNodePath   index-path to the rewritten node within the current expression tree
      * @param resultExpression the full expression tree after this step
+     * @param direction        direction in which the rule was applied; {@code null} defaults to {@link StepDirection#FORWARD}
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record DerivationStepDTO(Long id, int stepIndex, String appliedRuleId, List<Integer> targetNodePath, MathNode resultExpression) {
+    public record DerivationStepDTO(Long id, int stepIndex, String appliedRuleId, List<Integer> targetNodePath, MathNode resultExpression, StepDirection direction) {
 
-        public static DerivationStepDTO of(DerivationStep step) {
-            return new DerivationStepDTO(step.getId(), step.getStepIndex(), step.getAppliedRuleId(), step.getTargetNodePath(), step.getResultExpression());
+        /** Convenience constructor for callers that don't care about direction (defaults to FORWARD). */
+        public DerivationStepDTO(Long id, int stepIndex, String appliedRuleId, List<Integer> targetNodePath, MathNode resultExpression) {
+            this(id, stepIndex, appliedRuleId, targetNodePath, resultExpression, StepDirection.FORWARD);
         }
 
+        /**
+         * @param step the entity to project
+         * @return a DTO mirroring the step
+         */
+        public static DerivationStepDTO of(DerivationStep step) {
+            return new DerivationStepDTO(step.getId(), step.getStepIndex(), step.getAppliedRuleId(), step.getTargetNodePath(), step.getResultExpression(), step.getDirection());
+        }
+
+        /**
+         * @return a new {@link DerivationStep} entity populated from this DTO (id is set only if non-null)
+         */
         public DerivationStep toEntity() {
             DerivationStep step = new DerivationStep();
             if (id != null) {
@@ -56,6 +70,7 @@ public record ProofSubmissionDTO(Long id, Boolean submitted, ZonedDateTime submi
             step.setAppliedRuleId(appliedRuleId);
             step.setTargetNodePath(targetNodePath);
             step.setResultExpression(resultExpression);
+            step.setDirection(direction == null ? StepDirection.FORWARD : direction);
             return step;
         }
     }

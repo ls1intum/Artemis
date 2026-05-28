@@ -1,6 +1,16 @@
 <div class="d-flex flex-column gap-3">
     <!-- Start / Goal header -->
-    @if (sourceExpression() || targetExpression()) {
+    @if (goalMode() === 'EQUATION') {
+        @if (goalExpression()) {
+            <div class="d-flex align-items-center gap-2 flex-wrap p-2 border rounded small bg-light">
+                <span class="text-muted">Prove:</span>
+                <span class="fw-semibold" [innerHTML]="goalExpression() | mathNodeLatex"></span>
+                @if (isComplete()) {
+                    <span class="badge bg-success ms-auto">✓ Tautology reached</span>
+                }
+            </div>
+        }
+    } @else if (sourceExpression() || targetExpression()) {
         <div class="d-flex align-items-center gap-2 flex-wrap p-2 border rounded small bg-light">
             @if (sourceExpression()) {
                 <span class="text-muted">Start:</span>
@@ -16,6 +26,23 @@
             @if (isComplete()) {
                 <span class="badge bg-success ms-auto">✓ Reached goal</span>
             }
+        </div>
+    }
+
+    @if (progress() !== undefined && !isComplete()) {
+        <div class="d-flex align-items-center gap-2 small text-muted">
+            <span jhiTranslate="artemisApp.proofExercise.progressLabel">Progress</span>
+            <div class="progress flex-grow-1" style="height: 4px">
+                <div
+                    class="progress-bar bg-info"
+                    role="progressbar"
+                    [style.width.%]="progress()! * 100"
+                    [attr.aria-valuenow]="progress()! * 100"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                ></div>
+            </div>
+            <span style="min-width: 3em; text-align: right">{{ (progress()! * 100).toFixed(0) }}%</span>
         </div>
     }
 
@@ -74,13 +101,14 @@
                     <!-- Initial expression -->
                     <div class="py-1 px-2 border rounded small bg-light">
                         <span class="text-muted me-2" style="font-size: 0.75em">start</span>
-                        <span [innerHTML]="sourceExpression() | mathNodeLatex"></span>
+                        <span [innerHTML]="startExpression() | mathNodeLatex"></span>
                     </div>
                     @for (step of steps(); track step.stepIndex) {
                         <!-- Rule slot -->
                         <div class="d-flex align-items-center gap-1 ps-2 py-1 border rounded small" style="font-size: 0.8em; border-style: dashed !important; pointer-events: none">
                             <span class="text-muted">by</span>
                             <span class="badge bg-secondary">{{ ruleNameFor(step.appliedRuleId) }}</span>
+                            <span class="text-muted" title="Direction">{{ step.direction === 'REVERSE' ? '←' : '→' }}</span>
                         </div>
                         <!-- Result expression card -->
                         <div class="py-1 px-2 border rounded small">
@@ -98,7 +126,7 @@
                 <jhi-proof-expression-canvas [rootNodes]="rootNodes()" [draggingPayload]="draggingPayload()" [nodeCtx]="nodeCtx()" [blocks]="blocks()" [readonly]="isComplete()" />
             </div>
 
-            <!-- Contextual hint + undo -->
+            <!-- Contextual hint + undo + direction toggle -->
             <div class="d-flex gap-2 align-items-center flex-wrap">
                 @if (isComplete()) {
                     <small class="text-success fst-italic fw-semibold">Goal reached — derivation locked</small>
@@ -106,6 +134,16 @@
                     <small class="text-muted fst-italic">← Select a rule, then click a node</small>
                 } @else if (selectedRuleId() && selectedNodePath() === undefined) {
                     <span class="badge bg-primary">{{ selectedRuleName }}</span>
+                    @if (selectedRule()?.direction === 'BIDIRECTIONAL') {
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-primary"
+                            (click)="toggleDirection()"
+                            [title]="'artemisApp.proofExercise.direction.toggle' | artemisTranslate"
+                        >
+                            {{ selectedDirection() === 'REVERSE' ? '← reverse' : '→ forward' }}
+                        </button>
+                    }
                     <small class="text-muted fst-italic">Now click a node →</small>
                 } @else if (!selectedRuleId() && selectedNodePath() !== undefined) {
                     <small class="text-muted fst-italic">← Now select a rule</small>

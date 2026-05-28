@@ -18,7 +18,33 @@
             "error": "Ein Fehler ist beim Laden der Beweis-Aufgabe aufgetreten",
             "score": "Punkte",
             "assessedSubmission": "Ihr Beweis wurde bewertet.",
-            "assessedSubmissionInstructor": "Dieser Beweis wurde bewertet."
+            "assessedSubmissionInstructor": "Dieser Beweis wurde bewertet.",
+            "graderType": "Bewertungs-Backend",
+            "graderTypeHint": "Schritt-für-Schritt ist derzeit das einzige verfügbare Backend. Lean / Isabelle / egg e-graph folgen in Meilenstein 3.",
+            "direction": {
+                "toggle": "Anwendungsrichtung umschalten (vorwärts / rückwärts)",
+                "forward": "Vorwärts",
+                "reverse": "Rückwärts"
+            },
+            "goalMode": "Aufgabenform",
+            "goalModeHint": "Transformation: Studierende formen einen Startausdruck in einen Zielausdruck um. Gleichung: Studierende reduzieren eine Gleichung zu einer Tautologie (LHS struktur-gleich RHS).",
+            "goalExpression": "Ziel-Ausdruck",
+            "goalExpressionHint": "Der Beweis ist abgeschlossen, sobald sich der Ausdruck zu einer Tautologie (z.B. t = t) reduziert.",
+            "goalExpressionRequired": "Für die EQUATION-Aufgabenform muss ein Ziel-Ausdruck angegeben werden — typischerweise eine Gleichung mit zwei nicht-trivialen Seiten.",
+            "progressLabel": "Fortschritt",
+            "noRegressRejection": "Dieser Schritt würde einen bereits besuchten Zustand wiederherstellen.",
+            "acNormalization": "AC-Normalisierung",
+            "acNormalizationHint": "Behandelt + und · als kommutativ / assoziativ beim Vergleich von Ausdrücken. Studierende müssen Kommutativitäts- / Assoziativitätsregeln nicht explizit anwenden.",
+            "suggestHint": "Hinweis vorschlagen",
+            "hintsLoading": "Suche…",
+            "hintsHeader": "Vorschläge",
+            "hintsTitle": "Lass den Grader Vorschläge für den nächsten Schritt machen, sortiert nach Fortschritt zum Ziel.",
+            "dismiss": "Ausblenden",
+            "verifyReachability": "Erreichbarkeit prüfen",
+            "verifyReachabilityRunning": "Prüfe…",
+            "verifyReachabilityHint": "Lässt den automatischen Reduzierer vom Start-/Ziel-Ausdruck laufen — nützlich, um zu prüfen, ob die Aufgabe lösbar ist.",
+            "reachabilityReachable": "Erreichbar",
+            "reachabilityPartial": "Nicht vollständig erreichbar"
         }
     }
 }

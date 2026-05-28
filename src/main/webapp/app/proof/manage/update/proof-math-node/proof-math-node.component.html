@@ -80,6 +80,21 @@
             </span>
         }
 
+        @case ('UNARY_PREFIX') {
+            <span class="math-infix">
+                <span class="math-op">{{ displaySymbol() }}</span>
+                @if (slotChild('inner'); as inner) {
+                    @if (needsParens(inner, 'inner')) {
+                        <span class="math-paren">(</span>
+                        <jhi-math-node [node]="inner" [path]="slotChildPath('inner')" [rootIndex]="rootIndex()" [ctx]="ctx()" />
+                        <span class="math-paren">)</span>
+                    } @else {
+                        <jhi-math-node [node]="inner" [path]="slotChildPath('inner')" [rootIndex]="rootIndex()" [ctx]="ctx()" />
+                    }
+                }
+            </span>
+        }
+
         @case ('PARENTHESES') {
             <span class="math-infix">
                 <span class="math-paren">(</span>

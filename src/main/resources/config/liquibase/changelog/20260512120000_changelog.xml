@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="20260512120000-1" author="KilianSen">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="submission" columnName="student_checkbox_state"/>
+        </preConditions>
+        <dropColumn tableName="submission" columnName="student_checkbox_state"/>
+    </changeSet>
+
+    <changeSet id="20260512120000-2" author="KilianSen">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="proof_exercise_details" columnName="predefined_checkbox_state"/>
+        </preConditions>
+        <dropColumn tableName="proof_exercise_details" columnName="predefined_checkbox_state"/>
+    </changeSet>
+
+</databaseChangeLog>

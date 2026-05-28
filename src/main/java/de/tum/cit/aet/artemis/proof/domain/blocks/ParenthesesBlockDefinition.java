@@ -11,6 +11,7 @@ import de.tum.cit.aet.artemis.proof.domain.BlockDefinition;
 import de.tum.cit.aet.artemis.proof.domain.LayoutCategory;
 import de.tum.cit.aet.artemis.proof.domain.MathNodes;
 import de.tum.cit.aet.artemis.proof.domain.RewriteRule;
+import de.tum.cit.aet.artemis.proof.domain.RuleDirection;
 
 @Conditional(ProofEnabled.class)
 @Component
@@ -59,6 +60,6 @@ public class ParenthesesBlockDefinition implements BlockDefinition {
     @Override
     public List<RewriteRule> getRules() {
         var a = MathNodes.wc("a");
-        return List.of(new RewriteRule("paren_unwrap", "Remove parentheses", "\\left(a\\right) \\to a", MathNodes.paren(a), a, true));
+        return List.of(new RewriteRule("paren_unwrap", "Remove parentheses", "\\left(a\\right) \\to a", MathNodes.paren(a), a, RuleDirection.FORWARD_ONLY));
     }
 }

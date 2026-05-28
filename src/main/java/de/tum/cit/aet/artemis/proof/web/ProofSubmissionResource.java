@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -30,9 +31,12 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.proof.config.ProofEnabled;
 import de.tum.cit.aet.artemis.proof.domain.DerivationStep;
+import de.tum.cit.aet.artemis.proof.domain.MathNodes;
 import de.tum.cit.aet.artemis.proof.domain.ProofExercise;
 import de.tum.cit.aet.artemis.proof.domain.ProofSubmission;
+import de.tum.cit.aet.artemis.proof.dto.HintRequestDTO;
 import de.tum.cit.aet.artemis.proof.dto.ProofSubmissionDTO;
+import de.tum.cit.aet.artemis.proof.grader.HintSuggestion;
 import de.tum.cit.aet.artemis.proof.repository.ProofExerciseRepository;
 import de.tum.cit.aet.artemis.proof.repository.ProofSubmissionRepository;
 import de.tum.cit.aet.artemis.proof.service.ProofGradingService;
@@ -93,6 +97,13 @@ public class ProofSubmissionResource {
         submission.setParticipation(participation);
         for (DerivationStep step : submission.getSteps()) {
             step.setSubmission(submission);
+            try {
+                MathNodes.assertWildcardFree(step.getResultExpression());
+            }
+            catch (IllegalArgumentException e) {
+                throw new BadRequestAlertException(e.getMessage(), "proofSubmission", "wildcardNotAllowed");
+            }
+            step.setResultExpression(MathNodes.normalize(step.getResultExpression()));
         }
 
         submission = proofSubmissionRepository.save(submission);
@@ -162,6 +173,13 @@ public class ProofSubmissionResource {
         return ResponseEntity.ok(ProofSubmissionDTO.of(submission));
     }
 
+    /**
+     * GET /proof-submissions/{submissionId}/for-assessment : load a submission for tutor assessment,
+     * eagerly fetching steps, results, and participation.
+     *
+     * @param submissionId the submission to load
+     * @return the submission populated for the assessment view
+     */
     @GetMapping("proof-submissions/{submissionId}/for-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<ProofSubmissionDTO> getProofSubmissionForAssessment(@PathVariable Long submissionId) {
@@ -174,6 +192,12 @@ public class ProofSubmissionResource {
         return ResponseEntity.ok(ProofSubmissionDTO.of(submission));
     }
 
+    /**
+     * GET /exercises/{exerciseId}/proof-submissions : list all submitted submissions for an exercise.
+     *
+     * @param exerciseId the exercise whose submissions to list
+     * @return submitted submissions for the exercise
+     */
     @GetMapping("exercises/{exerciseId}/proof-submissions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ProofSubmissionDTO>> getSubmittedProofSubmissions(@PathVariable Long exerciseId) {
@@ -184,6 +208,39 @@ public class ProofSubmissionResource {
         return ResponseEntity.ok(dtos);
     }
 
+    /**
+     * POST /exercises/{exerciseId}/hints : ranked next-step suggestions for the student's current proof state.
+     * Gated by {@link ProofExercise#isAllowVerification()} — instructors can disable hints per exercise.
+     *
+     * @param exerciseId the exercise the student is working on
+     * @param request    the hint request body carrying the current expression
+     * @return up to three {@link HintSuggestion}s ranked by progress toward the goal
+     */
+    @PostMapping("exercises/{exerciseId}/hints")
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<HintSuggestion>> suggestHints(@PathVariable Long exerciseId, @RequestBody HintRequestDTO request) {
+        log.debug("REST request to compute hints for proof exercise : {}", exerciseId);
+        ProofExercise exercise = proofExerciseRepository.findByIdWithCategories(exerciseId).orElseThrow();
+        if (!exercise.isAllowVerification()) {
+            throw new AccessForbiddenException("Hint generation is disabled for this exercise.");
+        }
+        try {
+            MathNodes.assertWildcardFree(request.currentExpression());
+        }
+        catch (IllegalArgumentException e) {
+            throw new BadRequestAlertException(e.getMessage(), "proofSubmission", "wildcardNotAllowed");
+        }
+        return ResponseEntity.ok(proofGradingService.suggestHints(exercise, MathNodes.normalize(request.currentExpression())));
+    }
+
+    /**
+     * PUT /proof-submissions/{submissionId}/manual-result : overwrite the latest result with a
+     * tutor-supplied manual score.
+     *
+     * @param submissionId the submission to assess
+     * @param score        the manual score in [0, 100]
+     * @return the submission with the new manual result attached
+     */
     @PutMapping("proof-submissions/{submissionId}/manual-result")
     @EnforceAtLeastTutor
     public ResponseEntity<ProofSubmissionDTO> saveManualResult(@PathVariable Long submissionId, @RequestBody double score) {

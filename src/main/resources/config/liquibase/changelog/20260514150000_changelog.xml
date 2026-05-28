@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="20260514150000-1" author="KilianSen">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="proof_exercise_details" columnName="derivation_mode"/>
+        </preConditions>
+        <dropColumn tableName="proof_exercise_details" columnName="derivation_mode"/>
+    </changeSet>
+
+    <changeSet id="20260514150000-2" author="KilianSen">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="proof_exercise_details" columnName="manual_derivation"/></not>
+        </preConditions>
+        <addColumn tableName="proof_exercise_details">
+            <column name="manual_derivation" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

@@ -4,6 +4,8 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ProofSubmission } from 'app/proof/shared/entities/proof-submission.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
+import { MathNode } from 'app/proof/shared/entities/math-node.model';
+import { HintSuggestion } from 'app/proof/shared/entities/hint-suggestion.model';
 
 export type EntityResponseType = HttpResponse<ProofSubmission>;
 
@@ -64,5 +66,12 @@ export class ProofSubmissionService {
         return this.http
             .put<ProofSubmission>(`api/proof/proof-submissions/${submissionId}/manual-result`, score, { observe: 'response' })
             .pipe(map((res: HttpResponse<ProofSubmission>) => res.body!));
+    }
+
+    /** Asks the backend for ranked next-step suggestions at the current proof state. */
+    getHints(exerciseId: number, currentExpression: MathNode): Observable<HintSuggestion[]> {
+        return this.http
+            .post<HintSuggestion[]>(`api/proof/exercises/${exerciseId}/hints`, { currentExpression }, { observe: 'response' })
+            .pipe(map((res: HttpResponse<HintSuggestion[]>) => res.body ?? []));
     }
 }

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <changeSet id="20260514140000-1" author="KilianSen">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="proof_exercise_details" columnName="allow_verification"/></not>
+        </preConditions>
+        <addColumn tableName="proof_exercise_details">
+            <column name="allow_verification" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260514140000-2" author="KilianSen">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="proof_exercise_details" columnName="only_show_applicable_rules"/></not>
+        </preConditions>
+        <addColumn tableName="proof_exercise_details">
+            <column name="only_show_applicable_rules" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

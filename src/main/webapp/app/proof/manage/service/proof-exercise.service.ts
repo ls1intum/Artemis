@@ -6,6 +6,7 @@ import { map } from 'rxjs/operators';
 import { ProofExercise } from 'app/proof/shared/entities/proof-exercise.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseServicable, ExerciseService } from 'app/exercise/services/exercise.service';
+import { ReachabilityReport } from 'app/proof/shared/entities/hint-suggestion.model';
 
 export type EntityResponseType = HttpResponse<ProofExercise>;
 export type EntityArrayResponseType = HttpResponse<ProofExercise[]>;
@@ -62,5 +63,10 @@ export class ProofExerciseService implements ExerciseServicable<ProofExercise> {
         return this.http
             .post<ProofExercise>(`${this.resourceUrl}/import/${adaptedSourceProofExercise.id}`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
+    }
+
+    /** Runs the configured grader's reachability check; 404 if the grader does not support the check. */
+    verifyReachability(exerciseId: number): Observable<ReachabilityReport | undefined> {
+        return this.http.get<ReachabilityReport>(`${this.resourceUrl}/${exerciseId}/verify-reachability`, { observe: 'response' }).pipe(map((res) => res.body ?? undefined));
     }
 }

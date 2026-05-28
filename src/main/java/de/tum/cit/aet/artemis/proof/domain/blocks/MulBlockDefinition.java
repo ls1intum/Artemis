@@ -11,6 +11,7 @@ import de.tum.cit.aet.artemis.proof.domain.BlockDefinition;
 import de.tum.cit.aet.artemis.proof.domain.LayoutCategory;
 import de.tum.cit.aet.artemis.proof.domain.MathNodes;
 import de.tum.cit.aet.artemis.proof.domain.RewriteRule;
+import de.tum.cit.aet.artemis.proof.domain.RuleDirection;
 
 @Conditional(ProofEnabled.class)
 @Component
@@ -71,14 +72,17 @@ public class MulBlockDefinition implements BlockDefinition {
         var a = MathNodes.wc("a");
         var b = MathNodes.wc("b");
         var c = MathNodes.wc("c");
-        return List.of(new RewriteRule("mul_comm", "Commutativity", "a \\cdot b \\to b \\cdot a", MathNodes.mul(a, b), MathNodes.mul(b, a), false),
-                new RewriteRule("mul_assoc_left", "Associativity (left to right)", "(a \\cdot b) \\cdot c \\to a \\cdot (b \\cdot c)", MathNodes.mul(MathNodes.mul(a, b), c),
-                        MathNodes.mul(a, MathNodes.mul(b, c)), false),
-                new RewriteRule("mul_assoc_right", "Associativity (right to left)", "a \\cdot (b \\cdot c) \\to (a \\cdot b) \\cdot c", MathNodes.mul(a, MathNodes.mul(b, c)),
-                        MathNodes.mul(MathNodes.mul(a, b), c), false),
-                new RewriteRule("mul_one_left", "Identity (left)", "1 \\cdot a \\to a", MathNodes.mul(MathNodes.num("1"), a), a, true),
-                new RewriteRule("mul_one_right", "Identity (right)", "a \\cdot 1 \\to a", MathNodes.mul(a, MathNodes.num("1")), a, true),
-                new RewriteRule("mul_zero_left", "Annihilator (left)", "0 \\cdot a \\to 0", MathNodes.mul(MathNodes.num("0"), a), MathNodes.num("0"), true),
-                new RewriteRule("mul_zero_right", "Annihilator (right)", "a \\cdot 0 \\to 0", MathNodes.mul(a, MathNodes.num("0")), MathNodes.num("0"), true));
+        return List.of(new RewriteRule("mul_comm", "Commutativity", "a \\cdot b \\to b \\cdot a", MathNodes.mul(a, b), MathNodes.mul(b, a), RuleDirection.BIDIRECTIONAL),
+                new RewriteRule("mul_assoc", "Associativity", "(a \\cdot b) \\cdot c \\to a \\cdot (b \\cdot c)", MathNodes.mul(MathNodes.mul(a, b), c),
+                        MathNodes.mul(a, MathNodes.mul(b, c)), RuleDirection.BIDIRECTIONAL),
+                new RewriteRule("mul_one_left", "Identity (left)", "1 \\cdot a \\to a", MathNodes.mul(MathNodes.num("1"), a), a, RuleDirection.FORWARD_ONLY),
+                new RewriteRule("mul_one_right", "Identity (right)", "a \\cdot 1 \\to a", MathNodes.mul(a, MathNodes.num("1")), a, RuleDirection.FORWARD_ONLY),
+                new RewriteRule("mul_zero_left", "Annihilator (left)", "0 \\cdot a \\to 0", MathNodes.mul(MathNodes.num("0"), a), MathNodes.num("0"), RuleDirection.FORWARD_ONLY),
+                new RewriteRule("mul_zero_right", "Annihilator (right)", "a \\cdot 0 \\to 0", MathNodes.mul(a, MathNodes.num("0")), MathNodes.num("0"), RuleDirection.FORWARD_ONLY),
+                // Distributivity. Forward is "expand", reverse is "factor" — both are useful operations.
+                new RewriteRule("mul_distrib", "Distributivity (left)", "a \\cdot (b + c) \\to a \\cdot b + a \\cdot c", MathNodes.mul(a, MathNodes.add(b, c)),
+                        MathNodes.add(MathNodes.mul(a, b), MathNodes.mul(a, c)), RuleDirection.BIDIRECTIONAL),
+                new RewriteRule("mul_distrib_right", "Distributivity (right)", "(b + c) \\cdot a \\to b \\cdot a + c \\cdot a", MathNodes.mul(MathNodes.add(b, c), a),
+                        MathNodes.add(MathNodes.mul(b, a), MathNodes.mul(c, a)), RuleDirection.BIDIRECTIONAL));
     }
 }

@@ -71,11 +71,16 @@ export class MathNodeComponent {
 
     needsParens(child: MathNode, slotKey: string): boolean {
         const parentDesc = this.descriptor();
-        if (!parentDesc || parentDesc.associativity === 'NONE') return false;
+        if (!parentDesc) return false;
         const childDesc = this.registry.descriptorFor(child.type);
         const parentPrec = parentDesc.precedence ?? 0;
         const childPrec = childDesc?.precedence ?? -Infinity;
         if (childPrec === -Infinity) return true;
+        // Unary-prefix: child binds tighter than the operator if and only if its precedence is strictly higher.
+        if (parentDesc.layoutCategory === 'UNARY_PREFIX') {
+            return childPrec < parentPrec;
+        }
+        if (parentDesc.associativity === 'NONE') return false;
         return slotKey === 'right' ? childPrec <= parentPrec : childPrec < parentPrec;
     }
 

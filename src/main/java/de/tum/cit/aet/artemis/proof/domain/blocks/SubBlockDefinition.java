@@ -11,6 +11,7 @@ import de.tum.cit.aet.artemis.proof.domain.BlockDefinition;
 import de.tum.cit.aet.artemis.proof.domain.LayoutCategory;
 import de.tum.cit.aet.artemis.proof.domain.MathNodes;
 import de.tum.cit.aet.artemis.proof.domain.RewriteRule;
+import de.tum.cit.aet.artemis.proof.domain.RuleDirection;
 
 @Conditional(ProofEnabled.class)
 @Component
@@ -69,7 +70,11 @@ public class SubBlockDefinition implements BlockDefinition {
     @Override
     public List<RewriteRule> getRules() {
         var a = MathNodes.wc("a");
-        return List.of(new RewriteRule("sub_zero_right", "Identity (right)", "a - 0 \\to a", MathNodes.sub(a, MathNodes.num("0")), a, true),
-                new RewriteRule("sub_self", "Self-subtraction", "a - a \\to 0", MathNodes.sub(a, a), MathNodes.num("0"), true));
+        var b = MathNodes.wc("b");
+        return List.of(new RewriteRule("sub_zero_right", "Identity (right)", "a - 0 \\to a", MathNodes.sub(a, MathNodes.num("0")), a, RuleDirection.FORWARD_ONLY),
+                new RewriteRule("sub_self", "Self-subtraction", "a - a \\to 0", MathNodes.sub(a, a), MathNodes.num("0"), RuleDirection.FORWARD_ONLY),
+                // Bridge rule: lets +/- rules cooperate via the negation block.
+                new RewriteRule("sub_as_add_neg", "Subtraction as add-negation", "a - b \\to a + (-b)", MathNodes.sub(a, b), MathNodes.add(a, MathNodes.neg(b)),
+                        RuleDirection.BIDIRECTIONAL));
     }
 }

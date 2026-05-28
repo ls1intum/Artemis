@@ -9,6 +9,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.SecondaryTable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -16,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.proof.dto.ProofSubmissionDTO.DerivationStepDTO;
+import de.tum.cit.aet.artemis.proof.grader.GraderType;
 
 /**
  * A ProofExercise.
@@ -52,6 +55,21 @@ public class ProofExercise extends Exercise {
     @Column(table = "proof_exercise_details", name = "partial_credit_enabled")
     private boolean partialCreditEnabled = false;
 
+    @Column(table = "proof_exercise_details", name = "ac_normalization")
+    private boolean acNormalization = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(table = "proof_exercise_details", name = "grader_type", length = 32, nullable = false)
+    private GraderType graderType = GraderType.REWRITE_CHAIN;
+
+    @Enumerated(EnumType.STRING)
+    @Column(table = "proof_exercise_details", name = "goal_mode", length = 16, nullable = false)
+    private GoalMode goalMode = GoalMode.TRANSFORMATION;
+
+    @Convert(converter = MathNodeConverter.class)
+    @Column(table = "proof_exercise_details", name = "goal_expression", columnDefinition = "longtext")
+    private MathNode goalExpression;
+
     @Convert(converter = ExampleDerivationsConverter.class)
     @Column(table = "proof_exercise_details", name = "example_derivations", columnDefinition = "longtext")
     private List<List<DerivationStepDTO>> exampleDerivations = Collections.emptyList();
@@ -86,6 +104,38 @@ public class ProofExercise extends Exercise {
 
     public void setPartialCreditEnabled(boolean partialCreditEnabled) {
         this.partialCreditEnabled = partialCreditEnabled;
+    }
+
+    public boolean isAcNormalization() {
+        return acNormalization;
+    }
+
+    public void setAcNormalization(boolean acNormalization) {
+        this.acNormalization = acNormalization;
+    }
+
+    public GraderType getGraderType() {
+        return graderType;
+    }
+
+    public void setGraderType(GraderType graderType) {
+        this.graderType = graderType == null ? GraderType.REWRITE_CHAIN : graderType;
+    }
+
+    public GoalMode getGoalMode() {
+        return goalMode;
+    }
+
+    public void setGoalMode(GoalMode goalMode) {
+        this.goalMode = goalMode == null ? GoalMode.TRANSFORMATION : goalMode;
+    }
+
+    public MathNode getGoalExpression() {
+        return goalExpression;
+    }
+
+    public void setGoalExpression(MathNode goalExpression) {
+        this.goalExpression = goalExpression;
     }
 
     public MathNode getSourceExpression() {

@@ -10,7 +10,9 @@ import de.tum.cit.aet.artemis.proof.domain.Associativity;
 import de.tum.cit.aet.artemis.proof.domain.BlockDefinition;
 import de.tum.cit.aet.artemis.proof.domain.LayoutCategory;
 import de.tum.cit.aet.artemis.proof.domain.MathNodes;
+import de.tum.cit.aet.artemis.proof.domain.NotEqualToConstant;
 import de.tum.cit.aet.artemis.proof.domain.RewriteRule;
+import de.tum.cit.aet.artemis.proof.domain.RuleDirection;
 
 @Conditional(ProofEnabled.class)
 @Component
@@ -61,8 +63,9 @@ public class FractionBlockDefinition implements BlockDefinition {
         var a = MathNodes.wc("a");
         var b = MathNodes.wc("b");
         var c = MathNodes.wc("c");
-        return List.of(new RewriteRule("frac_one_denom", "Identity denominator", "\\frac{a}{1} \\to a", MathNodes.frac(a, MathNodes.num("1")), a, true),
+        return List.of(new RewriteRule("frac_one_denom", "Identity denominator", "\\frac{a}{1} \\to a", MathNodes.frac(a, MathNodes.num("1")), a, RuleDirection.FORWARD_ONLY),
                 new RewriteRule("frac_mul_cancel_left", "Cancel left factor", "\\frac{c \\cdot a}{c \\cdot b} \\to \\frac{a}{b}",
-                        MathNodes.frac(MathNodes.mul(c, a), MathNodes.mul(c, b)), MathNodes.frac(a, b), true));
+                        MathNodes.frac(MathNodes.mul(c, a), MathNodes.mul(c, b)), MathNodes.frac(a, b), RuleDirection.FORWARD_ONLY,
+                        List.of(new NotEqualToConstant("c", MathNodes.num("0")))));
     }
 }
