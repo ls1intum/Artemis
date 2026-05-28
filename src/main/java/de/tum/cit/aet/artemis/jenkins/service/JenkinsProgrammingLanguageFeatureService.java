@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.jenkins;
+package de.tum.cit.aet.artemis.jenkins.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.BASH;

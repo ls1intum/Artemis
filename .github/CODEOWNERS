@@ -24,6 +24,7 @@
 /src/main/java/de/tum/cit/aet/artemis/globalsearch   @bassner
 /src/main/java/de/tum/cit/aet/artemis/hyperion       @ls1intum/hyperion-maintainers
 /src/main/java/de/tum/cit/aet/artemis/iris           @ls1intum/iris-maintainers
+/src/main/java/de/tum/cit/aet/artemis/jenkins        @ls1intum/programming-maintainers
 /src/main/java/de/tum/cit/aet/artemis/lecture        @ls1intum/lectures-maintainers
 /src/main/java/de/tum/cit/aet/artemis/lti            @ls1intum/lti-maintainers
 /src/main/java/de/tum/cit/aet/artemis/modeling       @ls1intum/apollon-maintainers
@@ -65,6 +66,7 @@
 /src/test/java/de/tum/cit/aet/artemis/globalsearch   @bassner
 /src/test/java/de/tum/cit/aet/artemis/hyperion       @ls1intum/hyperion-maintainers
 /src/test/java/de/tum/cit/aet/artemis/iris           @ls1intum/iris-maintainers
+/src/test/java/de/tum/cit/aet/artemis/jenkins        @ls1intum/programming-maintainers
 /src/test/java/de/tum/cit/aet/artemis/lecture        @ls1intum/lectures-maintainers
 /src/test/java/de/tum/cit/aet/artemis/lti            @ls1intum/lti-maintainers
 /src/test/java/de/tum/cit/aet/artemis/modeling       @ls1intum/apollon-maintainers

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.jenkins.build_plan;
+package de.tum.cit.aet.artemis.jenkins.service.build_plan;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 
@@ -22,10 +22,10 @@ import org.w3c.dom.Document;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
+import de.tum.cit.aet.artemis.jenkins.service.JenkinsXmlConfigBuilder;
+import de.tum.cit.aet.artemis.jenkins.service.JenkinsXmlFileUtils;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
-import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlConfigBuilder;
-import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlFileUtils;
 
 @Profile(PROFILE_JENKINS)
 @Component

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.connectors.jenkins.build_plan;
+package de.tum.cit.aet.artemis.jenkins.service.build_plan;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
 
-class JenkinsPipelineScriptCreatorTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
+class JenkinsPipelineScriptCreatorIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
     private ProgrammingExercise programmingExercise;
 
