@@ -59,7 +59,7 @@
         "html-diff-ts": "1.4.2",
         "interactjs": "1.10.27",
         "jszip": "3.10.1",
-        "katex": "0.16.47",
+        "katex": "0.17.0",
         "lodash-es": "4.18.1",
         "markdown-it": "14.1.1",
         "markdown-it-github-alerts": "1.0.1",

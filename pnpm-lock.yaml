@@ -62,7 +62,7 @@ overrides:
   ip-address: 10.2.0
   js-yaml: 4.1.1
   jsdom: 29.1.1
-  katex: 0.16.47
+  katex: 0.17.0
   minimatch: 10.2.5
   postcss: 8.5.14
   punycode: 2.3.1
@@ -237,8 +237,8 @@ importers:
         specifier: 3.10.1
         version: 3.10.1
       katex:
-        specifier: 0.16.47
-        version: 0.16.47
+        specifier: 0.17.0
+        version: 0.17.0
       lodash-es:
         specifier: 4.18.1
         version: 4.18.1
@@ -6268,8 +6268,8 @@ packages:
   karma-source-map-support@1.4.0:
     resolution: {integrity: sha512-RsBECncGO17KAoJCYXjv+ckIz+Ii9NCi+9enk+rq6XC81ezYkb4/RHE6CTXdA7IOJqoF3wcaLfVG0CPmE5ca6A==}
 
-  katex@0.16.47:
-    resolution: {integrity: sha512-Eeo8Ys1doU1z+x8AZsPpQu+p/QcZBI5PeOo7QGQdy2x2m0MU/hYagBbGOmXwr5KVbEfVuWv9LpnQWeehogurjg==}
+  katex@0.17.0:
+    resolution: {integrity: sha512-Vdw0ATsQ9V+LuegM/BTwQqV/6cTl5lbGcIrU+BCgLxyf6bo38ybOr372tuSIxir3CN720flu1meYR6XzNMwQnw==}
     hasBin: true
 
   keyv@4.5.4:
@@ -12557,7 +12557,7 @@ snapshots:
 
   '@vscode/markdown-it-katex@1.1.2':
     dependencies:
-      katex: 0.16.47
+      katex: 0.17.0
 
   '@webassemblyjs/ast@1.14.1':
     dependencies:
@@ -14921,7 +14921,7 @@ snapshots:
     dependencies:
       source-map-support: 0.5.21
 
-  katex@0.16.47:
+  katex@0.17.0:
     dependencies:
       commander: 8.3.0
 
