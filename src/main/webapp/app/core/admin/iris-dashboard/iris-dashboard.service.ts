@@ -8,6 +8,7 @@ import {
     IrisDashboardMetric,
     IrisDashboardOverview,
     IrisDashboardTimeSeries,
+    IrisDashboardTimeSpan,
 } from './iris-dashboard.model';
 
 @Injectable({ providedIn: 'root' })
@@ -21,7 +22,7 @@ export class IrisDashboardService {
         return this.http.get<IrisDashboardOverview>(`${this.baseUrl}/overview`, { params });
     }
 
-    getTimeSeries(from: string, to: string, span: string, metric: IrisDashboardMetric): Observable<IrisDashboardTimeSeries> {
+    getTimeSeries(from: string, to: string, span: IrisDashboardTimeSpan, metric: IrisDashboardMetric): Observable<IrisDashboardTimeSeries> {
         const params = new HttpParams().set('from', from).set('to', to).set('span', span).set('metric', metric);
         return this.http.get<IrisDashboardTimeSeries>(`${this.baseUrl}/time-series`, { params });
     }

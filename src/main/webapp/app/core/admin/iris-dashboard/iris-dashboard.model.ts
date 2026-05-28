@@ -27,7 +27,7 @@ export interface IrisDashboardTimeSeriesEntry {
 }
 
 export interface IrisDashboardTimeSeries {
-    metric: string;
+    metric: IrisDashboardMetric;
     entries: IrisDashboardTimeSeriesEntry[];
 }
 
