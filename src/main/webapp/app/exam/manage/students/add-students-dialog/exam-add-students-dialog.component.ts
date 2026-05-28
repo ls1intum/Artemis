@@ -127,6 +127,11 @@ export class ExamAddStudentsDialogComponent {
                     return;
                 }
 
+                if (error.error?.errorKey === 'cannotRegisterEditor') {
+                    this.alertService.error('artemisApp.exam.error.cannotRegisterEditor');
+                    return;
+                }
+
                 this.alertService.error('artemisApp.examManagement.examStudents.addDialog.errorRegisterStudent');
             },
         });
