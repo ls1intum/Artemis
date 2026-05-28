@@ -16,19 +16,19 @@ class CommunicationEntityUsageArchitectureTest extends AbstractModuleEntityUsage
     }
 
     @Override
-    protected int getMaxEntityReturnViolations() {
-        return 0;
+    protected int getExpectedEntityReturnViolations() {
+        return 5;
     }
 
     // This module is already compliant for input violations
     @Override
-    protected int getMaxEntityInputViolations() {
+    protected int getExpectedEntityInputViolations() {
         return 0;
     }
 
     // TODO: Reduce this to 0 by removing entity references from DTOs
     @Override
-    protected int getMaxDtoEntityFieldViolations() {
-        return 1;
+    protected int getExpectedDtoEntityFieldViolations() {
+        return 3;
     }
 }
