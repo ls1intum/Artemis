@@ -751,7 +751,7 @@ public class MetricsBean {
 
     private void extractExerciseTypeMetricsAndAddToMetricsResults(Set<ExerciseTypeMetricsEntry> resultFromDatabase, Set<MultiGauge.Row<?>> resultForMetrics, Tags existingTags) {
         for (var exerciseType : ExerciseType.values()) {
-            var resultForExerciseType = resultFromDatabase.stream().filter(entry -> entry.exerciseType() == exerciseType.getExerciseClass()).findAny();
+            var resultForExerciseType = resultFromDatabase.stream().filter(entry -> entry.exerciseType() == exerciseType).findAny();
             var value = 0L;
             if (resultForExerciseType.isPresent()) {
                 value = resultForExerciseType.get().value();

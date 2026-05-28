@@ -45,8 +45,8 @@ interface CombinedOption {
     providers: [MetisService, LinkPreviewService, LinkifyService, MetisConversationService],
 })
 export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
-    channels = signal<(ChannelDTO | GroupChatDTO)[] | []>([]);
-    users = signal<UserPublicInfoDTO[] | []>([]);
+    channels = signal<(ChannelDTO | GroupChatDTO)[]>([]);
+    users = signal<UserPublicInfoDTO[]>([]);
     postToForward = signal<Post | undefined>(undefined);
     courseId = signal<number | undefined>(undefined);
     editorHeight = input<MarkdownEditorHeight>(MarkdownEditorHeight.INLINE);

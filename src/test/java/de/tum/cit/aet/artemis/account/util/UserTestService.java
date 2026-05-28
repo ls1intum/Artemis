@@ -149,6 +149,27 @@ public class UserTestService {
         return student;
     }
 
+    /**
+     * Asserts that the wire-facing fields of the given {@link UserDTO} match the corresponding fields on the source {@link User} entity.
+     * <p>
+     * Used at the User → UserDTO type boundary in the integration tests for the admin user endpoints. AssertJ's
+     * {@code usingRecursiveComparison().comparingOnlyFields(...)} cannot be used here because the entity and the DTO
+     * disagree on a field name ({@code User.registrationNumber} vs {@code UserDTO.visibleRegistrationNumber}), so the
+     * comparison is performed explicitly per field via the accessors.
+     */
+    private void assertUserDtoMatchesUser(UserDTO dto, User user) {
+        assertThat(dto.getId()).as("UserDTO.id matches User.id").isEqualTo(user.getId());
+        assertThat(dto.getLogin()).as("UserDTO.login matches User.login").isEqualTo(user.getLogin());
+        assertThat(dto.getFirstName()).as("UserDTO.firstName matches User.firstName").isEqualTo(user.getFirstName());
+        assertThat(dto.getLastName()).as("UserDTO.lastName matches User.lastName").isEqualTo(user.getLastName());
+        assertThat(dto.getEmail()).as("UserDTO.email matches User.email").isEqualTo(user.getEmail());
+        assertThat(dto.getImageUrl()).as("UserDTO.imageUrl matches User.imageUrl").isEqualTo(user.getImageUrl());
+        assertThat(dto.isActivated()).as("UserDTO.activated matches User.activated").isEqualTo(user.getActivated());
+        assertThat(dto.getLangKey()).as("UserDTO.langKey matches User.langKey").isEqualTo(user.getLangKey());
+        assertThat(dto.getVisibleRegistrationNumber()).as("UserDTO.visibleRegistrationNumber matches User.visibleRegistrationNumber")
+                .isEqualTo(user.getVisibleRegistrationNumber());
+    }
+
     private void assertThatUserWasSoftDeleted(User originalUser, User deletedUser) {
         assertThat(deletedUser.isDeleted()).isTrue();
         assertThat(deletedUser.getFirstName()).isEqualTo(Constants.USER_FIRST_NAME_AFTER_SOFT_DELETE);
@@ -254,17 +275,18 @@ public class UserTestService {
 
         var managedUserVM = new ManagedUserVM(student, newPassword);
         managedUserVM.setPassword(newPassword);
-        final var response = request.putWithResponseBody("/api/core/admin/users", managedUserVM, User.class, HttpStatus.OK);
+        final var response = request.putWithResponseBody("/api/core/admin/users", managedUserVM, UserDTO.class, HttpStatus.OK);
         final var updatedUserIndDB = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
 
         assertThat(response).isNotNull();
         assertThat(passwordService.checkPasswordMatch(newPassword, updatedUserIndDB.getPassword())).isTrue();
 
-        // set passwords to null to exclude them from the comparison
-        student.setPassword(null);
+        // The DTO carries only the fields exposed over the wire; compare them explicitly so the assertion
+        // works across the User → UserDTO type boundary (their field names differ for the registration number).
+        assertUserDtoMatchesUser(response, student);
+        // The DB entity carries the full state; assert entity-to-entity, ignoring the just-rotated password.
         updatedUserIndDB.setPassword(null);
-
-        assertThat(student).as("Returned user is equal to sent update").isEqualTo(response);
+        student.setPassword(null);
         assertThat(student).as("Updated user in DB is equal to sent update").isEqualTo(updatedUserIndDB);
     }
 
@@ -275,7 +297,7 @@ public class UserTestService {
 
         var managedUserVM = new ManagedUserVM(student, "foobar1234");
 
-        final var response = request.putWithResponseBody("/api/core/admin/users", managedUserVM, User.class, HttpStatus.OK);
+        final var response = request.putWithResponseBody("/api/core/admin/users", managedUserVM, UserDTO.class, HttpStatus.OK);
         assertThat(response).isNotNull();
 
         // do not allow empty authorities
@@ -336,17 +358,17 @@ public class UserTestService {
         student.setPassword(password);
         student.setEmail("batman@secret.invalid");
 
-        final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student, password), User.class, HttpStatus.CREATED);
+        final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student, password), UserDTO.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
         final var userInDB = userTestRepository.findById(response.getId()).orElseThrow();
         assertThat(passwordService.checkPasswordMatch(password, userInDB.getPassword())).isTrue();
         student.setId(response.getId());
 
-        // Exclude passwords from comparison
-        response.setPassword(null);
+        // Compare the DTO across the User → UserDTO type boundary, field by field.
+        assertUserDtoMatchesUser(response, student);
+        // Exclude the (one-way-hashed) password from the entity-to-entity comparison.
         userInDB.setPassword(null);
-
-        assertThat(student).as("New user is equal to request response").isEqualTo(response);
+        student.setPassword(null);
         assertThat(student).as("New user is equal to new user in DB").isEqualTo(userInDB);
 
         return userInDB;
@@ -379,14 +401,14 @@ public class UserTestService {
         final Set<Authority> authorities = roles.stream().map(Role::getAuthority).map(auth -> authorityRepository.findById(auth).orElseThrow()).collect(Collectors.toSet());
         student.setAuthorities(authorities);
 
-        final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student, student.getPassword()), User.class, HttpStatus.CREATED);
+        final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student, student.getPassword()), UserDTO.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
         final var userInDB = userTestRepository.findById(response.getId()).orElseThrow();
         userInDB.setPassword(password);
         student.setId(response.getId());
-        response.setPassword(password);
 
-        assertThat(student).as("New user is equal to request response").isEqualTo(response);
+        // Compare the DTO across the User → UserDTO type boundary, field by field.
+        assertUserDtoMatchesUser(response, student);
         assertThat(student).as("New user is equal to new user in DB").isEqualTo(userInDB);
     }
 
@@ -399,7 +421,7 @@ public class UserTestService {
         student.setEmail("batman@secret.invalid");
         student = userTestRepository.save(student);
 
-        final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student), User.class, HttpStatus.BAD_REQUEST);
+        final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student), UserDTO.class, HttpStatus.BAD_REQUEST);
         assertThat(response).isNull();
     }
 
@@ -410,7 +432,7 @@ public class UserTestService {
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
 
-        final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
+        final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student), UserDTO.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
 
         User student2 = new User();
@@ -419,7 +441,7 @@ public class UserTestService {
         student2.setPassword("barfoo");
         student2.setEmail("batman2@secret.stillinvalid");
 
-        final var response2 = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student2), User.class, HttpStatus.BAD_REQUEST);
+        final var response2 = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student2), UserDTO.class, HttpStatus.BAD_REQUEST);
         assertThat(response2).isNull();
     }
 
@@ -429,7 +451,7 @@ public class UserTestService {
         student.setLogin("batman");
         student.setPassword("foobar");
 
-        final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student), User.class, HttpStatus.BAD_REQUEST);
+        final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student), UserDTO.class, HttpStatus.BAD_REQUEST);
         assertThat(response).isNull();
     }
 
@@ -440,7 +462,7 @@ public class UserTestService {
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
 
-        final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
+        final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student), UserDTO.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
     }
 
@@ -453,7 +475,7 @@ public class UserTestService {
         student.setLogin("batman");
         student.setPassword(null);
 
-        final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
+        final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student), UserDTO.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
         final var userInDB = userTestRepository.findById(response.getId()).orElseThrow();
 
@@ -559,7 +581,7 @@ public class UserTestService {
         params.add("status", "");
         params.add("registrationNumbers", "");
         params.add("courseIds", "");
-        List<User> users = request.getList("/api/core/admin/users", HttpStatus.OK, User.class, params);
+        List<UserDTO> users = request.getList("/api/core/admin/users", HttpStatus.OK, UserDTO.class, params);
         assertThat(users).hasSize(1);
         assertThat(users.getFirst().getEmail()).isEqualTo(student.getEmail());
     }
@@ -586,7 +608,7 @@ public class UserTestService {
     }
 
     private void getUsersOrAuthorities_forbidden() throws Exception {
-        request.getList("/api/core/admin/users", HttpStatus.FORBIDDEN, User.class);
+        request.getList("/api/core/admin/users", HttpStatus.FORBIDDEN, UserDTO.class);
         request.getList("/api/core/admin/users/authorities", HttpStatus.FORBIDDEN, String.class);
     }
 
@@ -849,7 +871,7 @@ public class UserTestService {
     public void testUser() throws Exception {
         final var params = createParamsForPagingRequest("USER", "", "", "", false);
 
-        List<User> result;
+        List<UserDTO> result;
 
         courseUtilService.addEmptyCourse();
 
@@ -863,8 +885,8 @@ public class UserTestService {
             user1.setGroups(Collections.emptySet());
             user2.setGroups(Set.of("tumuser"));
             userTestRepository.saveAll(List.of(user1, user2));
-            result = request.getList("/api/core/admin/users", HttpStatus.OK, User.class, params);
-            assertThat(result).contains(user1).contains(user2);
+            result = request.getList("/api/core/admin/users", HttpStatus.OK, UserDTO.class, params);
+            assertThat(result).extracting(UserDTO::getLogin).contains(user1.getLogin(), user2.getLogin());
         }
     }
 
@@ -875,7 +897,7 @@ public class UserTestService {
 
         final var params = createParamsForPagingRequest("USER", "", "", Long.toString(course.getId()), true);
 
-        List<User> result;
+        List<UserDTO> result;
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
@@ -887,8 +909,8 @@ public class UserTestService {
             user1.setGroups(Collections.emptySet());
             user2.setGroups(Set.of("tumuser"));
             userTestRepository.saveAll(List.of(user1, user2));
-            result = request.getList("/api/core/admin/users", HttpStatus.OK, User.class, params);
-            assertThat(result).contains(user1).doesNotContain(user2);
+            result = request.getList("/api/core/admin/users", HttpStatus.OK, UserDTO.class, params);
+            assertThat(result).extracting(UserDTO::getLogin).contains(user1.getLogin()).doesNotContain(user2.getLogin());
         }
     }
 
@@ -896,7 +918,7 @@ public class UserTestService {
     public void testUserWithActivatedStatus() throws Exception {
         final var params = createParamsForPagingRequest("USER", "", "WITHOUT_REG_NO", "ACTIVATED", false);
 
-        List<User> result;
+        List<UserDTO> result;
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
@@ -909,8 +931,8 @@ public class UserTestService {
             user1.setActivated(true);
             user2.setActivated(false);
             userTestRepository.saveAll(List.of(user1, user2, admin));
-            result = request.getList("/api/core/admin/users", HttpStatus.OK, User.class, params);
-            assertThat(result).contains(user1, admin).doesNotContain(user2);
+            result = request.getList("/api/core/admin/users", HttpStatus.OK, UserDTO.class, params);
+            assertThat(result).extracting(UserDTO::getLogin).contains(user1.getLogin(), admin.getLogin()).doesNotContain(user2.getLogin());
         }
     }
 
@@ -918,7 +940,7 @@ public class UserTestService {
     public void testUserWithDeactivatedStatus() throws Exception {
         final var params = createParamsForPagingRequest("USER", "", "WITHOUT_REG_NO", "DEACTIVATED", false);
 
-        List<User> result;
+        List<UserDTO> result;
 
         courseUtilService.addEmptyCourse();
 
@@ -932,8 +954,8 @@ public class UserTestService {
             user1.setActivated(true);
             user2.setActivated(false);
             userTestRepository.saveAll(List.of(user1, user2));
-            result = request.getList("/api/core/admin/users", HttpStatus.OK, User.class, params);
-            assertThat(result).contains(user2).doesNotContain(user1);
+            result = request.getList("/api/core/admin/users", HttpStatus.OK, UserDTO.class, params);
+            assertThat(result).extracting(UserDTO::getLogin).contains(user2.getLogin()).doesNotContain(user1.getLogin());
         }
     }
 
@@ -941,7 +963,7 @@ public class UserTestService {
     public void testUserWithInternalStatus() throws Exception {
         final var params = createParamsForPagingRequest("USER", "INTERNAL", "WITHOUT_REG_NO", "", false);
 
-        List<User> result;
+        List<UserDTO> result;
 
         courseUtilService.addEmptyCourse();
 
@@ -956,8 +978,8 @@ public class UserTestService {
             user1.setInternal(true);
             user2.setInternal(false);
             userTestRepository.saveAll(List.of(user1, user2, admin));
-            result = request.getList("/api/core/admin/users", HttpStatus.OK, User.class, params);
-            assertThat(result).contains(user1, admin).doesNotContain(user2);
+            result = request.getList("/api/core/admin/users", HttpStatus.OK, UserDTO.class, params);
+            assertThat(result).extracting(UserDTO::getLogin).contains(user1.getLogin(), admin.getLogin()).doesNotContain(user2.getLogin());
         }
     }
 
@@ -965,7 +987,7 @@ public class UserTestService {
     public void testUserWithExternalStatus() throws Exception {
         final var params = createParamsForPagingRequest("USER", "EXTERNAL", "WITHOUT_REG_NO", "", false);
 
-        List<User> result;
+        List<UserDTO> result;
 
         courseUtilService.addEmptyCourse();
 
@@ -979,8 +1001,8 @@ public class UserTestService {
             user1.setInternal(true);
             user2.setInternal(false);
             userTestRepository.saveAll(List.of(user1, user2));
-            result = request.getList("/api/core/admin/users", HttpStatus.OK, User.class, params);
-            assertThat(result).contains(user2).doesNotContain(user1);
+            result = request.getList("/api/core/admin/users", HttpStatus.OK, UserDTO.class, params);
+            assertThat(result).extracting(UserDTO::getLogin).contains(user2.getLogin()).doesNotContain(user1.getLogin());
         }
     }
 
@@ -996,7 +1018,7 @@ public class UserTestService {
     public void testUserWithExternalAndInternalStatus() throws Exception {
         final var params = createParamsForPagingRequest("USER", "INTERNAL,EXTERNAL", "WITHOUT_REG_NO", "", false);
 
-        List<User> result;
+        List<UserDTO> result;
 
         courseUtilService.addEmptyCourse();
 
@@ -1010,7 +1032,7 @@ public class UserTestService {
             user1.setInternal(true);
             user2.setInternal(false);
             userTestRepository.saveAll(List.of(user1, user2));
-            result = request.getList("/api/core/admin/users", HttpStatus.OK, User.class, params);
+            result = request.getList("/api/core/admin/users", HttpStatus.OK, UserDTO.class, params);
             assertThat(result).isEqualTo(Collections.emptyList());
         }
     }
@@ -1023,7 +1045,7 @@ public class UserTestService {
     public void testUserWithRegistrationNumber() throws Exception {
         final var params = createParamsForPagingRequest("USER", "INTERNAL,EXTERNAL", "WITH_REG_NO", "", false);
 
-        List<User> result;
+        List<UserDTO> result;
 
         courseUtilService.addEmptyCourse();
 
@@ -1037,7 +1059,7 @@ public class UserTestService {
             user1.setRegistrationNumber(null);
             user2.setRegistrationNumber(null);
             userTestRepository.saveAll(List.of(user1, user2));
-            result = request.getList("/api/core/admin/users", HttpStatus.OK, User.class, params);
+            result = request.getList("/api/core/admin/users", HttpStatus.OK, UserDTO.class, params);
             assertThat(result).isEqualTo(Collections.emptyList());
         }
     }
@@ -1050,7 +1072,7 @@ public class UserTestService {
     public void testUserWithoutRegistrationNumber() throws Exception {
         final var params = createParamsForPagingRequest("USER", "", "WITHOUT_REG_NO", "", false);
 
-        List<User> result;
+        List<UserDTO> result;
 
         courseUtilService.addEmptyCourse();
 
@@ -1065,8 +1087,8 @@ public class UserTestService {
             user2.setRegistrationNumber("");
             User admin = userTestRepository.getUserByLoginElseThrow("admin");
             userTestRepository.saveAll(List.of(user1, user2, admin));
-            result = request.getList("/api/core/admin/users", HttpStatus.OK, User.class, params);
-            assertThat(result).contains(admin).doesNotContain(user1, user2);
+            result = request.getList("/api/core/admin/users", HttpStatus.OK, UserDTO.class, params);
+            assertThat(result).extracting(UserDTO::getLogin).contains(admin.getLogin()).doesNotContain(user1.getLogin(), user2.getLogin());
         }
     }
 }

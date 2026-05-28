@@ -20,6 +20,7 @@ import { ComplaintsFormComponent } from 'app/assessment/overview/complaint-form/
 import { ComplaintRequestComponent } from 'app/assessment/overview/complaint-request/complaint-request.component';
 import { ComplaintResponseComponent } from 'app/assessment/manage/complaint-response/complaint-response.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 @Component({
     selector: 'jhi-complaint-student-view',
@@ -94,14 +95,14 @@ export class ComplaintsStudentViewComponent implements OnInit {
     }
 
     /**
-     * Sets the complaint if a complaint and a valid result exists
+     * Sets the complaint if complaint and a valid result exist
      */
     loadPotentialComplaint(): void {
         this.complaintService
             .findBySubmissionId(this.submission.id!)
             .pipe(filter((res) => !!res.body))
-            .subscribe((res: HttpResponse<Complaint>) => {
-                this.complaint = res.body!;
+            .subscribe((res: HttpResponse<ComplaintDTO>) => {
+                this.complaint = this.complaintService.convertComplaintFromServer(res.body!, this.result()!);
             });
     }
 
@@ -155,7 +156,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
     }
 
     /**
-     * Function to set complaint type (which opens the complaint form) and scrolls to the complaint form
+     * Function to set the complaint type (which opens the complaint form) and scrolls to the complaint form
      */
     openComplaintForm(complainType: ComplaintType): void {
         this.formComplaintType = complainType;

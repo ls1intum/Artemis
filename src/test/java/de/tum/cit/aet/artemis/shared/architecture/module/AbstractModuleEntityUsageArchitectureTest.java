@@ -18,7 +18,9 @@ import java.util.Optional;
 import jakarta.persistence.Entity;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -43,8 +45,8 @@ import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
  * <ol>
  * <li>Create a subclass in your module's architecture package</li>
  * <li>Implement {@link #getModulePackage()} to return the module's base package</li>
- * <li>Override {@link #getMaxEntityReturnViolations()}, {@link #getMaxEntityInputViolations()}, and optionally
- * {@link #getMaxDtoEntityFieldViolations()} with the current violation counts</li>
+ * <li>Override {@link #getExpectedEntityReturnViolations()}, {@link #getExpectedEntityInputViolations()}, and optionally
+ * {@link #getExpectedDtoEntityFieldViolations()} with the current violation counts</li>
  * </ol>
  * <p>
  * <b>Important:</b> The violation counts should be reduced over time as DTOs are introduced.
@@ -58,34 +60,33 @@ public abstract class AbstractModuleEntityUsageArchitectureTest extends Abstract
      * <p>
      * The test uses {@code hasSize(...)} (exact match), so the override here must equal the
      * actual violation count: too low fails as a regression, too high fails as a stale baseline
-     * that's hiding an improvement. The "max" in the legacy method name predates the exact-match
-     * semantics; treat it as "expected count".
+     * that's hiding an improvement.
      * <p>
      * <b>TODO:</b> Reduce to 0 over time as DTOs are introduced.
      *
      * @return the exact number of entity-return violations expected (0 means fully compliant)
      */
-    protected abstract int getMaxEntityReturnViolations();
+    protected abstract int getExpectedEntityReturnViolations();
 
     /**
      * Returns the EXACT number of entity input (RequestBody/RequestPart) violations this module
-     * currently has. See {@link #getMaxEntityReturnViolations()} for the exact-match semantics.
+     * currently has. See {@link #getExpectedEntityReturnViolations()} for the exact-match semantics.
      *
      * @return the exact number of entity-input violations expected (0 means fully compliant)
      */
-    protected abstract int getMaxEntityInputViolations();
+    protected abstract int getExpectedEntityInputViolations();
 
     /**
      * Returns the EXACT number of DTO-entity-field violations this module currently has.
      * <p>
      * DTOs must not contain fields that reference @Entity types, as this defeats the purpose
      * of using DTOs (lazy wrapping pattern). DTOs should only contain primitive types,
-     * date/time types, enums, and other DTOs. See {@link #getMaxEntityReturnViolations()} for
+     * date/time types, enums, and other DTOs. See {@link #getExpectedEntityReturnViolations()} for
      * the exact-match semantics.
      *
      * @return the exact number of DTO-entity-field violations expected (0 means fully compliant)
      */
-    protected int getMaxDtoEntityFieldViolations() {
+    protected int getExpectedDtoEntityFieldViolations() {
         return 0; // Default: no violations allowed for new modules
     }
 
@@ -99,8 +100,8 @@ public abstract class AbstractModuleEntityUsageArchitectureTest extends Abstract
      * <li>Nested generic types containing entities</li>
      * </ul>
      * <p>
-     * The test allows up to {@link #getMaxEntityReturnViolations()} violations to support
-     * incremental migration to DTOs. This number should be reduced to 0 over time.
+     * The test expects exactly {@link #getExpectedEntityReturnViolations()} violations to support
+     * incremental migration to DTOs (exact-match ratchet). This number should be reduced to 0 over time.
      */
     @Test
     protected void restControllersMustNotReturnEntities() {
@@ -121,6 +122,12 @@ public abstract class AbstractModuleEntityUsageArchitectureTest extends Abstract
                     Method reflectedMethod = findMatchingDeclaredMethod(reflectedController, archMethod);
                     if (reflectedMethod == null) {
                         // synthetic/bridge methods etc. - skip safely
+                        continue;
+                    }
+
+                    // Only actual REST endpoints matter — skip private/helper methods (e.g. DTO->entity mappers)
+                    // that merely happen to live in a @RestController and return an entity.
+                    if (!isRestEndpointMethod(reflectedMethod)) {
                         continue;
                     }
 
@@ -146,12 +153,12 @@ public abstract class AbstractModuleEntityUsageArchitectureTest extends Abstract
 
         classes().that().resideInAPackage(getModuleWithSubpackage()).and().areAnnotatedWith(RestController.class).should(condition).allowEmptyShould(true).check(productionClasses);
 
-        int maxAllowed = getMaxEntityReturnViolations();
+        int expectedViolations = getExpectedEntityReturnViolations();
         assertThat(violations).as(
                 "Entity return type violations in module %s (expected exactly: %d, found: %d). "
                         + "Self-enforcing ratchet: if you reduce violations, lower this override; if you add a new violation, fix it instead of inflating the override. "
                         + "TODO: This number should be reduced to 0 by using DTOs instead of entities. " + "See the database documentation for guidelines on DTO usage.",
-                getModulePackage(), maxAllowed, violations.size()).hasSize(maxAllowed);
+                getModulePackage(), expectedViolations, violations.size()).hasSize(expectedViolations);
     }
 
     /**
@@ -164,7 +171,7 @@ public abstract class AbstractModuleEntityUsageArchitectureTest extends Abstract
      * <li>Nested generic types containing entities</li>
      * </ul>
      * <p>
-     * The test allows up to {@link #getMaxEntityInputViolations()} violations to support
+     * The test expects exactly {@link #getExpectedEntityInputViolations()} violations to support
      * incremental migration to DTOs. This number should be reduced to 0 over time.
      */
     @Test
@@ -186,6 +193,11 @@ public abstract class AbstractModuleEntityUsageArchitectureTest extends Abstract
                     Method reflectedMethod = findMatchingDeclaredMethod(reflectedController, archMethod);
                     if (reflectedMethod == null) {
                         // synthetic/bridge methods etc. - skip safely
+                        continue;
+                    }
+
+                    // Only actual REST endpoints matter — skip private/helper methods.
+                    if (!isRestEndpointMethod(reflectedMethod)) {
                         continue;
                     }
 
@@ -225,12 +237,12 @@ public abstract class AbstractModuleEntityUsageArchitectureTest extends Abstract
 
         classes().that().resideInAPackage(getModuleWithSubpackage()).and().areAnnotatedWith(RestController.class).should(condition).allowEmptyShould(true).check(productionClasses);
 
-        int maxAllowed = getMaxEntityInputViolations();
+        int expectedViolations = getExpectedEntityInputViolations();
         assertThat(violations).as(
                 "Entity input violations in module %s (expected exactly: %d, found: %d). "
                         + "Self-enforcing ratchet: if you reduce violations, lower this override; if you add a new violation, fix it instead of inflating the override. "
                         + "TODO: This number should be reduced to 0 by using DTOs instead of entities. " + "See the database documentation for guidelines on DTO usage.",
-                getModulePackage(), maxAllowed, violations.size()).hasSize(maxAllowed);
+                getModulePackage(), expectedViolations, violations.size()).hasSize(expectedViolations);
     }
 
     /**
@@ -290,13 +302,24 @@ public abstract class AbstractModuleEntityUsageArchitectureTest extends Abstract
         // Check classes ending with "DTO" (case-sensitive) - this is the naming convention for DTOs
         classes().that().resideInAPackage(getModuleWithSubpackage()).and().haveSimpleNameEndingWith("DTO").should(condition).allowEmptyShould(true).check(productionClasses);
 
-        int maxAllowed = getMaxDtoEntityFieldViolations();
+        int expectedViolations = getExpectedDtoEntityFieldViolations();
         assertThat(violations).as(
                 "DTO entity field violations in module %s (expected exactly: %d, found: %d). "
                         + "Self-enforcing ratchet: if you reduce violations, lower this override; if you add a new violation, fix it instead of inflating the override. "
                         + "TODO: This number should be reduced to 0 by removing entity references from DTOs. "
                         + "DTOs should only contain primitive types, date/time types, enums, and other DTOs. " + "See the database documentation for guidelines on DTO usage.",
-                getModulePackage(), maxAllowed, violations.size()).hasSize(maxAllowed);
+                getModulePackage(), expectedViolations, violations.size()).hasSize(expectedViolations);
+    }
+
+    /**
+     * Whether the given controller method is an actual HTTP endpoint, i.e. it is (meta-)annotated with
+     * {@link RequestMapping}. This covers {@code @GetMapping}/{@code @PostMapping}/{@code @PutMapping}/
+     * {@code @DeleteMapping}/{@code @PatchMapping} (all meta-annotated with {@code @RequestMapping}) and any
+     * custom mapping annotation. Private/helper methods (e.g. DTO&lt;-&gt;entity mappers) that merely live in a
+     * {@code @RestController} but carry no mapping annotation are not endpoints and must not be flagged.
+     */
+    protected static boolean isRestEndpointMethod(Method method) {
+        return AnnotatedElementUtils.hasAnnotation(method, RequestMapping.class);
     }
 
     /**
@@ -338,6 +361,14 @@ public abstract class AbstractModuleEntityUsageArchitectureTest extends Abstract
     /**
      * Returns the first encountered @Entity class inside a Java reflection Type.
      * Handles nested generics, arrays, generic arrays, and wildcards.
+     * <p>
+     * <b>Intentional skip:</b> a {@code Class<X>} type token (raw type {@code java.lang.Class}, including
+     * {@code Class<? extends SomeEntity>}, {@code Class<? super SomeEntity>}, {@code List<Class<SomeEntity>>}, etc.)
+     * is <em>not</em> reported as a violation. Such occurrences pass an entity type as metadata — they do not
+     * serialize an entity instance over the wire and therefore don't carry the lazy-wrapping risk this check
+     * guards against. DTOs that need to name an entity type should prefer a stable discriminator (enum or
+     * string) over a raw {@code Class<>} token; this skip just keeps the architecture test focused on the
+     * payload-shape concerns it actually exists to enforce.
      */
     protected static Optional<Class<?>> findFirstEntityType(Type type) {
         switch (type) {
@@ -354,6 +385,11 @@ public abstract class AbstractModuleEntityUsageArchitectureTest extends Abstract
                 return Optional.empty();
             }
             case ParameterizedType parameterizedType -> {
+                // A Class<X> (e.g. Class<? extends LectureUnit>) is a type token, not an embedded entity value:
+                // its type argument names a type, it does not serialize an entity instance. Don't recurse into it.
+                if (parameterizedType.getRawType() == Class.class) {
+                    return Optional.empty();
+                }
                 for (Type arg : parameterizedType.getActualTypeArguments()) {
                     Optional<Class<?>> found = findFirstEntityType(arg);
                     if (found.isPresent()) {
