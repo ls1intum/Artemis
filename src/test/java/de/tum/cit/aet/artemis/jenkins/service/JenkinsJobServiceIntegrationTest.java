@@ -1,6 +1,6 @@
-package de.tum.cit.aet.artemis.programming.service;
+package de.tum.cit.aet.artemis.jenkins.service;
 
-import static de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlFileUtils.getDocumentBuilderFactory;
+import static de.tum.cit.aet.artemis.jenkins.service.JenkinsXmlFileUtils.getDocumentBuilderFactory;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIOException;
 import static org.mockito.Mockito.mockStatic;
@@ -21,11 +21,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.w3c.dom.Document;
 
 import de.tum.cit.aet.artemis.core.exception.JenkinsException;
+import de.tum.cit.aet.artemis.jenkins.service.jobs.JenkinsJobService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsLocalVCTest;
-import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlFileUtils;
-import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
 
-class JenkinsJobServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
+class JenkinsJobServiceIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "jenkinsjobservicetest";
 

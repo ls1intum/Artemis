@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.jenkins.build_plan;
+package de.tum.cit.aet.artemis.jenkins.service.build_plan;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
