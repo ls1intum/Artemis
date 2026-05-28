@@ -1,9 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ActivatedRoute } from '@angular/router';
 import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 import { CommitHistoryComponent } from 'app/localvc/commit-history/commit-history.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
@@ -97,13 +100,21 @@ describe('CommitHistoryComponent', () => {
     const commit3: CommitInfo = { hash: 'commit3', author: 'author3', message: 'message3', timestamp: dayjs('2021-01-03') };
     const mockCommits: CommitInfo[] = [commit2, commit3, commit1];
 
+    beforeAll(() => {
+        try {
+            TestBed.initTestEnvironment(BrowserTestingModule, platformBrowserTesting());
+        } catch {
+            // The environment is already initialized when running through other test harnesses.
+        }
+    });
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [CommitHistoryComponent, MockComponent(CommitsInfoComponent)],
+            imports: [CommitHistoryComponent, MockComponent(CommitsInfoComponent)],
             providers: [
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ key: 'ABC123' }) },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
     });

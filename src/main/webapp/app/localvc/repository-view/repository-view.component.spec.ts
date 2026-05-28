@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { ActivatedRoute } from '@angular/router';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
@@ -30,17 +31,24 @@ describe('RepositoryViewComponent', () => {
     let programmingExerciseService: ProgrammingExerciseService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
 
+    beforeAll(() => {
+        try {
+            TestBed.initTestEnvironment(BrowserTestingModule, platformBrowserTesting());
+        } catch {
+            // The environment is already initialized when running through other test harnesses.
+        }
+    });
     beforeEach(async () => {
         mockDomainService = {
             setDomain: jest.fn(),
             subscribeDomainChange: jest.fn().mockReturnValue(of([DomainType.PARTICIPATION, { id: 1 }])),
         };
-        // Mock the ResizeObserver, which is not available in the test environment
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-            return new MockResizeObserver(callback);
-        });
+        // Mock the ResizeObserver, which is not available in the test environment.
+        // Assign the class directly — vi.fn().mockImplementation(...) does not yield a constructable mock under Vitest.
+        global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
 
         await TestBed.configureTestingModule({
+            imports: [RepositoryViewComponent],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: DomainService, useValue: mockDomainService },
