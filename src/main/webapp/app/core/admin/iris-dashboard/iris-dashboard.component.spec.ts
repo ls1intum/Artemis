@@ -3,9 +3,10 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IrisDashboardComponent } from './iris-dashboard.component';
 import { IrisDashboardService } from './iris-dashboard.service';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 describe('IrisDashboardComponent', () => {
     setupTestBed({ zoneless: true });
@@ -29,6 +30,8 @@ describe('IrisDashboardComponent', () => {
         thumbsDownAbsoluteRate: 15.0,
         sessionsWithThumbsUp: 40,
         sessionsWithThumbsDown: 10,
+        thumbsUpCount: 40,
+        thumbsDownCount: 10,
         avgResponseTimeSeconds: 5.5,
         p50ResponseTimeSeconds: 4.0,
         p95ResponseTimeSeconds: 12.0,
@@ -37,15 +40,15 @@ describe('IrisDashboardComponent', () => {
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [IrisDashboardComponent],
-            providers: [provideHttpClient(), provideHttpClientTesting()],
+            imports: [IrisDashboardComponent, TranslateModule.forRoot()],
+            providers: [provideHttpClient(), provideHttpClientTesting(), TranslateService],
         });
 
         dashboardService = TestBed.inject(IrisDashboardService);
         vi.spyOn(dashboardService, 'getOverview').mockReturnValue(of(mockOverview));
         vi.spyOn(dashboardService, 'getConfig').mockReturnValue(
             of({
-                maxQueryWindowDays: 365,
+                maxQueryWindowDays: 90,
                 staleThresholdMinutes: 5,
                 digestEnabled: false,
                 digestCron: '0 0 7 * * *',
@@ -77,12 +80,35 @@ describe('IrisDashboardComponent', () => {
         await fixture.whenStable();
         expect(component.overview()).toEqual(mockOverview);
         expect(component.loading()).toBe(false);
+        expect(component.error()).toBe(false);
     });
 
     it('should reload data on time span change', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
         component.onTimeSpanChange(component.timeSpanOptions[0]);
+        await fixture.whenStable();
         expect(dashboardService.getOverview).toHaveBeenCalledTimes(2);
+    });
+
+    it('should set error signal on overview failure', async () => {
+        vi.spyOn(dashboardService, 'getOverview').mockReturnValue(throwError(() => new Error('Server error')));
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(component.error()).toBe(true);
+        expect(component.loading()).toBe(false);
+        expect(component.overview()).toBeUndefined();
+    });
+
+    it('should clear stale data on reload', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(component.overview()).toEqual(mockOverview);
+
+        vi.spyOn(dashboardService, 'getOverview').mockReturnValue(throwError(() => new Error('fail')));
+        component.refresh();
+        await fixture.whenStable();
+        expect(component.overview()).toBeUndefined();
+        expect(component.error()).toBe(true);
     });
 });

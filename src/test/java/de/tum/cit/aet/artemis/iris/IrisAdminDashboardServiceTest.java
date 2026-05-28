@@ -13,7 +13,6 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,8 +57,7 @@ class IrisAdminDashboardServiceTest {
     @Test
     void computeNoResponseRate_emptyResults_returnsZero() {
         stubAllRepositoryMethods();
-        when(repository.findUserMessagesWithNextMessage(any(), any())).thenReturn(List.of());
-        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"), null);
+        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"));
         assertThat(overview.noResponseRate()).isEqualTo(0.0);
         assertThat(overview.noResponseMessageCount()).isEqualTo(0);
     }
@@ -67,11 +65,11 @@ class IrisAdminDashboardServiceTest {
     @Test
     void computeNoResponseRate_withResponses_computesCorrectly() {
         stubAllRepositoryMethods();
-        // Two user messages: one with LLM response, one without
-        when(repository.findUserMessagesWithNextMessage(any(), any()))
+        // Two user messages: one with LLM response, one without (both within staleBefore)
+        when(repository.findUserMessagesWithNextMessageFullRange(any(), any()))
                 .thenReturn(List.of(new Object[] { 1L, 100L, Instant.parse("2026-05-26T10:00:00Z"), "LLM", Instant.parse("2026-05-26T10:00:05Z"), "CHAT" },
                         new Object[] { 2L, 101L, Instant.parse("2026-05-26T11:00:00Z"), null, null, "CHAT" }));
-        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"), null);
+        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"));
         assertThat(overview.noResponseRate()).isEqualTo(50.0);
         assertThat(overview.noResponseMessageCount()).isEqualTo(1);
         assertThat(overview.noResponseSessionCount()).isEqualTo(1);
@@ -80,7 +78,7 @@ class IrisAdminDashboardServiceTest {
     @Test
     void engagementRate_zeroTotalSessions_returnsZero() {
         stubAllRepositoryMethods();
-        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"), null);
+        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"));
         assertThat(overview.engagementRate()).isEqualTo(0.0);
     }
 
@@ -89,7 +87,7 @@ class IrisAdminDashboardServiceTest {
         stubAllRepositoryMethods();
         when(repository.countTotalSessions(any(), any())).thenReturn(10L);
         when(repository.countActiveSessions(any(), any())).thenReturn(7L);
-        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"), null);
+        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"));
         assertThat(overview.engagementRate()).isEqualTo(70.0);
     }
 
@@ -102,7 +100,7 @@ class IrisAdminDashboardServiceTest {
         when(repository.countTotalLlmMessages(any(), any())).thenReturn(200L);
         when(repository.countSessionsWithThumbsUp(any(), any())).thenReturn(15L);
         when(repository.countSessionsWithThumbsDown(any(), any())).thenReturn(4L);
-        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"), null);
+        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"));
         assertThat(overview.thumbsUpRatio()).isEqualTo(10.0);
         assertThat(overview.thumbsDownRatio()).isEqualTo(2.5);
         assertThat(overview.thumbsUpAbsoluteRate()).isEqualTo(15.0);
@@ -116,7 +114,7 @@ class IrisAdminDashboardServiceTest {
         when(repository.findUserMessagesWithNextMessageFullRange(any(), any()))
                 .thenReturn(List.of(new Object[] { 1L, 100L, Instant.parse("2026-05-26T10:00:00Z"), "LLM", Instant.parse("2026-05-26T10:00:05Z"), "CHAT" },
                         new Object[] { 2L, 101L, Instant.parse("2026-05-26T11:00:00Z"), "LLM", Instant.parse("2026-05-26T11:00:10Z"), "CHAT" }));
-        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"), null);
+        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"));
         assertThat(overview.avgResponseTimeSeconds()).isEqualTo(7.5);
         assertThat(overview.p50ResponseTimeSeconds()).isEqualTo(7.5);
     }
@@ -125,7 +123,7 @@ class IrisAdminDashboardServiceTest {
     void overview_tokenCost_summedCorrectly() {
         stubAllRepositoryMethods();
         when(repository.computeTokenCost(any(), any())).thenReturn(List.of(new Object[] { 1, 1.50 }, new Object[] { 0, 0.75 }));
-        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"), null);
+        var overview = service.computeOverview(Instant.parse("2026-05-26T00:00:00Z"), Instant.parse("2026-05-27T00:00:00Z"));
         assertThat(overview.totalTokenCostEur()).isEqualTo(2.25);
     }
 
@@ -193,7 +191,7 @@ class IrisAdminDashboardServiceTest {
         Instant from = Instant.parse("2026-05-25T00:00:00Z");
         Instant to = Instant.parse("2026-05-28T00:00:00Z");
         List<Instant> buckets = service.generateBuckets(from, to, "DAY");
-        assertThat(buckets).hasSize(4); // May 25, 26, 27, 28 (includes the boundary day)
+        assertThat(buckets).hasSize(3); // May 25, 26, 27 (to is exclusive)
     }
 
     @Test
@@ -208,7 +206,16 @@ class IrisAdminDashboardServiceTest {
         Instant from = Instant.parse("2026-01-01T00:00:00Z");
         Instant to = Instant.parse("2026-04-01T00:00:00Z");
         List<Instant> buckets = service.generateBuckets(from, to, "MONTH");
-        assertThat(buckets).hasSize(4); // Jan, Feb, Mar, Apr
+        assertThat(buckets).hasSize(3); // Jan, Feb, Mar (to is exclusive)
+    }
+
+    @Test
+    void generateBuckets_nonMidnightTo_ceilsToNextDay() {
+        Instant from = Instant.parse("2026-05-25T00:00:00Z");
+        Instant to = Instant.parse("2026-05-27T15:00:00Z");
+        List<Instant> buckets = service.generateBuckets(from, to, "DAY");
+        assertThat(buckets).hasSize(3); // May 25, 26, 27
+        assertThat(buckets.getLast()).isEqualTo(Instant.parse("2026-05-27T00:00:00Z"));
     }
 
     // -- Time-series tests ------------------------------------------------------
@@ -221,7 +228,7 @@ class IrisAdminDashboardServiceTest {
                 new Object[] { 2L, Instant.parse("2026-05-25T11:00:00Z"), "CHAT", 0 }, new Object[] { 3L, Instant.parse("2026-05-26T09:00:00Z"), "CHAT", 1 }));
         var result = service.computeTimeSeries(from, to, "DAY", IrisDashboardMetric.SESSIONS);
         assertThat(result.metric()).isEqualTo(IrisDashboardMetric.SESSIONS);
-        assertThat(result.entries()).hasSize(3); // May 25, 26, 27
+        assertThat(result.entries()).hasSize(2); // May 25, 26 (to is exclusive)
         // First bucket (May 25): 2 total, 1 active
         assertThat(result.entries().getFirst().series().get("total")).isEqualTo(2.0);
         assertThat(result.entries().getFirst().series().get("active")).isEqualTo(1.0);
@@ -237,7 +244,7 @@ class IrisAdminDashboardServiceTest {
         when(repository.findMessagesInRange(any(), any())).thenReturn(List.of(new Object[] { 1L, Instant.parse("2026-05-25T10:00:00Z"), "USER", 100L },
                 new Object[] { 2L, Instant.parse("2026-05-25T10:00:05Z"), "LLM", 100L }, new Object[] { 3L, Instant.parse("2026-05-25T11:00:00Z"), "USER", 101L }));
         var result = service.computeTimeSeries(from, to, "DAY", IrisDashboardMetric.MESSAGES);
-        assertThat(result.entries()).hasSize(2); // May 25, 26 (includes boundary day)
+        assertThat(result.entries()).hasSize(1); // May 25 (to is exclusive)
         assertThat(result.entries().getFirst().series().get("user")).isEqualTo(2.0);
         assertThat(result.entries().getFirst().series().get("llm")).isEqualTo(1.0);
         assertThat(result.entries().getFirst().series().get("total")).isEqualTo(3.0);
@@ -278,9 +285,9 @@ class IrisAdminDashboardServiceTest {
         when(repository.findTopCoursesBySessionCount(any(), any(), anyInt())).thenReturn(List.of(new Object[] { 42L, 15L }, new Object[] { 99L, 8L }));
 
         Course course42 = new Course();
+        course42.setId(42L);
         course42.setTitle("Intro to Programming");
-        when(courseRepository.findById(42L)).thenReturn(Optional.of(course42));
-        when(courseRepository.findById(99L)).thenReturn(Optional.empty());
+        when(courseRepository.findAllById(List.of(42L, 99L))).thenReturn(List.of(course42));
 
         var result = service.computeBreakdown(from, to, IrisDashboardBreakdownDimension.COURSE);
         assertThat(result).hasSize(2);
@@ -336,7 +343,6 @@ class IrisAdminDashboardServiceTest {
         when(repository.countTotalLlmMessages(any(), any())).thenReturn(0L);
         when(repository.countSessionsWithThumbsUp(any(), any())).thenReturn(0L);
         when(repository.countSessionsWithThumbsDown(any(), any())).thenReturn(0L);
-        when(repository.findUserMessagesWithNextMessage(any(), any())).thenReturn(List.of());
         when(repository.findUserMessagesWithNextMessageFullRange(any(), any())).thenReturn(List.of());
         when(repository.computeTokenCost(any(), any())).thenReturn(List.of());
     }

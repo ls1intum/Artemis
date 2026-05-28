@@ -185,7 +185,7 @@ const childRoutes: Routes = [
         path: 'iris-dashboard',
         loadComponent: () => import('app/core/admin/iris-dashboard/iris-dashboard.component').then((m) => m.IrisDashboardComponent),
         data: {
-            pageTitle: 'Iris Dashboard',
+            pageTitle: 'artemisApp.irisDashboard.title',
             authorities: IS_AT_LEAST_ADMIN,
         },
         canActivate: [IrisGuard],

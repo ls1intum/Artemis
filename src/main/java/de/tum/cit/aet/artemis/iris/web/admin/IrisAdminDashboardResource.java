@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.Duration;
 import java.time.Instant;
 
-import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -44,16 +43,15 @@ public class IrisAdminDashboardResource {
     /**
      * GET /api/iris/admin/dashboard/overview : Get dashboard KPI overview.
      *
-     * @param from     start of the time window (inclusive)
-     * @param to       end of the time window (exclusive)
-     * @param chatMode optional chat mode filter (reserved for future use)
+     * @param from start of the time window (inclusive)
+     * @param to   end of the time window (exclusive)
      * @return the overview DTO
      */
     @GetMapping("overview")
     @EnforceAdmin
-    public ResponseEntity<?> getOverview(@RequestParam Instant from, @RequestParam Instant to, @RequestParam(required = false) @Nullable String chatMode) {
+    public ResponseEntity<?> getOverview(@RequestParam Instant from, @RequestParam Instant to) {
         validateWindow(from, to);
-        return ResponseEntity.ok(dashboardService.computeOverview(from, to, chatMode));
+        return ResponseEntity.ok(dashboardService.computeOverview(from, to));
     }
 
     /**

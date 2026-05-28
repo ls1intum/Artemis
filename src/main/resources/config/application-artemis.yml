@@ -128,7 +128,7 @@ artemis:
     url: <your-pyris-url>
     secret-token: <your-secret>
     dashboard:
-      max-query-window-days: 365
+      max-query-window-days: 90
       stale-threshold-minutes: 5
       digest:
         enabled: false

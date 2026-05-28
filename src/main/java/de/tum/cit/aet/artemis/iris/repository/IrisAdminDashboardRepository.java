@@ -124,27 +124,6 @@ public interface IrisAdminDashboardRepository extends ArtemisJpaRepository<IrisM
             FROM iris_message u
             JOIN iris_session s ON s.id = u.session_id
             WHERE u.sender = 'USER'
-              AND u.sent_at >= :from AND u.sent_at < :staleBefore
-              AND s.discriminator IN ('CHAT', 'TUTOR_SUGGESTION')
-            """)
-    List<Object[]> findUserMessagesWithNextMessage(@Param("from") Instant from, @Param("staleBefore") Instant staleBefore);
-
-    @Query(nativeQuery = true, value = """
-            SELECT u.id AS userMsgId, u.session_id AS sessionId, u.sent_at AS sentAt,
-                (SELECT m2.sender FROM iris_message m2
-                 WHERE m2.session_id = u.session_id
-                   AND (m2.sent_at > u.sent_at OR (m2.sent_at = u.sent_at AND m2.id > u.id))
-                 ORDER BY m2.sent_at, m2.id LIMIT 1
-                ) AS nextSender,
-                (SELECT m2.sent_at FROM iris_message m2
-                 WHERE m2.session_id = u.session_id
-                   AND (m2.sent_at > u.sent_at OR (m2.sent_at = u.sent_at AND m2.id > u.id))
-                 ORDER BY m2.sent_at, m2.id LIMIT 1
-                ) AS nextSentAt,
-                CASE WHEN s.discriminator = 'TUTOR_SUGGESTION' THEN 'TUTOR_SUGGESTION' ELSE s.chat_mode END AS modeLabel
-            FROM iris_message u
-            JOIN iris_session s ON s.id = u.session_id
-            WHERE u.sender = 'USER'
               AND u.sent_at >= :from AND u.sent_at < :to
               AND s.discriminator IN ('CHAT', 'TUTOR_SUGGESTION')
             """)

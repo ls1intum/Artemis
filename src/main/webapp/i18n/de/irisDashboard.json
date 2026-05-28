@@ -1,0 +1,46 @@
+{
+    "artemisApp": {
+        "irisDashboard": {
+            "title": "Iris Dashboard",
+            "loading": "Wird geladen...",
+            "error": "Dashboard-Daten konnten nicht geladen werden. Bitte erneut versuchen.",
+            "refresh": "Aktualisieren",
+            "totalSessions": "Sitzungen gesamt",
+            "activeSessions": "Aktive Sitzungen",
+            "engagementRate": "Aktivitätsrate",
+            "uniqueUsers": "Eindeutige Benutzer",
+            "noResponseRate": "Keine-Antwort-Rate",
+            "noResponseMessages": "Nachrichten ohne Antwort",
+            "noResponseSessions": "Sitzungen ohne Antwort",
+            "thumbsUpRatio": "Daumen hoch Quote",
+            "thumbsDownRatio": "Daumen runter Quote",
+            "sessionsWithThumbsUp": "Sitzungen mit Daumen hoch",
+            "sessionsWithThumbsDown": "Sitzungen mit Daumen runter",
+            "absolute": "Absolut",
+            "avgResponseTime": "Durchschn. Antwortzeit",
+            "p50p95": "P50 / P95",
+            "tokenCost": "Token-Kosten",
+            "breakdown": {
+                "byChatMode": "Nach Chat-Modus",
+                "byCourse": "Nach Kurs (Top 10)",
+                "byModel": "Nach Modell",
+                "mode": "Modus",
+                "sessions": "Sitzungen",
+                "messages": "Nachrichten",
+                "noResponseRate": "Keine-Antwort-Rate",
+                "course": "Kurs",
+                "costEur": "Kosten (EUR)",
+                "model": "Modell",
+                "totalTokens": "Token gesamt"
+            },
+            "config": "Konfiguration (Nur Lesen)",
+            "timeSpan": {
+                "day": "Tag",
+                "week": "Woche",
+                "month": "Monat",
+                "quarter": "Quartal",
+                "year": "Jahr"
+            }
+        }
+    }
+}

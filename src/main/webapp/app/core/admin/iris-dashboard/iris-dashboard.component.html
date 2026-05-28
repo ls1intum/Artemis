@@ -2,18 +2,27 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="d-flex align-items-center gap-2">
             <fa-icon [icon]="faRobot" />
-            <h3 class="mb-0">Iris Dashboard</h3>
+            <h3 class="mb-0" jhiTranslate="artemisApp.irisDashboard.title">Iris Dashboard</h3>
         </div>
         <div class="d-flex align-items-center gap-2">
             <p-select [ngModel]="selectedTimeSpan()" [options]="timeSpanOptions" optionLabel="label" (ngModelChange)="onTimeSpanChange($event)" size="small" styleClass="w-auto" />
-            <button class="btn btn-sm btn-outline-secondary" (click)="refresh()">
+            <button
+                class="btn btn-sm btn-outline-secondary"
+                (click)="refresh()"
+                [attr.aria-label]="'artemisApp.irisDashboard.refresh' | artemisTranslate"
+                [title]="'artemisApp.irisDashboard.refresh' | artemisTranslate"
+            >
                 <fa-icon [icon]="faSync" />
             </button>
         </div>
     </div>
 
     @if (loading()) {
-        <div class="text-center py-5">Loading...</div>
+        <div class="text-center py-5" jhiTranslate="artemisApp.irisDashboard.loading">Loading...</div>
+    }
+
+    @if (error()) {
+        <div class="alert alert-danger" role="alert" jhiTranslate="artemisApp.irisDashboard.error">Failed to load dashboard data. Please try again.</div>
     }
 
     @if (overview()) {
@@ -21,22 +30,26 @@
         <!-- Row 1: Sessions & Users -->
         <div class="row mb-3">
             <div class="col-md-3">
-                <p-card header="Total Sessions">
+                <p-card>
+                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.totalSessions">Total Sessions</div></ng-template>
                     <span class="fs-3 fw-bold">{{ o.totalSessions }}</span>
                 </p-card>
             </div>
             <div class="col-md-3">
-                <p-card header="Active Sessions">
+                <p-card>
+                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.activeSessions">Active Sessions</div></ng-template>
                     <span class="fs-3 fw-bold">{{ o.activeSessions }}</span>
                 </p-card>
             </div>
             <div class="col-md-3">
-                <p-card header="Engagement Rate">
+                <p-card>
+                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.engagementRate">Engagement Rate</div></ng-template>
                     <span class="fs-3 fw-bold">{{ o.engagementRate | number: '1.1-1' }}%</span>
                 </p-card>
             </div>
             <div class="col-md-3">
-                <p-card header="Unique Users">
+                <p-card>
+                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.uniqueUsers">Unique Users</div></ng-template>
                     <span class="fs-3 fw-bold">{{ o.uniqueUsers }}</span>
                 </p-card>
             </div>
@@ -45,17 +58,20 @@
         <!-- Row 2: No-Response -->
         <div class="row mb-3">
             <div class="col-md-4">
-                <p-card header="No-Response Rate">
+                <p-card>
+                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.noResponseRate">No-Response Rate</div></ng-template>
                     <span class="fs-3 fw-bold" [class.text-danger]="o.noResponseRate > 10">{{ o.noResponseRate | number: '1.1-1' }}%</span>
                 </p-card>
             </div>
             <div class="col-md-4">
-                <p-card header="No-Response Messages">
+                <p-card>
+                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.noResponseMessages">No-Response Messages</div></ng-template>
                     <span class="fs-3 fw-bold">{{ o.noResponseMessageCount }}</span>
                 </p-card>
             </div>
             <div class="col-md-4">
-                <p-card header="No-Response Sessions">
+                <p-card>
+                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.noResponseSessions">No-Response Sessions</div></ng-template>
                     <span class="fs-3 fw-bold">{{ o.noResponseSessionCount }}</span>
                 </p-card>
             </div>
@@ -64,24 +80,28 @@
         <!-- Row 3: Ratings -->
         <div class="row mb-3">
             <div class="col-md-3">
-                <p-card header="Thumbs Up Ratio">
+                <p-card>
+                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.thumbsUpRatio">Thumbs Up Ratio</div></ng-template>
                     <span class="fs-3 fw-bold">{{ o.thumbsUpRatio | number: '1.1-1' }}%</span>
-                    <div class="text-muted small">Absolute: {{ o.thumbsUpAbsoluteRate | number: '1.1-1' }}%</div>
+                    <div class="text-muted small"><span jhiTranslate="artemisApp.irisDashboard.absolute">Absolute</span>: {{ o.thumbsUpAbsoluteRate | number: '1.1-1' }}%</div>
                 </p-card>
             </div>
             <div class="col-md-3">
-                <p-card header="Thumbs Down Ratio">
+                <p-card>
+                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.thumbsDownRatio">Thumbs Down Ratio</div></ng-template>
                     <span class="fs-3 fw-bold">{{ o.thumbsDownRatio | number: '1.1-1' }}%</span>
-                    <div class="text-muted small">Absolute: {{ o.thumbsDownAbsoluteRate | number: '1.1-1' }}%</div>
+                    <div class="text-muted small"><span jhiTranslate="artemisApp.irisDashboard.absolute">Absolute</span>: {{ o.thumbsDownAbsoluteRate | number: '1.1-1' }}%</div>
                 </p-card>
             </div>
             <div class="col-md-3">
-                <p-card header="Sessions with Thumbs Up">
+                <p-card>
+                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.sessionsWithThumbsUp">Sessions with Thumbs Up</div></ng-template>
                     <span class="fs-3 fw-bold">{{ o.sessionsWithThumbsUp }}</span>
                 </p-card>
             </div>
             <div class="col-md-3">
-                <p-card header="Sessions with Thumbs Down">
+                <p-card>
+                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.sessionsWithThumbsDown">Sessions with Thumbs Down</div></ng-template>
                     <span class="fs-3 fw-bold">{{ o.sessionsWithThumbsDown }}</span>
                 </p-card>
             </div>
@@ -90,17 +110,20 @@
         <!-- Row 4: Response Time & Cost -->
         <div class="row mb-3">
             <div class="col-md-4">
-                <p-card header="Avg Response Time">
+                <p-card>
+                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.avgResponseTime">Avg Response Time</div></ng-template>
                     <span class="fs-3 fw-bold">{{ o.avgResponseTimeSeconds | number: '1.1-1' }}s</span>
                 </p-card>
             </div>
             <div class="col-md-4">
-                <p-card header="P50 / P95">
+                <p-card>
+                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.p50p95">P50 / P95</div></ng-template>
                     <span class="fs-3 fw-bold">{{ o.p50ResponseTimeSeconds | number: '1.1-1' }}s / {{ o.p95ResponseTimeSeconds | number: '1.1-1' }}s</span>
                 </p-card>
             </div>
             <div class="col-md-4">
-                <p-card header="Token Cost">
+                <p-card>
+                    <ng-template #header><div class="p-card-title" jhiTranslate="artemisApp.irisDashboard.tokenCost">Token Cost</div></ng-template>
                     <span class="fs-3 fw-bold">{{ o.totalTokenCostEur | number: '1.2-4' }} EUR</span>
                 </p-card>
             </div>
@@ -109,9 +132,9 @@
         <!-- Breakdown Tables -->
         <p-tabs [value]="activeBreakdownTab()" (valueChange)="activeBreakdownTab.set($event)">
             <p-tablist>
-                <p-tab [value]="0">By Chat Mode</p-tab>
-                <p-tab [value]="1">By Course (Top 10)</p-tab>
-                <p-tab [value]="2">By Model</p-tab>
+                <p-tab [value]="0" jhiTranslate="artemisApp.irisDashboard.breakdown.byChatMode">By Chat Mode</p-tab>
+                <p-tab [value]="1" jhiTranslate="artemisApp.irisDashboard.breakdown.byCourse">By Course (Top 10)</p-tab>
+                <p-tab [value]="2" jhiTranslate="artemisApp.irisDashboard.breakdown.byModel">By Model</p-tab>
             </p-tablist>
         </p-tabs>
 
@@ -119,10 +142,10 @@
             <p-table [value]="chatModeBreakdown()" class="p-datatable-sm">
                 <ng-template #header>
                     <tr>
-                        <th>Mode</th>
-                        <th>Sessions</th>
-                        <th>Messages</th>
-                        <th>No-Response Rate</th>
+                        <th jhiTranslate="artemisApp.irisDashboard.breakdown.mode">Mode</th>
+                        <th jhiTranslate="artemisApp.irisDashboard.breakdown.sessions">Sessions</th>
+                        <th jhiTranslate="artemisApp.irisDashboard.breakdown.messages">Messages</th>
+                        <th jhiTranslate="artemisApp.irisDashboard.breakdown.noResponseRate">No-Response Rate</th>
                     </tr>
                 </ng-template>
                 <ng-template #body let-entry>
@@ -140,9 +163,9 @@
             <p-table [value]="courseBreakdown()" class="p-datatable-sm">
                 <ng-template #header>
                     <tr>
-                        <th>Course</th>
-                        <th>Sessions</th>
-                        <th>Cost (EUR)</th>
+                        <th jhiTranslate="artemisApp.irisDashboard.breakdown.course">Course</th>
+                        <th jhiTranslate="artemisApp.irisDashboard.breakdown.sessions">Sessions</th>
+                        <th jhiTranslate="artemisApp.irisDashboard.breakdown.costEur">Cost (EUR)</th>
                     </tr>
                 </ng-template>
                 <ng-template #body let-entry>
@@ -159,9 +182,9 @@
             <p-table [value]="modelBreakdown()" class="p-datatable-sm">
                 <ng-template #header>
                     <tr>
-                        <th>Model</th>
-                        <th>Total Tokens</th>
-                        <th>Cost (EUR)</th>
+                        <th jhiTranslate="artemisApp.irisDashboard.breakdown.model">Model</th>
+                        <th jhiTranslate="artemisApp.irisDashboard.breakdown.totalTokens">Total Tokens</th>
+                        <th jhiTranslate="artemisApp.irisDashboard.breakdown.costEur">Cost (EUR)</th>
                     </tr>
                 </ng-template>
                 <ng-template #body let-entry>
@@ -176,7 +199,7 @@
 
         <!-- Config Panel -->
         @if (config()) {
-            <p-panel header="Configuration (Read-Only)" [toggleable]="true" [collapsed]="true" class="mt-3">
+            <p-panel [header]="'artemisApp.irisDashboard.config' | artemisTranslate" [toggleable]="true" [collapsed]="true" class="mt-3">
                 <pre>{{ config() | json }}</pre>
             </p-panel>
         }

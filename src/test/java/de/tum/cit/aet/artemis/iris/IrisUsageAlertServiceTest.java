@@ -104,24 +104,25 @@ class IrisUsageAlertServiceTest {
         verify(emailService).sendAlert(any(IrisDashboardAlertDTO.class));
     }
 
-    // IrisDashboardOverviewDTO has 18 fields:
+    // IrisDashboardOverviewDTO has 20 fields:
     // (totalSessions, activeSessions, engagementRate, totalMessages, uniqueUsers, noResponseRate,
     // noResponseMessageCount, noResponseSessionCount, thumbsUpRatio, thumbsDownRatio,
     // thumbsUpAbsoluteRate, thumbsDownAbsoluteRate, sessionsWithThumbsUp, sessionsWithThumbsDown,
+    // thumbsUpCount, thumbsDownCount,
     // avgResponseTimeSeconds, p50ResponseTimeSeconds, p95ResponseTimeSeconds, totalTokenCostEur)
 
     private void mockHighNoResponseRate() {
         // noResponseRate=15.0 which is > default threshold of 10.0
         // activeSessions=50 which is >= default minimumEligibleSessions of 10
-        when(dashboardService.computeOverview(any(), any(), any()))
-                .thenReturn(new IrisDashboardOverviewDTO(100, 50, 50.0, 200, 20, 15.0, 30, 15, 80.0, 20.0, 60.0, 15.0, 40, 10, 5.0, 4.0, 8.0, 10.0));
+        when(dashboardService.computeOverview(any(), any()))
+                .thenReturn(new IrisDashboardOverviewDTO(100, 50, 50.0, 200, 20, 15.0, 30, 15, 80.0, 20.0, 60.0, 15.0, 40, 10, 20, 5, 5.0, 4.0, 8.0, 10.0));
         when(dashboardService.computeStaleBefore(any(), any())).thenReturn(ZonedDateTime.of(2026, 5, 27, 11, 55, 0, 0, ZoneOffset.UTC).toInstant());
     }
 
     private void mockLowNoResponseRate() {
         // noResponseRate=5.0 which is <= default threshold of 10.0
-        when(dashboardService.computeOverview(any(), any(), any()))
-                .thenReturn(new IrisDashboardOverviewDTO(100, 50, 50.0, 200, 20, 5.0, 10, 5, 80.0, 20.0, 60.0, 15.0, 40, 10, 5.0, 4.0, 8.0, 10.0));
+        when(dashboardService.computeOverview(any(), any()))
+                .thenReturn(new IrisDashboardOverviewDTO(100, 50, 50.0, 200, 20, 5.0, 10, 5, 80.0, 20.0, 60.0, 15.0, 40, 10, 20, 5, 5.0, 4.0, 8.0, 10.0));
         when(dashboardService.computeStaleBefore(any(), any())).thenReturn(ZonedDateTime.of(2026, 5, 27, 11, 55, 0, 0, ZoneOffset.UTC).toInstant());
     }
 }

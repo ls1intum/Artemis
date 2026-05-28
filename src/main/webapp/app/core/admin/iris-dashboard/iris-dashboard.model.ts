@@ -13,6 +13,8 @@ export interface IrisDashboardOverview {
     thumbsDownAbsoluteRate: number;
     sessionsWithThumbsUp: number;
     sessionsWithThumbsDown: number;
+    thumbsUpCount: number;
+    thumbsDownCount: number;
     avgResponseTimeSeconds: number;
     p50ResponseTimeSeconds: number;
     p95ResponseTimeSeconds: number;

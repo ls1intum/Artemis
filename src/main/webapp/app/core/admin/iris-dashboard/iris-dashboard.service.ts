@@ -16,11 +16,8 @@ export class IrisDashboardService {
 
     private readonly baseUrl = 'api/iris/admin/dashboard';
 
-    getOverview(from: string, to: string, chatMode?: string): Observable<IrisDashboardOverview> {
-        let params = new HttpParams().set('from', from).set('to', to);
-        if (chatMode) {
-            params = params.set('chatMode', chatMode);
-        }
+    getOverview(from: string, to: string): Observable<IrisDashboardOverview> {
+        const params = new HttpParams().set('from', from).set('to', to);
         return this.http.get<IrisDashboardOverview>(`${this.baseUrl}/overview`, { params });
     }
 

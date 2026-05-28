@@ -161,7 +161,7 @@ public class IrisUsageAlertService {
             var lookbackStart = now.minus(Duration.ofMinutes(alert.getLookbackMinutes()));
             var staleBefore = dashboardService.computeStaleBefore(now, now);
 
-            var overview = dashboardService.computeOverview(lookbackStart, staleBefore, null);
+            var overview = dashboardService.computeOverview(lookbackStart, staleBefore);
 
             if (overview.activeSessions() < alert.getMinimumEligibleSessions()) {
                 return;
