@@ -954,11 +954,11 @@ public class ExamResource {
             throw new AccessForbiddenAlertException("You cannot register instructors or administrators to exams.", ENTITY_NAME, "cannotRegisterInstructor");
         }
 
-        if (student.getGroups().contains(exam.getCourse().getEditorGroupName()) || authCheckService.isAtLeastEditorInCourse(exam.getCourse().getId())) {
+        if (student.getGroups().contains(exam.getCourse().getEditorGroupName()) || authCheckService.isEditorInCourse(exam.getCourse(), student)) {
             throw new AccessForbiddenAlertException("You cannot register editors or tutors to exams.", ENTITY_NAME, "cannotRegisterEditor");
         }
 
-        if (student.getGroups().contains(exam.getCourse().getTeachingAssistantGroupName()) || authCheckService.isAtLeastTeachingAssistantInCourse(exam.getCourse().getId())) {
+        if (student.getGroups().contains(exam.getCourse().getTeachingAssistantGroupName()) || authCheckService.isTeachingAssistantInCourse(exam.getCourse(), student)) {
             throw new AccessForbiddenAlertException("You cannot register editors or tutors to exams.", ENTITY_NAME, "cannotRegisterEditor");
         }
 
