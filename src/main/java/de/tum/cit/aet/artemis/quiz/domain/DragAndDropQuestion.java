@@ -73,7 +73,7 @@ public class DragAndDropQuestion extends QuizQuestion {
     // contains/remove after Hibernate assigns ids on persist (see DomainObject.java:60-61). The Bag has no @OrderColumn,
     // so Hibernate does not DELETE+INSERT on parent save (the #12584 failure mode requires the unidirectional + @JoinColumn shape).
     // No MultipleBagFetchException risk: dragItems and dropLocations are indexed Lists (@OrderColumn), not bags.
-    // The legacy correct_mappings_order column on drag_and_drop_mapping is now orphaned; drop in a follow-up Liquibase changeset.
+    // The legacy correct_mappings_order column on drag_and_drop_mapping is now orphaned; tracked in #12807 for a follow-up Liquibase changeset.
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<DragAndDropMapping> correctMappings = new ArrayList<>();
 
@@ -109,8 +109,16 @@ public class DragAndDropQuestion extends QuizQuestion {
         return this;
     }
 
+    /**
+     * Removes a single drop location and clears its back-reference; with {@code orphanRemoval = true} the location will also be deleted on the next flush.
+     *
+     * @param dropLocation the drop location to remove
+     * @return this question for fluent chaining
+     */
     public DragAndDropQuestion removeDropLocation(DropLocation dropLocation) {
-        this.dropLocations.remove(dropLocation);
+        if (this.dropLocations != null) {
+            this.dropLocations.remove(dropLocation);
+        }
         dropLocation.setQuestion(null);
         return this;
     }
@@ -139,8 +147,16 @@ public class DragAndDropQuestion extends QuizQuestion {
         return this;
     }
 
+    /**
+     * Removes a single drag item and clears its back-reference; with {@code orphanRemoval = true} the item will also be deleted on the next flush.
+     *
+     * @param dragItem the drag item to remove
+     * @return this question for fluent chaining
+     */
     public DragAndDropQuestion removeDragItem(DragItem dragItem) {
-        this.dragItems.remove(dragItem);
+        if (this.dragItems != null) {
+            this.dragItems.remove(dragItem);
+        }
         dragItem.setQuestion(null);
         return this;
     }
@@ -169,8 +185,16 @@ public class DragAndDropQuestion extends QuizQuestion {
         return this;
     }
 
+    /**
+     * Removes a single mapping and clears its back-reference; with {@code orphanRemoval = true} the mapping will also be deleted on the next flush.
+     *
+     * @param dragAndDropMapping the mapping to remove
+     * @return this question for fluent chaining
+     */
     public DragAndDropQuestion removeCorrectMapping(DragAndDropMapping dragAndDropMapping) {
-        this.correctMappings.remove(dragAndDropMapping);
+        if (this.correctMappings != null) {
+            this.correctMappings.remove(dragAndDropMapping);
+        }
         dragAndDropMapping.setQuestion(null);
         return this;
     }

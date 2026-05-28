@@ -260,7 +260,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 recalculationNecessary = true;
             }
         }
-        originalQuestion.getCorrectMappings().removeAll(mappingsToRemove);
+        mappingsToRemove.forEach(originalQuestion::removeCorrectMapping);
         Set<DragAndDropMapping> existingMappings = new HashSet<>(originalQuestion.getCorrectMappings());
         for (var mappingDTO : dndDTO.correctMappings()) {
             boolean mappingExists = existingMappings.stream()
@@ -470,7 +470,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 recalculationNecessary = true;
             }
         }
-        originalQuestion.getCorrectMappings().removeAll(mappingsToRemove);
+        mappingsToRemove.forEach(originalQuestion::removeCorrectMapping);
         Set<ShortAnswerMapping> existingMappings = new HashSet<>(originalQuestion.getCorrectMappings());
         for (var mappingDTO : saDTO.correctMappings()) {
             if (addNewShortAnswerMappingFromDTO(originalQuestion, mappingDTO, existingMappings, tempIdToNewSolution)) {

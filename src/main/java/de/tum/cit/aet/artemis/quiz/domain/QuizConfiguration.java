@@ -20,13 +20,19 @@ public interface QuizConfiguration {
     void setQuestionParent(QuizQuestion quizQuestion);
 
     /**
-     * Recreate missing pointers from children to parents that were removed by @JSONIgnore
+     * Recreate missing pointers from children to parents that were removed by {@code @JsonIgnore}.
+     *
+     * <p>
+     * <strong>Contract:</strong> back-references are set unconditionally on every reachable child, including
+     * those with {@code id == null}. Prior to the bidirectional {@code mappedBy} mapping introduced for issues
+     * #12574 / #12584 this method silently skipped transient questions; that guard has been removed because
+     * the child {@code @ManyToOne} now owns the FK and would otherwise INSERT with a null {@code question_id}.
+     * Callers passing partially-deserialised graphs must ensure those graphs are valid for persistence
+     * (e.g. no orphaned components without their parent type).
      */
     default void reconnectJSONIgnoreAttributes() {// iterate through quizQuestions to add missing pointer back to quizExercise
-        // Note: This is necessary because of the @IgnoreJSON in question and answerOption
-        // that prevents infinite recursive JSON serialization. Back-references are set unconditionally
-        // (including for entities with id == null) so freshly-deserialised graphs persist correctly under the
-        // bidirectional mapping where the child @ManyToOne owns the FK column.
+        // Note: This is necessary because of the @JsonIgnore in question and answerOption
+        // that prevents infinite recursive JSON serialization.
         if (getQuizQuestions() == null) {
             return;
         }

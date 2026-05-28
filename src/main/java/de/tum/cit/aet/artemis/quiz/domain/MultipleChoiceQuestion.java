@@ -255,13 +255,15 @@ public class MultipleChoiceQuestion extends QuizQuestion {
      * Adds a single answer option and maintains the bidirectional back-reference required by the {@code mappedBy} mapping.
      *
      * @param answerOption the answer option to add
+     * @return this question for fluent chaining
      */
-    public void addAnswerOption(AnswerOption answerOption) {
+    public MultipleChoiceQuestion addAnswerOption(AnswerOption answerOption) {
         if (answerOptions == null) {
             answerOptions = new ArrayList<>();
         }
         answerOptions.add(answerOption);
         answerOption.setQuestion(this);
+        return this;
     }
 
     /**

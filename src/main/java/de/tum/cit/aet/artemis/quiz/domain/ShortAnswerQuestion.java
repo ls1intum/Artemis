@@ -49,7 +49,7 @@ public class ShortAnswerQuestion extends QuizQuestion {
     // semantic meaning — each mapping is identified by its (spot, solution) pair. We avoid HashSet because
     // DomainObject.hashCode is id-based and breaks for transient entities. The Bag has no @OrderColumn, so Hibernate
     // does not DELETE+INSERT on parent save (the #12584 failure mode requires the unidirectional + @JoinColumn shape).
-    // The legacy correct_mappings_order column on short_answer_mapping is now orphaned; drop in a follow-up Liquibase changeset.
+    // The legacy correct_mappings_order column on short_answer_mapping is now orphaned; tracked in #12807 for a follow-up Liquibase changeset.
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<ShortAnswerMapping> correctMappings = new ArrayList<>();
 
@@ -83,8 +83,16 @@ public class ShortAnswerQuestion extends QuizQuestion {
         return this;
     }
 
+    /**
+     * Removes a single spot and clears its back-reference; with {@code orphanRemoval = true} the spot will also be deleted on the next flush.
+     *
+     * @param shortAnswerSpot the spot to remove
+     * @return this question for fluent chaining
+     */
     public ShortAnswerQuestion removeSpot(ShortAnswerSpot shortAnswerSpot) {
-        this.spots.remove(shortAnswerSpot);
+        if (this.spots != null) {
+            this.spots.remove(shortAnswerSpot);
+        }
         shortAnswerSpot.setQuestion(null);
         return this;
     }
@@ -113,8 +121,16 @@ public class ShortAnswerQuestion extends QuizQuestion {
         return this;
     }
 
+    /**
+     * Removes a single solution and clears its back-reference; with {@code orphanRemoval = true} the solution will also be deleted on the next flush.
+     *
+     * @param shortAnswerSolution the solution to remove
+     * @return this question for fluent chaining
+     */
     public ShortAnswerQuestion removeSolution(ShortAnswerSolution shortAnswerSolution) {
-        this.solutions.remove(shortAnswerSolution);
+        if (this.solutions != null) {
+            this.solutions.remove(shortAnswerSolution);
+        }
         shortAnswerSolution.setQuestion(null);
         return this;
     }
@@ -143,8 +159,16 @@ public class ShortAnswerQuestion extends QuizQuestion {
         return this;
     }
 
+    /**
+     * Removes a single mapping and clears its back-reference; with {@code orphanRemoval = true} the mapping will also be deleted on the next flush.
+     *
+     * @param shortAnswerMapping the mapping to remove
+     * @return this question for fluent chaining
+     */
     public ShortAnswerQuestion removeCorrectMapping(ShortAnswerMapping shortAnswerMapping) {
-        this.correctMappings.remove(shortAnswerMapping);
+        if (this.correctMappings != null) {
+            this.correctMappings.remove(shortAnswerMapping);
+        }
         shortAnswerMapping.setQuestion(null);
         return this;
     }
