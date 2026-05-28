@@ -324,7 +324,7 @@ dependencies {
     implementation "io.opentelemetry:opentelemetry-exporter-otlp"
 
     // Prometheus requires the protobuf-java dependency, but we explicitly use the latest version to avoid security vulnerabilities
-    implementation "com.google.protobuf:protobuf-java:4.34.1"
+    implementation "com.google.protobuf:protobuf-java:4.35.0"
 
     // Jackson 2 core modules — versions managed by Spring Boot BOM
     implementation "com.fasterxml.jackson.core:jackson-annotations"
