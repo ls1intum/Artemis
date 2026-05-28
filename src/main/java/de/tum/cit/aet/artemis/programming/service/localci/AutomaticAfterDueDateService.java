@@ -147,6 +147,20 @@ public class AutomaticAfterDueDateService {
     }
 
     /**
+     * Computes the original offset between the exercise's reference date and its "Run Tests after Due Date" value.
+     * For course exercises, the reference date is the exercise due date.
+     * For exam exercises, the reference date is the latest individual exam end date including the exam grace period.
+     *
+     * @param programmingExercise the programming exercise before an update mutates its timeline values
+     * @return the original offset, or null if either the reference date or the build-and-test date is unavailable
+     */
+    public Duration getOriginalBuildAndTestOffset(ProgrammingExercise programmingExercise) {
+        final ZonedDateTime originalReferenceDate = getOriginalBuildAndTestReferenceDate(programmingExercise);
+        final ZonedDateTime originalBuildAndTestDate = programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate();
+        return originalReferenceDate == null || originalBuildAndTestDate == null ? null : Duration.between(originalReferenceDate, originalBuildAndTestDate);
+    }
+
+    /**
      * Recomputes the "Run Tests after Due Date" values for all programming exercises in an exam.
      *
      * @param examWithExercises     the exam
@@ -194,6 +208,14 @@ public class AutomaticAfterDueDateService {
         ZonedDateTime latestExamEndDate = examDateApi.map(api -> api.getLatestIndividualExamEndDate(exam)).orElse(exam.getEndDate());
         int gracePeriodInSeconds = Objects.requireNonNullElse(exam.getGracePeriod(), 0);
         return latestExamEndDate.plusSeconds(gracePeriodInSeconds);
+    }
+
+    private ZonedDateTime getOriginalBuildAndTestReferenceDate(ProgrammingExercise programmingExercise) {
+        if (!programmingExercise.isExamExercise()) {
+            return programmingExercise.getDueDate();
+        }
+
+        return examApi.flatMap(api -> api.findByExerciseId(programmingExercise.getId()).map(this::getLatestExamEndDateWithGrace)).orElse(null);
     }
 
     private ZonedDateTime computeBuildAndTestDate(final ProgrammingExercise exerciseWithBuildConfig, final Duration offset, final ZonedDateTime newLatestWithGraceExamEndDate,

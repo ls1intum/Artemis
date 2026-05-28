@@ -402,8 +402,7 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExerciseBeforeUpdate.setReleaseDate(programmingExercise.getReleaseDate());
         programmingExerciseBeforeUpdate.setStartDate(programmingExercise.getStartDate());
         programmingExerciseBeforeUpdate.setAssessmentDueDate(programmingExercise.getAssessmentDueDate());
-        final Duration originalBuildAndTestOffset = programmingExercise.getDueDate() == null || programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null ? null
-                : Duration.between(programmingExercise.getDueDate(), programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+        final Duration originalBuildAndTestOffset = automaticAfterDueDateService.map(service -> service.getOriginalBuildAndTestOffset(programmingExercise)).orElse(null);
 
         // Apply the DTO values to the existing exercise
         timelineUpdateDTO.applyTo(programmingExercise);

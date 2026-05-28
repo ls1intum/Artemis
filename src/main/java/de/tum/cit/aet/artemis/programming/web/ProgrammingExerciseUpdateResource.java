@@ -39,7 +39,6 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseService;
-import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -93,8 +92,6 @@ public class ProgrammingExerciseUpdateResource {
 
     private final Optional<SlideApi> slideApi;
 
-    private final Optional<ExamApi> examApi;
-
     private final Optional<AutomaticAfterDueDateService> automaticAfterDueDateService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
@@ -111,8 +108,8 @@ public class ProgrammingExerciseUpdateResource {
             CourseService courseService, ExerciseService exerciseService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, Optional<AthenaApi> athenaApi, ModuleFeatureService moduleFeatureService, Optional<SlideApi> slideApi,
-            Optional<ExamApi> examApi, Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, ExerciseVersionService exerciseVersionService,
-            ParticipationRepository participationRepository, CompetencyExerciseLinkService competencyExerciseLinkService) {
+            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, ExerciseVersionService exerciseVersionService, ParticipationRepository participationRepository,
+            CompetencyExerciseLinkService competencyExerciseLinkService) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -125,7 +122,6 @@ public class ProgrammingExerciseUpdateResource {
         this.athenaApi = athenaApi;
         this.moduleFeatureService = moduleFeatureService;
         this.slideApi = slideApi;
-        this.examApi = examApi;
         this.automaticAfterDueDateService = automaticAfterDueDateService;
         this.exerciseVersionService = exerciseVersionService;
         this.participationRepository = participationRepository;
@@ -207,7 +203,8 @@ public class ProgrammingExerciseUpdateResource {
                 : new ArrayList<>();
         // Capture original competency IDs before update() mutates the entity (L1 cache)
         final Set<Long> originalCompetencyIds = programmingExerciseBeforeUpdate.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
-        final Duration originalBuildAndTestOffset = getOriginalBuildAndTestOffset(programmingExerciseBeforeUpdate);
+        final Duration originalBuildAndTestOffset = automaticAfterDueDateService.map(service -> service.getOriginalBuildAndTestOffset(programmingExerciseBeforeUpdate))
+                .orElse(null);
 
         // Update the existing exercise with DTO values
         ProgrammingExercise updatedProgrammingExercise = update(updateDTO, programmingExerciseBeforeUpdate);
@@ -528,7 +525,7 @@ public class ProgrammingExerciseUpdateResource {
         final String originalProblemStatement = programmingExercise.getProblemStatement();
         final String originalBuildPlanConfiguration = programmingExercise.getBuildConfig() != null ? programmingExercise.getBuildConfig().getBuildPlanConfiguration() : null;
         final Set<Long> originalCompetencyIds = programmingExercise.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
-        final Duration originalBuildAndTestOffset = getOriginalBuildAndTestOffset(programmingExercise);
+        final Duration originalBuildAndTestOffset = automaticAfterDueDateService.map(service -> service.getOriginalBuildAndTestOffset(programmingExercise)).orElse(null);
 
         // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
         update(updateDTO, programmingExercise);
@@ -548,20 +545,5 @@ public class ProgrammingExerciseUpdateResource {
         exerciseVersionService.createExerciseVersion(savedExercise, user);
 
         return ResponseEntity.ok(savedExercise);
-    }
-
-    private Duration getOriginalBuildAndTestOffset(ProgrammingExercise programmingExercise) {
-        final ZonedDateTime originalReferenceDate = getOriginalBuildAndTestReferenceDate(programmingExercise);
-        final ZonedDateTime originalBuildAndTestDate = programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate();
-        return originalReferenceDate == null || originalBuildAndTestDate == null ? null : Duration.between(originalReferenceDate, originalBuildAndTestDate);
-    }
-
-    private ZonedDateTime getOriginalBuildAndTestReferenceDate(ProgrammingExercise programmingExercise) {
-        if (!programmingExercise.isExamExercise()) {
-            return programmingExercise.getDueDate();
-        }
-
-        return automaticAfterDueDateService
-                .flatMap(service -> examApi.flatMap(api -> api.findByExerciseId(programmingExercise.getId()).map(service::getLatestExamEndDateWithGrace))).orElse(null);
     }
 }

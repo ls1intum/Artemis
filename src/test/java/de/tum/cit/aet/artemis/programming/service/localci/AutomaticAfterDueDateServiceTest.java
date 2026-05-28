@@ -130,6 +130,42 @@ class AutomaticAfterDueDateServiceTest {
     }
 
     @Test
+    void getOriginalBuildAndTestOffset_courseExercise_returnsOffsetFromDueDate() throws JsonProcessingException {
+        var dueDate = BASE_TIME.plusDays(1);
+        var exercise = createCourseExercise(dueDate, BuildPhaseCondition.AFTER_DUE_DATE);
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(dueDate.plusMinutes(45));
+
+        var result = service.getOriginalBuildAndTestOffset(exercise);
+
+        assertThat(result).isEqualTo(Duration.ofMinutes(45));
+    }
+
+    @Test
+    void getOriginalBuildAndTestOffset_courseExerciseWithoutReferenceDate_returnsNull() throws JsonProcessingException {
+        var exercise = createCourseExercise(null, BuildPhaseCondition.AFTER_DUE_DATE);
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(BASE_TIME.plusHours(1));
+
+        var result = service.getOriginalBuildAndTestOffset(exercise);
+
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void getOriginalBuildAndTestOffset_examExercise_returnsOffsetFromLatestExamEndWithGrace() throws JsonProcessingException {
+        var exerciseId = 13L;
+        var latestExamEndDate = BASE_TIME.plusDays(2);
+        var exercise = createExamExercise(BASE_TIME.plusDays(1), BuildPhaseCondition.AFTER_DUE_DATE, 60);
+        exercise.setId(exerciseId);
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(latestExamEndDate.plusSeconds(60).plusHours(1));
+        when(examApi.findByExerciseId(exerciseId)).thenReturn(Optional.of(exercise.getExam()));
+        when(examDateApi.getLatestIndividualExamEndDate(exercise.getExam())).thenReturn(latestExamEndDate);
+
+        var result = service.getOriginalBuildAndTestOffset(exercise);
+
+        assertThat(result).isEqualTo(Duration.ofHours(1));
+    }
+
+    @Test
     void computeBuildAndTestDate_usesLatestExamEndWithGrace() throws JsonProcessingException {
         var dueDate = BASE_TIME.plusDays(1);
         var latestExamEndDate = BASE_TIME.plusDays(2);
