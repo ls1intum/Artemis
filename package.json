@@ -37,7 +37,7 @@
         "@primeuix/themes": "2.0.3",
         "@sentry/angular": "10.53.1",
         "@sentry/core": "10.53.1",
-        "@siemens/ngx-datatable": "26.0.0",
+        "@siemens/ngx-datatable": "26.1.0",
         "@stomp/rx-stomp": "2.4.0",
         "@stomp/stompjs": "7.3.0",
         "@swimlane/ngx-charts": "23.1.0",
