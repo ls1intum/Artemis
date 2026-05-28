@@ -34,12 +34,17 @@ public class LegacyNotificationPathDeprecationInterceptor implements HandlerInte
     /**
      * Maps legacy URL prefixes that the notification module still serves for backwards compatibility to
      * their canonical replacements. Order does not matter — entries are disjoint by construction.
+     * <p>
+     * The keys are derived from {@link NotificationLegacyRestPaths} on purpose: that class owns every
+     * legacy path constant in the module, and the {@link Deprecated @Deprecated} annotation on those
+     * constants surfaces deprecation warnings everywhere they are consumed, so cleanup is mechanical.
      */
+    @SuppressWarnings("deprecation")
     static final Map<String, String> LEGACY_TO_SUCCESSOR_PREFIX = Map.of(
             // Authenticated notification endpoints that used to live in the communication module.
-            "/api/communication/", "/api/notification/",
+            "/" + NotificationLegacyRestPaths.COMMUNICATION_PREFIX, "/api/notification/",
             // Unauthenticated public system-notification endpoint that used to live in the core module.
-            "/api/core/public/system-notifications/", "/api/notification/public/system-notifications/");
+            "/" + NotificationLegacyRestPaths.CORE_PUBLIC_PREFIX + "system-notifications/", "/api/notification/public/system-notifications/");
 
     static final String NOTIFICATION_PACKAGE = "de.tum.cit.aet.artemis.notification";
 

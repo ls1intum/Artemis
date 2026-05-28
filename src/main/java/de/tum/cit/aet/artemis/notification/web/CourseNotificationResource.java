@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.notification.config.NotificationLegacyRestPaths;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationInfoDTO;
@@ -28,7 +29,8 @@ import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingPres
 @RestController
 // The legacy "api/communication/" prefix is kept for backwards compatibility with deployed clients and will be removed
 // once those clients have migrated. New clients should use the "api/notification/" prefix.
-@RequestMapping({ "api/notification/", "api/communication/" })
+@SuppressWarnings("deprecation")
+@RequestMapping({ "api/notification/", NotificationLegacyRestPaths.COMMUNICATION_PREFIX })
 public class CourseNotificationResource {
 
     private final CourseNotificationService courseNotificationService;
