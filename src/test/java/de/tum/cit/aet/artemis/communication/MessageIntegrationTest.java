@@ -184,8 +184,11 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         PostResponseDTO createdPost = createPostAndAwaitAsyncCode(postToSave);
         checkCreatedMessagePost(postToSave, createdPost);
 
-        // conversation participants should be notified via one broadcast
+        // conversation participants should be notified via one broadcast on each STOMP destination
+        // (canonical + legacy during the migration window — keep both verifications in sync until the
+        // legacy /topic/metis/ topic is removed)
         verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/communication/courses/" + courseId), any(PostBroadcastDTO.class));
         verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/metis/courses/" + courseId), any(PostBroadcastDTO.class));
     }
 
@@ -253,8 +256,11 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         PostResponseDTO createdPost = createPostAndAwaitAsyncCode(postToSave);
         checkCreatedMessagePost(postToSave, createdPost);
 
-        // conversation participants should be notified via one broadcast
+        // conversation participants should be notified via one broadcast on each STOMP destination
+        // (canonical + legacy during the migration window — keep both verifications in sync until the
+        // legacy /topic/metis/ topic is removed)
         verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/communication/courses/" + courseId), any(PostBroadcastDTO.class));
         verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/metis/courses/" + courseId), any(PostBroadcastDTO.class));
     }
 
