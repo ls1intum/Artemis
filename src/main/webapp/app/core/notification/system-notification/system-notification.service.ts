@@ -13,7 +13,7 @@ type EntityArrayResponseType = HttpResponse<SystemNotification[]>;
 export class SystemNotificationService {
     private http = inject(HttpClient);
 
-    public resourceUrl = 'api/communication/system-notifications';
+    public resourceUrl = 'api/notification/system-notifications';
     public publicResourceUrl = 'api/core/public/system-notifications';
 
     /**
