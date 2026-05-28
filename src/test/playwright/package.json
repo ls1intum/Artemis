@@ -9,7 +9,7 @@
         "@typescript-eslint/eslint-plugin": "8.59.3",
         "@typescript-eslint/parser": "8.59.3",
         "cross-env": "10.1.0",
-        "dayjs": "1.11.20",
+        "dayjs": "1.11.21",
         "dotenv": "17.4.2",
         "eslint": "10.3.0",
         "istanbul-lib-coverage": "3.2.2",
