@@ -409,7 +409,7 @@ dependencies {
     // passkey functionality to simplify login — Spring Security versions managed by the Spring Boot BOM.
     implementation "org.springframework.security:spring-security-webauthn"
     implementation "com.webauthn4j:webauthn4j-spring-security-core:0.12.0.RELEASE"
-    implementation "com.webauthn4j:webauthn4j-core:0.31.3.RELEASE"
+    implementation "com.webauthn4j:webauthn4j-core:0.31.5.RELEASE"
 
     implementation "org.springframework.security:spring-security-messaging"
     implementation "org.springframework.security:spring-security-ldap"
