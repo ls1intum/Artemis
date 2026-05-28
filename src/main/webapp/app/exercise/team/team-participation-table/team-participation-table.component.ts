@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -70,10 +70,7 @@ export class TeamParticipationTableComponent implements OnInit {
 
     readonly team = input<Team>(undefined!);
     readonly course = input<Course>(undefined!);
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input() exercise: Exercise;
+    readonly exercise = input<Exercise>(undefined!);
     readonly isAdmin = input(false);
     readonly isTeamOwner = input(false);
 
