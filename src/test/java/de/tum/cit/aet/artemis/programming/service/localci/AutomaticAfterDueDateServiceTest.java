@@ -61,7 +61,7 @@ class AutomaticAfterDueDateServiceTest {
     @BeforeEach
     void setUp() {
         service = new AutomaticAfterDueDateService(programmingExerciseRepository, Optional.of(examDateApi), buildPhasesTemplateService, programmingExerciseBuildConfigRepository,
-                examApi);
+                Optional.of(examApi));
     }
 
     @Test

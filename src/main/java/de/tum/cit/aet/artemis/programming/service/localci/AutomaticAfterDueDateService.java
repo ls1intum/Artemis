@@ -45,10 +45,10 @@ public class AutomaticAfterDueDateService {
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
-    private final ExamApi examApi;
+    private final Optional<ExamApi> examApi;
 
     public AutomaticAfterDueDateService(ProgrammingExerciseRepository programmingExerciseRepository, Optional<ExamDateApi> examDateApi,
-            BuildPhasesTemplateService buildPhasesTemplateService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ExamApi examApi) {
+            BuildPhasesTemplateService buildPhasesTemplateService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, Optional<ExamApi> examApi) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.examDateApi = examDateApi;
         this.buildPhasesTemplateService = buildPhasesTemplateService;
@@ -110,7 +110,7 @@ public class AutomaticAfterDueDateService {
             offset = null; // no previous offset
         }
         // reference exercise exists and not in exam
-        else if (relevantData.examId() == null || (originalExamOfExercise = examApi.findByExerciseId(loadedProgrammingExercise.getId())).isEmpty()) {
+        else if (relevantData.examId() == null || (originalExamOfExercise = examApi.flatMap(api -> api.findByExerciseId(loadedProgrammingExercise.getId()))).isEmpty()) {
             offset = loadedProgrammingExercise.getDueDate() == null || loadedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null ? null
                     : Duration.between(loadedProgrammingExercise.getDueDate(), loadedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         }
@@ -198,10 +198,9 @@ public class AutomaticAfterDueDateService {
 
     private ZonedDateTime computeBuildAndTestDate(final ProgrammingExercise exerciseWithBuildConfig, final Duration offset, final ZonedDateTime newLatestWithGraceExamEndDate,
             final boolean forceCompute) {
-        final ZonedDateTime dueDate = exerciseWithBuildConfig.isExamExercise()
-                ? newLatestWithGraceExamEndDate == null ? getLatestExamEndDateWithGrace(examApi.findByExerciseId(exerciseWithBuildConfig.getId()).orElseThrow())
-                        : newLatestWithGraceExamEndDate
-                : exerciseWithBuildConfig.getDueDate();
+        final ZonedDateTime dueDate = exerciseWithBuildConfig.isExamExercise() ? newLatestWithGraceExamEndDate == null && examApi.isPresent()
+                ? getLatestExamEndDateWithGrace(examApi.orElseThrow().findByExerciseId(exerciseWithBuildConfig.getId()).orElseThrow())
+                : newLatestWithGraceExamEndDate : exerciseWithBuildConfig.getDueDate();
 
         final boolean hasAfterDueDatePhase = hasAfterDueDatePhase(exerciseWithBuildConfig.getBuildConfig().getBuildPlanPhases().map(BuildPlanPhasesDTO::phases).orElse(null));
 
