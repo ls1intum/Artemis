@@ -396,7 +396,7 @@ dependencies {
     // Spring Cloud 2025.1.1 (Oakwood) — individual module versions are pinned because the
     // spring-cloud-dependencies BOM does not publish versions for these specific modules.
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:5.0.1"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:5.0.2"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:5.0.3"
     implementation "org.springframework.cloud:spring-cloud-commons:5.0.1"
 
     // required by the Websocket Broker Connection in WebsocketConfiguration (due to multi node setup support).
