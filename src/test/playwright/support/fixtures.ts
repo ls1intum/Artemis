@@ -76,7 +76,7 @@ import { ProgrammingExerciseSubmissionsPage } from './pageobjects/exercises/prog
 export type ArtemisCommands = {
     login: (credentials: UserCredentials, url?: string) => Promise<void>;
     waitForExerciseBuildToFinish: (exerciseId: number, interval?: number, timeout?: number, minResults?: number) => Promise<void>;
-    waitForParticipationBuildToFinish: (participationId: number, interval?: number, timeout?: number) => Promise<StudentParticipation>;
+    waitForParticipationBuildToFinish: (participationId: number, interval?: number, timeout?: number, initialResultId?: number | null) => Promise<StudentParticipation>;
     toggleSidebar: () => Promise<void>;
     createCompetency: (
         courseId: number,
@@ -256,8 +256,8 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
         });
     },
     waitForParticipationBuildToFinish: async ({ exerciseAPIRequests }, use) => {
-        await use(async (participationId: number, interval?, timeout?) => {
-            return await Commands.waitForParticipationBuildToFinish(exerciseAPIRequests, participationId, interval, timeout);
+        await use(async (participationId: number, interval?, timeout?, initialResultId?) => {
+            return await Commands.waitForParticipationBuildToFinish(exerciseAPIRequests, participationId, interval, timeout, initialResultId);
         });
     },
     navigationBar: async ({ page }, use) => {
