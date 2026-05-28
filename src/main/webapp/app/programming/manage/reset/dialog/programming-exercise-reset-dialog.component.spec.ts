@@ -6,7 +6,7 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseResetDialogComponent } from 'app/programming/manage/reset/dialog/programming-exercise-reset-dialog.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingExerciseResetOptions, ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

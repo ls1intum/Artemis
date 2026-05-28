@@ -65,20 +65,25 @@
                 "lecturesTitle": "Vorlesungsdetails",
                 "lecturesDescription": "Vorlesungsinhalte und Einheiten ansehen",
                 "communicationTitle": "Kommunikation",
-                "communicationDescription": "Mit Kommilitonen und Dozenten chatten",
-                "irisTitle": "Dashboard mit Iris",
-                "irisDescription": "Mit Iris KI-Assistent chatten",
-                "usersTitle": "Benutzerverwaltung",
-                "usersDescription": "Benutzer und Berechtigungen verwalten",
-                "statisticsTitle": "Statistiken",
-                "statisticsDescription": "Kursstatistiken und Analysen ansehen",
-                "calendarTitle": "Kalender",
-                "calendarDescription": "Termine und Fristen ansehen"
+                "communicationDescription": "Kanäle und Nachrichten durchsuchen",
+                "faqsTitle": "FAQs",
+                "faqsDescription": "Häufig gestellte Fragen durchsuchen",
+                "examsTitle": "Klausuren",
+                "examsDescription": "Klausuren in deinen Kursen durchsuchen",
+                "coursesTitle": "Kurse",
+                "coursesDescription": "Eingeschriebene Kurse durchsuchen"
+            },
+            "types": {
+                "filter": "#Filter",
+                "feature": "Feature",
+                "course": "Kurs"
             },
             "results": {
                 "due": "Fällig: {{ date }}",
                 "point": "Punkt",
-                "points": "Punkte"
+                "points": "Punkte",
+                "examExercise": "Klausur",
+                "reply": "Antwort"
             },
             "comingSoon": "Demnächst verfügbar",
             "enterToActivate": "Eingabetaste drücken zum Aktivieren",

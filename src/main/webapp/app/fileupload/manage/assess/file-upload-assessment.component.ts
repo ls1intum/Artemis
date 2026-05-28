@@ -10,7 +10,7 @@ import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-t
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
@@ -424,7 +424,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 if (!res.body) {
                     return;
                 }
-                this.complaint = res.body;
+                this.complaint = this.complaintService.convertComplaintFromServer(res.body, this.result);
             },
             error: (err: HttpErrorResponse) => {
                 onError(this.alertService, err);
@@ -534,9 +534,12 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             return;
         }
 
+        const feedbacks = this.complaintService.getFeedbacksForUpdateAfterComplaint(this.assessments);
+        const complaintResponse = this.complaintService.getComplaintResponseForUpdateAfterComplaint(assessmentAfterComplaint.complaintResponse);
+
         this.isLoading = true;
         this.fileUploadAssessmentService
-            .updateAssessmentAfterComplaint(this.assessments, assessmentAfterComplaint.complaintResponse, submissionId, this.result?.assessmentNote?.note)
+            .updateAssessmentAfterComplaint(feedbacks, complaintResponse, submissionId, this.result?.assessmentNote?.note)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe({
                 next: (response) => {

@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
-import { PROFILE_ATHENA } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -41,7 +41,7 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
             this.availableAthenaModules = modules;
             this.modulesAvailable = modules.length > 0;
         });
-        this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+        this.isAthenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
         this.initialAthenaModule = this.exercise.feedbackSuggestionModule;
     }
 

@@ -4,12 +4,13 @@
             <form class="row" [formGroup]="form" (ngSubmit)="submitForm()">
                 <!-- Period -->
                 <div class="col-auto">
-                    <label class="form-label" for="period" jhiTranslate="artemisApp.forms.configurationForm.periodInput.label"></label>
+                    <h5 jhiTranslate="artemisApp.forms.configurationForm.periodInput.label"></h5>
                     <div class="input-group">
                         <input
                             name="period"
                             id="period"
                             required
+                            [attr.aria-label]="'artemisApp.forms.configurationForm.periodInput.label' | artemisTranslate"
                             [class.is-invalid]="isPeriodInvalid"
                             (focus)="markPeriodAsTouched()"
                             [value]="periodControl?.value | artemisDateRange: 'long-date' : undefined : true"
@@ -38,7 +39,7 @@
                         </div>
                     }
                     <!-- Do not show options if the course has communication disabled -->
-                    <div [hidden]="!isMessagingEnabled(course())">
+                    <div class="mt-3" [hidden]="!isMessagingEnabled(course())">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" formControlName="useTutorialGroupChannels" id="useTutorialGroupChannels" />
                             <label
@@ -61,8 +62,8 @@
                             }
                         </div>
                         <!--Public Channel / Private Channel -->
-                        <div class="form-group" [hidden]="!useTutorialGroupChannelsControl?.value">
-                            <label class="d-block" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.label"></label>
+                        <div class="form-group mt-3" [hidden]="!useTutorialGroupChannelsControl?.value">
+                            <h5 jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.label"></h5>
                             <div class="btn-group" role="group">
                                 <input formControlName="usePublicTutorialGroupChannels" type="radio" class="btn-check" id="public" autocomplete="off" checked [value]="true" />
                                 <label class="btn btn-outline-secondary" for="public" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.public"></label>
@@ -77,12 +78,10 @@
                         </div>
                     </div>
                 </div>
-                <div class="row mt-2">
-                    <div class="col-12">
-                        <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
-                            <span jhiTranslate="{{ isEditMode() ? 'global.generic.edit' : 'global.generic.create' }}"></span>
-                        </button>
-                    </div>
+                <div class="col-12 mt-3 d-flex justify-content-end">
+                    <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
+                        <span jhiTranslate="{{ isEditMode() ? 'entity.action.save' : 'global.generic.create' }}"></span>
+                    </button>
                 </div>
             </form>
         }

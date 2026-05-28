@@ -118,7 +118,7 @@ jobs:
           java-version: '${{ env.java }}'
           cache: 'gradle'
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
       - name: Install pnpm dependencies
         run: pnpm install --frozen-lockfile
       - name: Build Angular Client
@@ -126,11 +126,30 @@ jobs:
         # memory without competing with the Gradle JVM (which reserves up to 4g).
         # Use --optimization=false to work around esbuild crash during script optimization.
         run: pnpm run clean-www && pnpm run prebuild && pnpm exec ng build --configuration production --optimization=false
+      - name: Decide whether to include the SBOM
+        # SBOM generation (cdxgen + cyclonedxBom + copySbomsToResources) adds ~60 s to a cold
+        # WAR build and is only needed for release-eligible artifacts. Opt in via `-Psbom` on
+        # pushes to develop, main, release/*, version tags, and published releases. All other
+        # builds (PRs, feature branches) ship a WAR without SBOM — AdminSbomResource handles
+        # this gracefully by returning 404, and the admin UI renders an info banner.
+        id: sbom
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+        run: |
+          case "$EVENT_NAME:$REF" in
+            release:*|push:refs/heads/develop|push:refs/heads/main|push:refs/heads/release/*|push:refs/tags/*)
+              echo "flag=-Psbom" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "flag=" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
       - name: Build .war
         # Skip the webapp Gradle task since the Angular client was already built above.
-        run: ./gradlew -Pprod -Pwar bootWar -x webapp
+        run: ./gradlew -Pprod -Pwar bootWar -x webapp ${{ steps.sbom.outputs.flag }}
       - name: Upload Artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: Artemis.war
           path: build/libs/Artemis-*.war
@@ -162,27 +181,27 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Download .war artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           name: Artemis.war
           path: build/libs
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
       - name: Log in to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ghcr.io/ls1intum/artemis
           tags: |
             type=ref,event=pr
       - name: Build and push (linux/amd64)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./docker/artemis/Dockerfile
@@ -203,7 +222,7 @@ jobs:
           printf '%s' "$DOCKER_TAG" > docker-tag.txt
           echo "Using Docker tag: $DOCKER_TAG"
       - name: Upload Docker tag as artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: docker-tag
           path: docker-tag.txt
@@ -240,7 +259,7 @@ jobs:
           printf '%s' "$DOCKER_TAG" > docker-tag.txt
           echo "Using Docker tag: $DOCKER_TAG"
       - name: Upload Docker tag as artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: docker-tag
           path: docker-tag.txt

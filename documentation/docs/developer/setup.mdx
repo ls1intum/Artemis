@@ -276,6 +276,8 @@ artemis:
       enabled: true
     hyperion:
       enabled: true
+    weaviate:
+      enabled: false   # global search; enable together with a running Weaviate instance (see weaviate-setup.mdx)
 
     athena:
         # If you want to use Athena, refer to the dedicated configuration section. Under Administration Guide, Setup of Extension Services.
@@ -301,12 +303,12 @@ When you import the project into IntelliJ the run configurations will also be im
 The recommended way is to run the server and the client separately. This provides fast rebuilds of the server and hot module replacement in the client.
 
 - **Artemis (Client):** Will execute `pnpm install` and `pnpm start`. The client will be available at [http://localhost:9000/](http://localhost:9000/) with hot module replacement enabled (also see [Client Setup](#client-setup)).
-- **Artemis (Server, LocalVC & LocalCI):** The server will be started separated from the client with the profiles `dev,artemis,localci,localvc,scheduling,buildagent,core,ldap,local`.
+- **Artemis (Server, LocalVC & LocalCI):** The server will be started separated from the client with the profiles `dev,artemis,localci,localvc,scheduling,buildagent,core,local`. Enable LDAP via `artemis.user-management.ldap.enabled=true` in your `application-local.yml`.
 - **Artemis (Server, LocalVC & Jenkins):** The server will be started separated from the client with the profiles `dev,jenkins,localvc,artemis,scheduling,core,local`.
-- **Artemis (Server, LocalVC & LocalCI, Athena):** The server will be started separated from the client with the profiles `dev,localci,localvc,artemis,scheduling,athena,buildagent,core,local`.
+- **Artemis (Server, LocalVC & LocalCI, Athena):** The server will be started separated from the client with the profiles `dev,localci,localvc,artemis,scheduling,buildagent,core,local`. Enable Athena via `artemis.athena.enabled=true` in your `application-local.yml`.
 - **Artemis (Server, LocalVC & LocalCI, Iris):** The server will be started separated from the client with the profiles `dev,localci,localvc,artemis,scheduling,iris,buildagent,core,local`.
 - **Artemis (BuildAgent):** The server will be started separated from the client with the profiles `buildagent,local`. This configuration is used to run the build agent for the local CI. This configuration is rarely needed for development.
-- **Artemis (Server, Prod, LocalCI):** The server will be started separated from the client with the profiles `prod,core,ldap,localvc,localci,scheduling,local`. This configuration is used for production-like testing.
+- **Artemis (Server, Prod, LocalCI):** The server will be started separated from the client with the profiles `prod,core,localvc,localci,scheduling,local`. Enable LDAP via `artemis.user-management.ldap.enabled=true` in your environment config. This configuration is used for production-like testing.
 
 <details>
 <summary>Deprecated Options</summary>
@@ -395,7 +397,9 @@ Then run the container using the following command and replace `<TAG/VERSION>` a
 docker run \
   -v "$PWD/application-local.yml:/opt/artemis/config/application-local.yml:ro" \
   -e SPRING_CONFIG_ADDITIONAL_LOCATION=file:/opt/artemis/config/ \
-  -e SPRING_PROFILES_ACTIVE=dev,artemis,localci,localvc,scheduling,buildagent,core,ldap,local,apollon \
+  -e SPRING_PROFILES_ACTIVE=dev,artemis,localci,localvc,scheduling,buildagent,core,local \
+  -e ARTEMIS_USER_MANAGEMENT_LDAP_ENABLED=true \
+  -e ARTEMIS_APOLLON_ENABLED=true \
   -p 8080:8080 \
   ghcr.io/ls1intum/artemis:<TAG/VERSION>
 ```

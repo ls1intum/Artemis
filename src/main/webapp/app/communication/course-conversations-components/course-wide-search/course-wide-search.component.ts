@@ -3,14 +3,14 @@ import { faChevronLeft, faCircleNotch, faEnvelope, faFilter, faLongArrowAltDown,
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { MetisService } from 'app/communication/service/metis.service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { PostContextFilter, PostSortCriterion, SortDirection } from 'app/communication/metis.util';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
-import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
+import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -19,7 +19,7 @@ import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Posting } from 'app/communication/shared/entities/posting.model';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { UserPublicInfoDTO } from 'app/account/user/user.model';
 
 @Component({
     selector: 'jhi-course-wide-search',

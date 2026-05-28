@@ -31,6 +31,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.AddedToChannelNotification;
@@ -46,18 +48,19 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTOService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
 
 @Profile(PROFILE_CORE)
@@ -88,10 +91,13 @@ public class ChannelResource extends ConversationManagementResource {
 
     private final CourseNotificationService courseNotificationService;
 
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
+
     public ChannelResource(ConversationParticipantRepository conversationParticipantRepository, ChannelService channelService, ChannelRepository channelRepository,
             ChannelAuthorizationService channelAuthorizationService, AuthorizationCheckService authorizationCheckService, ConversationDTOService conversationDTOService,
             CourseRepository courseRepository, UserRepository userRepository, ConversationService conversationService,
-            Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, CourseNotificationService courseNotificationService) {
+            Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, CourseNotificationService courseNotificationService,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         super(courseRepository);
         this.channelService = channelService;
         this.channelRepository = channelRepository;
@@ -103,6 +109,7 @@ public class ChannelResource extends ConversationManagementResource {
         this.tutorialGroupChannelManagementApi = tutorialGroupChannelManagementApi;
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.courseNotificationService = courseNotificationService;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateService;
     }
 
     /**
@@ -311,7 +318,7 @@ public class ChannelResource extends ConversationManagementResource {
 
         var usersToNotify = conversationParticipantRepository.findConversationParticipantsByConversationId(channel.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
-        conversationService.deleteConversation(channel.getId());
+        channelService.deleteChannel(channel);
 
         var course = channel.getCourse();
         var channelDeletedNotification = new ChannelDeletedNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(), channel.getName());
@@ -566,6 +573,15 @@ public class ChannelResource extends ConversationManagementResource {
         channelAuthorizationService.isAllowedToUpdateChannel(channelFromDatabase, requestingUser);
         channelFromDatabase.setIsPublic(!channelFromDatabase.getIsPublic());
         var updatedChannel = channelRepository.save(channelFromDatabase);
+        searchableEntityWeaviateService.ifPresent(service -> {
+            if (ChannelSearchableEntityDTO.isIndexable(updatedChannel)) {
+                service.upsertChannelAsync(ChannelSearchableEntityDTO.fromChannel(updatedChannel));
+            }
+            else {
+                service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, updatedChannel.getId());
+                service.deleteAllPostsForChannelAsync(updatedChannel.getId());
+            }
+        });
         return ResponseEntity.ok(conversationDTOService.convertChannelToDTO(requestingUser, updatedChannel));
     }
 

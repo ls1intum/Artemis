@@ -8,7 +8,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';

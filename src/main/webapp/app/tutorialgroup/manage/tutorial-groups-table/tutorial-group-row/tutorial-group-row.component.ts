@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, HostBinding, TemplateRef, ViewEncapsulation, input } from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { RouterLink } from '@angular/router';
 import { TutorialGroupUtilizationIndicatorComponent } from 'app/tutorialgroup/manage/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

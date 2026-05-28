@@ -1,4 +1,4 @@
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 
 export class SubmissionSyncPayload {

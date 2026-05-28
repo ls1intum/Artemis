@@ -47,7 +47,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
@@ -135,7 +135,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let artemisIntelligenceService: ArtemisIntelligenceService;
     let consistencyCheckService: ConsistencyCheckService;
     let sessionStorageService: SessionStorageService;
-    let reviewCommentService: jest.Mocked<Pick<ExerciseReviewCommentService, 'setExercise' | 'reloadThreads'>> & { threads: WritableSignal<any[]> };
+    let reviewCommentService: jest.Mocked<Pick<ExerciseReviewCommentService, 'setExercise' | 'reloadThreads' | 'getSelectedFeedbackThreadIdsForRepository'>> & {
+        threads: WritableSignal<any[]>;
+    };
 
     const mockIssues: ConsistencyIssue[] = [
         {
@@ -285,6 +287,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         reviewCommentService = {
             setExercise: jest.fn(),
             reloadThreads: jest.fn(),
+            getSelectedFeedbackThreadIdsForRepository: jest.fn(() => []),
             threads: signal([]),
         } as any;
         (reviewCommentService.reloadThreads as jest.Mock).mockImplementation((onLoaded?: () => void) => onLoaded?.());

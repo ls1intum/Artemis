@@ -14,12 +14,12 @@ import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
 @Profile(PROFILE_CORE)
 @Configuration
 @Lazy
-@EnableJpaRepositories(basePackages = { "de.tum.cit.aet.artemis.assessment.repository", "de.tum.cit.aet.artemis.atlas.repository",
-        "de.tum.cit.aet.artemis.communication.repository", "de.tum.cit.aet.artemis.core.repository", "de.tum.cit.aet.artemis.exam.repository",
-        "de.tum.cit.aet.artemis.exercise.repository", "de.tum.cit.aet.artemis.fileupload.repository", "de.tum.cit.aet.artemis.iris.repository",
-        "de.tum.cit.aet.artemis.lecture.repository", "de.tum.cit.aet.artemis.lti.repository", "de.tum.cit.aet.artemis.modeling.repository",
-        "de.tum.cit.aet.artemis.plagiarism.repository", "de.tum.cit.aet.artemis.programming.repository", "de.tum.cit.aet.artemis.proof.repository",
-        "de.tum.cit.aet.artemis.quiz.repository", "de.tum.cit.aet.artemis.text.repository",
+@EnableJpaRepositories(basePackages = { "de.tum.cit.aet.artemis.account.repository", "de.tum.cit.aet.artemis.admin.repository", "de.tum.cit.aet.artemis.assessment.repository",
+        "de.tum.cit.aet.artemis.atlas.repository", "de.tum.cit.aet.artemis.communication.repository", "de.tum.cit.aet.artemis.core.repository",
+        "de.tum.cit.aet.artemis.course.repository", "de.tum.cit.aet.artemis.exam.repository", "de.tum.cit.aet.artemis.exercise.repository",
+        "de.tum.cit.aet.artemis.fileupload.repository", "de.tum.cit.aet.artemis.iris.repository", "de.tum.cit.aet.artemis.lecture.repository",
+        "de.tum.cit.aet.artemis.lti.repository", "de.tum.cit.aet.artemis.modeling.repository", "de.tum.cit.aet.artemis.plagiarism.repository",
+        "de.tum.cit.aet.artemis.programming.repository", "de.tum.cit.aet.artemis.quiz.repository", "de.tum.cit.aet.artemis.text.repository", "de.tum.cit.aet.artemis.proof.repository",
         "de.tum.cit.aet.artemis.tutorialgroup.repository" }, repositoryBaseClass = RepositoryImpl.class)
 @EnableJpaAuditing(auditorAwareRef = "springSecurityAuditorAware")
 @EnableTransactionManagement

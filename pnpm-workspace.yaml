@@ -23,12 +23,16 @@ enablePrePostScripts: true
 # Tell pnpm that Angular 21 is an acceptable peer for packages whose published
 # peerDependencies range still lists only "18.x || 19.x || 20.x".
 # We already pin every relevant @angular/* dep under @swimlane/* and ng-mocks
-# to ^21.2.0 via pnpm.overrides in package.json; this block just suppresses
+# to ^21.2.0 via the `overrides:` block below; this block just suppresses
 # the cosmetic peer-range warning that overrides do not silence on their own.
 # When @swimlane / ng-mocks publish releases that declare Angular 21 in their
-# peer range, this block (and the matching pnpm.overrides) can be removed.
+# peer range, this block (and the matching overrides) can be removed.
 peerDependencyRules:
     allowedVersions:
+        # eslint-plugin-jest-extended still declares "^7 || ^8 || ^9"; the plugin works fine on
+        # ESLint 10. Scoped to that one package so we don't silence legitimate ESLint-version
+        # warnings from other plugins. Drop this entry once upstream lists ESLint 10.
+        'eslint-plugin-jest-extended>eslint': '10'
         '@angular/animations': '21'
         '@angular/cdk': '21'
         '@angular/common': '21'
@@ -39,13 +43,92 @@ peerDependencyRules:
         '@angular/platform-browser-dynamic': '21'
         '@angular/router': '21'
 
+# Dependency overrides. pnpm 11 reads overrides from this file in preference to
+# the legacy `pnpm.overrides` block in package.json. We pin a handful of
+# transitive packages to CVE-patched versions and force Angular 21 across all
+# @swimlane/* and ng-mocks subtrees (still on older peer ranges).
+overrides:
+    '@angular-builders/jest>@angular-devkit/build-angular': '^21.2.0'
+    '@angular-builders/jest>@angular/cdk': '^21.2.0'
+    '@angular-builders/jest>@angular/common': '^21.2.0'
+    '@angular-builders/jest>@angular/compiler': '^21.2.0'
+    '@angular-builders/jest>@angular/core': '^21.2.0'
+    '@angular-builders/jest>@angular/forms': '^21.2.0'
+    '@angular-builders/jest>@angular/platform-browser': '^21.2.0'
+    '@angular-builders/jest>@angular/platform-browser-dynamic': '^21.2.0'
+    '@angular-builders/jest>@angular/router': '^21.2.0'
+    '@angular-builders/jest>@angular/compiler-cli': '^21.2.0'
+    '@swimlane/ngx-charts>@angular/animations': '^21.2.0'
+    '@swimlane/ngx-charts>@angular/cdk': '^21.2.0'
+    '@swimlane/ngx-charts>@angular/common': '^21.2.0'
+    '@swimlane/ngx-charts>@angular/compiler': '^21.2.0'
+    '@swimlane/ngx-charts>@angular/core': '^21.2.0'
+    '@swimlane/ngx-charts>@angular/forms': '^21.2.0'
+    '@swimlane/ngx-charts>@angular/platform-browser': '^21.2.0'
+    '@swimlane/ngx-charts>@angular/platform-browser-dynamic': '^21.2.0'
+    '@swimlane/ngx-charts>@angular/router': '^21.2.0'
+    '@swimlane/ngx-charts>rxjs': '^7.8.2'
+    '@swimlane/ngx-graph>@angular/animations': '^21.2.0'
+    '@swimlane/ngx-graph>@angular/cdk': '^21.2.0'
+    '@swimlane/ngx-graph>@angular/common': '^21.2.0'
+    '@swimlane/ngx-graph>@angular/compiler': '^21.2.0'
+    '@swimlane/ngx-graph>@angular/core': '^21.2.0'
+    '@swimlane/ngx-graph>@angular/forms': '^21.2.0'
+    '@swimlane/ngx-graph>@angular/platform-browser': '^21.2.0'
+    '@swimlane/ngx-graph>@angular/platform-browser-dynamic': '^21.2.0'
+    '@swimlane/ngx-graph>@angular/router': '^21.2.0'
+    '@swimlane/ngx-graph>rxjs': '^7.8.2'
+    'ng-mocks>@angular/common': '^21.2.0'
+    'ng-mocks>@angular/core': '^21.2.0'
+    'ng-mocks>@angular/forms': '^21.2.0'
+    'ng-mocks>@angular/platform-browser': '^21.2.0'
+    'ng-mocks>@angular/platform-browser-dynamic': '^21.2.0'
+    'ng-mocks>@angular/router': '^21.2.0'
+    'ng-mocks>rxjs': '^7.8.2'
+    'babel-plugin-istanbul>test-exclude': '8.0.0'
+    '@babel/runtime': '7.29.2'
+    '@babel/plugin-transform-modules-systemjs': '7.29.4'
+    '@primeuix/styled': '0.7.4'
+    '@sinonjs/fake-timers': '15.4.0'
+    ajv: '8.20.0'
+    braces: '3.0.3'
+    cookie: '1.1.1'
+    debug: '4.4.3'
+    diff: '9.0.0'
+    dompurify: '3.4.5'
+    esbuild: '0.28.0'
+    express: '5.2.1'
+    fast-uri: '3.1.2'
+    globals: '17.6.0'
+    hono: '4.12.18'
+    '@hono/node-server': '1.19.13'
+    ip-address: '10.2.0'
+    js-yaml: '4.1.1'
+    jsdom: '29.1.1'
+    katex: '0.16.47'
+    minimatch: '10.2.5'
+    postcss: '8.5.14'
+    punycode: '2.3.1'
+    semver: '7.8.0'
+    serialize-javascript: '7.0.5'
+    tmp: '0.2.5'
+    tough-cookie: '6.0.1'
+    undici: '7.25.0'
+    uuid: '14.0.0'
+    vite: '7.3.2'
+    webpack: '5.106.2'
+    webpack-dev-middleware: '7.4.5'
+    webpack-dev-server: '5.2.4'
+    word-wrap: '1.2.5'
+    ws: '8.20.1'
+    yargs-parser: '22.0.0'
+
 # Patch files applied by pnpm to specific transitive dependencies during install
 # (the pnpm-native replacement for the old patch-package/postinstall flow).
 patchedDependencies:
     '@angular-builders/jest@21.0.3': 'patches/@angular-builders+jest+21.0.3.patch'
-    '@eslint/eslintrc@3.3.5': 'patches/@eslint+eslintrc+3.3.5.patch'
     '@swimlane/ngx-graph@11.0.0': 'patches/@swimlane+ngx-graph+11.0.0.patch'
-    'eslint@9.39.4': 'patches/eslint+9.39.4.patch'
+    'eslint@10.4.0': 'patches/eslint+10.4.0.patch'
 
 # Allowlist of dependencies permitted to run install-time build / lifecycle scripts.
 # pnpm 11 blocks build scripts by default; these are needed for native bindings

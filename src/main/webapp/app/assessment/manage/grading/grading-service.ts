@@ -7,7 +7,7 @@ import { GradeDTO, GradeStep, GradeStepsDTO } from 'app/assessment/shared/entiti
 import { map } from 'rxjs/operators';
 import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { captureException } from '@sentry/angular';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { GradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
 export type EntityResponseType = HttpResponse<GradingScaleDTO>;

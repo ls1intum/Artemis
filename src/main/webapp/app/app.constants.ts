@@ -63,6 +63,14 @@ export const MODULE_FEATURE_SHARING = 'sharing';
 
 export const MODULE_FEATURE_LTI = 'lti';
 
+export const MODULE_FEATURE_ATHENA = 'athena';
+
+export const MODULE_FEATURE_APOLLON = 'apollon';
+
+export const MODULE_FEATURE_LDAP = 'ldap';
+
+export const MODULE_FEATURE_SAML2 = 'saml2';
+
 export const MODULE_FEATURE_THEIA = 'theia';
 
 export type ModuleFeature =
@@ -81,6 +89,10 @@ export type ModuleFeature =
     | typeof MODULE_FEATURE_TUTORIALGROUP
     | typeof MODULE_FEATURE_SHARING
     | typeof MODULE_FEATURE_LTI
+    | typeof MODULE_FEATURE_ATHENA
+    | typeof MODULE_FEATURE_APOLLON
+    | typeof MODULE_FEATURE_LDAP
+    | typeof MODULE_FEATURE_SAML2
     | typeof MODULE_FEATURE_THEIA;
 
 export const PROFILE_LOCALCI = 'localci';
@@ -97,14 +109,6 @@ export const PROFILE_TEST = 'test';
 
 export const PROFILE_JENKINS = 'jenkins';
 
-export const PROFILE_APOLLON = 'apollon';
-
-export const PROFILE_ATHENA = 'athena';
-
-export const PROFILE_LDAP = 'ldap';
-
-export const PROFILE_SAML2 = 'saml2';
-
 export type ProfileFeature =
     | typeof PROFILE_LOCALCI
     | typeof PROFILE_BUILDAGENT
@@ -112,8 +116,4 @@ export type ProfileFeature =
     | typeof PROFILE_PROD
     | typeof PROFILE_DEV
     | typeof PROFILE_TEST
-    | typeof PROFILE_JENKINS
-    | typeof PROFILE_APOLLON
-    | typeof PROFILE_ATHENA
-    | typeof PROFILE_LDAP
-    | typeof PROFILE_SAML2;
+    | typeof PROFILE_JENKINS;

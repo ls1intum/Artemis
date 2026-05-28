@@ -14,7 +14,7 @@ import {
     ExerciseEditorSyncTarget,
     ExerciseNewVersionAlertEvent,
 } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { ExerciseMetadataFieldHandler, createExerciseMetadataHandlers } from 'app/exercise/synchronization/metadata/exercise-metadata-handlers';
 import {
     ExerciseMetadataConflictModalComponent,

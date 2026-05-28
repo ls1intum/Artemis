@@ -15,10 +15,10 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { of } from 'rxjs';
 import { Router } from '@angular/router';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { MockProvider } from 'ng-mocks';
-import { User } from 'app/core/user/user.model';
-import * as courseModel from 'app/core/course/shared/entities/course.model';
+import { User } from 'app/account/user/user.model';
+import * as courseModel from 'app/course/shared/entities/course.model';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
 
 class MockOneToOneChatService {

@@ -189,24 +189,73 @@ echo -e "${GREEN}Prerequisites OK${NC}"
 # =============================================================================
 # Step 1: Build the WAR (unless --skip-build)
 # =============================================================================
+# Parallelise the two long legs of a -Pprod WAR build that touch disjoint output
+# directories:
+#   pnpm run webapp:prod      -> build/resources/main/static/   (Angular bundle)
+#   ./gradlew compileJava     -> build/classes/                  (.class files)
+# Then re-enter Gradle for the assembly step with `-x webapp` so Gradle just runs
+# processResources + bootWar against the Angular bundle already on disk.
+#
+# SBOM generation (server cyclonedxBom + client cdxgen + filter-shipped) is opt-in
+# via `-Psbom`. The E2E path does not need an SBOM in the WAR, so we omit it here.
+# AdminSbomResource handles a missing SBOM by returning 404, and the admin UI
+# renders an informational banner.
 if [ "$SKIP_BUILD" = false ]; then
     echo ""
-    echo -e "${BLUE}Step 1: Building WAR (./gradlew -Pprod -Pwar bootWar -x test)...${NC}"
-    ./gradlew -Pprod -Pwar bootWar -x test
+    echo -e "${BLUE}Step 1: Building WAR (parallel: webapp + compileJava, then bootWar)...${NC}"
+    CLIENT_LOG="$LOCAL_DIR/build-client.log"
+    SERVER_LOG="$LOCAL_DIR/build-server.log"
+    : > "$CLIENT_LOG"; : > "$SERVER_LOG"
+
+    pnpm run webapp:prod >"$CLIENT_LOG" 2>&1 &
+    CLIENT_PID=$!
+    echo -e "${YELLOW}  • client build started (pid $CLIENT_PID, log: $CLIENT_LOG)${NC}"
+
+    ./gradlew -Pprod -Pwar compileJava -x webapp >"$SERVER_LOG" 2>&1 &
+    SERVER_PID=$!
+    echo -e "${YELLOW}  • server compile started (pid $SERVER_PID, log: $SERVER_LOG)${NC}"
+
+    set +e
+    wait "$CLIENT_PID"; CLIENT_RC=$?
+    wait "$SERVER_PID"; SERVER_RC=$?
+    set -e
+    if [ "$CLIENT_RC" -ne 0 ] || [ "$SERVER_RC" -ne 0 ]; then
+        echo -e "${RED}Build failed (client rc=$CLIENT_RC, server rc=$SERVER_RC).${NC}"
+        for tag in "client" "server"; do
+            log_var="${tag^^}_LOG"
+            echo -e "${RED}--- last 50 lines of ${tag} log ---${NC}"
+            tail -n 50 "${!log_var}" 2>/dev/null || true
+        done
+        exit 1
+    fi
+    echo -e "${GREEN}  ✓ client + server built; assembling WAR...${NC}"
+    # bootWar without `-Psbom` skips the SBOM dependency chain entirely; the
+    # cyclonedxBom and generateClientSbom tasks are not wired into copySbomsToResources.
+    ./gradlew -Pprod -Pwar bootWar -x test -x webapp
 else
     echo ""
     echo -e "${YELLOW}Step 1: Skipping WAR build (--skip-build)${NC}"
 fi
 
-# Glob the WAR path AFTER the build step so a freshly produced artifact (or a renamed one after a
-# version bump) is picked up. Doing this before the build would store the literal pattern on a
-# clean checkout and the existence check below would fire even on a successful build.
-WAR_FILES=(build/libs/Artemis-*.war)
-if [ ! -e "${WAR_FILES[0]}" ]; then
-    echo -e "${RED}ERROR: No WAR found at build/libs/Artemis-*.war. Drop --skip-build to build it.${NC}"
+# Resolve the WAR for the *current* build.gradle version rather than picking the first
+# lexicographic match from build/libs. We do not `gradle clean` in the fast path (that defeats
+# fast iteration), so stale artifacts from older releases stick around — and the new
+# `major.patch` scheme makes alphabetical ordering unsafe: e.g. `Artemis-9.1.2.war` sorts before
+# `Artemis-9.2.war`. A stale WAR built from pre-PR-#12695 sources still uses the old
+# `new Semver(currentVersionString)` migration code, which then dies on startup with
+# `SemverException: Invalid version (no patch version): 9.2` when the persisted DB carries a
+# two-part version. Resolve the WAR after the build so a freshly produced artifact is picked up.
+ARTEMIS_VERSION=$(grep -E '^[[:space:]]*version[[:space:]]*=' build.gradle | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
+if [ -z "$ARTEMIS_VERSION" ]; then
+    echo -e "${RED}ERROR: Could not determine Artemis version from build.gradle${NC}"
     exit 1
 fi
-WAR_FILE="${WAR_FILES[0]}"
+WAR_FILE="build/libs/Artemis-${ARTEMIS_VERSION}.war"
+if [ ! -e "$WAR_FILE" ]; then
+    echo -e "${RED}ERROR: Expected WAR not found: $WAR_FILE${NC}"
+    echo "Drop --skip-build to build it, or delete stale build/libs/Artemis-*.war from prior versions."
+    exit 1
+fi
 
 # Sanity-check the Angular bundle is in the WAR (nginx serves it from there). Without -Pprod the
 # bootWar task may produce a JSP-less, asset-less artifact.

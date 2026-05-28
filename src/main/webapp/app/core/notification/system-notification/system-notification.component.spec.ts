@@ -7,7 +7,7 @@ import { Subject, of } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { SystemNotification, SystemNotificationType } from 'app/core/shared/entities/system-notification.model';
+import { SystemNotification, SystemNotificationType } from 'app/admin/system-notification-management/system-notification.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

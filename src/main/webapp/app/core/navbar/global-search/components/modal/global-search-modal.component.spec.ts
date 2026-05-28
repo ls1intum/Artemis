@@ -16,7 +16,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { GlobalSearchResult, GlobalSearchService } from '../../services/global-search.service';
+import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
+import { GlobalSearchApiService } from 'app/openapi/api/globalSearchApi.service';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
@@ -40,12 +41,12 @@ describe('GlobalSearchModalComponent', () => {
     };
 
     const mockSearchService = {
-        search: vi.fn(() => of<GlobalSearchResult[]>([])),
+        globalSearch: vi.fn(() => of<GlobalSearchResult[]>([])),
     };
 
     beforeEach(() => {
         vi.clearAllMocks();
-        mockSearchService.search.mockReturnValue(of<GlobalSearchResult[]>([]));
+        mockSearchService.globalSearch.mockReturnValue(of<GlobalSearchResult[]>([]));
         TestBed.configureTestingModule({
             imports: [GlobalSearchModalComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
@@ -55,7 +56,7 @@ describe('GlobalSearchModalComponent', () => {
                 { provide: OsDetectorService, useValue: mockOsDetectorService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: GlobalSearchService, useValue: mockSearchService },
+                { provide: GlobalSearchApiService, useValue: mockSearchService },
                 { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(true) } },
             ],
         });
@@ -263,8 +264,8 @@ describe('GlobalSearchModalComponent', () => {
     });
 
     describe('Search Pipeline', () => {
-        const queryResults: GlobalSearchResult[] = [{ id: '1', type: 'exercise', title: 'Test Exercise', badge: 'Programming', metadata: {} }];
-        const filteredResults: GlobalSearchResult[] = [{ id: '2', type: 'exercise', title: 'Filtered Exercise', badge: 'Quiz', metadata: {} }];
+        const queryResults: GlobalSearchResult[] = [{ id: '1', type: 'exercise', title: 'Test Exercise', badge: 'programming', metadata: {} }];
+        const filteredResults: GlobalSearchResult[] = [{ id: '2', type: 'exercise', title: 'Filtered Exercise', badge: 'quiz', metadata: {} }];
 
         beforeEach(() => {
             vi.useFakeTimers();
@@ -274,27 +275,47 @@ describe('GlobalSearchModalComponent', () => {
             vi.useRealTimers();
         });
 
+        it('should remove rightmost filter when Backspace is pressed and query is empty', () => {
+            component['activeFilters'].set(['exercise', 'lecture']);
+            component['searchQuery'].set('');
+
+            const event = new KeyboardEvent('keydown', { key: 'Backspace' });
+            component['onSearchKeyDown'](event);
+
+            expect(component['activeFilters']()).toEqual(['exercise']);
+        });
+
+        it('should not remove filter when Backspace is pressed but query is not empty', () => {
+            component['activeFilters'].set(['exercise']);
+            component['searchQuery'].set('a');
+
+            const event = new KeyboardEvent('keydown', { key: 'Backspace' });
+            component['onSearchKeyDown'](event);
+
+            expect(component['activeFilters']()).toEqual(['exercise']);
+        });
+
         it('should re-trigger search when filter changes even if query stays the same', () => {
-            mockSearchService.search.mockReturnValue(of(queryResults));
+            mockSearchService.globalSearch.mockReturnValue(of(queryResults));
 
             // Type a query
             component['onSearchInput']('test');
             vi.advanceTimersByTime(300);
 
-            expect(mockSearchService.search).toHaveBeenCalledWith('test', { type: undefined });
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('test', undefined);
             expect(component['results']()).toEqual(queryResults);
 
             // Now toggle a filter with the same query — should still re-trigger
-            mockSearchService.search.mockReturnValue(of(filteredResults));
-            component['addFilter']('exercise');
+            mockSearchService.globalSearch.mockReturnValue(of(filteredResults));
+            component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
 
-            expect(mockSearchService.search).toHaveBeenCalledWith('test', { type: 'exercise' });
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('test', 'exercise');
             expect(component['results']()).toEqual(filteredResults);
         });
 
         it('should set searchError on HTTP failure', () => {
-            mockSearchService.search.mockReturnValue(throwError(() => new Error('Network error')));
+            mockSearchService.globalSearch.mockReturnValue(throwError(() => new Error('Network error')));
 
             component['onSearchInput']('test');
             vi.advanceTimersByTime(300);
@@ -304,7 +325,7 @@ describe('GlobalSearchModalComponent', () => {
         });
 
         it('should cancel pending search when modal is closed via resetSearch', () => {
-            mockSearchService.search.mockReturnValue(of(queryResults));
+            mockSearchService.globalSearch.mockReturnValue(of(queryResults));
 
             // Type a query but don't wait for debounce
             component['onSearchInput']('test');
@@ -320,14 +341,14 @@ describe('GlobalSearchModalComponent', () => {
         });
 
         it('should show cached results when filter is removed and re-added without making another HTTP call', () => {
-            mockSearchService.search.mockReturnValue(of(filteredResults));
+            mockSearchService.globalSearch.mockReturnValue(of(filteredResults));
 
             // Add exercise filter → triggers search → shows results
-            component['addFilter']('exercise');
+            component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
             expect(component['results']()).toEqual(filteredResults);
             expect(component['isLoading']()).toBe(false);
-            expect(mockSearchService.search).toHaveBeenCalledOnce();
+            expect(mockSearchService.globalSearch).toHaveBeenCalledOnce();
 
             // Remove exercise filter (no query) → resets to initial state
             component['removeFilter']('exercise');
@@ -337,19 +358,19 @@ describe('GlobalSearchModalComponent', () => {
             expect(component['isLoading']()).toBe(false);
 
             // Re-add exercise filter → must use cached results, no new HTTP call
-            component['addFilter']('exercise');
+            component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
             expect(component['results']()).toEqual(filteredResults);
             expect(component['isLoading']()).toBe(false);
             // Should still be only 1 call total — the re-add was served from cache
-            expect(mockSearchService.search).toHaveBeenCalledOnce();
+            expect(mockSearchService.globalSearch).toHaveBeenCalledOnce();
         });
 
         it('should not get stuck loading when filter is removed and re-added quickly within debounce window', () => {
-            mockSearchService.search.mockReturnValue(of(filteredResults));
+            mockSearchService.globalSearch.mockReturnValue(of(filteredResults));
 
             // Add exercise filter and let it complete
-            component['addFilter']('exercise');
+            component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
             expect(component['results']()).toEqual(filteredResults);
             expect(component['isLoading']()).toBe(false);
@@ -357,7 +378,7 @@ describe('GlobalSearchModalComponent', () => {
             // Remove and immediately re-add (within 300ms debounce)
             component['removeFilter']('exercise');
             // Don't wait for debounce — immediately re-add
-            component['addFilter']('exercise');
+            component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
 
             // Must not be stuck loading — should show cached results
@@ -366,44 +387,44 @@ describe('GlobalSearchModalComponent', () => {
         });
 
         it('should clear placeholder cache on resetSearch so fresh results load next time', () => {
-            mockSearchService.search.mockReturnValue(of(filteredResults));
+            mockSearchService.globalSearch.mockReturnValue(of(filteredResults));
 
             // Populate cache
-            component['addFilter']('exercise');
+            component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
             expect(component['results']()).toEqual(filteredResults);
-            expect(mockSearchService.search).toHaveBeenCalledOnce();
+            expect(mockSearchService.globalSearch).toHaveBeenCalledOnce();
 
             // Reset (simulates closing the modal)
             component['resetSearch']();
 
             // Re-add filter — cache was cleared, so a new HTTP call should happen
-            mockSearchService.search.mockReturnValue(of(queryResults));
-            component['addFilter']('exercise');
+            mockSearchService.globalSearch.mockReturnValue(of(queryResults));
+            component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
             expect(component['results']()).toEqual(queryResults);
-            expect(mockSearchService.search).toHaveBeenCalledTimes(2);
+            expect(mockSearchService.globalSearch).toHaveBeenCalledTimes(2);
         });
 
         it('should route onEntityClick through the main pipeline instead of a separate subscription', () => {
-            mockSearchService.search.mockReturnValue(of(filteredResults));
+            mockSearchService.globalSearch.mockReturnValue(of(filteredResults));
 
-            component['onEntityClick']({ id: 'ex', title: 'Exercises', description: '', icon: {} as any, type: 'feature', enabled: true, filterTag: 'exercise' });
+            component['onEntityClick']({ id: 'ex', title: 'Exercises', description: '', icon: {} as any, type: 'feature', enabled: true, filterTags: ['exercise'] });
             vi.advanceTimersByTime(300);
 
-            expect(mockSearchService.search).toHaveBeenCalledOnce();
-            expect(mockSearchService.search).toHaveBeenCalledWith('', { type: 'exercise', sortBy: 'dueDate', limit: 10 });
+            expect(mockSearchService.globalSearch).toHaveBeenCalledOnce();
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('', 'exercise');
             expect(component['results']()).toEqual(filteredResults);
         });
 
         it('should serve cached filter results synchronously without waiting for 300ms debounce', () => {
-            mockSearchService.search.mockReturnValue(of(filteredResults));
+            mockSearchService.globalSearch.mockReturnValue(of(filteredResults));
 
             // First add: needs debounce + HTTP
-            component['addFilter']('exercise');
+            component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
             expect(component['results']()).toEqual(filteredResults);
-            expect(mockSearchService.search).toHaveBeenCalledOnce();
+            expect(mockSearchService.globalSearch).toHaveBeenCalledOnce();
 
             // Remove filter — synchronous branch, no debounce needed
             component['removeFilter']('exercise');
@@ -413,13 +434,13 @@ describe('GlobalSearchModalComponent', () => {
             expect(component['hasSearched']()).toBe(false);
 
             // Re-add filter — cached branch should also run synchronously
-            component['addFilter']('exercise');
+            component['addFilter'](['exercise']);
             // At time 0 (no timer advancement), results should already appear from cache
             expect(component['results']()).toEqual(filteredResults);
             expect(component['isLoading']()).toBe(false);
             expect(component['hasSearched']()).toBe(true);
             // No additional HTTP call: still only the 1 from the first add
-            expect(mockSearchService.search).toHaveBeenCalledOnce();
+            expect(mockSearchService.globalSearch).toHaveBeenCalledOnce();
         });
     });
 
