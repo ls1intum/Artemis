@@ -4,8 +4,8 @@ import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.s
 import { Subscription, forkJoin } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';

@@ -1,9 +1,9 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
@@ -72,6 +72,7 @@ import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-he
 import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -449,7 +450,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             });
         } else {
             this.complaintService.getComplaintsForTestRun(this.exerciseId).subscribe({
-                next: (res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]),
+                next: (res: HttpResponse<ComplaintDTO[]>) => {
+                    this.complaints = res.body?.map((complaintDTO) => this.complaintService.convertComplaintFromServerInList(complaintDTO)) ?? [];
+                },
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
         }

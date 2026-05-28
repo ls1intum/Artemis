@@ -232,6 +232,11 @@
     color: var(--artemis-alert-neutral-color);
 }
 
+.monaco-review-comment-thread-tag--selected-feedback {
+    background-color: var(--artemis-alert-warning-background);
+    color: var(--artemis-alert-warning-color);
+}
+
 .monaco-review-comment-thread-tag--consistency {
     background-color: var(--artemis-alert-neutral-background);
     color: var(--artemis-alert-neutral-color);
@@ -308,6 +313,21 @@
     justify-content: flex-end;
     gap: 0.5rem;
     margin-top: 0.5rem;
+}
+
+.monaco-review-comment-feedback-selection-button.p-button {
+    background-color: var(--artemis-alert-warning-background);
+    border-color: var(--artemis-alert-warning-color);
+    color: var(--artemis-alert-warning-color);
+}
+
+.monaco-review-comment-feedback-selection-button.p-button:enabled:hover,
+.monaco-review-comment-feedback-selection-button.p-button:enabled:focus,
+.monaco-review-comment-feedback-selection-button.p-button:enabled:active,
+.monaco-review-comment-feedback-selection-button--selected.p-button {
+    background-color: color-mix(in srgb, var(--artemis-alert-warning-background) 72%, var(--body-bg));
+    border-color: var(--artemis-alert-warning-color);
+    color: var(--artemis-alert-warning-color);
 }
 
 .monaco-review-comment-resolve-controls {

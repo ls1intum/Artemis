@@ -12,12 +12,12 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
-import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardProperties;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardDigestDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisDashboardEmailService;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 
 class IrisDashboardEmailServiceTest {
 

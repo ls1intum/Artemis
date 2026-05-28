@@ -18,13 +18,13 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
-import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardProperties;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardAlertDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardDigestDTO;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 
 /**
  * Service responsible for sending Iris dashboard digest and alert emails to configured admin recipients.

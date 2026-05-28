@@ -16,7 +16,7 @@ import { isPracticeMode } from 'app/exercise/shared/entities/participation/stude
 import { getManualUnreferencedFeedback } from 'app/exercise/result/result.utils';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';

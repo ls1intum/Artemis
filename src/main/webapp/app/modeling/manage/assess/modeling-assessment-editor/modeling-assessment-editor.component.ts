@@ -27,7 +27,7 @@ import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entitie
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { onError } from 'app/shared/util/global.utils';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
@@ -309,7 +309,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 if (!res.body) {
                     return;
                 }
-                this.complaint = res.body;
+                this.complaint = this.complaintService.convertComplaintFromServer(res.body, this.result);
             },
             error: () => {
                 this.onError();
@@ -488,26 +488,28 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             assessmentAfterComplaint.onError();
             return;
         }
-        this.modelingAssessmentService
-            .updateAssessmentAfterComplaint(this.feedback, assessmentAfterComplaint.complaintResponse, this.submission!.id!, this.result?.assessmentNote?.note)
-            .subscribe({
-                next: (response) => {
-                    assessmentAfterComplaint.onSuccess();
-                    this.result = response.body!;
-                    this.alertService.closeAll();
-                    this.alertService.success('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
-                },
-                error: (httpErrorResponse: HttpErrorResponse) => {
-                    assessmentAfterComplaint.onError();
-                    this.alertService.closeAll();
-                    const error = httpErrorResponse.error;
-                    if (error && error.errorKey && error.errorKey === 'complaintLock') {
-                        this.alertService.error(error.message, error.params);
-                    } else {
-                        this.alertService.error('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintFailed');
-                    }
-                },
-            });
+
+        const feedbacks = this.complaintService.getFeedbacksForUpdateAfterComplaint(this.feedback);
+        const complaintResponse = this.complaintService.getComplaintResponseForUpdateAfterComplaint(assessmentAfterComplaint.complaintResponse);
+
+        this.modelingAssessmentService.updateAssessmentAfterComplaint(feedbacks, complaintResponse, this.submission!.id!, this.result?.assessmentNote?.note).subscribe({
+            next: (response) => {
+                assessmentAfterComplaint.onSuccess();
+                this.result = response.body!;
+                this.alertService.closeAll();
+                this.alertService.success('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
+            },
+            error: (httpErrorResponse: HttpErrorResponse) => {
+                assessmentAfterComplaint.onError();
+                this.alertService.closeAll();
+                const error = httpErrorResponse.error;
+                if (error && error.errorKey && error.errorKey === 'complaintLock') {
+                    this.alertService.error(error.message, error.params);
+                } else {
+                    this.alertService.error('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintFailed');
+                }
+            },
+        });
     }
 
     /**

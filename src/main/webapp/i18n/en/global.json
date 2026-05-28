@@ -65,11 +65,13 @@
                 "lecturesTitle": "Lecture Details",
                 "lecturesDescription": "View lecture content and units",
                 "communicationTitle": "Communication",
-                "communicationDescription": "Search communication channels",
+                "communicationDescription": "Search channels and messages",
                 "faqsTitle": "FAQs",
                 "faqsDescription": "Search frequently asked questions",
                 "examsTitle": "Exams",
-                "examsDescription": "Search exams across your courses"
+                "examsDescription": "Search exams across your courses",
+                "coursesTitle": "Courses",
+                "coursesDescription": "Search courses you are enrolled in"
             },
             "types": {
                 "filter": "#Filter",
@@ -80,7 +82,8 @@
                 "due": "Due: {{ date }}",
                 "point": "point",
                 "points": "points",
-                "examExercise": "Exam"
+                "examExercise": "Exam",
+                "reply": "Reply"
             },
             "comingSoon": "Coming soon",
             "enterToActivate": "Press Enter to activate",

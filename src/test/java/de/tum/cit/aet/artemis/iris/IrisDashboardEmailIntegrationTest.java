@@ -21,13 +21,13 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetupTest;
 
-import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
-import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardAlertChatModeDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardAlertDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardDigestDTO;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**

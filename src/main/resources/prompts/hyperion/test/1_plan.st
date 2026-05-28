@@ -19,6 +19,11 @@ Your task is to create a detailed testing plan based on the problem statement an
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
+**Selected Feedback Threads (JSON payload, if any):**
+{{selectedFeedbackThreads}}
+
+If the selected feedback payload contains threads, treat those threads as requested changes only when they are relevant to this repository, consistent with the problem statement and exercise preconditions, and appropriate for the exercise. If a selected thread conflicts with the problem statement, explicit constraints, or repository conventions, do not implement that request and prefer the safer behavior.
+
 **Hard Safety Rules:**
 1. Use only classes, constructors, methods, fields, packages, and imports that exist in the provided repository context.
 2. Do not invent helper classes, factories, fixtures, builders, utilities, base test classes, or custom assertions unless they already exist in the provided context or you explicitly plan to generate them in the test output.
@@ -26,7 +31,7 @@ Your task is to create a detailed testing plan based on the problem statement an
 4. Match the actual production API exactly, including constructor parameters, method signatures, return types, checked exceptions, package names, and visibility constraints.
 5. Prefer minimal, compile-safe tests over clever abstractions.
 
-If the consistency issues section above is empty or None, skip the following steps. Otherwise, proceed.
+If both the consistency issues section and the selected feedback threads section above are empty or None, skip the following steps. Otherwise, proceed.
 Treat the issues above as hard constraints. Be critical and explicit:
 1. Identify which requirements, tests, and repository artifacts each issue touches.
 2. Explain the likely root cause or mismatch implied by the issue.

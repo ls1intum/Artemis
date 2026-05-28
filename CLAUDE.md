@@ -108,7 +108,8 @@ pnpm run test:one -- --test-path-pattern='src/main/webapp/app/path/to/spec\.ts$'
 
 ### Server (`src/main/java/de/tum/cit/aet/artemis/`)
 Organized by feature module:
-- `core/` - Configuration, security, utilities, base entities
+- `core/` - Configuration, security base, utilities, base entities
+- `account/` - User, authority, passkey, account REST, authentication, LDAP
 - `exercise/` - Base exercise functionality
 - `programming/` - Programming exercises with CI/CD
 - `quiz/` - Quiz exercises
@@ -117,14 +118,21 @@ Organized by feature module:
 - `fileupload/` - File upload exercises
 - `exam/` - Exam mode
 - `assessment/` - Grading and assessment
-- `communication/` - Channels, messaging, notifications
+- `communication/` - Channels, messaging, conversations, FAQs, saved posts
+- `notification/` - Course / global / system / push notifications, mail service
 - `lecture/` - Lecture management
+- `calendar/` - Calendar events and iCal subscriptions
 - `atlas/` - Competency-based learning, learning analytics
 - `iris/` - LLM-based virtual tutor
 - `athena/` - ML-based assessment
+- `hyperion/` - LLM-based exercise creation assistant
 - `plagiarism/` - Plagiarism detection (JPlag)
 - `lti/` - LTI integration
 - `tutorialgroup/` - Tutorial group management
+- `globalsearch/` - Cross-entity search via Weaviate
+- `videosource/` - External video source integration (TUM Live)
+- `course/` - Course management, registration, archive, dashboard, statistics
+- `admin/` - Admin operations: data export, vulnerability scan, cleanup, telemetry, organization management, legal documents
 
 ### Client Web App (`src/main/webapp/app/`)
 - `core/` - Core services (HTTP, auth, guards)

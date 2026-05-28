@@ -15,7 +15,7 @@ import { MetisService } from 'app/communication/service/metis.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { AlertService } from 'app/shared/service/alert.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';

@@ -32,7 +32,7 @@ import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lectur
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { throwError } from 'rxjs';
 import { PdfDropZoneComponent } from '../../pdf-drop-zone/pdf-drop-zone.component';

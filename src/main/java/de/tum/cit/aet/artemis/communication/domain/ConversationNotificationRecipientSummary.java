@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.communication.domain;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
 
 /**
  * Stores the user of a conversation participant, who is supposed to receive a websocket message and stores whether

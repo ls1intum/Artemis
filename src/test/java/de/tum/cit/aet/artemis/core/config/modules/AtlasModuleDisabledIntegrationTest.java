@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.cit.aet.artemis.admin.service.export.DataExportScienceEventService;
 import de.tum.cit.aet.artemis.atlas.config.AtlasNotPresentException;
-import de.tum.cit.aet.artemis.core.service.export.DataExportScienceEventService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVCSamlTest;
 
 /**

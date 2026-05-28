@@ -16,6 +16,8 @@ import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -25,18 +27,17 @@ import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.UserRoleDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 
 public abstract class PostingService {
@@ -110,37 +111,41 @@ public abstract class PostingService {
     }
 
     /**
-     * Broadcasts a posting related event in a course under a specific topic via websockets
+     * Broadcasts a posting related event in a course under a specific topic via websockets.
+     * <p>
+     * The wire payload is a {@link PostBroadcastDTO}: a cycle-free projection that drops the
+     * {@code reactions → Reaction.user → User} and {@code answers → AnswerPost.post} cycles
+     * before the frame leaves the server. Sending the {@link Post} entity directly used to walk
+     * the same JSON cycle that fires Jackson's {@code DeserializerCache} race during integration
+     * test deserialization (see {@code JacksonDeserializerInitializationConfig}).
      *
      * @param postDTO    object including the affected post as well as the action
      * @param courseId   the id of the course the posting belongs to
      * @param recipients the recipients for this broadcast, can be null
      */
     public void broadcastForPost(PostDTO postDTO, Long courseId, Set<ConversationNotificationRecipientSummary> recipients) {
-        // reduce the payload of the websocket message: this is important to avoid overloading the involved subsystems
-        Conversation postConversation = postDTO.post().getConversation();
-        if (postConversation != null) {
-            postConversation.hideDetails();
-            if (postDTO.post().getAnswers() != null) {
-                postDTO.post().getAnswers().forEach(answerPost -> answerPost.setPost(new Post(answerPost.getPost().getId())));
-            }
+        Post post = postDTO.post();
+        // Build the cycle-free wire payload before adjusting entity state — PostResponseDTO.from
+        // walks the entity exactly once.
+        PostBroadcastDTO broadcastPayload = PostBroadcastDTO.from(post, postDTO.action());
 
+        Conversation postConversation = post.getConversation();
+        if (postConversation != null) {
             String courseConversationTopic = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId;
             if (postConversation instanceof Channel channel && channel.getIsCourseWide()) {
-                websocketMessagingService.sendMessage(courseConversationTopic, postDTO);
+                websocketMessagingService.sendMessage(courseConversationTopic, broadcastPayload);
             }
             else {
                 if (recipients == null) {
                     // send to all participants of the conversation
                     recipients = getConversationParticipantsAsSummaries(postConversation);
                 }
-                recipients.forEach(recipient -> websocketMessagingService.sendMessage("/topic/user/" + recipient.userId() + "/notifications/conversations",
-                        new PostDTO(postDTO.post(), postDTO.action())));
+                recipients.forEach(recipient -> websocketMessagingService.sendMessage("/topic/user/" + recipient.userId() + "/notifications/conversations", broadcastPayload));
             }
         }
-        else if (postDTO.post().getPlagiarismCase() != null) {
-            String plagiarismCaseTopic = METIS_WEBSOCKET_CHANNEL_PREFIX + "plagiarismCase/" + postDTO.post().getPlagiarismCase().getId();
-            websocketMessagingService.sendMessage(plagiarismCaseTopic, postDTO);
+        else if (post.getPlagiarismCase() != null) {
+            String plagiarismCaseTopic = METIS_WEBSOCKET_CHANNEL_PREFIX + "plagiarismCase/" + post.getPlagiarismCase().getId();
+            websocketMessagingService.sendMessage(plagiarismCaseTopic, broadcastPayload);
         }
     }
 
