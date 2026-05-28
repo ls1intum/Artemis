@@ -1,17 +1,3 @@
-# pnpm 11+ moved install/resolution settings out of `.npmrc` (which it now
-# ignores for everything except registry/auth/Node settings like node-options)
-# and into this file. Settings here govern the install behaviour in this
-# project root.
-
-# No hoist shim: rely on pnpm's default isolated layout. Every package the
-# project imports is declared as a direct dependency in package.json; patches
-# go through pnpm.patchedDependencies (which works on the .pnpm symlink store
-# directly, without requiring transitive deps at top-level node_modules).
-
-# Auto-install peer dependencies (default in pnpm 10, opt-in in pnpm 11).
-# Without this, peer deps such as `@angular/animations` (required by
-# @swimlane/ngx-charts / @swimlane/ngx-graph) are not installed, and the
-# Angular esbuild bundle fails with "Could not resolve @angular/animations".
 autoInstallPeers: true
 
 # Treat the lockfile as authoritative; never silently update it during install.
@@ -116,7 +102,7 @@ overrides:
     undici: '7.25.0'
     uuid: '14.0.0'
     vite: '7.3.2'
-    webpack: '5.106.2'
+    webpack: '5.107.2'
     webpack-dev-middleware: '7.4.5'
     webpack-dev-server: '5.2.4'
     word-wrap: '1.2.5'
