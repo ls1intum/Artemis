@@ -474,7 +474,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 if (!res.body) {
                     return;
                 }
-                this._complaint.set(res.body);
+                this._complaint.set(this.complaintService.convertComplaintFromServer(res.body, this.resultWithComplaint()));
             },
             error: (err: HttpErrorResponse) => {
                 this.onError(err.message);
