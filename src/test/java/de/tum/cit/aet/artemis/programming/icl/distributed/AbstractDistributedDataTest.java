@@ -15,14 +15,14 @@ import java.util.function.Consumer;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryListener;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapListener;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.listener.QueueItemListener;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.listener.QueueListener;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.DistributedTopic;
+import de.tum.cit.aet.artemis.localci.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.localci.service.distributed.api.map.listener.MapEntryListener;
+import de.tum.cit.aet.artemis.localci.service.distributed.api.map.listener.MapListener;
+import de.tum.cit.aet.artemis.localci.service.distributed.api.queue.DistributedQueue;
+import de.tum.cit.aet.artemis.localci.service.distributed.api.queue.listener.QueueItemListener;
+import de.tum.cit.aet.artemis.localci.service.distributed.api.queue.listener.QueueListener;
+import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedTopic;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisBuildAgentTest;
 
 public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAgentTest {

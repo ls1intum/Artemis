@@ -34,12 +34,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.localvc.service.SshGitCommandFactoryService;
+import de.tum.cit.aet.artemis.localvc.service.ssh.HashUtils;
+import de.tum.cit.aet.artemis.localvc.service.ssh.SshConstants;
+import de.tum.cit.aet.artemis.localvc.service.ssh.SshGitCommand;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
-import de.tum.cit.aet.artemis.programming.service.localvc.SshGitCommandFactoryService;
-import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
-import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshConstants;
-import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshGitCommand;
 
 class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 

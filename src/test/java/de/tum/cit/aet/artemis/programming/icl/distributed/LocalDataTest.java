@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.programming.icl.distributed;
 
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.local.LocalDataProviderService;
+import de.tum.cit.aet.artemis.localci.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.localci.service.distributed.local.LocalDataProviderService;
 
 class LocalDataTest extends AbstractDistributedDataTest {
 

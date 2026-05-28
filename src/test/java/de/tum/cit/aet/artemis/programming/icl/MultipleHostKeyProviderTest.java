@@ -6,8 +6,8 @@ import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 
+import de.tum.cit.aet.artemis.localvc.service.ssh.MultipleHostKeyProvider;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
-import de.tum.cit.aet.artemis.programming.service.localvc.ssh.MultipleHostKeyProvider;
 
 class MultipleHostKeyProviderTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 

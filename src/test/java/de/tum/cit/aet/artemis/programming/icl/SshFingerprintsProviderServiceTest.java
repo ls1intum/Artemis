@@ -22,8 +22,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
-import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshFingerprintsProviderService;
+import de.tum.cit.aet.artemis.localvc.service.ssh.HashUtils;
+import de.tum.cit.aet.artemis.localvc.service.ssh.SshFingerprintsProviderService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 class SshFingerprintsProviderServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {

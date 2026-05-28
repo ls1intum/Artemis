@@ -15,9 +15,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
@@ -55,7 +56,7 @@ class RepositoryServiceIntegrationTest extends AbstractProgrammingIntegrationLoc
         Files.createDirectories(file.getParent());
         FileUtils.write(file.toFile(), seededContent, StandardCharsets.UTF_8);
         localRepository.workingCopyGitRepo.add().addFilepattern(".").call();
-        de.tum.cit.aet.artemis.programming.service.GitService.commit(localRepository.workingCopyGitRepo).setMessage("seed content").call();
+        de.tum.cit.aet.artemis.localvc.service.GitService.commit(localRepository.workingCopyGitRepo).setMessage("seed content").call();
         localRepository.workingCopyGitRepo.push().setRemote("origin").call();
 
         repositoryUri = new LocalVCRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, repositorySlug));

@@ -9,7 +9,7 @@ import org.springframework.boot.actuate.info.Info;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
-import de.tum.cit.aet.artemis.programming.service.localci.LocalCIInfoContributor;
+import de.tum.cit.aet.artemis.localci.service.LocalCIInfoContributor;
 
 class LocalCIInfoContributorTest {
 

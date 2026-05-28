@@ -14,8 +14,8 @@ import org.testcontainers.DockerClientFactory;
 
 import com.redis.testcontainers.RedisStackContainer;
 
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.redisson.RedissonDistributedDataProviderService;
+import de.tum.cit.aet.artemis.localci.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.localci.service.distributed.redisson.RedissonDistributedDataProviderService;
 
 @SpringBootTest
 @ActiveProfiles({ PROFILE_BUILDAGENT, PROFILE_TEST_BUILDAGENT })

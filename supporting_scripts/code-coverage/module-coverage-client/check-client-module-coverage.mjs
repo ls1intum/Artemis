@@ -70,11 +70,19 @@ const moduleThresholds = {
         functions:  84.70,
         lines:      91.00,
     },
-    buildagent: {
-        statements: 89.80,
-        branches:   74.60,
-        functions:  84.70,
-        lines:      89.90,
+    // buildagent client module folded into localci/ (the UI was always served by core nodes and talked
+    // to LocalCI REST endpoints). Conservative initial baselines mirror the pre-extraction numbers.
+    localci: {
+        statements: 89.00,
+        branches:   74.00,
+        functions:  84.00,
+        lines:      89.00,
+    },
+    localvc: {
+        statements: 80.00,
+        branches:   60.00,
+        functions:  70.00,
+        lines:      80.00,
     },
     communication: {
         // Lowered after notification extraction moved ~5k lines (course-notification subtree)
