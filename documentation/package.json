@@ -40,7 +40,7 @@
         "@typescript-eslint/eslint-plugin": "8.59.3",
         "@typescript-eslint/parser": "8.59.3",
         "baseline-browser-mapping": "2.10.29",
-        "eslint": "10.3.0",
+        "eslint": "10.4.0",
         "prettier": "3.8.3",
         "typescript": "6.0.3"
     },
