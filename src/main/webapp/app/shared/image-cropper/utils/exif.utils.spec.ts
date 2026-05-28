@@ -1,8 +1,9 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { getTransformationsFromExifData, supportsAutomaticRotation } from './exif.utils';
 
 describe('Exif Utils', () => {
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('supportsAutomaticRotation', () => {
@@ -14,13 +15,15 @@ describe('Exif Utils', () => {
                 src: '',
             } as unknown as HTMLImageElement;
 
-            jest.spyOn(window, 'Image').mockImplementation(() => mockImage);
+            vi.spyOn(window, 'Image').mockImplementation(function () {
+                return mockImage;
+            } as unknown as typeof Image);
 
             const promise = supportsAutomaticRotation();
             mockImage.onload?.(new Event('load'));
             const result = await promise;
 
-            expect(result).toBeTrue();
+            expect(result).toBe(true);
         });
 
         it('should resolve false if the browser does not support automatic image orientation', async () => {
@@ -31,13 +34,15 @@ describe('Exif Utils', () => {
                 src: '',
             } as unknown as HTMLImageElement;
 
-            jest.spyOn(window, 'Image').mockImplementation(() => mockImage);
+            vi.spyOn(window, 'Image').mockImplementation(function () {
+                return mockImage;
+            } as unknown as typeof Image);
 
             const promise = supportsAutomaticRotation();
             mockImage.onload?.(new Event('load'));
             const result = await promise;
 
-            expect(result).toBeFalse();
+            expect(result).toBe(false);
         });
     });
 
