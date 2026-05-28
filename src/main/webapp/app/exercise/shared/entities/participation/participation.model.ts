@@ -1,6 +1,6 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import dayjs from 'dayjs/esm';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseDTO } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
@@ -83,3 +83,14 @@ export const getLatestSubmission = (participation: Participation): Submission | 
     }
     return undefined;
 };
+
+/**
+ * A DTO representing a participation.
+ *
+ * @param id       the id of the participation
+ * @param exercise the exercise DTO, the participation belongs to
+ */
+export class ParticipationWithExerciseDTO {
+    id?: number;
+    exercise?: ExerciseDTO;
+}

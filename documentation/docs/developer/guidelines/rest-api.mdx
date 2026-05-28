@@ -195,6 +195,10 @@ public class ExerciseResource {
   <strong>Critical:</strong> DTOs must NEVER contain references to <code>@Entity</code> types as fields. This includes direct entity references, collections of entities (List, Set, Map), or any nested structure containing entities. Wrapping an entity inside a DTO defeats the entire purpose of using DTOs.
 </Callout>
 
+<Callout variant={CalloutVariant.danger}>
+  <strong>Critical:</strong> DTOs must NEVER expose <code>Class&lt;...&gt;</code> tokens as fields (including record components). Serializing a <code>Class</code> writes the fully-qualified JVM class name into the JSON payload, which couples every client to internal Java package layout — a class rename then silently breaks consumers (including cached stale browser tabs). When a DTO needs to express "which kind of entity does this row represent", use a dedicated discriminator <strong>enum</strong> with <code>@JsonValue</code> (see <em>Discriminator Enums for Entity-Type Fields</em> below). <code>Class&lt;...&gt;</code> may still appear as a parameter on an internal JPQL-overloaded constructor that converts to the canonical enum — that's an internal mapping concern and never reaches the wire.
+</Callout>
+
 DTOs must be pure data containers with only:
 - Primitive types and their wrappers (String, Long, Integer, Boolean, etc.)
 - Date/time types (ZonedDateTime, Instant, LocalDate, etc.)
@@ -374,6 +378,63 @@ public ResponseEntity<QuizQuestionDTO> createQuestion(@RequestBody @Valid QuizQu
 ```
 
 
+### Discriminator Enums for Entity-Type Fields
+
+When a DTO needs to expose *which concrete subclass* of an entity inheritance hierarchy a row represents (for example, the result of Hibernate's `TYPE(...)` JPQL function over an `@Inheritance` hierarchy), do **not** expose `Class<? extends SomeEntity>` as a DTO component. Serializing a `Class` writes its fully-qualified JVM name into the JSON payload, which couples every client (including cached stale browser tabs after a refactor) to the internal Java package layout — a class rename then silently breaks consumers.
+
+Instead, define a discriminator **enum** whose `@JsonValue` produces the exact string the entity's `@JsonSubTypes` already emits, and expose that enum on the DTO. The canonical examples in Artemis are `ExerciseType` and `LectureUnitType`:
+
+```java
+public enum ExerciseType {
+
+    TEXT("text"), PROGRAMMING("programming"), MODELING("modeling"), FILE_UPLOAD("file-upload"), QUIZ("quiz");
+
+    private final String value;
+
+    ExerciseType(String value) {
+        this.value = value;
+    }
+
+    @JsonValue
+    public String getValue() {
+        return value;
+    }
+
+    public static ExerciseType getExerciseTypeFromClass(Class<? extends Exercise> exerciseClass) {
+        return switch (exerciseClass.getSimpleName()) {
+            case "TextExercise" -> TEXT;
+            case "ProgrammingExercise" -> PROGRAMMING;
+            // ...
+            default -> throw new IllegalArgumentException("Unknown exercise class: " + exerciseClass.getName());
+        };
+    }
+}
+```
+
+The enum's JSON values must match the entity's `@JsonSubTypes` `name` exactly. A client reading `Exercise.type` then sees the same string regardless of whether the source is the entity or a DTO — and a stable string contract survives package renames.
+
+When the DTO is populated from a JPQL `SELECT NEW ... TYPE(e) ...` projection, add an **overloaded record constructor** that accepts the raw entity class and converts it via the enum helper. This keeps the canonical record component (the field that serialization observes) as the enum, while the JPQL projection continues to compile unchanged:
+
+```java
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record ExerciseInformationDTO(long id, ..., ExerciseType type, ...) {
+
+    /**
+     * JPQL constructor that accepts the raw entity class produced by Hibernate's {@code TYPE(...)} function
+     * and maps it to the {@link ExerciseType} discriminator used by the canonical record component.
+     */
+    public ExerciseInformationDTO(long id, ..., Class<? extends Exercise> type, ...) {
+        this(id, ..., ExerciseType.getExerciseTypeFromClass(type), ...);
+    }
+}
+```
+
+The overloaded constructor takes `Class<>` as a *parameter*, not as a *field*, so it does not violate the "no `Class<>` in DTOs" rule — that rule (and the architecture test enforcing it) targets record components and declared fields only.
+
+<Callout variant={CalloutVariant.warning}>
+  <strong>Wire-format compatibility:</strong> Migrating an existing DTO from <code>Class&lt;...&gt;</code> to a discriminator enum is a <strong>breaking change</strong> for any consumer that reads the old fully-qualified-class-name strings. Update every client mapper at the network boundary (e.g. <code>mapToExerciseType</code> in <code>CourseDashboardService</code>) and verify external consumers (e.g. Pyris) in the same release.
+</Callout>
+
 ### Architecture Test Enforcement
 
 We enforce DTO usage through architecture tests that verify:
@@ -381,8 +442,9 @@ We enforce DTO usage through architecture tests that verify:
 1. **No entity return types:** REST controllers must not return `@Entity` types directly
 2. **No entity input types:** `@RequestBody` and `@RequestPart` parameters must not be `@Entity` types
 3. **No entity fields in DTOs:** DTO classes must not contain fields that reference `@Entity` types (prevents lazy wrapper pattern)
+4. **No `Class<>` fields in DTOs:** DTO classes (in any `..dto..` package) must not declare fields of raw type `java.lang.Class` — i.e. no `Class<? extends X>` or raw `Class` record components. Use a discriminator enum (see *Discriminator Enums for Entity-Type Fields* above). Enforced by `ArchitectureTest#testNoClassFieldsInDtos`.
 
-These tests run as part of CI and will fail if violations are introduced. Current violation counts are tracked per module with the goal of reducing them to zero.
+These tests run as part of CI and will fail if violations are introduced. Rules 1–3 are tracked per module with the goal of reducing the count to zero (see `AbstractModuleEntityUsageArchitectureTest`); rule 4 is a global zero-tolerance rule.
 
 ## REST Controller Best Practices
 

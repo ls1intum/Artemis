@@ -72,6 +72,7 @@ import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-he
 import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -449,7 +450,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             });
         } else {
             this.complaintService.getComplaintsForTestRun(this.exerciseId).subscribe({
-                next: (res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]),
+                next: (res: HttpResponse<ComplaintDTO[]>) => {
+                    this.complaints = res.body?.map((complaintDTO) => this.complaintService.convertComplaintFromServerInList(complaintDTO)) ?? [];
+                },
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
         }

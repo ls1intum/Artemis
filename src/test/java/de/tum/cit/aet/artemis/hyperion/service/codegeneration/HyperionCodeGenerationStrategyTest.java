@@ -469,7 +469,7 @@ class HyperionCodeGenerationServiceTest {
 
         @Override
         protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
-                String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
+                String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
             lastBuildEnvironmentContext = buildEnvironmentContext;
             lastConsistencyIssues = consistencyIssues;
             Map<String, Object> variables = Map.of("test", "plan");
@@ -478,21 +478,21 @@ class HyperionCodeGenerationServiceTest {
 
         @Override
         protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-                String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
+                String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "structure");
             return callChatClient(user, exercise, courseId, "test-structure-template", variables);
         }
 
         @Override
         protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-                String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
+                String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "headers");
             return callChatClient(user, exercise, courseId, "test-headers-template", variables);
         }
 
         @Override
         protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-                String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
+                String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "logic");
             return callChatClient(user, exercise, courseId, "test-logic-template", variables);
         }

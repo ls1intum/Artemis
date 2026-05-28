@@ -13,7 +13,10 @@ class TestASan(AbstractProgramTest):
     makeTarget: str
 
     def __init__(self, executionDirectory: str, makeTarget: str = "asan", requirements: List[str] = None, name: str = "TestCompileASan"):
-        super(TestASan, self).__init__(name, executionDirectory, "make", requirements, timeoutSec=5)
+        # 30s (was 5s): a sanitizer-instrumented gcc compile can spike past 5s when several
+        # builds share the CPU on a loaded multi-node CI host. The timeout only bounds a
+        # genuinely stuck compile; a correct one finishes in well under a second.
+        super(TestASan, self).__init__(name, executionDirectory, "make", requirements, timeoutSec=30)
         self.makeTarget = makeTarget
 
     def _run(self):

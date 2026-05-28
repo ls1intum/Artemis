@@ -32,6 +32,11 @@ describe('Team Owner Search Component', () => {
         courseService = TestBed.inject(CourseManagementService);
     });
 
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
     it('should initialize with team owner', () => {
         comp.team = { owner };
 
@@ -54,9 +59,13 @@ describe('Team Owner Search Component', () => {
         const searchText = owner.login!;
 
         comp.course = { id: 1 };
+        vi.useFakeTimers();
 
         let onSearchResult: User[] | undefined = undefined;
         comp.onSearch(of(searchText)).subscribe((result) => (onSearchResult = result));
+
+        // The text$ stream is debounced (200 ms) to coalesce rapid keystrokes.
+        vi.advanceTimersByTime(200);
 
         expect(searchFailedSpy).toHaveBeenCalledOnce();
         expect(searchFailedSpy).toHaveBeenCalledWith(false);
@@ -82,9 +91,13 @@ describe('Team Owner Search Component', () => {
         const searchText = 'SearchText';
 
         comp.course = { id: 1 };
+        vi.useFakeTimers();
 
         let onSearchResult: User[] | undefined = undefined;
         comp.onSearch(of(searchText)).subscribe((result) => (onSearchResult = result));
+
+        // The text$ stream is debounced (200 ms) to coalesce rapid keystrokes.
+        vi.advanceTimersByTime(200);
 
         expect(searchFailedSpy).toHaveBeenCalledOnce();
         expect(searchFailedSpy).toHaveBeenCalledWith(false);

@@ -126,7 +126,7 @@ public class AdminUserResource {
      * @throws BadRequestAlertException 400 (Bad Request) if the login or email is already in use
      */
     @PostMapping("users")
-    public ResponseEntity<User> createUser(@Valid @RequestBody ManagedUserVM userToBeCreated) throws URISyntaxException, AccessForbiddenAlertException {
+    public ResponseEntity<UserDTO> createUser(@Valid @RequestBody ManagedUserVM userToBeCreated) throws URISyntaxException, AccessForbiddenAlertException {
         this.userService.checkUsernameAndPasswordValidityElseThrow(userToBeCreated.getLogin(), userToBeCreated.getPassword());
 
         log.debug("REST request to save User : {}", userToBeCreated);
@@ -152,7 +152,7 @@ public class AdminUserResource {
             // NOTE: Mail service is NOT active at the moment
             // mailService.sendCreationEmail(newUser);
             return ResponseEntity.created(new URI("/api/core/users/" + newUser.getLogin()))
-                    .headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.created", newUser.getLogin())).body(newUser);
+                    .headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.created", newUser.getLogin())).body(new UserDTO(newUser));
         }
     }
 
