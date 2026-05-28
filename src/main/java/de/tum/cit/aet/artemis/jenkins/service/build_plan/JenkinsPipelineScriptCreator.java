@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.jenkins.build_plan;
+package de.tum.cit.aet.artemis.jenkins.service.build_plan;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 

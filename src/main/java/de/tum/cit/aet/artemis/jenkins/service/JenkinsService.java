@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.jenkins;
+package de.tum.cit.aet.artemis.jenkins.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 
@@ -19,6 +19,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.JenkinsException;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
+import de.tum.cit.aet.artemis.jenkins.service.build_plan.JenkinsBuildPlanService;
+import de.tum.cit.aet.artemis.jenkins.service.jobs.JenkinsJobService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -27,8 +29,6 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResultsDTO;
-import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanService;
-import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
 
 @Profile(PROFILE_JENKINS)
 @Lazy

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.jenkins;
+package de.tum.cit.aet.artemis.jenkins.service;
 
 import java.io.IOException;
 import java.io.Reader;

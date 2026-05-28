@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.jenkins;
+package de.tum.cit.aet.artemis.jenkins.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 
@@ -6,9 +6,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.jenkins.service.build_plan.JenkinsBuildPlanService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
-import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanService;
 
 @Profile(PROFILE_JENKINS)
 @Lazy
