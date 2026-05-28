@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateModule } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FeedbackNodeComponent } from 'app/exercise/feedback/node/feedback-node.component';
@@ -13,7 +14,7 @@ describe('FeedbackNodeComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FeedbackNodeComponent],
+            imports: [FeedbackNodeComponent, TranslateModule.forRoot()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(FeedbackNodeComponent);
@@ -28,7 +29,7 @@ describe('FeedbackNodeComponent', () => {
     });
 
     it('should set specific node type correctly for feedback group', () => {
-        fixture.componentRef.setInput('feedbackItemNode', { members: [] } as unknown as FeedbackGroup);
+        fixture.componentRef.setInput('feedbackItemNode', { members: [], credits: 0 } as unknown as FeedbackGroup);
         fixture.detectChanges();
 
         expect(component.feedbackItemGroup).toBeDefined();
