@@ -28,9 +28,15 @@ import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 @Service
 public class CourseNotificationWebappService extends CourseNotificationBroadcastService {
 
-    private static final String WEBSOCKET_TOPIC_PREFIX = "/topic/communication/notification/";
+    private static final String WEBSOCKET_TOPIC_PREFIX = "/topic/notification/";
 
-    private static final String WEBSOCKET_BROADCAST_TOPIC_PREFIX = "/topic/communication/notification/all";
+    private static final String WEBSOCKET_BROADCAST_TOPIC_PREFIX = "/topic/notification/all";
+
+    // Legacy STOMP destinations kept in parallel during the migration to /topic/notification/...
+    // Deployed mobile and external clients may still be subscribed here; remove once they have migrated.
+    private static final String LEGACY_WEBSOCKET_TOPIC_PREFIX = "/topic/communication/notification/";
+
+    private static final String LEGACY_WEBSOCKET_BROADCAST_TOPIC_PREFIX = "/topic/communication/notification/all";
 
     private final WebsocketMessagingService websocketMessagingService;
 
@@ -56,6 +62,9 @@ public class CourseNotificationWebappService extends CourseNotificationBroadcast
         recipients.forEach(user -> {
             websocketMessagingService.sendMessageToUser(user.getLogin(), WEBSOCKET_TOPIC_PREFIX + courseNotification.courseId(), courseNotification);
             websocketMessagingService.sendMessageToUser(user.getLogin(), WEBSOCKET_BROADCAST_TOPIC_PREFIX, courseNotification);
+            // Mirror to the legacy destinations so older subscribers continue to receive notifications during the migration window.
+            websocketMessagingService.sendMessageToUser(user.getLogin(), LEGACY_WEBSOCKET_TOPIC_PREFIX + courseNotification.courseId(), courseNotification);
+            websocketMessagingService.sendMessageToUser(user.getLogin(), LEGACY_WEBSOCKET_BROADCAST_TOPIC_PREFIX, courseNotification);
         });
     }
 }

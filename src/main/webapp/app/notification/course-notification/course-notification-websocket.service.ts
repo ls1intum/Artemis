@@ -90,22 +90,20 @@ export class CourseNotificationWebsocketService implements OnDestroy {
         if (this.courseWebsocketSubscriptions[courseId]) {
             return this.courseWebsocketSubscriptions[courseId];
         }
-        this.courseWebsocketSubscriptions[courseId] = this.websocketService
-            .subscribe('/user/topic/communication/notification/' + courseId)
-            .subscribe((notification: CourseNotification) => {
-                const courseNotification = new CourseNotification(
-                    notification.notificationId!,
-                    notification.courseId!,
-                    notification.notificationType!,
-                    CourseNotificationCategory[notification.category as unknown as keyof typeof CourseNotificationCategory],
-                    CourseNotificationViewingStatus[notification.status as unknown as keyof typeof CourseNotificationViewingStatus],
-                    convertDateFromServer(notification.creationDate!)!,
-                    notification.parameters!,
-                    notification.relativeWebAppUrl!,
-                );
-                this.courseNotificationService.addNotification(courseId, courseNotification);
-                this.websocketNotificationSubject.next(courseNotification);
-            });
+        this.courseWebsocketSubscriptions[courseId] = this.websocketService.subscribe('/user/topic/notification/' + courseId).subscribe((notification: CourseNotification) => {
+            const courseNotification = new CourseNotification(
+                notification.notificationId!,
+                notification.courseId!,
+                notification.notificationType!,
+                CourseNotificationCategory[notification.category as unknown as keyof typeof CourseNotificationCategory],
+                CourseNotificationViewingStatus[notification.status as unknown as keyof typeof CourseNotificationViewingStatus],
+                convertDateFromServer(notification.creationDate!)!,
+                notification.parameters!,
+                notification.relativeWebAppUrl!,
+            );
+            this.courseNotificationService.addNotification(courseId, courseNotification);
+            this.websocketNotificationSubject.next(courseNotification);
+        });
 
         return this.courseWebsocketSubscriptions[courseId];
     }

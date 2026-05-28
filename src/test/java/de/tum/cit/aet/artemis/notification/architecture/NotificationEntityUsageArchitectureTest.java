@@ -18,7 +18,7 @@ class NotificationEntityUsageArchitectureTest extends AbstractModuleEntityUsageA
     // TODO: Reduce this to 0 by returning DTOs instead of entities
     @Override
     protected int getMaxEntityReturnViolations() {
-        return 6;
+        return 7;
     }
 
     // This module is already compliant for input violations

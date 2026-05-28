@@ -28,7 +28,9 @@ class CourseNotificationWebappServiceTest {
     @Mock
     private WebsocketMessagingService websocketMessagingService;
 
-    private static final String WEBSOCKET_TOPIC_PREFIX = "/topic/communication/notification/";
+    private static final String WEBSOCKET_TOPIC_PREFIX = "/topic/notification/";
+
+    private static final String LEGACY_WEBSOCKET_TOPIC_PREFIX = "/topic/communication/notification/";
 
     @BeforeEach
     void setUp() {
@@ -45,6 +47,10 @@ class CourseNotificationWebappServiceTest {
         verify(websocketMessagingService, times(1)).sendMessageToUser("user1", WEBSOCKET_TOPIC_PREFIX + "123", notification);
         verify(websocketMessagingService, times(1)).sendMessageToUser("user2", WEBSOCKET_TOPIC_PREFIX + "123", notification);
         verify(websocketMessagingService, times(1)).sendMessageToUser("user3", WEBSOCKET_TOPIC_PREFIX + "123", notification);
+        // Each recipient must also be notified on the legacy topic during the migration window.
+        verify(websocketMessagingService, times(1)).sendMessageToUser("user1", LEGACY_WEBSOCKET_TOPIC_PREFIX + "123", notification);
+        verify(websocketMessagingService, times(1)).sendMessageToUser("user2", LEGACY_WEBSOCKET_TOPIC_PREFIX + "123", notification);
+        verify(websocketMessagingService, times(1)).sendMessageToUser("user3", LEGACY_WEBSOCKET_TOPIC_PREFIX + "123", notification);
     }
 
     @Test
@@ -66,6 +72,7 @@ class CourseNotificationWebappServiceTest {
         ReflectionTestUtils.invokeMethod(courseNotificationWebappService, "sendCourseNotification", notification, List.of(user));
 
         verify(websocketMessagingService, times(1)).sendMessageToUser("testuser", WEBSOCKET_TOPIC_PREFIX + "456", notification);
+        verify(websocketMessagingService, times(1)).sendMessageToUser("testuser", LEGACY_WEBSOCKET_TOPIC_PREFIX + "456", notification);
     }
 
     private User createTestUser(Long id, String login) {

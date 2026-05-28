@@ -146,7 +146,7 @@ describe('SystemNotificationService', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (result = resp));
 
-            const req = httpMock.expectOne({ method: 'GET', url: 'api/core/public/system-notifications/active' });
+            const req = httpMock.expectOne({ method: 'GET', url: 'api/notification/public/system-notifications/active' });
             req.flush(returnedFromService);
 
             expect(result).toHaveLength(1);
@@ -160,7 +160,7 @@ describe('SystemNotificationService', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (result = resp));
 
-            const req = httpMock.expectOne({ method: 'GET', url: 'api/core/public/system-notifications/active' });
+            const req = httpMock.expectOne({ method: 'GET', url: 'api/notification/public/system-notifications/active' });
             req.flush(null);
 
             expect(result).toEqual([]);

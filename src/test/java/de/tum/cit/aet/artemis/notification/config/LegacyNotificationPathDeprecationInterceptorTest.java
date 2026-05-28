@@ -42,6 +42,18 @@ class LegacyNotificationPathDeprecationInterceptorTest {
     }
 
     @Test
+    void shouldSetDeprecationHeadersWhenLegacyPublicSystemNotificationPathIsUsed() throws NoSuchMethodException {
+        request.setRequestURI("/api/core/public/system-notifications/active");
+        HandlerMethod handler = notificationHandler();
+
+        interceptor.preHandle(request, response, handler);
+
+        assertThat(response.getHeader("Deprecation")).isEqualTo("true");
+        assertThat(response.getHeader("Sunset")).isEqualTo(LegacyNotificationPathDeprecationInterceptor.SUNSET_DATE);
+        assertThat(response.getHeader("Link")).isEqualTo("</api/notification/public/system-notifications/active>; rel=\"successor-version\"");
+    }
+
+    @Test
     void shouldNotSetHeadersWhenNewPathIsUsed() throws NoSuchMethodException {
         request.setRequestURI("/api/notification/notification/42");
         HandlerMethod handler = notificationHandler();

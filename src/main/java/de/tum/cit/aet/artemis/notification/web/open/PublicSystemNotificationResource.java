@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.web.open;
+package de.tum.cit.aet.artemis.notification.web.open;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -23,7 +23,9 @@ import de.tum.cit.aet.artemis.notification.service.SystemNotificationService;
 @Profile(PROFILE_CORE)
 @Lazy
 @RestController
-@RequestMapping("api/core/public/")
+// The legacy "api/core/public/" prefix is kept for backwards compatibility with deployed clients and will be removed
+// once those clients have migrated. New clients should use the "api/notification/public/" prefix.
+@RequestMapping({ "api/notification/public/", "api/core/public/" })
 public class PublicSystemNotificationResource {
 
     private static final Logger log = LoggerFactory.getLogger(PublicSystemNotificationResource.class);

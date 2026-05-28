@@ -26,6 +26,10 @@ public class NotificationWebConfiguration implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(legacyNotificationPathDeprecationInterceptor).addPathPatterns(LegacyNotificationPathDeprecationInterceptor.LEGACY_PREFIX + "**");
+        // Register the interceptor on every legacy prefix the notification module still serves. The handler
+        // package check inside the interceptor protects endpoints owned by other modules that share these
+        // prefixes (e.g. the communication module's own /api/communication/... endpoints).
+        String[] legacyPathPatterns = LegacyNotificationPathDeprecationInterceptor.LEGACY_TO_SUCCESSOR_PREFIX.keySet().stream().map(prefix -> prefix + "**").toArray(String[]::new);
+        registry.addInterceptor(legacyNotificationPathDeprecationInterceptor).addPathPatterns(legacyPathPatterns);
     }
 }

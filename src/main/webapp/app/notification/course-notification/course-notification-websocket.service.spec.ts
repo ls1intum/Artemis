@@ -79,8 +79,8 @@ describe('CourseNotificationWebsocketService', () => {
             coursesSubject.next(courses);
 
             expect(websocketServiceMock.subscribe).toHaveBeenCalledTimes(2);
-            expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/user/topic/communication/notification/1');
-            expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/user/topic/communication/notification/2');
+            expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/user/topic/notification/1');
+            expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/user/topic/notification/2');
         });
 
         it('should not resubscribe to same course twice', () => {
@@ -171,7 +171,7 @@ describe('CourseNotificationWebsocketService', () => {
             coursesSubject.next(courses);
 
             expect(websocketServiceMock.subscribe).toHaveBeenCalledOnce();
-            expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/user/topic/communication/notification/2');
+            expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/user/topic/notification/2');
         });
     });
 
@@ -190,7 +190,7 @@ describe('CourseNotificationWebsocketService', () => {
             const courses1 = [{ id: 1, title: 'Course 1' }] as Course[];
             coursesSubject.next(courses1);
 
-            expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/user/topic/communication/notification/1');
+            expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/user/topic/notification/1');
 
             vi.clearAllMocks();
             websocketServiceMock.subscribe.mockReturnValue(websocketReceiveSubject.asObservable());
@@ -203,7 +203,7 @@ describe('CourseNotificationWebsocketService', () => {
             const courses2 = [{ id: 2, title: 'Course 2' }] as Course[];
             coursesSubject.next(courses2);
 
-            expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/user/topic/communication/notification/2');
+            expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/user/topic/notification/2');
         });
 
         it('should not resubscribe when the same user is emitted twice', () => {
