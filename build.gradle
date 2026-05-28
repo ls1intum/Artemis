@@ -536,7 +536,7 @@ dependencies {
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
     testImplementation "org.gradle:gradle-tooling-api:9.5.0"
-    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.5"
+    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.6"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.8.0"
     testImplementation "com.redis:testcontainers-redis:2.2.4"
     testImplementation "org.testcontainers:testcontainers-weaviate:${testcontainers_version}"
