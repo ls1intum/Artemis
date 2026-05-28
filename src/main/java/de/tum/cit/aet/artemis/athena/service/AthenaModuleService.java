@@ -224,23 +224,10 @@ public class AthenaModuleService {
      * @param course   the course the exercise belongs to
      */
     public void applyAthenaCourseSettings(Exercise exercise, Course course) {
-        boolean gradingEnabled = switch (exercise.getExerciseType()) {
-            case TEXT -> course.isAthenaTextGradingEnabled();
-            case MODELING -> course.isAthenaModelingGradingEnabled();
-            case PROGRAMMING -> course.isAthenaProgrammingGradingEnabled();
-            default -> false;
-        };
-        boolean preliminaryEnabled = switch (exercise.getExerciseType()) {
-            case TEXT -> course.isAthenaTextPreliminaryEnabled();
-            case MODELING -> course.isAthenaModelingPreliminaryEnabled();
-            case PROGRAMMING -> course.isAthenaProgrammingPreliminaryEnabled();
-            default -> false;
-        };
-
-        if (gradingEnabled) {
+        if (course.isAthenaGradingEnabled()) {
             exercise.setFeedbackSuggestionModule(getDefaultModule(exercise.getExerciseType()));
         }
-        if (preliminaryEnabled) {
+        if (course.isAthenaFormativeEnabled()) {
             exercise.setAllowFeedbackRequests(true);
         }
     }

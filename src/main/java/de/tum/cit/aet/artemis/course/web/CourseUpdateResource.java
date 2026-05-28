@@ -175,12 +175,8 @@ public class CourseUpdateResource {
         String oldCodeOfConduct = existingCourse.getCourseInformationSharingMessagingCodeOfConduct();
 
         // Capture Athena flag values BEFORE applying DTO so we can detect true→false transitions
-        boolean wasTextGradingEnabled = existingCourse.isAthenaTextGradingEnabled();
-        boolean wasTextPreliminaryEnabled = existingCourse.isAthenaTextPreliminaryEnabled();
-        boolean wasModelingGradingEnabled = existingCourse.isAthenaModelingGradingEnabled();
-        boolean wasModelingPreliminaryEnabled = existingCourse.isAthenaModelingPreliminaryEnabled();
-        boolean wasProgrammingGradingEnabled = existingCourse.isAthenaProgrammingGradingEnabled();
-        boolean wasProgrammingPreliminaryEnabled = existingCourse.isAthenaProgrammingPreliminaryEnabled();
+        boolean wasGradingEnabled = existingCourse.isAthenaGradingEnabled();
+        boolean wasFormativeEnabled = existingCourse.isAthenaFormativeEnabled();
 
         // Apply DTO values to the existing course entity - this preserves all relationships
         courseUpdateDTO.applyTo(existingCourse);
@@ -239,24 +235,21 @@ public class CourseUpdateResource {
             athenaApi.ifPresent(api -> api.revokeAccessToRestrictedFeedbackSuggestionModules(result));
         }
 
-        // if individual Athena flags transitioned from enabled to disabled, bulk-clear the corresponding exercise settings
-        if (wasTextGradingEnabled && !courseUpdateDTO.athenaTextGradingEnabled()) {
-            athenaApi.ifPresent(api -> api.clearFeedbackSuggestionModuleForCourse(result.getId(), ExerciseType.TEXT));
+        // if global Athena grading flag transitioned from enabled to disabled, bulk-clear feedbackSuggestionModule for all exercise types
+        if (wasGradingEnabled && !courseUpdateDTO.athenaGradingEnabled()) {
+            athenaApi.ifPresent(api -> {
+                api.clearFeedbackSuggestionModuleForCourse(result.getId(), ExerciseType.TEXT);
+                api.clearFeedbackSuggestionModuleForCourse(result.getId(), ExerciseType.MODELING);
+                api.clearFeedbackSuggestionModuleForCourse(result.getId(), ExerciseType.PROGRAMMING);
+            });
         }
-        if (wasTextPreliminaryEnabled && !courseUpdateDTO.athenaTextPreliminaryEnabled()) {
-            athenaApi.ifPresent(api -> api.clearAllowFeedbackRequestsForCourse(result.getId(), ExerciseType.TEXT));
-        }
-        if (wasModelingGradingEnabled && !courseUpdateDTO.athenaModelingGradingEnabled()) {
-            athenaApi.ifPresent(api -> api.clearFeedbackSuggestionModuleForCourse(result.getId(), ExerciseType.MODELING));
-        }
-        if (wasModelingPreliminaryEnabled && !courseUpdateDTO.athenaModelingPreliminaryEnabled()) {
-            athenaApi.ifPresent(api -> api.clearAllowFeedbackRequestsForCourse(result.getId(), ExerciseType.MODELING));
-        }
-        if (wasProgrammingGradingEnabled && !courseUpdateDTO.athenaProgrammingGradingEnabled()) {
-            athenaApi.ifPresent(api -> api.clearFeedbackSuggestionModuleForCourse(result.getId(), ExerciseType.PROGRAMMING));
-        }
-        if (wasProgrammingPreliminaryEnabled && !courseUpdateDTO.athenaProgrammingPreliminaryEnabled()) {
-            athenaApi.ifPresent(api -> api.clearAllowFeedbackRequestsForCourse(result.getId(), ExerciseType.PROGRAMMING));
+        // if global Athena formative flag transitioned from enabled to disabled, bulk-clear allowFeedbackRequests for all exercise types
+        if (wasFormativeEnabled && !courseUpdateDTO.athenaFormativeEnabled()) {
+            athenaApi.ifPresent(api -> {
+                api.clearAllowFeedbackRequestsForCourse(result.getId(), ExerciseType.TEXT);
+                api.clearAllowFeedbackRequestsForCourse(result.getId(), ExerciseType.MODELING);
+                api.clearAllowFeedbackRequestsForCourse(result.getId(), ExerciseType.PROGRAMMING);
+            });
         }
 
         if (timeZoneChanged && tutorialGroupChannelManagementApi.isPresent()) {

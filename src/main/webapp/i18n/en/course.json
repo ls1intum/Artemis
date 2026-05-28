@@ -243,15 +243,8 @@
                 "tooltip": "If this option is selected, the course's exercises can also use restricted Athena modules for feedback generation."
             },
             "athena": {
-                "textExercises": "Text Exercises",
-                "textGradingEnabled": "Enable grading feedback suggestions",
-                "textPreliminaryEnabled": "Enable preliminary feedback requests",
-                "modelingExercises": "Modeling Exercises",
-                "modelingGradingEnabled": "Enable grading feedback suggestions",
-                "modelingPreliminaryEnabled": "Enable preliminary feedback requests",
-                "programmingExercises": "Programming Exercises",
-                "programmingGradingEnabled": "Enable grading feedback suggestions",
-                "programmingPreliminaryEnabled": "Enable preliminary feedback requests"
+                "formativeEnabled": "Enable formative feedback requests",
+                "gradingEnabled": "Enable grading feedback suggestions"
             },
             "onlineCourse": {
                 "title": "Online Course",

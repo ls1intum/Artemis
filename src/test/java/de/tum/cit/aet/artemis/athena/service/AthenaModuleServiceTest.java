@@ -34,9 +34,9 @@ class AthenaModuleServiceTest {
     }
 
     @Test
-    void applyAthenaCourseSettings_textGradingEnabled_setsFeedbackSuggestionModule() {
+    void applyAthenaCourseSettings_gradingEnabled_setsFeedbackSuggestionModule() {
         Course course = new Course();
-        course.setAthenaTextGradingEnabled(true);
+        course.setAthenaGradingEnabled(true);
         TextExercise exercise = new TextExercise();
         exercise.setCourse(course);
         service.applyAthenaCourseSettings(exercise, course);
@@ -45,10 +45,10 @@ class AthenaModuleServiceTest {
     }
 
     @Test
-    void applyAthenaCourseSettings_textGradingAndPreliminaryEnabled_setsBothFields() {
+    void applyAthenaCourseSettings_gradingAndFormativeEnabled_setsBothFields() {
         Course course = new Course();
-        course.setAthenaTextGradingEnabled(true);
-        course.setAthenaTextPreliminaryEnabled(true);
+        course.setAthenaGradingEnabled(true);
+        course.setAthenaFormativeEnabled(true);
         TextExercise exercise = new TextExercise();
         exercise.setCourse(course);
         service.applyAthenaCourseSettings(exercise, course);

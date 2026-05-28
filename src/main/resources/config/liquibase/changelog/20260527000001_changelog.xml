@@ -5,22 +5,10 @@
 
     <changeSet id="20260527000001-1" author="artemis">
         <addColumn tableName="course">
-            <column name="athena_text_grading_enabled" type="boolean" defaultValueBoolean="false">
+            <column name="athena_formative_enabled" type="boolean" defaultValueBoolean="false">
                 <constraints nullable="false"/>
             </column>
-            <column name="athena_text_preliminary_enabled" type="boolean" defaultValueBoolean="false">
-                <constraints nullable="false"/>
-            </column>
-            <column name="athena_modeling_grading_enabled" type="boolean" defaultValueBoolean="false">
-                <constraints nullable="false"/>
-            </column>
-            <column name="athena_modeling_preliminary_enabled" type="boolean" defaultValueBoolean="false">
-                <constraints nullable="false"/>
-            </column>
-            <column name="athena_programming_grading_enabled" type="boolean" defaultValueBoolean="false">
-                <constraints nullable="false"/>
-            </column>
-            <column name="athena_programming_preliminary_enabled" type="boolean" defaultValueBoolean="false">
+            <column name="athena_grading_enabled" type="boolean" defaultValueBoolean="false">
                 <constraints nullable="false"/>
             </column>
         </addColumn>
