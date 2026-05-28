@@ -50,8 +50,8 @@ describe(`ErrorHandlerInterceptor`, () => {
         });
     });
 
-    it.each([{ url: '/api/core/public/account' }, { url: '/api/core/account' }])(
-        'should not broadcast an http error if status is 401 but url includes /api/core/public/account or /api/core/account',
+    it.each([{ url: '/api/core/public/account' }, { url: '/api/account/account' }])(
+        'should not broadcast an http error if status is 401 but url includes /api/core/public/account or /api/account/account',
         ({ url }) => {
             const error = new HttpErrorResponse({ status: 401, url });
             const mockHandler = {

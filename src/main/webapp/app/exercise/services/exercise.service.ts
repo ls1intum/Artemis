@@ -63,7 +63,7 @@ export class ExerciseService {
 
     public resourceUrl = 'api/exercise/exercises';
     public adminResourceUrl = 'api/exercise/admin/exercises';
-    public courseResourceUrl = 'api/core/courses';
+    public courseResourceUrl = 'api/course/courses';
 
     /**
      * Validates if the dates are correct

@@ -149,10 +149,10 @@ export class CourseManagementAPIRequests {
      * Useful for tests that file complaints on shared seed courses.
      */
     async updateCourseMaxComplaints(courseId: number, maxComplaints: number) {
-        const courseResponse = await this.page.request.get(`api/core/courses/${courseId}`);
+        const courseResponse = await this.page.request.get(`api/course/courses/${courseId}`);
         const courseData = await courseResponse.json();
         courseData.maxComplaints = maxComplaints;
-        const response = await this.page.request.put(`api/core/courses/${courseId}`, {
+        const response = await this.page.request.put(`api/course/courses/${courseId}`, {
             multipart: {
                 course: {
                     name: 'course',
@@ -195,7 +195,7 @@ export class CourseManagementAPIRequests {
     }
 
     private async addUserToCourse(courseId: number, username: string, roleIdentifier: string) {
-        await this.page.request.post(`api/core/courses/${courseId}/${roleIdentifier}/${username}`);
+        await this.page.request.post(`api/course/courses/${courseId}/${roleIdentifier}/${username}`);
     }
 
     /**

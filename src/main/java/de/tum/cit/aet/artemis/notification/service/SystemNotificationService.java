@@ -62,12 +62,24 @@ public class SystemNotificationService {
         return systemNotificationRepository.findAllActiveAndFutureSystemNotifications(ZonedDateTime.now());
     }
 
+    static final String SYSTEM_NOTIFICATION_TOPIC = "/topic/notification/system-notification";
+
+    // Legacy STOMP destination kept in parallel during the migration to /topic/notification/...
+    // TODO: Remove once external clients have migrated. Target sunset: 2026-09-30 — keep in sync with
+    // LegacyApiPathDeprecationInterceptor.SUNSET_DATE.
+    @Deprecated(forRemoval = true, since = "9.3")
+    static final String LEGACY_SYSTEM_NOTIFICATION_TOPIC = "/topic/system-notification";
+
     /**
      * Sends the current list of active and future system notifications to all connected clients.
      * Call this method after changing any system notification.
      */
+    @SuppressWarnings("deprecation")
     public void distributeActiveAndFutureNotificationsToClients() {
-        websocketMessagingService.sendMessage("/topic/system-notification", findAllActiveAndFutureSystemNotifications());
+        List<SystemNotification> notifications = findAllActiveAndFutureSystemNotifications();
+        websocketMessagingService.sendMessage(SYSTEM_NOTIFICATION_TOPIC, notifications);
+        // Mirror to the legacy destination so older subscribers continue to receive updates during the migration window.
+        websocketMessagingService.sendMessage(LEGACY_SYSTEM_NOTIFICATION_TOPIC, notifications);
     }
 
     /**

@@ -70,7 +70,7 @@ export class CourseManagementService implements OnDestroy {
     private courseNotificationService = inject(CourseNotificationService);
     private localStorageService = inject(LocalStorageService);
 
-    private resourceUrl = 'api/core/courses';
+    private resourceUrl = 'api/course/courses';
 
     private coursesForNotifications: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
 

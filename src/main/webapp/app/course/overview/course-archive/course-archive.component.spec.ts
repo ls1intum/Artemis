@@ -103,7 +103,7 @@ describe('CourseArchiveComponent', () => {
             const emptyCourses: CourseForArchiveDTO[] = [];
             const getCoursesForArchiveSpy = vi.spyOn(courseService, 'getCoursesForArchive');
 
-            const req = httpMock.expectOne({ method: 'GET', url: `api/core/courses/for-archive` });
+            const req = httpMock.expectOne({ method: 'GET', url: `api/course/courses/for-archive` });
             component.ngOnInit();
 
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
