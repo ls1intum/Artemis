@@ -1,6 +1,8 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TeamService } from 'app/exercise/team/team.service';
 import { TeamsComponent } from 'app/exercise/team/teams/teams.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -11,7 +13,7 @@ import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.se
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { MockParticipationService } from 'test/helpers/mocks/service/mock-participation.service';
 import { MockComponent } from 'ng-mocks';
-import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TeamsExportButtonComponent } from 'app/exercise/team/teams-import-dialog/teams-export-button.component';
 import { TeamsImportButtonComponent } from 'app/exercise/team/teams-import-dialog/teams-import-button.component';
 import { TeamUpdateButtonComponent } from 'app/exercise/team/team-update-dialog/team-update-button.component';
@@ -28,6 +30,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('TeamsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: TeamsComponent;
     let fixture: ComponentFixture<TeamsComponent>;
     let debugElement: DebugElement;
@@ -37,20 +41,9 @@ describe('TeamsComponent', () => {
         snapshot: { queryParamMap: convertToParamMap({}) },
     } as any as ActivatedRoute;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [NgxDatatableModule],
-            declarations: [
-                TeamsComponent,
-                TranslatePipeMock,
-                MockComponent(TeamsExportButtonComponent),
-                MockComponent(TeamsImportButtonComponent),
-                MockComponent(TeamUpdateButtonComponent),
-                MockComponent(DataTableComponent),
-                MockComponent(TeamStudentsListComponent),
-                MockRouterLinkDirective,
-                MockComponent(TeamDeleteButtonComponent),
-            ],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [NgxDatatableModule, TeamsComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: ParticipationService, useClass: MockParticipationService },
@@ -63,23 +56,47 @@ describe('TeamsComponent', () => {
                 provideHttpClientTesting(),
             ],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TeamsComponent);
-                comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-            });
+            .overrideComponent(TeamsComponent, {
+                remove: {
+                    imports: [
+                        TeamsExportButtonComponent,
+                        TeamsImportButtonComponent,
+                        TeamUpdateButtonComponent,
+                        DataTableComponent,
+                        TeamStudentsListComponent,
+                        TeamDeleteButtonComponent,
+                    ],
+                },
+                add: {
+                    imports: [
+                        MockComponent(TeamsExportButtonComponent),
+                        MockComponent(TeamsImportButtonComponent),
+                        MockComponent(TeamUpdateButtonComponent),
+                        MockComponent(DataTableComponent),
+                        MockComponent(TeamStudentsListComponent),
+                        MockRouterLinkDirective,
+                        MockComponent(TeamDeleteButtonComponent),
+                    ],
+                },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(TeamsComponent);
+        comp = fixture.componentInstance;
+        debugElement = fixture.debugElement;
     });
 
-    it('Teams are loaded correctly', fakeAsync(() => {
-        comp.ngOnInit();
-        tick();
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
-        // Make sure that all 3 teams were received for exercise
+    it('Teams are loaded correctly', async () => {
+        comp.ngOnInit();
+        await fixture.whenStable();
+
         expect(comp.teams).toHaveLength(mockTeams.length);
 
-        // Check that ngx-datatable is present
         const datatable = debugElement.query(By.css('jhi-data-table'));
         expect(datatable).not.toBeNull();
-    }));
+    });
 });
