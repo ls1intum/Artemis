@@ -274,7 +274,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 of(
                     new HttpResponse({
                         body: {
-                            entity,
+                            ...entity,
+                            id: 1,
                         },
                     }),
                 ),
