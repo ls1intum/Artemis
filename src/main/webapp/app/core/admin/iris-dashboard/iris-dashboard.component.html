@@ -167,14 +167,12 @@
                     <tr>
                         <th jhiTranslate="artemisApp.irisDashboard.breakdown.course">Course</th>
                         <th jhiTranslate="artemisApp.irisDashboard.breakdown.sessions">Sessions</th>
-                        <th jhiTranslate="artemisApp.irisDashboard.breakdown.costEur">Cost (EUR)</th>
                     </tr>
                 </ng-template>
                 <ng-template #body let-entry>
                     <tr>
                         <td>{{ entry.label }}</td>
                         <td>{{ entry.values['sessions'] }}</td>
-                        <td>{{ entry.values['costEur'] | number: '1.2-4' }} EUR</td>
                     </tr>
                 </ng-template>
             </p-table>

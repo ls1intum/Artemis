@@ -108,6 +108,10 @@ public class IrisUsageAlertService {
         if (!alert.isEnabled()) {
             return;
         }
+        if (alert.getCheckIntervalMinutes() <= 0) {
+            log.error("Iris alert: check-interval-minutes must be > 0, got {}", alert.getCheckIntervalMinutes());
+            configValid = false;
+        }
         if (alert.getNoResponseRateThreshold() < 0 || alert.getNoResponseRateThreshold() > 100) {
             log.error("Iris alert: threshold must be in [0,100], got {}", alert.getNoResponseRateThreshold());
             configValid = false;
@@ -143,7 +147,7 @@ public class IrisUsageAlertService {
      * Uses Hazelcast distributed locking to prevent concurrent executions across cluster nodes
      * and to enforce the cooldown period cluster-wide.
      */
-    @Scheduled(fixedRateString = "${artemis.iris.dashboard.alert.check-interval-minutes:30}", timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedRateString = "${artemis.iris.dashboard.alert.check-interval-minutes:30}", initialDelayString = "${artemis.iris.dashboard.alert.check-interval-minutes:30}", timeUnit = TimeUnit.MINUTES)
     public void checkAlertThresholds() {
         if (!properties.getAlert().isEnabled() || !configValid) {
             return;

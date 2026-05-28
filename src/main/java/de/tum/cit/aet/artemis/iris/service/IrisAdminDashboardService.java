@@ -604,6 +604,7 @@ public class IrisAdminDashboardService {
             Map<String, Double> values = new LinkedHashMap<>();
             values.put("sessions", (double) sessions);
             values.put("activeSessions", (double) active);
+            values.put("messages", (double) eligible);
             values.put("noResponseRate", noRespRate);
             entries.add(new IrisDashboardBreakdownEntryDTO(mode, values));
         }

@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -20,6 +21,10 @@ import de.tum.cit.aet.artemis.iris.config.IrisDashboardBreakdownDimension;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardMetric;
 import de.tum.cit.aet.artemis.iris.config.IrisDashboardProperties;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.dto.IrisDashboardBreakdownEntryDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisDashboardConfigDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisDashboardOverviewDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisDashboardTimeSeriesDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisAdminDashboardService;
 
 @RestController
@@ -49,7 +54,7 @@ public class IrisAdminDashboardResource {
      */
     @GetMapping("overview")
     @EnforceAdmin
-    public ResponseEntity<?> getOverview(@RequestParam Instant from, @RequestParam Instant to) {
+    public ResponseEntity<IrisDashboardOverviewDTO> getOverview(@RequestParam Instant from, @RequestParam Instant to) {
         validateWindow(from, to);
         return ResponseEntity.ok(dashboardService.computeOverview(from, to));
     }
@@ -65,7 +70,8 @@ public class IrisAdminDashboardResource {
      */
     @GetMapping("time-series")
     @EnforceAdmin
-    public ResponseEntity<?> getTimeSeries(@RequestParam Instant from, @RequestParam Instant to, @RequestParam String span, @RequestParam IrisDashboardMetric metric) {
+    public ResponseEntity<IrisDashboardTimeSeriesDTO> getTimeSeries(@RequestParam Instant from, @RequestParam Instant to, @RequestParam String span,
+            @RequestParam IrisDashboardMetric metric) {
         validateWindow(from, to);
         return ResponseEntity.ok(dashboardService.computeTimeSeries(from, to, span, metric));
     }
@@ -80,7 +86,8 @@ public class IrisAdminDashboardResource {
      */
     @GetMapping("breakdown")
     @EnforceAdmin
-    public ResponseEntity<?> getBreakdown(@RequestParam Instant from, @RequestParam Instant to, @RequestParam IrisDashboardBreakdownDimension dimension) {
+    public ResponseEntity<List<IrisDashboardBreakdownEntryDTO>> getBreakdown(@RequestParam Instant from, @RequestParam Instant to,
+            @RequestParam IrisDashboardBreakdownDimension dimension) {
         validateWindow(from, to);
         return ResponseEntity.ok(dashboardService.computeBreakdown(from, to, dimension));
     }
@@ -92,7 +99,7 @@ public class IrisAdminDashboardResource {
      */
     @GetMapping("config")
     @EnforceAdmin
-    public ResponseEntity<?> getConfig() {
+    public ResponseEntity<IrisDashboardConfigDTO> getConfig() {
         return ResponseEntity.ok(dashboardService.getConfig());
     }
 
