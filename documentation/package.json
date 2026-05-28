@@ -2,7 +2,7 @@
     "name": "guidelines",
     "version": "0.0.0",
     "private": true,
-    "packageManager": "pnpm@11.1.1",
+    "packageManager": "pnpm@11.4.0",
     "scripts": {
         "build": "docusaurus build",
         "clear": "docusaurus clear",
