@@ -165,7 +165,7 @@ export class CourseExerciseService {
      */
     findAllExercisesWithDueDatesForCourse(courseId: number): Observable<HttpResponse<Exercise[]>> {
         return this.http
-            .get<Exercise[]>(`api/core/courses/${courseId}/all-exercises-with-due-dates`, { observe: 'response' })
+            .get<Exercise[]>(`api/course/courses/${courseId}/all-exercises-with-due-dates`, { observe: 'response' })
             .pipe(map((res: HttpResponse<Exercise[]>) => this.processExercisesHttpResponses(res)));
     }
 }

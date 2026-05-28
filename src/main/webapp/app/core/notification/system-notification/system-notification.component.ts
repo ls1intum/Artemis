@@ -13,7 +13,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
-export const WEBSOCKET_CHANNEL = '/topic/system-notification';
+export const WEBSOCKET_CHANNEL = '/topic/notification/system-notification';
 export const CLOSED_NOTIFICATION_IDS_STORAGE_KEY = 'system-notification.closedIds';
 
 @Component({

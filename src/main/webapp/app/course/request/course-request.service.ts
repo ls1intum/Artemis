@@ -37,8 +37,8 @@ interface CourseRequestsAdminOverviewDTO {
 export class CourseRequestService {
     private http = inject(HttpClient);
 
-    private readonly resourceUrl = 'api/core/course-requests';
-    private readonly adminResourceUrl = 'api/core/admin/course-requests';
+    private readonly resourceUrl = 'api/course/course-requests';
+    private readonly adminResourceUrl = 'api/admin/course-requests';
 
     create(courseRequest: BaseCourseRequest): Observable<CourseRequest> {
         const dto = this.convertRequestToDTO(courseRequest);

@@ -20,7 +20,7 @@ import dayjs from 'dayjs/esm';
 export class AdminDataExportsService {
     private http = inject(HttpClient);
 
-    private readonly resourceUrl = 'api/core/admin/data-exports';
+    private readonly resourceUrl = 'api/admin/data-exports';
 
     /**
      * Retrieves data exports in the system with associated user information, with pagination.

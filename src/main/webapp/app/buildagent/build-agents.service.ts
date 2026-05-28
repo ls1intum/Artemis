@@ -6,7 +6,7 @@ import { catchError } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class BuildAgentsService {
-    public adminResourceUrl = 'api/core/admin';
+    public adminResourceUrl = 'api/admin';
 
     private readonly http = inject(HttpClient);
 

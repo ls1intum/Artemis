@@ -122,7 +122,7 @@ describe('FeatureToggleService', () => {
 
             service.setFeatureToggleState(FeatureToggle.AutonomousTutor, true).subscribe();
 
-            const req = httpTesting.expectOne('/api/core/admin/feature-toggle');
+            const req = httpTesting.expectOne('/api/admin/feature-toggle');
             expect(req.request.method).toBe('PUT');
             expect(req.request.body).toEqual({ [FeatureToggle.AutonomousTutor]: true });
             req.flush(null);
@@ -134,7 +134,7 @@ describe('FeatureToggleService', () => {
 
             service.setFeatureToggleState(FeatureToggle.ProgrammingExercises, false).subscribe();
 
-            const req = httpTesting.expectOne('/api/core/admin/feature-toggle');
+            const req = httpTesting.expectOne('/api/admin/feature-toggle');
             expect(req.request.method).toBe('PUT');
             expect(req.request.body).toEqual({ [FeatureToggle.ProgrammingExercises]: false });
             req.flush(null);
