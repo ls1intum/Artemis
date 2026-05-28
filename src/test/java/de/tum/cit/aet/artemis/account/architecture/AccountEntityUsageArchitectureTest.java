@@ -14,10 +14,9 @@ class AccountEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchit
         return ARTEMIS_PACKAGE + ".account";
     }
 
-    // TODO: Reduce this to 0 by returning DTOs instead of entities (AdminUserResource#createUser still returns User)
     @Override
     protected int getExpectedEntityReturnViolations() {
-        return 1;
+        return 0;
     }
 
     @Override
