@@ -310,11 +310,11 @@ importers:
         version: 0.16.2
     devDependencies:
       '@analogjs/vite-plugin-angular':
-        specifier: 2.5.1
-        version: 2.5.1(140bb9dcff276ad2166f7967f2e7fbda)
+        specifier: 2.5.2
+        version: 2.5.2(140bb9dcff276ad2166f7967f2e7fbda)
       '@analogjs/vitest-angular':
-        specifier: 2.5.1
-        version: 2.5.1(@analogjs/vite-plugin-angular@2.5.1(140bb9dcff276ad2166f7967f2e7fbda))(@angular-devkit/architect@0.2102.12(chokidar@5.0.0))(@angular-devkit/schematics@21.2.12(chokidar@5.0.0))(vitest@4.1.7)(zone.js@0.16.2)
+        specifier: 2.5.2
+        version: 2.5.2(@analogjs/vite-plugin-angular@2.5.2(140bb9dcff276ad2166f7967f2e7fbda))(@angular-devkit/architect@0.2102.12(chokidar@5.0.0))(@angular-devkit/schematics@21.2.12(chokidar@5.0.0))(vitest@4.1.7)(zone.js@0.16.2)
       '@angular-builders/jest':
         specifier: 21.0.3
         version: 21.0.3(patch_hash=5ffb09a16cb0e2ed2a4703acb66fc3dc7d43e9f1de66eac1867b5e8271d0744c)(f6785a7072d55243c3e046bb7fc86785)
@@ -561,8 +561,8 @@ packages:
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
 
-  '@analogjs/vite-plugin-angular@2.5.1':
-    resolution: {integrity: sha512-69qNVlDulbw3NiNrt8hyoS4DXYsBYtQe1rT5BElMRLM6Q05zM3zcM0MrCXnpw5+rTtF8hoEP9eXpuHroHOTnPw==}
+  '@analogjs/vite-plugin-angular@2.5.2':
+    resolution: {integrity: sha512-zJdmYb6B+qwMzcv9N6fWD4uYarrulqyJSPvNg8yzmVABbRV3YkAQXFMlr6ZgwkV9jSNK5CaqiSQSB238wX7RpA==}
     peerDependencies:
       '@angular-devkit/build-angular': ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
       '@angular/build': ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
@@ -575,8 +575,8 @@ packages:
       vite:
         optional: true
 
-  '@analogjs/vitest-angular@2.5.1':
-    resolution: {integrity: sha512-DhvhTXJKJIghlQW+SNMyRNtw0iQ9uB72XvAO+warIm37ot64w4SV8eveUO1ckorxLvenqNDXF8Yl0A243dgA7A==}
+  '@analogjs/vitest-angular@2.5.2':
+    resolution: {integrity: sha512-wd9gNF0jJTOjiljeDO3M64QbcYFm3K0+KEG6bEAU9pX6J1Qgag4z9e0ZxlL1X2vRrYe087z+tbX8rp5tezPzuA==}
     peerDependencies:
       '@analogjs/vite-plugin-angular': '*'
       '@angular-devkit/architect': '>=0.1500.0 < 0.2200.0'
@@ -8388,7 +8388,7 @@ packages:
     engines: {node: '>=12'}
 
   xlsx@https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz:
-    resolution: {tarball: https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz}
+    resolution: {integrity: sha512-oLDq3jw7AcLqKWH2AhCpVTZl8mf6X2YReP+Neh0SJUzV/BdZYjth94tG5toiMB1PPrYtxOCfaoUCkvtuH+3AJA==, tarball: https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz}
     version: 0.20.3
     engines: {node: '>=0.8'}
     hasBin: true
@@ -8626,7 +8626,7 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
 
-  '@analogjs/vite-plugin-angular@2.5.1(140bb9dcff276ad2166f7967f2e7fbda)':
+  '@analogjs/vite-plugin-angular@2.5.2(140bb9dcff276ad2166f7967f2e7fbda)':
     dependencies:
       magic-string: 0.30.21
       obug: 2.1.1
@@ -8641,9 +8641,9 @@ snapshots:
       - '@emnapi/core'
       - '@emnapi/runtime'
 
-  '@analogjs/vitest-angular@2.5.1(@analogjs/vite-plugin-angular@2.5.1(140bb9dcff276ad2166f7967f2e7fbda))(@angular-devkit/architect@0.2102.12(chokidar@5.0.0))(@angular-devkit/schematics@21.2.12(chokidar@5.0.0))(vitest@4.1.7)(zone.js@0.16.2)':
+  '@analogjs/vitest-angular@2.5.2(@analogjs/vite-plugin-angular@2.5.2(140bb9dcff276ad2166f7967f2e7fbda))(@angular-devkit/architect@0.2102.12(chokidar@5.0.0))(@angular-devkit/schematics@21.2.12(chokidar@5.0.0))(vitest@4.1.7)(zone.js@0.16.2)':
     dependencies:
-      '@analogjs/vite-plugin-angular': 2.5.1(140bb9dcff276ad2166f7967f2e7fbda)
+      '@analogjs/vite-plugin-angular': 2.5.2(140bb9dcff276ad2166f7967f2e7fbda)
       '@angular-devkit/architect': 0.2102.12(chokidar@5.0.0)
       '@angular-devkit/schematics': 21.2.12(chokidar@5.0.0)
       vitest: 4.1.7(@opentelemetry/api@1.9.1)(@types/node@24.12.4)(@vitest/coverage-istanbul@4.1.7)(@vitest/coverage-v8@4.1.7)(jsdom@29.1.1)(vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.99.0)(terser@5.46.0)(yaml@2.9.0))
@@ -13267,7 +13267,7 @@ snapshots:
       normalize-path: 3.0.0
       schema-utils: 4.3.3
       serialize-javascript: 7.0.5
-      tinyglobby: 0.2.15
+      tinyglobby: 0.2.16
       webpack: 5.106.2(esbuild@0.28.0)(postcss@8.5.14)
 
   core-js-compat@3.49.0:
@@ -17015,7 +17015,7 @@ snapshots:
       picomatch: 4.0.4
       postcss: 8.5.14
       rollup: 4.60.4
-      tinyglobby: 0.2.15
+      tinyglobby: 0.2.16
     optionalDependencies:
       '@types/node': 24.12.4
       fsevents: 2.3.3
@@ -17032,7 +17032,7 @@ snapshots:
       picomatch: 4.0.4
       postcss: 8.5.14
       rollup: 4.60.4
-      tinyglobby: 0.2.15
+      tinyglobby: 0.2.16
     optionalDependencies:
       '@types/node': 24.12.4
       fsevents: 2.3.3
