@@ -941,7 +941,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * Emits the closeEditor event when the close button is clicked
      */
     onCloseButtonClick(): void {
-        this.closeEditor.emit();
+        this.closeEditor.emit(undefined);
     }
 
     private updateReviewCommentButton(): void {
