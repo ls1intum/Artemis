@@ -273,10 +273,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             jest.spyOn(programmingExerciseService, 'update').mockReturnValue(
                 of(
                     new HttpResponse({
-                        body: {
-                            ...entity,
-                            id: 1,
-                        },
+                        body: entity,
                     }),
                 ),
             );
