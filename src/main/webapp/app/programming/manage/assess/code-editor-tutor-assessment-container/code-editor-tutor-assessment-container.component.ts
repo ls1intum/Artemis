@@ -504,27 +504,30 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             return;
         }
 
+        // Reassemble the manual result's feedbacks from the editor state first, then snapshot them: getFeedbacksForUpdateAfterComplaint must
+        // capture the freshly assembled feedback list, not the pre-edit one.
         this.setFeedbacksForManualResult();
-        this.manualResultService
-            .updateAfterComplaint(this.manualResult!.feedbacks!, assessmentAfterComplaint.complaintResponse, this.submission!.id!, this.manualResult!.assessmentNote?.note)
-            .subscribe({
-                next: (result: Result) => {
-                    assessmentAfterComplaint.onSuccess();
-                    this!.submission!.results![0] = this.manualResult = result;
-                    this.alertService.closeAll();
-                    this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
-                },
-                error: (httpErrorResponse: HttpErrorResponse) => {
-                    assessmentAfterComplaint.onError();
-                    this.alertService.closeAll();
-                    const error = httpErrorResponse.error;
-                    if (error && error.errorKey && error.errorKey === 'complaintLock') {
-                        this.alertService.error(error.message, error.params);
-                    } else {
-                        this.onError('artemisApp.assessment.messages.updateAfterComplaintFailed');
-                    }
-                },
-            });
+        const feedbacks = this.complaintService.getFeedbacksForUpdateAfterComplaint(this.manualResult!.feedbacks!);
+        const complaintResponse = this.complaintService.getComplaintResponseForUpdateAfterComplaint(assessmentAfterComplaint.complaintResponse);
+
+        this.manualResultService.updateAfterComplaint(feedbacks, complaintResponse, this.submission!.id!, this.manualResult!.assessmentNote?.note).subscribe({
+            next: (result: Result) => {
+                assessmentAfterComplaint.onSuccess();
+                this!.submission!.results![0] = this.manualResult = result;
+                this.alertService.closeAll();
+                this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
+            },
+            error: (httpErrorResponse: HttpErrorResponse) => {
+                assessmentAfterComplaint.onError();
+                this.alertService.closeAll();
+                const error = httpErrorResponse.error;
+                if (error && error.errorKey && error.errorKey === 'complaintLock') {
+                    this.alertService.error(error.message, error.params);
+                } else {
+                    this.onError('artemisApp.assessment.messages.updateAfterComplaintFailed');
+                }
+            },
+        });
     }
 
     /**
@@ -584,7 +587,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     /**
-     * Show an error as an alert in the top of the editor html.
+     * Show an error as an alert in the top of the editor HTML.
      * Used by other components to display errors.
      * The error must already be provided translated by the emitting component.
      */
@@ -657,7 +660,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 if (!res.body) {
                     return;
                 }
-                this.complaint = res.body;
+                this.complaint = this.complaintService.convertComplaintFromServer(res.body, this.manualResult);
             },
             error: (err: HttpErrorResponse) => {
                 this.onError(err?.message);

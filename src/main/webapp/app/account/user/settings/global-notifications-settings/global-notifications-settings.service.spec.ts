@@ -36,7 +36,7 @@ describe('GlobalNotificationSettingsService', () => {
 
         const promise = firstValueFrom(service.getAll());
 
-        const req = httpMock.expectOne('api/communication/global-notification-settings');
+        const req = httpMock.expectOne('api/notification/global-notification-settings');
         expect(req.request.method).toBe('GET');
         req.flush(mockSettings);
 
@@ -50,7 +50,7 @@ describe('GlobalNotificationSettingsService', () => {
 
         const promise = firstValueFrom(service.update(type, enabled));
 
-        const req = httpMock.expectOne(`api/communication/global-notification-settings/${type}`);
+        const req = httpMock.expectOne(`api/notification/global-notification-settings/${type}`);
         expect(req.request.method).toBe('PUT');
         expect(req.request.body).toEqual({ enabled });
         req.flush({});

@@ -19,7 +19,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ConversationInfoComponent } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/tabs/conversation-info/conversation-info.component';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
+import { CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
