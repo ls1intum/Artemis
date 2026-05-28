@@ -13,6 +13,7 @@ import {
 import { AssessmentNamesForModelId } from 'app/modeling/manage/assess/modeling-assessment.util';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 
 export type FeedbackType = 'correct' | 'needs_revision' | 'not_attempted' | 'non_compliant';
 
@@ -30,9 +31,11 @@ interface FeedbackTypeConfig {
 })
 export class UnifiedFeedbackComponent {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+    private localeConversionService = inject(LocaleConversionService);
 
     feedbackContent = input<string>('');
     points = input<number>(0);
+    scoreAccuracy = input<number | undefined>(undefined);
     type = input<FeedbackType | undefined>(undefined);
     title = input<string | undefined>(undefined);
     reference = input<string | undefined>(undefined);
@@ -108,6 +111,13 @@ export class UnifiedFeedbackComponent {
 
     readonly inferredAlertClass = computed(() => {
         return this.feedbackTypeConfigs[this.inferredType()].alertClass;
+    });
+
+    readonly formattedPoints = computed(() => {
+        const points = this.points();
+        const formatted = this.localeConversionService.toLocaleString(points, this.scoreAccuracy());
+        const key = `artemisApp.assessment.detail.points.${Math.abs(points) === 1 ? 'one' : 'many'}`;
+        return this.artemisTranslatePipe.transform(key, { points: formatted });
     });
 
     private stripFeedbackSuggestionPrefix(text: string): string {

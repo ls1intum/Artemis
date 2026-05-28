@@ -146,6 +146,7 @@
                                                                         [points]="feedback.credits || 0"
                                                                         [feedback]="feedback"
                                                                         [assessmentsNames]="assessmentsNames"
+                                                                        [scoreAccuracy]="course?.accuracyOfScores"
                                                                     />
                                                                 }
                                                             }
@@ -157,6 +158,7 @@
                                                                     [feedbackContent]="buildFeedbackTextForReview(feedback)"
                                                                     [points]="feedback.credits || 0"
                                                                     [feedback]="feedback"
+                                                                    [scoreAccuracy]="course?.accuracyOfScores"
                                                                 />
                                                             }
                                                         </div>

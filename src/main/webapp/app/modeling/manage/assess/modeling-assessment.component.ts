@@ -241,7 +241,15 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 this.elementFeedback.set(assessment.modelElementId, feedback);
             }
         }
-        // Return only the feedbacks currently reported by Apollon (not stale entries)
+        // Remove entries for elements no longer present in Apollon to prevent stale suggestion metadata reuse
+        const currentIds = new Set(assessments.map((a) => a.modelElementId));
+        for (const id of [...this.elementFeedback.keys()]) {
+            if (!currentIds.has(id)) {
+                this.elementFeedback.delete(id);
+                this.shownInApollon.delete(id);
+            }
+        }
+
         return assessments.map((a) => this.elementFeedback.get(a.modelElementId)!).filter(Boolean);
     }
 

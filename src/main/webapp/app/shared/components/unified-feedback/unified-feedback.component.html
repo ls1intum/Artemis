@@ -15,7 +15,7 @@
                         <span class="unified-feedback-title" [pTooltip]="inferredTitle()!" tooltipPosition="top">{{ inferredTitle() }}</span>
                     }
                 </div>
-                <div class="unified-feedback-points">{{ points() }} {{ 'artemisApp.feedback.points' | artemisTranslate }}</div>
+                <div class="unified-feedback-points">{{ formattedPoints() }}</div>
             </div>
 
             @if (feedbackContent()) {
