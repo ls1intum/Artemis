@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.icl;
+package de.tum.cit.aet.artemis.localvc.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -13,7 +13,6 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 
 class RepositoryUriTest {

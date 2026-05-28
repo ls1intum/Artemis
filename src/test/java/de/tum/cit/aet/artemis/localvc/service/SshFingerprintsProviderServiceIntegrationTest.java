@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.icl;
+package de.tum.cit.aet.artemis.localvc.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.localvc.service.ssh.HashUtils;
 import de.tum.cit.aet.artemis.localvc.service.ssh.SshFingerprintsProviderService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
-class SshFingerprintsProviderServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class SshFingerprintsProviderServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private SshServer sshServer;
 

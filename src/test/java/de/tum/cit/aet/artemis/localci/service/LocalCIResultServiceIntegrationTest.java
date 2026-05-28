@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.icl;
+package de.tum.cit.aet.artemis.localci.service;
 
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
-class LocalCIResultServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
+class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "localciresultservice";
 

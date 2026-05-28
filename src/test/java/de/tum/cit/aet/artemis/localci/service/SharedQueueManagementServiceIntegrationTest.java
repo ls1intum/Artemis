@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.icl;
+package de.tum.cit.aet.artemis.localci.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -10,7 +10,7 @@ import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 
-class SharedQueueManagementServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
+class SharedQueueManagementServiceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     @Test
     void testPushDockerImageCleanupInfo() {

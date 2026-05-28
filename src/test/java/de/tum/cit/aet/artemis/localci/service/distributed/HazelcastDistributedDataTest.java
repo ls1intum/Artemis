@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.icl.distributed;
+package de.tum.cit.aet.artemis.localci.service.distributed;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;

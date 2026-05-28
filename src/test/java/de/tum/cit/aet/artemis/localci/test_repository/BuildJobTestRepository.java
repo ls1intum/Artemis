@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.test_repository;
+package de.tum.cit.aet.artemis.localci.test_repository;
 
 import java.util.Optional;
 

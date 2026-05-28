@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.icl.distributed;
+package de.tum.cit.aet.artemis.localci.service.distributed;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGENT;

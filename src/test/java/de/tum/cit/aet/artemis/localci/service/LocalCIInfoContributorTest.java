@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.icl;
+package de.tum.cit.aet.artemis.localci.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -9,7 +9,6 @@ import org.springframework.boot.actuate.info.Info;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
-import de.tum.cit.aet.artemis.localci.service.LocalCIInfoContributor;
 
 class LocalCIInfoContributorTest {
 

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.icl.distributed;
+package de.tum.cit.aet.artemis.localci.service.distributed;
 
 import de.tum.cit.aet.artemis.localci.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.localci.service.distributed.local.LocalDataProviderService;

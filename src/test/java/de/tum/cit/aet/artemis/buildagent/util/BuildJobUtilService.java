@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
-import de.tum.cit.aet.artemis.programming.test_repository.BuildJobTestRepository;
+import de.tum.cit.aet.artemis.localci.test_repository.BuildJobTestRepository;
 
 @Lazy
 @Service

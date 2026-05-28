@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.icl;
+package de.tum.cit.aet.artemis.localvc.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.localvc.service.ssh.MultipleHostKeyProvider;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 
-class MultipleHostKeyProviderTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
+class MultipleHostKeyProviderIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "multiplehostkeyprovider";
 
