@@ -37,13 +37,13 @@ public class CourseNotificationSettingPresetRegistryService {
 
     /**
      * Constructs a new CourseNotificationSettingPresetRegistry and automatically scans the application context for all
-     * classes annotated with {@link CourseNotificationSettingPreset} in the {@code communication.domain.setting_presets}
-     * directory. The registry then creates an instance for all preset types.
+     * classes annotated with {@link CourseNotificationSettingPreset} in the package that contains
+     * {@link UserCourseNotificationSettingPreset}. The registry then creates an instance for all preset types.
      */
     public CourseNotificationSettingPresetRegistryService() {
         ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
         scanner.addIncludeFilter(new AnnotationTypeFilter(CourseNotificationSettingPreset.class));
-        String basePackage = "de.tum.cit.aet.artemis.notification.domain.setting_presets";
+        String basePackage = UserCourseNotificationSettingPreset.class.getPackage().getName();
 
         for (BeanDefinition bd : scanner.findCandidateComponents(basePackage)) {
             try {

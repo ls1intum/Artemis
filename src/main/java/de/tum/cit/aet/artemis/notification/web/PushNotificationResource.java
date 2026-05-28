@@ -47,7 +47,9 @@ import io.jsonwebtoken.ExpiredJwtException;
 @Profile(PROFILE_CORE)
 @Lazy
 @RestController
-@RequestMapping("api/communication/push_notification/")
+// The legacy "api/communication/" prefix is kept for backwards compatibility with deployed clients and will be removed
+// once those clients have migrated. New clients should use the "api/notification/" prefix.
+@RequestMapping({ "api/notification/push_notification/", "api/communication/push_notification/" })
 public class PushNotificationResource {
 
     private static final Logger log = LoggerFactory.getLogger(PushNotificationResource.class);

@@ -37,13 +37,13 @@ public class CourseNotificationRegistryService {
 
     /**
      * Constructs a new NotificationRegistry and automatically scans the application context for all classes annotated
-     * with {@link CourseNotificationType} in the {@code communication.domain.notifications} directory. The
+     * with {@link CourseNotificationType} in the package that contains {@link CourseNotification}. The
      * registry maps each notification type's numeric identifier to its class type.
      */
     public CourseNotificationRegistryService() {
         ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
         scanner.addIncludeFilter(new AnnotationTypeFilter(CourseNotificationType.class));
-        String basePackage = "de.tum.cit.aet.artemis.notification.domain.course_notifications";
+        String basePackage = CourseNotification.class.getPackage().getName();
 
         for (BeanDefinition bd : scanner.findCandidateComponents(basePackage)) {
             try {

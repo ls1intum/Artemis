@@ -26,7 +26,9 @@ import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingServ
 @Profile(PROFILE_CORE)
 @Lazy
 @RestController
-@RequestMapping("api/communication/")
+// The legacy "api/communication/" prefix is kept for backwards compatibility with deployed clients and will be removed
+// once those clients have migrated. New clients should use the "api/notification/" prefix.
+@RequestMapping({ "api/notification/", "api/communication/" })
 public class UserCourseNotificationSettingResource {
 
     private static final Logger log = LoggerFactory.getLogger(UserCourseNotificationSettingResource.class);

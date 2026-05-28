@@ -17,9 +17,9 @@ class NotificationResourceArchitectureTest extends AbstractModuleResourceArchite
         return ARTEMIS_PACKAGE + ".notification";
     }
 
-    // TODO: The notification REST resources still expose their endpoints under "api/communication/..."
-    // for backwards compatibility with existing clients. Once the URLs are migrated to
-    // "api/notification/..." these exemptions should be removed.
+    // TODO: The notification REST resources expose their endpoints under both "api/notification/..."
+    // (preferred) and the legacy "api/communication/..." prefix kept for backwards compatibility with
+    // existing clients. Once the legacy prefix is removed these exemptions should be removed.
     @Override
     protected Set<Class<?>> getIgnoredModulePathPrefixResources() {
         return Set.of(CourseNotificationResource.class, GlobalNotificationSettingResource.class, PushNotificationResource.class, SystemNotificationResource.class,

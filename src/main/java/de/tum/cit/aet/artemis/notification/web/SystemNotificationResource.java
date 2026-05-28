@@ -33,7 +33,9 @@ import de.tum.cit.aet.artemis.notification.repository.SystemNotificationReposito
 @Profile(PROFILE_CORE)
 @Lazy
 @RestController
-@RequestMapping("api/communication/")
+// The legacy "api/communication/" prefix is kept for backwards compatibility with deployed clients and will be removed
+// once those clients have migrated. New clients should use the "api/notification/" prefix.
+@RequestMapping({ "api/notification/", "api/communication/" })
 public class SystemNotificationResource {
 
     private static final Logger log = LoggerFactory.getLogger(SystemNotificationResource.class);

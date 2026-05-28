@@ -36,7 +36,9 @@ import de.tum.cit.aet.artemis.notification.service.SystemNotificationService;
 @EnforceAdmin
 @Lazy
 @RestController
-@RequestMapping("api/communication/admin/")
+// The legacy "api/communication/" prefix is kept for backwards compatibility with deployed clients and will be removed
+// once those clients have migrated. New clients should use the "api/notification/" prefix.
+@RequestMapping({ "api/notification/admin/", "api/communication/admin/" })
 public class AdminSystemNotificationResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminSystemNotificationResource.class);
