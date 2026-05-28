@@ -373,6 +373,9 @@ public class ConversationService {
 
     /**
      * Legacy variant of {@link #getConversationParticipantTopicName(Long)} kept for the deprecation window.
+     *
+     * @param courseId the id of the course
+     * @return the legacy STOMP destination prefix that the server still mirrors notifications onto
      */
     @Deprecated(forRemoval = true, since = "9.3")
     @NonNull

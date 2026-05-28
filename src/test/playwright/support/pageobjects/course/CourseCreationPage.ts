@@ -256,7 +256,11 @@ export class CourseCreationPage {
      * @returns the response if a test needs it
      */
     async update() {
-        const responsePromise = this.page.waitForResponse((resp) => /\/api\/core\/courses\/\d+(\?|$)/.test(resp.url()) && ['POST', 'PUT'].includes(resp.request().method()));
+        // Matches both the canonical /api/course/courses/{id} and the legacy /api/core/courses/{id} so
+        // the test stays correct during the deprecation window where either prefix could fire.
+        const responsePromise = this.page.waitForResponse(
+            (resp) => /\/api\/(?:course|core)\/courses\/\d+(\?|$)/.test(resp.url()) && ['POST', 'PUT'].includes(resp.request().method()),
+        );
         await this.page.click('#save-entity');
         const response = await responsePromise;
         return response.json();

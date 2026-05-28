@@ -49,6 +49,6 @@ public class CourseRequestResource {
     public ResponseEntity<CourseRequestDTO> createCourseRequest(@Valid @RequestBody CourseRequestCreateDTO courseRequest) throws URISyntaxException {
         log.debug("REST request to create course request for course {}", courseRequest.shortName());
         CourseRequestDTO result = courseRequestService.createCourseRequest(courseRequest);
-        return ResponseEntity.created(new URI("/api/core/course-requests/" + result.id())).body(result);
+        return ResponseEntity.created(new URI("/api/course/course-requests/" + result.id())).body(result);
     }
 }

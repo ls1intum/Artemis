@@ -221,7 +221,7 @@ public class AdminCourseResource {
         final Course finalCourse = createdCourse;
         searchableEntityWeaviateService.ifPresent(service -> service.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(finalCourse)));
 
-        return ResponseEntity.created(new URI("/api/core/courses/" + createdCourse.getId())).body(createdCourse);
+        return ResponseEntity.created(new URI("/api/admin/courses/" + createdCourse.getId())).body(createdCourse);
     }
 
     /**

@@ -61,6 +61,19 @@ class LegacyApiPathDeprecationInterceptorTest {
     }
 
     @Test
+    void shouldStripServletContextPathBeforeMatchingLegacyPrefix() {
+        // Under a non-root deployment (server.servlet.context-path=/artemis), HttpServletRequest#getRequestURI()
+        // returns the context-prefixed path. The interceptor must strip it before comparing prefixes.
+        request.setContextPath("/artemis");
+        request.setRequestURI("/artemis/api/core/users/42");
+
+        interceptor.preHandle(request, response, handlerOf(AccountControllerStub.class));
+
+        assertThat(response.getHeader("Deprecation")).isEqualTo(LegacyApiPathDeprecationInterceptor.DEPRECATION_DATE);
+        assertThat(response.getHeaders("Link")).containsExactly("</api/account/users/42>; rel=\"successor-version\"");
+    }
+
+    @Test
     void shouldBeNoOpForSinglePathController() {
         request.setRequestURI("/api/exam/exams/1");
 

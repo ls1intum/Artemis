@@ -164,7 +164,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(1);
 
         // both conversation participants should be notified
-        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(anyString(),
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
                 (Object) argThat(argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(createdPost))));
     }
 
@@ -187,7 +187,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // conversation participants should be notified via one broadcast on each STOMP destination
         // (canonical + legacy during the migration window — keep both verifications in sync until the
         // legacy /topic/metis/ topic is removed)
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
+                any(PostBroadcastDTO.class));
         verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/communication/courses/" + courseId), any(PostBroadcastDTO.class));
         verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/metis/courses/" + courseId), any(PostBroadcastDTO.class));
     }
@@ -208,7 +209,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         checkCreatedMessagePost(postToSave, createdPost);
 
         // conversation participants should be notified individually
-        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(anyString(),
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
                 (Object) argThat(argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(createdPost))));
         verify(websocketMessagingService, never()).sendMessage(eq("/topic/metis/courses/" + courseId), any(PostBroadcastDTO.class));
     }
@@ -248,8 +249,9 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         if (!isUserMentionValid) {
             request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, PostResponseDTO.class, HttpStatus.BAD_REQUEST);
-            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
-            verify(websocketMessagingService, never()).sendMessage(anyString(), any(PostBroadcastDTO.class));
+            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
+                    any(PostBroadcastDTO.class));
+            verify(websocketMessagingService, never()).sendMessage(argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")), any(PostBroadcastDTO.class));
             return;
         }
 
@@ -259,7 +261,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // conversation participants should be notified via one broadcast on each STOMP destination
         // (canonical + legacy during the migration window — keep both verifications in sync until the
         // legacy /topic/metis/ topic is removed)
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
+                any(PostBroadcastDTO.class));
         verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/communication/courses/" + courseId), any(PostBroadcastDTO.class));
         verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/metis/courses/" + courseId), any(PostBroadcastDTO.class));
     }
@@ -357,7 +360,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(numberOfPostsBefore);
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
+                any(PostBroadcastDTO.class));
 
         // active messaging again
         persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
@@ -386,7 +390,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(numberOfPostsBefore);
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
+                any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -586,7 +591,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(updatedPost.content()).isEqualTo(conversationPostToUpdate.getContent());
 
         // both conversation participants should be notified about the update
-        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(anyString(),
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
                 (Object) argThat(argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(updatedPost))));
     }
 
@@ -616,7 +621,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         if (!isUserMentionValid) {
             request.putWithResponseBody("/api/communication/courses/" + courseId + "/messages/" + postToUpdate.getId(), toUpdatePostingDTO(postToUpdate), PostResponseDTO.class,
                     HttpStatus.BAD_REQUEST);
-            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
+                    any(PostBroadcastDTO.class));
             return;
         }
 
@@ -627,7 +633,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(updatedPost.content()).isEqualTo(postToUpdate.getContent());
 
         // both conversation participants should be notified about the update
-        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(anyString(),
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
                 (Object) argThat(argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(updatedPost))));
     }
 
@@ -644,7 +650,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(notUpdatedPost).isNull();
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
+                any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -656,7 +663,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(conversationMessageRepository.findById(conversationPostToDelete.getId())).isEmpty();
         // both conversation participants should be notified
-        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(anyString(),
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
                 (Object) argThat(argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(conversationPostToDelete))));
     }
 
@@ -669,7 +676,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(conversationMessageRepository.findById(conversationPostToDelete.getId())).isPresent();
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
+                any(PostBroadcastDTO.class));
     }
 
     @Test
