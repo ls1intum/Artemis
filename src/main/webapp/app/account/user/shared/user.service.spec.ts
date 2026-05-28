@@ -43,14 +43,14 @@ describe('User Service', () => {
         it('should call correct URL to initialize LTI user', () => {
             service.initializeLTIUser().subscribe();
             const req = httpMock.expectOne({ method: 'PUT' });
-            const resourceUrl = 'api/core/users/initialize';
+            const resourceUrl = 'api/account/users/initialize';
             expect(req.request.url).toBe(`${resourceUrl}`);
         });
 
         it('should call correct URL to accept external LLM', () => {
             service.updateLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI).subscribe();
             const req = httpMock.expectOne({ method: 'PUT' });
-            const resourceUrl = 'api/core/users/select-llm-usage';
+            const resourceUrl = 'api/account/users/select-llm-usage';
             expect(req.request.url).toBe(`${resourceUrl}`);
         });
     });
