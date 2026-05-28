@@ -48,3 +48,47 @@ jobs:
             fi
             echo "${key}: ${values[0]} (consistent across ${files[*]})"
           done
+
+      - name: Check area filters exercise their own implementations
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import sys
+
+          text = Path(".github/workflows/ci.yml").read_text()
+          filters: dict[str, list[str]] = {}
+          current = None
+          for line in text.splitlines():
+              if line.startswith("            has_") and line.rstrip().endswith(":"):
+                  current = line.strip()[:-1]
+                  filters[current] = []
+                  continue
+              if current and line.startswith("              - "):
+                  filters[current].append(line.split("- ", 1)[1].strip().strip("'\""))
+                  continue
+              if current and line and not line.startswith("              "):
+                  current = None
+
+          required = {
+              "has_java": {
+                  ".github/workflows/ci.yml",
+                  ".github/workflows/ci-quality.yml",
+                  "supporting_scripts/analyze_java_files.py",
+                  "supporting_scripts/find_slow_queries.py",
+              },
+              "has_docs": {".github/workflows/ci.yml", ".github/workflows/ci-docs.yml"},
+              "has_i18n": {".github/workflows/ci.yml", ".github/workflows/ci-translation.yml", ".ci/translation-file-checker/**"},
+              "has_gradle": {".github/workflows/ci.yml", ".github/workflows/ci-gradle-wrapper.yml"},
+          }
+
+          failed = False
+          for name, paths in required.items():
+              present = set(filters.get(name, []))
+              missing = sorted(paths - present)
+              if missing:
+                  failed = True
+                  print(f"::error::{name} is missing implementation self-test paths: {', '.join(missing)}")
+
+          if failed:
+              sys.exit(1)
+          PY

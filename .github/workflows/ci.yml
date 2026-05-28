@@ -69,8 +69,8 @@ jobs:
               - '!**/*.md'
               - '!LICENSE'
               - '!documentation/**'
-      #   area (default `some`): positive allow-lists (OR logic) gating the per-area jobs
-      #   (quality, gradle-wrapper, workflows, docs, translation — all required when relevant).
+      #   area (default `some`): positive allow-lists (OR logic) gating the per-area jobs.
+      #   Each area includes its own workflow/helper files so edited checks run themselves.
       - id: area
         if: github.event_name != 'workflow_dispatch' || !inputs.force_build
         uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d  # v4.0.1
@@ -78,15 +78,26 @@ jobs:
           base: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || '' }}
           filters: |
             has_java:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-quality.yml'
               - 'src/main/java/**'
               - 'src/test/java/**'
               - 'build.gradle'
               - 'gradle/**'
+              - 'supporting_scripts/analyze_java_files.py'
+              - 'supporting_scripts/find_slow_queries.py'
             has_docs:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-docs.yml'
               - 'documentation/**'
             has_i18n:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-translation.yml'
+              - '.ci/translation-file-checker/**'
               - 'src/main/webapp/i18n/**'
             has_gradle:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-gradle-wrapper.yml'
               - 'gradle/wrapper/**'
               - 'gradlew'
               - 'gradlew.bat'

@@ -84,8 +84,10 @@ an *over-run* (safe), never a silent skip of a required check (which would merge
 code). This is implemented as a dedicated `dorny/paths-filter` step with
 `predicate-quantifier: every` and negation patterns — under the action's default `some`
 quantifier the negations are inert, so the area filters (positive allow-lists) live in a
-second step. Cascading skips don't bypass the gate either: `detect-changes` is in the gate's
-`needs:`, so a change-detection failure fails the gate closed.
+second step. Area filters include their own `ci-*.yml` workflow and helper-script paths, so
+a PR that edits a required check also runs that check. Cascading skips don't bypass the gate
+either: `detect-changes` is in the gate's `needs:`, so a change-detection failure fails the
+gate closed.
 
 ## Action pinning policy
 
