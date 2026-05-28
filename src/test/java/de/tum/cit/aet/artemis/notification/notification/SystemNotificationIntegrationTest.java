@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.notification.notification;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -13,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.core.config.LegacyApiPathDeprecationInterceptor;
 import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
 import de.tum.cit.aet.artemis.notification.repository.SystemNotificationRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -60,6 +64,21 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     void testGetActiveSystemNotificationWithoutUser() throws Exception {
         getActiveSystemNotification();
+    }
+
+    @Test
+    void shouldTagLegacyPublicSystemNotificationsPathWithDeprecationHeaders() throws Exception {
+        // End-to-end check that LegacyApiPathDeprecationInterceptor is wired into Spring's interceptor
+        // chain and picks up the multi-path @RequestMapping on PublicSystemNotificationResource. Hitting
+        // the legacy /api/core/public/... prefix must yield the RFC 9745/8594/8288 headers and point at
+        // the canonical /api/notification/public/... successor URL; hitting the canonical prefix must not.
+        request.performMvcRequest(get("/api/core/public/system-notifications/active")).andExpect(status().isOk())
+                .andExpect(header().string("Deprecation", LegacyApiPathDeprecationInterceptor.DEPRECATION_DATE))
+                .andExpect(header().string("Sunset", LegacyApiPathDeprecationInterceptor.SUNSET_DATE))
+                .andExpect(header().string("Link", "</api/notification/public/system-notifications/active>; rel=\"successor-version\""));
+
+        request.performMvcRequest(get("/api/notification/public/system-notifications/active")).andExpect(status().isOk()).andExpect(header().doesNotExist("Deprecation"))
+                .andExpect(header().doesNotExist("Sunset"));
     }
 
     @Test

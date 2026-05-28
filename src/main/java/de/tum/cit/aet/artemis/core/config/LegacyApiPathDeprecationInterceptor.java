@@ -39,11 +39,11 @@ public class LegacyApiPathDeprecationInterceptor implements HandlerInterceptor {
     // RFC 9745 §2 — Deprecation field-value is an HTTP Structured Field date: "@" followed by the
     // Unix epoch second. 2026-05-28 00:00:00 UTC = 1779148800. Keep in sync with the
     // @Deprecated(since=...) annotations on the *LegacyRestPaths constants across modules.
-    static final String DEPRECATION_DATE = "@1779148800";
+    public static final String DEPRECATION_DATE = "@1779148800";
 
     // RFC 8594 — Sunset still uses IMF-fixdate (HTTP-date) format. Bump (and bump the @Deprecated
     // since) when the migration deadline slips.
-    static final String SUNSET_DATE = "Wed, 30 Sep 2026 00:00:00 GMT";
+    public static final String SUNSET_DATE = "Wed, 30 Sep 2026 00:00:00 GMT";
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
