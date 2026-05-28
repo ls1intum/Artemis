@@ -1,4 +1,7 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { firstValueFrom } from 'rxjs';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
@@ -12,11 +15,14 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('Team Exercise Search Component', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: TeamExerciseSearchComponent;
     let fixture: ComponentFixture<TeamExerciseSearchComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [TeamExerciseSearchComponent],
             providers: [
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 LocalStorageService,
@@ -29,6 +35,10 @@ describe('Team Exercise Search Component', () => {
 
         fixture = TestBed.createComponent(TeamExerciseSearchComponent);
         comp = fixture.componentInstance;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('formats the search result with release date', () => {
@@ -64,14 +74,14 @@ describe('Team Exercise Search Component', () => {
         const exercise = new TextExercise(undefined, undefined);
         exercise.title = title;
 
-        jest.spyOn(comp.selectExercise, 'emit');
-        jest.spyOn(comp, 'searchResultFormatter').mockReturnValue(title);
+        const selectExerciseEmitSpy = vi.spyOn(comp.selectExercise, 'emit');
+        const searchResultFormatterSpy = vi.spyOn(comp, 'searchResultFormatter').mockReturnValue(title);
 
         comp.onAutocompleteSelect(exercise);
 
-        expect(comp.searchResultFormatter).toHaveBeenCalledWith(exercise);
+        expect(searchResultFormatterSpy).toHaveBeenCalledWith(exercise);
         expect(comp.inputDisplayValue).toEqual(title);
-        expect(comp.selectExercise.emit).toHaveBeenCalledWith(exercise);
+        expect(selectExerciseEmitSpy).toHaveBeenCalledWith(exercise);
     });
 
     it('searchInputFormatter', () => {
@@ -88,7 +98,7 @@ describe('Team Exercise Search Component', () => {
 
         const matchesExercise = comp.searchMatchesExercise('My Exercise', exercise);
 
-        expect(matchesExercise).toBeTrue();
+        expect(matchesExercise).toBe(true);
     });
 
     it('searchMatchesExercise with lowercase term', () => {
@@ -97,7 +107,7 @@ describe('Team Exercise Search Component', () => {
 
         const matchesExercise = comp.searchMatchesExercise('my exercise', exercise);
 
-        expect(matchesExercise).toBeTrue();
+        expect(matchesExercise).toBe(true);
     });
 
     it('searchMatchesExercise with partial term start', () => {
@@ -106,7 +116,7 @@ describe('Team Exercise Search Component', () => {
 
         const matchesExercise = comp.searchMatchesExercise('my', exercise);
 
-        expect(matchesExercise).toBeTrue();
+        expect(matchesExercise).toBe(true);
     });
 
     it('searchMatchesExercise with partial term end', () => {
@@ -115,7 +125,7 @@ describe('Team Exercise Search Component', () => {
 
         const matchesExercise = comp.searchMatchesExercise('ercise', exercise);
 
-        expect(matchesExercise).toBeTrue();
+        expect(matchesExercise).toBe(true);
     });
 
     it('searchMatchesExercise without whitespace', () => {
@@ -124,7 +134,7 @@ describe('Team Exercise Search Component', () => {
 
         const matchesExercise = comp.searchMatchesExercise('MyExercise', exercise);
 
-        expect(matchesExercise).toBeFalse();
+        expect(matchesExercise).toBe(false);
     });
 
     it('searchMatchesExercise with incorrect searchTerm', () => {
@@ -133,19 +143,20 @@ describe('Team Exercise Search Component', () => {
 
         const matchesExercise = comp.searchMatchesExercise('Other Exercise', exercise);
 
-        expect(matchesExercise).toBeFalse();
+        expect(matchesExercise).toBe(false);
     });
 
     it('successfully loads the exercise options', async () => {
-        comp.course = new Course();
-        comp.course.id = 1;
-        comp.ignoreExercises = [];
+        const course = new Course();
+        course.id = 1;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('ignoreExercises', []);
 
         expect(comp.exerciseOptions).toHaveLength(0);
 
-        await comp.loadExerciseOptions().subscribe((exerciseOptions) => {
-            expect(exerciseOptions).not.toBeNull();
-            expect(exerciseOptions!.length).toBeGreaterThan(0);
-        });
+        const exerciseOptions = await firstValueFrom(comp.loadExerciseOptions());
+
+        expect(exerciseOptions).not.toBeNull();
+        expect(exerciseOptions!.length).toBeGreaterThan(0);
     });
 });
