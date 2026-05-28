@@ -2,7 +2,7 @@ import { Validators } from '@angular/forms';
 import { Params } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { Post } from './shared/entities/post.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 
 export enum PostingEditType {
     CREATE,

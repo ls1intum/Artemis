@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, OnInit, effect, inject, input, output } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
-import { Course, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
+import { Course, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export interface TutorialGroupsConfigurationFormData {
     period?: Date[];
@@ -19,7 +20,7 @@ export interface TutorialGroupsConfigurationFormData {
     templateUrl: './tutorial-groups-configuration-form.component.html',
     styleUrls: ['./tutorial-groups-configuration-form.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, OwlDateTimeModule, FaIconComponent, ArtemisDateRangePipe],
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, OwlDateTimeModule, FaIconComponent, ArtemisDateRangePipe, ArtemisTranslatePipe],
     providers: [ArtemisDatePipe],
 })
 export class TutorialGroupsConfigurationFormComponent implements OnInit {

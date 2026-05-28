@@ -127,6 +127,12 @@ describe('Sort Service', () => {
             }
         });
 
+        it('should sort strings containing numbers using natural ordering', () => {
+            const objects = [{ name: 'Test User 10' }, { name: 'Test User 1' }, { name: 'Test User 9' }, { name: 'Test User 2' }];
+            service.sortByProperty(objects, 'name', true);
+            expect(objects.map((o) => o.name)).toEqual(['Test User 1', 'Test User 2', 'Test User 9', 'Test User 10']);
+        });
+
         it.each([
             [['f', 'g'], true, [e3, e2, e1, e4, e5, e6]],
             [['f', 'g'], false, [e6, e5, e4, e1, e2, e3]],

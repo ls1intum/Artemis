@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest';
 import { CropperSettings } from 'app/shared/image-cropper/interfaces/cropper.settings';
 import { CropService } from 'app/shared/image-cropper/services/crop.service';
 

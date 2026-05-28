@@ -22,7 +22,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
-import de.tum.cit.aet.artemis.core.dto.calendar.NonQuizExerciseCalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.dto.NonQuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.web.ExamResource;
@@ -739,13 +739,13 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     }
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.calendar.NonQuizExerciseCalendarEventDTO(
+            SELECT new de.tum.cit.aet.artemis.calendar.dto.NonQuizExerciseCalendarEventDTO(
                 exercise.id,
                 CASE TYPE(exercise)
-                    WHEN FileUploadExercise THEN de.tum.cit.aet.artemis.core.util.CalendarEventType.FILE_UPLOAD_EXERCISE
-                    WHEN TextExercise THEN de.tum.cit.aet.artemis.core.util.CalendarEventType.TEXT_EXERCISE
-                    WHEN ModelingExercise THEN de.tum.cit.aet.artemis.core.util.CalendarEventType.MODELING_EXERCISE
-                    ELSE de.tum.cit.aet.artemis.core.util.CalendarEventType.PROGRAMMING_EXERCISE
+                    WHEN FileUploadExercise THEN de.tum.cit.aet.artemis.calendar.util.CalendarEventType.FILE_UPLOAD_EXERCISE
+                    WHEN TextExercise THEN de.tum.cit.aet.artemis.calendar.util.CalendarEventType.TEXT_EXERCISE
+                    WHEN ModelingExercise THEN de.tum.cit.aet.artemis.calendar.util.CalendarEventType.MODELING_EXERCISE
+                    ELSE de.tum.cit.aet.artemis.calendar.util.CalendarEventType.PROGRAMMING_EXERCISE
                 END,
                 exercise.title,
                 exercise.releaseDate,

@@ -17,7 +17,7 @@ overrides:
     follow-redirects: '1.16.0'
     js-yaml: '4.1.1'
     minimatch: '10.2.5'
-    qs: '6.15.1'
+    qs: '6.15.2'
     serialize-javascript: '7.0.5'
     undici: '7.25.0'
     uuid: '14.0.0'

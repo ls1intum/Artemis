@@ -6,10 +6,9 @@ import { onError } from 'app/shared/util/global.utils';
 import { Subject, combineLatest } from 'rxjs';
 import { finalize, switchMap, take, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { Course } from 'app/course/shared/entities/course.model';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { TutorialGroupConfigurationDTO, tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
@@ -19,7 +18,7 @@ import dayjs from 'dayjs/esm';
     selector: 'jhi-edit-tutorial-groups-configuration',
     templateUrl: './edit-tutorial-groups-configuration.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [LoadingIndicatorContainerComponent, TranslateDirective, TutorialGroupsConfigurationFormComponent],
+    imports: [LoadingIndicatorContainerComponent, TutorialGroupsConfigurationFormComponent],
 })
 export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);

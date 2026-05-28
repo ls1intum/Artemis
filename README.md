@@ -125,6 +125,7 @@ The following members of the project management team are responsible for specifi
 
 | Feature / Module      | Responsible maintainer                                                             |
 |-----------------------|------------------------------------------------------------------------------------|
+| Account               | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
 | Exercises             | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
 | Programming exercises | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
 | Build agents          | Robert Jandow ([@robertjndw](https://github.com/robertjndw))                       |
@@ -143,6 +144,11 @@ The following members of the project management team are responsible for specifi
 | Tutorial Groups       | Ramona Beinstingel ([@rabeatwork](https://github.com/rabeatwork))                  |
 | Plagiarism checks     | Markus Paulsen ([@MarkusPaulsen](https://github.com/MarkusPaulsen))                |
 | LTI                   | Maximilian Anzinger ([@maximiliananzinger](https://github.com/maximiliananzinger)) |
+| Calendar              | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
+| Global search         | Patrick Bassner ([@bassner](https://github.com/bassner))                           |
+| Video source          | Patrick Bassner ([@bassner](https://github.com/bassner))                           |
+| Course                | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
+| Admin                 | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
 
 
 

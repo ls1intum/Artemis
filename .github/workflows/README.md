@@ -127,6 +127,7 @@ These workflows are intentionally NOT folded into the umbrella:
 | `test-mysql.yml` | Manual-only (`workflow_dispatch`). Sibling DB engine to PostgreSQL. |
 | `bean-instantiations.yml` | Java-source-only; independent, niche path filter. |
 | `version-consistency.yml` | Trivial, fires on a tiny path set. |
+| `nightly-lti-interop.yml` | Scheduled default-branch interop check; not part of PR/push CI. |
 | `deploy-documentation.yml` | Owns the `pages` concurrency slot. |
 | `testserver-deployment.yml`, `prod-like-deployment.yml` | Manual deploy workflows. |
 | `pullrequest-coverage-reporter.yml` | `workflow_run` consumer of CI artifacts. Listens for `CI`. |
