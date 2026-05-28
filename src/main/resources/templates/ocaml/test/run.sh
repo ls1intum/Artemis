@@ -99,18 +99,18 @@ if [ "$ONLY" != "test" ] || $RUN_HIDDEN; then
     # copy the test executable into the project root
     mv -f ${testWorkingDirectory}/test/test.exe ./
 
-    # to then delete all source code, to prevent access to it while running the code
-    if $SAFE; then
-        rm -rf ${studentParentWorkingDirectoryName}
-        rm -rf ${solutionWorkingDirectory}
-        rm -rf ${testWorkingDirectory}
-    fi
-
     if [ "$ONLY" = "compile" ]; then
         exit 0
     fi
 else
     cd "$BUILD_ROOT" || exit
+fi
+
+# delete all source code before running the test executable, to prevent access to it while running the code
+if $SAFE; then
+    rm -rf ${studentParentWorkingDirectoryName}
+    rm -rf ${solutionWorkingDirectory}
+    rm -rf ${testWorkingDirectory}
 fi
 
 # running the test executable without arguments to cause them to exit without actually running any tests
