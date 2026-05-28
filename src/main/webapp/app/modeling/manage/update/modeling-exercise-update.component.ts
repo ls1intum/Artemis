@@ -1,9 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, effect, inject, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, effect, inject, signal, viewChild } from '@angular/core';
 import { FormsModule, NgModel } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
+import { UMLModel, importDiagram } from '@tumaet/apollon';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -42,6 +42,8 @@ import { cloneDeep, isEmpty } from 'lodash-es';
 import { Subscription } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
+import { ModelingExerciseTimelineComponent } from 'app/modeling/manage/modeling-exercise-timeline/modeling-exercise-timeline.component';
+import { ExerciseTimelineStatus } from 'app/shared/exercise-timeline/exercise-timeline.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -66,6 +68,7 @@ import { ModelingExerciseService } from '../services/modeling-exercise.service';
         GradingInstructionsDetailsComponent,
         FormFooterComponent,
         ArtemisTranslatePipe,
+        ModelingExerciseTimelineComponent,
     ],
 })
 export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
@@ -80,6 +83,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly calendarService = inject(CalendarService);
+    timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: false });
 
     readonly exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
     readonly teamConfigFormGroupComponent = viewChild(TeamConfigFormGroupComponent);
@@ -88,16 +92,10 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     readonly bonusPoints = viewChild<NgModel>('bonusPoints');
     readonly points = viewChild<NgModel>('points');
     readonly solutionPublicationDateField = viewChild<FormDateTimePickerComponent>('solutionPublicationDate');
-    readonly releaseDateField = viewChild<FormDateTimePickerComponent>('releaseDate');
-    readonly startDateField = viewChild<FormDateTimePickerComponent>('startDate');
-    readonly dueDateField = viewChild<FormDateTimePickerComponent>('dueDate');
-    readonly assessmentDateField = viewChild<FormDateTimePickerComponent>('assessmentDueDate');
     readonly editFormEl = viewChild<ElementRef<HTMLFormElement>>('editForm');
 
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'Model';
-
-    UMLDiagramType = UMLDiagramType;
 
     modelingExercise: ModelingExercise;
     backupExercise: ModelingExercise;
@@ -108,7 +106,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     notificationText?: string;
     domainActionsProblemStatement = [new FormulaAction()];
     domainActionsExampleSolution = [new FormulaAction()];
-    examCourseId?: number;
     isImport: boolean;
     isExamMode: boolean;
 
@@ -135,6 +132,10 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     constructor() {
         effect(() => {
             this.updateFormSectionsOnIsValidChange();
+        });
+        effect(() => {
+            this.timelineStatus();
+            this.calculateFormSectionStatus();
         });
     }
 
@@ -166,7 +167,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             }
 
             this.backupExercise = cloneDeep(this.modelingExercise);
-            this.examCourseId = this.modelingExercise.course?.id || this.modelingExercise.exerciseGroup?.exam?.course?.id;
         });
 
         this.activatedRoute.url
@@ -249,25 +249,8 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             },
             {
                 title: 'artemisApp.exercise.sections.grading',
-                valid: Boolean(
-                    (this.points()?.valid ?? true) &&
-                    (this.bonusPoints()?.valid ?? true) &&
-                    (this.isExamMode ||
-                        (!this.modelingExercise.startDateError &&
-                            !this.modelingExercise.dueDateError &&
-                            !this.modelingExercise.assessmentDueDateError &&
-                            (this.releaseDateField()?.dateInput?.valid ?? true) &&
-                            (this.startDateField()?.dateInput?.valid ?? true) &&
-                            (this.dueDateField()?.dateInput?.valid ?? true) &&
-                            (this.assessmentDateField()?.dateInput?.valid ?? true))),
-                ),
-                empty:
-                    !this.isExamMode &&
-                    // if a dayjs object contains an empty date, it is considered "invalid"
-                    (!this.modelingExercise.startDate?.isValid() ||
-                        !this.modelingExercise.dueDate?.isValid() ||
-                        !this.modelingExercise.assessmentDueDate?.isValid() ||
-                        !this.modelingExercise.releaseDate?.isValid()),
+                valid: Boolean((this.points()?.valid ?? true) && (this.bonusPoints()?.valid ?? true) && (this.isExamMode || this.timelineStatus().valid)),
+                empty: !this.isExamMode && this.timelineStatus().empty,
             },
         ];
     }

@@ -99,74 +99,14 @@
         <hr class="mb-5" />
         <h3 jhiTranslate="artemisApp.exercise.sections.grading" id="artemisApp.exercise.sections.grading"></h3>
         @if (!isExamMode) {
-            <div class="d-flex">
-                <div class="form-group flex-grow-1">
-                    <jhi-date-time-picker
-                        #releaseDate
-                        class="form-element"
-                        id="pick-releaseDate"
-                        labelName="{{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}"
-                        [(ngModel)]="modelingExercise.releaseDate"
-                        (valueChange)="validateDate()"
-                        [error]="false"
-                        name="releaseDate"
-                    />
-                </div>
-                <div class="form-group flex-grow-1 ms-3">
-                    <jhi-date-time-picker
-                        #startDate
-                        class="form-element"
-                        id="pick-startDate"
-                        name="startDate"
-                        [startAt]="modelingExercise.releaseDate"
-                        [min]="modelingExercise.releaseDate"
-                        [error]="!!modelingExercise.startDateError"
-                        labelName="{{ 'artemisApp.exercise.startDate' | artemisTranslate }}"
-                        (valueChange)="validateDate()"
-                        [(ngModel)]="modelingExercise.startDate"
-                    />
-                    @if (modelingExercise.startDateError) {
-                        <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.startDateError"></span>
-                    }
-                </div>
-            </div>
-        }
-        @if (!isExamMode) {
-            <div class="d-flex">
-                <div class="form-group flex-grow-1">
-                    <jhi-date-time-picker
-                        #dueDate
-                        class="form-element"
-                        id="pick-dueDate"
-                        name="dueDate"
-                        [startAt]="modelingExercise.startDate"
-                        [min]="modelingExercise.startDate"
-                        [error]="!!modelingExercise.dueDateError"
-                        labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
-                        (valueChange)="validateDate()"
-                        [(ngModel)]="modelingExercise.dueDate"
-                    />
-                    @if (modelingExercise.dueDateError) {
-                        <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.dueDateError"></span>
-                    }
-                </div>
-                <div class="form-group flex-grow-1 ms-3">
-                    <jhi-date-time-picker
-                        #assessmentDueDate
-                        class="form-element"
-                        id="pick-assessmentDueDate"
-                        name="assessmentDueDate"
-                        [startAt]="modelingExercise.dueDate"
-                        [min]="modelingExercise.dueDate"
-                        [error]="!!modelingExercise.assessmentDueDateError"
-                        labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
-                        (valueChange)="validateDate()"
-                        [(ngModel)]="modelingExercise.assessmentDueDate"
-                    />
-                    @if (modelingExercise.assessmentDueDateError) {
-                        <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.assessmentDueDateError"></span>
-                    }
-                </div>
+            <div class="form-group pt-2">
+                <jhi-modeling-exercise-timeline
+                    [(releaseDate)]="modelingExercise.releaseDate"
+                    [(startDate)]="modelingExercise.startDate"
+                    [(dueDate)]="modelingExercise.dueDate"
+                    [(assessmentDueDate)]="modelingExercise.assessmentDueDate"
+                    (timelineStatus)="timelineStatus.set($event)"
+                />
             </div>
         }
         <div class="form-group">
