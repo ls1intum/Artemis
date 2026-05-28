@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -77,6 +78,9 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private CourseTestRepository courseRepository;
+
+    @Autowired
+    private ExamTestRepository examRepository;
 
     @Autowired
     private LocalVCLocalCITestService localVCLocalCITestService;
@@ -431,6 +435,47 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
         assertThat(exerciseFromDb.getBuildAndTestStudentSubmissionsAfterDueDate()).isNotNull();
         assertThat(exerciseFromDb.getBuildAndTestStudentSubmissionsAfterDueDate().toInstant()).as("buildAndTestStudentSubmissionsAfterDueDate should be shifted by the same offset")
+                .isCloseTo(expectedBuildAndTestDate.toInstant(), within(1, java.time.temporal.ChronoUnit.SECONDS));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProgrammingExercise_preservesExamBuildAndTestDateOffset() throws Exception {
+        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        course = programmingExercise.getExerciseGroup().getExam().getCourse();
+        addInstructorToCourse();
+
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+
+        var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"));
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
+
+        ZonedDateTime examEndDate = ZonedDateTime.now().plusDays(2);
+        int gracePeriodInSeconds = 60;
+        var exam = programmingExercise.getExerciseGroup().getExam();
+        exam.setEndDate(examEndDate);
+        exam.setGracePeriod(gracePeriodInSeconds);
+        examRepository.save(exam);
+
+        ZonedDateTime originalReferenceDate = examEndDate.plusSeconds(gracePeriodInSeconds);
+        ZonedDateTime expectedBuildAndTestDate = originalReferenceDate.plusHours(1);
+
+        programmingExercise.setReleaseDate(null);
+        programmingExercise.setDueDate(null);
+        programmingExercise.setAssessmentDueDate(null);
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(expectedBuildAndTestDate);
+        programmingExerciseRepository.save(programmingExercise);
+
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+
+        var updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class,
+                HttpStatus.OK);
+
+        var exerciseFromDb = programmingExerciseRepository.findByIdElseThrow(updatedExercise.getId());
+
+        assertThat(exerciseFromDb.getBuildAndTestStudentSubmissionsAfterDueDate()).isNotNull();
+        assertThat(exerciseFromDb.getBuildAndTestStudentSubmissionsAfterDueDate().toInstant())
+                .as("buildAndTestStudentSubmissionsAfterDueDate should preserve the offset from the exam end date with grace")
                 .isCloseTo(expectedBuildAndTestDate.toInstant(), within(1, java.time.temporal.ChronoUnit.SECONDS));
     }
 

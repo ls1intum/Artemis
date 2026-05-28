@@ -9,18 +9,6 @@
 
     chmod +x run.sh
     ./run.sh -s --only compile
-- name: test
-  script: |-
-    cd "${testWorkingDirectory}"
-
-    # Artemis replaces the variable on the right hand side with a concrete value
-    export studentParentWorkingDirectoryName="${studentParentWorkingDirectoryName}"
-    export solutionWorkingDirectory="${solutionWorkingDirectory}"
-    export testWorkingDirectory="${testWorkingDirectory}"
-
-    ./run.sh -s --only test
-  resultPaths:
-    - 'test-reports/*.xml'
 - name: tests_with_hidden
   condition: AFTER_DUE_DATE
   script: |-
@@ -32,5 +20,21 @@
     export testWorkingDirectory="${testWorkingDirectory}"
 
     ./run.sh -s --run-hidden
+  resultPaths:
+    - 'test-reports/*.xml'
+- name: test
+  script: |-
+    if [ ! -d "${testWorkingDirectory}" ]; then
+        exit 0
+    fi
+
+    cd "${testWorkingDirectory}"
+
+    # Artemis replaces the variable on the right hand side with a concrete value
+    export studentParentWorkingDirectoryName="${studentParentWorkingDirectoryName}"
+    export solutionWorkingDirectory="${solutionWorkingDirectory}"
+    export testWorkingDirectory="${testWorkingDirectory}"
+
+    ./run.sh -s --only test
   resultPaths:
     - 'test-reports/*.xml'
