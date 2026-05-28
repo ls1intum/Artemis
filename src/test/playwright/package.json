@@ -18,7 +18,7 @@
         "junit-merge": "2.0.0",
         "npm-check-updates": "22.2.0",
         "monocart-reporter": "2.11.2",
-        "npm-run-all2": "8.0.4",
+        "npm-run-all2": "9.0.1",
         "simple-git": "3.36.0",
         "uuid": "14.0.0",
         "archiver": "8.0.0"
