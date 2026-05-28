@@ -1,3 +1,4 @@
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { ActivatedRoute } from '@angular/router';
@@ -98,7 +99,7 @@ describe('RepositoryViewComponent', () => {
         component.ngOnInit();
 
         // Expect loadingParticipation to be false after loading
-        expect(component.loadingParticipation).toBeFalse();
+        expect(component.loadingParticipation).toBe(false);
 
         // Expect exercise and participation to be set correctly
         expect(component.exercise).toEqual(mockExercise);
@@ -112,8 +113,8 @@ describe('RepositoryViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.differentParticipationSub?.closed).toBeTrue();
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.differentParticipationSub?.closed).toBe(true);
+        expect(component.paramSub?.closed).toBe(true);
     });
 
     it('should load participation for SOLUTION repository type', () => {
@@ -135,7 +136,7 @@ describe('RepositoryViewComponent', () => {
         component.ngOnInit();
 
         // Expect loadingParticipation to be false after loading
-        expect(component.loadingParticipation).toBeFalse();
+        expect(component.loadingParticipation).toBe(false);
 
         // Expect exercise and participation to be set correctly
         expect(component.exercise).toEqual(mockExercise);
@@ -149,8 +150,8 @@ describe('RepositoryViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.differentParticipationSub?.closed).toBeTrue();
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.differentParticipationSub?.closed).toBe(true);
+        expect(component.paramSub?.closed).toBe(true);
     });
 
     it('should load participation for TESTS repository type', () => {
@@ -171,7 +172,7 @@ describe('RepositoryViewComponent', () => {
         component.ngOnInit();
 
         // Expect loadingParticipation to be false after loading
-        expect(component.loadingParticipation).toBeFalse();
+        expect(component.loadingParticipation).toBe(false);
 
         // Expect exercise and participation to be set correctly
         expect(component.exercise).toEqual(mockExercise);
@@ -185,8 +186,8 @@ describe('RepositoryViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.differentParticipationSub?.closed).toBeTrue();
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.differentParticipationSub?.closed).toBe(true);
+        expect(component.paramSub?.closed).toBe(true);
     });
 
     it('should load AUXILIARY repository type', () => {
@@ -210,7 +211,7 @@ describe('RepositoryViewComponent', () => {
         component.ngOnInit();
 
         // Expect loadingParticipation to be false after loading
-        expect(component.loadingParticipation).toBeFalse();
+        expect(component.loadingParticipation).toBe(false);
 
         // Expect exercise and participation to be set correctly
         expect(component.exercise).toEqual(mockExercise);
@@ -223,7 +224,7 @@ describe('RepositoryViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
     });
 
     it('should handle unknown repository type', () => {
@@ -247,17 +248,17 @@ describe('RepositoryViewComponent', () => {
         component.ngOnInit();
 
         // Expect loadingParticipation to be false after loading
-        expect(component.loadingParticipation).toBeFalse();
+        expect(component.loadingParticipation).toBe(false);
 
         // Expect participationCouldNotBeFetched to be true
-        expect(component.participationCouldNotBeFetched).toBeTrue();
+        expect(component.participationCouldNotBeFetched).toBe(true);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.differentParticipationSub?.closed).toBeTrue();
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.differentParticipationSub?.closed).toBe(true);
+        expect(component.paramSub?.closed).toBe(true);
     });
 
     it('should load student participation', () => {
@@ -313,7 +314,7 @@ describe('RepositoryViewComponent', () => {
         component.ngOnInit();
 
         // Expect loadingParticipation to be false after loading
-        expect(component.loadingParticipation).toBeFalse();
+        expect(component.loadingParticipation).toBe(false);
 
         // Expect exercise and participation to be set correctly
         expect(component.exercise).toEqual(mockParticipation.exercise);
@@ -327,8 +328,8 @@ describe('RepositoryViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.participationWithLatestResultSub?.closed).toBeTrue();
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.participationWithLatestResultSub?.closed).toBe(true);
+        expect(component.paramSub?.closed).toBe(true);
     });
 
     it('should handle error when loading participation', () => {
@@ -346,17 +347,17 @@ describe('RepositoryViewComponent', () => {
         component.ngOnInit();
 
         // Expect loadingParticipation to be false after loading
-        expect(component.loadingParticipation).toBeFalse();
+        expect(component.loadingParticipation).toBe(false);
 
         // Expect participationCouldNotBeFetched to be true
-        expect(component.participationCouldNotBeFetched).toBeTrue();
+        expect(component.participationCouldNotBeFetched).toBe(true);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.participationWithLatestResultSub?.closed).toBeTrue();
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.participationWithLatestResultSub?.closed).toBe(true);
+        expect(component.paramSub?.closed).toBe(true);
     });
 
     it('should handle error when loading exercise', () => {
@@ -374,15 +375,15 @@ describe('RepositoryViewComponent', () => {
         component.ngOnInit();
 
         // Expect loadingParticipation to be false after loading
-        expect(component.loadingParticipation).toBeFalse();
+        expect(component.loadingParticipation).toBe(false);
 
         // Expect participationCouldNotBeFetched to be true
-        expect(component.participationCouldNotBeFetched).toBeTrue();
+        expect(component.participationCouldNotBeFetched).toBe(true);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
     });
 });

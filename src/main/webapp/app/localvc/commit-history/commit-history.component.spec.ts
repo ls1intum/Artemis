@@ -1,3 +1,4 @@
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
@@ -162,8 +163,8 @@ describe('CommitHistoryComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
-        expect(component.participationSub?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
+        expect(component.participationSub?.closed).toBe(true);
     });
 
     it('should load student commits', () => {
@@ -181,9 +182,9 @@ describe('CommitHistoryComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
-        expect(component.participationSub?.closed).toBeTrue();
-        expect(component.commitsInfoSubscription?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
+        expect(component.participationSub?.closed).toBe(true);
+        expect(component.commitsInfoSubscription?.closed).toBe(true);
     });
 
     it('should set student commit results', () => {
@@ -204,9 +205,9 @@ describe('CommitHistoryComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
-        expect(component.participationSub?.closed).toBeTrue();
-        expect(component.commitsInfoSubscription?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
+        expect(component.participationSub?.closed).toBe(true);
+        expect(component.commitsInfoSubscription?.closed).toBe(true);
     });
 
     it('should load template participation and handle commits', () => {
@@ -232,9 +233,9 @@ describe('CommitHistoryComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
-        expect(component.participationSub?.closed).toBeTrue();
-        expect(component.commitsInfoSubscription?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
+        expect(component.participationSub?.closed).toBe(true);
+        expect(component.commitsInfoSubscription?.closed).toBe(true);
     });
 
     it('should load solution participation', () => {
@@ -260,8 +261,8 @@ describe('CommitHistoryComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
-        expect(component.participationSub?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
+        expect(component.participationSub?.closed).toBe(true);
     });
 
     it('should load test participation', () => {
@@ -272,7 +273,7 @@ describe('CommitHistoryComponent', () => {
         // Trigger ngOnInit
         component.ngOnInit();
 
-        expect(component.isTestRepository).toBeTrue();
+        expect(component.isTestRepository).toBe(true);
 
         // Expectations
         expect(component.participation).toEqual(mockExerciseWithTemplateAndSolution.templateParticipation);
@@ -285,8 +286,8 @@ describe('CommitHistoryComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
-        expect(component.participationSub?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
+        expect(component.participationSub?.closed).toBe(true);
     });
 
     it('should load auxiliary repository commits', () => {
@@ -306,7 +307,7 @@ describe('CommitHistoryComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
-        expect(component.participationSub?.closed).toBeTrue();
+        expect(component.paramSub?.closed).toBe(true);
+        expect(component.participationSub?.closed).toBe(true);
     });
 });
