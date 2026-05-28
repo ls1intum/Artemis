@@ -91,7 +91,7 @@ describe('SharingComponent', () => {
 
         req.flush(testBasket);
 
-        const courseReq = httpMock.expectOne((request) => request.url === 'api/core/courses/course-management-overview');
+        const courseReq = httpMock.expectOne((request) => request.url === 'api/course/courses/course-management-overview');
 
         courseReq.flush(courses);
 
@@ -174,7 +174,7 @@ describe('SharingComponent', () => {
             url: basketUrl,
         });
 
-        const courseReq = httpMock.expectOne((request) => request.url === 'api/core/courses/course-management-overview');
+        const courseReq = httpMock.expectOne((request) => request.url === 'api/course/courses/course-management-overview');
 
         courseReq.flush(courses);
 
@@ -205,7 +205,7 @@ describe('SharingComponent', () => {
 
         req.flush(testBasket);
 
-        const courseReq = httpMock.expectOne((request) => request.url === 'api/core/courses/course-management-overview');
+        const courseReq = httpMock.expectOne((request) => request.url === 'api/course/courses/course-management-overview');
 
         const errorSpy = jest.spyOn(alertService, 'error');
 

@@ -54,7 +54,7 @@ describe('EntityTitleService', () => {
     it.each([
         { type: EntityType.EXERCISE, ids: [1], url: 'exercise/exercises/1' },
         { type: EntityType.LECTURE, ids: [1], url: 'lecture/lectures/1' },
-        { type: EntityType.COURSE, ids: [1], url: 'core/courses/1' },
+        { type: EntityType.COURSE, ids: [1], url: 'course/courses/1' },
         { type: EntityType.DIAGRAM, ids: [1], url: 'modeling/apollon-diagrams/1' },
         { type: EntityType.EXAM, ids: [1], url: 'exam/exams/1' },
         { type: EntityType.ORGANIZATION, ids: [1], url: 'core/organizations/1' },
