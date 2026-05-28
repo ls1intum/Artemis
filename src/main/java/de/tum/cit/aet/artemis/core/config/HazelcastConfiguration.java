@@ -1365,6 +1365,7 @@ public class HazelcastConfiguration {
         // MapConfig changes after the proxy is built are silently ignored on most cluster topologies.
         // Must be longer than the longest plausible LLM session (GPT-5.4 + medium reasoning ~5min).
         config.getMapConfigs().put("atlas-orchestrator-runs", new MapConfig().setBackupCount(0).setTimeToLiveSeconds(30 * 60));
+        config.getMapConfigs().put("iris-dashboard-schedule-state", new MapConfig().setBackupCount(artemisProperties.getCache().getHazelcast().getBackupCount()));
     }
 
     /**

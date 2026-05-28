@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -9,10 +10,14 @@ import static org.mockito.Mockito.when;
 import java.time.Clock;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
@@ -36,10 +41,15 @@ class IrisUsageAlertServiceTest {
 
     private IrisAdminDashboardRepository dashboardRepository;
 
+    private HazelcastInstance hazelcastInstance;
+
+    private IMap<String, java.time.Instant> scheduleStateMap;
+
     private IrisUsageAlertService alertService;
 
+    @SuppressWarnings("unchecked")
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         profileService = mock(ProfileService.class);
         properties = new IrisDashboardProperties();
         dashboardService = mock(IrisAdminDashboardService.class);
@@ -52,7 +62,13 @@ class IrisUsageAlertServiceTest {
         when(emailService.canSendAlert()).thenReturn(true);
         when(dashboardRepository.countUserMessages(any(), any())).thenReturn(100L);
 
-        alertService = new IrisUsageAlertService(profileService, properties, dashboardService, emailService, dashboardRepository, false);
+        hazelcastInstance = mock(HazelcastInstance.class);
+        scheduleStateMap = mock(IMap.class);
+        doReturn(scheduleStateMap).when(hazelcastInstance).getMap("iris-dashboard-schedule-state");
+        doReturn(true).when(scheduleStateMap).tryLock(any(), any(long.class), any(TimeUnit.class));
+        when(scheduleStateMap.get("last-alert-sent-at")).thenReturn(null).thenReturn(java.time.Instant.parse("2026-05-27T12:00:00Z"));
+
+        alertService = new IrisUsageAlertService(profileService, properties, dashboardService, emailService, dashboardRepository, false, hazelcastInstance);
 
         TimeUtil.setClock(Clock.fixed(ZonedDateTime.of(2026, 5, 27, 12, 0, 0, 0, ZoneOffset.UTC).toInstant(), ZoneOffset.UTC));
     }

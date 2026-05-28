@@ -6,19 +6,22 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 import jakarta.annotation.PostConstruct;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
@@ -31,16 +34,20 @@ import de.tum.cit.aet.artemis.iris.repository.IrisAdminDashboardRepository;
  * Scheduled service that monitors Iris no-response rates and sends alert emails when thresholds are exceeded.
  * <p>
  * Uses a cooldown mechanism to avoid alert storms: after a successful send the service suppresses
- * further alerts for the configured cooldown period. An {@link AtomicBoolean} guard prevents
- * concurrent executions of the check method.
+ * further alerts for the configured cooldown period. Hazelcast distributed locking prevents
+ * concurrent executions across cluster nodes.
  */
 @Service
-@Lazy
+@Lazy(false)
 @Profile(PROFILE_CORE)
 @Conditional(IrisEnabled.class)
 public class IrisUsageAlertService {
 
     private static final Logger log = LoggerFactory.getLogger(IrisUsageAlertService.class);
+
+    private static final String SCHEDULE_STATE_MAP = "iris-dashboard-schedule-state";
+
+    private static final String LAST_ALERT_SENT_AT_KEY = "last-alert-sent-at";
 
     private final ProfileService profileService;
 
@@ -52,13 +59,14 @@ public class IrisUsageAlertService {
 
     private final IrisAdminDashboardRepository dashboardRepository;
 
+    private final HazelcastInstance hazelcastInstance;
+
     private final boolean isTestServer;
 
     private boolean configValid = true;
 
-    private final AtomicReference<Instant> lastAlertSentAt = new AtomicReference<>(Instant.EPOCH);
-
-    private final AtomicBoolean alertInFlight = new AtomicBoolean(false);
+    @Nullable
+    private IMap<String, Instant> scheduleStateMap;
 
     /**
      * Creates a new IrisUsageAlertService.
@@ -69,15 +77,25 @@ public class IrisUsageAlertService {
      * @param emailService        service that sends alert emails
      * @param dashboardRepository repository for counting user messages
      * @param isTestServer        whether the current instance is a test server
+     * @param hazelcastInstance   Hazelcast instance for distributed locking
      */
     public IrisUsageAlertService(ProfileService profileService, IrisDashboardProperties properties, IrisAdminDashboardService dashboardService,
-            IrisDashboardEmailService emailService, IrisAdminDashboardRepository dashboardRepository, @Value("${info.testServer:false}") boolean isTestServer) {
+            IrisDashboardEmailService emailService, IrisAdminDashboardRepository dashboardRepository, @Value("${info.testServer:false}") boolean isTestServer,
+            @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.profileService = profileService;
         this.properties = properties;
         this.dashboardService = dashboardService;
         this.emailService = emailService;
         this.dashboardRepository = dashboardRepository;
         this.isTestServer = isTestServer;
+        this.hazelcastInstance = hazelcastInstance;
+    }
+
+    private IMap<String, Instant> getScheduleStateMap() {
+        if (scheduleStateMap == null) {
+            scheduleStateMap = hazelcastInstance.getMap(SCHEDULE_STATE_MAP);
+        }
+        return scheduleStateMap;
     }
 
     /**
@@ -120,9 +138,10 @@ public class IrisUsageAlertService {
      * Periodically checks whether the Iris no-response rate exceeds the configured threshold and sends an alert email.
      * <p>
      * Skips execution when scheduling is inactive, the dev profile is active, the instance is a test server,
-     * the alert feature is disabled, configuration is invalid, the email service cannot send, or the cooldown
-     * has not yet elapsed since the last alert. Double-checked locking via {@link AtomicBoolean} prevents
-     * concurrent executions.
+     * the alert feature is disabled, configuration is invalid, or the email service cannot send.
+     * <p>
+     * Uses Hazelcast distributed locking to prevent concurrent executions across cluster nodes
+     * and to enforce the cooldown period cluster-wide.
      */
     @Scheduled(fixedRateString = "${artemis.iris.dashboard.alert.check-interval-minutes:30}", timeUnit = TimeUnit.MINUTES)
     public void checkAlertThresholds() {
@@ -144,16 +163,17 @@ public class IrisUsageAlertService {
 
         var now = TimeUtil.now().toInstant();
         var cooldown = Duration.ofMinutes(properties.getAlert().getCooldownMinutes());
-        if (now.minus(cooldown).isBefore(lastAlertSentAt.get())) {
-            return;
-        }
 
-        if (!alertInFlight.compareAndSet(false, true)) {
-            return;
-        }
-
+        IMap<String, Instant> stateMap = getScheduleStateMap();
+        boolean locked = false;
         try {
-            if (now.minus(cooldown).isBefore(lastAlertSentAt.get())) {
+            locked = stateMap.tryLock(LAST_ALERT_SENT_AT_KEY, 5, TimeUnit.SECONDS);
+            if (!locked) {
+                return;
+            }
+
+            Instant lastSent = stateMap.get(LAST_ALERT_SENT_AT_KEY);
+            if (lastSent != null && now.minus(cooldown).isBefore(lastSent)) {
                 return;
             }
 
@@ -179,7 +199,7 @@ public class IrisUsageAlertService {
 
             int sent = emailService.sendAlert(alertDto);
             if (sent > 0) {
-                lastAlertSentAt.set(TimeUtil.now().toInstant());
+                stateMap.put(LAST_ALERT_SENT_AT_KEY, TimeUtil.now().toInstant());
                 log.info("Iris alert sent to {} recipients (no-response rate: {}%)", sent, overview.noResponseRate());
             }
         }
@@ -187,7 +207,9 @@ public class IrisUsageAlertService {
             log.error("Failed to compute/send Iris alert", e);
         }
         finally {
-            alertInFlight.set(false);
+            if (locked) {
+                stateMap.unlock(LAST_ALERT_SENT_AT_KEY);
+            }
         }
     }
 }
