@@ -235,7 +235,7 @@ jobs:
   docker-release:
     name: Build and Push Docker Image
     if: ${{ github.event_name == 'push' || github.event_name == 'release' }}
-    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@v1.1.1
+    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@v1.2.0
     with:
       ref: ${{ github.ref_name }}
       image-name: ls1intum/artemis
