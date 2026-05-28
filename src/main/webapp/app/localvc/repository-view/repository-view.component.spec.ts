@@ -64,7 +64,14 @@ describe('RepositoryViewComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(RepositoryViewComponent);
                 component = fixture.componentInstance;
-                fixture.detectChanges();
+                // Intentionally do not call fixture.detectChanges() here.
+                // The tests assert on component state directly via ngOnInit(),
+                // never on rendered DOM. Triggering change detection would
+                // instantiate the ProgrammingExerciseInstructionComponent
+                // child template node, whose ngOnInit reads
+                // `participation.id` before bindings settle and throws an
+                // unhandled TypeError under Vitest (which exits non-zero on
+                // unhandled async errors, unlike Jest).
                 activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
                 programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
                 programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
@@ -176,7 +183,7 @@ describe('RepositoryViewComponent', () => {
 
         // Expect exercise and participation to be set correctly
         expect(component.exercise).toEqual(mockExercise);
-        expect(component.participation).toEqual({});
+        expect(component.participation).toBeUndefined();
 
         // Expect domainService method to be called with the correct arguments
         expect(component.domainService.setDomain).toHaveBeenCalledWith([DomainType.TEST_REPOSITORY, mockExercise]);
@@ -215,7 +222,7 @@ describe('RepositoryViewComponent', () => {
 
         // Expect exercise and participation to be set correctly
         expect(component.exercise).toEqual(mockExercise);
-        expect(component.participation).toEqual({});
+        expect(component.participation).toBeUndefined();
 
         // Expect domainService method to be called with the correct arguments
         expect(component.domainService.setDomain).toHaveBeenCalledWith([DomainType.AUXILIARY_REPOSITORY, mockAuxiliaryRepository]);
