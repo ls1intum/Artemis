@@ -249,7 +249,7 @@ export class CourseCreationPage {
      * Updates the created exam.
      *
      * Scopes `waitForResponse` to the update method (PUT/POST `multipart/form-data`)
-     * — the generic `api/core/courses/*` glob also matches concurrent GETs (refresh,
+     * — the generic `api/course/courses/*` glob also matches concurrent GETs (refresh,
      * stats, dashboards) that the page issues right before the form save, and racing
      * against those returns a course object without the just-edited fields.
      *

@@ -13,7 +13,7 @@ export class BuildOverviewService {
     private http = inject(HttpClient);
 
     public resourceUrl = 'api/programming';
-    public adminResourceUrl = 'api/core/admin';
+    public adminResourceUrl = 'api/admin';
     nestedDtoKey = 'pageable';
 
     /**
