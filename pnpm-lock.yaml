@@ -311,10 +311,10 @@ importers:
     devDependencies:
       '@analogjs/vite-plugin-angular':
         specifier: 2.5.1
-        version: 2.5.1(140bb9dcff276ad2166f7967f2e7fbda)
+        version: 2.5.1(282e4825c907d4b81bf9fd472cbfbaa8)
       '@analogjs/vitest-angular':
         specifier: 2.5.1
-        version: 2.5.1(@analogjs/vite-plugin-angular@2.5.1(140bb9dcff276ad2166f7967f2e7fbda))(@angular-devkit/architect@0.2102.12(chokidar@5.0.0))(@angular-devkit/schematics@21.2.12(chokidar@5.0.0))(vitest@4.1.7)(zone.js@0.16.2)
+        version: 2.5.1(@analogjs/vite-plugin-angular@2.5.1(282e4825c907d4b81bf9fd472cbfbaa8))(@angular-devkit/architect@0.2102.12(chokidar@5.0.0))(@angular-devkit/schematics@21.2.12(chokidar@5.0.0))(vitest@4.1.7)(zone.js@0.16.2)
       '@angular-builders/jest':
         specifier: 21.0.3
         version: 21.0.3(patch_hash=5ffb09a16cb0e2ed2a4703acb66fc3dc7d43e9f1de66eac1867b5e8271d0744c)(f6785a7072d55243c3e046bb7fc86785)
@@ -466,8 +466,8 @@ importers:
         specifier: 6.1.3
         version: 6.1.3
       sass:
-        specifier: 1.99.0
-        version: 1.99.0
+        specifier: 1.100.0
+        version: 1.100.0
       stylelint:
         specifier: 17.12.0
         version: 17.12.0(typescript@5.9.3)
@@ -494,10 +494,10 @@ importers:
         version: 8.59.4(eslint@10.4.0(patch_hash=19b47d956993254d1aa65b78cf56f3610dcc1b47812cbe4f7eb39ec71f894424)(jiti@2.7.0))(typescript@5.9.3)
       vite-tsconfig-paths:
         specifier: 6.1.1
-        version: 6.1.1(typescript@5.9.3)(vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.99.0)(terser@5.46.0)(yaml@2.9.0))
+        version: 6.1.1(typescript@5.9.3)(vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.100.0)(terser@5.46.0)(yaml@2.9.0))
       vitest:
         specifier: 4.1.7
-        version: 4.1.7(@opentelemetry/api@1.9.1)(@types/node@24.12.4)(@vitest/coverage-istanbul@4.1.7)(@vitest/coverage-v8@4.1.7)(jsdom@29.1.1)(vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.99.0)(terser@5.46.0)(yaml@2.9.0))
+        version: 4.1.7(@opentelemetry/api@1.9.1)(@types/node@24.12.4)(@vitest/coverage-istanbul@4.1.7)(@vitest/coverage-v8@4.1.7)(jsdom@29.1.1)(vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.100.0)(terser@5.46.0)(yaml@2.9.0))
 
 packages:
 
@@ -7386,13 +7386,13 @@ packages:
       webpack:
         optional: true
 
-  sass@1.97.3:
-    resolution: {integrity: sha512-fDz1zJpd5GycprAbu4Q2PV/RprsRtKC/0z82z0JLgdytmcq0+ujJbJ/09bPGDxCLkKY3Np5cRAOcWiVkLXJURg==}
-    engines: {node: '>=14.0.0'}
+  sass@1.100.0:
+    resolution: {integrity: sha512-B5j0rYMlinhhOo9tjQebMVVn0TfyXAF+wB3b2ggZUuJ/is/Y+7+JGjirAMxHZ9Z3hIP98NPfamlAkBHa1lAaXQ==}
+    engines: {node: '>=20.19.0'}
     hasBin: true
 
-  sass@1.99.0:
-    resolution: {integrity: sha512-kgW13M54DUB7IsIRM5LvJkNlpH+WhMpooUcaWGFARkF1Tc82v9mIWkCbCYf+MBvpIUBSeSOTilpZjEPr2VYE6Q==}
+  sass@1.97.3:
+    resolution: {integrity: sha512-fDz1zJpd5GycprAbu4Q2PV/RprsRtKC/0z82z0JLgdytmcq0+ujJbJ/09bPGDxCLkKY3Np5cRAOcWiVkLXJURg==}
     engines: {node: '>=14.0.0'}
     hasBin: true
 
@@ -8626,7 +8626,7 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
 
-  '@analogjs/vite-plugin-angular@2.5.1(140bb9dcff276ad2166f7967f2e7fbda)':
+  '@analogjs/vite-plugin-angular@2.5.1(282e4825c907d4b81bf9fd472cbfbaa8)':
     dependencies:
       magic-string: 0.30.21
       obug: 2.1.1
@@ -8636,17 +8636,17 @@ snapshots:
     optionalDependencies:
       '@angular-devkit/build-angular': 21.2.12(a739533a1c8ee2e2e212bc7573ff8f7c)
       '@angular/build': 21.2.12(@angular/compiler-cli@21.2.14(@angular/compiler@21.2.14)(typescript@5.9.3))(@angular/compiler@21.2.14)(@angular/core@21.2.14(@angular/compiler@21.2.14)(rxjs@7.8.2)(zone.js@0.16.2))(@angular/localize@21.2.14(@angular/compiler-cli@21.2.14(@angular/compiler@21.2.14)(typescript@5.9.3))(@angular/compiler@21.2.14))(@angular/platform-browser@21.2.14(@angular/animations@21.2.14(@angular/core@21.2.14(@angular/compiler@21.2.14)(rxjs@7.8.2)(zone.js@0.16.2)))(@angular/common@21.2.14(@angular/core@21.2.14(@angular/compiler@21.2.14)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@angular/core@21.2.14(@angular/compiler@21.2.14)(rxjs@7.8.2)(zone.js@0.16.2)))(@angular/service-worker@21.2.14(@angular/core@21.2.14(@angular/compiler@21.2.14)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2))(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@24.12.4)(chokidar@5.0.0)(jiti@2.7.0)(less@4.4.2)(postcss@8.5.14)(terser@5.46.0)(tslib@2.8.1)(typescript@5.9.3)(vitest@4.1.7)(yaml@2.9.0)
-      vite: 7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.99.0)(terser@5.46.0)(yaml@2.9.0)
+      vite: 7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.100.0)(terser@5.46.0)(yaml@2.9.0)
     transitivePeerDependencies:
       - '@emnapi/core'
       - '@emnapi/runtime'
 
-  '@analogjs/vitest-angular@2.5.1(@analogjs/vite-plugin-angular@2.5.1(140bb9dcff276ad2166f7967f2e7fbda))(@angular-devkit/architect@0.2102.12(chokidar@5.0.0))(@angular-devkit/schematics@21.2.12(chokidar@5.0.0))(vitest@4.1.7)(zone.js@0.16.2)':
+  '@analogjs/vitest-angular@2.5.1(@analogjs/vite-plugin-angular@2.5.1(282e4825c907d4b81bf9fd472cbfbaa8))(@angular-devkit/architect@0.2102.12(chokidar@5.0.0))(@angular-devkit/schematics@21.2.12(chokidar@5.0.0))(vitest@4.1.7)(zone.js@0.16.2)':
     dependencies:
-      '@analogjs/vite-plugin-angular': 2.5.1(140bb9dcff276ad2166f7967f2e7fbda)
+      '@analogjs/vite-plugin-angular': 2.5.1(282e4825c907d4b81bf9fd472cbfbaa8)
       '@angular-devkit/architect': 0.2102.12(chokidar@5.0.0)
       '@angular-devkit/schematics': 21.2.12(chokidar@5.0.0)
-      vitest: 4.1.7(@opentelemetry/api@1.9.1)(@types/node@24.12.4)(@vitest/coverage-istanbul@4.1.7)(@vitest/coverage-v8@4.1.7)(jsdom@29.1.1)(vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.99.0)(terser@5.46.0)(yaml@2.9.0))
+      vitest: 4.1.7(@opentelemetry/api@1.9.1)(@types/node@24.12.4)(@vitest/coverage-istanbul@4.1.7)(@vitest/coverage-v8@4.1.7)(jsdom@29.1.1)(vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.100.0)(terser@5.46.0)(yaml@2.9.0))
     optionalDependencies:
       zone.js: 0.16.2
 
@@ -8903,7 +8903,7 @@ snapshots:
       '@babel/helper-annotate-as-pure': 7.27.3
       '@babel/helper-split-export-declaration': 7.24.7
       '@inquirer/confirm': 5.1.21(@types/node@24.12.4)
-      '@vitejs/plugin-basic-ssl': 2.1.4(vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.99.0)(terser@5.46.0)(yaml@2.9.0))
+      '@vitejs/plugin-basic-ssl': 2.1.4(vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.100.0)(terser@5.46.0)(yaml@2.9.0))
       beasties: 0.4.1
       browserslist: 4.28.2
       esbuild: 0.28.0
@@ -8934,7 +8934,7 @@ snapshots:
       less: 4.4.2
       lmdb: 3.5.1
       postcss: 8.5.14
-      vitest: 4.1.7(@opentelemetry/api@1.9.1)(@types/node@24.12.4)(@vitest/coverage-istanbul@4.1.7)(@vitest/coverage-v8@4.1.7)(jsdom@29.1.1)(vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.99.0)(terser@5.46.0)(yaml@2.9.0))
+      vitest: 4.1.7(@opentelemetry/api@1.9.1)(@types/node@24.12.4)(@vitest/coverage-istanbul@4.1.7)(@vitest/coverage-v8@4.1.7)(jsdom@29.1.1)(vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.100.0)(terser@5.46.0)(yaml@2.9.0))
     transitivePeerDependencies:
       - '@emnapi/core'
       - '@emnapi/runtime'
@@ -12478,9 +12478,9 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.12.2':
     optional: true
 
-  '@vitejs/plugin-basic-ssl@2.1.4(vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.99.0)(terser@5.46.0)(yaml@2.9.0))':
+  '@vitejs/plugin-basic-ssl@2.1.4(vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.100.0)(terser@5.46.0)(yaml@2.9.0))':
     dependencies:
-      vite: 7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.99.0)(terser@5.46.0)(yaml@2.9.0)
+      vite: 7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.100.0)(terser@5.46.0)(yaml@2.9.0)
 
   '@vitest/coverage-istanbul@4.1.7(vitest@4.1.7)':
     dependencies:
@@ -12494,7 +12494,7 @@ snapshots:
       magicast: 0.5.3
       obug: 2.1.1
       tinyrainbow: 3.1.0
-      vitest: 4.1.7(@opentelemetry/api@1.9.1)(@types/node@24.12.4)(@vitest/coverage-istanbul@4.1.7)(@vitest/coverage-v8@4.1.7)(jsdom@29.1.1)(vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.99.0)(terser@5.46.0)(yaml@2.9.0))
+      vitest: 4.1.7(@opentelemetry/api@1.9.1)(@types/node@24.12.4)(@vitest/coverage-istanbul@4.1.7)(@vitest/coverage-v8@4.1.7)(jsdom@29.1.1)(vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.100.0)(terser@5.46.0)(yaml@2.9.0))
     transitivePeerDependencies:
       - supports-color
 
@@ -12510,7 +12510,7 @@ snapshots:
       obug: 2.1.1
       std-env: 4.1.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.7(@opentelemetry/api@1.9.1)(@types/node@24.12.4)(@vitest/coverage-istanbul@4.1.7)(@vitest/coverage-v8@4.1.7)(jsdom@29.1.1)(vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.99.0)(terser@5.46.0)(yaml@2.9.0))
+      vitest: 4.1.7(@opentelemetry/api@1.9.1)(@types/node@24.12.4)(@vitest/coverage-istanbul@4.1.7)(@vitest/coverage-v8@4.1.7)(jsdom@29.1.1)(vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.100.0)(terser@5.46.0)(yaml@2.9.0))
 
   '@vitest/expect@4.1.7':
     dependencies:
@@ -12521,13 +12521,13 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.0
 
-  '@vitest/mocker@4.1.7(vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.99.0)(terser@5.46.0)(yaml@2.9.0))':
+  '@vitest/mocker@4.1.7(vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.100.0)(terser@5.46.0)(yaml@2.9.0))':
     dependencies:
       '@vitest/spy': 4.1.7
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.99.0)(terser@5.46.0)(yaml@2.9.0)
+      vite: 7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.100.0)(terser@5.46.0)(yaml@2.9.0)
 
   '@vitest/pretty-format@4.1.7':
     dependencies:
@@ -16191,15 +16191,15 @@ snapshots:
       sass: 1.97.3
       webpack: 5.106.2(esbuild@0.28.0)(postcss@8.5.14)
 
-  sass@1.97.3:
+  sass@1.100.0:
     dependencies:
-      chokidar: 4.0.3
+      chokidar: 5.0.0
       immutable: 5.1.5
       source-map-js: 1.2.1
     optionalDependencies:
       '@parcel/watcher': 2.5.6
 
-  sass@1.99.0:
+  sass@1.97.3:
     dependencies:
       chokidar: 4.0.3
       immutable: 5.1.5
@@ -16998,15 +16998,32 @@ snapshots:
 
   vary@1.1.2: {}
 
-  vite-tsconfig-paths@6.1.1(typescript@5.9.3)(vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.99.0)(terser@5.46.0)(yaml@2.9.0)):
+  vite-tsconfig-paths@6.1.1(typescript@5.9.3)(vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.100.0)(terser@5.46.0)(yaml@2.9.0)):
     dependencies:
       debug: 4.4.3
       globrex: 0.1.2
       tsconfck: 3.1.6(typescript@5.9.3)
-      vite: 7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.99.0)(terser@5.46.0)(yaml@2.9.0)
+      vite: 7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.100.0)(terser@5.46.0)(yaml@2.9.0)
     transitivePeerDependencies:
       - supports-color
       - typescript
+
+  vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.100.0)(terser@5.46.0)(yaml@2.9.0):
+    dependencies:
+      esbuild: 0.28.0
+      fdir: 6.5.0(picomatch@4.0.4)
+      picomatch: 4.0.4
+      postcss: 8.5.14
+      rollup: 4.60.4
+      tinyglobby: 0.2.15
+    optionalDependencies:
+      '@types/node': 24.12.4
+      fsevents: 2.3.3
+      jiti: 2.7.0
+      less: 4.4.2
+      sass: 1.100.0
+      terser: 5.46.0
+      yaml: 2.9.0
 
   vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.97.3)(terser@5.46.0)(yaml@2.9.0):
     dependencies:
@@ -17025,27 +17042,10 @@ snapshots:
       terser: 5.46.0
       yaml: 2.9.0
 
-  vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.99.0)(terser@5.46.0)(yaml@2.9.0):
-    dependencies:
-      esbuild: 0.28.0
-      fdir: 6.5.0(picomatch@4.0.4)
-      picomatch: 4.0.4
-      postcss: 8.5.14
-      rollup: 4.60.4
-      tinyglobby: 0.2.15
-    optionalDependencies:
-      '@types/node': 24.12.4
-      fsevents: 2.3.3
-      jiti: 2.7.0
-      less: 4.4.2
-      sass: 1.99.0
-      terser: 5.46.0
-      yaml: 2.9.0
-
-  vitest@4.1.7(@opentelemetry/api@1.9.1)(@types/node@24.12.4)(@vitest/coverage-istanbul@4.1.7)(@vitest/coverage-v8@4.1.7)(jsdom@29.1.1)(vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.99.0)(terser@5.46.0)(yaml@2.9.0)):
+  vitest@4.1.7(@opentelemetry/api@1.9.1)(@types/node@24.12.4)(@vitest/coverage-istanbul@4.1.7)(@vitest/coverage-v8@4.1.7)(jsdom@29.1.1)(vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.100.0)(terser@5.46.0)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.7
-      '@vitest/mocker': 4.1.7(vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.99.0)(terser@5.46.0)(yaml@2.9.0))
+      '@vitest/mocker': 4.1.7(vite@7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.100.0)(terser@5.46.0)(yaml@2.9.0))
       '@vitest/pretty-format': 4.1.7
       '@vitest/runner': 4.1.7
       '@vitest/snapshot': 4.1.7
@@ -17062,7 +17062,7 @@ snapshots:
       tinyexec: 1.1.2
       tinyglobby: 0.2.16
       tinyrainbow: 3.1.0
-      vite: 7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.99.0)(terser@5.46.0)(yaml@2.9.0)
+      vite: 7.3.2(@types/node@24.12.4)(jiti@2.7.0)(less@4.4.2)(sass@1.100.0)(terser@5.46.0)(yaml@2.9.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
