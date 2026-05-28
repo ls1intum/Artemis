@@ -10,12 +10,12 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { PageableResult } from 'app/shared/table/pageable-table';
+import { PageableResult } from 'app/ui/table/pageable-table';
 
 describe('RatingListComponent', () => {
     setupTestBed({ zoneless: true });

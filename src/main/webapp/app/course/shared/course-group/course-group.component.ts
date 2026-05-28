@@ -3,22 +3,22 @@ import { Observable, Subject, of } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { User } from 'app/account/user/user.model';
 import { Course, CourseGroup } from 'app/course/shared/entities/course.model';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ActionType } from 'app/ui/delete-dialog/delete-dialog.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { iconsAsHTML } from 'app/shared/util/icons.utils';
+import { DataTableComponent } from 'app/ui/data-table/data-table.component';
+import { iconsAsHTML } from 'app/foundation/util/icons.utils';
 import { faDownload, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
+import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/ui/export/export-constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { RouterLink } from '@angular/router';
 import { addPublicFilePrefix } from 'app/app.constants';
-import { UsersImportButtonComponent } from 'app/shared/user-import/button/users-import-button.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { ExportUserInformationRow, exportUserInformationAsCsv } from 'app/shared/user-import/util/write-users-to-csv';
+import { UsersImportButtonComponent } from 'app/ui/user-import/button/users-import-button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ProfilePictureComponent } from 'app/ui/profile-picture/profile-picture.component';
+import { DeleteButtonDirective } from 'app/ui/delete-dialog/directive/delete-button.directive';
+import { ExportUserInformationRow, exportUserInformationAsCsv } from 'app/ui/user-import/util/write-users-to-csv';
 
 const cssClasses = {
     alreadyMember: 'already-member',

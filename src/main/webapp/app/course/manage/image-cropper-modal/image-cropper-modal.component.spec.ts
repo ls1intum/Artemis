@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
-import { ImageCropperComponent } from 'app/shared/image-cropper/component/image-cropper.component';
+import { ImageCropperComponent } from 'app/ui/image-cropper/component/image-cropper.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ImageCropperModalComponent', () => {

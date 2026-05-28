@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { SpanType } from 'app/exercise/shared/entities/statistics.model';
 import { CourseManagementStatisticsComponent } from 'app/course/manage/statistics/course-management-statistics.component';
-import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
+import { StatisticsService } from 'app/ui/statistics-graph/service/statistics.service';
 import { of } from 'rxjs';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ActivatedRoute, RouterModule } from '@angular/router';

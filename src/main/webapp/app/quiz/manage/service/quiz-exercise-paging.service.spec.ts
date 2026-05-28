@@ -5,7 +5,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClient } from '@angular/common/http';
 import { QuizExercisePagingService } from './quiz-exercise-paging.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/ui/table/pageable-table';
 
 describe('QuizExercisePagingService', () => {
     setupTestBed({ zoneless: true });

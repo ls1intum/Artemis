@@ -9,12 +9,12 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { FileWithHasMatch } from 'app/plagiarism/manage/plagiarism-split-view/split-pane-header/split-pane-header.component';
 import { escape } from 'lodash-es';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
-import { TEXT_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { TEXT_FILE_EXTENSIONS } from 'app/foundation/constants/file-extensions.constants';
 import { Subject } from 'rxjs';
 import { PlagiarismFileElement } from 'app/plagiarism/shared/entities/PlagiarismFileElement';
 import { SplitPaneHeaderComponent } from '../split-pane-header/split-pane-header.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgClass } from '@angular/common';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { DomainChange, DomainType, FileType } from 'app/programming/shared/code-editor/model/code-editor.model';

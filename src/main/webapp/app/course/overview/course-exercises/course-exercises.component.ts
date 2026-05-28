@@ -5,15 +5,15 @@ import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { LtiService } from 'app/shared/service/lti.service';
+import { LtiService } from 'app/foundation/service/lti.service';
 import { NgClass, NgStyle } from '@angular/common';
-import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SidebarComponent } from 'app/ui/sidebar/sidebar.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
-import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/shared/types/sidebar';
+import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Subscription, forkJoin } from 'rxjs';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },

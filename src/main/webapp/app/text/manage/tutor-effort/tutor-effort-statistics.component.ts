@@ -7,12 +7,12 @@ import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { median } from 'simple-statistics';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { round } from 'app/shared/util/utils';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { round } from 'app/foundation/util/utils';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
 import { BarChartModule } from '@swimlane/ngx-charts';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PlagiarismAndTutorEffortDirective } from 'app/plagiarism/manage/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
 
 interface TutorEffortRange {

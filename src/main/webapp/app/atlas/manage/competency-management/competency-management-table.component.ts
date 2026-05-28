@@ -1,11 +1,11 @@
 import dayjs from 'dayjs/esm';
 import { Component, DestroyRef, computed, effect, inject, input, output, signal } from '@angular/core';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType, getIcon } from 'app/atlas/shared/entities/competency.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
-import { onError } from 'app/shared/util/global.utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { Subject } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { faFileImport, faMagnifyingGlass, faPencilAlt, faPlus, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -18,18 +18,18 @@ import {
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { DeleteButtonDirective } from 'app/ui/delete-dialog/directive/delete-button.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RouterModule } from '@angular/router';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { InputTextModule } from 'primeng/inputtext';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 
 @Component({
     selector: 'jhi-competency-management-table',

@@ -7,16 +7,16 @@ import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exerc
 import { Subscription } from 'rxjs';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { TextExerciseService } from '../text-exercise/service/text-exercise.service';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
-import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
+import { StatisticsService } from 'app/ui/statistics-graph/service/statistics.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
-import { EventManager } from 'app/shared/service/event-manager.service';
-import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { DocumentationType } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
+import { DetailOverviewSection, DetailType } from 'app/ui/detail-overview-list/detail-overview-list.component';
 import {
     getExerciseGeneralDetailsSection,
     getExerciseGradingDefaultDetails,
@@ -25,9 +25,9 @@ import {
     getExerciseModeDetailSection,
     getExerciseProblemDetailSection,
 } from 'app/exercise/util/utils';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
+import { DetailOverviewListComponent } from 'app/ui/detail-overview-list/detail-overview-list.component';
 
 @Component({
     selector: 'jhi-text-exercise-detail',

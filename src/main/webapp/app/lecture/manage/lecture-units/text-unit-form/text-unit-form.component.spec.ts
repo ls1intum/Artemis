@@ -8,19 +8,19 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MarkdownCache, TextUnitFormComponent, TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FormDateTimePickerComponent } from 'app/ui/date-time-picker/date-time-picker.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 
 type Store = {
     [key: string]: any;

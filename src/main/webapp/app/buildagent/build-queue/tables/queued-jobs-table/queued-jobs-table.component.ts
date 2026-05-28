@@ -2,12 +2,12 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 import { RouterLink } from '@angular/router';
 import { BuildJob } from 'app/buildagent/shared/entities/build-job.model';
 import { faClock, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SlicePipe } from '@angular/common';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 
 /**

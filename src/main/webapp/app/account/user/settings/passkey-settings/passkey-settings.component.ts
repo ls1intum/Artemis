@@ -1,24 +1,24 @@
 import { Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AccountService } from 'app/core/auth/account.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { faBan, faKey, faPencil, faPlus, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/account/user/user.model';
 import { Observable, Subject, Subscription, of, tap } from 'rxjs';
 import { PasskeyDTO } from 'app/account/user/settings/passkey-settings/dto/passkey.dto';
 import { PasskeySettingsApiService } from 'app/account/user/settings/passkey-settings/passkey-settings-api.service';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ActionType, EntitySummary } from 'app/ui/delete-dialog/delete-dialog.model';
+import { DeleteButtonDirective } from 'app/ui/delete-dialog/directive/delete-button.directive';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/ui/components/buttons/button/button.component';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { CustomMaxLengthDirective } from 'app/shared/validators/custom-max-length-validator/custom-max-length-validator.directive';
+import { CustomMaxLengthDirective } from 'app/foundation/validators/custom-max-length-validator/custom-max-length-validator.directive';
 import { WebauthnService } from 'app/account/user/settings/passkey-settings/webauthn.service';
 import { BadgeModule } from 'primeng/badge';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { Authority, IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { Authority, IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants';
 
 export interface DisplayedPasskey extends PasskeyDTO {
     isEditingLabel?: boolean;

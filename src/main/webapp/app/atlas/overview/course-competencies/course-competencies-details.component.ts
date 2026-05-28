@@ -12,8 +12,8 @@ import {
     getMastery,
     getProgress,
 } from 'app/atlas/shared/entities/competency.model';
-import { AlertService } from 'app/shared/service/alert.service';
-import { onError } from 'app/shared/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
@@ -24,7 +24,7 @@ import { Subscription, combineLatest } from 'rxjs';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
@@ -33,14 +33,14 @@ import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectur
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
 import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
-import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { SidePanelComponent } from 'app/ui/side-panel/side-panel.component';
+import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.component';
-import { ScienceEventType } from 'app/shared/science/science.model';
-import { ScienceService } from 'app/shared/science/science.service';
+import { ScienceEventType } from 'app/foundation/science/science.model';
+import { ScienceService } from 'app/foundation/science/science.service';
 
 @Component({
     selector: 'jhi-course-competencies-details',

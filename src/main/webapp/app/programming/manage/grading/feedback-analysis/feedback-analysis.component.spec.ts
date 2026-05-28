@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FeedbackAnalysisComponent, FeedbackAnalysisState } from 'app/programming/manage/grading/feedback-analysis/feedback-analysis.component';
 import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
@@ -11,8 +11,8 @@ import { AffectedStudentsModalComponent } from 'app/programming/manage/grading/f
 import { FeedbackDetailChannelModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-detail-channel/feedback-detail-channel-modal.component';
 import { Subject } from 'rxjs';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import { AlertService } from 'app/shared/service/alert.service';
-import { SortingOrder } from 'app/shared/table/pageable-table';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { SortingOrder } from 'app/ui/table/pageable-table';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 

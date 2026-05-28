@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, effect, inject, input, untracked } from '
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { Subscription, of } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, shareReplay, skip, switchMap, take, tap } from 'rxjs/operators';
-import { AsPipe } from 'app/shared/pipes/as.pipe';
+import { AsPipe } from 'app/foundation/pipes/as.pipe';
 import { IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
@@ -14,16 +14,16 @@ import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model'
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
-import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { FormsModule } from '@angular/forms';
 import dayjs from 'dayjs/esm';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/ui/components/buttons/button/button.component';
 import { faArrowDown, faArrowUp, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 /**

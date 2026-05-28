@@ -2,17 +2,17 @@ import { Component, ViewEncapsulation, inject } from '@angular/core';
 import { DragItemComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-item/drag-item.component';
 import { QuizStatisticUtil } from 'app/quiz/shared/service/quiz-statistic-util.service';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { DragAndDropQuestionStatistic } from 'app/quiz/shared/entities/drag-and-drop-question-statistic.model';
 import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuestionStatisticComponent, blueColor, greenColor } from 'app/quiz/manage/statistics/question-statistic.component';
 import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ImageComponent } from 'app/shared/image/image.component';
+import { ImageComponent } from 'app/foundation/image/image.component';
 import { NgStyle } from '@angular/common';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 import { addPublicFilePrefix } from 'app/app.constants';
@@ -21,11 +21,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
     selector: 'jhi-drag-and-drop-question-statistic',
     templateUrl: './drag-and-drop-question-statistic.component.html',
     providers: [QuizStatisticUtil, DragAndDropQuestionUtil],
-    styleUrls: [
-        '../../../../shared/chart/vertical-bar-chart.scss',
-        '../quiz-point-statistic/quiz-point-statistic.component.scss',
-        './drag-and-drop-question-statistic.component.scss',
-    ],
+    styleUrls: ['../../../../ui/chart/vertical-bar-chart.scss', '../quiz-point-statistic/quiz-point-statistic.component.scss', './drag-and-drop-question-statistic.component.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [TranslateDirective, BarChartModule, FaIconComponent, ImageComponent, NgStyle, DragItemComponent, QuizStatisticsFooterComponent],
 })

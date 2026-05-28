@@ -1,9 +1,9 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { SortingOrder } from 'app/shared/table/pageable-table';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { SortingOrder } from 'app/ui/table/pageable-table';
 import { take } from 'rxjs/operators';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ExampleSubmissionImportPagingService } from 'app/exercise/example-submission/example-submission-import/example-submission-import-paging.service';

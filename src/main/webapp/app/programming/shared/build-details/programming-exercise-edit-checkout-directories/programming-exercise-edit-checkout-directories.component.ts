@@ -5,8 +5,8 @@ import { BuildPlanCheckoutDirectoriesDTO } from 'app/programming/shared/entities
 
 import { Subject } from 'rxjs';
 import { FormsModule, NgModel } from '@angular/forms';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-programming-exercise-edit-checkout-directories',

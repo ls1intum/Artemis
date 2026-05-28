@@ -4,8 +4,8 @@ import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
 import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor.component';
 import { BUILD_PHASE_NAME_PATTERN, BUILD_PHASE_RESERVED_NAMES, BuildPhase, BuildPlanPhases, parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 import { LegacyBuildPlanConverterService } from 'app/programming/shared/services/legacy-build-plan-converter.service';

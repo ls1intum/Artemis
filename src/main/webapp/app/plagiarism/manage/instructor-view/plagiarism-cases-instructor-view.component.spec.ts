@@ -8,15 +8,15 @@ import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { TranslateService } from '@ngx-translate/core';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
-import * as DownloadUtil from 'app/shared/util/download.util';
+import * as DownloadUtil from 'app/foundation/util/download.util';
 import dayjs from 'dayjs/esm';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
 import { MockComponent } from 'ng-mocks';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ProgressBarComponent } from 'app/ui/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { PlagiarismCaseVerdictComponent } from 'app/plagiarism/shared/verdict/plagiarism-case-verdict.component';
 import { Component, ElementRef, signal } from '@angular/core';
 import { Location } from '@angular/common';
@@ -26,7 +26,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 @Component({ template: '' })
 class DummyComponent {}
 
-jest.mock('app/shared/util/download.util', () => ({
+jest.mock('app/foundation/util/download.util', () => ({
     downloadFile: jest.fn(),
 }));
 

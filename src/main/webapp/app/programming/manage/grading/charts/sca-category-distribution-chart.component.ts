@@ -5,11 +5,11 @@ import { CategoryIssuesMap } from 'app/programming/shared/entities/programming-e
 import { TranslateService } from '@ngx-translate/core';
 import { getColor } from 'app/programming/manage/grading/charts/programming-grading-charts.utils';
 import { ProgrammingGradingChartsDirective } from 'app/programming/manage/grading/charts/programming-grading-charts.directive';
-import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgxChartsMultiSeriesDataEntry } from 'app/ui/chart/ngx-charts-datatypes';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { BarChartModule } from '@swimlane/ngx-charts';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 enum ScaChartBarTitle {
     PENALTY = 'Penalty',

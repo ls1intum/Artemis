@@ -1,10 +1,10 @@
 import { Component, OnInit, inject, input } from '@angular/core';
-import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
+import { ConfirmIconComponent } from 'app/ui/confirm-icon/confirm-icon.component';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { MetisService } from 'app/communication/service/metis.service';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { NgClass } from '@angular/common';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LinkPreview } from 'app/communication/link-preview/services/link-preview.service';
 import { urlRegex } from 'app/communication/link-preview/services/linkify.service';
 

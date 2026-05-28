@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, input, model, output } from '@angular/core';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComplaintResponseService } from 'app/assessment/manage/services/complaint-response.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
@@ -7,17 +7,17 @@ import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complai
 import { finalize } from 'rxjs/operators';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Router } from '@angular/router';
-import { assessmentNavigateBack } from 'app/shared/util/navigate-back.util';
+import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
 import { Location } from '@angular/common';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { isAllowedToRespondToComplaintAction } from 'app/assessment/manage/services/assessment.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ComplaintAction, ComplaintResponseUpdateDTO } from 'app/assessment/shared/entities/complaint-response-dto.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TextareaCounterComponent } from 'app/shared/textarea/textarea-counter.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TextareaCounterComponent } from 'app/ui/textarea/textarea-counter.component';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 export type AssessmentAfterComplaint = { complaintResponse: ComplaintResponse; onSuccess: () => void; onError: () => void };
 

@@ -6,11 +6,11 @@ import { TranslateModule } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 
 import { CourseRequestFormComponent } from 'app/course/request/course-request-form.component';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
-import { regexValidator } from 'app/shared/form/shortname-validator.directive';
+import { FormDateTimePickerComponent } from 'app/ui/date-time-picker/date-time-picker.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
+import { regexValidator } from 'app/ui/form/shortname-validator.directive';
 
 describe('CourseRequestFormComponent', () => {
     setupTestBed({ zoneless: true });

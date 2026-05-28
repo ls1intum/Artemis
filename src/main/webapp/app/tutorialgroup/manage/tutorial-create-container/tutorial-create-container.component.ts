@@ -1,11 +1,11 @@
 import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariable';
+import { getNumericPathVariableSignal } from 'app/foundation/route/getPathVariable';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CreateTutorialGroupEvent, TutorialCreateOrEditComponent } from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupTutorsService } from 'app/tutorialgroup/manage/service/tutorial-group-tutors.service';
-import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
+import { LoadingIndicatorOverlayComponent } from 'app/ui/loading-indicator-overlay/loading-indicator-overlay.component';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 
 @Component({

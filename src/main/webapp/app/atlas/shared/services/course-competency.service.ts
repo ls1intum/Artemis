@@ -14,8 +14,8 @@ import {
     CourseCompetencyType,
 } from 'app/atlas/shared/entities/competency.model';
 import { map, tap } from 'rxjs/operators';
-import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
-import { CompetencyPageableSearch, SearchResult } from 'app/shared/table/pageable-table';
+import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
+import { CompetencyPageableSearch, SearchResult } from 'app/ui/table/pageable-table';
 import { HttpParams } from '@angular/common/http';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';

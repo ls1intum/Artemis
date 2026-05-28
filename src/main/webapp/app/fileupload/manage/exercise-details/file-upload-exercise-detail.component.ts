@@ -4,13 +4,13 @@ import { ActivatedRoute } from '@angular/router';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
 import { FileUploadExerciseService } from '../services/file-upload-exercise.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
+import { StatisticsService } from 'app/ui/statistics-graph/service/statistics.service';
 import dayjs from 'dayjs/esm';
-import { onError } from 'app/shared/util/global.utils';
-import { EventManager } from 'app/shared/service/event-manager.service';
-import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { onError } from 'app/foundation/util/global.utils';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { DocumentationType } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
 import {
     getExerciseGeneralDetailsSection,
     getExerciseGradingDefaultDetails,
@@ -19,10 +19,10 @@ import {
     getExerciseModeDetailSection,
     getExerciseProblemDetailSection,
 } from 'app/exercise/util/utils';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
+import { DetailOverviewListComponent } from 'app/ui/detail-overview-list/detail-overview-list.component';
 import { map } from 'rxjs/operators';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';

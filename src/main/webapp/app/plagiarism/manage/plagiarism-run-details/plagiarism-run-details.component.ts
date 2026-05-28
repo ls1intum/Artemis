@@ -1,15 +1,15 @@
 import { Component, OnChanges, SimpleChanges, inject, input, output } from '@angular/core';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { Range, round } from 'app/shared/util/utils';
+import { Range, round } from 'app/foundation/util/utils';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
 import { PlagiarismResultStats } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { DatePipe } from '@angular/common';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { PlagiarismAndTutorEffortDirective } from 'app/plagiarism/manage/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
 import { PlagiarismInspectorService } from 'app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.service';
 import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
@@ -22,7 +22,7 @@ interface SimilarityRangeComparisonStateDTO {
 
 @Component({
     selector: 'jhi-plagiarism-run-details',
-    styleUrls: ['./plagiarism-run-details.component.scss', '../../../shared/chart/vertical-bar-chart.scss'],
+    styleUrls: ['./plagiarism-run-details.component.scss', '../../../ui/chart/vertical-bar-chart.scss'],
     templateUrl: './plagiarism-run-details.component.html',
     imports: [TranslateDirective, HelpIconComponent, BarChartModule, DatePipe, ArtemisTranslatePipe, ArtemisDatePipe],
 })

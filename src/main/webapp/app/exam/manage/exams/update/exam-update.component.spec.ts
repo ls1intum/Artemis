@@ -1,5 +1,5 @@
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { of, throwError } from 'rxjs';
 import { Component } from '@angular/core';
@@ -15,12 +15,12 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
-import { AlertService } from 'app/shared/service/alert.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { User } from 'app/account/user/user.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
@@ -36,7 +36,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/ui/components/buttons/button/button.component';
 import { By } from '@angular/platform-browser';
 import { toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

@@ -1,14 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, input, model, output } from '@angular/core';
 import { FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
 import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faSort } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass, SlicePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { ResultComponent } from 'app/exercise/result/result.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { BuildAgentInformation } from 'app/buildagent/shared/entities/build-agent-information.model';
 import { createAddressToAgentInfoMap, getAgentInfoByAddress } from 'app/buildagent/shared/build-agent-address.utils';
 

@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { ExerciseVersionMetadata } from 'app/exercise/version-history/shared/exercise-version-history.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ProfilePictureComponent } from 'app/ui/profile-picture/profile-picture.component';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';

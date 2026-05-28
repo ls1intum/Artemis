@@ -4,9 +4,9 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { LearnerProfileApiService } from 'app/account/user/settings/learner-profile/learner-profile-api.service';
 import { CourseLearnerProfileDTO } from 'app/account/user/settings/learner-profile/dto/course-learner-profile-dto.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { AlertService, AlertType } from 'app/shared/service/alert.service';
-import { SegmentedToggleComponent } from 'app/shared/segmented-toggle/segmented-toggle.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
+import { SegmentedToggleComponent } from 'app/ui/segmented-toggle/segmented-toggle.component';
 import { COURSE_LEARNER_PROFILE_OPTIONS } from 'app/account/user/settings/learner-profile/entities/course-learner-profile-options.model';
 
 /**

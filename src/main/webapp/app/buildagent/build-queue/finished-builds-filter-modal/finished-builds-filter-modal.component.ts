@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { HttpParams } from '@angular/common/http';
 import { FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { FormDateTimePickerComponent } from 'app/ui/date-time-picker/date-time-picker.component';
 import { FormsModule } from '@angular/forms';
 
 export class FinishedBuildJobFilter {

@@ -6,12 +6,12 @@ import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { FormsModule } from '@angular/forms';
 import { TutorialRegistrationsImportModalComponent } from 'app/tutorialgroup/manage/tutorial-registrations-import-modal/tutorial-registrations-import-modal.component';
-import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
-import { ExportUserInformationRow, exportUserInformationAsCsv } from 'app/shared/user-import/util/write-users-to-csv';
+import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/ui/export/export-constants';
+import { ExportUserInformationRow, exportUserInformationAsCsv } from 'app/ui/user-import/util/write-users-to-csv';
 import { TutorialRegistrationsRegisterModalComponent } from 'app/tutorialgroup/manage/tutorial-registrations-register-modal/tutorial-registrations-register-modal.component';
 import {
     TutorialRegistrationsStudentsTableComponent,

@@ -11,9 +11,9 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { ButtonComponent } from 'app/ui/components/buttons/button/button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExpandableSectionComponent } from '../expandable-section/expandable-section.component';
 

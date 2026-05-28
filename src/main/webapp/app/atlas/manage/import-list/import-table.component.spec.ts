@@ -4,13 +4,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PagingService } from 'app/exercise/services/paging.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Observable, of } from 'rxjs';
-import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
+import { SearchResult, SortingOrder } from 'app/ui/table/pageable-table';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { ImportTableComponent } from 'app/atlas/manage/import-list/import-table.component';
-import { Column } from 'app/shared/import/import.component';
+import { Column } from 'app/ui/import/import.component';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ImportTableComponent', () => {

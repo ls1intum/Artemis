@@ -4,7 +4,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService } from 'primeng/dynamicdialog';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 @Component({
     template: '',

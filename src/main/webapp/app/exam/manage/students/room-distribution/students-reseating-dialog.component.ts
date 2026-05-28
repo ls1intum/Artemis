@@ -1,5 +1,5 @@
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import {
     Component,
     InputSignal,
@@ -28,7 +28,7 @@ import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { faBan, faChair } from '@fortawesome/free-solid-svg-icons';
 import { RoomForDistributionDTO, SeatsOfExamRoomDTO } from './students-room-distribution.model';
 import { Observable, debounceTime, distinctUntilChanged, map } from 'rxjs';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
 
 @Component({
     selector: 'jhi-students-reseating-dialog',

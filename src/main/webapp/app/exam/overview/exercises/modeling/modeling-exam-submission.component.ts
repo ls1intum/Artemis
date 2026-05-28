@@ -10,14 +10,14 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/sha
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { SafeHtml } from '@angular/platform-browser';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { ResizeableContainerComponent } from 'app/ui/resizeable-container/resizeable-container.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 
 @Component({

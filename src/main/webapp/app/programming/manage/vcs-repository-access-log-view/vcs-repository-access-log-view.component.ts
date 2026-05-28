@@ -3,9 +3,9 @@ import { Observable, lastValueFrom } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { VcsAccessLogDTO } from 'app/programming/shared/entities/vcs-access-log-entry.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-vcs-repository-access-log-view',

@@ -1,17 +1,17 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 'app/programming/manage/assess/repo-export/programming-assessment-repo-export.service';
 import { HttpResponse } from '@angular/common/http';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
+import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { FormDateTimePickerComponent } from 'app/ui/date-time-picker/date-time-picker.component';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({

@@ -1,10 +1,10 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -20,7 +20,7 @@ import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.
 import { BehaviorSubject, Subject, of } from 'rxjs';
 import { signal } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/ui/components/buttons/button/button.component';
 import {
     mockClientMessage,
     mockClientMessageWithMemories,
@@ -33,16 +33,16 @@ import {
     mockWebsocketServerMessage,
 } from 'test/helpers/sample/iris-sample-data';
 import { By } from '@angular/platform-browser';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { IrisAssistantMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
 import { IrisJsonMessageContent, IrisMessageContentType, IrisTextMessageContent, getMcqData, isMcqContent } from 'app/iris/shared/entities/iris-content-type.model';
 import dayjs from 'dayjs/esm';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisThinkingBubbleComponent } from 'app/iris/overview/base-chatbot/iris-thinking-bubble/iris-thinking-bubble.component';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/account/user/user.model';
@@ -51,7 +51,7 @@ import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service'
 import { ConfirmationService } from 'primeng/api';
 import { DialogService } from 'primeng/dynamicdialog';
 import { IrisOnboardingService } from 'app/iris/overview/iris-onboarding-modal/iris-onboarding.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { COURSE_SUGGESTION_CHIPS } from 'app/iris/overview/base-chatbot/iris-chatbot-suggestion-chips';

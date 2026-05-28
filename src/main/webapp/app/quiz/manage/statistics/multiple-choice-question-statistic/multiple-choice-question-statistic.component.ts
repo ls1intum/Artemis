@@ -1,13 +1,13 @@
 import { Component, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { QuizStatisticUtil } from 'app/quiz/shared/service/quiz-statistic-util.service';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { MultipleChoiceQuestionStatistic } from 'app/quiz/shared/entities/multiple-choice-question-statistic.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuestionStatisticComponent, blueColor, greenColor, redColor } from 'app/quiz/manage/statistics/question-statistic.component';
 import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
@@ -15,7 +15,7 @@ import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-st
 @Component({
     selector: 'jhi-multiple-choice-question-statistic',
     templateUrl: './multiple-choice-question-statistic.component.html',
-    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', '../../../../shared/chart/vertical-bar-chart.scss'],
+    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', '../../../../ui/chart/vertical-bar-chart.scss'],
     providers: [QuizStatisticUtil],
     imports: [TranslateDirective, BarChartModule, FaIconComponent, QuizStatisticsFooterComponent],
 })

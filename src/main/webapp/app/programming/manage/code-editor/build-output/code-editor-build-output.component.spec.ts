@@ -16,7 +16,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StaticCodeAnalysisIssue } from 'app/programming/shared/entities/static-code-analysis-issue.model';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { CodeEditorSubmissionService } from 'app/programming/shared/code-editor/services/code-editor-submission.service';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';

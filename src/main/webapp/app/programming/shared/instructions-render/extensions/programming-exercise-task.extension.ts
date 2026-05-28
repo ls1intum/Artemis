@@ -1,5 +1,5 @@
 import { Injectable, ViewContainerRef } from '@angular/core';
-import { ArtemisTextReplacementPlugin } from 'app/shared/markdown-editor/extensions/ArtemisTextReplacementPlugin';
+import { ArtemisTextReplacementPlugin } from 'app/editor/markdown-editor/extensions/ArtemisTextReplacementPlugin';
 
 /**
  * Regular expression for finding tasks.

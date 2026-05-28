@@ -13,7 +13,7 @@ import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage
 import { TutorialRegistrationsComponent } from 'app/tutorialgroup/manage/tutorial-registrations/tutorial-registrations.component';
 import { TutorialGroupDetailData } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupCourseAndGroupService } from 'app/tutorialgroup/shared/service/tutorial-group-course-and-group.service';
-import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
+import { LoadingIndicatorOverlayComponent } from 'app/ui/loading-indicator-overlay/loading-indicator-overlay.component';
 import { LoadingIndicatorOverlayStubComponent } from 'test/helpers/stubs/tutorialgroup/loading-indicator-overlay-stub.component';
 import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';

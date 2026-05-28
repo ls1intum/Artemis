@@ -1,19 +1,19 @@
 import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { finalize } from 'rxjs/operators';
 import { faPlayCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
-import { ExerciseActionButtonComponent } from 'app/shared/components/buttons/exercise-action-button/exercise-action-button.component';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { ExerciseActionButtonComponent } from 'app/ui/components/buttons/exercise-action-button/exercise-action-button.component';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 
 @Component({
     selector: 'jhi-start-practice-mode-button',

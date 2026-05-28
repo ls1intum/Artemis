@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 import { BuildJob, BuildJobStatistics, FinishedBuildJob, SpanType } from 'app/buildagent/shared/entities/build-job.model';
-import { createNestedRequestOption } from 'app/shared/util/request.util';
+import { createNestedRequestOption } from 'app/foundation/util/request.util';
 import { HttpResponse } from '@angular/common/http';
 import { FinishedBuildJobFilter } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 

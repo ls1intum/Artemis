@@ -6,17 +6,17 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { User } from 'app/account/user/user.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Subject } from 'rxjs';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ActionType } from 'app/ui/delete-dialog/delete-dialog.model';
 import { faUserSlash } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { DeleteButtonDirective } from 'app/ui/delete-dialog/directive/delete-button.directive';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { TableLazyLoadEvent } from 'primeng/table';
-import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared/table-view/table-view';
-import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
-import { AlertService } from 'app/shared/service/alert.service';
-import { onError } from 'app/shared/util/global.utils';
+import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/ui/table-view/table-view';
+import { buildDbQueryFromLazyEvent } from 'app/ui/table-view/request-builder';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
 
 /**
  * Admin component for viewing and managing organization details.

@@ -14,11 +14,11 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { TranslateService } from '@ngx-translate/core';
 import { isProgrammingExerciseParticipation } from 'app/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { BarChartModule, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
 import { faCircleNotch, faExclamationTriangle, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/util/statistics-graph.utils';
+import { axisTickFormattingWithPercentageSign } from 'app/ui/statistics-graph/util/statistics-graph.utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { FeedbackItemService, FeedbackItemServiceImpl } from 'app/exercise/feedback/item/feedback-item-service';
@@ -30,13 +30,13 @@ import { ChartData } from 'app/exercise/feedback/chart/feedback-chart-data';
 import { FeedbackChartService } from 'app/exercise/feedback/chart/feedback-chart.service';
 import { isFeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 import { cloneDeep } from 'lodash-es';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass, NgTemplateOutlet, UpperCasePipe } from '@angular/common';
 import { FeedbackNodeComponent } from './node/feedback-node.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { Participation, getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
 
 // Modal -> Result details view

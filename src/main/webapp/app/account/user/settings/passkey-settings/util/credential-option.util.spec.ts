@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createCredentialOptions } from './credential-option.util';
-import { decodeBase64url } from 'app/shared/util/base64.util';
+import { decodeBase64url } from 'app/foundation/util/base64.util';
 import { User } from 'app/account/user/user.model';
 
-vi.mock('app/shared/util/base64.util', () => ({
+vi.mock('app/foundation/util/base64.util', () => ({
     decodeBase64url: vi.fn(),
 }));
 

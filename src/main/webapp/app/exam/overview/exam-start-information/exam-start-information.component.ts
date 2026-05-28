@@ -1,12 +1,12 @@
 import { Component, effect, input } from '@angular/core';
 
-import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared/information-box/information-box.component';
+import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/ui/information-box/information-box.component';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import dayjs from 'dayjs/esm';
 import { SafeHtml } from '@angular/platform-browser';
 import { StudentExamWorkingTimeComponent } from 'app/exam/overview/student-exam-working-time/student-exam-working-time.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-exam-start-information',

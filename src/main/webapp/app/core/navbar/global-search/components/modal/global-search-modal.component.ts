@@ -7,7 +7,7 @@ import { OsDetectorService } from '../../services/os-detector.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowDown, faArrowUp } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DialogModule } from 'primeng/dialog';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { GlobalSearchNavigationViewComponent } from 'app/core/navbar/global-search/components/views/navigation-view/global-search-navigation-view.component';

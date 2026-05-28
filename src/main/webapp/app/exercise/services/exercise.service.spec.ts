@@ -5,8 +5,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import type { EntityResponseType, ExerciseDetailsType } from 'app/exercise/services/exercise.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -15,7 +15,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { MockProvider } from 'ng-mocks';
 import { SafeHtml } from '@angular/platform-browser';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
@@ -26,7 +26,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { EntityTitleService } from 'app/core/navbar/entity-title.service';
 import { ExerciseDeletionSummaryDTO } from 'app/exercise/shared/entities/exercise-deletion-summary.model';
-import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
+import { EntitySummary } from 'app/ui/delete-dialog/delete-dialog.model';
 
 describe('Exercise Service', () => {
     let service: ExerciseService;

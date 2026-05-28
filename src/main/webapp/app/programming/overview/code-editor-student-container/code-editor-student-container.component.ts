@@ -4,7 +4,7 @@ import { UpdatingResultComponent } from 'app/exercise/result/updating-result/upd
 import { Observable, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize } from 'app/ui/components/buttons/button/button.component';
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackType, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
@@ -22,7 +22,7 @@ import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { isManualResult as isManualResultFunction } from 'app/exercise/result/result.utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgrammingExerciseInstructionComponent } from '../../shared/instructions-render/programming-exercise-instruction.component';
 import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
 import { CodeEditorRepositoryIsLockedComponent } from 'app/programming/shared/code-editor/layout/code-editor-repository-is-locked.component';

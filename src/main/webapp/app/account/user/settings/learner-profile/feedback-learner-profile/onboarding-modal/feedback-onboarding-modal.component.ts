@@ -4,12 +4,12 @@ import { TextResultComponent } from 'app/text/overview/text-result/text-result.c
 import { FEEDBACK_EXAMPLES } from 'app/account/user/settings/learner-profile/feedback-learner-profile/onboarding-modal/feedback-examples';
 import { LearnerProfileApiService } from 'app/account/user/settings/learner-profile/learner-profile-api.service';
 import { LearnerProfileDTO } from 'app/account/user/settings/learner-profile/dto/learner-profile-dto.model';
-import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/ui/components/buttons/button/button.component';
 import { DialogModule } from 'primeng/dialog';
 
 @Component({

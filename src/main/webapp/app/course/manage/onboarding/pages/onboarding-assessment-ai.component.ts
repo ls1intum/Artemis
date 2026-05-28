@@ -1,10 +1,10 @@
 import { Component, effect, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Course } from 'app/course/shared/entities/course.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChartLine, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
 import { NgClass } from '@angular/common';
 
 @Component({

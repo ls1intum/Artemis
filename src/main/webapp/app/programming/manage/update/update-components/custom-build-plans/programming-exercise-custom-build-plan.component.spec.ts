@@ -9,8 +9,8 @@ import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update
 import { BuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { LegacyBuildPlanConverterService } from 'app/programming/shared/services/legacy-build-plan-converter.service';
 
 describe('ProgrammingExerciseCustomBuildPlanComponent', () => {

@@ -1,8 +1,8 @@
 import { Component, signal } from '@angular/core';
 import { Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/statistics.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { StatisticsGraphComponent } from 'app/ui/statistics-graph/statistics-graph.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 

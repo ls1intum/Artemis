@@ -1,7 +1,7 @@
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -15,7 +15,7 @@ import { Exercise, ExerciseType, IncludedInOverallScore, ValidationReason } from
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import {
     APP_NAME_PATTERN_FOR_SWIFT,
     EXERCISE_TITLE_NAME_PATTERN,
@@ -29,7 +29,7 @@ import {
     PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX,
     PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN,
     PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN,
-} from 'app/shared/constants/input.constants';
+} from 'app/foundation/constants/input.constants';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
@@ -37,7 +37,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
-import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
 import { SharingInfo } from 'app/sharing/sharing.model';
@@ -47,18 +47,18 @@ import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/upd
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { IS_DISPLAYED_IN_SIMPLE_MODE, ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
 import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/course-utils';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ProgrammingExerciseVersionControlComponent } from 'app/programming/manage/update/update-components/version-control/programming-exercise-version-control.component';
-import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
-import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
-import { FileService } from 'app/shared/service/file.service';
-import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
+import { FormSectionStatus, FormStatusBarComponent } from 'app/ui/form/form-status-bar/form-status-bar.component';
+import { FormFooterComponent } from 'app/ui/form/form-footer/form-footer.component';
+import { FileService } from 'app/foundation/service/file.service';
+import { FeatureOverlayComponent } from 'app/ui/components/feature-overlay/feature-overlay.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';

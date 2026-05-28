@@ -3,12 +3,12 @@ import { CourseNotification } from 'app/notification/shared/entities/course-noti
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
 import { IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ProfilePictureComponent } from 'app/ui/profile-picture/profile-picture.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CommonModule } from '@angular/common';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { DomSanitizer } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 

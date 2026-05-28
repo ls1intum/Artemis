@@ -1,17 +1,17 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { Dialog } from 'primeng/dialog';
-import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialRegistrationsRegisterSearchBarComponent } from 'app/tutorialgroup/manage/tutorial-registrations-register-search-bar/tutorial-registrations-register-search-bar.component';
 import {
     TutorialRegistrationsStudentsTableComponent,
     TutorialRegistrationsStudentsTableRemoveActionColumnInfo,
 } from 'app/tutorialgroup/manage/tutorial-registrations-students-table/tutorial-registrations-students-table.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ButtonDirective } from 'primeng/button';
-import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
+import { LoadingIndicatorOverlayComponent } from 'app/ui/loading-indicator-overlay/loading-indicator-overlay.component';
 import { HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';

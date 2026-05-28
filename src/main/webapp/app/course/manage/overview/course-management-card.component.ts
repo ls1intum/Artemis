@@ -23,21 +23,21 @@ import {
     faUserCheck,
     faUsers,
 } from '@fortawesome/free-solid-svg-icons';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { NgStyle } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { ImageComponent } from 'app/shared/image/image.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ImageComponent } from 'app/foundation/image/image.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseManagementExerciseRowComponent } from './course-management-exercise-row.component';
 import { CourseManagementOverviewStatisticsComponent } from './course-management-overview-statistics.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
-import { getContrastingTextColor } from 'app/shared/util/color.utils';
+import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FeatureOverlayComponent } from 'app/ui/components/feature-overlay/feature-overlay.component';
+import { getContrastingTextColor } from 'app/foundation/util/color.utils';
 
 @Component({
     selector: 'jhi-course-management-card',

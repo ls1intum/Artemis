@@ -1,7 +1,7 @@
 import { Component, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
-import { ImageComponent } from 'app/shared/image/image.component';
+import { ImageComponent } from 'app/foundation/image/image.component';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { QuizQuestion, RenderedQuizQuestionMarkDownElement } from 'app/quiz/shared/entities/quiz-question.model';
@@ -11,7 +11,7 @@ import { CdkDragDrop, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-dr
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { NgClass, NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { QuizScoringInfoStudentModalComponent } from '../quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 import { DragItemComponent } from './drag-item/drag-item.component';

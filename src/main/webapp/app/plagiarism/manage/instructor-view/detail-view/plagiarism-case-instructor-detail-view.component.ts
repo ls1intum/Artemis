@@ -13,14 +13,14 @@ import { MetisService } from 'app/communication/service/metis.service';
 import { PageType } from 'app/communication/metis.util';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Subscription } from 'rxjs';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { faCheck, faInfo, faPrint, faUser } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
-import { abbreviateString } from 'app/shared/util/text.utils';
+import { abbreviateString } from 'app/foundation/util/text.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
 import dayjs from 'dayjs/esm';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
     NgbDropdown,
@@ -36,7 +36,7 @@ import {
     NgbNavOutlet,
 } from '@ng-bootstrap/ng-bootstrap';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
-import { ConfirmAutofocusButtonComponent } from 'app/shared/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
+import { ConfirmAutofocusButtonComponent } from 'app/ui/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
 import { FormsModule } from '@angular/forms';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';

@@ -23,9 +23,9 @@ import { MessageModule } from 'primeng/message';
 
 import { SystemNotificationManagementUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';
 import { SystemNotification, SystemNotificationType } from 'app/admin/system-notification-management/system-notification.model';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { FormDateTimePickerComponent } from 'app/ui/date-time-picker/date-time-picker.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';

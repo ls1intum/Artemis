@@ -2,13 +2,13 @@ import { Component, Input, OnInit, inject } from '@angular/core';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
-import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
-import { AlertService } from 'app/shared/service/alert.service';
+import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { faUpload } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise, copyBuildConfigFromExerciseJson } from 'app/programming/shared/entities/programming-exercise.model';
 import JSZip from 'jszip';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { ButtonComponent } from 'app/ui/components/buttons/button/button.component';
+import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseImportDialogData } from '../exercise-import.component';
 

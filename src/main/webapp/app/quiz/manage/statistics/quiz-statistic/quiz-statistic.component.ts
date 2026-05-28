@@ -2,15 +2,15 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angula
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { calculateMaxScore } from 'app/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
 import { Subscription } from 'rxjs';
-import { round } from 'app/shared/util/utils';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { round } from 'app/foundation/util/utils';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
@@ -18,7 +18,7 @@ import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-st
 @Component({
     selector: 'jhi-quiz-statistic',
     templateUrl: './quiz-statistic.component.html',
-    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', '../../../../shared/chart/vertical-bar-chart.scss'],
+    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', '../../../../ui/chart/vertical-bar-chart.scss'],
     imports: [TranslateDirective, BarChartModule, FaIconComponent, QuizStatisticsFooterComponent],
 })
 export class QuizStatisticComponent extends AbstractQuizStatisticComponent implements OnInit, OnDestroy {

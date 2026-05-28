@@ -2,13 +2,13 @@ import { Component, OnDestroy, computed, effect, inject, signal } from '@angular
 import { ActivatedRoute } from '@angular/router';
 import { Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/statistics.model';
 import { Subscription } from 'rxjs';
-import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
+import { StatisticsService } from 'app/ui/statistics-graph/service/statistics.service';
 import { CourseManagementStatisticsDTO } from '../../shared/entities/course-management-statistics-dto';
-import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
-import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/average-score-graph/statistics-average-score-graph.component';
-import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { StatisticsAverageScoreGraphComponent } from 'app/ui/statistics-graph/average-score-graph/statistics-average-score-graph.component';
+import { StatisticsGraphComponent } from 'app/ui/statistics-graph/statistics-graph.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 

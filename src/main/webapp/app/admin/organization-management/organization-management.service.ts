@@ -6,7 +6,7 @@ import { Organization } from 'app/admin/organization-management/organization.mod
 import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
-import { PageableResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
+import { PageableResult, SearchTermPageableSearch } from 'app/ui/table/pageable-table';
 
 @Injectable({ providedIn: 'root' })
 export class OrganizationManagementService {

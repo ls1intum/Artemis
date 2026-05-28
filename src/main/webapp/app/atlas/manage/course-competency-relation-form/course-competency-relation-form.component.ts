@@ -2,15 +2,15 @@ import { Component, computed, effect, inject, input, model, signal } from '@angu
 import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, UpdateCourseCompetencyRelationDTO } from 'app/atlas/shared/entities/competency.model';
 
 import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { faLightbulb, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
-import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { ButtonComponent, ButtonType } from 'app/ui/components/buttons/button/button.component';
 
 interface SuggestedRelationDTO {
     tail_id: string;

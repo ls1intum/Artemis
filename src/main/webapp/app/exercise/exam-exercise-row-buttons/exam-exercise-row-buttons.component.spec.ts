@@ -17,12 +17,12 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockDirective, MockProvider } from 'ng-mocks';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { DeleteButtonDirective } from 'app/ui/delete-dialog/directive/delete-button.directive';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { EventManager } from 'app/shared/service/event-manager.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ExamExerciseRowButtonsComponent } from 'app/exercise/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 
 describe('ExamExerciseRowButtonsComponent', () => {

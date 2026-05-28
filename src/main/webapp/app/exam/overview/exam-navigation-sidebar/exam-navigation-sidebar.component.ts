@@ -1,6 +1,6 @@
 import { Component, HostListener, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { SidebarEventService } from 'app/shared/sidebar/service/sidebar-event.service';
+import { SidebarEventService } from 'app/ui/sidebar/service/sidebar-event.service';
 import { ExamSession } from 'app/exam/shared/entities/exam-session.model';
 import { Exercise, ExerciseType, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
@@ -11,16 +11,16 @@ import { map } from 'rxjs/operators';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChevronRight, faFileLines, faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
 import { CommitState, DomainChange, DomainType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { SidebarData } from 'app/shared/types/sidebar';
-import { facSaveSuccess, facSaveWarning } from 'app/shared/icons/icons';
+import { SidebarData } from 'app/foundation/types/sidebar';
+import { facSaveSuccess, facSaveWarning } from 'app/foundation/icons/icons';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 
 export enum ExerciseButtonStatus {

@@ -2,14 +2,14 @@ import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Observable, Subject, debounceTime, distinctUntilChanged, finalize, map, takeUntil } from 'rxjs';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/shared/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AbstractDialogComponent } from 'app/communication/course-conversations-components/abstract-dialog.component';
-import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { LoadingIndicatorContainerComponent } from 'app/ui/loading-indicator-container/loading-indicator-container.component';
 import { ChannelItemComponent } from './channel-item/channel-item.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { canCreateChannel } from 'app/communication/conversations/conversation-permissions.utils';
 

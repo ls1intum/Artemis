@@ -1,19 +1,19 @@
 import { Component, HostListener, Signal, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { IconDefinition, faChevronRight, faCog, faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { NgClass, NgTemplateOutlet, SlicePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ImageComponent } from 'app/shared/image/image.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ImageComponent } from 'app/foundation/image/image.component';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
+import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { Course } from 'app/course/shared/entities/course.model';
-import { LayoutService } from 'app/shared/breakpoints/layout.service';
+import { LayoutService } from 'app/foundation/breakpoints/layout.service';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
-import { ScienceService } from 'app/shared/science/science.service';
-import { ScienceEventType } from 'app/shared/science/science.model';
+import { CustomBreakpointNames } from 'app/foundation/breakpoints/breakpoints.service';
+import { ScienceService } from 'app/foundation/science/science.service';
+import { ScienceEventType } from 'app/foundation/science/science.model';
 
 export interface CourseActionItem {
     title: string;

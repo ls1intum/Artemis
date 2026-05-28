@@ -1,25 +1,25 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackChannelRequestDTO, FeedbackDetail } from './service/feedback-analysis.service';
 import { NgbModal, NgbModule, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { faCircleQuestion, faFilter, faMessage, faSort, faSpinner, faUsers } from '@fortawesome/free-solid-svg-icons';
-import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
+import { SearchResult, SortingOrder } from 'app/ui/table/pageable-table';
 import { FeedbackModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback/feedback-modal.component';
 import { FeedbackFilterModalComponent, FilterData } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-filter/feedback-filter-modal.component';
-import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
-import { SortIconComponent } from 'app/shared/sort/icon/sort-icon.component';
+import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
+import { SortIconComponent } from 'app/foundation/sort/icon/sort-icon.component';
 import { AffectedStudentsModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-affected-students/feedback-affected-students-modal.component';
 import { FeedbackDetailChannelModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-detail-channel/feedback-detail-channel-modal.component';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { Router } from '@angular/router';
 import dayjs from 'dayjs/esm';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CommonModule } from '@angular/common';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
-import { facDetails } from 'app/shared/icons/icons';
+import { facDetails } from 'app/foundation/icons/icons';
 
 export interface FeedbackAnalysisState {
     page: number;

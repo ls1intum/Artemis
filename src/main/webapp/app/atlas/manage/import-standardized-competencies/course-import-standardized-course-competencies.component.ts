@@ -1,5 +1,5 @@
 import { getIcon } from 'app/atlas/shared/entities/competency.model';
-import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize, ButtonType } from 'app/ui/components/buttons/button/button.component';
 import {
     KnowledgeAreaDTO,
     KnowledgeAreaForTree,
@@ -11,16 +11,16 @@ import {
 import { faBan, faDownLeftAndUpRightToCenter, faFileImport, faSort, faTrash, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Component, HostListener, OnInit, inject, viewChild } from '@angular/core';
-import { onError } from 'app/shared/util/global.utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 import { forkJoin, map } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/shared/service/alert.service';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
-import { SortService } from 'app/shared/service/sort.service';
+import { SortService } from 'app/foundation/service/sort.service';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
-import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationType } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { StandardizedCompetencyFilterPageComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-filter-page.component';
 import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';

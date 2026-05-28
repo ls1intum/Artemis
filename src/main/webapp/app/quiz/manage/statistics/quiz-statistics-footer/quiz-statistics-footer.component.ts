@@ -10,15 +10,15 @@ import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.servi
 import { MultipleChoiceQuestionStatistic } from 'app/quiz/shared/entities/multiple-choice-question-statistic.model';
 import { QuizPointStatistic } from 'app/quiz/shared/entities/quiz-point-statistic.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
+import { UI_RELOAD_TIME } from 'app/foundation/constants/exercise-exam-constants';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgClass } from '@angular/common';
-import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
-import { TruncatePipe } from 'app/shared/pipes/truncate.pipe';
+import { JhiConnectionStatusComponent } from 'app/ui/connection-status/connection-status.component';
+import { TruncatePipe } from 'app/foundation/pipes/truncate.pipe';
 
 @Component({
     selector: 'jhi-quiz-statistics-footer',

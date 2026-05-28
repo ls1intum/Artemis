@@ -2,7 +2,7 @@ import { Component, OnInit, effect, inject, input, viewChild } from '@angular/co
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
-import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize, ButtonType } from 'app/ui/components/buttons/button/button.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -11,7 +11,7 @@ import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ProgrammingSubmissionPolicyStatusComponent } from 'app/programming/shared/entities/programming-submission-policy-status';
 import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/student-actions/exercise-details-student-actions.component';

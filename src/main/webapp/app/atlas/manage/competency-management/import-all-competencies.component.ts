@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, model } from '@angular/core';
 import { Course, CourseForImportDTO } from 'app/course/shared/entities/course.model';
-import { Column, ImportComponent } from 'app/shared/import/import.component';
+import { Column, ImportComponent } from 'app/ui/import/import.component';
 
 import { CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 
@@ -9,11 +9,11 @@ export interface ImportAllCompetenciesDialogData {
     competencyType?: CourseCompetencyType | 'courseCompetency';
 }
 import { NgbPagination, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { ButtonComponent } from 'app/ui/components/buttons/button/button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';

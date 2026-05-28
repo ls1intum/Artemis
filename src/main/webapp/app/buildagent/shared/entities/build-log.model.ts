@@ -1,4 +1,4 @@
-import { safeUnescape } from 'app/shared/util/security.util';
+import { safeUnescape } from 'app/foundation/util/security.util';
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 

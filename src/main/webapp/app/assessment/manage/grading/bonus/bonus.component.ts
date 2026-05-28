@@ -8,22 +8,22 @@ import { Bonus, BonusExample, BonusStrategy } from 'app/assessment/shared/entiti
 import { catchError, finalize, tap } from 'rxjs/operators';
 import { faExclamationTriangle, faPlus, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
-import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize } from 'app/ui/components/buttons/button/button.component';
 import { Subject, forkJoin, of } from 'rxjs';
-import { SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
+import { SearchTermPageableSearch, SortingOrder } from 'app/ui/table/pageable-table';
 import { GradeEditMode } from 'app/assessment/manage/grading/grading.component';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 
-import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
-import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { SafeHtmlPipe } from 'app/foundation/pipes/safe-html.pipe';
+import { GradeStepBoundsPipe } from 'app/foundation/pipes/grade-step-bounds.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { DeleteButtonDirective } from 'app/ui/delete-dialog/directive/delete-button.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
 import { toEntity } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
 export enum BonusStrategyOption {

@@ -20,11 +20,11 @@ import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fo
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/ui/components/buttons/button/button.component';
 
 @Component({
     selector: 'jhi-competency-selection-primeng',

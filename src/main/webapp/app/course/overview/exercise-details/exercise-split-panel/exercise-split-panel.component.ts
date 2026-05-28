@@ -13,11 +13,11 @@ import { QuizParticipationComponent } from 'app/quiz/overview/participation/quiz
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
-import { PanelDirective, ResizablePanelsComponent } from 'app/shared/components/resizable-panels/resizable-panels.component';
+import { PanelDirective, ResizablePanelsComponent } from 'app/ui/components/resizable-panels/resizable-panels.component';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ResetRepoButtonComponent } from 'app/course/overview/exercise-details/reset-repo-button/reset-repo-button.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
@@ -27,7 +27,7 @@ import { CompetencyContributionComponent } from 'app/atlas/shared/competency-con
 import { LtiInitializerComponent } from 'app/course/overview/exercise-details/lti-initializer/lti-initializer.component';
 import { PanelModule } from 'primeng/panel';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';

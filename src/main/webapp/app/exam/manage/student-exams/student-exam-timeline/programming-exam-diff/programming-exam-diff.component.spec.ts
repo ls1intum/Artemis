@@ -7,7 +7,7 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { of } from 'rxjs';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { CachedRepositoryFilesService } from 'app/programming/manage/services/cached-repository-files.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

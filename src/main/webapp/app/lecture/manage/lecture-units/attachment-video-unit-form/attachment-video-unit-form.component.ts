@@ -3,18 +3,18 @@ import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { buildEmbedUrl, parseVideoUrl } from './video-url-parser';
 import { faArrowLeft, faCircleInfo, faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
+import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/foundation/constants/file-extensions.constants';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
-import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormDateTimePickerComponent } from 'app/ui/date-time-picker/date-time-picker.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;

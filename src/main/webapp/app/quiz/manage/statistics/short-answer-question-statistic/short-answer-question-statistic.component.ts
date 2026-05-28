@@ -1,14 +1,14 @@
 import { Component, inject } from '@angular/core';
 import { QuizStatisticUtil } from 'app/quiz/shared/service/quiz-statistic-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { ShortAnswerQuestionStatistic } from 'app/quiz/shared/entities/short-answer-question-statistic.model';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuestionStatisticComponent, blueColor, greenColor } from 'app/quiz/manage/statistics/question-statistic.component';
 import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
@@ -17,11 +17,7 @@ import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-st
     selector: 'jhi-short-answer-question-statistic',
     templateUrl: './short-answer-question-statistic.component.html',
     providers: [QuizStatisticUtil, ShortAnswerQuestionUtil],
-    styleUrls: [
-        '../../../../shared/chart/vertical-bar-chart.scss',
-        '../quiz-point-statistic/quiz-point-statistic.component.scss',
-        './short-answer-question-statistic.component.scss',
-    ],
+    styleUrls: ['../../../../ui/chart/vertical-bar-chart.scss', '../quiz-point-statistic/quiz-point-statistic.component.scss', './short-answer-question-statistic.component.scss'],
     imports: [TranslateDirective, BarChartModule, FaIconComponent, QuizStatisticsFooterComponent],
 })
 export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComponent {

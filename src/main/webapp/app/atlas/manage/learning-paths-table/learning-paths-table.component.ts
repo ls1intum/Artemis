@@ -1,17 +1,17 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { LearningPathAverageProgressDTO, LearningPathInformationDTO } from 'app/atlas/shared/entities/learning-path.model';
-import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
-import { onError } from 'app/shared/util/global.utils';
+import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/ui/table/pageable-table';
+import { onError } from 'app/foundation/util/global.utils';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbPaginationModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyGraphModalComponent } from 'app/atlas/manage/competency-graph-modal/competency-graph-modal.component';
-import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
+import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 enum TableColumn {
     ID = 'ID',

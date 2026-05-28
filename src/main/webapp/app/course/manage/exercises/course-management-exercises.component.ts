@@ -2,10 +2,10 @@ import { Component, OnInit, TemplateRef, computed, inject, signal } from '@angul
 import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
-import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
 import { ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseManagementExercisesSearchComponent } from '../exercises-search/course-management-exercises-search.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseExerciseCardComponent } from '../course-exercise-card/course-exercise-card.component';
 import { ProgrammingExerciseComponent } from 'app/programming/manage/exercise/programming-exercise.component';
 import { QuizExerciseCreateButtonsComponent } from 'app/quiz/manage/create-buttons/quiz-exercise-create-buttons.component';
@@ -14,10 +14,10 @@ import { ExerciseCreateButtonsComponent } from 'app/exercise/exercise-create-but
 import { ModelingExerciseComponent } from 'app/modeling/manage/modeling-exercise/modeling-exercise.component';
 import { TextExerciseComponent } from 'app/text/manage/text-exercise/exercise/text-exercise.component';
 import { FileUploadExerciseComponent } from 'app/fileupload/manage/file-upload-exercise/file-upload-exercise.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT } from 'app/app.constants';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 

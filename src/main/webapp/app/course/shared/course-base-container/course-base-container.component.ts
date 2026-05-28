@@ -19,13 +19,13 @@ import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 
-import { BarControlConfiguration } from 'app/shared/tab-bar/tab-bar';
+import { BarControlConfiguration } from 'app/ui/tab-bar/tab-bar';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { LtiService } from 'app/shared/service/lti.service';
-import { sortCourses } from 'app/shared/util/course.util';
+import { LtiService } from 'app/foundation/service/lti.service';
+import { sortCourses } from 'app/foundation/util/course.util';
 import { SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_LECTURE, MODULE_FEATURE_LTI, MODULE_FEATURE_TUTORIALGROUP, PROFILE_LOCALCI } from 'app/app.constants';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
@@ -33,7 +33,7 @@ import { CourseAccessStorageService } from '../services/course-access-storage.se
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 
 /**
  * Base class that contains common functionality for course container components.

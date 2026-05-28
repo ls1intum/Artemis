@@ -1,7 +1,7 @@
 import { Component, OnInit, input, signal } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { PostingCreateEditModalDirective } from 'app/communication/posting-create-edit-modal/posting-create-edit-modal.directive';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -14,8 +14,8 @@ import { PageType, PostContentValidationPattern, PostTitleValidationPattern, Pos
 import { Conversation } from 'app/communication/shared/entities/conversation/conversation.model';
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { deepClone } from 'app/shared/util/deep-clone.util';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 const TITLE_MAX_LENGTH = 200;
 

@@ -1,18 +1,18 @@
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseCompetenciesDetailsComponent } from 'app/atlas/overview/course-competencies/course-competencies-details.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
 import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
-import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
+import { SidePanelComponent } from 'app/ui/side-panel/side-panel.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -23,12 +23,12 @@ import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.mode
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { By } from '@angular/platform-browser';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import dayjs from 'dayjs/esm';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
@@ -37,7 +37,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.component';
-import { ScienceService } from 'app/shared/science/science.service';
+import { ScienceService } from 'app/foundation/science/science.service';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CourseCompetenciesDetails', () => {

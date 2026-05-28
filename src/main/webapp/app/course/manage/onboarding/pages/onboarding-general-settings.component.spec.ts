@@ -9,10 +9,10 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { OnboardingGeneralSettingsComponent } from './onboarding-general-settings.component';
 import { Course, Language } from 'app/course/shared/entities/course.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ColorSelectorComponent } from 'app/ui/color-selector/color-selector.component';
+import { FormDateTimePickerComponent } from 'app/ui/date-time-picker/date-time-picker.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';

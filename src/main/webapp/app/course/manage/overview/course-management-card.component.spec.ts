@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementCardComponent } from 'app/course/manage/overview/course-management-card.component';
 import dayjs from 'dayjs/esm';
@@ -19,16 +19,16 @@ import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LECTURE, MODU
 import { ComponentRef } from '@angular/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { ImageComponent } from 'app/shared/image/image.component';
+import { ImageComponent } from 'app/foundation/image/image.component';
 import { CourseManagementExerciseRowComponent } from 'app/course/manage/overview/course-management-exercise-row.component';
 import { CourseManagementOverviewStatisticsComponent } from 'app/course/manage/overview/course-management-overview-statistics.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
-import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
+import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
+import { FeatureOverlayComponent } from 'app/ui/components/feature-overlay/feature-overlay.component';
 describe('CourseManagementCardComponent', () => {
     setupTestBed({ zoneless: true });
 

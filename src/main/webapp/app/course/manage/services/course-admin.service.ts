@@ -3,11 +3,11 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { Course } from 'app/course/shared/entities/course.model';
-import { objectToJsonBlob } from 'app/shared/util/blob-util';
+import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseSummaryDTO } from 'app/course/shared/entities/course-summary.model';
 import { CourseOperationProgressDTO } from 'app/course/shared/entities/course-operation-progress.model';
-import { convertDateFromServer } from 'app/shared/util/date.utils';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { toCourseCreateDTO } from 'app/course/shared/entities/course-update-dto.model';
 
 export type EntityResponseType = HttpResponse<Course>;

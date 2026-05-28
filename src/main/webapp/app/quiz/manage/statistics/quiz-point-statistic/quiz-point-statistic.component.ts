@@ -2,28 +2,28 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angula
 import { ActivatedRoute, Router } from '@angular/router';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
 import { AccountService } from 'app/core/auth/account.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { PointCounter } from 'app/quiz/shared/entities/point-counter.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizPointStatistic } from 'app/quiz/shared/entities/quiz-point-statistic.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { blueColor } from 'app/quiz/manage/statistics/question-statistic.component';
-import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
-import { round } from 'app/shared/util/utils';
+import { UI_RELOAD_TIME } from 'app/foundation/constants/exercise-exam-constants';
+import { round } from 'app/foundation/util/utils';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { calculateMaxScore } from 'app/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
-import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
     templateUrl: './quiz-point-statistic.component.html',
-    styleUrls: ['./quiz-point-statistic.component.scss', '../../../../shared/chart/vertical-bar-chart.scss'],
+    styleUrls: ['./quiz-point-statistic.component.scss', '../../../../ui/chart/vertical-bar-chart.scss'],
     imports: [FaIconComponent, TranslateDirective, BarChartModule, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
 })
 export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent implements OnInit, OnDestroy {

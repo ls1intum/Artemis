@@ -1,18 +1,18 @@
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
 import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
 
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CreatePrerequisiteComponent } from 'app/atlas/manage/create/create-prerequisite.component';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { PrerequisiteFormComponent } from 'app/atlas/manage/forms/prerequisite/prerequisite-form.component';

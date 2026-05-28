@@ -1,4 +1,4 @@
-import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
+import { TutorLeaderboardElement } from 'app/ui/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 
 export class StatsForDashboard {

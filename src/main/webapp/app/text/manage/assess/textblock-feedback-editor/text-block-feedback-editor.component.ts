@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, HostBinding, inject, input, outpu
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
-import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
+import { ConfirmIconComponent } from 'app/ui/confirm-icon/confirm-icon.component';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute } from '@angular/router';
@@ -11,12 +11,12 @@ import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-a
 import { faAngleRight, faEdit, faExclamationTriangle, faQuestionCircle, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { GradingInstructionLinkIconComponent } from 'app/ui/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { TextblockFeedbackDropdownComponent } from './dropdown/textblock-feedback-dropdown.component';
 import { FormsModule } from '@angular/forms';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-text-block-feedback-editor',

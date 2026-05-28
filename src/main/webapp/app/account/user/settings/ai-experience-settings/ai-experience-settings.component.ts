@@ -4,18 +4,18 @@ import { Subject, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { RouterLink } from '@angular/router';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AccountService } from 'app/core/auth/account.service';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisMemoriesHttpService } from 'app/iris/overview/services/iris-memories-http.service';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { DeleteButtonDirective } from 'app/ui/delete-dialog/directive/delete-button.directive';
+import { ActionType } from 'app/ui/delete-dialog/delete-dialog.model';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-ai-experience-settings',

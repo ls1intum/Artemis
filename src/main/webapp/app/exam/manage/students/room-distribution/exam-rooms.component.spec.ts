@@ -19,11 +19,11 @@ import {
     ExamRoomOverviewDTO,
     ExamRoomUploadInformationDTO,
 } from 'app/exam/manage/students/room-distribution/exam-rooms.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
-import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
+import { DeleteDialogService } from 'app/ui/delete-dialog/service/delete-dialog.service';
 import { MockDeleteDialogService } from 'test/helpers/mocks/service/mock-delete-dialog.service';
-import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 

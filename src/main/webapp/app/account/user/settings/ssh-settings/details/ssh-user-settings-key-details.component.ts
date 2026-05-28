@@ -1,19 +1,19 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { DocumentationLinkComponent } from 'app/shared/components/documentation-link/documentation-link.component';
-import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { DocumentationLinkComponent } from 'app/ui/components/documentation-link/documentation-link.component';
+import { DateTimePickerType, FormDateTimePickerComponent } from 'app/ui/date-time-picker/date-time-picker.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Subject, Subscription, concatMap, filter, tap } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
-import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { AlertService } from 'app/shared/service/alert.service';
-import { getOS } from 'app/shared/util/os-detector.util';
+import { DocumentationType } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/ui/components/buttons/button/button.component';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { getOS } from 'app/foundation/util/os-detector.util';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import dayjs from 'dayjs/esm';
 import { FormsModule } from '@angular/forms';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/ssh-user-settings.service';
 
 @Component({

@@ -1,24 +1,24 @@
 import { AfterViewInit, Component, DestroyRef, effect, inject, input, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/course/overview/visualizations/exercise-scores-chart.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { onError } from 'app/shared/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
 import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { cloneDeep, sortBy } from 'lodash-es';
 import { Color, LineChartModule, ScaleType } from '@swimlane/ngx-charts';
-import { round } from 'app/shared/util/utils';
+import { round } from 'app/foundation/util/utils';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
-import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter';
+import { ChartExerciseTypeFilter } from 'app/ui/chart/chart-exercise-type-filter';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 type ChartSeries = {
     name: string;

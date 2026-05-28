@@ -10,7 +10,7 @@ import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/g
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { getUserLabel } from 'app/communication/course-conversations-components/other/conversation.util';
-import { convertDateFromServer } from 'app/shared/util/date.utils';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
 
 type EntityArrayResponseType = HttpResponse<ConversationDTO[]>;
 

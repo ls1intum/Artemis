@@ -2,7 +2,7 @@ import { Component, computed, signal, viewChild } from '@angular/core';
 import { CalendarEvent } from 'app/openapi/model/calendarEvent';
 import { Popover, PopoverModule } from 'primeng/popover';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faClock, faLocationDot, faUser, faXmark } from '@fortawesome/free-solid-svg-icons';
 import * as utils from 'app/calendar/shared/util/calendar-util';

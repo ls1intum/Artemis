@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
-import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
+import { SearchResult, SearchTermPageableSearch } from 'app/ui/table/pageable-table';
+import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
 import { HttpParams } from '@angular/common/http';
 import { FilterData } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-filter/feedback-filter-modal.component';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';

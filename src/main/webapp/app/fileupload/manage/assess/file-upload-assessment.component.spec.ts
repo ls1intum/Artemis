@@ -13,7 +13,7 @@ import { MockComponent } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
-import 'app/shared/util/array.extension';
+import 'app/foundation/util/array.extension';
 
 import { FileUploadAssessmentComponent } from './file-upload-assessment.component';
 import { FileUploadAssessmentService } from './file-upload-assessment.service';
@@ -32,15 +32,15 @@ import { SubmissionExerciseType, SubmissionType, setLatestSubmissionResult } fro
 import { Course } from 'app/course/shared/entities/course.model';
 
 import { AccountService } from 'app/core/auth/account.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
-import { FileService } from 'app/shared/service/file.service';
+import { FileService } from 'app/foundation/service/file.service';
 
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
+import { ResizeableContainerComponent } from 'app/ui/resizeable-container/resizeable-container.component';
+import { ScoreDisplayComponent } from 'app/ui/score-display/score-display.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';

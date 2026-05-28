@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -11,15 +11,15 @@ import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.servi
 import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { QuizExerciseDetailComponent } from 'app/quiz/manage/detail/quiz-exercise-detail.component';
 import dayjs, { Dayjs } from 'dayjs/esm';
-import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
+import { StatisticsService } from 'app/ui/statistics-graph/service/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CompetencyExerciseLink, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
-import { DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { DetailType } from 'app/ui/detail-overview-list/detail-overview-list.component';
 
 describe('QuizExercise Details Component', () => {
     setupTestBed({ zoneless: true });

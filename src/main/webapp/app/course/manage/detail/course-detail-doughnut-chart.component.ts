@@ -1,15 +1,15 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { DoughnutChartType } from './course-detail.component';
 import { Router, RouterLink } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Color, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { NgxChartsSingleSeriesDataEntry } from 'app/ui/chart/ngx-charts-datatypes';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
 

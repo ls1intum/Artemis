@@ -2,10 +2,10 @@ import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { faFile, faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewSection, DetailType } from 'app/ui/detail-overview-list/detail-overview-list.component';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { DetailOverviewListComponent } from 'app/ui/detail-overview-list/detail-overview-list.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({

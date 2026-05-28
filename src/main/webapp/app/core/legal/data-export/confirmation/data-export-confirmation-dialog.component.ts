@@ -1,11 +1,11 @@
 import { Component, DestroyRef, OnInit, inject, input, model, output, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EMPTY, Observable } from 'rxjs';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { FormsModule, NgForm } from '@angular/forms';
 import { faBan, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ConfirmEntityNameComponent } from 'app/ui/confirm-entity-name/confirm-entity-name.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TypeAheadUserSearchFieldComponent } from 'app/core/legal/data-export/type-ahead-search-field/type-ahead-user-search-field.component';
 import { User } from 'app/account/user/user.model';

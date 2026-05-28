@@ -4,10 +4,10 @@ import { Component, OnInit, input, viewChildren } from '@angular/core';
 import { faCompress, faExpand, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-structured-grading-instructions-assessment-layout',

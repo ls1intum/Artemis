@@ -4,27 +4,27 @@ import { CourseStorageService } from 'app/course/manage/services/course-storage.
 import { Subscription, switchMap, tap } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
-import { onError } from 'app/shared/util/global.utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/shared/service/alert.service';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { CourseDashboardService } from 'app/course/overview/course-dashboard/course-dashboard.service';
 import { CompetencyInformation, ExerciseMetrics, StudentMetrics } from 'app/atlas/shared/entities/student-metrics.model';
 import { ExerciseLateness } from 'app/course/overview/course-dashboard/course-exercise-lateness/course-exercise-lateness.component';
 import { ExercisePerformance } from 'app/course/overview/course-dashboard/course-exercise-performance/course-exercise-performance.component';
-import { round } from 'app/shared/util/utils';
+import { round } from 'app/foundation/util/utils';
 import dayjs from 'dayjs/esm';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { CompetencyAccordionToggleEvent } from 'app/atlas/overview/competency-accordion/competency-accordion.component';
 import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { CourseExercisePerformanceComponent } from './course-exercise-performance/course-exercise-performance.component';
 import { CourseExerciseLatenessComponent } from './course-exercise-lateness/course-exercise-lateness.component';
 import { CompetencyAccordionComponent } from 'app/atlas/overview/competency-accordion/competency-accordion.component';
-import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
-import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
+import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
+import { FeatureOverlayComponent } from 'app/ui/components/feature-overlay/feature-overlay.component';
 
 @Component({
     selector: 'jhi-course-dashboard',

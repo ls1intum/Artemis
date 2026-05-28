@@ -15,11 +15,11 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 import { AdminImportStandardizedCompetenciesComponent } from 'app/admin/standardized-competencies/import/admin-import-standardized-competencies.component';
 import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { ButtonComponent } from 'app/ui/components/buttons/button/button.component';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { AlertService } from 'app/shared/service/alert.service';
-import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { KnowledgeAreaValidators, KnowledgeAreasForImportDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';

@@ -12,7 +12,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { MockComponent } from 'ng-mocks';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
-import 'app/shared/util/array.extension';
+import 'app/foundation/util/array.extension';
 
 import { FileUploadExerciseDetailComponent } from './file-upload-exercise-detail.component';
 import { FileUploadExerciseService } from '../services/file-upload-exercise.service';
@@ -21,14 +21,14 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
-import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { EventManager } from 'app/shared/service/event-manager.service';
+import { StatisticsService } from 'app/ui/statistics-graph/service/statistics.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { DetailOverviewListComponent, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { DocumentationButtonComponent } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
+import { DetailOverviewListComponent, DetailType } from 'app/ui/detail-overview-list/detail-overview-list.component';
 import { CompetencyExerciseLink, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 
 describe('FileUploadExerciseDetailComponent', () => {

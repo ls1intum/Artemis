@@ -6,7 +6,7 @@ import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
-import { objectToJsonBlob } from 'app/shared/util/blob-util';
+import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import dayjs from 'dayjs/esm';
 
 type EntityResponseType = HttpResponse<AttachmentVideoUnit>;

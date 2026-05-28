@@ -12,11 +12,11 @@ import { BonusService } from 'app/assessment/manage/grading/bonus/bonus.service'
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
-import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { GradeStepBoundsPipe } from 'app/foundation/pipes/grade-step-bounds.pipe';
+import { SafeHtmlPipe } from 'app/foundation/pipes/safe-html.pipe';
+import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
 import { MockComponent } from 'ng-mocks';
 import { HttpResponse } from '@angular/common/http';
 import { Bonus, BonusStrategy } from 'app/assessment/shared/entities/bonus.model';

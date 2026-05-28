@@ -8,12 +8,12 @@ import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { QuizTrainingSettingsComponent } from './quiz-training-settings.component';
 import { QuizTrainingSettingsService } from 'app/account/user/settings/quiz-training-settings/quiz-training-settings.service';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { AlertService } from 'app/shared/service/alert.service';
-import * as globalUtils from 'app/shared/util/global.utils';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { AlertService } from 'app/foundation/service/alert.service';
+import * as globalUtils from 'app/foundation/util/global.utils';
 import { HttpResponse } from '@angular/common/http';
 import { LeaderboardSettingsDTO } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard-types';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 

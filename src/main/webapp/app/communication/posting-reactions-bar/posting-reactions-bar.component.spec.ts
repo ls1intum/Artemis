@@ -4,8 +4,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/communication/service/metis.service';
 import { DebugElement } from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { getElement } from 'test/helpers/utils/general-test.utils';
@@ -23,7 +23,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { By } from '@angular/platform-browser';
-import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
+import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/foundation/pipes/reacting-users-on-posting.pipe';
 import {
     metisAnnouncement,
     metisCourse,
@@ -42,7 +42,7 @@ import { ChannelDTO } from 'app/communication/shared/entities/conversation/chann
 import { User } from 'app/account/user/user.model';
 import { provideHttpClient } from '@angular/common/http';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
+import { ConfirmIconComponent } from 'app/ui/confirm-icon/confirm-icon.component';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';

@@ -1,5 +1,5 @@
 import { BehaviorSubject, EMPTY, Observable, Subject } from 'rxjs';
-import { ConnectionState, IWebsocketService } from 'app/shared/service/websocket.service';
+import { ConnectionState, IWebsocketService } from 'app/foundation/service/websocket.service';
 
 export class MockWebsocketService implements IWebsocketService {
     private channels = new Map<string, Subject<any>>();

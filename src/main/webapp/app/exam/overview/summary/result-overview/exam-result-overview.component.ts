@@ -1,23 +1,23 @@
 import { ChangeDetectorRef, Component, OnInit, effect, inject, input } from '@angular/core';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { faAward, faClipboard } from '@fortawesome/free-solid-svg-icons';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundScorePercentSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { captureException } from '@sentry/angular';
 import { isExamResultPublished } from 'app/exam/overview/exam.utils';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CollapsibleCardComponent } from '../collapsible-card/collapsible-card.component';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NoDataComponent } from 'app/shared/components/no-data/no-data-component';
+import { NoDataComponent } from 'app/ui/components/no-data/no-data-component';
 import { GradingKeyTableComponent } from 'app/assessment/manage/grading/grading-key/grading-key-table.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 type ExerciseInfo = {

@@ -7,8 +7,8 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { FilterProp, ParticipationComponent } from 'app/exercise/participation/participation.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of, throwError } from 'rxjs';
 import { ParticipationManagementDTO } from 'app/exercise/participation/participation-management-dto.model';
 import dayjs from 'dayjs/esm';
@@ -18,13 +18,13 @@ import { MockProvider } from 'ng-mocks';
 import { MockProgrammingSubmissionService } from 'test/helpers/mocks/service/mock-programming-submission.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { EventManager } from 'app/shared/service/event-manager.service';
-import { PageableResult } from 'app/shared/table/pageable-table';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { PageableResult } from 'app/ui/table/pageable-table';
 
 describe('ParticipationComponent', () => {
     setupTestBed({ zoneless: true });

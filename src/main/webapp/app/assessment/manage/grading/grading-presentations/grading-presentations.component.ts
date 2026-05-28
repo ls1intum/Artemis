@@ -1,10 +1,10 @@
 import { Component, DestroyRef, effect, inject, input, output, untracked } from '@angular/core';
 import { ModePickerComponent, ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 import { FormsModule } from '@angular/forms';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
 
 /**
  * Enum representing the available presentation types in a course grading system.

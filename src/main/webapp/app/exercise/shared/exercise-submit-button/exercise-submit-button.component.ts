@@ -1,8 +1,8 @@
 import { Component, ElementRef, HostListener, computed, effect, inject, input, output, viewChild } from '@angular/core';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ButtonComponent, ButtonType } from 'app/ui/components/buttons/button/button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faRobot } from '@fortawesome/free-solid-svg-icons';
 import { RequestFeedbackButtonComponent } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';

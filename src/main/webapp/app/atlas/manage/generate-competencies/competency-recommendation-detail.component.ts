@@ -1,16 +1,16 @@
 import { Component, computed, effect, input, model, output, signal } from '@angular/core';
 import { CourseCompetencyValidators } from 'app/atlas/shared/entities/competency.model';
 import { faChevronRight, faPen, faSave, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize, ButtonType } from 'app/ui/components/buttons/button/button.component';
 import { FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CompetencyFormControlsWithViewed } from 'app/atlas/manage/generate-competencies/generate-competencies.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ButtonComponent } from 'app/ui/components/buttons/button/button.component';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { TaxonomySelectComponent } from 'app/atlas/manage/taxonomy-select/taxonomy-select.component';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 
 @Component({
     selector: 'jhi-competency-recommendation',

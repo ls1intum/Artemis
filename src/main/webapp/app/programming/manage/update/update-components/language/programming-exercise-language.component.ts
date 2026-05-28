@@ -9,12 +9,12 @@ import { Subject, Subscription } from 'rxjs';
 import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-build-plan.component';
 import { ProgrammingExerciseTheiaComponent } from 'app/programming/manage/update/update-components/theia/programming-exercise-theia.component';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
-import { APP_NAME_PATTERN_FOR_SWIFT } from 'app/shared/constants/input.constants';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { APP_NAME_PATTERN_FOR_SWIFT } from 'app/foundation/constants/input.constants';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { KeyValuePipe } from '@angular/common';
-import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-language',

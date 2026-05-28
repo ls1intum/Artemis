@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { faBell, faCog, faEnvelopeOpen, faFilter, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CourseNotificationBubbleComponent } from 'app/notification/course-notification/course-notification-bubble/course-notification-bubble.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseNotificationCategory } from 'app/notification/shared/entities/course-notification/course-notification-category';
 import { CourseNotification } from 'app/notification/shared/entities/course-notification/course-notification';
 import { CourseNotificationComponent } from 'app/notification/course-notification/course-notification/course-notification.component';
@@ -11,7 +11,7 @@ import { CourseNotificationService } from 'app/notification/course-notification/
 import { Subscription, fromEvent } from 'rxjs';
 import { CourseNotificationViewingStatus } from 'app/notification/shared/entities/course-notification/course-notification-viewing-status';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RouterLink } from '@angular/router';
 

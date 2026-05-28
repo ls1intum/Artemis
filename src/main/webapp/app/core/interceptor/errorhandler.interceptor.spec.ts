@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpRequest } from '@angular/common/http';
 import { throwError } from 'rxjs';
 import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.interceptor';
-import { EventManager } from 'app/shared/service/event-manager.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { AccountService } from 'app/core/auth/account.service';
 
 describe(`ErrorHandlerInterceptor`, () => {

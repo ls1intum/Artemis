@@ -1,10 +1,10 @@
 import { Component, inject, output, signal } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
+import { RangeSliderComponent } from 'app/ui/range-slider/range-slider.component';
 import { FeedbackAnalysisService } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
 
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 
 export interface FilterData {
     tasks: string[];

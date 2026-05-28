@@ -8,7 +8,7 @@ import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assess
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -21,22 +21,22 @@ import { getLatestSubmissionResult, getSubmissionResultById } from 'app/exercise
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
-import { assessmentNavigateBack } from 'app/shared/util/navigate-back.util';
+import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
-import { onError } from 'app/shared/util/global.utils';
-import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
+import { onError } from 'app/foundation/util/global.utils';
+import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import dayjs from 'dayjs/esm';
 import { filter, finalize } from 'rxjs/operators';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ResizeableContainerComponent } from 'app/ui/resizeable-container/resizeable-container.component';
+import { ScoreDisplayComponent } from 'app/ui/score-display/score-display.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FileService } from 'app/shared/service/file.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FileService } from 'app/foundation/service/file.service';
 
 @Component({
     providers: [FileUploadAssessmentService],

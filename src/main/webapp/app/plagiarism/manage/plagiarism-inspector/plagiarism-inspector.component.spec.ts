@@ -3,8 +3,8 @@ import { ActivatedRoute } from '@angular/router';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { of } from 'rxjs';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { downloadFile } from 'app/shared/util/download.util';
-import { Range } from 'app/shared/util/utils';
+import { downloadFile } from 'app/foundation/util/download.util';
+import { Range } from 'app/foundation/util/utils';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -26,7 +26,7 @@ import { PlagiarismInspectorComponent } from 'app/plagiarism/manage/plagiarism-i
 import { PlagiarismInspectorService } from 'app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.service';
 import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
 
-jest.mock('app/shared/util/download.util', () => ({
+jest.mock('app/foundation/util/download.util', () => ({
     downloadFile: jest.fn(),
 }));
 

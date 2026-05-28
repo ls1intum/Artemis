@@ -17,14 +17,14 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslatePipe } from '@ngx-translate/core';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { hasExerciseDueDatePassed, isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercise/util/exercise.utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
@@ -38,11 +38,11 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
-import { ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonType } from 'app/ui/components/buttons/button/button.component';
 import { NgTemplateOutlet } from '@angular/common';
-import { ExerciseActionButtonComponent } from 'app/shared/components/buttons/exercise-action-button/exercise-action-button.component';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { CodeButtonComponent } from 'app/shared/components/buttons/code-button/code-button.component';
+import { ExerciseActionButtonComponent } from 'app/ui/components/buttons/exercise-action-button/exercise-action-button.component';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
+import { CodeButtonComponent } from 'app/ui/components/buttons/code-button/code-button.component';
 import {
     DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT,
     RequestFeedbackButtonComponent,

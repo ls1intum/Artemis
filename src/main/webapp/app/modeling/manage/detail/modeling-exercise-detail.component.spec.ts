@@ -3,8 +3,8 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of } from 'rxjs';
 import { ModelingExerciseDetailComponent } from 'app/modeling/manage/detail/modeling-exercise-detail.component';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -14,9 +14,9 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockComponent } from 'ng-mocks';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
-import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
-import { EventManager } from 'app/shared/service/event-manager.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { StatisticsService } from 'app/ui/statistics-graph/service/statistics.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
@@ -24,7 +24,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { CompetencyExerciseLink, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
-import { DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { DetailType } from 'app/ui/detail-overview-list/detail-overview-list.component';
 
 describe('ModelingExercise Management Detail Component', () => {
     setupTestBed({ zoneless: true });

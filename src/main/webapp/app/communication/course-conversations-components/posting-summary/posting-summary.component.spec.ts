@@ -5,13 +5,13 @@ import { PostingSummaryComponent } from 'app/communication/course-conversations-
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import dayjs from 'dayjs/esm';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { ProfilePictureComponent } from 'app/ui/profile-picture/profile-picture.component';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 

@@ -1,4 +1,4 @@
-import { StringBaseEntity } from 'app/shared/model/base-entity';
+import { StringBaseEntity } from 'app/foundation/model/base-entity';
 import { RepositoryInfo, TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { JobTimingInfo } from 'app/buildagent/shared/entities/job-timing-info.model';
 import { BuildConfig } from 'app/buildagent/shared/entities/build-config.model';

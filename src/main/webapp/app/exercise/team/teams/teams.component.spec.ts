@@ -15,7 +15,7 @@ import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/serv
 import { TeamsExportButtonComponent } from 'app/exercise/team/teams-import-dialog/teams-export-button.component';
 import { TeamsImportButtonComponent } from 'app/exercise/team/teams-import-dialog/teams-import-button.component';
 import { TeamUpdateButtonComponent } from 'app/exercise/team/team-update-dialog/team-update-button.component';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { DataTableComponent } from 'app/ui/data-table/data-table.component';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { TeamStudentsListComponent } from 'app/exercise/team/team-participate/team-students-list.component';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';

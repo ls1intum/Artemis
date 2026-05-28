@@ -3,16 +3,16 @@ import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/statistics.model';
 import { Subscription } from 'rxjs';
-import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
+import { StatisticsService } from 'app/ui/statistics-graph/service/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { HttpResponse } from '@angular/common/http';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ExerciseDetailStatisticsComponent } from './exercise-detail-statistic/exercise-detail-statistics.component';
-import { StatisticsScoreDistributionGraphComponent } from 'app/shared/statistics-graph/score-distribution-graph/statistics-score-distribution-graph.component';
-import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { StatisticsScoreDistributionGraphComponent } from 'app/ui/statistics-graph/score-distribution-graph/statistics-score-distribution-graph.component';
+import { StatisticsGraphComponent } from 'app/ui/statistics-graph/statistics-graph.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exercise-statistics',
