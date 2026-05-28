@@ -451,8 +451,8 @@ importers:
         specifier: 17.0.5
         version: 17.0.5
       ng-mocks:
-        specifier: 14.15.2
-        version: 14.15.2(c2a81edcf0a80fb94a2de2a26f1500f3)
+        specifier: 14.15.3
+        version: 14.15.3(c2a81edcf0a80fb94a2de2a26f1500f3)
       postcss-html:
         specifier: 1.8.1
         version: 1.8.1
@@ -6680,8 +6680,8 @@ packages:
     resolution: {integrity: sha512-eonl3sLUha+S1GzTPxychyhnUzKyeQkZ7jLjKrBagJgPla13F+uQ71HgpFefyHgqrjEbCPkDArxYsjY8/+gLKA==}
     engines: {node: '>= 0.4.0'}
 
-  ng-mocks@14.15.2:
-    resolution: {integrity: sha512-3nI4qAzJMHnThkOKtPKcw88I7Q6psmOav41OSqOqELqa/6UTWCu1LfPtAYI0BMn1hjQ8VMXtMKXpgT1ajTnBRg==}
+  ng-mocks@14.15.3:
+    resolution: {integrity: sha512-J0UafeI2K5kc5oDhIinGu+VqT990b0sP2dlKV3JxXYTlaQxQ7Mm0LLrxGz10hsGGJVtn9JEKkhjnpb6oijLT3w==}
     peerDependencies:
       '@angular/common': ^21.2.0
       '@angular/core': ^21.2.0
@@ -15379,7 +15379,7 @@ snapshots:
 
   netmask@2.1.1: {}
 
-  ng-mocks@14.15.2(c2a81edcf0a80fb94a2de2a26f1500f3):
+  ng-mocks@14.15.3(c2a81edcf0a80fb94a2de2a26f1500f3):
     dependencies:
       '@angular/common': 21.2.14(@angular/core@21.2.14(@angular/compiler@21.2.14)(rxjs@7.8.2)(zone.js@0.16.2))(rxjs@7.8.2)
       '@angular/core': 21.2.14(@angular/compiler@21.2.14)(rxjs@7.8.2)(zone.js@0.16.2)

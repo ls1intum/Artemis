@@ -132,7 +132,7 @@
         "jest-preset-angular": "16.1.5",
         "lighthouse": "13.3.0",
         "lint-staged": "17.0.5",
-        "ng-mocks": "14.15.2",
+        "ng-mocks": "14.15.3",
         "postcss-html": "1.8.1",
         "postcss-scss": "4.0.9",
         "prettier": "3.8.3",
