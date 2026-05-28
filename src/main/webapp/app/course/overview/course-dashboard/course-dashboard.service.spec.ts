@@ -39,14 +39,14 @@ describe('CourseDashboardService', () => {
                         shortName: 'E1',
                         start: '2024-01-01T00:00:00Z',
                         due: '2024-01-10T00:00:00Z',
-                        type: 'de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise',
+                        type: 'programming',
                     },
                     2: {
                         id: 2,
                         title: 'Exercise 2',
                         shortName: 'E2',
                         start: '2024-01-02T00:00:00Z',
-                        type: 'de.tum.cit.aet.artemis.modeling.domain.ModelingExercise',
+                        type: 'modeling',
                     },
                     3: {
                         id: 3,
@@ -54,7 +54,7 @@ describe('CourseDashboardService', () => {
                         shortName: 'E3',
                         start: '2024-01-03T00:00:00Z',
                         due: '2024-01-12T00:00:00Z',
-                        type: 'de.tum.cit.aet.artemis.quiz.domain.QuizExercise',
+                        type: 'quiz',
                     },
                     4: {
                         id: 4,
@@ -62,7 +62,7 @@ describe('CourseDashboardService', () => {
                         shortName: 'E4',
                         start: '2024-01-04T00:00:00Z',
                         due: '2024-01-14T00:00:00Z',
-                        type: 'de.tum.cit.aet.artemis.text.domain.TextExercise',
+                        type: 'text',
                     },
                     5: {
                         id: 5,
@@ -70,7 +70,7 @@ describe('CourseDashboardService', () => {
                         shortName: 'E5',
                         start: '2024-01-05T00:00:00Z',
                         due: '2024-01-15T00:00:00Z',
-                        type: 'de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise',
+                        type: 'file-upload',
                     },
                 },
                 categories: {
