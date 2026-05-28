@@ -136,8 +136,8 @@ public class QuizExerciseFactory {
 
         var shortAnswerSpot1 = new ShortAnswerSpot().spotNr(0).width(1);
         var shortAnswerSpot2 = new ShortAnswerSpot().spotNr(2).width(2);
-        sa.getSpots().add(shortAnswerSpot1);
-        sa.getSpots().add(shortAnswerSpot2);
+        sa.addSpot(shortAnswerSpot1);
+        sa.addSpot(shortAnswerSpot2);
 
         var shortAnswerSolution1 = new ShortAnswerSolution().text("is");
         var shortAnswerSolution2 = new ShortAnswerSolution().text("long");
@@ -228,8 +228,8 @@ public class QuizExerciseFactory {
     public static MultipleChoiceQuestion createMultipleChoiceQuestion() {
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4d).text("Q1");
         mc.setScoringType(ScoringType.ALL_OR_NOTHING);
-        mc.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
-        mc.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
+        mc.addAnswerOption(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
+        mc.addAnswerOption(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
         mc.setExplanation("Explanation");
         mc.setRandomizeOrder(true);
 
