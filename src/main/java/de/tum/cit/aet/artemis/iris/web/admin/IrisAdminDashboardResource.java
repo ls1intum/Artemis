@@ -103,7 +103,7 @@ public class IrisAdminDashboardResource {
         if (from.plus(Duration.ofDays(properties.getMaxQueryWindowDays())).isBefore(to)) {
             throw new BadRequestAlertException("Query window exceeds maximum of " + properties.getMaxQueryWindowDays() + " days", ENTITY_NAME, "windowTooLarge");
         }
-        if (to.isAfter(Instant.now().plus(Duration.ofDays(1)))) {
+        if (to.isAfter(de.tum.cit.aet.artemis.core.util.TimeUtil.now().toInstant().plus(Duration.ofDays(1)))) {
             throw new BadRequestAlertException("'to' cannot be more than 1 day in the future", ENTITY_NAME, "futureWindow");
         }
     }
