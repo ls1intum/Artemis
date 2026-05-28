@@ -307,6 +307,28 @@ class ArchitectureTest extends AbstractArchitectureTest {
         classes().that().areAnnotatedWith(JsonInclude.class).should(useJsonIncludeNonEmptyOrNonNull()).check(allClasses);
     }
 
+    /**
+     * Forbids {@code Class<>} fields (and the raw {@code Class} type) in DTO records and classes.
+     * <p>
+     * Exposing a {@code Class<? extends SomeEntity>} as a DTO component leaks the JVM/package layout
+     * over the wire: serializing it emits a fully-qualified class name, which couples every client
+     * (including stale tabs after a refactor) to internal Java package names. The replacement is a
+     * dedicated discriminator type — typically an {@code enum} whose values are stable JSON strings
+     * via {@code @JsonValue} (see {@link de.tum.cit.aet.artemis.exercise.domain.ExerciseType} and
+     * {@link de.tum.cit.aet.artemis.lecture.domain.LectureUnitType}).
+     * <p>
+     * This rule only inspects <em>fields</em> (which includes synthesized record components). It does
+     * <em>not</em> flag {@code Class<>} parameters on JPQL-overloaded constructors that convert the
+     * raw entity class produced by Hibernate's {@code TYPE(...)} function into the canonical
+     * discriminator field — those are an internal mapping concern that never reaches the wire.
+     */
+    @Test
+    void testNoClassFieldsInDtos() {
+        ArchRule rule = noFields().that().areDeclaredInClassesThat().resideInAPackage("..dto..").should().haveRawType(Class.class).because(
+                "DTOs must not expose Class<> tokens; that leaks fully-qualified class names over the wire and couples clients to JVM package layout. Use a discriminator enum with @JsonValue instead (see ExerciseType, LectureUnitType).");
+        rule.check(productionClasses);
+    }
+
     private <T extends HasAnnotations<T>> ArchCondition<T> useJsonIncludeNonEmptyOrNonNull() {
         return new ArchCondition<>("Use @JsonInclude(JsonInclude.Include.NON_EMPTY) or @JsonInclude(JsonInclude.Include.NON_NULL)") {
 
@@ -348,8 +370,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
     void testNoRestControllersImported() {
         final var exceptions = new String[] { "AccountResourceIntegrationTest", "AdminResourceArchitectureTest", "AndroidAppSiteAssociationResourceTest",
                 "AppleAppSiteAssociationResourceTest", "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest", "CourseResourceArchitectureTest",
-                "PlagiarismApiArchitectureTest", "LtiApiArchitectureTest", "IrisTutorSuggestionIntegrationTest", "IrisAutonomousTutorPipelineIntegrationTest",
-                "HyperionCodeGenerationResourceTest", "LegacyCalendarResource" };
+                "NotificationResourceArchitectureTest", "PlagiarismApiArchitectureTest", "LtiApiArchitectureTest", "IrisTutorSuggestionIntegrationTest",
+                "IrisAutonomousTutorPipelineIntegrationTest", "HyperionCodeGenerationResourceTest", "LegacyCalendarResource" };
         final var classes = classesExcept(allClasses, exceptions);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }
