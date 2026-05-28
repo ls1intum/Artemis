@@ -12,7 +12,7 @@ import { IrisSearchResult } from 'app/core/navbar/global-search/models/iris-sear
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { SEARCH_DEBOUNCE_MS } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
-import { catchError, debounceTime, of, switchMap, tap } from 'rxjs';
+import { catchError, of, switchMap, timer } from 'rxjs';
 
 /** Delay in ms after a new result before measuring the rendered answer height. */
 const ANSWER_MEASURE_DELAY_MS = 60;
@@ -91,22 +91,25 @@ export class GlobalSearchIrisAnswerComponent {
 
         // Iris answer pipeline — runs alongside the main search.
         // ask() emits multiple values: first a thinking update, then the final result.
-        // tap() runs before debounceTime so stale state is cleared immediately on every
-        // keystroke rather than waiting for the debounce window to expire.
-        // switchMap cancels the previous ask() subscription on every new debounced query.
+        // The outer switchMap ensures every new searchQuery emission immediately cancels
+        // both the debounce timer and any in-flight ask() subscription, so a stale
+        // WebSocket update from a superseded run can never reach the subscriber.
+        // State is reset at the top of the outer switchMap — before the debounce window —
+        // so the UI clears on every keystroke even if the request has not fired yet.
         toObservable(this.searchQuery)
             .pipe(
-                tap(() => {
+                switchMap((query) => {
                     this.irisResult.set(undefined);
                     this.irisThinking.set(false);
                     this.currentRunId.set(undefined);
-                }),
-                debounceTime(IRIS_ANSWER_DEBOUNCE_MS),
-                switchMap((query) => {
                     if (!query.trim()) {
                         return of(undefined);
                     }
-                    return this.irisSearchAnswerService.ask(query).pipe(catchError(() => of(undefined)));
+                    // timer(X) waits X ms before emitting, giving the outer switchMap time to cancel
+                    // it on the next keystroke. Unlike of(query).pipe(debounceTime(X)), timer does not
+                    // complete immediately — debounceTime flushes instantly when its source completes,
+                    // which would bypass the debounce window entirely.
+                    return timer(IRIS_ANSWER_DEBOUNCE_MS).pipe(switchMap(() => this.irisSearchAnswerService.ask(query).pipe(catchError(() => of(undefined)))));
                 }),
                 takeUntilDestroyed(),
             )

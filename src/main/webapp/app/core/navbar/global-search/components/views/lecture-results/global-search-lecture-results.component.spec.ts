@@ -171,14 +171,14 @@ describe('GlobalSearchLectureResultsComponent', () => {
             fixture.componentRef.setInput('selectedIndex', 0);
             fixture.detectChanges();
 
-            const navigateSpy = vi.spyOn((component as any).router, 'navigateByUrl');
+            const navigateSpy = vi.spyOn((component as any).router, 'navigate');
             const event = new KeyboardEvent('keydown', { key: 'Enter' });
             const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
 
             component.handleKeydown(event);
 
             expect(preventDefaultSpy).toHaveBeenCalled();
-            expect(navigateSpy).toHaveBeenCalledWith('/courses/1/lectures/1/units/1');
+            expect(navigateSpy).toHaveBeenCalledWith([mockResult.lectureUnit.link], { queryParams: mockResult.lectureUnit.queryParams });
         });
 
         it('should not navigate when Enter is pressed with no selection', () => {
@@ -186,7 +186,7 @@ describe('GlobalSearchLectureResultsComponent', () => {
             fixture.componentRef.setInput('selectedIndex', -1);
             fixture.detectChanges();
 
-            const navigateSpy = vi.spyOn((component as any).router, 'navigateByUrl');
+            const navigateSpy = vi.spyOn((component as any).router, 'navigate');
             const event = new KeyboardEvent('keydown', { key: 'Enter' });
 
             component.handleKeydown(event);
@@ -199,7 +199,7 @@ describe('GlobalSearchLectureResultsComponent', () => {
             fixture.componentRef.setInput('selectedIndex', 0);
             fixture.detectChanges();
 
-            const navigateSpy = vi.spyOn((component as any).router, 'navigateByUrl');
+            const navigateSpy = vi.spyOn((component as any).router, 'navigate');
             const event = new KeyboardEvent('keydown', { key: 'ArrowDown' });
 
             component.handleKeydown(event);

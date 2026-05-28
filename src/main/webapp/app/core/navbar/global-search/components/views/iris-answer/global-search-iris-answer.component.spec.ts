@@ -346,7 +346,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             fixture.detectChanges();
             expect(component['irisResult']()?.answer).toBe('First answer');
 
-            // New query — tap() runs immediately on emission, before the debounce fires
+            // New query — outer switchMap runs synchronously on emission, cancelling the timer before it fires
             fixture.componentRef.setInput('searchQuery', 'query two');
             fixture.detectChanges();
 
