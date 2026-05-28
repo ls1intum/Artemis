@@ -1,66 +1,71 @@
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
-import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { Subject } from 'rxjs';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
-import { TeamService } from 'app/exercise/team/team.service';
 import { TeamsImportButtonComponent } from 'app/exercise/team/teams-import-dialog/teams-import-button.component';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
-import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
-import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { TeamsImportDialogComponent } from 'app/exercise/team/teams-import-dialog/teams-import-dialog.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
 import { mockExercise, mockSourceTeams, mockTeams } from 'test/helpers/mocks/service/mock-team.service';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+
 describe('TeamsImportButtonComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: TeamsImportButtonComponent;
     let fixture: ComponentFixture<TeamsImportButtonComponent>;
     let debugElement: DebugElement;
-    let modalService: NgbModal;
+    let dialogService: DialogService;
 
-    function resetComponent() {
-        comp.teams = mockTeams;
-        comp.exercise = mockExercise;
-    }
-
-    beforeEach(waitForAsync(() => {
-        TestBed.configureTestingModule({
-            imports: [MockModule(NgbModule), MockDirective(FeatureToggleDirective)],
-            declarations: [TeamsImportButtonComponent, ButtonComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
-            providers: [MockProvider(TeamService), MockProvider(NgbModal)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [TeamsImportButtonComponent],
+            providers: [MockProvider(DialogService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
-    }));
-    beforeEach(() => {
+
         fixture = TestBed.createComponent(TeamsImportButtonComponent);
         comp = fixture.componentInstance;
         debugElement = fixture.debugElement;
-        modalService = TestBed.inject(NgbModal);
+        dialogService = TestBed.inject(DialogService);
+        fixture.componentRef.setInput('teams', mockTeams);
+        fixture.componentRef.setInput('exercise', mockExercise);
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     describe('openTeamsImportDialog', () => {
-        let modalServiceStub: jest.SpyInstance;
-        let componentInstance: any;
+        it('should open teams import dialog when called', () => {
+            const onClose = new Subject<Team[] | undefined>();
+            const dialogRef = { onClose: onClose.asObservable() } as DynamicDialogRef;
+            const dialogServiceStub = vi.spyOn(dialogService, 'open').mockReturnValue(dialogRef);
+            const teams: Team[][] = [];
+            comp.save.subscribe((value: Team[]) => teams.push(value));
 
-        let teams: Team[] = [];
-
-        beforeEach(() => {
-            resetComponent();
-            comp.save.subscribe((value: Team[]) => {
-                teams = value;
-            });
-            componentInstance = { teams: [], exercise: undefined };
-            const result = new Promise((resolve) => resolve(mockSourceTeams));
-            modalServiceStub = jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance, result });
-        });
-        afterEach(() => {
-            jest.restoreAllMocks();
-        });
-        it('should open teams import dialog when called', fakeAsync(() => {
             const button = debugElement.nativeElement.querySelector('button');
             button.click();
-            expect(modalServiceStub).toHaveBeenCalledOnce();
-            expect(componentInstance.exercise).toEqual(mockExercise);
-            expect(componentInstance.teams).toEqual(mockTeams);
-            tick(100);
-            expect(teams).toEqual(mockSourceTeams);
-        }));
+
+            expect(dialogServiceStub).toHaveBeenCalledOnce();
+            expect(dialogServiceStub).toHaveBeenCalledWith(
+                TeamsImportDialogComponent,
+                expect.objectContaining({
+                    showHeader: false,
+                    width: '50rem',
+                    modal: true,
+                    closeOnEscape: true,
+                    dismissableMask: false,
+                    data: { exercise: mockExercise, teams: mockTeams },
+                }),
+            );
+
+            onClose.next(mockSourceTeams);
+
+            expect(teams).toEqual([mockSourceTeams]);
+        });
     });
 });

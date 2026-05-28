@@ -1,25 +1,25 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, input, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal, viewChild } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/foundation/service/alert.service';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { TeamService } from 'app/exercise/team/team.service';
 import { TeamImportStrategyType as ImportStrategy, Team } from 'app/exercise/shared/entities/team/team.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { flatMap } from 'lodash-es';
 import { User } from 'app/account/user/user.model';
 import { faBan, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass } from '@angular/common';
 import { TeamsImportFromFileFormComponent } from './teams-import-from-file-form.component';
-import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TeamExerciseSearchComponent } from '../team-exercise-search/team-exercise-search.component';
 import { TeamStudentsListComponent } from '../team-participate/team-students-list.component';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-teams-import-dialog',
@@ -41,7 +41,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 })
 export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     private teamService = inject(TeamService);
-    private activeModal = inject(NgbActiveModal);
+    private dialogRef = inject(DynamicDialogRef);
+    private dialogConfig = inject(DynamicDialogConfig);
     private alertService = inject(AlertService);
 
     readonly ImportStrategy = ImportStrategy;
@@ -49,8 +50,8 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
 
     readonly importForm = viewChild.required<NgForm>('importForm');
 
-    readonly exercise = input<Exercise>(undefined!);
-    readonly teams = input<Team[]>(undefined!); // existing teams already in exercise
+    readonly exercise = signal<Exercise>(undefined!);
+    readonly teams = signal<Team[]>(undefined!); // existing teams already in exercise
 
     sourceExercise?: Exercise;
 
@@ -91,6 +92,13 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      * Life cycle hook to indicate component creation is done
      */
     ngOnInit() {
+        const data = this.dialogConfig.data as { exercise?: Exercise; teams?: Team[] } | undefined;
+        if (data?.exercise) {
+            this.exercise.set(data.exercise);
+        }
+        if (data?.teams) {
+            this.teams.set(data.teams);
+        }
         this.computePotentialConflictsBasedOnExistingTeams();
     }
 
@@ -287,7 +295,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      * Cancel the import dialog
      */
     clear() {
-        this.activeModal.dismiss('cancel');
+        this.dialogRef.close(undefined);
     }
 
     /**
@@ -365,7 +373,7 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      * @param {HttpResponse<Team[]>} teams - Successfully updated teams
      */
     onSaveSuccess(teams: HttpResponse<Team[]>) {
-        this.activeModal.close(teams.body);
+        this.dialogRef.close(teams.body);
         this.isImporting = false;
 
         setTimeout(() => {

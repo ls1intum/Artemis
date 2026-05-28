@@ -1,5 +1,5 @@
 import { Component, inject, input, output } from '@angular/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
@@ -21,7 +21,7 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
     imports: [ButtonComponent],
 })
 export class TeamsImportButtonComponent {
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
 
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
@@ -41,13 +41,20 @@ export class TeamsImportButtonComponent {
      */
     openTeamsImportDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(TeamsImportDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.exercise = this.exercise;
-        modalRef.componentInstance.teams = this.teams;
+        const dialogRef = this.dialogService.open(TeamsImportDialogComponent, {
+            showHeader: false,
+            width: '50rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            data: { exercise: this.exercise(), teams: this.teams() },
+        });
 
-        modalRef.result.then(
-            (teams: Team[]) => this.save.emit(teams),
-            () => {},
-        );
+        dialogRef?.onClose.subscribe((teams: Team[] | undefined) => {
+            if (teams) {
+                this.save.emit(teams);
+            }
+        });
     }
 }
