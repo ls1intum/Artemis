@@ -43,7 +43,8 @@ public class CourseNotificationSettingPresetRegistryService {
     public CourseNotificationSettingPresetRegistryService() {
         ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
         scanner.addIncludeFilter(new AnnotationTypeFilter(CourseNotificationSettingPreset.class));
-        String basePackage = UserCourseNotificationSettingPreset.class.getPackage().getName();
+        // Class#getPackageName() (Java 9+) never returns null, unlike Class#getPackage().
+        String basePackage = UserCourseNotificationSettingPreset.class.getPackageName();
 
         for (BeanDefinition bd : scanner.findCandidateComponents(basePackage)) {
             try {

@@ -36,9 +36,9 @@ class LegacyNotificationPathDeprecationInterceptorTest {
 
         interceptor.preHandle(request, response, handler);
 
-        assertThat(response.getHeader("Deprecation")).isEqualTo("true");
+        assertThat(response.getHeader("Deprecation")).isEqualTo(LegacyNotificationPathDeprecationInterceptor.DEPRECATION_DATE);
         assertThat(response.getHeader("Sunset")).isEqualTo(LegacyNotificationPathDeprecationInterceptor.SUNSET_DATE);
-        assertThat(response.getHeader("Link")).isEqualTo("</api/notification/notification/42>; rel=\"successor-version\"");
+        assertThat(response.getHeaders("Link")).containsExactly("</api/notification/notification/42>; rel=\"successor-version\"");
     }
 
     @Test
@@ -48,9 +48,22 @@ class LegacyNotificationPathDeprecationInterceptorTest {
 
         interceptor.preHandle(request, response, handler);
 
-        assertThat(response.getHeader("Deprecation")).isEqualTo("true");
+        assertThat(response.getHeader("Deprecation")).isEqualTo(LegacyNotificationPathDeprecationInterceptor.DEPRECATION_DATE);
         assertThat(response.getHeader("Sunset")).isEqualTo(LegacyNotificationPathDeprecationInterceptor.SUNSET_DATE);
-        assertThat(response.getHeader("Link")).isEqualTo("</api/notification/public/system-notifications/active>; rel=\"successor-version\"");
+        assertThat(response.getHeaders("Link")).containsExactly("</api/notification/public/system-notifications/active>; rel=\"successor-version\"");
+    }
+
+    @Test
+    void shouldNotClobberExistingLinkHeaderWhenLegacyPathHitsNotificationController() throws NoSuchMethodException {
+        // Simulate a controller that has already written a pagination Link header (PaginationUtil pattern).
+        String paginationLink = "</api/communication/system-notifications?page=1&size=50>; rel=\"next\"";
+        response.addHeader("Link", paginationLink);
+        request.setRequestURI("/api/communication/system-notifications");
+        HandlerMethod handler = notificationHandler();
+
+        interceptor.preHandle(request, response, handler);
+
+        assertThat(response.getHeaders("Link")).containsExactly(paginationLink, "</api/notification/system-notifications>; rel=\"successor-version\"");
     }
 
     @Test

@@ -48,7 +48,12 @@ public class LegacyNotificationPathDeprecationInterceptor implements HandlerInte
 
     static final String NOTIFICATION_PACKAGE = "de.tum.cit.aet.artemis.notification";
 
-    // IMF-fixdate per RFC 7231 §7.1.1.1. Update when the legacy prefixes are actually removed.
+    // RFC 9745 specifies the Deprecation header value as an IMF-fixdate (RFC 7231 §7.1.1.1).
+    // This is the date the legacy prefixes were marked deprecated; align it with the commit that
+    // introduced the deprecation. Plain `true` would be non-compliant with RFC 9745.
+    static final String DEPRECATION_DATE = "Thu, 28 May 2026 00:00:00 GMT";
+
+    // RFC 8594 — IMF-fixdate of the planned removal. Update when the legacy prefixes are actually removed.
     static final String SUNSET_DATE = "Wed, 30 Sep 2026 00:00:00 GMT";
 
     @Override
@@ -68,10 +73,13 @@ public class LegacyNotificationPathDeprecationInterceptor implements HandlerInte
             if (!path.startsWith(legacyPrefix)) {
                 continue;
             }
-            response.setHeader("Deprecation", "true");
+            // Deprecation / Sunset are single-valued — setHeader is correct (no other writer sets them).
+            response.setHeader("Deprecation", DEPRECATION_DATE);
             response.setHeader("Sunset", SUNSET_DATE);
+            // Link is multi-valued (RFC 8288): use addHeader so we do not clobber a pagination Link header
+            // that controllers like getAllSystemNotifications write via PaginationUtil.
             String successor = entry.getValue() + path.substring(legacyPrefix.length());
-            response.setHeader("Link", "<" + successor + ">; rel=\"successor-version\"");
+            response.addHeader("Link", "<" + successor + ">; rel=\"successor-version\"");
             return true;
         }
         return true;

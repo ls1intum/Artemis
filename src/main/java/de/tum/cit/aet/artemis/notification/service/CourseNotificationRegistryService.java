@@ -43,7 +43,8 @@ public class CourseNotificationRegistryService {
     public CourseNotificationRegistryService() {
         ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
         scanner.addIncludeFilter(new AnnotationTypeFilter(CourseNotificationType.class));
-        String basePackage = CourseNotification.class.getPackage().getName();
+        // Class#getPackageName() (Java 9+) never returns null, unlike Class#getPackage().
+        String basePackage = CourseNotification.class.getPackageName();
 
         for (BeanDefinition bd : scanner.findCandidateComponents(basePackage)) {
             try {
