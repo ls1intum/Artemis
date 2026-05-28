@@ -192,7 +192,7 @@ describe('ProgrammingFeedbackItemService', () => {
         const items = service.create(feedbacks, false);
         const groups = service.group(items, exercise) as FeedbackGroup[];
 
-        expect(groups).toBeArrayOfSize(1);
+        expect(groups).toHaveLength(1);
 
         const wrongGroup = groups.find((group) => group.name === 'wrong');
         const feedbackInGroup = wrongGroup!.members[0].feedbackReference;
@@ -205,7 +205,7 @@ describe('ProgrammingFeedbackItemService', () => {
         const items = service.create(feedbacks, false);
         const groups = service.group(items, exercise) as FeedbackGroup[];
 
-        expect(groups).toBeArrayOfSize(1);
+        expect(groups).toHaveLength(1);
 
         const correctGroup = groups.find((group) => group.name === 'correct');
         const feedbackInGroup = correctGroup!.members[0].feedbackReference;

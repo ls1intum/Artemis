@@ -86,9 +86,9 @@ describe('FeedbackItemService', () => {
         const items = service.create(feedbacks, false);
         const groups = service.group(items) as FeedbackGroup[];
 
-        expect(groups.find((group) => group.name === 'wrong')?.members).toBeArrayOfSize(4);
-        expect(groups.find((group) => group.name === 'info')?.members).toBeArrayOfSize(3);
-        expect(groups.find((group) => group.name === 'correct')?.members).toBeArrayOfSize(2);
+        expect(groups.find((group) => group.name === 'wrong')?.members).toHaveLength(4);
+        expect(groups.find((group) => group.name === 'info')?.members).toHaveLength(3);
+        expect(groups.find((group) => group.name === 'correct')?.members).toHaveLength(2);
     });
 
     it('should filter out subsequent SGI feedback for group credit calculation', () => {
@@ -104,7 +104,7 @@ describe('FeedbackItemService', () => {
         const items = service.create(feedbacks, false);
         const groups = service.group(items) as FeedbackGroup[];
 
-        expect(groups).toBeArrayOfSize(2);
+        expect(groups).toHaveLength(2);
 
         const infoGroup = groups.find((group) => group.name === 'info');
         expect(infoGroup?.credits).toBe(0);
