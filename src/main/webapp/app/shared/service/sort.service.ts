@@ -6,6 +6,12 @@ import dayjs from 'dayjs/esm';
 })
 export class SortService {
     /**
+     * Collator used for comparing strings. `numeric: true` enables natural ordering so that, for
+     * example, "Test User 10" sorts after "Test User 9" instead of right after "Test User 1".
+     */
+    private static readonly stringCollator = new Intl.Collator(undefined, { numeric: true });
+
+    /**
      * Sorts the given array based on the defined keys
      * @param array The array that should be sorted
      * @param key The attribute of the elements that should be used for determining the order
@@ -86,7 +92,7 @@ export class SortService {
 
     private static compareBasic(valueA: any, valueB: any) {
         if (typeof valueA === 'string' && typeof valueB === 'string') {
-            return valueA.localeCompare(valueB);
+            return SortService.stringCollator.compare(valueA, valueB);
         } else if (valueA === valueB) {
             return 0;
         } else {

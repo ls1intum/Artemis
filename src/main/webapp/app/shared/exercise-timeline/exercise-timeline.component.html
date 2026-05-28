@@ -1,0 +1,61 @@
+<div class="frame">
+    @for (internalItem of internalTimelineItems(); track $index; let index = $index) {
+        <div class="timeline-item-row">
+            <div class="timeline-graphic">
+                <div class="timeline-graphic-line"></div>
+                <div
+                    class="timeline-graphic-circle"
+                    [class.required]="internalItem.kind === 'required'"
+                    [class.optional]="internalItem.kind === 'optional'"
+                    [class.valid]="!internalItem.isBeforePreviousDate && !internalItem.isInputRequiredButUndefined"
+                    [class.invalid]="internalItem.isBeforePreviousDate || (dateModel.touched && internalItem.isInputRequiredButUndefined)"
+                >
+                    @if (internalItem.internalDate !== undefined) {
+                        <div
+                            class="timeline-graphic-circle-dot"
+                            [class.invalid]="internalItem.isBeforePreviousDate || (dateModel.touched && internalItem.isInputRequiredButUndefined)"
+                        ></div>
+                    }
+                </div>
+                <div class="timeline-graphic-line"></div>
+            </div>
+            <div class="label-and-input">
+                @if (index > 0) {
+                    <div class="spacer"></div>
+                }
+                <label class="label" [for]="'datepicker-' + index" [jhiTranslate]="internalItem.labelStringKey"></label>
+                <div class="datepicker-and-info">
+                    <p-datepicker
+                        styleClass="timeline-datepicker"
+                        [inputStyle]="{ width: '100%', 'box-sizing': 'border-box' }"
+                        [inputId]="'datepicker-' + index"
+                        [ngModel]="internalItem.internalDate"
+                        (onInput)="handleManualInput(internalItem, $event)"
+                        (onSelect)="updateDate(internalItem, $event)"
+                        (onClear)="updateDate(internalItem, null)"
+                        #dateModel="ngModel"
+                        [showTime]="true"
+                        dateFormat="dd.mm.yy"
+                        timeSeparator=":"
+                        placeholder="dd.mm.yyyy hh:mm"
+                        keepInvalid="true"
+                        showClear="true"
+                        [showIcon]="!readonly()"
+                        iconDisplay="input"
+                        appendTo="body"
+                        showOnFocus="false"
+                        [baseZIndex]="1050"
+                        [invalid]="internalItem.isBeforePreviousDate || (dateModel.touched && internalItem.isInputRequiredButUndefined)"
+                        [disabled]="readonly()"
+                    />
+                    <i
+                        class="pi pi-info-circle timeline-datepicker-info-icon"
+                        [class.visible]="internalItem.isBeforePreviousDate || (dateModel.touched && internalItem.isInputRequiredButUndefined)"
+                        [pTooltip]="internalItem.tooltip"
+                        tooltipPosition="right"
+                    ></i>
+                </div>
+            </div>
+        </div>
+    }
+</div>

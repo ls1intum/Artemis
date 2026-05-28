@@ -8,8 +8,6 @@ import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layo
 import { ComplaintService, EntityResponseType } from 'app/assessment/shared/services/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
-import { User } from 'app/account/user/user.model';
-import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -20,7 +18,6 @@ import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
-import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { ModelingAssessmentEditorComponent } from 'app/modeling/manage/assess/modeling-assessment-editor/modeling-assessment-editor.component';
@@ -47,6 +44,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
+import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 describe('ModelingAssessmentEditorComponent', () => {
     setupTestBed({ zoneless: true });
@@ -172,19 +170,8 @@ describe('ModelingAssessmentEditorComponent', () => {
             const submission = getSubmissionWithData();
 
             modelingSubmissionSpy.mockReturnValue(of(submission));
-            const user = <User>{ id: 99, groups: ['instructorGroup'] };
-            const result: Result = {
-                feedbacks: [new Feedback()],
-                score: 80,
-                successful: true,
-                submission: new ProgrammingSubmission(),
-                assessor: user,
-                hasComplaint: true,
-                assessmentType: AssessmentType.SEMI_AUTOMATIC,
-                id: 2,
-            };
-            const complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result };
-            complaintSpy.mockReturnValue(of({ body: complaint } as HttpResponse<Complaint>));
+            const complaintDTO = <ComplaintDTO>{ id: 1, complaintText: 'Why only 80%?' };
+            complaintSpy.mockReturnValue(of({ body: complaintDTO } as HttpResponse<ComplaintDTO>));
 
             const handleFeedbackSpy = vi.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
             const verifyFeedbackSpy = vi.spyOn(component, 'validateFeedback');
@@ -193,7 +180,11 @@ describe('ModelingAssessmentEditorComponent', () => {
             await fixture.whenStable();
             expect(modelingSubmissionSpy).toHaveBeenCalledOnce();
             expect(component.isLoading).toBe(false);
-            expect(component.complaint).toEqual(complaint);
+            expect(component.complaint).toMatchObject({
+                id: complaintDTO.id,
+                complaintText: complaintDTO.complaintText,
+                result: component.result,
+            });
             modelingSubmissionSpy.mockRestore();
             // called twice, since the feedback is additionally verified during the component initialization
             expect(handleFeedbackSpy).toHaveBeenCalledTimes(2);
