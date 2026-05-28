@@ -23,6 +23,13 @@ import { MathNodeContext } from 'app/proof/manage/update/proof-math-node/proof-m
 import { ProofExpressionCanvasComponent } from 'app/proof/shared/expression-canvas/proof-expression-canvas.component';
 import { ProofBuilderComponent } from 'app/proof/manage/update/proof-builder/proof-builder.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
+import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
+import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
+import { ProgressBarModule } from 'primeng/progressbar';
+import { TagModule } from 'primeng/tag';
+import { TooltipModule } from 'primeng/tooltip';
 
 type StepStatus = 'pending' | 'valid' | 'invalid';
 
@@ -39,6 +46,13 @@ type StepStatus = 'pending' | 'valid' | 'invalid';
         KatexStringPipe,
         ProofExpressionCanvasComponent,
         ProofBuilderComponent,
+        ButtonModule,
+        CardModule,
+        InputTextModule,
+        MessageModule,
+        ProgressBarModule,
+        TagModule,
+        TooltipModule,
     ],
 })
 export class ProofSubmissionComponent implements OnInit, OnDestroy {

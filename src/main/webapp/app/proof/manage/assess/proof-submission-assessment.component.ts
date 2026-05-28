@@ -15,11 +15,31 @@ import { MathNodeLatexPipe } from 'app/proof/shared/math-node-latex.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ProofBlockRegistryService } from 'app/proof/manage/service/proof-block-registry.service';
 import { ProofSubmissionService } from 'app/proof/participate/service/proof-submission.service';
+import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
+import { InputGroupModule } from 'primeng/inputgroup';
+import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
+import { InputTextModule } from 'primeng/inputtext';
+import { TagModule } from 'primeng/tag';
 
 @Component({
     selector: 'jhi-proof-submission-assessment',
     templateUrl: './proof-submission-assessment.component.html',
-    imports: [AssessmentLayoutComponent, TranslateDirective, HtmlForMarkdownPipe, MathNodeLatexPipe, NgClass, ArtemisDatePipe, FormsModule],
+    imports: [
+        AssessmentLayoutComponent,
+        TranslateDirective,
+        HtmlForMarkdownPipe,
+        MathNodeLatexPipe,
+        NgClass,
+        ArtemisDatePipe,
+        FormsModule,
+        ButtonModule,
+        CardModule,
+        InputGroupModule,
+        InputGroupAddonModule,
+        InputTextModule,
+        TagModule,
+    ],
 })
 export class ProofSubmissionAssessmentComponent implements OnInit {
     private route = inject(ActivatedRoute);

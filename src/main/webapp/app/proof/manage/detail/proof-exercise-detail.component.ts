@@ -13,7 +13,7 @@ import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import {
@@ -29,6 +29,10 @@ import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/det
 import { MathNodeLatexPipe } from 'app/proof/shared/math-node-latex.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DecimalPipe } from '@angular/common';
+import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
+import { TableModule } from 'primeng/table';
+import { TagModule } from 'primeng/tag';
 
 @Component({
     selector: 'jhi-proof-exercise-detail',
@@ -43,6 +47,10 @@ import { DecimalPipe } from '@angular/common';
         RouterLink,
         ArtemisDatePipe,
         DecimalPipe,
+        ButtonModule,
+        CardModule,
+        TableModule,
+        TagModule,
     ],
 })
 export class ProofExerciseDetailComponent implements OnInit, OnDestroy {
@@ -57,7 +65,6 @@ export class ProofExerciseDetailComponent implements OnInit, OnDestroy {
 
     proofExercise: ProofExercise;
     course?: Course;
-    isExamExercise: boolean;
     formattedProblemStatement: SafeHtml | null;
     formattedExampleSolution: SafeHtml | null;
     submissions: ProofSubmission[] = [];
@@ -77,8 +84,7 @@ export class ProofExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     onExerciseLoaded() {
-        this.isExamExercise = !!this.proofExercise.exerciseGroup;
-        this.course = this.isExamExercise ? this.proofExercise.exerciseGroup?.exam?.course : this.proofExercise.course;
+        this.course = this.proofExercise.course;
 
         this.formattedProblemStatement = this.artemisMarkdownService.safeHtmlForMarkdown(this.proofExercise.problemStatement);
         this.formattedExampleSolution = this.artemisMarkdownService.safeHtmlForMarkdown(this.proofExercise.exampleSolution);

@@ -1,5 +1,12 @@
 import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
+import { ProgressBarModule } from 'primeng/progressbar';
+import { TagModule } from 'primeng/tag';
+import { TooltipModule } from 'primeng/tooltip';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MathNode, applyRule, distance, equalsAC, isTautology, normalizeAC } from '../../../shared/entities/math-node.model';
 import { DerivationStep } from '../../../shared/entities/derivation-step.model';
 import { BlockDefinitionModel, RewriteRuleModel } from '../../../shared/entities/block-definition.model';
@@ -15,7 +22,20 @@ import { MathNodeContext } from '../proof-math-node/proof-math-node.component';
 @Component({
     selector: 'jhi-proof-derivation-workspace',
     templateUrl: './proof-derivation-workspace.component.html',
-    imports: [FormsModule, MathNodeLatexPipe, KatexStringPipe, ArtemisTranslatePipe, ProofExpressionCanvasComponent],
+    imports: [
+        FormsModule,
+        ButtonModule,
+        InputTextModule,
+        MessageModule,
+        ProgressBarModule,
+        TagModule,
+        TooltipModule,
+        TranslateDirective,
+        MathNodeLatexPipe,
+        KatexStringPipe,
+        ArtemisTranslatePipe,
+        ProofExpressionCanvasComponent,
+    ],
 })
 export class ProofDerivationWorkspaceComponent implements OnInit {
     private blockRegistryService = inject(ProofBlockRegistryService);

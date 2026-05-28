@@ -110,7 +110,7 @@
                 <span class="math-wildcard">{{ node().value ?? '?' }}</span>
             } @else {
                 <span class="math-unknown">
-                    <span class="badge bg-secondary me-1">{{ node().type }}</span>
+                    <p-tag severity="secondary" [value]="node().type" styleClass="me-1" />
                     @for (entry of unknownChildren(); track $index) {
                         <jhi-math-node [node]="entry.child" [path]="entry.childPath" [rootIndex]="rootIndex()" [ctx]="ctx()" />
                     }

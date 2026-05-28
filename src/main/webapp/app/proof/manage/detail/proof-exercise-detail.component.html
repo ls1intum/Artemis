@@ -19,49 +19,50 @@
             @if (submissions.length > 0) {
                 <div class="row mt-3">
                     <div class="col-12">
-                        <div class="card">
-                            <div class="card-header d-flex align-items-center justify-content-between">
-                                <h4 class="card-title mb-0">Submitted Proofs</h4>
-                                <span class="badge bg-secondary">{{ submissions.length }}</span>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>Student</th>
-                                            <th>Submitted</th>
-                                            <th>Steps</th>
-                                            <th>Score</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @for (sub of submissions; track sub.id) {
-                                            <tr>
-                                                <td>{{ sub.participation?.studentName ?? sub.participation?.studentLogin ?? '—' }}</td>
-                                                <td>{{ sub.submissionDate | artemisDate }}</td>
-                                                <td>{{ sub.steps?.length ?? 0 }}</td>
-                                                <td>
-                                                    @if (sub.results && sub.results.length > 0) {
-                                                        {{ sub.results[sub.results.length - 1].score | number: '1.0-1' }}%
-                                                    } @else {
-                                                        <span class="text-muted">—</span>
-                                                    }
-                                                </td>
-                                                <td class="text-end">
-                                                    <a
-                                                        class="btn btn-sm btn-outline-primary"
-                                                        [routerLink]="['/course-management', course!.id, 'proof-exercises', proofExercise.id, 'submissions', sub.id, 'assessment']"
-                                                    >
-                                                        Assess
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                        <p-card>
+                            <ng-template pTemplate="header">
+                                <div class="d-flex align-items-center justify-content-between px-3 pt-3">
+                                    <h4 class="mb-0">Submitted Proofs</h4>
+                                    <p-tag severity="secondary" [value]="submissions.length.toString()" />
+                                </div>
+                            </ng-template>
+                            <p-table [value]="submissions" styleClass="p-datatable-sm p-datatable-hover">
+                                <ng-template pTemplate="header">
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Submitted</th>
+                                        <th>Steps</th>
+                                        <th>Score</th>
+                                        <th></th>
+                                    </tr>
+                                </ng-template>
+                                <ng-template pTemplate="body" let-sub>
+                                    <tr>
+                                        <td>{{ sub.participation?.studentName ?? sub.participation?.studentLogin ?? '—' }}</td>
+                                        <td>{{ sub.submissionDate | artemisDate }}</td>
+                                        <td>{{ sub.steps?.length ?? 0 }}</td>
+                                        <td>
+                                            @if (sub.results && sub.results.length > 0) {
+                                                {{ sub.results[sub.results.length - 1].score | number: '1.0-1' }}%
+                                            } @else {
+                                                <span class="text-muted">—</span>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            <a
+                                                pButton
+                                                size="small"
+                                                severity="primary"
+                                                [outlined]="true"
+                                                [routerLink]="['/course-management', course!.id, 'proof-exercises', proofExercise.id, 'submissions', sub.id, 'assessment']"
+                                            >
+                                                Assess
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </ng-template>
+                            </p-table>
+                        </p-card>
                     </div>
                 </div>
             }
@@ -69,11 +70,11 @@
             @if (proofExercise.sourceExpression && proofExercise.targetExpression) {
                 <div class="row mt-3">
                     <div class="col-12">
-                        <div class="card">
-                            <div class="card-header">
-                                <h4 class="card-title" jhiTranslate="artemisApp.proofExercise.expressionsTitle">Proof Expressions</h4>
-                            </div>
-                            <div class="card-body d-flex gap-4 align-items-center flex-wrap">
+                        <p-card>
+                            <ng-template pTemplate="header">
+                                <h4 class="px-3 pt-3 mb-0" jhiTranslate="artemisApp.proofExercise.expressionsTitle">Proof Expressions</h4>
+                            </ng-template>
+                            <div class="d-flex gap-4 align-items-center flex-wrap">
                                 <div>
                                     <small class="text-muted d-block mb-1" jhiTranslate="artemisApp.proofExercise.sourceExpression">Source</small>
                                     <span class="fs-5" [innerHTML]="proofExercise.sourceExpression | mathNodeLatex"></span>
@@ -84,7 +85,7 @@
                                     <span class="fs-5" [innerHTML]="proofExercise.targetExpression | mathNodeLatex"></span>
                                 </div>
                             </div>
-                        </div>
+                        </p-card>
                     </div>
                 </div>
             }

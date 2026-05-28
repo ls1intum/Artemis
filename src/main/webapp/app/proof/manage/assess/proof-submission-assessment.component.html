@@ -14,173 +14,164 @@
 >
     @if (!isLoading) {
         <!-- Submission info + score action — full width at the top -->
-        <div class="card mb-3">
-            <div class="card-body py-2">
-                <div class="d-flex align-items-center gap-4 flex-wrap">
-                    <!-- Student + date + step count -->
-                    <div class="d-flex gap-4 flex-grow-1 flex-wrap">
-                        @if (submission?.participation?.studentName || submission?.participation?.studentLogin) {
-                            <div>
-                                <small class="text-muted d-block">Student</small>
-                                <strong>{{ submission.participation!.studentName ?? submission.participation!.studentLogin }}</strong>
-                            </div>
-                        }
-                        @if (submission?.submissionDate) {
-                            <div>
-                                <small class="text-muted d-block">Submitted</small>
-                                <span>{{ submission.submissionDate | artemisDate }}</span>
-                            </div>
-                        }
+        <p-card styleClass="mb-3">
+            <div class="d-flex align-items-center gap-4 flex-wrap">
+                <!-- Student + date + step count -->
+                <div class="d-flex gap-4 flex-grow-1 flex-wrap">
+                    @if (submission?.participation?.studentName || submission?.participation?.studentLogin) {
                         <div>
-                            <small class="text-muted d-block">Steps</small>
-                            <strong>{{ submission?.steps?.length ?? 0 }}</strong>
+                            <small class="text-muted d-block">Student</small>
+                            <strong>{{ submission.participation!.studentName ?? submission.participation!.studentLogin }}</strong>
                         </div>
-                        @if (result) {
-                            <div>
-                                <small class="text-muted d-block">Auto score</small>
-                                <strong [ngClass]="(result.score ?? 0) >= 50 ? 'text-success' : 'text-danger'">{{ result.score }}%</strong>
-                            </div>
-                        }
-                        @if (isProofComplete) {
-                            <div class="d-flex align-items-center">
-                                <span class="badge bg-success">&#10003; Proof Complete</span>
-                            </div>
-                        } @else if ((submission?.steps?.length ?? 0) > 0) {
-                            <div class="d-flex align-items-center">
-                                <span class="badge bg-warning text-dark">Incomplete</span>
-                            </div>
-                        }
+                    }
+                    @if (submission?.submissionDate) {
+                        <div>
+                            <small class="text-muted d-block">Submitted</small>
+                            <span>{{ submission.submissionDate | artemisDate }}</span>
+                        </div>
+                    }
+                    <div>
+                        <small class="text-muted d-block">Steps</small>
+                        <strong>{{ submission?.steps?.length ?? 0 }}</strong>
                     </div>
+                    @if (result) {
+                        <div>
+                            <small class="text-muted d-block">Auto score</small>
+                            <strong [ngClass]="(result.score ?? 0) >= 50 ? 'text-success' : 'text-danger'">{{ result.score }}%</strong>
+                        </div>
+                    }
+                    @if (isProofComplete) {
+                        <div class="d-flex align-items-center">
+                            <p-tag severity="success" value="✓ Proof Complete" />
+                        </div>
+                    } @else if ((submission?.steps?.length ?? 0) > 0) {
+                        <div class="d-flex align-items-center">
+                            <p-tag severity="warn" value="Incomplete" />
+                        </div>
+                    }
+                </div>
 
-                    <!-- Manual score input -->
-                    <div class="d-flex align-items-center gap-2 flex-shrink-0">
-                        <label class="form-label small text-muted mb-0 text-nowrap" for="manualScore">Manual score</label>
-                        <div class="input-group input-group-sm" style="width: 120px">
-                            <input type="number" id="manualScore" class="form-control" min="0" max="100" [(ngModel)]="manualScore" placeholder="0–100" />
-                            <span class="input-group-text">%</span>
-                        </div>
-                        <button class="btn btn-sm btn-warning text-nowrap" [disabled]="saveBusy || manualScore === undefined" (click)="saveManualScore()">
-                            @if (saveBusy) {
-                                Saving…
-                            } @else {
-                                Save Score
-                            }
-                        </button>
-                        @if (saveSuccess) {
-                            <span class="text-success small">&#10003; Saved</span>
-                        }
-                    </div>
+                <!-- Manual score input -->
+                <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                    <label class="small text-muted mb-0 text-nowrap" for="manualScore">Manual score</label>
+                    <p-inputgroup styleClass="p-inputgroup-sm" style="width: 120px">
+                        <input type="number" id="manualScore" pInputText pSize="small" min="0" max="100" [(ngModel)]="manualScore" placeholder="0–100" />
+                        <p-inputgroup-addon>%</p-inputgroup-addon>
+                    </p-inputgroup>
+                    <p-button
+                        size="small"
+                        severity="warn"
+                        class="text-nowrap"
+                        [disabled]="saveBusy || manualScore === undefined"
+                        (onClick)="saveManualScore()"
+                        [label]="saveBusy ? 'Saving…' : 'Save Score'"
+                    />
+                    @if (saveSuccess) {
+                        <span class="text-success small">✓ Saved</span>
+                    }
                 </div>
             </div>
-        </div>
+        </p-card>
 
         <!-- Main content -->
         <div class="row g-3">
             <!-- Problem statement (narrow) -->
             <div class="col-12 col-lg-3">
-                <div class="card h-100">
-                    <div class="card-header">
-                        <h6 class="card-title mb-0" jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</h6>
-                    </div>
-                    <div class="card-body">
-                        @if (proofExercise.problemStatement) {
-                            <div [innerHTML]="proofExercise.problemStatement | htmlForMarkdown"></div>
-                        }
-                        @if (hasAstExpressions) {
-                            <div class="mt-3 p-2 rounded border bg-light small">
-                                <div class="d-flex align-items-center gap-2 mb-1">
-                                    <span class="badge bg-secondary">Start</span>
-                                    <span [innerHTML]="proofExercise.sourceExpression | mathNodeLatex"></span>
-                                </div>
-                                <div class="text-center text-muted">&#8595; prove &#8595;</div>
-                                <div class="d-flex align-items-center gap-2 mt-1">
-                                    <span class="badge bg-success">Goal</span>
-                                    <span [innerHTML]="proofExercise.targetExpression | mathNodeLatex"></span>
-                                </div>
+                <p-card styleClass="h-100">
+                    <ng-template pTemplate="header">
+                        <h6 class="px-3 pt-3 mb-0" jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</h6>
+                    </ng-template>
+                    @if (proofExercise.problemStatement) {
+                        <div [innerHTML]="proofExercise.problemStatement | htmlForMarkdown"></div>
+                    }
+                    @if (hasAstExpressions) {
+                        <div class="mt-3 p-2 rounded border bg-light small">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <p-tag severity="secondary" value="Start" />
+                                <span [innerHTML]="proofExercise.sourceExpression | mathNodeLatex"></span>
                             </div>
-                        }
-                    </div>
-                </div>
+                            <div class="text-center text-muted">↓ prove ↓</div>
+                            <div class="d-flex align-items-center gap-2 mt-1">
+                                <p-tag severity="success" value="Goal" />
+                                <span [innerHTML]="proofExercise.targetExpression | mathNodeLatex"></span>
+                            </div>
+                        </div>
+                    }
+                </p-card>
             </div>
 
             @if (hasAstExpressions) {
                 <!-- Student's derivation -->
                 <div class="col-12 col-lg-5">
-                    <div class="card h-100" [ngClass]="{ 'border-success': isProofComplete, 'border-warning': !isProofComplete && (submission?.steps?.length ?? 0) > 0 }">
-                        <div class="card-header">
-                            <h6 class="card-title mb-0">Student's Proof</h6>
-                        </div>
-                        <div class="card-body">
-                            @if ((submission?.steps?.length ?? 0) === 0) {
-                                <p class="text-muted fst-italic mb-0 small">No derivation steps submitted.</p>
-                            } @else {
-                                <div class="d-flex align-items-center gap-2 mb-1">
-                                    <span class="badge bg-secondary flex-shrink-0">Start</span>
-                                    <span [innerHTML]="proofExercise.sourceExpression | mathNodeLatex"></span>
+                    <p-card [styleClass]="'h-100 ' + (isProofComplete ? 'border-success' : (submission?.steps?.length ?? 0) > 0 ? 'border-warning' : '')">
+                        <ng-template pTemplate="header">
+                            <h6 class="px-3 pt-3 mb-0">Student's Proof</h6>
+                        </ng-template>
+                        @if ((submission?.steps?.length ?? 0) === 0) {
+                            <p class="text-muted fst-italic mb-0 small">No derivation steps submitted.</p>
+                        } @else {
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <p-tag severity="secondary" value="Start" styleClass="flex-shrink-0" />
+                                <span [innerHTML]="proofExercise.sourceExpression | mathNodeLatex"></span>
+                            </div>
+                            @for (step of submission.steps; track step.stepIndex; let last = $last) {
+                                <div class="d-flex align-items-center gap-2 py-1 ps-1 text-muted">
+                                    <span style="font-size: 1.1rem; line-height: 1">↓</span>
+                                    <p-tag severity="secondary" [value]="getRuleName(step.appliedRuleId)" />
                                 </div>
-                                @for (step of submission.steps; track step.stepIndex; let last = $last) {
-                                    <div class="d-flex align-items-center gap-2 py-1 ps-1 text-muted">
-                                        <span style="font-size: 1.1rem; line-height: 1">&#8595;</span>
-                                        <span class="badge bg-light text-dark border">{{ getRuleName(step.appliedRuleId) }}</span>
-                                    </div>
-                                    <div class="d-flex align-items-center gap-2 mb-1 ps-3" [ngClass]="{ 'text-success fw-semibold': last && isProofComplete }">
-                                        <span [innerHTML]="step.resultExpression | mathNodeLatex"></span>
-                                        @if (last && isProofComplete) {
-                                            <span class="badge bg-success ms-1">&#10003; Goal</span>
-                                        }
-                                    </div>
-                                }
+                                <div class="d-flex align-items-center gap-2 mb-1 ps-3" [ngClass]="{ 'text-success fw-semibold': last && isProofComplete }">
+                                    <span [innerHTML]="step.resultExpression | mathNodeLatex"></span>
+                                    @if (last && isProofComplete) {
+                                        <p-tag severity="success" value="✓ Goal" styleClass="ms-1" />
+                                    }
+                                </div>
                             }
-                        </div>
-                    </div>
+                        }
+                    </p-card>
                 </div>
 
                 <!-- Sample solutions -->
                 <div class="col-12 col-lg-4">
                     @if (hasExampleDerivations) {
-                        <div class="card h-100">
-                            <div class="card-header">
-                                <h6 class="card-title mb-0">
+                        <p-card styleClass="h-100">
+                            <ng-template pTemplate="header">
+                                <h6 class="px-3 pt-3 mb-0 d-flex align-items-center gap-2">
                                     Sample Solutions
-                                    <span class="badge bg-secondary ms-1">{{ proofExercise.exampleDerivations!.length }}</span>
+                                    <p-tag severity="secondary" [value]="proofExercise.exampleDerivations!.length.toString()" />
                                 </h6>
-                            </div>
-                            <div class="card-body">
-                                @for (derivation of proofExercise.exampleDerivations; track $index; let i = $index) {
-                                    <div [class]="i > 0 ? 'border-top pt-3 mt-3' : ''">
-                                        <div class="fw-semibold small text-muted mb-2">
-                                            Solution {{ i + 1 }}
-                                            <span class="badge ms-1" [ngClass]="isExampleComplete(derivation) ? 'bg-success' : 'bg-warning text-dark'">
-                                                {{ derivation.length }} step{{ derivation.length !== 1 ? 's' : '' }}
-                                            </span>
-                                        </div>
-                                        <div class="d-flex align-items-center gap-2 mb-1">
-                                            <span class="badge bg-secondary flex-shrink-0">Start</span>
-                                            <span [innerHTML]="proofExercise.sourceExpression | mathNodeLatex"></span>
-                                        </div>
-                                        @for (step of derivation; track step.stepIndex; let last = $last) {
-                                            <div class="d-flex align-items-center gap-2 py-1 ps-1 text-muted">
-                                                <span style="font-size: 1.1rem; line-height: 1">&#8595;</span>
-                                                <span class="badge bg-light text-dark border">{{ getRuleName(step.appliedRuleId) }}</span>
-                                            </div>
-                                            <div
-                                                class="d-flex align-items-center gap-2 mb-1 ps-3"
-                                                [ngClass]="{ 'text-success fw-semibold': last && isExampleComplete(derivation) }"
-                                            >
-                                                <span [innerHTML]="step.resultExpression | mathNodeLatex"></span>
-                                                @if (last && isExampleComplete(derivation)) {
-                                                    <span class="badge bg-success ms-1">&#10003; Goal</span>
-                                                }
-                                            </div>
-                                        }
+                            </ng-template>
+                            @for (derivation of proofExercise.exampleDerivations; track $index; let i = $index) {
+                                <div [class]="i > 0 ? 'border-top pt-3 mt-3' : ''">
+                                    <div class="fw-semibold small text-muted mb-2 d-flex align-items-center gap-2">
+                                        Solution {{ i + 1 }}
+                                        <p-tag
+                                            [severity]="isExampleComplete(derivation) ? 'success' : 'warn'"
+                                            [value]="derivation.length + ' step' + (derivation.length !== 1 ? 's' : '')"
+                                        />
                                     </div>
-                                }
-                            </div>
-                        </div>
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <p-tag severity="secondary" value="Start" styleClass="flex-shrink-0" />
+                                        <span [innerHTML]="proofExercise.sourceExpression | mathNodeLatex"></span>
+                                    </div>
+                                    @for (step of derivation; track step.stepIndex; let last = $last) {
+                                        <div class="d-flex align-items-center gap-2 py-1 ps-1 text-muted">
+                                            <span style="font-size: 1.1rem; line-height: 1">↓</span>
+                                            <p-tag severity="secondary" [value]="getRuleName(step.appliedRuleId)" />
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2 mb-1 ps-3" [ngClass]="{ 'text-success fw-semibold': last && isExampleComplete(derivation) }">
+                                            <span [innerHTML]="step.resultExpression | mathNodeLatex"></span>
+                                            @if (last && isExampleComplete(derivation)) {
+                                                <p-tag severity="success" value="✓ Goal" styleClass="ms-1" />
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </p-card>
                     } @else {
-                        <div class="card h-100 border-dashed">
-                            <div class="card-body d-flex align-items-center justify-content-center text-muted small fst-italic">No sample solutions configured.</div>
-                        </div>
+                        <p-card styleClass="h-100 border-dashed">
+                            <div class="d-flex align-items-center justify-content-center text-muted small fst-italic">No sample solutions configured.</div>
+                        </p-card>
                     }
                 </div>
             }

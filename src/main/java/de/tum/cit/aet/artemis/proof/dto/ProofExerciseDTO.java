@@ -40,8 +40,7 @@ import de.tum.cit.aet.artemis.proof.grader.GraderType;
  * @param dueDate                                submission deadline
  * @param assessmentDueDate                      deadline for tutors to complete assessments
  * @param exampleSolutionPublicationDate         when the example solution becomes visible
- * @param courseId                               the course ID (for course exercises)
- * @param exerciseGroupId                        the exam exercise group ID (for exam exercises)
+ * @param courseId                               the course ID (proof exercises are course-only)
  * @param sourceExpression                       the starting expression of the proof (root MathNode)
  * @param targetExpression                       the goal expression students must derive
  * @param manualDerivation                       true if students write the result expression themselves (false = system auto-applies)
@@ -59,9 +58,8 @@ public record ProofExerciseDTO(Long id, String title, String shortName, String p
         DifficultyLevel difficulty, Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean allowComplaintsForAutomaticAssessments,
         Boolean allowFeedbackRequests, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, String gradingInstructions,
         ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, Long courseId,
-        Long exerciseGroupId, MathNode sourceExpression, MathNode targetExpression, Boolean manualDerivation, Boolean allowVerification, Boolean onlyShowApplicableRules,
-        Boolean partialCreditEnabled, GraderType graderType, GoalMode goalMode, MathNode goalExpression, Boolean acNormalization,
-        List<List<DerivationStepDTO>> exampleDerivations) {
+        MathNode sourceExpression, MathNode targetExpression, Boolean manualDerivation, Boolean allowVerification, Boolean onlyShowApplicableRules, Boolean partialCreditEnabled,
+        GraderType graderType, GoalMode goalMode, MathNode goalExpression, Boolean acNormalization, List<List<DerivationStepDTO>> exampleDerivations) {
 
     /**
      * @param exercise the entity to project
@@ -69,15 +67,14 @@ public record ProofExerciseDTO(Long id, String title, String shortName, String p
      */
     public static ProofExerciseDTO of(ProofExercise exercise) {
         Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
-        Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
         return new ProofExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getProblemStatement(), exercise.getDescription(),
                 exercise.getExampleSolution(), exercise.getCategories(), exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(),
                 exercise.getIncludedInOverallScore(), exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(),
                 exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), exercise.getGradingInstructions(),
                 exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), courseId,
-                exerciseGroupId, exercise.getSourceExpression(), exercise.getTargetExpression(), exercise.isManualDerivation(), exercise.isAllowVerification(),
-                exercise.isOnlyShowApplicableRules(), exercise.isPartialCreditEnabled(), exercise.getGraderType(), exercise.getGoalMode(), exercise.getGoalExpression(),
-                exercise.isAcNormalization(), exercise.getExampleDerivations());
+                exercise.getSourceExpression(), exercise.getTargetExpression(), exercise.isManualDerivation(), exercise.isAllowVerification(), exercise.isOnlyShowApplicableRules(),
+                exercise.isPartialCreditEnabled(), exercise.getGraderType(), exercise.getGoalMode(), exercise.getGoalExpression(), exercise.isAcNormalization(),
+                exercise.getExampleDerivations());
     }
 
     /**

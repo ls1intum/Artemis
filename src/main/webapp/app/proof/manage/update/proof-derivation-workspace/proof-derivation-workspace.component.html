@@ -6,7 +6,7 @@
                 <span class="text-muted">Prove:</span>
                 <span class="fw-semibold" [innerHTML]="goalExpression() | mathNodeLatex"></span>
                 @if (isComplete()) {
-                    <span class="badge bg-success ms-auto">✓ Tautology reached</span>
+                    <p-tag severity="success" value="✓ Tautology reached" class="ms-auto" />
                 }
             </div>
         }
@@ -24,7 +24,7 @@
                 <span class="fw-semibold" [innerHTML]="targetExpression() | mathNodeLatex"></span>
             }
             @if (isComplete()) {
-                <span class="badge bg-success ms-auto">✓ Reached goal</span>
+                <p-tag severity="success" value="✓ Reached goal" class="ms-auto" />
             }
         </div>
     }
@@ -32,16 +32,7 @@
     @if (progress() !== undefined && !isComplete()) {
         <div class="d-flex align-items-center gap-2 small text-muted">
             <span jhiTranslate="artemisApp.proofExercise.progressLabel">Progress</span>
-            <div class="progress flex-grow-1" style="height: 4px">
-                <div
-                    class="progress-bar bg-info"
-                    role="progressbar"
-                    [style.width.%]="progress()! * 100"
-                    [attr.aria-valuenow]="progress()! * 100"
-                    aria-valuemin="0"
-                    aria-valuemax="100"
-                ></div>
-            </div>
+            <p-progressBar class="flex-grow-1" [value]="progress()! * 100" [showValue]="false" [style]="{ height: '4px' }" />
             <span style="min-width: 3em; text-align: right">{{ (progress()! * 100).toFixed(0) }}%</span>
         </div>
     }
@@ -52,7 +43,9 @@
             <small class="text-muted fw-semibold d-block mb-1" jhiTranslate="artemisApp.proofExercise.rulesPanel">Rules</small>
             <input
                 type="search"
-                class="form-control form-control-sm mb-2"
+                pInputText
+                pSize="small"
+                class="mb-2"
                 [placeholder]="'artemisApp.proofExercise.searchRules' | artemisTranslate"
                 [value]="ruleSearch()"
                 (input)="ruleSearch.set($any($event.target).value)"
@@ -107,7 +100,7 @@
                         <!-- Rule slot -->
                         <div class="d-flex align-items-center gap-1 ps-2 py-1 border rounded small" style="font-size: 0.8em; border-style: dashed !important; pointer-events: none">
                             <span class="text-muted">by</span>
-                            <span class="badge bg-secondary">{{ ruleNameFor(step.appliedRuleId) }}</span>
+                            <p-tag severity="secondary" [value]="ruleNameFor(step.appliedRuleId)" />
                             <span class="text-muted" title="Direction">{{ step.direction === 'REVERSE' ? '←' : '→' }}</span>
                         </div>
                         <!-- Result expression card -->
@@ -133,28 +126,28 @@
                 } @else if (!selectedRuleId() && selectedNodePath() === undefined) {
                     <small class="text-muted fst-italic">← Select a rule, then click a node</small>
                 } @else if (selectedRuleId() && selectedNodePath() === undefined) {
-                    <span class="badge bg-primary">{{ selectedRuleName }}</span>
+                    <p-tag severity="info" [value]="selectedRuleName" />
                     @if (selectedRule()?.direction === 'BIDIRECTIONAL') {
-                        <button
-                            type="button"
-                            class="btn btn-sm btn-outline-primary"
-                            (click)="toggleDirection()"
-                            [title]="'artemisApp.proofExercise.direction.toggle' | artemisTranslate"
-                        >
-                            {{ selectedDirection() === 'REVERSE' ? '← reverse' : '→ forward' }}
-                        </button>
+                        <p-button
+                            size="small"
+                            severity="primary"
+                            [outlined]="true"
+                            [label]="selectedDirection() === 'REVERSE' ? '← reverse' : '→ forward'"
+                            (onClick)="toggleDirection()"
+                            [pTooltip]="'artemisApp.proofExercise.direction.toggle' | artemisTranslate"
+                        />
                     }
                     <small class="text-muted fst-italic">Now click a node →</small>
                 } @else if (!selectedRuleId() && selectedNodePath() !== undefined) {
                     <small class="text-muted fst-italic">← Now select a rule</small>
                 }
                 @if (steps().length > 0) {
-                    <button type="button" class="btn btn-sm btn-outline-secondary ms-auto" (click)="undoLastStep()">↩ Undo</button>
+                    <p-button class="ms-auto" size="small" severity="secondary" [outlined]="true" label="↩ Undo" (onClick)="undoLastStep()" />
                 }
             </div>
 
             @if (ruleApplicationError()) {
-                <div class="alert alert-warning py-1 px-2 small mb-0">{{ ruleApplicationError() }}</div>
+                <p-message severity="warn" [text]="ruleApplicationError()!" styleClass="mb-0" />
             }
         </div>
     </div>

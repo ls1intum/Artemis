@@ -43,28 +43,33 @@
                         </td>
                         <td class="d-md-table-cell"><jhi-exercise-categories [exercise]="proofExercise" /></td>
                         <td class="text-end" style="white-space: nowrap">
-                            <div class="btn-group flex-btn-group-container">
+                            <div class="d-flex gap-1 justify-content-end flex-wrap">
                                 @if (proofExercise.isAtLeastTutor) {
-                                    <a [routerLink]="['/course-management', course.id, 'proof-exercises', proofExercise.id, 'scores']" class="btn btn-info btn-sm me-1">
+                                    <a pButton size="small" severity="info" [routerLink]="['/course-management', course.id, 'proof-exercises', proofExercise.id, 'scores']">
                                         <fa-icon [icon]="faTable" />
-                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
+                                        <span class="d-none d-md-inline ms-1" jhiTranslate="entity.action.scores">Scores</span>
                                     </a>
                                 }
                                 @if (proofExercise.isAtLeastTutor) {
-                                    <a [routerLink]="['/course-management', course.id, 'proof-exercises', proofExercise.id, 'participations']" class="btn btn-primary btn-sm me-1">
+                                    <a
+                                        pButton
+                                        size="small"
+                                        severity="primary"
+                                        [routerLink]="['/course-management', course.id, 'proof-exercises', proofExercise.id, 'participations']"
+                                    >
                                         <fa-icon [icon]="faListAlt" />
-                                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+                                        <span class="d-none d-md-inline ms-1" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                                     </a>
                                 }
                                 @if (proofExercise.isAtLeastTutor) {
-                                    <a [routerLink]="['/course-management', course.id, 'proof-exercises', proofExercise.id, 'submissions']" class="btn btn-success btn-sm me-1">
+                                    <a pButton size="small" severity="success" [routerLink]="['/course-management', course.id, 'proof-exercises', proofExercise.id, 'submissions']">
                                         <fa-icon [icon]="faBook" />
-                                        <span class="d-none d-md-inline" jhiTranslate="todoSubmissions">Submissions</span>
+                                        <span class="d-none d-md-inline ms-1" jhiTranslate="todoSubmissions">Submissions</span>
                                     </a>
                                 }
-                                <a [routerLink]="['/course-management', course.id, 'proof-exercises', proofExercise.id, 'edit']" class="btn btn-warning btn-sm me-1">
+                                <a pButton size="small" severity="warn" [routerLink]="['/course-management', course.id, 'proof-exercises', proofExercise.id, 'edit']">
                                     <fa-icon [icon]="faWrench" />
-                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                                    <span class="d-none d-md-inline ms-1" jhiTranslate="entity.action.edit">Edit</span>
                                 </a>
                                 <button
                                     jhiDeleteButton

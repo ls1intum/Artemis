@@ -18,11 +18,23 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
     selector: 'jhi-proof-exercise',
     templateUrl: './proof-exercise.component.html',
-    imports: [SortDirective, FormsModule, SortByDirective, TranslateDirective, FaIconComponent, RouterLink, ExerciseCategoriesComponent, ArtemisDatePipe, DeleteButtonDirective],
+    imports: [
+        SortDirective,
+        FormsModule,
+        SortByDirective,
+        TranslateDirective,
+        FaIconComponent,
+        RouterLink,
+        ExerciseCategoriesComponent,
+        ArtemisDatePipe,
+        DeleteButtonDirective,
+        ButtonModule,
+    ],
 })
 export class ProofExerciseComponent extends ExerciseComponent {
     protected proofExerciseService = inject(ProofExerciseService);

@@ -17,7 +17,7 @@ describe('ProofExerciseService', () => {
     let httpMock: HttpTestingController;
 
     const mockExercise = (): ProofExercise => {
-        const ex = new ProofExercise(undefined, undefined);
+        const ex = new ProofExercise(undefined);
         ex.id = 1;
         ex.title = 'Test Proof';
         ex.description = 'Prove X';
@@ -92,7 +92,7 @@ describe('ProofExerciseService', () => {
 
     it('should import an exercise', async () => {
         const source = mockExercise();
-        const imported = new ProofExercise(undefined, undefined);
+        const imported = new ProofExercise(undefined);
         imported.title = 'Imported Proof';
 
         const promise = service.import(source).toPromise();
@@ -104,7 +104,7 @@ describe('ProofExerciseService', () => {
     });
 
     it('should set exercise type to PROOF', () => {
-        const ex = new ProofExercise(undefined, undefined);
+        const ex = new ProofExercise(undefined);
         expect(ex.type).toBe(ExerciseType.PROOF);
     });
 });

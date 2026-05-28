@@ -44,15 +44,22 @@
             @if (isTerminal) {
                 <div>
                     <label class="form-label small mb-0" jhiTranslate="artemisApp.proofExercise.builder.value">Value</label>
-                    <input class="form-control form-control-sm" style="width: 80px" [value]="terminalValue()" (input)="terminalValue.set($any($event.target).value)" />
+                    <input pInputText pSize="small" style="width: 80px" [value]="terminalValue()" (input)="terminalValue.set($any($event.target).value)" />
                 </div>
             }
-            <button class="btn btn-sm btn-primary" (click)="insertAtSelected()" jhiTranslate="artemisApp.proofExercise.builder.insert">Insert</button>
-            <button class="btn btn-sm btn-outline-danger ms-auto" (click)="clearExpression()" jhiTranslate="artemisApp.proofExercise.builder.clear">Clear</button>
+            <p-button size="small" [label]="'artemisApp.proofExercise.builder.insert' | artemisTranslate" (onClick)="insertAtSelected()" />
+            <p-button
+                class="ms-auto"
+                size="small"
+                severity="danger"
+                [outlined]="true"
+                [label]="'artemisApp.proofExercise.builder.clear' | artemisTranslate"
+                (onClick)="clearExpression()"
+            />
         </div>
 
         @if (errorMessage()) {
-            <div class="alert alert-danger mt-1 py-1 px-2 small">{{ errorMessage() }}</div>
+            <p-message severity="error" [text]="errorMessage()!" styleClass="mt-1" />
         }
     </div>
 </div>

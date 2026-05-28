@@ -20,6 +20,15 @@ import { ReachabilityReport } from '../../shared/entities/hint-suggestion.model'
 import { ProofBuilderComponent } from './proof-builder/proof-builder.component';
 import { ProofDerivationWorkspaceComponent } from './proof-derivation-workspace/proof-derivation-workspace.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
+import { CheckboxModule } from 'primeng/checkbox';
+import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
+import { SelectModule } from 'primeng/select';
+import { TagModule } from 'primeng/tag';
+import { TextareaModule } from 'primeng/textarea';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
     selector: 'jhi-proof-exercise-update',
@@ -35,6 +44,15 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
         ArtemisTranslatePipe,
         ProofBuilderComponent,
         ProofDerivationWorkspaceComponent,
+        ButtonModule,
+        CardModule,
+        CheckboxModule,
+        InputTextModule,
+        MessageModule,
+        SelectModule,
+        TagModule,
+        TextareaModule,
+        TooltipModule,
     ],
 })
 export class ProofExerciseUpdateComponent implements OnInit {
@@ -212,17 +230,7 @@ export class ProofExerciseUpdateComponent implements OnInit {
     }
 
     previousState() {
-        if (this.proofExercise.exerciseGroup) {
-            this.router.navigate([
-                'course-management',
-                this.proofExercise.exerciseGroup.exam?.course?.id || this.activatedRoute.snapshot.params['courseId'],
-                'exams',
-                this.proofExercise.exerciseGroup.exam?.id || this.activatedRoute.snapshot.params['examId'],
-                'exercise-groups',
-            ]);
-        } else {
-            this.router.navigate(['course-management', this.proofExercise.course?.id || this.activatedRoute.snapshot.params['courseId'], 'proof-exercises']);
-        }
+        this.router.navigate(['course-management', this.proofExercise.course?.id || this.activatedRoute.snapshot.params['courseId'], 'proof-exercises']);
     }
 
     private onSaveSuccess() {

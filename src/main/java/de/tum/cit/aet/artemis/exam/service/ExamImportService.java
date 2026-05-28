@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ExamConfigurationException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -366,7 +367,7 @@ public class ExamImportService {
                     yield Optional.of(quizExerciseImportService.importQuizExercise(originalQuizExercise, quizSkeleton, null));
                 }
 
-                case PROOF -> Optional.empty(); // TODO: Implement importProofExercise
+                case PROOF -> throw new BadRequestAlertException("Proof exercises cannot be imported into an exam", "exam", "proofNotAllowedInExam");
             };
             // Attach the newly created Exercise to the new Exercise Group only if the importing was successful
             exerciseCopied.ifPresent(exerciseGroupCopied::addExercise);

@@ -3,23 +3,23 @@
         <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
             <h2 id="jhi-proof-exercise-heading" jhiTranslate="artemisApp.proofExercise.home.createOrEditLabel">Create or edit a Proof Exercise</h2>
 
-            <div class="card p-3 mb-3 mt-3">
+            <p-card styleClass="mb-3 mt-3">
                 <div class="form-group" [hidden]="!proofExercise.id">
                     <label for="id" jhiTranslate="global.field.id">ID</label>
-                    <input type="text" class="form-control" id="id" name="id" [(ngModel)]="proofExercise.id" readonly />
+                    <input type="text" pInputText id="id" name="id" class="w-100" [(ngModel)]="proofExercise.id" readonly />
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.title" for="field_title">Title</label>
-                    <input type="text" class="form-control" name="title" id="field_title" [(ngModel)]="proofExercise.title" required />
+                    <input type="text" pInputText name="title" id="field_title" class="w-100" [(ngModel)]="proofExercise.title" required />
                 </div>
 
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
                     <jhi-category-selector [categories]="exerciseCategories()" [existingCategories]="existingCategories()" (selectedCategories)="updateCategories($event)" />
                 </div>
-            </div>
+            </p-card>
 
-            <div class="card p-3 mb-3">
+            <p-card styleClass="mb-3">
                 <div class="form-group border-bottom pb-2">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
                     <jhi-markdown-editor-monaco id="field_problemStatement" [(markdown)]="proofExercise.problemStatement" />
@@ -29,9 +29,9 @@
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.exampleSolution" for="field_exampleSolution">Example Solution</label>
                     <jhi-markdown-editor-monaco id="field_exampleSolution" [(markdown)]="proofExercise.exampleSolution" />
                 </div>
-            </div>
+            </p-card>
 
-            <div class="card p-3 mb-3">
+            <p-card styleClass="mb-3">
                 <div class="row">
                     <div class="col-12 col-md-6">
                         <div class="form-group">
@@ -48,20 +48,20 @@
                     <div class="col-12 col-md-6">
                         <div class="form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.exercise.maxPoints" for="field_maxPoints">Max Points</label>
-                            <input type="number" class="form-control" name="maxPoints" id="field_maxPoints" [(ngModel)]="proofExercise.maxPoints" required />
+                            <input type="number" pInputText name="maxPoints" id="field_maxPoints" class="w-100" [(ngModel)]="proofExercise.maxPoints" required />
                         </div>
                     </div>
                     <div class="col-12 col-md-6">
                         <div class="form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints">Bonus Points</label>
-                            <input type="number" class="form-control" name="bonusPoints" id="field_bonusPoints" [(ngModel)]="proofExercise.bonusPoints" />
+                            <input type="number" pInputText name="bonusPoints" id="field_bonusPoints" class="w-100" [(ngModel)]="proofExercise.bonusPoints" />
                         </div>
                     </div>
                 </div>
-            </div>
+            </p-card>
 
-            <div class="card p-3 mb-3">
-                <h4 class="card-title border-bottom pb-2" jhiTranslate="artemisApp.exercise.sections.grading">Scheduling</h4>
+            <p-card styleClass="mb-3">
+                <h4 class="border-bottom pb-2" jhiTranslate="artemisApp.exercise.sections.grading">Scheduling</h4>
                 <div class="d-flex">
                     <div class="form-group flex-grow-1">
                         <jhi-date-time-picker
@@ -89,7 +89,7 @@
                             [(ngModel)]="proofExercise.startDate"
                         />
                         @if (proofExercise.startDateError) {
-                            <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.startDateError"></span>
+                            <small class="p-error d-block" jhiTranslate="artemisApp.exercise.startDateError"></small>
                         }
                     </div>
                 </div>
@@ -108,7 +108,7 @@
                             [(ngModel)]="proofExercise.dueDate"
                         />
                         @if (proofExercise.dueDateError) {
-                            <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.dueDateError"></span>
+                            <small class="p-error d-block" jhiTranslate="artemisApp.exercise.dueDateError"></small>
                         }
                     </div>
                     <div class="form-group flex-grow-1 ms-3">
@@ -125,102 +125,112 @@
                             [(ngModel)]="proofExercise.assessmentDueDate"
                         />
                         @if (proofExercise.assessmentDueDateError) {
-                            <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.assessmentDueDateError"></span>
+                            <small class="p-error d-block" jhiTranslate="artemisApp.exercise.assessmentDueDateError"></small>
                         }
                     </div>
                 </div>
-            </div>
+            </p-card>
 
-            <div class="card p-3 mb-3">
-                <h4 class="card-title border-bottom pb-2">Proof Configuration</h4>
+            <p-card styleClass="mb-3">
+                <h4 class="border-bottom pb-2">Proof Configuration</h4>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.proofExercise.description" for="field_description"
                         >Internal Description (Instructions for Students)</label
                     >
-                    <textarea class="form-control" name="description" id="field_description" rows="5" [(ngModel)]="proofExercise.description"></textarea>
+                    <textarea pTextarea name="description" id="field_description" rows="5" class="w-100" [(ngModel)]="proofExercise.description"></textarea>
                 </div>
-                <div class="form-check mt-3">
-                    <input type="checkbox" class="form-check-input" id="field_derivationMode" name="derivationMode" [(ngModel)]="proofExercise.manualDerivation" />
-                    <label class="form-check-label" for="field_derivationMode" jhiTranslate="artemisApp.proofExercise.derivationModeManual">Manual derivation mode</label>
-                    <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.derivationModeHint">
-                        Student writes the result expression; in inference mode the system applies the rule automatically.
-                    </small>
+                <div class="d-flex align-items-start gap-2 mt-3">
+                    <p-checkbox inputId="field_derivationMode" name="derivationMode" [(ngModel)]="proofExercise.manualDerivation" [binary]="true" />
+                    <div>
+                        <label for="field_derivationMode" jhiTranslate="artemisApp.proofExercise.derivationModeManual">Manual derivation mode</label>
+                        <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.derivationModeHint">
+                            Student writes the result expression; in inference mode the system applies the rule automatically.
+                        </small>
+                    </div>
                 </div>
-                <div class="form-check mt-3">
-                    <input type="checkbox" class="form-check-input" id="field_allowVerification" name="allowVerification" [(ngModel)]="proofExercise.allowVerification" />
-                    <label class="form-check-label" for="field_allowVerification" jhiTranslate="artemisApp.proofExercise.allowVerification">Allow Verification</label>
-                    <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.allowVerificationHint"
-                        >Show the "Verify Proof" button so students can check their steps.</small
-                    >
+                <div class="d-flex align-items-start gap-2 mt-3">
+                    <p-checkbox inputId="field_allowVerification" name="allowVerification" [(ngModel)]="proofExercise.allowVerification" [binary]="true" />
+                    <div>
+                        <label for="field_allowVerification" jhiTranslate="artemisApp.proofExercise.allowVerification">Allow Verification</label>
+                        <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.allowVerificationHint"
+                            >Show the "Verify Proof" button so students can check their steps.</small
+                        >
+                    </div>
                 </div>
-                <div class="form-check mt-2">
-                    <input
-                        type="checkbox"
-                        class="form-check-input"
-                        id="field_onlyShowApplicableRules"
-                        name="onlyShowApplicableRules"
-                        [(ngModel)]="proofExercise.onlyShowApplicableRules"
-                    />
-                    <label class="form-check-label" for="field_onlyShowApplicableRules" jhiTranslate="artemisApp.proofExercise.onlyShowApplicableRules"
-                        >Only Show Applicable Rules</label
-                    >
-                    <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.onlyShowApplicableRulesHint"
-                        >Hide rules that cannot be applied at the currently selected node.</small
-                    >
+                <div class="d-flex align-items-start gap-2 mt-2">
+                    <p-checkbox inputId="field_onlyShowApplicableRules" name="onlyShowApplicableRules" [(ngModel)]="proofExercise.onlyShowApplicableRules" [binary]="true" />
+                    <div>
+                        <label for="field_onlyShowApplicableRules" jhiTranslate="artemisApp.proofExercise.onlyShowApplicableRules">Only Show Applicable Rules</label>
+                        <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.onlyShowApplicableRulesHint"
+                            >Hide rules that cannot be applied at the currently selected node.</small
+                        >
+                    </div>
                 </div>
-                <div class="form-check mt-2">
-                    <input type="checkbox" class="form-check-input" id="field_partialCreditEnabled" name="partialCreditEnabled" [(ngModel)]="proofExercise.partialCreditEnabled" />
-                    <label class="form-check-label" for="field_partialCreditEnabled" jhiTranslate="artemisApp.proofExercise.partialCreditEnabled">Partial Credit</label>
-                    <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.partialCreditEnabledHint"
-                        >Award proportional points for valid steps when the proof is incomplete. Requires at least one example derivation to determine the expected step
-                        count.</small
-                    >
+                <div class="d-flex align-items-start gap-2 mt-2">
+                    <p-checkbox inputId="field_partialCreditEnabled" name="partialCreditEnabled" [(ngModel)]="proofExercise.partialCreditEnabled" [binary]="true" />
+                    <div>
+                        <label for="field_partialCreditEnabled" jhiTranslate="artemisApp.proofExercise.partialCreditEnabled">Partial Credit</label>
+                        <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.partialCreditEnabledHint"
+                            >Award proportional points for valid steps when the proof is incomplete. Requires at least one example derivation to determine the expected step
+                            count.</small
+                        >
+                    </div>
                 </div>
-                <div class="form-check mt-2">
-                    <input type="checkbox" class="form-check-input" id="field_acNormalization" name="acNormalization" [(ngModel)]="proofExercise.acNormalization" />
-                    <label class="form-check-label" for="field_acNormalization" jhiTranslate="artemisApp.proofExercise.acNormalization">AC normalisation</label>
-                    <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.acNormalizationHint"
-                        >Treat + and · as commutative / associative for equality comparisons. Students don't have to apply commutativity / associativity rules explicitly to make
-                        trees match.</small
-                    >
+                <div class="d-flex align-items-start gap-2 mt-2">
+                    <p-checkbox inputId="field_acNormalization" name="acNormalization" [(ngModel)]="proofExercise.acNormalization" [binary]="true" />
+                    <div>
+                        <label for="field_acNormalization" jhiTranslate="artemisApp.proofExercise.acNormalization">AC normalisation</label>
+                        <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.acNormalizationHint"
+                            >Treat + and · as commutative / associative for equality comparisons. Students don't have to apply commutativity / associativity rules explicitly to
+                            make trees match.</small
+                        >
+                    </div>
                 </div>
                 <div class="form-group mt-3">
-                    <label for="field_graderType" class="form-label" jhiTranslate="artemisApp.proofExercise.graderType">Grader</label>
-                    <select id="field_graderType" name="graderType" class="form-select" [(ngModel)]="proofExercise.graderType">
-                        @for (opt of graderTypeOptions; track opt.value) {
-                            <option [value]="opt.value" [disabled]="opt.disabled">{{ opt.label }}</option>
-                        }
-                    </select>
+                    <label for="field_graderType" jhiTranslate="artemisApp.proofExercise.graderType">Grader</label>
+                    <p-select
+                        inputId="field_graderType"
+                        name="graderType"
+                        styleClass="w-100"
+                        [options]="graderTypeOptions"
+                        optionLabel="label"
+                        optionValue="value"
+                        optionDisabled="disabled"
+                        [(ngModel)]="proofExercise.graderType"
+                    />
                     <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.graderTypeHint"
                         >Step-by-step is the only grader available today. Lean / Isabelle / egg e-graph backends arrive in milestone 3.</small
                     >
                 </div>
-            </div>
+            </p-card>
 
-            <div class="card p-3 mb-3">
+            <p-card styleClass="mb-3">
                 <div class="d-flex align-items-center justify-content-between border-bottom pb-2">
-                    <h4 class="card-title mb-0" jhiTranslate="artemisApp.proofExercise.expressions">Expressions</h4>
+                    <h4 class="mb-0" jhiTranslate="artemisApp.proofExercise.expressions">Expressions</h4>
                     <div class="d-flex align-items-center gap-2">
-                        <button
-                            type="button"
-                            class="btn btn-sm btn-outline-secondary"
-                            (click)="checkReachability()"
+                        <p-button
+                            size="small"
+                            severity="secondary"
+                            [outlined]="true"
+                            (onClick)="checkReachability()"
                             [disabled]="reachabilityChecking()"
-                            [title]="'artemisApp.proofExercise.verifyReachabilityHint' | artemisTranslate"
-                        >
-                            {{
+                            [pTooltip]="'artemisApp.proofExercise.verifyReachabilityHint' | artemisTranslate"
+                            [label]="
                                 reachabilityChecking()
                                     ? ('artemisApp.proofExercise.verifyReachabilityRunning' | artemisTranslate)
                                     : ('artemisApp.proofExercise.verifyReachability' | artemisTranslate)
-                            }}
-                        </button>
+                            "
+                        />
                         @if (reachability(); as report) {
                             @if (report.reachable) {
-                                <span class="badge bg-success">{{ 'artemisApp.proofExercise.reachabilityReachable' | artemisTranslate }}</span>
+                                <p-tag severity="success" [value]="'artemisApp.proofExercise.reachabilityReachable' | artemisTranslate" />
                             } @else {
-                                <span class="badge bg-warning text-dark">
-                                    {{ 'artemisApp.proofExercise.reachabilityPartial' | artemisTranslate }} ({{ report.finalDistance }} / {{ report.initialDistance }})
-                                </span>
+                                <p-tag
+                                    severity="warn"
+                                    [value]="
+                                        ('artemisApp.proofExercise.reachabilityPartial' | artemisTranslate) + ' (' + report.finalDistance + ' / ' + report.initialDistance + ')'
+                                    "
+                                />
                             }
                         }
                         @if (reachabilityError(); as err) {
@@ -229,18 +239,17 @@
                     </div>
                 </div>
                 <div class="form-group mb-3">
-                    <label for="field_goalMode" class="form-label" jhiTranslate="artemisApp.proofExercise.goalMode">Goal mode</label>
-                    <select
-                        id="field_goalMode"
+                    <label for="field_goalMode" jhiTranslate="artemisApp.proofExercise.goalMode">Goal mode</label>
+                    <p-select
+                        inputId="field_goalMode"
                         name="goalMode"
-                        class="form-select"
+                        styleClass="w-100"
+                        [options]="goalModeOptions"
+                        optionLabel="label"
+                        optionValue="value"
                         [ngModel]="proofExercise.goalMode ?? 'TRANSFORMATION'"
                         (ngModelChange)="onGoalModeChange($event)"
-                    >
-                        @for (opt of goalModeOptions; track opt.value) {
-                            <option [value]="opt.value">{{ opt.label }}</option>
-                        }
-                    </select>
+                    />
                     <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.goalModeHint"
                         >Transformation: students transform a source tree into a target tree. Equation: students reduce a single equation to a tautology (LHS structurally equals
                         RHS).</small
@@ -248,11 +257,11 @@
                 </div>
                 @if ((proofExercise.goalMode ?? 'TRANSFORMATION') === 'TRANSFORMATION') {
                     @if (!proofExercise.sourceExpression || !proofExercise.targetExpression) {
-                        <div class="alert alert-warning py-2 px-3 small mb-3">
+                        <p-message severity="warn" styleClass="mb-3">
                             <span jhiTranslate="artemisApp.proofExercise.expressionsRequired">
                                 Both a source and a target expression are required for the derivation workspace to appear for students.
                             </span>
-                        </div>
+                        </p-message>
                     }
                     <div class="d-flex flex-column gap-4">
                         <div>
@@ -267,11 +276,11 @@
                     </div>
                 } @else {
                     @if (!proofExercise.goalExpression) {
-                        <div class="alert alert-warning py-2 px-3 small mb-3">
+                        <p-message severity="warn" styleClass="mb-3">
                             <span jhiTranslate="artemisApp.proofExercise.goalExpressionRequired">
                                 A goal expression is required for the workspace to appear. Typical shape is an equality with two non-trivial sides.
                             </span>
-                        </div>
+                        </p-message>
                     }
                     <div>
                         <h6 jhiTranslate="artemisApp.proofExercise.goalExpression">Goal Expression</h6>
@@ -281,26 +290,24 @@
                         <jhi-proof-builder [expression]="proofExercise.goalExpression" [label]="'Goal'" (expressionChange)="onGoalExpressionChange($event)" />
                     </div>
                 }
-            </div>
+            </p-card>
 
             @if ((proofExercise.goalMode ?? 'TRANSFORMATION') === 'TRANSFORMATION' ? proofExercise.sourceExpression : proofExercise.goalExpression) {
-                <div class="card p-3 mb-3">
+                <p-card styleClass="mb-3">
                     <div class="d-flex align-items-center justify-content-between border-bottom pb-2 mb-3">
-                        <h4 class="card-title mb-0" jhiTranslate="artemisApp.proofExercise.exampleSolutions">Example Solutions</h4>
+                        <h4 class="mb-0" jhiTranslate="artemisApp.proofExercise.exampleSolutions">Example Solutions</h4>
                         <div class="d-flex align-items-center gap-2">
-                            <button
-                                type="button"
-                                class="btn btn-sm"
-                                [class.btn-outline-secondary]="!onlyShowApplicableRules()"
-                                [class.btn-secondary]="onlyShowApplicableRules()"
-                                (click)="onlyShowApplicableRules.set(!onlyShowApplicableRules())"
-                                title="Only show rules applicable at the selected node"
-                            >
-                                <span>{{ onlyShowApplicableRules() ? '★' : '☆' }} Only applicable rules</span>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-primary" (click)="addExampleDerivation()">
+                            <p-button
+                                size="small"
+                                severity="secondary"
+                                [outlined]="!onlyShowApplicableRules()"
+                                (onClick)="onlyShowApplicableRules.set(!onlyShowApplicableRules())"
+                                pTooltip="Only show rules applicable at the selected node"
+                                [label]="(onlyShowApplicableRules() ? '★' : '☆') + ' Only applicable rules'"
+                            />
+                            <p-button size="small" severity="primary" [outlined]="true" (onClick)="addExampleDerivation()">
                                 + <span jhiTranslate="artemisApp.proofExercise.addExampleSolution">Add example solution</span>
-                            </button>
+                            </p-button>
                         </div>
                     </div>
 
@@ -316,12 +323,12 @@
                                 <span class="fw-semibold small text-muted">
                                     Example Solution {{ i + 1 }}
                                     @if (derivation.length > 0) {
-                                        <span class="badge bg-secondary ms-2">{{ derivation.length }} step{{ derivation.length !== 1 ? 's' : '' }}</span>
+                                        <p-tag class="ms-2" severity="secondary" [value]="derivation.length + ' step' + (derivation.length !== 1 ? 's' : '')" />
                                     }
                                 </span>
-                                <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeExampleDerivation(i)">
+                                <p-button size="small" severity="danger" [outlined]="true" (onClick)="removeExampleDerivation(i)">
                                     <span jhiTranslate="entity.action.delete">Remove</span>
-                                </button>
+                                </p-button>
                             </div>
                             <jhi-proof-derivation-workspace
                                 [sourceExpression]="proofExercise.sourceExpression"
@@ -335,22 +342,20 @@
                             />
                         </div>
                     }
-                </div>
+                </p-card>
             }
 
             <!-- FIXME: dev-only — remove or gate behind a proper feature flag before merging to main -->
             @if (isDev) {
-                <div class="card p-3 mb-3 border-warning">
+                <p-card styleClass="mb-3 border-warning">
                     <div class="d-flex align-items-center gap-2 mb-2">
-                        <span class="badge bg-warning text-dark">DEV</span>
+                        <p-tag severity="warn" value="DEV" />
                         <small class="text-muted fw-semibold">JSON Import / Export</small>
                     </div>
                     <div class="d-flex gap-2 mb-3">
-                        <button type="button" class="btn btn-sm btn-outline-warning" (click)="exportJson()">⬇ Export JSON</button>
-                        <label class="btn btn-sm btn-outline-warning mb-0">
-                            ⬆ Import JSON
-                            <input type="file" accept=".json,application/json" class="d-none" (change)="importJson($event)" />
-                        </label>
+                        <p-button size="small" severity="warn" [outlined]="true" label="⬇ Export JSON" (onClick)="exportJson()" />
+                        <p-button size="small" severity="warn" [outlined]="true" label="⬆ Import JSON" (onClick)="jsonFileInput.click()" />
+                        <input #jsonFileInput type="file" accept=".json,application/json" class="d-none" (change)="importJson($event)" />
                     </div>
                     <div
                         class="rounded text-center py-4 px-3"
@@ -376,14 +381,14 @@
                             }
                         </div>
                     </div>
-                </div>
+                </p-card>
             }
 
             <div class="d-flex gap-2">
-                <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
+                <button pButton type="button" id="cancel-save" severity="secondary" (click)="previousState()">
                     <span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
-                <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+                <button pButton type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving">
                     <span jhiTranslate="entity.action.save">Save</span>
                 </button>
             </div>

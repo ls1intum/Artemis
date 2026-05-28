@@ -1,6 +1,10 @@
 import { Component, OnInit, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { MessageModule } from 'primeng/message';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 import { MathNode } from '../../../shared/entities/math-node.model';
 import { BlockDefinitionModel } from '../../../shared/entities/block-definition.model';
@@ -12,7 +16,7 @@ import { ProofExpressionCanvasComponent } from '../../../shared/expression-canva
 @Component({
     selector: 'jhi-proof-builder',
     templateUrl: './proof-builder.component.html',
-    imports: [FormsModule, TranslateDirective, ProofExpressionCanvasComponent, MathNodeLatexPipe],
+    imports: [FormsModule, ButtonModule, InputTextModule, MessageModule, TranslateDirective, ArtemisTranslatePipe, ProofExpressionCanvasComponent, MathNodeLatexPipe],
 })
 export class ProofBuilderComponent implements OnInit {
     private blockRegistryService = inject(ProofBlockRegistryService);

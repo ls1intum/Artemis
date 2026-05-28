@@ -151,7 +151,7 @@ export const courseRoutes: Routes = [
                             showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
-                        loadComponent: () => import('app/core/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
+                        loadComponent: () => import('app/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
                         loadChildren: () => import('app/proof/participate/proof-editor.route').then((m) => m.proofEditorRoute),
                     },
                     {

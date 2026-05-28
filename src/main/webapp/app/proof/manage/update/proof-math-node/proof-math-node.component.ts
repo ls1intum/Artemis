@@ -1,5 +1,6 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TagModule } from 'primeng/tag';
 
 import { ProofBlockRegistryService } from '../../service/proof-block-registry.service';
 import { MathNode } from '../../../shared/entities/math-node.model';
@@ -18,7 +19,7 @@ export interface MathNodeContext {
     selector: 'jhi-math-node',
     templateUrl: './proof-math-node.component.html',
     styleUrl: './proof-math-node.component.scss',
-    imports: [FormsModule, MathNodeComponent],
+    imports: [FormsModule, TagModule, MathNodeComponent],
 })
 export class MathNodeComponent {
     node = input.required<MathNode>();

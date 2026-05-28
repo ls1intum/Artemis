@@ -28,7 +28,7 @@ describe('ProofSubmissionComponent', () => {
     let alertService: AlertService;
 
     const mockExercise = (): ProofExercise => {
-        const ex = new ProofExercise(undefined, undefined);
+        const ex = new ProofExercise(undefined);
         ex.id = 10;
         ex.type = ExerciseType.PROOF;
         return ex;

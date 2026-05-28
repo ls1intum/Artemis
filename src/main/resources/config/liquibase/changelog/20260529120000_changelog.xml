@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <!--
+        Phase 6: per-exercise AC-normalisation switch. When enabled, the grader treats + and ·
+        as commutative/associative for equality comparisons — students don't need to apply commutativity
+        or associativity rules explicitly to make two structurally-different-but-mathematically-equal trees match.
+        Rule pattern matching is unaffected; only equality comparisons normalise.
+    -->
+    <changeSet id="20260529120000-1" author="KilianSen">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="proof_exercise_details" columnName="ac_normalization"/></not>
+        </preConditions>
+        <addColumn tableName="proof_exercise_details">
+            <column name="ac_normalization" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

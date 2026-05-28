@@ -35,7 +35,7 @@ import { ExamImportComponent, ExamImportDialogData } from 'app/exam/manage/exams
 import { ExerciseImportComponent, ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
 import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_MODELING, MODULE_FEATURE_PROOF, MODULE_FEATURE_TEXT, PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT, PROFILE_LOCALCI } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
@@ -96,7 +96,6 @@ export class ExerciseGroupsComponent implements OnInit {
     textExerciseEnabled = signal(false);
     modelingExerciseEnabled = signal(false);
     fileUploadExerciseEnabled = signal(false);
-    proofExerciseEnabled = signal(false);
     disabledExerciseTypes: string[] = [];
 
     // Icons
@@ -111,7 +110,6 @@ export class ExerciseGroupsComponent implements OnInit {
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
     faFileImport = faFileImport;
-    faFlask = faFlask;
 
     /**
      * Initialize the courseId and examId. Get all exercise groups for the exam. Setup dictionary for exercise groups which contain programming exercises.
@@ -135,7 +133,6 @@ export class ExerciseGroupsComponent implements OnInit {
         this.textExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT));
         this.modelingExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_MODELING));
         this.fileUploadExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_FILEUPLOAD));
-        this.proofExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PROOF));
 
         if (!this.textExerciseEnabled()) {
             this.disabledExerciseTypes.push(ExerciseType.TEXT);
@@ -146,9 +143,7 @@ export class ExerciseGroupsComponent implements OnInit {
         if (!this.fileUploadExerciseEnabled()) {
             this.disabledExerciseTypes.push(ExerciseType.FILE_UPLOAD);
         }
-        if (!this.proofExerciseEnabled()) {
-            this.disabledExerciseTypes.push(ExerciseType.PROOF);
-        }
+        this.disabledExerciseTypes.push(ExerciseType.PROOF);
     }
 
     /**

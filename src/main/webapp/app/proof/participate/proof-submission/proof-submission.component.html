@@ -8,16 +8,18 @@
 
         <!-- Proof Complete banner -->
         @if (isComplete() && hasAstExpressions) {
-            <div class="alert alert-success d-flex align-items-center gap-3 mb-3 py-3 px-4">
-                <span class="fs-4">🎉</span>
-                <div>
-                    <strong jhiTranslate="artemisApp.proofExercise.proofComplete">Proof Complete!</strong>
-                    <span class="ms-2 text-success-emphasis" jhiTranslate="artemisApp.proofExercise.proofCompleteHint">Your derivation reaches the target expression.</span>
+            <p-message severity="success" styleClass="mb-3 w-100">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="fs-4">🎉</span>
+                    <div>
+                        <strong jhiTranslate="artemisApp.proofExercise.proofComplete">Proof Complete!</strong>
+                        <span class="ms-2 text-success-emphasis" jhiTranslate="artemisApp.proofExercise.proofCompleteHint">Your derivation reaches the target expression.</span>
+                    </div>
+                    @if (allStepsValid) {
+                        <p-tag class="ms-auto" severity="success" [value]="'artemisApp.proofExercise.allStepsValid' | artemisTranslate" />
+                    }
                 </div>
-                @if (allStepsValid) {
-                    <span class="badge bg-success ms-auto" jhiTranslate="artemisApp.proofExercise.allStepsValid">All steps verified</span>
-                }
-            </div>
+            </p-message>
         }
 
         <!-- Autosave indicator -->
@@ -35,115 +37,118 @@
 
         <div class="d-flex flex-column gap-3">
             <!-- Problem statement card -->
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title mb-0" jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</h4>
-                </div>
-                <div class="card-body">
-                    @if (proofExercise.problemStatement) {
-                        <span [innerHTML]="proofExercise.problemStatement | htmlForMarkdown"></span>
-                    }
-                    @if (hasAstExpressions) {
-                        <div class="mt-3 rounded border overflow-hidden d-flex flex-column" style="font-size: 0.9em">
-                            <!-- Start row -->
-                            <div class="d-flex align-items-center gap-2 px-3 py-2" style="border-left: 3px solid #6c757d">
-                                <span class="text-muted fw-semibold text-uppercase" style="font-size: 0.68em; letter-spacing: 0.07em; min-width: 38px">Start</span>
-                                <span [innerHTML]="startExpression() | mathNodeLatex"></span>
-                            </div>
+            <p-card>
+                <ng-template pTemplate="header">
+                    <h4 class="px-3 pt-3 mb-0" jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</h4>
+                </ng-template>
+                @if (proofExercise.problemStatement) {
+                    <span [innerHTML]="proofExercise.problemStatement | htmlForMarkdown"></span>
+                }
+                @if (hasAstExpressions) {
+                    <div class="mt-3 rounded border overflow-hidden d-flex flex-column" style="font-size: 0.9em">
+                        <!-- Start row -->
+                        <div class="d-flex align-items-center gap-2 px-3 py-2" style="border-left: 3px solid #6c757d">
+                            <span class="text-muted fw-semibold text-uppercase" style="font-size: 0.68em; letter-spacing: 0.07em; min-width: 38px">Start</span>
+                            <span [innerHTML]="startExpression() | mathNodeLatex"></span>
+                        </div>
 
-                            <!-- Current state row — visible only while in progress -->
-                            @if (steps().length > 0 && !isComplete()) {
-                                <div
-                                    class="px-3 border-top d-flex align-items-center gap-1 text-muted"
-                                    style="font-size: 0.72em; padding-top: 3px; padding-bottom: 3px; padding-left: calc(0.75rem + 3px) !important"
-                                >
-                                    ↓ {{ steps().length }} step{{ steps().length !== 1 ? 's' : '' }}
-                                </div>
-                                <div class="d-flex align-items-center gap-2 px-3 py-2 border-top" style="border-left: 3px solid var(--bs-primary)">
-                                    <span class="text-primary fw-semibold text-uppercase" style="font-size: 0.68em; letter-spacing: 0.07em; min-width: 38px">Now</span>
-                                    <span class="fw-semibold" [innerHTML]="currentExpression() | mathNodeLatex"></span>
-                                </div>
-                            }
-
-                            <!-- Connector to goal -->
+                        <!-- Current state row — visible only while in progress -->
+                        @if (steps().length > 0 && !isComplete()) {
                             <div
-                                class="px-3 border-top d-flex align-items-center gap-1"
+                                class="px-3 border-top d-flex align-items-center gap-1 text-muted"
                                 style="font-size: 0.72em; padding-top: 3px; padding-bottom: 3px; padding-left: calc(0.75rem + 3px) !important"
                             >
-                                @if (isComplete()) {
-                                    <span class="text-success fw-semibold">✓ goal reached</span>
-                                } @else {
-                                    <span class="text-muted">↓ prove</span>
-                                }
+                                ↓ {{ steps().length }} step{{ steps().length !== 1 ? 's' : '' }}
                             </div>
-
-                            <!-- Goal row -->
-                            <div
-                                class="d-flex align-items-center gap-2 px-3 py-2 border-top"
-                                [style.border-left]="isComplete() ? '3px solid var(--bs-success)' : '3px solid #6c757d'"
-                            >
-                                <span
-                                    class="fw-semibold text-uppercase"
-                                    [class.text-success]="isComplete()"
-                                    [class.text-muted]="!isComplete()"
-                                    style="font-size: 0.68em; letter-spacing: 0.07em; min-width: 38px"
-                                    >Goal</span
-                                >
-                                <span [innerHTML]="proofExercise.targetExpression | mathNodeLatex"></span>
-                                @if (isComplete()) {
-                                    <span class="ms-auto badge bg-success">✓</span>
-                                }
+                            <div class="d-flex align-items-center gap-2 px-3 py-2 border-top" style="border-left: 3px solid var(--bs-primary)">
+                                <span class="text-primary fw-semibold text-uppercase" style="font-size: 0.68em; letter-spacing: 0.07em; min-width: 38px">Now</span>
+                                <span class="fw-semibold" [innerHTML]="currentExpression() | mathNodeLatex"></span>
                             </div>
-                        </div>
-                    }
-                    @if (proofExercise.description) {
-                        <hr />
-                        <span [innerHTML]="proofExercise.description | htmlForMarkdown"></span>
-                    }
-                </div>
-            </div>
+                        }
 
-            <!-- Derivation workspace -->
-            @if (hasAstExpressions) {
-                <div class="card">
-                    <div class="card-header d-flex align-items-center justify-content-between">
-                        <h4 class="card-title mb-0" jhiTranslate="artemisApp.proofExercise.derivation">Derivation</h4>
-                        <div class="d-flex gap-2">
-                            @if (!submission?.submitted && proofExercise?.allowVerification && !isComplete()) {
-                                <button
-                                    type="button"
-                                    class="btn btn-sm btn-outline-info"
-                                    (click)="requestHints()"
-                                    [disabled]="hintsLoading()"
-                                    [title]="'artemisApp.proofExercise.hintsTitle' | artemisTranslate"
-                                >
-                                    {{
-                                        hintsLoading() ? ('artemisApp.proofExercise.hintsLoading' | artemisTranslate) : ('artemisApp.proofExercise.suggestHint' | artemisTranslate)
-                                    }}
-                                </button>
+                        <!-- Connector to goal -->
+                        <div
+                            class="px-3 border-top d-flex align-items-center gap-1"
+                            style="font-size: 0.72em; padding-top: 3px; padding-bottom: 3px; padding-left: calc(0.75rem + 3px) !important"
+                        >
+                            @if (isComplete()) {
+                                <span class="text-success fw-semibold">✓ goal reached</span>
+                            } @else {
+                                <span class="text-muted">↓ prove</span>
                             }
-                            @if (steps().length > 0 && !submission?.submitted && canVerify) {
-                                <button type="button" class="btn btn-sm btn-outline-secondary" (click)="verifyFullProof()" jhiTranslate="artemisApp.proofExercise.verifyProof">
-                                    Verify Proof
-                                </button>
+                        </div>
+
+                        <!-- Goal row -->
+                        <div class="d-flex align-items-center gap-2 px-3 py-2 border-top" [style.border-left]="isComplete() ? '3px solid var(--bs-success)' : '3px solid #6c757d'">
+                            <span
+                                class="fw-semibold text-uppercase"
+                                [class.text-success]="isComplete()"
+                                [class.text-muted]="!isComplete()"
+                                style="font-size: 0.68em; letter-spacing: 0.07em; min-width: 38px"
+                                >Goal</span
+                            >
+                            <span [innerHTML]="proofExercise.targetExpression | mathNodeLatex"></span>
+                            @if (isComplete()) {
+                                <p-tag class="ms-auto" severity="success" value="✓" />
                             }
                         </div>
                     </div>
+                }
+                @if (proofExercise.description) {
+                    <hr />
+                    <span [innerHTML]="proofExercise.description | htmlForMarkdown"></span>
+                }
+            </p-card>
+
+            <!-- Derivation workspace -->
+            @if (hasAstExpressions) {
+                <p-card>
+                    <ng-template pTemplate="header">
+                        <div class="d-flex align-items-center justify-content-between px-3 pt-3">
+                            <h4 class="mb-0" jhiTranslate="artemisApp.proofExercise.derivation">Derivation</h4>
+                            <div class="d-flex gap-2">
+                                @if (!submission?.submitted && proofExercise?.allowVerification && !isComplete()) {
+                                    <p-button
+                                        size="small"
+                                        severity="info"
+                                        [outlined]="true"
+                                        (onClick)="requestHints()"
+                                        [disabled]="hintsLoading()"
+                                        [pTooltip]="'artemisApp.proofExercise.hintsTitle' | artemisTranslate"
+                                        [label]="
+                                            hintsLoading()
+                                                ? ('artemisApp.proofExercise.hintsLoading' | artemisTranslate)
+                                                : ('artemisApp.proofExercise.suggestHint' | artemisTranslate)
+                                        "
+                                    />
+                                }
+                                @if (steps().length > 0 && !submission?.submitted && canVerify) {
+                                    <p-button
+                                        size="small"
+                                        severity="secondary"
+                                        [outlined]="true"
+                                        (onClick)="verifyFullProof()"
+                                        [label]="'artemisApp.proofExercise.verifyProof' | artemisTranslate"
+                                    />
+                                }
+                            </div>
+                        </div>
+                    </ng-template>
                     @if (hints().length > 0) {
                         <div class="px-3 py-2 border-bottom small bg-light">
                             <div class="d-flex align-items-center justify-content-between mb-2">
                                 <span class="fw-semibold text-muted" jhiTranslate="artemisApp.proofExercise.hintsHeader">Suggestions</span>
-                                <button type="button" class="btn btn-sm btn-link p-0" (click)="dismissHints()" jhiTranslate="artemisApp.proofExercise.dismiss">Dismiss</button>
+                                <p-button size="small" [text]="true" styleClass="p-0" (onClick)="dismissHints()" [label]="'artemisApp.proofExercise.dismiss' | artemisTranslate" />
                             </div>
                             <div class="d-flex flex-column gap-1">
                                 @for (hint of hints(); track hint.ruleId + '-' + hint.path.join(',')) {
-                                    <button type="button" class="btn btn-sm btn-outline-primary text-start" (click)="applyHint(hint)">
+                                    <p-button size="small" severity="primary" [outlined]="true" styleClass="text-start" (onClick)="applyHint(hint)">
                                         <span class="fw-semibold">{{ hint.rationale ?? hint.ruleId }}</span>
                                         <span class="text-muted ms-2" style="font-size: 0.85em">
                                             →
                                             <span [innerHTML]="hint.previewResult | mathNodeLatex"></span>
                                         </span>
-                                    </button>
+                                    </p-button>
                                 }
                             </div>
                         </div>
@@ -153,20 +158,11 @@
                     @if (progress() !== undefined && !isComplete()) {
                         <div class="px-3 py-2 border-bottom d-flex align-items-center gap-2 small text-muted">
                             <span jhiTranslate="artemisApp.proofExercise.progressLabel">Progress</span>
-                            <div class="progress flex-grow-1" style="height: 4px">
-                                <div
-                                    class="progress-bar bg-info"
-                                    role="progressbar"
-                                    [style.width.%]="progress()! * 100"
-                                    [attr.aria-valuenow]="progress()! * 100"
-                                    aria-valuemin="0"
-                                    aria-valuemax="100"
-                                ></div>
-                            </div>
+                            <p-progressBar class="flex-grow-1" [value]="progress()! * 100" [showValue]="false" [style]="{ height: '4px' }" />
                             <span style="min-width: 3em; text-align: right">{{ (progress()! * 100).toFixed(0) }}%</span>
                         </div>
                     }
-                    <div class="card-body d-flex gap-3">
+                    <div class="d-flex gap-3">
                         <!-- Rule palette sidebar -->
                         @if (!submission?.submitted && !pendingManualStep()) {
                             <div class="d-flex flex-column" style="width: 180px; flex-shrink: 0">
@@ -188,7 +184,9 @@
                                 <small class="text-muted fw-semibold d-block mb-1" jhiTranslate="artemisApp.proofExercise.rulesPanel">Rules</small>
                                 <input
                                     type="search"
-                                    class="form-control form-control-sm mb-2"
+                                    pInputText
+                                    pSize="small"
+                                    class="mb-2"
                                     [placeholder]="'artemisApp.proofExercise.searchRules' | artemisTranslate"
                                     [value]="ruleSearch()"
                                     (input)="ruleSearch.set($any($event.target).value)"
@@ -302,30 +300,27 @@
                                     <div class="border border-primary rounded p-3 mt-2">
                                         <div class="d-flex align-items-center gap-2 mb-2">
                                             <small class="text-muted" jhiTranslate="artemisApp.proofExercise.manualStepClaimedRule">Claimed rule:</small>
-                                            <span class="badge bg-primary">{{ selectedRuleName }}</span>
+                                            <p-tag severity="info" [value]="selectedRuleName" />
                                         </div>
                                         <small class="text-muted d-block mb-2" jhiTranslate="artemisApp.proofExercise.manualStepBuildResult">Build the result expression:</small>
                                         <jhi-proof-builder [expression]="manualResultExpression()" (expressionChange)="manualResultExpression.set($event)" />
                                         <div class="d-flex gap-2 mt-3">
-                                            <button
-                                                type="button"
-                                                class="btn btn-sm btn-primary"
-                                                (click)="confirmManualStep()"
-                                                jhiTranslate="artemisApp.proofExercise.manualStepConfirm"
-                                            >
-                                                Confirm Step
-                                            </button>
-                                            <button
-                                                type="button"
-                                                class="btn btn-sm btn-outline-secondary"
-                                                (click)="cancelManualStep()"
-                                                jhiTranslate="artemisApp.proofExercise.cancel"
-                                            >
-                                                Cancel
-                                            </button>
+                                            <p-button
+                                                size="small"
+                                                severity="primary"
+                                                (onClick)="confirmManualStep()"
+                                                [label]="'artemisApp.proofExercise.manualStepConfirm' | artemisTranslate"
+                                            />
+                                            <p-button
+                                                size="small"
+                                                severity="secondary"
+                                                [outlined]="true"
+                                                (onClick)="cancelManualStep()"
+                                                [label]="'artemisApp.proofExercise.cancel' | artemisTranslate"
+                                            />
                                         </div>
                                         @if (ruleApplicationError()) {
-                                            <div class="alert alert-warning mt-2 py-1 px-2 small">{{ ruleApplicationError() }}</div>
+                                            <p-message severity="warn" styleClass="mt-2" [text]="ruleApplicationError()!" />
                                         }
                                     </div>
                                 } @else {
@@ -340,65 +335,66 @@
                                                 <small class="text-muted fst-italic">← Select a rule, then click a node</small>
                                             }
                                         } @else if (selectedRuleId() && selectedNodePath() === undefined) {
-                                            <span class="badge bg-primary">{{ selectedRuleName }}</span>
+                                            <p-tag severity="info" [value]="selectedRuleName" />
                                             @if (selectedRule()?.direction === 'BIDIRECTIONAL') {
-                                                <button
-                                                    type="button"
-                                                    class="btn btn-sm btn-outline-primary"
-                                                    (click)="toggleDirection()"
-                                                    [title]="'artemisApp.proofExercise.direction.toggle' | artemisTranslate"
-                                                >
-                                                    {{ selectedDirection() === 'REVERSE' ? '← reverse' : '→ forward' }}
-                                                </button>
+                                                <p-button
+                                                    size="small"
+                                                    severity="primary"
+                                                    [outlined]="true"
+                                                    (onClick)="toggleDirection()"
+                                                    [pTooltip]="'artemisApp.proofExercise.direction.toggle' | artemisTranslate"
+                                                    [label]="selectedDirection() === 'REVERSE' ? '← reverse' : '→ forward'"
+                                                />
                                             }
                                             <small class="text-muted fst-italic">Now click a node →</small>
                                         } @else if (!selectedRuleId() && selectedNodePath() !== undefined) {
                                             <small class="text-muted fst-italic">← Now select a rule</small>
                                         }
                                         @if (steps().length > 0) {
-                                            <button class="btn btn-sm btn-outline-secondary ms-auto" (click)="undoLastStep()" jhiTranslate="artemisApp.proofExercise.undo">
-                                                Undo
-                                            </button>
+                                            <p-button
+                                                class="ms-auto"
+                                                size="small"
+                                                severity="secondary"
+                                                [outlined]="true"
+                                                (onClick)="undoLastStep()"
+                                                [label]="'artemisApp.proofExercise.undo' | artemisTranslate"
+                                            />
                                         }
                                     </div>
                                     @if (ruleApplicationError()) {
-                                        <div class="alert alert-warning mt-2 py-1 px-2 small">{{ ruleApplicationError() }}</div>
+                                        <p-message severity="warn" styleClass="mt-2" [text]="ruleApplicationError()!" />
                                     }
                                 }
                             }
                         </div>
                     </div>
-                </div>
+                </p-card>
             }
 
             <!-- Submission card -->
             @if (submission?.submitted) {
-                <div class="card border-success">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="rounded-circle bg-success d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px">
-                                <span class="text-white fw-bold fs-5">✓</span>
-                            </div>
-                            <div>
-                                <strong class="text-success d-block" jhiTranslate="artemisApp.proofExercise.submittedTitle">Submitted</strong>
-                                @if (submission?.submissionDate) {
-                                    <small class="text-muted">{{ submission.submissionDate!.toDate().toLocaleString() }}</small>
-                                }
-                            </div>
+                <p-card styleClass="border-success">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle bg-success d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px">
+                            <span class="text-white fw-bold fs-5">✓</span>
                         </div>
-                        @if (result) {
-                            <hr class="my-3" />
-                            <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.score">Score</small>
-                            <p class="fs-4 mb-0">{{ result.score }}%</p>
-                        }
+                        <div>
+                            <strong class="text-success d-block" jhiTranslate="artemisApp.proofExercise.submittedTitle">Submitted</strong>
+                            @if (submission?.submissionDate) {
+                                <small class="text-muted">{{ submission.submissionDate!.toDate().toLocaleString() }}</small>
+                            }
+                        </div>
                     </div>
-                </div>
+                    @if (result) {
+                        <hr class="my-3" />
+                        <small class="text-muted d-block" jhiTranslate="artemisApp.proofExercise.score">Score</small>
+                        <p class="fs-4 mb-0">{{ result.score }}%</p>
+                    }
+                </p-card>
             } @else {
-                <div class="card">
-                    <div class="card-body">
-                        <jhi-exercise-submit-button [exercise]="proofExercise" [isLoading]="isSaving" [isSubmitted]="false" (onSubmit)="submit()" />
-                    </div>
-                </div>
+                <p-card>
+                    <jhi-exercise-submit-button [exercise]="proofExercise" [isLoading]="isSaving" [isSubmitted]="false" (onSubmit)="submit()" />
+                </p-card>
             }
         </div>
     </div>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+
+    <!--
+        Phase 4: equation-as-goal mode. Adds goal_mode + goal_expression to proof_exercise_details.
+        Existing exercises default to TRANSFORMATION (the legacy source→target shape); EQUATION exercises
+        store a single MathNode (typically an equality) and the grader completes them by tautology reduction.
+    -->
+    <changeSet id="20260528120000-1" author="KilianSen">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="proof_exercise_details" columnName="goal_mode"/></not>
+        </preConditions>
+        <addColumn tableName="proof_exercise_details">
+            <column name="goal_mode" type="varchar(16)" defaultValue="TRANSFORMATION">
+                <constraints nullable="false"/>
+            </column>
+            <column name="goal_expression" type="longtext">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>
