@@ -207,7 +207,7 @@ dependencies {
     // down to 5.5.1 by this explicit pin.
     // We cannot upgrade to 5.6.1 (the patched release) because it breaks Hazelcast cluster formation; the bump was
     // reverted in PR #12652.
-    implementation "org.apache.httpcomponents.client5:httpclient5:5.5.1"
+    implementation "org.apache.httpcomponents.client5:httpclient5:5.6.1"
     implementation "org.apache.httpcomponents.core5:httpcore5:5.3.6"
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
 
