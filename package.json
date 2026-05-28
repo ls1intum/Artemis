@@ -144,7 +144,7 @@
         "stylelint-config-standard-scss": "17.0.0",
         "stylelint-scss": "7.1.1",
         "ts-morph": "28.0.0",
-        "typescript": "5.9.3",
+        "typescript": "6.0.3",
         "typescript-eslint": "8.59.4",
         "vite-tsconfig-paths": "6.1.1",
         "vitest": "4.1.7"
