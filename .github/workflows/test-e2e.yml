@@ -571,7 +571,7 @@ jobs:
 
       - name: All Tests Report (PR)
         id: test-report
-        uses: mikepenz/action-junit-report@v6.4.0
+        uses: mikepenz/action-junit-report@v6.4.1
         if: success() || failure()
         with:
           commit: ${{ github.event.workflow_run.head_sha }}
@@ -735,7 +735,7 @@ jobs:
           path: all-test-results
 
       - name: All Tests Report (Non-PR)
-        uses: mikepenz/action-junit-report@v6.4.0
+        uses: mikepenz/action-junit-report@v6.4.1
         if: success() || failure()
         with:
           commit: ${{ github.event.workflow_run.head_sha }}

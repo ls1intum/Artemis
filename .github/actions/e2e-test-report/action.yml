@@ -33,7 +33,7 @@ runs:
 
     - name: Generate Test Report
       id: test-report
-      uses: mikepenz/action-junit-report@v6.4.0
+      uses: mikepenz/action-junit-report@v6.4.1
       if: success() || failure()
       with:
         commit: ${{ inputs.commit-sha }}
