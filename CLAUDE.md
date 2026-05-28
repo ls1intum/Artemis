@@ -118,7 +118,8 @@ Organized by feature module:
 - `fileupload/` - File upload exercises
 - `exam/` - Exam mode
 - `assessment/` - Grading and assessment
-- `communication/` - Channels, messaging, notifications
+- `communication/` - Channels, messaging, conversations, FAQs, saved posts
+- `notification/` - Course / global / system / push notifications, mail service
 - `lecture/` - Lecture management
 - `calendar/` - Calendar events and iCal subscriptions
 - `atlas/` - Competency-based learning, learning analytics
