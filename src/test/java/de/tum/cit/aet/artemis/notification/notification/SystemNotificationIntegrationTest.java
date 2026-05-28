@@ -78,7 +78,7 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
                 .andExpect(header().string("Link", "</api/notification/public/system-notifications/active>; rel=\"successor-version\""));
 
         request.performMvcRequest(get("/api/notification/public/system-notifications/active")).andExpect(status().isOk()).andExpect(header().doesNotExist("Deprecation"))
-                .andExpect(header().doesNotExist("Sunset"));
+                .andExpect(header().doesNotExist("Sunset")).andExpect(header().doesNotExist("Link"));
     }
 
     @Test
