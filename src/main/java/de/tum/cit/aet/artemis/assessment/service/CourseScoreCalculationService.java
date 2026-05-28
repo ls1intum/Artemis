@@ -553,7 +553,7 @@ public class CourseScoreCalculationService {
     }
 
     private boolean isAssessedAutomatically(ExerciseCourseScoreDTO exercise) {
-        return exercise.exerciseType() == ExerciseType.PROGRAMMING && exercise.assessmentType() == AssessmentType.AUTOMATIC;
+        return exercise.type() == ExerciseType.PROGRAMMING && exercise.assessmentType() == AssessmentType.AUTOMATIC;
     }
 
     private boolean isAutomaticAssessmentDone(ExerciseCourseScoreDTO exercise) {
