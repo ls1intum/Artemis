@@ -231,7 +231,7 @@ dependencies {
     implementation "de.jplag:typescript:${jplag_version}"
 
     // Align all Spring AI modules to the same version
-    implementation platform("org.springframework.ai:spring-ai-bom:2.0.0-M4")
+    implementation platform("org.springframework.ai:spring-ai-bom:2.0.0-M8")
     // Azure OpenAI (prod, or when you want Azure)
     implementation "org.springframework.ai:spring-ai-starter-model-azure-openai" // can also use non-azure models
     implementation "org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc"
