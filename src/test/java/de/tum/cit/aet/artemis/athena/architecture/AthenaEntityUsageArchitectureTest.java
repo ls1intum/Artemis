@@ -15,12 +15,12 @@ class AthenaEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchite
     }
 
     @Override
-    protected int getMaxEntityReturnViolations() {
+    protected int getExpectedEntityReturnViolations() {
         return 0;
     }
 
     @Override
-    protected int getMaxEntityInputViolations() {
+    protected int getExpectedEntityInputViolations() {
         return 0;
     }
 }
