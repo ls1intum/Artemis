@@ -132,7 +132,7 @@ export class UnifiedFeedbackComponent {
     private getReferencedFeedbackTitle(feedback: Feedback): string {
         if (feedback.text) {
             if (feedback.text.startsWith(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER)) {
-                return this.artemisTranslatePipe.transform(this.feedbackTypeTitleKeys[this.inferredType()]);
+                return this.stripFeedbackSuggestionPrefix(feedback.text);
             }
             if (Feedback.isFeedbackSuggestion(feedback)) {
                 return this.stripFeedbackSuggestionPrefix(feedback.text);

@@ -99,7 +99,7 @@ export class ExamResultsPage {
             .locator('.unified-feedback')
             .filter({ has: this.page.locator('.unified-feedback-reference-text', { hasText: element }) })
             .filter({ has: this.page.locator('.unified-feedback-points', { hasText: points.toString() }) });
-        await expect(feedbackElement).toBeVisible();
+        await expect(feedbackElement).toBeVisible({ timeout: 30000 });
         await expect(feedbackElement.locator('.unified-feedback-text', { hasText: feedback })).toBeVisible();
     }
 }

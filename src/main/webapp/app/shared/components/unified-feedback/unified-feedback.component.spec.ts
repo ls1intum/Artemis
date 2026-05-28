@@ -1,7 +1,8 @@
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UnifiedFeedbackComponent } from './unified-feedback.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
 
 describe('UnifiedFeedbackComponent', () => {
     setupTestBed({ zoneless: true });
@@ -12,6 +13,12 @@ describe('UnifiedFeedbackComponent', () => {
         await TestBed.configureTestingModule({
             imports: [UnifiedFeedbackComponent, TranslateModule.forRoot()],
         }).compileComponents();
+
+        const translateService = TestBed.inject(TranslateService);
+        translateService.setTranslation('en', {
+            artemisApp: { assessment: { detail: { points: { one: '{{points}} Point', many: '{{points}} Points' } } } },
+        });
+        translateService.use('en');
 
         fixture = TestBed.createComponent(UnifiedFeedbackComponent);
         component = fixture.componentInstance;
@@ -142,6 +149,13 @@ describe('UnifiedFeedbackComponent', () => {
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('.unified-feedback-points')?.textContent).toContain('3');
         expect(fixture.nativeElement.querySelector('.unified-feedback-text')?.innerHTML).toContain('<p>Hello</p>');
+    });
+
+    it('should use the original Athena suggestion title for adapted feedback', () => {
+        fixture.componentRef.setInput('title', undefined);
+        fixture.componentRef.setInput('feedback', { text: `${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check` } as any);
+        fixture.detectChanges();
+        expect(component.inferredTitle()).toBe('Missing null check');
     });
 
     it('should fall back to default title when mapping is present but id missing', () => {
