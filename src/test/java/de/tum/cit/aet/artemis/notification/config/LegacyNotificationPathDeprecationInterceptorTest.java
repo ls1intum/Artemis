@@ -55,7 +55,8 @@ class LegacyNotificationPathDeprecationInterceptorTest {
 
     @Test
     void shouldNotClobberExistingLinkHeaderWhenLegacyPathHitsNotificationController() throws NoSuchMethodException {
-        // Simulate a controller that has already written a pagination Link header (PaginationUtil pattern).
+        // Pre-populate a pagination Link header to model the case where, after preHandle, the controller
+        // adds its own Link header (PaginationUtil pattern). The interceptor must not overwrite either side.
         String paginationLink = "</api/communication/system-notifications?page=1&size=50>; rel=\"next\"";
         response.addHeader("Link", paginationLink);
         request.setRequestURI("/api/communication/system-notifications");
@@ -63,7 +64,8 @@ class LegacyNotificationPathDeprecationInterceptorTest {
 
         interceptor.preHandle(request, response, handler);
 
-        assertThat(response.getHeaders("Link")).containsExactly(paginationLink, "</api/notification/system-notifications>; rel=\"successor-version\"");
+        // Order is order-of-insertion-dependent and not significant per RFC 8288 — assert presence regardless of order.
+        assertThat(response.getHeaders("Link")).containsExactlyInAnyOrder(paginationLink, "</api/notification/system-notifications>; rel=\"successor-version\"");
     }
 
     @Test
