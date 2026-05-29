@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -81,7 +82,8 @@ import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 @EnforceAdmin
 @Lazy
 @RestController
-@RequestMapping("api/core/admin/")
+@SuppressWarnings("deprecation")
+@RequestMapping({ "api/account/admin/", AccountLegacyRestPaths.CORE_ADMIN_PREFIX })
 public class AdminUserResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminUserResource.class);
@@ -151,7 +153,7 @@ public class AdminUserResource {
 
             // NOTE: Mail service is NOT active at the moment
             // mailService.sendCreationEmail(newUser);
-            return ResponseEntity.created(new URI("/api/core/users/" + newUser.getLogin()))
+            return ResponseEntity.created(new URI("/api/account/admin/users/" + newUser.getLogin()))
                     .headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.created", newUser.getLogin())).body(new UserDTO(newUser));
         }
     }

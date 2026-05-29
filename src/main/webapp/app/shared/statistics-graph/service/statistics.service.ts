@@ -15,7 +15,7 @@ export class StatisticsService {
 
     private basePath = 'management/statistics/';
     private resourceUrl = 'api/core/' + this.basePath;
-    private adminResourceUrl = 'api/core/admin/' + this.basePath;
+    private adminResourceUrl = 'api/admin/' + this.basePath;
 
     /**
      * Sends a GET request to retrieve the data for a graph based on the graphType in the last *span* days and the given period

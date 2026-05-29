@@ -14,7 +14,7 @@ export class OrganizationManagementService {
     private entityTitleService = inject(EntityTitleService);
 
     public resourceUrl = 'api/core/organizations';
-    public adminResourceUrl = 'api/core/admin/organizations';
+    public adminResourceUrl = 'api/admin/organizations';
 
     /**
      * Send GET request to retrieve a paginated and filtered list of organizations
