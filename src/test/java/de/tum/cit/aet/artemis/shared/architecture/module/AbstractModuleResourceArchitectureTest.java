@@ -56,10 +56,8 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
             "api/account/passkey/{credentialId}", "api/account/passkey/{credentialId}/approval",
             // assessment
             "api/assessment/exercises/{exerciseId}/example-submissions/import/{sourceSubmissionId}",
-            // atlas
-            "api/atlas/courses/{courseId}/course-competencies/relations/{competencyRelationId}",
             // communication
-            "api/communication/courses/{courseId}/messages/{postId}/display-priority", "api/communication/courses/{courseId}/one-to-one-chats/{userId}",
+            "api/communication/courses/{courseId}/one-to-one-chats/{userId}",
             // core (file serving — the collection segment doubles as a key in FilePathConverter's external-URI <-> filesystem
             // mapping, in StaticResourcesConfiguration resource handlers, and in stored attachment links / embedded markdown.
             // Pluralizing the route alone would desync it from server-generated and persisted URIs; needs a coordinated data migration.)
@@ -70,8 +68,6 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
             "api/core/files/exam-user/signatures/{examUserId}/*", "api/core/files/exam-user/{examUserId}/*", "api/core/files/user/profile-pictures/{userId}/*",
             // course
             "api/course/courses/{courseId}/import-summary/{sourceCourseId}",
-            // exam
-            "api/exam/rooms/{examRoomId}/seats",
             // exercise
             "api/exercise/exercises/{destinationExerciseId}/teams/import-from-exercise/{sourceExerciseId}",
             "api/exercise/exercises/{exerciseId}/resume-programming-participation/{participationId}",
@@ -91,8 +87,6 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
             "api/programming/programming-exercises/{exerciseId}/export-student-repository/{participationId}",
             "api/programming/programming-submissions/{participationId}/trigger-build", "api/programming/programming-submissions/{participationId}/trigger-failed-build",
             "api/programming/repository-files-content/{commitId}",
-            // quiz
-            "api/quiz/courses/{courseId}/training-questions/{quizQuestionId}/submit", "api/quiz/quiz-exercises/{quizBatchId}/start-batch",
             // text
             "api/text/admin/event-insights/text-assessment/events/{courseId}", "api/text/text-exercises/import/{sourceExerciseId}",
             // tutorialgroup (collection "tutorial-free-periods" mismatches its id {tutorialGroupFreePeriodId}: rename the

@@ -333,9 +333,9 @@ public class CourseCompetencyResource {
      * @param competencyRelationId the id of the competency relation
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("courses/{courseId}/course-competencies/relations/{competencyRelationId}")
+    @DeleteMapping("courses/{courseId}/course-competencies/relations/{relationId}")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<Void> removeCompetencyRelation(@PathVariable long courseId, @PathVariable long competencyRelationId) {
+    public ResponseEntity<Void> removeCompetencyRelation(@PathVariable long courseId, @PathVariable("relationId") long competencyRelationId) {
         log.info("REST request to remove a competency relation: {}", competencyRelationId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var relation = competencyRelationRepository.findById(competencyRelationId).orElseThrow();
@@ -378,9 +378,9 @@ public class CourseCompetencyResource {
      * @param updateCourseCompetencyRelationDTO the new relation type
      * @return the ResponseEntity with status 200 (OK)
      */
-    @PatchMapping("courses/{courseId}/course-competencies/relations/{competencyRelationId}")
+    @PatchMapping("courses/{courseId}/course-competencies/relations/{relationId}")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<Void> updateCompetencyRelation(@PathVariable long courseId, @PathVariable long competencyRelationId,
+    public ResponseEntity<Void> updateCompetencyRelation(@PathVariable long courseId, @PathVariable("relationId") long competencyRelationId,
             @RequestBody @Valid UpdateCourseCompetencyRelationDTO updateCourseCompetencyRelationDTO) {
         log.info("REST request to update a competency relation: {}", competencyRelationId);
         courseCompetencyService.updateCourseCompetencyRelation(courseId, competencyRelationId, updateCourseCompetencyRelationDTO);

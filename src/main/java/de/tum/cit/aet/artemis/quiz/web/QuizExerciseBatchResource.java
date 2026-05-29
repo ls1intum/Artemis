@@ -144,7 +144,7 @@ public class QuizExerciseBatchResource {
      * @param quizBatchId the id of the quizBatch to start
      * @return the ResponseEntity with status 200 (OK)
      */
-    @PutMapping("quiz-exercises/{quizBatchId}/start-batch")
+    @PutMapping({ "quiz-batches/{quizBatchId}/start-batch", "quiz-exercises/{quizBatchId}/start-batch" })
     @EnforceAtLeastTutor
     public ResponseEntity<QuizBatchDTO> startBatch(@PathVariable Long quizBatchId) {
         log.info("REST request to start quiz batch : {}", quizBatchId);
