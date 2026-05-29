@@ -409,7 +409,7 @@ export class AccountService implements IAccountService {
                 return currentUserIdentity;
             }
 
-            return { ...currentUserIdentity, selectedLLMUsage: accepted, selectedLLMUsageTimestamp: dayjs() };
+            return Object.assign({}, currentUserIdentity, { selectedLLMUsage: accepted, selectedLLMUsageTimestamp: dayjs() });
         });
     }
 

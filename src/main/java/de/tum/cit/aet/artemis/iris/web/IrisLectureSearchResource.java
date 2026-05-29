@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
@@ -69,7 +70,7 @@ public class IrisLectureSearchResource {
     @EnforceAtLeastStudent
     @LimitRequestsPerMinute(type = RateLimitType.AI_SEARCH_PIPELINE)
     public ResponseEntity<Void> ask(@RequestBody @Valid PyrisSearchAskRequestDTO requestDTO, Principal principal) {
-        var user = userRepository.findOneByLogin(principal.getName()).orElseThrow();
+        var user = userRepository.findOneByLogin(principal.getName()).orElseThrow(() -> new EntityNotFoundException("User", principal.getName()));
         user.hasOptedIntoLLMUsageElseThrow();
         pyrisJobService.addGlobalSearchAnswerJob(principal.getName(), requestDTO.runId().toString());
         // Note: do NOT remove the job on exception here. Transport-level failures are ambiguous —
