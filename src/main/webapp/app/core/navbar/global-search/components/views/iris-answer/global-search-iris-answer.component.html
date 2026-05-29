@@ -1,68 +1,74 @@
-<div class="iris-answer-panel d-flex flex-column h-100">
-    <!-- Header -->
-    <div class="iris-answer-header d-flex align-items-center justify-content-between flex-shrink-0">
-        <div class="d-flex align-items-center gap-2">
-            <jhi-iris-logo [size]="IrisLogoSize.TEXT" aria-hidden="true" />
-            <span class="iris-answer-title">{{ 'global.search.irisAnswerTitle' | artemisTranslate }}</span>
+@if (irisThinking() || irisResult()?.answer) {
+    <div class="iris-inline-answer my-2">
+        <!-- Header -->
+        <div class="iris-card-header d-flex align-items-center gap-2">
+            <jhi-iris-logo [size]="IrisLogoSize.TEXT" [class.iris-logo-pulse]="irisThinking()" [style.filter]="'none'" aria-hidden="true" />
+            <span class="iris-card-label fw-bold">Iris</span>
+            <span class="iris-ai-badge d-inline-flex align-items-center rounded-pill fw-bold">{{ 'global.search.irisAiBadge' | artemisTranslate }}</span>
         </div>
-        <button
-            class="iris-close-btn btn p-1 d-inline-flex align-items-center justify-content-center text-secondary"
-            type="button"
-            (click)="closeDrawer.emit()"
-            [attr.aria-label]="'entity.action.close' | artemisTranslate"
-        >
-            <fa-icon [icon]="faTimes" aria-hidden="true" />
-        </button>
-    </div>
 
-    <!-- Content -->
-    <div #contentArea class="iris-answer-content flex-grow-1 overflow-y-auto">
-        @if (isLoading()) {
-            <div class="iris-loading d-flex flex-column gap-2 p-2" aria-busy="true">
-                <p-skeleton width="90%" height="0.875rem" borderRadius="0.25rem" />
-                <p-skeleton width="75%" height="0.875rem" borderRadius="0.25rem" />
-                <p-skeleton width="85%" height="0.875rem" borderRadius="0.25rem" />
-                <p-skeleton width="60%" height="0.875rem" borderRadius="0.25rem" />
-                <p-skeleton width="80%" height="0.875rem" borderRadius="0.25rem" />
+        <!-- Body -->
+        @if (irisThinking()) {
+            <div class="iris-thinking-wrapper">
+                <jhi-iris-thinking-bubble [message]="'global.search.irisAnswerThinking' | artemisTranslate" />
             </div>
-        } @else if (hasError()) {
-            <p class="iris-error-msg text-secondary text-center py-4">{{ 'global.search.irisAnswerError' | artemisTranslate }}</p>
-        } @else if (result()) {
-            <!-- Answer text (markdown + KaTeX math rendering) -->
-            <div class="iris-answer-text markdown-preview" [innerHTML]="result()!.answer | htmlForMarkdown"></div>
+        } @else {
+            <!-- Answer window with optional collapse -->
+            <div class="iris-answer-region">
+                <div
+                    #answerBody
+                    class="iris-answer-text markdown-preview"
+                    [class.is-clamped]="shouldClamp()"
+                    [class.is-expanded]="isOverflowing() && isExpanded()"
+                    [innerHTML]="irisResult()?.answer | htmlForMarkdown"
+                ></div>
+            </div>
 
-            <!-- Sources -->
-            @if (result()!.sources.length > 0) {
-                <div class="iris-sources">
-                    <span class="iris-sources-label text-secondary">{{ 'global.search.irisAnswerSources' | artemisTranslate }}</span>
-                    <div class="iris-sources-list d-flex flex-column gap-2 mt-2">
-                        @for (source of result()!.sources; track $index) {
-                            <a
-                                #selectableItem
-                                class="iris-source-card border p-2 text-decoration-none d-block"
-                                [class.is-selected]="selectedSourceIndex() === $index"
-                                [routerLink]="source.lectureUnit.link"
-                                [attr.aria-label]="source.lectureUnit.name"
-                            >
-                                <span class="d-block fw-medium text-body iris-source-title">{{ source.lectureUnit.name }}</span>
-                                <span class="iris-source-meta"
-                                    >{{ source.course.name }} › {{ source.lecture.name }} · {{ 'global.search.pageAbbreviation' | artemisTranslate }}
-                                    {{ source.lectureUnit.pageNumber }}</span
-                                >
-                            </a>
-                        }
-                    </div>
-                </div>
+            <!-- Show more / less — sits below the text, never overlapping -->
+            @if (shouldClamp()) {
+                <button class="iris-toggle-btn bg-transparent border-0 fw-medium" type="button" (click)="isExpanded.set(true)">
+                    {{ 'global.search.irisAnswerShowMore' | artemisTranslate }} ↓
+                </button>
+            }
+            @if (isOverflowing() && isExpanded()) {
+                <button class="iris-toggle-btn bg-transparent border-0 fw-medium" type="button" (click)="collapse()">
+                    {{ 'global.search.irisAnswerShowLess' | artemisTranslate }} ↑
+                </button>
             }
 
-            <!-- Continue in Iris (stubbed) -->
-            <!-- TODO: Wire this to open the Iris chat with the current query pre-filled -->
-            <div class="iris-cta mt-3">
-                <button class="iris-continue-link d-inline-flex align-items-center gap-2" type="button" disabled>
-                    <fa-icon [icon]="faComments" aria-hidden="true" />
-                    {{ 'global.search.continueInIris' | artemisTranslate }}
-                </button>
-            </div>
+            <!-- Source chips — first INITIAL_VISIBLE_SOURCE_COUNT inline; all chips in one wrapping row when expanded -->
+            @if (sources().length > 0) {
+                <div class="iris-chips d-flex align-items-center" [class.iris-chips--expanded]="moreOpen()">
+                    @for (source of visibleSources(); track $index) {
+                        <a
+                            class="iris-chip d-inline-flex align-items-center text-decoration-none text-nowrap rounded-pill"
+                            [routerLink]="source.lectureUnit.link"
+                            [queryParams]="source.lectureUnit.queryParams"
+                        >
+                            <fa-icon [icon]="SOURCE_ICONS[source.lectureUnit.sourceType] ?? faFile" class="iris-chip-icon flex-shrink-0" aria-hidden="true" />
+                            <span class="iris-chip-name text-truncate">{{ source.lectureUnit.name }}</span>
+                            @if (source.lectureUnit.displayMeta) {
+                                <span class="iris-chip-meta text-body-secondary">· {{ source.lectureUnit.displayMeta }}</span>
+                            }
+                        </a>
+                    }
+                    @if (sources().length > INITIAL_VISIBLE_SOURCE_COUNT && !moreOpen()) {
+                        <button class="iris-chip iris-more-btn rounded-pill" type="button" (click)="moreOpen.set(true)">
+                            +{{ sources().length - INITIAL_VISIBLE_SOURCE_COUNT }} {{ 'global.search.irisAnswerMore' | artemisTranslate }}
+                        </button>
+                    }
+                    @if (moreOpen()) {
+                        <button
+                            class="iris-collapse-btn d-inline-flex align-items-center justify-content-center rounded-pill flex-shrink-0"
+                            type="button"
+                            (click)="moreOpen.set(false)"
+                            [attr.aria-label]="'global.search.irisCollapseSources' | artemisTranslate"
+                        >
+                            <fa-icon [icon]="faChevronUp" />
+                        </button>
+                    }
+                </div>
+            }
         }
     </div>
-</div>
+}
