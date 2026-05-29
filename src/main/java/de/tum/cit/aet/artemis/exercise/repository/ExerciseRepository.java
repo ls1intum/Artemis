@@ -681,7 +681,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Modifying
     @Query("""
             UPDATE Exercise e
-            SET e.allowFeedbackRequests = false
+            SET e.allowFeedbackRequests = FALSE
             WHERE e.course.id = :courseId
                   AND TYPE(e) IN (TextExercise)
             """)
@@ -701,7 +701,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Modifying
     @Query("""
             UPDATE Exercise e
-            SET e.allowFeedbackRequests = false
+            SET e.allowFeedbackRequests = FALSE
             WHERE e.course.id = :courseId
                   AND TYPE(e) IN (ModelingExercise)
             """)
@@ -721,7 +721,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Modifying
     @Query("""
             UPDATE Exercise e
-            SET e.allowFeedbackRequests = false
+            SET e.allowFeedbackRequests = FALSE
             WHERE e.course.id = :courseId
                   AND TYPE(e) IN (ProgrammingExercise)
             """)
@@ -741,7 +741,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Modifying
     @Query("""
             UPDATE Exercise e
-            SET e.allowFeedbackRequests = true
+            SET e.allowFeedbackRequests = TRUE
             WHERE e.course.id = :courseId
                   AND TYPE(e) IN (TextExercise)
             """)
@@ -761,7 +761,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Modifying
     @Query("""
             UPDATE Exercise e
-            SET e.allowFeedbackRequests = true
+            SET e.allowFeedbackRequests = TRUE
             WHERE e.course.id = :courseId
                   AND TYPE(e) IN (ModelingExercise)
             """)
@@ -781,7 +781,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Modifying
     @Query("""
             UPDATE Exercise e
-            SET e.allowFeedbackRequests = true
+            SET e.allowFeedbackRequests = TRUE
             WHERE e.course.id = :courseId
                   AND TYPE(e) IN (ProgrammingExercise)
             """)
