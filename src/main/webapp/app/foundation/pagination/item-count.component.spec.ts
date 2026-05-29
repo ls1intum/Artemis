@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -65,6 +65,25 @@ describe('ItemCountComponent test', () => {
             expect(comp.itemRangeBegin()).toBe(11);
             expect(comp.itemRangeEnd()).toBe(16);
             expect(comp.itemTotal()).toBe(16);
+        });
+    });
+
+    describe('rendering', () => {
+        // Guards the full reactive chain under zoneless: params input -> computed signals -> [translateValues] ->
+        // child jhiTranslate directive effect -> rendered DOM. A logic-only assertion on the computeds would miss a
+        // broken re-render here.
+        it('should render the interpolated item count and update it when params change', () => {
+            const translateService = TestBed.inject(TranslateService);
+            translateService.setTranslation('en', { global: { 'item-count': '{{first}} - {{second}} of {{total}}' } });
+            translateService.use('en');
+
+            fixture.componentRef.setInput('params', { page: 2, totalItems: 16, itemsPerPage: 10 });
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('div').textContent).toContain('11 - 16 of 16');
+
+            fixture.componentRef.setInput('params', { page: 1, totalItems: 100, itemsPerPage: 10 });
+            fixture.detectChanges();
+            expect(fixture.nativeElement.querySelector('div').textContent).toContain('1 - 10 of 100');
         });
     });
 });

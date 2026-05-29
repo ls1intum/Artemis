@@ -1,5 +1,4 @@
 import { Directive, TemplateRef, ViewContainerRef, effect, inject, input } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/foundation/constants/authority.constants';
 
@@ -26,22 +25,16 @@ export class HasAnyAuthorityDirective {
     });
 
     constructor() {
-        // Re-evaluate the view whenever the required authorities change.
+        // Re-render whenever the required authorities or the authentication state change: hasAnyAuthorityDirect()
+        // synchronously reads the userIdentity()/authenticated() signals, so this effect tracks them and re-runs on
+        // login/logout — no separate auth-state subscription is needed. The effect runs after inputs are set, so
+        // reading the required input here is safe (a constructor subscription would read it during construction and
+        // throw NG0950). Toggling the embedded view via ViewContainerRef notifies the change-detection scheduler on
+        // attach/detach, so this renders correctly under zoneless change detection.
         effect(() => {
-            this.jhiHasAnyAuthority();
-            this.updateView();
-        });
-        // Get notified each time authentication state changes (subscribed once, not per input change).
-        this.accountService
-            .getAuthenticationState()
-            .pipe(takeUntilDestroyed())
-            .subscribe(() => this.updateView());
-    }
-
-    private updateView(): void {
-        this.accountService.hasAnyAuthority(this.jhiHasAnyAuthority()).then((result) => {
+            const authorized = this.accountService.hasAnyAuthorityDirect(this.jhiHasAnyAuthority());
             this.viewContainerRef.clear();
-            if (result) {
+            if (authorized) {
                 this.viewContainerRef.createEmbeddedView(this.templateRef);
             }
         });

@@ -43,7 +43,11 @@ export class TranslateDirective {
                 next: (value) => {
                     this.el.nativeElement.innerHTML = value;
                 },
-                error: () => `${translationNotFoundMessage}[${key}]`,
+                // Render the not-found fallback on a genuine stream error (the common missing-key case already
+                // flows through `next` via ngx-translate's MissingTranslationHandler). textContent avoids markup injection.
+                error: () => {
+                    this.el.nativeElement.textContent = `${translationNotFoundMessage}[${key}]`;
+                },
             });
     }
 }

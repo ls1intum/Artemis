@@ -49,14 +49,15 @@ export class ExtensionPointDirective {
             this.viewRef = template ? this.viewContainerRef.createEmbeddedView(template, context) : this.viewContainerRef.createEmbeddedView(this.templateRef, context);
         });
 
-        // Update the existing view's context in place when only the context changes.
+        // Update the existing view's context in place when only the context changes. Mutate the existing context
+        // object via Object.assign rather than reassigning viewRef.context (replacing the context object is
+        // deprecated in Angular 21). The embedded view holds the same object reference, and re-running this effect
+        // refreshes the view so its bindings re-read the mutated context — no markForCheck needed under zoneless.
         effect(() => {
             const context = this.jhiExtensionPointContext();
-            untracked(() => {
-                if (this.viewRef && context) {
-                    this.viewRef.context = context;
-                }
-            });
+            if (this.viewRef && context) {
+                Object.assign(this.viewRef.context, context);
+            }
         });
     }
 }
