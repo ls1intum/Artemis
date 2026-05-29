@@ -3,16 +3,16 @@ import { LearningObjectType, LearningPathDTO } from 'app/atlas/shared/entities/l
 import { map } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { LearningPathNavComponent } from 'app/atlas/overview/learning-path-student-nav/learning-path-student-nav.component';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ActivatedRoute } from '@angular/router';
 import { LearningPathLectureUnitComponent } from 'app/atlas/overview/learning-path-lecture-unit/learning-path-lecture-unit.component';
 import { LearningPathExerciseComponent } from 'app/atlas/overview/learning-path-exercise/learning-path-exercise.component';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
-import { onError } from 'app/shared/util/global.utils';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ScienceEventType } from 'app/shared/science/science.model';
-import { ScienceService } from 'app/shared/science/science.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ScienceEventType } from 'app/foundation/science/science.model';
+import { ScienceService } from 'app/foundation/science/science.service';
 
 @Component({
     selector: 'jhi-learning-path-student-page',

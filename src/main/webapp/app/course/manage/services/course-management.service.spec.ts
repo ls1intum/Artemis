@@ -15,8 +15,8 @@ import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submis
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { take } from 'rxjs/operators';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

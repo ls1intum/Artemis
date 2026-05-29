@@ -3,7 +3,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { UserService } from 'app/account/user/shared/user.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { Authority } from 'app/foundation/constants/authority.constants';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import { provideHttpClient } from '@angular/common/http';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';

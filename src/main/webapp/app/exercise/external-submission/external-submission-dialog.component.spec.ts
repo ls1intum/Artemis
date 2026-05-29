@@ -8,7 +8,7 @@ import { Subject, throwError } from 'rxjs';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { User } from 'app/account/user/user.model';
-import { EventManager } from 'app/shared/service/event-manager.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

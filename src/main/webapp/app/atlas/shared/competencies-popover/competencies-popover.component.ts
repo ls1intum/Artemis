@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewEncapsulation, input } from '@angular/core';
 import { faFlag } from '@fortawesome/free-solid-svg-icons';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

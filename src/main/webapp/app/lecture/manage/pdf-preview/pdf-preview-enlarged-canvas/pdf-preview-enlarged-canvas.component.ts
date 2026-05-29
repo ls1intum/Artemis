@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, HostListener, OnInit, Renderer2, inject, input, output, signal, viewChild } from '@angular/core';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 type NavigationDirection = 'next' | 'prev';
 

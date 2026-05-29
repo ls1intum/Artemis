@@ -7,7 +7,7 @@ import { BehaviorSubject, Subject } from 'rxjs';
 import { CourseSettingCategoryDirective } from 'app/course/overview/course-settings/directive/course-setting-category.directive';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { SubjectObservablePair } from 'app/shared/util/rxjs.utils';
+import { SubjectObservablePair } from 'app/foundation/util/rxjs.utils';
 
 // Create a concrete test component that extends the directive
 @Component({

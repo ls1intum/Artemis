@@ -1,4 +1,4 @@
-import { decodeBase64url } from 'app/shared/util/base64.util';
+import { decodeBase64url } from 'app/foundation/util/base64.util';
 import { User } from 'app/account/user/user.model';
 
 export function createCredentialOptions(options: PublicKeyCredentialCreationOptions, user: User): PublicKeyCredentialCreationOptions {

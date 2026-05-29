@@ -2,9 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, OperatorFunction, catchError, finalize, map, of } from 'rxjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { FileService } from 'app/shared/service/file.service';
+import { FileService } from 'app/foundation/service/file.service';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import {
     InlineRefinementEvent,
     MAX_INSTRUCTION_LENGTH,

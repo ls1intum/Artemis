@@ -5,7 +5,7 @@ import { CourseNotificationPresetPickerComponent } from 'app/notification/course
 import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
 import { By } from '@angular/platform-browser';
 import { MockDirective } from 'ng-mocks';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { CourseNotificationChannel } from 'app/notification/shared/entities/course-notification/course-notification-channel';

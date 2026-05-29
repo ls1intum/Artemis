@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, HostListener, OnDestroy, ViewChild, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { EMPTY, Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
@@ -11,28 +11,28 @@ import { ProgrammingExerciseParticipationService } from 'app/programming/manage/
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
-import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { MonacoEditorMode } from 'app/shared/monaco-editor/model/monaco-editor.types';
+import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MonacoEditorMode } from 'app/editor/monaco-editor/model/monaco-editor.types';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
-import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
-import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
-import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
-import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
+import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';
+import { TaskAction } from 'app/editor/monaco-editor/model/actions/task.action';
+import { TestCaseAction } from 'app/editor/monaco-editor/model/actions/test-case.action';
+import { TextEditorDomainAction } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action.model';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionAnalysisComponent } from './analysis/programming-exercise-instruction-analysis.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 
-import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
+import { RewriteAction } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
 import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS } from 'app/app.constants';
-import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
+import RewritingVariant from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
-import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
+import { RewriteResult } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { ProblemStatementSyncService, ProblemStatementSyncState } from 'app/exercise/synchronization/services/problem-statement-sync.service';
 import {
     EditorSelectionWithPosition,
@@ -43,7 +43,7 @@ import {
 import { editor } from 'monaco-editor';
 import { MonacoBinding } from 'y-monaco';
 import { ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { InlineRefinementButtonComponent } from 'app/shared/monaco-editor/inline-refinement-button/inline-refinement-button.component';
+import { InlineRefinementButtonComponent } from 'app/editor/monaco-editor/inline-refinement-button/inline-refinement-button.component';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { getFirstCommentByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
