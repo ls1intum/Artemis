@@ -11,7 +11,6 @@ import '@analogjs/vitest-angular/setup-snapshots';
 import * as jestExtendedMatchers from 'jest-extended';
 import { expect, vi } from 'vitest';
 
-// Register jest-extended matchers (toBeTrue, toBeArray, ...) to match jest-test-setup and the eslint autofix that prefers them.
 expect.extend(jestExtendedMatchers);
 
 // Provide a jest-compatible global so that legacy mocks (e.g. jest-canvas-mock) work under Vitest.

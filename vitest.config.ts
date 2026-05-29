@@ -92,7 +92,7 @@ export default defineConfig({
             'src/main/webapp/app/exercise/exercise-scores/**/*.spec.ts', // include exercise-scores tests
             'src/main/webapp/app/exercise/shared/filter-dropdown/**/*.spec.ts', // include filter-dropdown component tests
             'src/main/webapp/app/shared-ui/search-filter/**/*.spec.ts', // include search-filter component tests
-            'src/main/webapp/app/programming/shared/**/*.spec.ts', // include programming shared tests (covers build-phases-template, build-plan-phases, legacy-build-plan-converter, programming-exercise-update-timeline)
+            'src/main/webapp/app/programming/shared/**/*.spec.ts', // include programming shared tests
             'src/main/webapp/app/shared-ui/detail-overview-list/components/programming-diff-report-detail/**/*.spec.ts', // include programming diff report detail tests
             'src/test/javascript/spec/integration/code-editor/code-editor-container.integration.spec.ts', // migrated to Vitest
         ],
@@ -166,7 +166,7 @@ export default defineConfig({
                 'src/main/webapp/app/exercise/exercise-scores/**/*.ts', // include exercise-scores for code coverage
                 'src/main/webapp/app/exercise/shared/filter-dropdown/**/*.ts', // include filter-dropdown component for code coverage
                 'src/main/webapp/app/shared-ui/search-filter/**/*.ts', // include search-filter component for code coverage
-                'src/main/webapp/app/programming/shared/**/*.ts', // include programming shared for code coverage (covers build-phases-template, build-plan-phases, legacy-build-plan-converter, programming-exercise-update-timeline)
+                'src/main/webapp/app/programming/shared/**/*.ts', // include programming shared for code coverage
                 'src/main/webapp/app/shared-ui/detail-overview-list/components/programming-diff-report-detail/**/*.ts', // include programming diff report detail for code coverage
             ],
             exclude: [
