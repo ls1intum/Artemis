@@ -1,13 +1,21 @@
-<ng-template #scoringExplanation let-c="close" let-d="dismiss">
-    <div class="modal-header">
+<p-dialog
+    [(visible)]="isVisible"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [dismissableMask]="true"
+    [closeOnEscape]="true"
+    [closable]="true"
+    [style]="{ width: '50rem' }"
+>
+    <ng-template pTemplate="header">
         <h5 class="modal-title">
             <span
                 jhiTranslate="artemisApp.quizExercise.explanationText.scoringTitle"
                 [translateValues]="{ paramTitle: this.question().title, paramIndex: this.questionIndex() }"
             ></span>
         </h5>
-        <button type="button" class="btn-close" aria-label="Close" (click)="d()"></button>
-    </div>
+    </ng-template>
     @if (this.question().scoringType === ScoringType.ALL_OR_NOTHING && isSingleChoice) {
         <div class="modal-body">
             <span class="font-weight-bold" jhiTranslate="artemisApp.quizExercise.explanationText.scoringTypeSingleChoice"></span>
@@ -547,12 +555,12 @@
             }
         </div>
     }
-    <div class="modal-footer">
-        <button type="button" class="btn btn-outline" (click)="c()">Close</button>
-    </div>
-</ng-template>
+    <ng-template pTemplate="footer">
+        <button type="button" class="btn btn-outline" (click)="isVisible.set(false)">Close</button>
+    </ng-template>
+</p-dialog>
 <div>
-    <button class="btn" (click)="open(scoringExplanation)">
+    <button class="btn" (click)="open()">
         <fa-icon [ngClass]="{ questionCorrect: this.score() === this.question().points, questionWrong: this.score() !== this.question().points }" [icon]="farQuestionCircle" />
     </button>
 </div>

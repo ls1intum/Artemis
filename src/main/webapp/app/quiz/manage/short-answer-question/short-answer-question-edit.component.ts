@@ -1,7 +1,7 @@
 import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnInit, ViewEncapsulation, computed, effect, inject, input, output, viewChild } from '@angular/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
-import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
 import { QuizQuestionEdit } from 'app/quiz/manage/interfaces/quiz-question-edit.interface';
@@ -69,7 +69,6 @@ import { InputNumberModule } from 'primeng/inputnumber';
 })
 export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, QuizQuestionEdit {
     shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
-    private modalService = inject(NgbModal);
     private changeDetector = inject(ChangeDetectorRef);
     private translateService = inject(TranslateService);
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
@@ -360,13 +359,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
             const spotForMapping = this.shortAnswerQuestion.spots?.find((spot) => spot.spotNr === id)!;
             this.shortAnswerQuestion.correctMappings!.push(new ShortAnswerMapping(spotForMapping, solution));
         }
-    }
-
-    /**
-     * This function opens the modal for the help dialog.
-     */
-    open(content: any) {
-        this.modalService.open(content, { size: 'lg' });
     }
 
     /**

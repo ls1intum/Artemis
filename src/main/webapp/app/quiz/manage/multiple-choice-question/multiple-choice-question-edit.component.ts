@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewEncapsulation, computed, effect, inject, input, output, viewChild } from '@angular/core';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
-import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { QuizQuestionEdit } from 'app/quiz/manage/interfaces/quiz-question-edit.interface';
@@ -53,7 +53,6 @@ import { InputNumberModule } from 'primeng/inputnumber';
     ],
 })
 export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, OnInit {
-    private modalService = inject(NgbModal);
     private changeDetector = inject(ChangeDetectorRef);
     private translateService = inject(TranslateService);
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
@@ -149,14 +148,6 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
         if (this.question().singleChoice) {
             this.question().scoringType = ScoringType.ALL_OR_NOTHING;
         }
-    }
-
-    /**
-     * open the modal for the help dialog
-     * @param content
-     */
-    open(content: any) {
-        this.modalService.open(content, { size: 'lg' });
     }
 
     /**
