@@ -157,7 +157,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "user_groups")
     private Set<String> groups = new HashSet<>();
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @JsonIgnore
     private Set<UserCourseRole> courseRoles = new HashSet<>();
 

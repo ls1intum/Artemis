@@ -357,7 +357,10 @@ public class ExamRegistrationService {
      */
     public void addAllStudentsOfCourseToExam(Long courseId, Exam exam) {
         Course course = courseRepository.findByIdElseThrow(courseId);
-        var students = new ArrayList<>(userRepository.getStudents(course));
+        // Load students with their authorities eagerly so that isAdmin() can access
+        // user.getAuthorities() without triggering a LazyInitializationException on
+        // the detached entity after the Hibernate session has been closed.
+        var students = new ArrayList<>(userRepository.findAllByCourseIdAndCourseRolesInWithAuthorities(course.getId(), Set.of(CourseRole.STUDENT)));
 
         Map<String, Object> userData = new HashMap<>();
         userData.put("exam", exam.getTitle());

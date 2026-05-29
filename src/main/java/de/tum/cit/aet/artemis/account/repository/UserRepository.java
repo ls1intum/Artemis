@@ -570,6 +570,25 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     Set<User> findAllByCourseIdAndCourseRolesIn(@Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles);
 
+    /**
+     * Fetches all non-deleted users enrolled in a course with any of the given roles, with their {@code authorities} collection eagerly initialized.
+     * Use this variant when the callers need to access {@code user.getAuthorities()} without an open Hibernate session (e.g. to call {@link AuthorizationCheckService#isAdmin}).
+     *
+     * @param courseId the ID of the course
+     * @param roles    the set of {@link CourseRole} values to filter by
+     * @return set of matching users (authorities initialized)
+     */
+    @Query("""
+            SELECT DISTINCT user
+            FROM User user
+                JOIN FETCH user.authorities
+                JOIN user.courseRoles ucr
+            WHERE ucr.course.id = :courseId
+                AND ucr.role IN :roles
+                AND user.deleted = FALSE
+            """)
+    Set<User> findAllByCourseIdAndCourseRolesInWithAuthorities(@Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles);
+
     @Query("""
             SELECT COUNT(DISTINCT ucr.user)
             FROM UserCourseRole ucr

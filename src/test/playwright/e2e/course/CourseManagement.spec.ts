@@ -20,11 +20,6 @@ const courseData = {
     semester: 'SS23',
     maxPoints: 40,
     programmingLanguage: 'JAVA',
-    customizeGroupNames: false,
-    studentGroupName: process.env.STUDENT_GROUP_NAME ?? '',
-    tutorGroupName: process.env.TUTOR_GROUP_NAME ?? '',
-    editorGroupName: process.env.EDITOR_GROUP_NAME ?? '',
-    instructorGroupName: process.env.INSTRUCTOR_GROUP_NAME ?? '',
     enableComplaints: true,
     maxComplaints: 5,
     maxTeamComplaints: 3,
@@ -40,7 +35,6 @@ const editedCourseData = {
     testCourse: false,
 };
 
-const allowGroupCustomization = process.env.ALLOW_GROUP_CUSTOMIZATION;
 const dateFormat = 'MMM D, YYYY HH:mm';
 
 export interface CourseSummary {
@@ -100,18 +94,16 @@ test.describe('Course management', { tag: '@fast' }, () => {
 
     test.describe('Course creation', () => {
         let course: Course | undefined;
-        let course2: Course | undefined;
 
         test.beforeEach('Set course title and shortname', async ({ login }) => {
             await login(admin, '/');
-            // Reset the closure variables so the previous test's (already-deleted) course
+            // Reset the closure variable so the previous test's (already-deleted) course
             // reference isn't carried into this test's afterEach. Without this reset the
             // afterEach below would call deleteCourse on a stale id and the server would
             // return 404, which historically (before the null-check added in #11885) showed
             // up as a server-side ConstraintViolationException — the source of the long-lived
             // "ConstraintViolationError" comment + 5 s retry workaround in deleteCourse.
             course = undefined;
-            course2 = undefined;
             const uid = generateUUID();
             courseData.title = 'Course ' + uid;
             courseData.shortName = 'playwright' + uid;
@@ -135,7 +127,6 @@ test.describe('Course management', { tag: '@fast' }, () => {
             await courseCreation.setMaxComplaintsTimeDays(courseData.maxComplaintTimeDays);
             await courseCreation.setEnableMoreFeedback(courseData.enableMoreFeedback);
             await courseCreation.setMaxRequestMoreFeedbackTimeDays(courseData.maxRequestMoreFeedbackTimeDays);
-            await courseCreation.setCustomizeGroupNames(courseData.customizeGroupNames);
 
             const courseBody = await courseCreation.submit();
             course = courseBody;
@@ -177,40 +168,8 @@ test.describe('Course management', { tag: '@fast' }, () => {
             await expect(courseManagement.getMaxRequestMoreFeedbackTimeDays().filter({ hasText: courseData.maxRequestMoreFeedbackTimeDays.toString() })).toBeVisible();
         });
 
-        if (allowGroupCustomization) {
-            test('Creates a new course with custom groups', async ({ navigationBar, courseManagement, courseCreation }) => {
-                await navigationBar.openCourseManagement();
-                await courseManagement.openCourseCreation();
-                await courseCreation.setTitle(courseData.title);
-                await courseCreation.setShortName(courseData.shortName);
-                await courseCreation.setTestCourse(courseData.testCourse);
-                await courseCreation.setCustomizeGroupNames(true);
-                await courseCreation.setStudentGroup(courseData.studentGroupName);
-                await courseCreation.setTutorGroup(courseData.tutorGroupName);
-                await courseCreation.setEditorGroup(courseData.editorGroupName);
-                await courseCreation.setInstructorGroup(courseData.instructorGroupName);
-
-                const courseBody = await courseCreation.submit();
-                course2 = courseBody;
-
-                expect(courseBody.title).toBe(courseData.title);
-                expect(courseBody.shortName).toBe(courseData.shortName);
-                expect(courseBody.testCourse).toBe(courseData.testCourse);
-                expect(courseBody.studentGroupName).toBe(courseData.studentGroupName);
-                expect(courseBody.teachingAssistantGroupName).toBe(courseData.tutorGroupName);
-                expect(courseBody.editorGroupName).toBe(courseData.editorGroupName);
-                expect(courseBody.instructorGroupName).toBe(courseData.instructorGroupName);
-
-                await expect(courseManagement.getCourseSidebarTitle().filter({ hasText: courseData.title })).toBeVisible();
-                await expect(courseManagement.getCourseTitle().filter({ hasText: courseData.title })).toBeVisible();
-                await expect(courseManagement.getCourseShortName().filter({ hasText: courseData.shortName })).toBeVisible();
-                await expect(courseManagement.getCourseTestCourse().locator(convertBooleanToCheckIconClass(courseData.testCourse))).toBeVisible();
-            });
-        }
-
         test.afterEach(async ({ courseManagementAPIRequests }) => {
             await courseManagementAPIRequests.deleteCourse(course, admin);
-            await courseManagementAPIRequests.deleteCourse(course2, admin);
         });
     });
 

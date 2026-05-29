@@ -27,6 +27,7 @@ import java.util.function.Supplier;
 
 import jakarta.annotation.PostConstruct;
 
+import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -608,10 +609,18 @@ public class UserService {
         if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role)) {
             userCourseRoleRepository.save(new UserCourseRole(user, course, role));
         }
-        // Dual-write: also write to legacy user_groups table until Phase 9 removes it
+        // Dual-write: also write to legacy user_groups table until Phase 9 removes it.
+        // If the caller loaded the user without the groups entity graph, re-fetch with groups
+        // so the legacy write always happens — silently skipping it would leave user_groups stale.
+        // TODO (Phase 9): remove this block once the user_groups table is dropped
         String groupName = course.getGroupNameForRole(role);
-        if (groupName != null && !user.getGroups().contains(groupName)) {
-            user.getGroups().add(groupName);
+        if (groupName != null) {
+            if (!Hibernate.isInitialized(user.getGroups())) {
+                user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(user.getLogin()).orElse(user);
+            }
+            if (!user.getGroups().contains(groupName)) {
+                user.getGroups().add(groupName);
+            }
         }
         user.setAuthorities(authorityService.buildAuthorities(user));
         saveUser(user);
@@ -628,9 +637,15 @@ public class UserService {
     public void removeUserFromCourse(User user, Course course, CourseRole role) {
         log.info("Remove user {} from course {} role {}", user.getLogin(), course.getId(), role);
         userCourseRoleRepository.deleteByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role);
-        // Dual-write: also remove from legacy user_groups table until Phase 9 removes it
+        // Dual-write: also remove from legacy user_groups table until Phase 9 removes it.
+        // If the caller loaded the user without the groups entity graph, re-fetch with groups
+        // so the legacy write always happens — silently skipping it would leave user_groups stale.
+        // TODO (Phase 9): remove this block once the user_groups table is dropped
         String groupName = course.getGroupNameForRole(role);
         if (groupName != null) {
+            if (!Hibernate.isInitialized(user.getGroups())) {
+                user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(user.getLogin()).orElse(user);
+            }
             user.getGroups().remove(groupName);
         }
         user.setAuthorities(authorityService.buildAuthorities(user));
