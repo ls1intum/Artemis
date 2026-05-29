@@ -1249,7 +1249,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var participation = createParticipationWithRepository(programmingExercise);
 
         var updatedParticipation = request.putWithResponseBody(
-                "/api/exercise/exercises/" + programmingExercise.getId() + "/resume-programming-participation/" + participation.getId(), null,
+                "/api/exercise/exercises/" + programmingExercise.getId() + "/participations/" + participation.getId() + "/resume-programming-participation", null,
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
         assertThat(updatedParticipation.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
     }
@@ -1273,7 +1273,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, exercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         participationRepo.save(participation);
-        request.putWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/resume-programming-participation/" + participation.getId(), null,
+        request.putWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations/" + participation.getId() + "/resume-programming-participation", null,
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.FORBIDDEN);
     }
 

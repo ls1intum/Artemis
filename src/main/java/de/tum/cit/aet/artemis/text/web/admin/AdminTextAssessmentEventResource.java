@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.repository.TextAssessmentEventRepository;
@@ -37,8 +38,10 @@ public class AdminTextAssessmentEventResource {
      * @param courseId the id of the course to filter by
      * @return returns a List of TextAssessmentEvent's
      */
-    @GetMapping("event-insights/text-assessment/events/{courseId}")
-    public ResponseEntity<List<TextAssessmentEvent>> getEventsByCourseId(@PathVariable Long courseId) {
+    @GetMapping({ "event-insights/text-assessment/events", "event-insights/text-assessment/events/{courseId}" })
+    public ResponseEntity<List<TextAssessmentEvent>> getEventsByCourseId(@RequestParam(name = "courseId", required = false) Long courseIdQuery,
+            @PathVariable(name = "courseId", required = false) Long courseIdPath) {
+        Long courseId = courseIdQuery != null ? courseIdQuery : courseIdPath;
         List<TextAssessmentEvent> events = textAssessmentEventRepository.findAllByCourseId(courseId);
         return ResponseEntity.ok().body(events);
     }

@@ -148,9 +148,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @return result after saving example modeling assessment
      */
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping("modeling-submissions/{exampleSubmissionId}/example-assessment")
+    @PutMapping("modeling-submissions/{submissionId}/example-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<Result> saveModelingExampleAssessment(@PathVariable long exampleSubmissionId, @RequestBody List<Feedback> feedbacks) {
+    public ResponseEntity<Result> saveModelingExampleAssessment(@PathVariable("submissionId") long exampleSubmissionId, @RequestBody List<Feedback> feedbacks) {
         log.debug("REST request to save modeling example assessment : {}", exampleSubmissionId);
         Result result = saveExampleAssessment(exampleSubmissionId, feedbacks);
         return ResponseEntity.ok(result);
