@@ -1,5 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { HttpResponse } from '@angular/common/http';
@@ -9,13 +8,14 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExternalSubmissionService } from 'app/exercise/external-submission/external-submission.service';
 import { SCORE_PATTERN } from 'app/app.constants';
 import { User } from 'app/account/user/user.model';
-import { EventManager } from 'app/foundation/service/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 
 @Component({
     selector: 'jhi-external-submission-dialog',
@@ -24,15 +24,12 @@ import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe
 })
 export class ExternalSubmissionDialogComponent implements OnInit {
     private externalSubmissionService = inject(ExternalSubmissionService);
-    private activeModal = inject(NgbActiveModal);
+    private readonly dialogRef = inject(DynamicDialogRef);
     private eventManager = inject(EventManager);
 
     readonly SCORE_PATTERN = SCORE_PATTERN;
 
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input() exercise: Exercise;
+    readonly exercise = input.required<Exercise>();
 
     student: User = new User();
     result: Result;
@@ -64,7 +61,7 @@ export class ExternalSubmissionDialogComponent implements OnInit {
      * Close modal window.
      */
     clear() {
-        this.activeModal.dismiss('cancel');
+        this.dialogRef.close('cancel');
     }
 
     /**
@@ -76,7 +73,7 @@ export class ExternalSubmissionDialogComponent implements OnInit {
         for (let i = 0; i < this.result.feedbacks.length; i++) {
             this.result.feedbacks[i].type = FeedbackType.MANUAL;
         }
-        this.subscribeToSaveResponse(this.externalSubmissionService.create(this.exercise, this.student, this.result));
+        this.subscribeToSaveResponse(this.externalSubmissionService.create(this.exercise(), this.student, this.result));
     }
 
     /**
@@ -95,7 +92,7 @@ export class ExternalSubmissionDialogComponent implements OnInit {
      * @param { HttpResponse<Result> } result - Result of successful http request
      */
     onSaveSuccess(result: HttpResponse<Result>) {
-        this.activeModal.close(result.body);
+        this.dialogRef.close(result.body);
         this.isSaving = false;
         this.eventManager.broadcast({ name: 'resultListModification', content: 'Added a manual result' });
     }

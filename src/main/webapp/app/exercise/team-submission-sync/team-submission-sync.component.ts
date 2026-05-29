@@ -27,10 +27,10 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
     // Sync settings
     readonly THROTTLE_TIME = 2000; // ms
 
-    readonly exerciseType = input<ExerciseType>(undefined!);
-    readonly submissionObservable = input<Observable<Submission>>();
-    readonly submissionPatchObservable = input<Observable<SubmissionPatch>>();
-    readonly participation = input<StudentParticipation>(undefined!);
+    readonly exerciseType = input.required<ExerciseType>();
+    readonly submissionObservable = input<Observable<Submission> | undefined>();
+    readonly submissionPatchObservable = input<Observable<SubmissionPatch> | undefined>();
+    readonly participation = input.required<StudentParticipation>();
 
     readonly receiveSubmission = output<Submission>();
     readonly receiveSubmissionPatch = output<SubmissionPatch>();
@@ -81,9 +81,9 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
      * updated submissions or submission patches based on those own changes via websockets
      */
     private setupSender() {
-        this.submissionObservable()
-            ?.pipe(throttleTime(this.THROTTLE_TIME, undefined, { leading: true, trailing: true }))
-            .subscribe({
+        const submissionObservable = this.submissionObservable();
+        if (submissionObservable) {
+            submissionObservable.pipe(throttleTime(this.THROTTLE_TIME, undefined, { leading: true, trailing: true })).subscribe({
                 next: (submission: Submission) => {
                     if (submission.participation) {
                         submission.participation.exercise = undefined;
@@ -93,6 +93,7 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
                 },
                 error: (error: unknown) => this.onError(error),
             });
+        }
 
         this.submissionPatchObservable()?.subscribe({
             next: (submissionPatch: SubmissionPatch) => {
@@ -114,7 +115,6 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
                 next: () => {
                     const initialSync = new SubmissionPatch(ApollonEditor.generateInitialSyncMessage());
                     this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildWebsocketTopic('/patch'), initialSync);
-                    // TODO: The 'emit' function requires a mandatory void argument
                     this.reconnected.emit();
                 },
                 error: (error: unknown) => this.onError(error),
@@ -122,7 +122,7 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
     }
 
     private isSelf(user: User) {
-        return this.currentUser.login === user.login;
+        return this.currentUser?.login === user.login;
     }
 
     private buildWebsocketTopic(path = ''): string {

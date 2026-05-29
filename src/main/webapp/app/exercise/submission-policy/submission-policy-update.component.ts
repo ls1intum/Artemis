@@ -98,8 +98,8 @@ import { KeyValuePipe } from '@angular/common';
     imports: [TranslateDirective, FormsModule, ReactiveFormsModule, HelpIconComponent, KeyValuePipe],
 })
 export class SubmissionPolicyUpdateComponent implements OnInit {
-    readonly programmingExercise = input<ProgrammingExercise>(undefined!);
-    readonly editable = input<boolean>(undefined!);
+    readonly programmingExercise = input.required<ProgrammingExercise>();
+    readonly editable = input(false);
 
     readonly submissionPolicyTypeChange = output<void>();
 
@@ -154,16 +154,16 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
     }
 
     onSubmissionPolicyTypeChanged(submissionPolicyType: SubmissionPolicyType) {
-        const previousSubmissionPolicyType = this.programmingExercise()?.submissionPolicy?.type ?? SubmissionPolicyType.NONE;
+        const programmingExercise = this.programmingExercise();
+        const previousSubmissionPolicyType = programmingExercise?.submissionPolicy?.type ?? SubmissionPolicyType.NONE;
         if (submissionPolicyType === SubmissionPolicyType.NONE) {
             if (previousSubmissionPolicyType !== SubmissionPolicyType.NONE) {
-                this.programmingExercise().submissionPolicy!.type = SubmissionPolicyType.NONE;
+                programmingExercise.submissionPolicy!.type = SubmissionPolicyType.NONE;
             } else {
-                this.programmingExercise().submissionPolicy = undefined;
+                programmingExercise.submissionPolicy = undefined;
             }
         } else if (submissionPolicyType === SubmissionPolicyType.LOCK_REPOSITORY) {
             const newPolicy = new LockRepositoryPolicy();
-            const programmingExercise = this.programmingExercise();
             if (programmingExercise.submissionPolicy) {
                 newPolicy.id = programmingExercise.submissionPolicy.id;
                 newPolicy.active = programmingExercise.submissionPolicy.active;
@@ -172,7 +172,6 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
             programmingExercise.submissionPolicy = newPolicy;
         } else if (submissionPolicyType === SubmissionPolicyType.SUBMISSION_PENALTY) {
             const newPolicy = new SubmissionPenaltyPolicy();
-            const programmingExercise = this.programmingExercise();
             if (programmingExercise.submissionPolicy) {
                 newPolicy.id = programmingExercise.submissionPolicy.id;
                 newPolicy.active = programmingExercise.submissionPolicy.active;
@@ -192,7 +191,6 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
             programmingExercise.submissionPolicy = newPolicy;
         }
         this.setAuxiliaryBooleansOnSubmissionPolicyChange(submissionPolicyType);
-        // TODO: The 'emit' function requires a mandatory void argument
         this.submissionPolicyTypeChange.emit();
         return submissionPolicyType!;
     }
@@ -203,7 +201,7 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
      * @returns {boolean} true if the form is invalid, false if the form is valid
      */
     get invalid(): boolean {
-        const type = this.programmingExercise()?.submissionPolicy?.type;
+        const type = this.programmingExercise().submissionPolicy?.type;
         if (!this.form || !type || type === SubmissionPolicyType.NONE) {
             return false;
         }
@@ -215,7 +213,7 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
      * using ngModel with reactive forms has been deprecated in Angular v6
      */
     updateSubmissionLimit() {
-        this.programmingExercise()!.submissionPolicy!.submissionLimit = this.submissionLimitControl.value as number;
+        this.programmingExercise().submissionPolicy!.submissionLimit = this.submissionLimitControl.value as number;
     }
 
     /**
@@ -223,6 +221,6 @@ export class SubmissionPolicyUpdateComponent implements OnInit {
      * using ngModel with reactive forms has been deprecated in Angular v6
      */
     updateExceedingPenalty() {
-        this.programmingExercise()!.submissionPolicy!.exceedingPenalty = this.exceedingPenaltyControl.value as number;
+        this.programmingExercise().submissionPolicy!.exceedingPenalty = this.exceedingPenaltyControl.value as number;
     }
 }

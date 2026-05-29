@@ -1,4 +1,9 @@
+/**
+ * Vitest tests for TeamSubmissionSyncComponent.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockProvider } from 'ng-mocks';
@@ -13,7 +18,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockHttpService } from 'test/helpers/mocks/service/mock-http.service';
 import { HttpClient } from '@angular/common/http';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { Observable, Subject, of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { SubmissionSyncPayload } from 'app/exercise/shared/entities/submission/submission-sync-payload.model';
 import { User } from 'app/account/user/user.model';
@@ -25,16 +30,19 @@ import { ConnectionState } from 'app/foundation/service/websocket.service';
 import { ApollonEditor } from '@tumaet/apollon';
 
 describe('Team Submission Sync Component', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<TeamSubmissionSyncComponent>;
     let component: TeamSubmissionSyncComponent;
     let websocketService: WebsocketService;
     let textSubmissionWithParticipation: Submission;
-    let submissionObservableWithParticipation: Observable<Submission>;
     let submissionSyncPayload: SubmissionSyncPayload;
     let currentUser: User;
+    let otherUser: User;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [TeamSubmissionSyncComponent],
             providers: [
                 MockProvider(AlertService),
                 MockProvider(SessionStorageService),
@@ -44,44 +52,49 @@ describe('Team Submission Sync Component', () => {
                 { provide: HttpClient, useClass: MockHttpService },
             ],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TeamSubmissionSyncComponent);
-                component = fixture.componentInstance;
+            .overrideTemplate(TeamSubmissionSyncComponent, '')
+            .compileComponents();
 
-                websocketService = TestBed.inject(WebsocketService);
+        currentUser = new User();
+        currentUser.login = 'ge12ebc';
+        otherUser = new User();
+        otherUser.login = 'other';
+        vi.spyOn(TestBed.inject(AccountService), 'identity').mockResolvedValue(currentUser);
 
-                component.exerciseType = ExerciseType.TEXT;
-                const participation = new StudentParticipation(ParticipationType.STUDENT);
-                participation.id = 3;
-                component.participation = participation;
-                textSubmissionWithParticipation = new TextSubmission();
-                textSubmissionWithParticipation.participation = new StudentParticipation();
-                submissionObservableWithParticipation = of(textSubmissionWithParticipation);
-                component.submissionObservable = submissionObservableWithParticipation;
-                currentUser = new User();
-                currentUser.login = 'ge12ebc';
-                component.currentUser = currentUser;
+        fixture = TestBed.createComponent(TeamSubmissionSyncComponent);
+        component = fixture.componentInstance;
+        websocketService = TestBed.inject(WebsocketService);
 
-                submissionSyncPayload = new SubmissionSyncPayload();
-                submissionSyncPayload.sender = currentUser;
-                const submission = new TextSubmission();
-                submission.id = 12;
-                submissionSyncPayload.submission = submission;
-            });
+        fixture.componentRef.setInput('exerciseType', ExerciseType.TEXT);
+        const participation = new StudentParticipation(ParticipationType.STUDENT);
+        participation.id = 3;
+        fixture.componentRef.setInput('participation', participation);
+
+        textSubmissionWithParticipation = new TextSubmission();
+        textSubmissionWithParticipation.participation = new StudentParticipation();
+        fixture.componentRef.setInput('submissionObservable', of(textSubmissionWithParticipation));
+
+        // Ensure the identity promise in the constructor resolves.
+        await Promise.resolve();
+
+        submissionSyncPayload = new SubmissionSyncPayload();
+        const submission = new TextSubmission();
+        submission.id = 12;
+        submissionSyncPayload.submission = submission;
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('ngOnInit should work correctly', () => {
         const expectedWebsocketTopic = '/topic/participations/3/team/text-submissions';
+        submissionSyncPayload.sender = otherUser;
         const submissionSyncObservable = of(submissionSyncPayload);
 
-        const receiveSubmissionEventEmitter = jest.spyOn(component.receiveSubmission, 'emit');
-        const websocketSubscribeSpy = jest.spyOn(websocketService, 'subscribe').mockReturnValue(submissionSyncObservable);
-        const websocketSendSpy = jest.spyOn(websocketService, 'send');
+        const receiveSubmissionEventEmitter = vi.spyOn(component.receiveSubmission, 'emit');
+        const websocketSubscribeSpy = vi.spyOn(websocketService, 'subscribe').mockReturnValue(submissionSyncObservable);
+        const websocketSendSpy = vi.spyOn(websocketService, 'send');
 
         component.ngOnInit();
 
@@ -96,7 +109,7 @@ describe('Team Submission Sync Component', () => {
         // checks for setupSender
         expect(textSubmissionWithParticipation).toBeDefined();
         expect(textSubmissionWithParticipation?.participation?.exercise).toBeUndefined();
-        expect(textSubmissionWithParticipation?.participation?.submissions).toBeEmpty();
+        expect(textSubmissionWithParticipation?.participation?.submissions).toHaveLength(0);
         expect(websocketSendSpy).toHaveBeenCalledTimes(2);
         expect(websocketSendSpy).toHaveBeenNthCalledWith(1, expectedWebsocketTopic + '/update', textSubmissionWithParticipation);
         expect(websocketSendSpy.mock.calls[1][0]).toBe(expectedWebsocketTopic + '/patch');
@@ -105,8 +118,8 @@ describe('Team Submission Sync Component', () => {
 
     it('should handle submission patch payloads.', () => {
         const mockEmitter = new Subject<SubmissionPatchPayload>();
-        const receiver = jest.fn();
-        jest.spyOn(websocketService, 'subscribe').mockReturnValue(mockEmitter.asObservable());
+        const receiver = vi.fn();
+        vi.spyOn(websocketService, 'subscribe').mockReturnValue(mockEmitter.asObservable());
 
         component.ngOnInit();
         component.receiveSubmissionPatch.subscribe(receiver);
@@ -121,11 +134,11 @@ describe('Team Submission Sync Component', () => {
     });
 
     it('should properly send submission patches.', () => {
-        const sendSpy = jest.spyOn(websocketService, 'send');
-        jest.spyOn(websocketService, 'subscribe').mockReturnValue(of());
+        const sendSpy = vi.spyOn(websocketService, 'send');
+        vi.spyOn(websocketService, 'subscribe').mockReturnValue(of());
         const mockEmitter = new Subject<SubmissionPatch>();
 
-        component.submissionPatchObservable = mockEmitter;
+        fixture.componentRef.setInput('submissionPatchObservable', mockEmitter);
         component.ngOnInit();
 
         const expectedTopic = '/topic/participations/3/team/text-submissions/patch';
@@ -137,14 +150,14 @@ describe('Team Submission Sync Component', () => {
     it('should re-broadcast the initial Yjs sync message and emit `reconnected` on every STOMP (re)connect', () => {
         const mock = websocketService as unknown as MockWebsocketService;
         const expectedTopic = '/topic/participations/3/team/text-submissions/patch';
-        const generateInitialSyncSpy = jest.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
-        const reconnectedSpy = jest.fn();
+        const generateInitialSyncSpy = vi.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
+        const reconnectedSpy = vi.fn();
         component.reconnected.subscribe(reconnectedSpy);
 
         // Drop the submissionObservable so the only thing that produces /patch sends is the reconnect path
-        component.submissionObservable = undefined;
-        const sendSpy = jest.spyOn(websocketService, 'send');
-        jest.spyOn(websocketService, 'subscribe').mockReturnValue(of());
+        fixture.componentRef.setInput('submissionObservable', undefined);
+        const sendSpy = vi.spyOn(websocketService, 'send');
+        vi.spyOn(websocketService, 'subscribe').mockReturnValue(of());
 
         component.ngOnInit();
 
@@ -176,11 +189,11 @@ describe('Team Submission Sync Component', () => {
 
     it('should stop reacting to connection-state changes after ngOnDestroy', () => {
         const mock = websocketService as unknown as MockWebsocketService;
-        jest.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
-        const reconnectedSpy = jest.fn();
+        vi.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
+        const reconnectedSpy = vi.fn();
         component.reconnected.subscribe(reconnectedSpy);
-        component.submissionObservable = undefined;
-        jest.spyOn(websocketService, 'subscribe').mockReturnValue(of());
+        fixture.componentRef.setInput('submissionObservable', undefined);
+        vi.spyOn(websocketService, 'subscribe').mockReturnValue(of());
 
         component.ngOnInit();
         expect(reconnectedSpy).toHaveBeenCalledOnce();
