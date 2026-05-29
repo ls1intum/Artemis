@@ -488,6 +488,20 @@ Each REST path is built from these kinds of segments, in this order:
 
 Subtype collections are allowed when the id is the supertype id, because the collection ends with the matching plural: `api/programming/programming-exercises/{exerciseId}` ✅ (`programming-exercises` ends with `exercises`, the plural of `exerciseId`).
 
+#### Common violations and how to fix each
+
+Every violation falls into one of these patterns. Each example is a real path from the Artemis API; pick the fix that matches your case and keep the old path as a deprecated alias (see below).
+
+| Pattern | ❌ Before | ✅ After | How |
+|---------|-----------|---------|-----|
+| **Singular collection** | `api/programming/auxiliary-repository/{auxiliaryRepositoryId}` | `api/programming/auxiliary-repositories/{auxiliaryRepositoryId}` | Pluralize the collection so it is the plural of the id stem. |
+| **Floating id** (id straight after the module, or after another id) | `api/notification/{courseId}/settings` | `api/notification/courses/{courseId}/settings` | Insert the matching plural collection before the id. |
+| **Key entity not at the end** (operation modeled as a collection) | `api/programming/repository/{participationId}/files` | `api/programming/participations/{participationId}/repository/files` | Reorder so the id pairs with its real collection; the operation/sub-resource (`repository`, `text-editor`) comes after. |
+| **Source / qualified id as a path segment** | `api/programming/programming-exercises/import/{sourceExerciseId}` | `api/programming/programming-exercises/import?sourceExerciseId={id}` *(or)* `api/programming/programming-exercises/{sourceExerciseId}/import` | If the id is only a parameter of the action, make it a query parameter; if it identifies a real parent resource, nest the action under that resource. |
+| **Collection name ≠ id name** | `api/account/passkey/{credentialId}` | `api/account/passkeys/{passkeyId}` *(or)* `api/account/credentials/{credentialId}` | Rename either the collection or the id so they match exactly — an API naming decision; do not leave them divergent. |
+
+The arch rule reports the *first* unpaired id on a path, so fixing one segment can surface a second (e.g. pluralizing `tutorial-groups-configuration` revealed that the nested `tutorial-free-periods/{tutorialGroupFreePeriodId}` collection still mismatches its id). Re-run the test after each fix.
+
 #### Migrating a path without breaking clients
 
 Mobile apps (iOS, Android) and the VS Code extension consume these paths and cannot be updated in lockstep, so **never remove or rename a path outright**. Map the canonical path *and* the old path on the same handler — canonical first, legacy second — so the old one keeps working as a deprecated alias:
