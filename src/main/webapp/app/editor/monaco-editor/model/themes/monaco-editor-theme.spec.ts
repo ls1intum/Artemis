@@ -1,3 +1,5 @@
+import { describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import * as monaco from 'monaco-editor';
 import { EditorColors } from 'app/editor/monaco-editor/model/themes/editor-colors.interface';
 import { LanguageTokenStyleDefinition } from 'app/editor/monaco-editor/model/themes/language-token-style-definition.interface';
@@ -5,6 +7,8 @@ import { MonacoThemeDefinition } from 'app/editor/monaco-editor/model/themes/mon
 import { MonacoEditorTheme } from 'app/editor/monaco-editor/model/themes/monaco-editor-theme.model';
 
 describe('MonacoEditorTheme', () => {
+    setupTestBed({ zoneless: true });
+
     const colorDefinitions: EditorColors = {
         backgroundColor: '#181a18',
         foregroundColor: '#ffffff',
@@ -37,7 +41,7 @@ describe('MonacoEditorTheme', () => {
 
     it('should correctly register a theme', () => {
         const theme = new MonacoEditorTheme(themeDefinition);
-        const defineThemeSpy = jest.spyOn(monaco.editor, 'defineTheme');
+        const defineThemeSpy = vi.spyOn(monaco.editor, 'defineTheme');
         theme.register();
         expect(defineThemeSpy).toHaveBeenCalledExactlyOnceWith('test-theme', {
             base: 'vs',

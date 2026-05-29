@@ -188,6 +188,12 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly diffHeader = viewChild<ElementRef<HTMLDivElement>>('diffHeader');
     readonly colorSelector = viewChild(ColorSelectorComponent);
 
+    /**
+     * Setter-based input kept as a legacy {@link Input} decorator on purpose: it has a side effect (pushing the value into the
+     * Monaco editor) and is written imperatively by consumers in the `exercise/**` carve-out (e.g. grading-instructions-details),
+     * so it cannot be migrated to a signal `input()`/`model()` without breaching that carve-out. Paired with {@link markdownChange}
+     * to keep the two-way `[(markdown)]` binding working. Migration deferred until the carve-out is in scope.
+     */
     @Input()
     set markdown(value: string | undefined) {
         this._markdown = value;
@@ -196,56 +202,43 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     _markdown?: string;
 
-    @Input()
-    enableFileUpload = true;
+    readonly enableFileUpload = input(true);
 
-    @Input()
-    enableResize = true;
+    readonly enableResize = input(true);
 
-    @Input()
-    showPreviewButton = true;
+    readonly showPreviewButton = input(true);
 
-    @Input()
-    showVisualButton = false;
+    readonly showVisualButton = input(false);
 
-    @Input()
-    showDefaultPreview = true;
+    readonly showDefaultPreview = input(true);
 
-    @Input()
-    useDefaultMarkdownEditorOptions = true;
+    readonly useDefaultMarkdownEditorOptions = input(true);
 
-    @Input()
-    showEditButton = true;
+    readonly showEditButton = input(true);
 
     /**
      * If set to true, the editor will grow and shrink to fit its content. However, the height will still be constrained by {@link resizableMinHeight} and {@link resizableMaxHeight}.
      * In particular, an empty editor will have the height of {@link resizableMinHeight} upon initialization, no matter what value {@link initialEditorHeight} has.
      */
-    @Input()
-    linkEditorHeightToContentHeight = false;
+    readonly linkEditorHeightToContentHeight = input(false);
 
     /**
      * The initial height the editor should have.
      */
-    @Input()
-    initialEditorHeight: MarkdownEditorHeight = MarkdownEditorHeight.SMALL;
+    readonly initialEditorHeight = input<MarkdownEditorHeight>(MarkdownEditorHeight.SMALL);
 
     /**
      * If true, the editor height is managed externally by the parent container.
      * The editor will try to grow to fill the available space rather than managing its own height.
      * Use this when embedding the editor in a container that controls layout (e.g., code editor view).
      */
-    @Input()
-    externalHeight = false;
+    readonly externalHeight = input(false);
 
-    @Input()
-    resizableMaxHeight = MarkdownEditorHeight.LARGE;
+    readonly resizableMaxHeight = input<MarkdownEditorHeight>(MarkdownEditorHeight.LARGE);
 
-    @Input()
-    resizableMinHeight = MarkdownEditorHeight.SMALL;
+    readonly resizableMinHeight = input<MarkdownEditorHeight>(MarkdownEditorHeight.SMALL);
 
-    @Input()
-    defaultActions: TextEditorAction[] = [
+    readonly defaultActions = input<TextEditorAction[]>([
         new BoldAction(),
         new ItalicAction(),
         new UnderlineAction(),
@@ -257,29 +250,25 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         new AttachmentAction(),
         new OrderedListAction(),
         new BulletedListAction(),
-    ];
+    ]);
 
-    @Input()
-    headerActions?: TextEditorActionGroup<HeadingAction> = new TextEditorActionGroup<HeadingAction>(
-        'artemisApp.multipleChoiceQuestion.editor.style',
-        [1, 2, 3].map((level) => new HeadingAction(level)),
-        undefined,
+    readonly headerActions = input<TextEditorActionGroup<HeadingAction> | undefined>(
+        new TextEditorActionGroup<HeadingAction>(
+            'artemisApp.multipleChoiceQuestion.editor.style',
+            [1, 2, 3].map((level) => new HeadingAction(level)),
+            undefined,
+        ),
     );
 
-    @Input()
-    lectureReferenceAction?: LectureAttachmentReferenceAction = undefined;
+    readonly lectureReferenceAction = input<LectureAttachmentReferenceAction | undefined>(undefined);
 
-    @Input()
-    colorAction?: ColorAction = new ColorAction();
+    readonly colorAction = input<ColorAction | undefined>(new ColorAction());
 
-    @Input()
-    domainActions: TextEditorDomainAction[] = [];
+    readonly domainActions = input<TextEditorDomainAction[]>([]);
 
-    @Input()
-    artemisIntelligenceActions: TextEditorAction[] = [];
+    readonly artemisIntelligenceActions = input<TextEditorAction[]>([]);
 
-    @Input()
-    metaActions: TextEditorAction[] = [new FullscreenAction()];
+    readonly metaActions = input<TextEditorAction[]>([new FullscreenAction()]);
 
     readonly enableExerciseReviewComments = input<boolean>(false);
     readonly showLocationWarning = input<boolean>(false);
@@ -308,26 +297,24 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     /** Emits diff line change information when in diff mode */
     diffLineChange = output<{ ready: boolean; lineChange: LineChange }>();
 
+    /**
+     * Legacy {@link Output} decorator kept on purpose to preserve the two-way `[(markdown)]` binding paired with the
+     * setter-based {@link markdown} input. Migration deferred together with that input (see its documentation).
+     */
     @Output()
     markdownChange = new EventEmitter<string>();
 
-    @Output()
-    onPreviewSelect = new EventEmitter<void>();
+    readonly onPreviewSelect = output<void>();
 
-    @Output()
-    onEditSelect = new EventEmitter<void>();
+    readonly onEditSelect = output<void>();
 
-    @Output()
-    onBlurEditor = new EventEmitter<void>();
+    readonly onBlurEditor = output<void>();
 
-    @Output()
-    textWithDomainActionsFound = new EventEmitter<TextWithDomainAction[]>();
+    readonly textWithDomainActionsFound = output<TextWithDomainAction[]>();
 
-    @Output()
-    onDefaultPreviewHtmlChanged = new EventEmitter<SafeHtml | undefined>();
+    readonly onDefaultPreviewHtmlChanged = output<SafeHtml | undefined>();
 
-    @Output()
-    onLeaveVisualTab = new EventEmitter<void>();
+    readonly onLeaveVisualTab = output<void>();
 
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     readonly onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
@@ -478,23 +465,23 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     ngAfterContentInit(): void {
         // Affects the template - done in this method to avoid ExpressionChangedAfterItHasBeenCheckedErrors.
-        this.targetWrapperHeight = !this.externalHeight ? this.initialEditorHeight.valueOf() : undefined;
-        this.minWrapperHeight = this.resizableMinHeight.valueOf();
+        this.targetWrapperHeight = !this.externalHeight() ? this.initialEditorHeight().valueOf() : undefined;
+        this.minWrapperHeight = this.resizableMinHeight().valueOf();
         this.constrainDragPositionFn = this.constrainDragPosition.bind(this);
         this.displayedActions = {
-            style: this.filterDisplayedActions(this.defaultActions).filter((action) => action instanceof TextStyleTextEditorAction) as TextStyleTextEditorAction[],
-            standard: this.filterDisplayedActions(this.defaultActions).filter((action) => !(action instanceof TextStyleTextEditorAction)),
-            header: this.filterDisplayedActions(this.headerActions?.actions ?? []),
-            color: this.filterDisplayedAction(this.colorAction),
+            style: this.filterDisplayedActions(this.defaultActions()).filter((action) => action instanceof TextStyleTextEditorAction) as TextStyleTextEditorAction[],
+            standard: this.filterDisplayedActions(this.defaultActions()).filter((action) => !(action instanceof TextStyleTextEditorAction)),
+            header: this.filterDisplayedActions(this.headerActions()?.actions ?? []),
+            color: this.filterDisplayedAction(this.colorAction()),
             domain: {
-                withoutOptions: this.filterDisplayedActions(this.domainActions.filter((action) => !(action instanceof TextEditorDomainActionWithOptions))),
+                withoutOptions: this.filterDisplayedActions(this.domainActions().filter((action) => !(action instanceof TextEditorDomainActionWithOptions))),
                 withOptions: this.filterDisplayedActions(
-                    this.domainActions.filter((action) => action instanceof TextEditorDomainActionWithOptions),
+                    this.domainActions().filter((action) => action instanceof TextEditorDomainActionWithOptions),
                 ) as TextEditorDomainActionWithOptions[],
             },
-            lecture: this.filterDisplayedAction(this.lectureReferenceAction),
-            artemisIntelligence: this.filterDisplayedActions(this.artemisIntelligenceActions ?? []),
-            meta: this.filterDisplayedActions(this.metaActions),
+            lecture: this.filterDisplayedAction(this.lectureReferenceAction()),
+            artemisIntelligence: this.filterDisplayedActions(this.artemisIntelligenceActions() ?? []),
+            meta: this.filterDisplayedActions(this.metaActions()),
         };
     }
 
@@ -540,27 +527,27 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.resizeObserver.observe(this.actionPalette()!.nativeElement);
         }
         [
-            this.defaultActions,
-            this.headerActions?.actions ?? [],
-            this.domainActions,
-            ...(this.colorAction ? [this.colorAction] : []),
-            ...(this.lectureReferenceAction ? [this.lectureReferenceAction] : []),
-            ...this.artemisIntelligenceActions,
-            this.metaActions,
+            this.defaultActions(),
+            this.headerActions()?.actions ?? [],
+            this.domainActions(),
+            ...(this.colorAction() ? [this.colorAction()!] : []),
+            ...(this.lectureReferenceAction() ? [this.lectureReferenceAction()!] : []),
+            ...this.artemisIntelligenceActions(),
+            this.metaActions(),
         ]
             .flat()
             .forEach((action) => {
                 if (action instanceof FullscreenAction) {
                     // We include the full element if the initial height is set to 'external' so the editor is resized to fill the screen.
                     action.element = this.isHeightManagedExternally() ? this.fullElement().nativeElement : this.wrapper().nativeElement;
-                } else if (this.enableFileUpload && action instanceof AttachmentAction) {
+                } else if (this.enableFileUpload() && action instanceof AttachmentAction) {
                     action.setUploadCallback(this.embedFiles.bind(this));
                     action.setOpenFileDialogCallback(this.openFilePicker.bind(this));
                 }
                 this.monacoEditor()!.registerAction(action);
             });
 
-        if (this.useDefaultMarkdownEditorOptions) {
+        if (this.useDefaultMarkdownEditorOptions()) {
             this.monacoEditor()!.applyOptionPreset(DEFAULT_MARKDOWN_EDITOR_OPTIONS);
         }
 
@@ -652,8 +639,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     constrainDragPosition(pointerPosition: Point): Point {
         // We do not want to drag past the minimum or maximum height.
         // x is not used, so we can ignore it.
-        const minY = this.wrapper().nativeElement.getBoundingClientRect().top + this.resizableMinHeight;
-        const maxY = this.wrapper().nativeElement.getBoundingClientRect().top + this.resizableMaxHeight;
+        const minY = this.wrapper().nativeElement.getBoundingClientRect().top + this.resizableMinHeight();
+        const maxY = this.wrapper().nativeElement.getBoundingClientRect().top + this.resizableMaxHeight();
         return {
             x: pointerPosition.x,
             y: Math.min(maxY, Math.max(minY, pointerPosition.y)),
@@ -708,10 +695,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     onContentHeightChanged(newContentHeight: number | undefined): void {
         // Upon switching back from the preview tab, the file upload footer will briefly have a height of 0. We ignore this case to avoid an incorrect height.
-        if (this.linkEditorHeightToContentHeight && !(this.enableFileUpload && this.getElementClientHeight(this.fileUploadFooter()) === 0)) {
+        if (this.linkEditorHeightToContentHeight() && !(this.enableFileUpload() && this.getElementClientHeight(this.fileUploadFooter()) === 0)) {
             const totalHeight = (newContentHeight ?? 0) + this.getElementClientHeight(this.fileUploadFooter()) + this.getElementClientHeight(this.actionPalette());
             // Clamp the height so it is between the minimum and maximum height.
-            this.targetWrapperHeight = Math.max(this.resizableMinHeight, Math.min(this.resizableMaxHeight, totalHeight));
+            this.targetWrapperHeight = Math.max(this.resizableMinHeight(), Math.min(this.resizableMaxHeight(), totalHeight));
         }
     }
 
@@ -798,8 +785,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.diffOriginalPaneWidth = originalWidth;
     }
 
-    parseMarkdown(domainActionsToCheck: TextEditorDomainAction[] = this.domainActions): void {
-        if (this.showDefaultPreview) {
+    parseMarkdown(domainActionsToCheck: TextEditorDomainAction[] = this.domainActions()): void {
+        if (this.showDefaultPreview()) {
             this.defaultPreviewHtml = this.artemisMarkdown.safeHtmlForMarkdown(this._markdown);
             this.onDefaultPreviewHtmlChanged.emit(this.defaultPreviewHtml);
         }
@@ -843,7 +830,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * @param inputElement The input element that contains the files. If provided, the input element will be reset.
      */
     embedFiles(files: File[], inputElement?: HTMLInputElement): void {
-        if (!this.enableFileUpload) {
+        if (!this.enableFileUpload()) {
             return;
         }
         files.forEach((file) => {
@@ -872,8 +859,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private processFileUploadResponse(response: FileUploadResponse, file: File): void {
         const extension = file.name.split('.').last()?.toLocaleLowerCase();
 
-        const attachmentAction: AttachmentAction | undefined = this.defaultActions.find((action) => action instanceof AttachmentAction) as AttachmentAction;
-        const urlAction: UrlAction | undefined = this.defaultActions.find((action) => action instanceof UrlAction);
+        const attachmentAction: AttachmentAction | undefined = this.defaultActions().find((action) => action instanceof AttachmentAction) as AttachmentAction;
+        const urlAction: UrlAction | undefined = this.defaultActions().find((action) => action instanceof UrlAction);
         if (!attachmentAction || !urlAction || !response.path) {
             throw new Error('Cannot process file upload.');
         }
@@ -910,7 +897,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     onSelectColor(color: string): void {
         const colorName = this.colorToClassMap.get(color);
         if (colorName) {
-            this.colorAction?.executeInCurrentEditor({ color: colorName });
+            this.colorAction()?.executeInCurrentEditor({ color: colorName });
         }
     }
 
@@ -919,7 +906,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * @private
      */
     private isHeightManagedExternally(): boolean {
-        return this.externalHeight;
+        return this.externalHeight();
     }
 
     /**

@@ -1,8 +1,12 @@
+import { describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { parseMarkdownForDomainActions } from 'app/editor/markdown-editor/monaco/markdown-editor-parsing.helper';
 import { GradingDescriptionAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-description.action';
 import { GradingFeedbackAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-feedback.action';
 
 describe('MarkdownEditorParsingHelper', () => {
+    setupTestBed({ zoneless: true });
+
     it('should parse markdown without domain action identifiers', () => {
         const markdown = 'This is some text that uses no domain action identifiers.';
         const result = parseMarkdownForDomainActions(markdown, []);

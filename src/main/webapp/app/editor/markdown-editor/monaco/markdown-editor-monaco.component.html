@@ -12,7 +12,7 @@
     >
         <nav ngbNav #actionPalette #nav="ngbNav" class="nav-tabs" [destroyOnHide]="false" (navChange)="onNavChanged($event)" (shown)="onTabShown()">
             <ng-container [ngbNavItem]="TAB_EDIT">
-                @if (showEditButton) {
+                @if (showEditButton()) {
                     <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.edit"></span></a>
                 }
                 <ng-template ngbNavContent>
@@ -52,7 +52,7 @@
                             (drop)="onFileDrop($event)"
                             (onBlurEditor)="onBlurEditor.emit()"
                         />
-                        @if (enableFileUpload) {
+                        @if (enableFileUpload()) {
                             <div class="d-flex align-items-center border-top" #fileUploadFooter>
                                 <input
                                     #fileUploadInput
@@ -92,7 +92,7 @@
                 </ng-template>
             </ng-container>
             <ng-container [ngbNavItem]="TAB_VISUAL">
-                @if (showVisualButton) {
+                @if (showVisualButton()) {
                     <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0" jhiTranslate="entity.action.visual"></a>
                 }
                 <ng-template ngbNavContent>
@@ -102,13 +102,13 @@
                 </ng-template>
             </ng-container>
             <ng-container [ngbNavItem]="TAB_PREVIEW">
-                @if (showPreviewButton) {
+                @if (showPreviewButton()) {
                     <a ngbNavLink class="btn-sm text-normal px-2 py-0 m-0"><span jhiTranslate="entity.action.preview"></span></a>
                 }
                 <ng-template ngbNavContent>
                     <div class="mt-1 mb-2 mx-2 overflow-auto">
                         <ng-content class="overflow-auto p-1" select="#previewMonaco">
-                            @if (showDefaultPreview) {
+                            @if (showDefaultPreview()) {
                                 <div class="p-0 m-0 background-editor-high markdown-preview" [innerHTML]="defaultPreviewHtml"></div>
                             }
                         </ng-content>
@@ -152,7 +152,7 @@
                             @if (displayedActions.header.length) {
                                 <div class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
                                     <button class="btn btn-sm px-2 py-0" type="button" id="dropdownBasic1" ngbDropdownToggle>
-                                        <span [jhiTranslate]="headerActions!.translationKey"></span>
+                                        <span [jhiTranslate]="headerActions()!.translationKey"></span>
                                     </button>
                                     <div class="dropdown-menu" ngbDropdownMenu>
                                         @for (action of displayedActions.header; track action.id) {
@@ -332,7 +332,7 @@
         </nav>
         <div [ngbNavOutlet]="nav"></div>
     </div>
-    @if (enableResize && inEditMode) {
+    @if (enableResize() && inEditMode) {
         <div #resizePlaceholder [style.cursor]="isResizing ? 'ns-resize' : undefined" class="d-flex justify-content-center resize-placeholder">
             <fa-icon
                 cdkDrag

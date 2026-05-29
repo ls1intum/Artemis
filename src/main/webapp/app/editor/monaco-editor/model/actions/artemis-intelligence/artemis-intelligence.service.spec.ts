@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -28,26 +30,28 @@ import { RewriteFaqResponse } from 'app/openapi/model/rewriteFaqResponse';
 import { HyperionFaqApiService } from 'app/openapi/api/hyperionFaqApi.service';
 
 describe('ArtemisIntelligenceService', () => {
+    setupTestBed({ zoneless: true });
+
     let httpMock: HttpTestingController;
     let service: ArtemisIntelligenceService;
     let alertService: AlertService;
     let translateService: TranslateService;
 
     const monacoEditorComponent = {
-        addLineWidget: jest.fn(),
+        addLineWidget: vi.fn(),
     } as unknown as MonacoEditorComponent;
 
     const mockAlertService = {
-        success: jest.fn(),
+        success: vi.fn(),
     };
 
     const mockHyperionFaqApiService = {
-        rewriteFaq: jest.fn(),
+        rewriteFaq: vi.fn(),
     };
 
     const mockHyperionProblemStatementApiService = {
-        rewriteProblemStatement: jest.fn(),
-        checkExerciseConsistency: jest.fn(),
+        rewriteProblemStatement: vi.fn(),
+        checkExerciseConsistency: vi.fn(),
     };
 
     const mockIssues: ConsistencyIssue[] = [
@@ -139,7 +143,7 @@ describe('ArtemisIntelligenceService', () => {
 
     afterEach(() => {
         httpMock.verify();
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     describe('rewrite', () => {
@@ -237,9 +241,11 @@ describe('ArtemisIntelligenceService', () => {
 
             mockHyperionProblemStatementApiService.checkExerciseConsistency.mockReturnValue(of(mockResponse));
 
-            service.consistencyCheck(exerciseId).subscribe(() => {
-                expect(service.isLoading()).toBeFalsy();
-            });
+            // The loading flag is reset by the finalize operator, which runs after the source completes.
+            // For the synchronous `of(...)` source, finalize has already run once subscribe() returns,
+            // so the post-subscription assertion observes the reset state without leaking into a late callback.
+            service.consistencyCheck(exerciseId).subscribe();
+            expect(service.isLoading()).toBeFalsy();
         });
 
         it('matches correct repositories', () => {
