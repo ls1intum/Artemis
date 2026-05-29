@@ -3,7 +3,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseCreateButtonComponent } from 'app/exercise/exercise-create-buttons/exercise-create-button/exercise-create-button.component';
 import { ExerciseImportButtonComponent } from 'app/exercise/exercise-create-buttons/exercise-import-button/exercise-import-button.component';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-exercise-create-buttons',

@@ -10,25 +10,25 @@ import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
-import { ChannelReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/channel-reference.action';
-import { UserMentionAction } from 'app/shared/monaco-editor/model/actions/communication/user-mention.action';
-import { ExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/exercise-reference.action';
+import { ChannelReferenceAction } from 'app/editor/monaco-editor/model/actions/communication/channel-reference.action';
+import { UserMentionAction } from 'app/editor/monaco-editor/model/actions/communication/user-mention.action';
+import { ExerciseReferenceAction } from 'app/editor/monaco-editor/model/actions/communication/exercise-reference.action';
 import { metisExamChannelDTO, metisExerciseChannelDTO, metisGeneralChannelDTO, metisTutor, metisUser1, metisUser2 } from 'test/helpers/sample/metis-sample-data';
-import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
+import { TextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
 import * as monaco from 'monaco-editor';
-import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { User } from 'app/account/user/user.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
+import { LectureAttachmentReferenceAction } from 'app/editor/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { ReferenceType } from 'app/communication/metis.util';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import dayjs from 'dayjs/esm';
-import { FaqReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/faq-reference.action';
+import { FaqReferenceAction } from 'app/editor/monaco-editor/model/actions/communication/faq-reference.action';
 import { Faq } from 'app/communication/shared/entities/faq.model';
 import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
-import { FileService } from 'app/shared/service/file.service';
+import { FileService } from 'app/foundation/service/file.service';
 import { ChannelIdAndNameDTO } from 'app/communication/shared/entities/conversation/channel.model';
 
 describe('MonacoEditorCommunicationActionIntegration', () => {

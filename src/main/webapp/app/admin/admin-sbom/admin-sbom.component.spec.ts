@@ -7,7 +7,7 @@ import { of, throwError } from 'rxjs';
 
 import { AdminSbomComponent } from './admin-sbom.component';
 import { AdminSbomService } from './admin-sbom.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisVersion, CombinedSbom, ComponentVulnerabilities, SbomComponent, Vulnerability } from './admin-sbom.model';
 
 describe('AdminSbomComponent', () => {

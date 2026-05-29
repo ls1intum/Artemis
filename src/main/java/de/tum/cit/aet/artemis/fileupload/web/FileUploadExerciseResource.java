@@ -45,7 +45,6 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.Operati
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
-import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -77,6 +76,7 @@ import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseImportService
 import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseService;
 import de.tum.cit.aet.artemis.fileupload.service.FileUploadSubmissionExportService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
+import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 
 /**

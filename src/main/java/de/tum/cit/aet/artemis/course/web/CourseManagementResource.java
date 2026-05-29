@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseExistingExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForImportDTO;
@@ -52,7 +53,8 @@ import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 @Profile(PROFILE_CORE)
 @Lazy
 @RestController
-@RequestMapping("api/core/")
+@SuppressWarnings("deprecation")
+@RequestMapping({ "api/course/", CourseLegacyRestPaths.CORE_PREFIX })
 public class CourseManagementResource {
 
     private static final Logger log = LoggerFactory.getLogger(CourseManagementResource.class);

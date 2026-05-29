@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementComponent } from 'app/course/manage/course-management/course-management.component';
@@ -19,7 +19,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
-import { EventManager } from 'app/shared/service/event-manager.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { MockProvider } from 'ng-mocks';
 import { CourseAccessStorageService } from 'app/course/shared/services/course-access-storage.service';
 

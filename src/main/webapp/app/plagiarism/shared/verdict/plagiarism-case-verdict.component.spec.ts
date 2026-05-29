@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { By } from '@angular/platform-browser';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { MockPipe } from 'ng-mocks';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 

@@ -103,7 +103,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         var course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         course1.setEnrollmentEnabled(true);
         course1 = courseRepository.save(course1);
-        Set<String> updatedGroups = request.postSetWithResponseBody("/api/core/courses/" + course1.getId() + "/enroll", null, String.class, HttpStatus.OK);
+        Set<String> updatedGroups = request.postSetWithResponseBody("/api/course/courses/" + course1.getId() + "/enroll", null, String.class, HttpStatus.OK);
         assertThat(updatedGroups).as("User is registered for course").contains(course1.getStudentGroupName());
     }
 
@@ -139,7 +139,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("tool", ToolTokenType.SCORPIO.toString());
 
-        var responseBody = request.performMvcRequest(post("/api/core/tool-token").cookie(cookie).params(params)).andExpect(status().isOk()).andReturn().getResponse()
+        var responseBody = request.performMvcRequest(post("/api/account/tool-token").cookie(cookie).params(params)).andExpect(status().isOk()).andReturn().getResponse()
                 .getContentAsString();
 
         AuthenticationIntegrationTestHelper.toolTokenAssertions(tokenProvider, responseBody, initialLifetime, ToolTokenType.SCORPIO);
@@ -175,7 +175,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         final var managedUserVM = new ManagedUserVM(student);
         managedUserVM.setPassword("12345678");
 
-        final var response = request.putWithResponseBody("/api/core/admin/users", managedUserVM, User.class, HttpStatus.OK);
+        final var response = request.putWithResponseBody("/api/account/admin/users", managedUserVM, User.class, HttpStatus.OK);
         final var updatedUserIndDB = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
 
         assertThat(passwordService.checkPasswordMatch(managedUserVM.getPassword(), updatedUserIndDB.getPassword())).isTrue();

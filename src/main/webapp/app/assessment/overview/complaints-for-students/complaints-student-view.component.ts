@@ -5,7 +5,7 @@ import { ComplaintService } from 'app/assessment/shared/services/complaint.servi
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
@@ -14,12 +14,13 @@ import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ComplaintsFormComponent } from 'app/assessment/overview/complaint-form/complaints-form.component';
 import { ComplaintRequestComponent } from 'app/assessment/overview/complaint-request/complaint-request.component';
 import { ComplaintResponseComponent } from 'app/assessment/manage/complaint-response/complaint-response.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 @Component({
     selector: 'jhi-complaint-student-view',
@@ -94,14 +95,14 @@ export class ComplaintsStudentViewComponent implements OnInit {
     }
 
     /**
-     * Sets the complaint if a complaint and a valid result exists
+     * Sets the complaint if complaint and a valid result exist
      */
     loadPotentialComplaint(): void {
         this.complaintService
             .findBySubmissionId(this.submission.id!)
             .pipe(filter((res) => !!res.body))
-            .subscribe((res: HttpResponse<Complaint>) => {
-                this.complaint = res.body!;
+            .subscribe((res: HttpResponse<ComplaintDTO>) => {
+                this.complaint = this.complaintService.convertComplaintFromServer(res.body!, this.result()!);
             });
     }
 
@@ -155,7 +156,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
     }
 
     /**
-     * Function to set complaint type (which opens the complaint form) and scrolls to the complaint form
+     * Function to set the complaint type (which opens the complaint form) and scrolls to the complaint form
      */
     openComplaintForm(complainType: ComplaintType): void {
         this.formComplaintType = complainType;
