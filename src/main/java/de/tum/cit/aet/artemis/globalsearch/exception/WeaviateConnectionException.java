@@ -1,8 +1,8 @@
-package de.tum.cit.aet.artemis.core.exception;
+package de.tum.cit.aet.artemis.globalsearch.exception;
 
 import java.io.Serial;
 
-import de.tum.cit.aet.artemis.core.exception.failureAnalyzer.WeaviateConnectionFailureAnalyzer;
+import de.tum.cit.aet.artemis.globalsearch.exception.failureAnalyzer.WeaviateConnectionFailureAnalyzer;
 
 /**
  * Exception thrown when the connection to Weaviate fails during application startup.

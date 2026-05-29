@@ -1,11 +1,11 @@
-package de.tum.cit.aet.artemis.core.exception.failureAnalyzer;
+package de.tum.cit.aet.artemis.globalsearch.exception.failureAnalyzer;
 
 import java.util.stream.Collectors;
 
 import org.springframework.boot.diagnostics.AbstractFailureAnalyzer;
 import org.springframework.boot.diagnostics.FailureAnalysis;
 
-import de.tum.cit.aet.artemis.core.exception.WeaviateConfigurationException;
+import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateConfigurationException;
 
 /**
  * FailureAnalyzer that provides helpful error messages when the Weaviate configuration is invalid.

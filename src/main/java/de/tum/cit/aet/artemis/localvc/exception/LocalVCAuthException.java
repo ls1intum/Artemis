@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.exception.localvc;
+package de.tum.cit.aet.artemis.localvc.exception;
 
 /**
  * Exception thrown when the user is not authenticated or authorized to fetch or push to a local VC repository.

@@ -1,4 +1,6 @@
-package de.tum.cit.aet.artemis.core.exception;
+package de.tum.cit.aet.artemis.localci.exception;
+
+import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 
 /**
  * Exception thrown when something goes wrong with the local CI system.

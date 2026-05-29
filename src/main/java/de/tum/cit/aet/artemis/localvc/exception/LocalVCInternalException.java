@@ -1,6 +1,6 @@
-package de.tum.cit.aet.artemis.core.exception.localvc;
+package de.tum.cit.aet.artemis.localvc.exception;
 
-import de.tum.cit.aet.artemis.core.exception.VersionControlException;
+import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 
 /**
  * Exception thrown when an internal error occurs in the local version control system.

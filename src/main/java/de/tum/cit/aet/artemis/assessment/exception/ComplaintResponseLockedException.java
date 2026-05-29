@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.exception;
+package de.tum.cit.aet.artemis.assessment.exception;
 
 import java.io.Serial;
 import java.time.format.DateTimeFormatter;
@@ -7,6 +7,8 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.web.ComplaintResponseResource;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 
 public class ComplaintResponseLockedException extends BadRequestAlertException {
 

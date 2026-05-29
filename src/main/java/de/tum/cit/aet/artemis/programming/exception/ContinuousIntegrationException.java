@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.exception;
+package de.tum.cit.aet.artemis.programming.exception;
 
 public class ContinuousIntegrationException extends RuntimeException {
 

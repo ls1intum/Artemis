@@ -1,10 +1,10 @@
-package de.tum.cit.aet.artemis.core.exception.failureAnalyzer;
+package de.tum.cit.aet.artemis.globalsearch.exception.failureAnalyzer;
 
 import org.springframework.boot.diagnostics.AbstractFailureAnalyzer;
 import org.springframework.boot.diagnostics.FailureAnalysis;
 
 import de.tum.cit.aet.artemis.core.config.ConfigurationValidator;
-import de.tum.cit.aet.artemis.core.exception.WeaviateConnectionException;
+import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateConnectionException;
 
 /**
  * FailureAnalyzer that provides helpful error messages when the connection to Weaviate fails.

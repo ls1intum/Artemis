@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.exception;
+package de.tum.cit.aet.artemis.exercise.exception;
 
 import java.io.Serial;
 import java.util.HashMap;
@@ -8,6 +8,8 @@ import java.util.Map;
 import org.springframework.data.util.Pair;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.exercise.web.TeamResource;
 
 /**

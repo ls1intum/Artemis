@@ -1,10 +1,10 @@
-package de.tum.cit.aet.artemis.core.exception.failureAnalyzer;
+package de.tum.cit.aet.artemis.globalsearch.exception.failureAnalyzer;
 
 import org.springframework.boot.diagnostics.AbstractFailureAnalyzer;
 import org.springframework.boot.diagnostics.FailureAnalysis;
 
 import de.tum.cit.aet.artemis.core.config.ConfigurationValidator;
-import de.tum.cit.aet.artemis.core.exception.WeaviateAuthenticationException;
+import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateAuthenticationException;
 
 /**
  * FailureAnalyzer that provides helpful error messages when authentication to Weaviate fails (HTTP 401).

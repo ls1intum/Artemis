@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.exception;
+package de.tum.cit.aet.artemis.programming.exception;
 
 /**
  * Created by muenchdo on 22/06/16.

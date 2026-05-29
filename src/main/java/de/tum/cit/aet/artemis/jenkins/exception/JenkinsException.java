@@ -1,4 +1,6 @@
-package de.tum.cit.aet.artemis.core.exception;
+package de.tum.cit.aet.artemis.jenkins.exception;
+
+import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 
 public class JenkinsException extends ContinuousIntegrationException {
 

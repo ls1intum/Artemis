@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.exception;
+package de.tum.cit.aet.artemis.programming.exception;
 
 /*
  * TODO our exception handling is awful in some places. An example with this exception: I just created this wrapper for now so that we don't have 'throws Exception' after some of

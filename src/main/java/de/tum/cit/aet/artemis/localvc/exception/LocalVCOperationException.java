@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.exception.localvc;
+package de.tum.cit.aet.artemis.localvc.exception;
 
 /**
  * Generic exception for all local version control purposes.

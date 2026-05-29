@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.exception;
+package de.tum.cit.aet.artemis.jenkins.exception;
 
 public class ContinuousIntegrationBuildPlanException extends RuntimeException {
 

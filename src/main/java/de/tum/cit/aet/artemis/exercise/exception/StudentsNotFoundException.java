@@ -1,10 +1,12 @@
-package de.tum.cit.aet.artemis.core.exception;
+package de.tum.cit.aet.artemis.exercise.exception;
 
 import java.io.Serial;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.exercise.web.TeamResource;
 
 /**

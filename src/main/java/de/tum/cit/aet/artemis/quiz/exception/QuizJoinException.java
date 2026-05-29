@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.exception;
+package de.tum.cit.aet.artemis.quiz.exception;
 
 public class QuizJoinException extends Throwable {
 

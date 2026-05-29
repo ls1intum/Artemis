@@ -1,9 +1,9 @@
-package de.tum.cit.aet.artemis.core.exception;
+package de.tum.cit.aet.artemis.globalsearch.exception;
 
 import java.io.Serial;
 import java.util.List;
 
-import de.tum.cit.aet.artemis.core.exception.failureAnalyzer.WeaviateConfigurationFailureAnalyzer;
+import de.tum.cit.aet.artemis.globalsearch.exception.failureAnalyzer.WeaviateConfigurationFailureAnalyzer;
 
 /**
  * Exception thrown when the Weaviate configuration is invalid or incomplete.
