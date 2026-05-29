@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -91,7 +93,7 @@ public record DragAndDropQuestionFromEditorDTO(Long id, @NotEmpty String title, 
             effectiveIdToDropLocation.put(dropLocations.get(i).effectiveId(), locations.get(i));
         }
 
-        List<DragAndDropMapping> mappings = new ArrayList<>(correctMappings.stream().map(m -> {
+        Set<DragAndDropMapping> mappings = correctMappings.stream().map(m -> {
             DragItem dragItem = effectiveIdToDragItem.get(m.dragItemTempId());
             DropLocation dropLocation = effectiveIdToDropLocation.get(m.dropLocationTempId());
             if (dragItem == null || dropLocation == null) {
@@ -101,7 +103,7 @@ public record DragAndDropQuestionFromEditorDTO(Long id, @NotEmpty String title, 
             mapping.setDragItem(dragItem);
             mapping.setDropLocation(dropLocation);
             return mapping;
-        }).toList());
+        }).collect(Collectors.toSet());
         question.setCorrectMappings(mappings);
         return question;
     }

@@ -9,7 +9,7 @@ import { CourseNotificationPage } from 'app/notification/shared/entities/course-
 import { CourseNotificationCategory } from 'app/notification/shared/entities/course-notification/course-notification-category';
 import { CourseNotificationViewingStatus } from 'app/notification/shared/entities/course-notification/course-notification-viewing-status';
 import { CourseNotificationChannel } from 'app/notification/shared/entities/course-notification/course-notification-channel';
-import { convertDateFromServer } from 'app/shared/util/date.utils';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { AccountService } from 'app/core/auth/account.service';
 
 /**

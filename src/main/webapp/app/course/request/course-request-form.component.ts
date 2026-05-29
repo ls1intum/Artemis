@@ -1,11 +1,11 @@
 import { Component, input, output } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
-import { generateCourseShortName } from 'app/shared/util/semester-utils';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
+import { generateCourseShortName } from 'app/foundation/util/semester-utils';
 
 @Component({
     selector: 'jhi-course-request-form',

@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, effect, input, output, signal } fro
 import { McqData, McqQuestionData } from 'app/iris/shared/entities/iris-content-type.model';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { IrisCitationTextComponent } from 'app/iris/overview/citation-text/iris-citation-text.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 /**
  * Interactive multiple-choice question component rendered inside Iris chat messages.

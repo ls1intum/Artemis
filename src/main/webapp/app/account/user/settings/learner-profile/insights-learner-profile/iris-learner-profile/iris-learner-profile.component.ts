@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { OnInit } from '@angular/core';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AccountService } from 'app/core/auth/account.service';
 import { FormsModule } from '@angular/forms';
 import { MemirisMemoriesListComponent } from './memiris-memories-list.component';

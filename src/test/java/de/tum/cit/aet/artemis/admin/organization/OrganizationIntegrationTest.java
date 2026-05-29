@@ -98,7 +98,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course1 = courseRepository.save(course1);
         course2 = courseRepository.save(course2);
 
-        List<Course> coursesToEnroll = request.getList("/api/core/courses/for-enrollment", HttpStatus.OK, Course.class);
+        List<Course> coursesToEnroll = request.getList("/api/course/courses/for-enrollment", HttpStatus.OK, Course.class);
         assertThat(coursesToEnroll).contains(course1).contains(course2);
     }
 
@@ -137,13 +137,13 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course2 = courseRepository.save(course2);
         course3 = courseRepository.save(course3);
 
-        Set<String> updatedGroups = request.postWithResponseBody("/api/core/courses/" + course1.getId() + "/enroll", null, Set.class, HttpStatus.OK);
+        Set<String> updatedGroups = request.postWithResponseBody("/api/course/courses/" + course1.getId() + "/enroll", null, Set.class, HttpStatus.OK);
         assertThat(updatedGroups).as("User is enrolled in course").contains(course1.getStudentGroupName());
 
-        updatedGroups = request.postWithResponseBody("/api/core/courses/" + course2.getId() + "/enroll", null, Set.class, HttpStatus.OK);
+        updatedGroups = request.postWithResponseBody("/api/course/courses/" + course2.getId() + "/enroll", null, Set.class, HttpStatus.OK);
         assertThat(updatedGroups).as("User is enrolled in course").contains(course2.getStudentGroupName());
 
-        request.postWithResponseBody("/api/core/courses/" + course3.getId() + "/enroll", null, Set.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/course/courses/" + course3.getId() + "/enroll", null, Set.class, HttpStatus.FORBIDDEN);
     }
 
     /**

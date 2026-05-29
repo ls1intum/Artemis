@@ -13,9 +13,9 @@ import { of, throwError } from 'rxjs';
 import { CourseRequestComponent } from 'app/course/request/course-request.component';
 import { CourseRequestService } from 'app/course/request/course-request.service';
 import { CourseRequestFormComponent } from 'app/course/request/course-request-form.component';
-import { AlertService } from 'app/shared/service/alert.service';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 describe('CourseRequestComponent', () => {
     setupTestBed({ zoneless: true });
