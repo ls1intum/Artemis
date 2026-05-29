@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, filter, shareReplay, timeout } from 'rxjs';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 
 /** Maximum time (ms) to wait for a WebSocket response before the Observable errors. */
 export const IRIS_SEARCH_ANSWER_WS_TIMEOUT_MS = 60_000;

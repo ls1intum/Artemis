@@ -6,7 +6,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Subject } from 'rxjs';
 import { IRIS_SEARCH_ANSWER_WS_TIMEOUT_MS, IrisSearchAnswerService } from './iris-search-answer.service';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 
 const MOCK_RUN_ID = '550e8400-e29b-41d4-a716-446655440000';
 
