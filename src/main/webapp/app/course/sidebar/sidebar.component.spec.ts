@@ -1,0 +1,320 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
+import { SidebarCardMediumComponent } from 'app/course/sidebar/sidebar-card-medium/sidebar-card-medium.component';
+import { SidebarCardItemComponent } from 'app/course/sidebar/sidebar-card-item/sidebar-card-item.component';
+import { SidebarCardDirective } from 'app/course/sidebar/directive/sidebar-card.directive';
+import { SearchFilterPipe } from 'app/foundation/pipes/search-filter.pipe';
+import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { By } from '@angular/platform-browser';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { ExerciseFilterModalComponent } from 'app/exercise/exercise-filter/exercise-filter-modal.component';
+import { ExerciseFilterResults } from 'app/foundation/types/exercise-filter';
+import { EventEmitter } from '@angular/core';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+
+describe('SidebarComponent', () => {
+    setupTestBed({ zoneless: true });
+    let component: SidebarComponent;
+    let fixture: ComponentFixture<SidebarComponent>;
+    let modalService: NgbModal;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [
+                MockModule(FormsModule),
+                MockModule(ReactiveFormsModule),
+                MockModule(RouterModule),
+                MockDirective(TranslateDirective),
+                MockComponent(ExerciseFilterModalComponent),
+                FaIconComponent,
+                SidebarComponent,
+                SidebarCardMediumComponent,
+                SidebarCardItemComponent,
+                SidebarCardDirective,
+                SearchFilterPipe,
+                SearchFilterComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockRouterLinkDirective,
+            ],
+            providers: [
+                MockProvider(NgbModal),
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(SidebarComponent);
+        component = fixture.componentInstance;
+        modalService = TestBed.inject(NgbModal);
+
+        component.sidebarData = {
+            sidebarType: 'default',
+        } as SidebarData;
+    });
+
+    it('should filter sidebar items based on search criteria', () => {
+        component.sidebarData = {
+            groupByCategory: true,
+            ungroupedData: [
+                { title: 'Item 1', type: 'Type A', id: 1, size: 'M' },
+                { title: 'Item 2', type: 'Type B', id: 2, size: 'M' },
+            ],
+        };
+        component.searchValue = 'Item 1';
+        fixture.changeDetectorRef.detectChanges();
+
+        // Check if only the item with title 'Item 1' is being displayed
+        let filteredItems = component.sidebarData.ungroupedData?.filter((item) => item.title.includes(component.searchValue));
+        filteredItems = filteredItems ?? [];
+        expect(filteredItems).toHaveLength(1);
+        expect(filteredItems[0].title).toContain('Item 1');
+    });
+
+    it('should display the correct message when no data is found', () => {
+        // Mock sidebarData to have no items
+        component.sidebarData = {
+            groupByCategory: true,
+            ungroupedData: [],
+        };
+        component.sidebarDataBeforeFiltering = {
+            groupByCategory: true,
+            ungroupedData: [] as SidebarCardElement[],
+        };
+        fixture.changeDetectorRef.detectChanges();
+
+        const noDataMessageElement = fixture.debugElement.query(By.css('.scrollable-item-content'));
+        expect(noDataMessageElement).toBeTruthy();
+        const directiveInstance = noDataMessageElement.injector.get(TranslateDirective);
+        expect(directiveInstance.jhiTranslate).toBe('artemisApp.courseOverview.general.noDataFound');
+    });
+
+    it('should give the correct size for exercises', () => {
+        component.sidebarData = {
+            groupByCategory: true,
+            sidebarType: 'exercise',
+        };
+        fixture.changeDetectorRef.detectChanges();
+
+        const size = component.getSize();
+        expect(size).toBe('M');
+    });
+
+    it('should give the correct size for exams', () => {
+        component.sidebarData = {
+            groupByCategory: true,
+            sidebarType: 'exam',
+        };
+        fixture.changeDetectorRef.detectChanges();
+
+        const size = component.getSize();
+        expect(size).toBe('L');
+    });
+
+    it('should give the correct size for default', () => {
+        component.sidebarData = {
+            groupByCategory: true,
+        };
+        fixture.changeDetectorRef.detectChanges();
+
+        const size = component.getSize();
+        expect(size).toBe('M');
+    });
+
+    it('should update sidebar event subscription on re emit input event change', () => {
+        fixture.detectChanges();
+        const prevSubscription = component.sidebarEventSubscription;
+        fixture.componentRef.setInput('reEmitNonDistinctSidebarEvents', true);
+        fixture.changeDetectorRef.detectChanges();
+        expect(component.sidebarEventSubscription).not.toBe(prevSubscription);
+    });
+
+    describe('openFilterExercisesLink', () => {
+        const FILTER_LINK_SELECTOR = '.text-primary a';
+
+        it('should display the filter link', () => {
+            component.showFilter = true;
+            fixture.changeDetectorRef.detectChanges();
+
+            const filterLink = fixture.debugElement.query(By.css(FILTER_LINK_SELECTOR));
+
+            expect(filterLink).toBeTruthy();
+        });
+
+        it('should NOT display the filter link when sidebarType is NOT exercise', () => {
+            const filterLink = fixture.debugElement.query(By.css(FILTER_LINK_SELECTOR));
+
+            expect(filterLink).toBeFalsy();
+        });
+
+        it('should open modal on click with initialized filters', () => {
+            component.showFilter = true;
+            fixture.changeDetectorRef.detectChanges();
+            const filterAppliedMock = new EventEmitter<ExerciseFilterResults>();
+            const mockReturnValue = {
+                result: Promise.resolve({}),
+                componentInstance: {
+                    sidebarData: {},
+                    exerciseFilters: {},
+                    filterApplied: filterAppliedMock,
+                },
+            } as NgbModalRef;
+            const openModalSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+            const openFilterExercisesDialogSpy = vi.spyOn(component, 'openFilterExercisesDialog');
+            const initFilterOptionsSpy = vi.spyOn(component, 'initializeFilterOptions');
+
+            const filterLink = fixture.debugElement.query(By.css(FILTER_LINK_SELECTOR)).nativeElement;
+            filterLink.click();
+
+            expect(initFilterOptionsSpy).toHaveBeenCalledOnce();
+            expect(openFilterExercisesDialogSpy).toHaveBeenCalledOnce();
+            expect(openModalSpy).toHaveBeenCalledWith(ExerciseFilterModalComponent, { animation: true, backdrop: 'static', size: 'lg' });
+        });
+    });
+
+    describe('Chat and Channel Creation Methods', () => {
+        beforeEach(() => {
+            fixture.detectChanges();
+        });
+
+        it('should emit onDirectChatPressed and set showChatDropdown to false when createDirectChat is called', () => {
+            vi.spyOn(component.onDirectChatPressed, 'emit');
+
+            component.createDirectChat();
+
+            expect(component.onDirectChatPressed.emit).toHaveBeenCalledOnce();
+        });
+
+        it('should emit onGroupChatPressed and set showChatDropdown to false when createGroupChat is called', () => {
+            vi.spyOn(component.onGroupChatPressed, 'emit');
+
+            component.createGroupChat();
+
+            expect(component.onGroupChatPressed.emit).toHaveBeenCalledOnce();
+        });
+
+        it('should emit onBrowsePressed and set showChannelDropdown to false when browseChannels is called', () => {
+            vi.spyOn(component.onBrowsePressed, 'emit');
+
+            component.browseChannels();
+
+            expect(component.onBrowsePressed.emit).toHaveBeenCalledOnce();
+        });
+
+        it('should emit onCreateChannelPressed and set showChannelDropdown to false when createNewChannel is called', () => {
+            vi.spyOn(component.onCreateChannelPressed, 'emit');
+
+            component.createNewChannel();
+
+            expect(component.onCreateChannelPressed.emit).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('openFilterExercisesDialog', () => {
+        it('should subscribe to filterApplied from modal', () => {
+            const filterAppliedEmitter = new EventEmitter<ExerciseFilterResults>();
+            const mockModalRef: Partial<NgbModalRef> = {
+                componentInstance: {
+                    filterApplied: filterAppliedEmitter,
+                },
+            };
+            const openSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+            const subscribeSpy = vi.spyOn(filterAppliedEmitter, 'subscribe');
+
+            component.openFilterExercisesDialog();
+
+            expect(openSpy).toHaveBeenCalledOnce();
+            expect(subscribeSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should update variables correctly when filterApplied is emitted', () => {
+            const filterAppliedEmitter = new EventEmitter<ExerciseFilterResults>();
+            const mockModalRef: Partial<NgbModalRef> = {
+                componentInstance: {
+                    filterApplied: filterAppliedEmitter,
+                },
+            };
+            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+
+            const mockFilterResults: ExerciseFilterResults = {
+                filteredSidebarData: {
+                    sidebarType: 'exercise',
+                    groupByCategory: true,
+                    ungroupedData: [{ title: 'test sidebar card element' } as SidebarCardElement],
+                    groupedData: {
+                        testGroup: {
+                            entityData: [{ title: 'test group element' } as SidebarCardElement],
+                        },
+                    },
+                },
+                appliedExerciseFilters: {
+                    categoryFilter: {
+                        isDisplayed: true,
+                        options: [
+                            {
+                                category: new ExerciseCategory('test', undefined),
+                                searched: true,
+                            },
+                        ],
+                    },
+                    exerciseTypesFilter: {
+                        isDisplayed: true,
+                        options: [
+                            {
+                                name: 'testType',
+                                value: ExerciseType.PROGRAMMING,
+                                checked: true,
+                                icon: 'testIcon' as unknown as IconProp,
+                            },
+                        ],
+                    },
+                },
+                isFilterActive: true,
+            };
+
+            component.openFilterExercisesDialog();
+            filterAppliedEmitter.emit(mockFilterResults);
+
+            expect(component.sidebarData).toEqual(mockFilterResults.filteredSidebarData);
+            expect(component.exerciseFilters).toEqual(mockFilterResults.appliedExerciseFilters);
+            expect(component.isFilterActive).toBe(true);
+        });
+
+        it('should show "Create Channel" button when canCreateChannel is true', () => {
+            fixture.componentRef.setInput('inCommunication', true);
+            component.sidebarData.canCreateChannel = true;
+            fixture.changeDetectorRef.detectChanges();
+            const createChannelButton = fixture.debugElement.query(By.css('.createChannel'));
+            expect(createChannelButton).toBeTruthy();
+        });
+
+        it('should not show "Create Channel" button when canCreateChannel is false', () => {
+            fixture.componentRef.setInput('inCommunication', true);
+            component.sidebarData.canCreateChannel = false;
+            fixture.changeDetectorRef.detectChanges();
+            const createChannelButton = fixture.debugElement.query(By.css('.createChannel'));
+            expect(createChannelButton).toBeFalsy();
+        });
+    });
+});

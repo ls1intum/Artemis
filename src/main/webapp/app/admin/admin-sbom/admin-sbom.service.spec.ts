@@ -100,7 +100,7 @@ describe('AdminSbomService', () => {
                 expect(result.client?.bomFormat).toBe('CycloneDX');
             });
 
-            const req = httpMock.expectOne('/api/core/admin/sbom');
+            const req = httpMock.expectOne('/api/admin/sbom');
             expect(req.request.method).toBe('GET');
             req.flush(mockCombinedSbom);
         });
@@ -114,7 +114,7 @@ describe('AdminSbomService', () => {
                 expect(result.components![0].name).toBe('spring-core');
             });
 
-            const req = httpMock.expectOne('/api/core/admin/sbom/server');
+            const req = httpMock.expectOne('/api/admin/sbom/server');
             expect(req.request.method).toBe('GET');
             req.flush(mockServerSbom);
         });
@@ -128,7 +128,7 @@ describe('AdminSbomService', () => {
                 expect(result.components![0].name).toBe('core');
             });
 
-            const req = httpMock.expectOne('/api/core/admin/sbom/client');
+            const req = httpMock.expectOne('/api/admin/sbom/client');
             expect(req.request.method).toBe('GET');
             req.flush(mockClientSbom);
         });
@@ -142,7 +142,7 @@ describe('AdminSbomService', () => {
                 expect(result.highCount).toBe(1);
             });
 
-            const req = httpMock.expectOne('/api/core/admin/sbom/vulnerabilities');
+            const req = httpMock.expectOne('/api/admin/sbom/vulnerabilities');
             expect(req.request.method).toBe('GET');
             req.flush(mockVulnerabilities);
         });
@@ -154,7 +154,7 @@ describe('AdminSbomService', () => {
                 expect(result).toEqual(mockVulnerabilities);
             });
 
-            const req = httpMock.expectOne('/api/core/admin/sbom/vulnerabilities/refresh');
+            const req = httpMock.expectOne('/api/admin/sbom/vulnerabilities/refresh');
             expect(req.request.method).toBe('GET');
             req.flush(mockVulnerabilities);
         });
@@ -166,7 +166,7 @@ describe('AdminSbomService', () => {
                 expect(result).toBeNull();
             });
 
-            const req = httpMock.expectOne('/api/core/admin/sbom/vulnerabilities/send-email');
+            const req = httpMock.expectOne('/api/admin/sbom/vulnerabilities/send-email');
             expect(req.request.method).toBe('POST');
             expect(req.request.body).toEqual({});
             req.flush(null);

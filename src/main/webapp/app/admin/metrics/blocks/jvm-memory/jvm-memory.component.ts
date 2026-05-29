@@ -1,7 +1,7 @@
 import { Component, input } from '@angular/core';
 
 import { JvmMetrics } from 'app/admin/metrics/metrics.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { DecimalPipe, KeyValuePipe } from '@angular/common';
 

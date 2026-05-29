@@ -4,7 +4,7 @@ import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TeamService } from 'app/exercise/team/team.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { get } from 'lodash-es';
@@ -13,19 +13,19 @@ import { Submission, SubmissionExerciseType, getLatestSubmissionResult, setLates
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { onError } from 'app/shared/util/global.utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
-import { getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
+import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { faFlag, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { DataTableComponent } from 'app/shared-ui/data-table/data-table.component';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 const currentExerciseRowClass = 'datatable-row-current-exercise';
 

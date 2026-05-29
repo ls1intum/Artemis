@@ -6,7 +6,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { LearningPathNavOverviewLearningObjectsComponent } from 'app/atlas/overview/learning-path-nav-overview-learning-objects/learning-path-nav-overview-learning-objects.component';
 import { LearningObjectType, LearningPathNavigationObjectDTO } from 'app/atlas/shared/entities/learning-path.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 

@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.tutorsuggestion.PyrisT
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
 
 @Component
@@ -78,8 +79,8 @@ public class IrisRequestMockProvider {
     @Value("${artemis.iris.url}/api/v1/search/lectures")
     private URL lectureSearchApiURL;
 
-    @Value("${artemis.iris.url}/api/v1/search/ask")
-    private URL lectureSearchAskApiURL;
+    @Value("${artemis.iris.url}/api/v1/pipelines/global-search/run")
+    private URL globalSearchAnswerApiURL;
 
     @Value("${artemis.iris.url}")
     private String irisBaseUrl;
@@ -382,22 +383,22 @@ public class IrisRequestMockProvider {
         // @formatter:on
     }
 
-    public void mockSearchAsk(Object responseBody) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(lectureSearchAskApiURL.toString()))
-            .andExpect(method(HttpMethod.POST))
-            .andRespond(withSuccess(write(responseBody), MediaType.APPLICATION_JSON));
-        // @formatter:on
+    /**
+     * Mocks an async POST to /api/v1/pipelines/global-search/run (returns 202) and exposes the parsed request DTO
+     * to the given consumer so tests can capture the job token via
+     * {@code dto.settings().authenticationToken()}.
+     */
+    public void mockGlobalSearchIrisAnswer(Consumer<PyrisGlobalSearchAnswerRequestDTO> responseConsumer) {
+        mockServer.expect(ExpectedCount.once(), requestTo(globalSearchAnswerApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+            var mockRequest = (MockClientHttpRequest) request;
+            var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisGlobalSearchAnswerRequestDTO.class);
+            responseConsumer.accept(dto);
+            return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
+        });
     }
 
-    public void mockSearchAskError(HttpStatus status) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(lectureSearchAskApiURL.toString()))
-            .andExpect(method(HttpMethod.POST))
-            .andRespond(withRawStatus(status.value()));
-        // @formatter:on
+    public void mockGlobalSearchIrisAnswerError(HttpStatus status) {
+        mockServer.expect(ExpectedCount.once(), requestTo(globalSearchAnswerApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withRawStatus(status.value()));
     }
 
     // -------------------- Memiris endpoints --------------------

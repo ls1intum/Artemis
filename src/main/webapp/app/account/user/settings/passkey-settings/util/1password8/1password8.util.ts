@@ -1,4 +1,4 @@
-import { encodeAsBase64Url } from 'app/shared/util/base64.util';
+import { encodeAsBase64Url } from 'app/foundation/util/base64.util';
 import { Malformed1Password8RegistrationCredential } from 'app/account/user/settings/passkey-settings/entities/malformed1-password8-registration-credential';
 import { SerializableRegistrationCredential } from 'app/account/user/settings/passkey-settings/entities/serializable-registration-credential';
 import { SerializableLoginCredential } from 'app/account/user/settings/passkey-settings/entities/serializable-login-credential';

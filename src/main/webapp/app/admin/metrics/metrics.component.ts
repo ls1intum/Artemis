@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 
 import { MetricsService } from './metrics.service';
 import { Metrics, NodeInfo, Thread } from 'app/admin/metrics/metrics.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { JvmMemoryComponent } from './blocks/jvm-memory/jvm-memory.component';
 import { JvmThreadsComponent } from './blocks/jvm-threads/jvm-threads.component';

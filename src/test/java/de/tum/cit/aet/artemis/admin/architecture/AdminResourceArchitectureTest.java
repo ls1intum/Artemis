@@ -26,9 +26,9 @@ class AdminResourceArchitectureTest extends AbstractModuleResourceArchitectureTe
         return ARTEMIS_PACKAGE + ".admin";
     }
 
-    // TODO: The admin REST resources still expose their endpoints under "api/core/admin/..." for
-    // backwards compatibility with existing clients. Once the URLs are migrated to "api/admin/..."
-    // these exemptions should be removed.
+    // TODO: The admin REST resources expose their endpoints under both "api/admin/..." (preferred)
+    // and the legacy "api/core/admin/..." prefix kept for backwards compatibility with existing
+    // clients. Once the legacy prefix is removed these exemptions should be removed.
     @Override
     protected Set<Class<?>> getIgnoredModulePathPrefixResources() {
         return Set.of(AdminAuditResource.class, AdminBuildJobQueueResource.class, AdminCleanupResource.class, AdminCourseRequestResource.class, AdminCourseResource.class,

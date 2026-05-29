@@ -1,18 +1,18 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subject, tap } from 'rxjs';
 import { faEdit, faEllipsis, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { AlertService } from 'app/shared/service/alert.service';
+import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import dayjs from 'dayjs/esm';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { DocumentationLinkComponent } from 'app/shared/components/documentation-link/documentation-link.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { DocumentationLinkComponent } from 'app/shared-ui/components/documentation-link/documentation-link.component';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/ssh-user-settings.service';
 
 @Component({

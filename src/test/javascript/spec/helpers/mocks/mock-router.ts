@@ -43,6 +43,16 @@ export class MockRouter {
     /** Mock for Router.createUrlTree() */
     createUrlTree = createMockFn({ path: 'testValue' } as unknown as UrlTree);
 
+    /** Mock for Router.parseUrl() — returns a real (empty) UrlTree so the active-link
+     * `containsTree` comparison in the real RouterLinkActive directive works without throwing. */
+    parseUrl = createMockFn(new UrlTree());
+
+    /** Mock for Router.lastSuccessfulNavigation() — read by RouterLinkActive's active-state computed. */
+    lastSuccessfulNavigation = createMockFn(null);
+
+    /** Mock for Router.isActive() */
+    isActive = createMockFn(false);
+
     /** Mock for Router.serializeUrl() */
     serializeUrl = createMockFn('testValue');
 
