@@ -46,6 +46,7 @@ import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { FileService } from 'app/foundation/service/file.service';
 import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants';
+import { Checkbox } from 'primeng/checkbox';
 
 const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
 
@@ -75,6 +76,7 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
         RouterLink,
+        Checkbox,
     ],
 })
 export class CourseUpdateComponent implements OnInit {

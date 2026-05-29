@@ -401,27 +401,25 @@
                     </div>
                 }
                 @if (isAthenaEnabled) {
-                    <div class="form-check mt-3">
-                        <input
-                            type="checkbox"
-                            class="form-check-input"
-                            name="athenaFormativeEnabled"
-                            id="field_athenaFormativeEnabled"
-                            [checked]="course.athenaFormativeEnabled"
-                            (change)="toggleAthenaFormativeEnabled()"
+                    <div class="d-flex align-items-center gap-2 mt-3">
+                        <p-checkbox
+                            inputId="field_athenaFormativeEnabled"
+                            [binary]="true"
+                            [(ngModel)]="course.athenaFormativeEnabled"
+                            [ngModelOptions]="{ standalone: true }"
+                            (onChange)="toggleAthenaFormativeEnabled()"
                         />
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.athena.formativeEnabled" for="field_athenaFormativeEnabled"></label>
+                        <label class="form-control-label mb-0" jhiTranslate="artemisApp.course.athena.formativeEnabled" for="field_athenaFormativeEnabled"></label>
                     </div>
-                    <div class="form-check">
-                        <input
-                            type="checkbox"
-                            class="form-check-input"
-                            name="athenaGradingEnabled"
-                            id="field_athenaGradingEnabled"
-                            [checked]="course.athenaGradingEnabled"
-                            (change)="toggleAthenaGradingEnabled()"
+                    <div class="d-flex align-items-center gap-2 mt-2">
+                        <p-checkbox
+                            inputId="field_athenaGradingEnabled"
+                            [binary]="true"
+                            [(ngModel)]="course.athenaGradingEnabled"
+                            [ngModelOptions]="{ standalone: true }"
+                            (onChange)="toggleAthenaGradingEnabled()"
                         />
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.athena.gradingEnabled" for="field_athenaGradingEnabled"></label>
+                        <label class="form-control-label mb-0" jhiTranslate="artemisApp.course.athena.gradingEnabled" for="field_athenaGradingEnabled"></label>
                     </div>
                 }
                 <!-- Not part of model -->
