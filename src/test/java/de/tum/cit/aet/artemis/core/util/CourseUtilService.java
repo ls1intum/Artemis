@@ -40,8 +40,8 @@ import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -210,7 +210,7 @@ public class CourseUtilService {
     private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
 
     @Autowired
-    private UserCourseRoleRepository userCourseRoleRepository;
+    private UserCourseRoleTestRepository userCourseRoleRepository;
 
     /**
      * Creates and saves a course (`id` is automatically generated).

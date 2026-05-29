@@ -38,8 +38,8 @@ import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ReactionTestRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
@@ -75,7 +75,7 @@ public class ConversationUtilService {
     private UserTestRepository userRepo;
 
     @Autowired
-    private UserCourseRoleRepository userCourseRoleRepository;
+    private UserCourseRoleTestRepository userCourseRoleRepository;
 
     @Autowired
     private ExerciseTestRepository exerciseRepo;

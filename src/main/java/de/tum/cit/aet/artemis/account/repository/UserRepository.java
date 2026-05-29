@@ -1607,7 +1607,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param groupName the name of the group to remove from all users
      * @return the number of rows deleted
      */
-    // TODO (Phase 9): delete once user_groups table is dropped (CourseDeletionService will use UserCourseRoleRepository.deleteByCourse_Id instead)
+    // TODO (Phase 9): delete once user_groups table is dropped (ON DELETE CASCADE on user_course_role.course_id handles cleanup automatically)
     @Modifying
     @Transactional // ok because of modifying query
     @Query(value = """

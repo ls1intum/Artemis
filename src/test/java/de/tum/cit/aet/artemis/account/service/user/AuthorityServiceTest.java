@@ -13,8 +13,8 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
@@ -33,7 +33,7 @@ class AuthorityServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     private CourseUtilService courseUtilService;
 
     @Autowired
-    private UserCourseRoleRepository userCourseRoleRepository;
+    private UserCourseRoleTestRepository userCourseRoleRepository;
 
     private Course course;
 

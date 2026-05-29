@@ -31,8 +31,8 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CalendarSubscriptionTokenStore;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.repository.CalendarSubscriptionTokenStoreRepository;
-import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 
 /**
  * Service responsible for initializing the database with specific testdata related to Users for use in integration tests.
@@ -81,7 +81,7 @@ public class UserUtilService {
     private CalendarSubscriptionTokenStoreRepository calendarSubscriptionTokenStoreRepository;
 
     @Autowired
-    private UserCourseRoleRepository userCourseRoleRepository;
+    private UserCourseRoleTestRepository userCourseRoleRepository;
 
     /**
      * Changes the currently authorized User to the User with the given username.
