@@ -69,4 +69,12 @@ public class AthenaApi extends AbstractAthenaApi {
     public void clearAllowFeedbackRequestsForCourse(Long courseId, ExerciseType exerciseType) {
         athenaModuleService.clearAllowFeedbackRequestsForCourse(courseId, exerciseType);
     }
+
+    public void applyFeedbackSuggestionModuleForCourse(Long courseId, ExerciseType exerciseType) {
+        athenaModuleService.applyFeedbackSuggestionModuleForCourse(courseId, exerciseType);
+    }
+
+    public void applyAllowFeedbackRequestsForCourse(Long courseId, ExerciseType exerciseType) {
+        athenaModuleService.applyAllowFeedbackRequestsForCourse(courseId, exerciseType);
+    }
 }

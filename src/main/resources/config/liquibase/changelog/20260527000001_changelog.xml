@@ -13,4 +13,11 @@
             </column>
         </addColumn>
     </changeSet>
+
+    <changeSet id="20260527000001-2" author="artemis">
+        <!-- Clear Athena settings on all existing exercises so that DB state is consistent
+             with the new course-level flags, which default to false. -->
+        <sql>UPDATE exercise SET feedback_suggestion_module = NULL</sql>
+        <sql>UPDATE exercise SET allow_manual_feedback_requests = FALSE</sql>
+    </changeSet>
 </databaseChangeLog>

@@ -579,12 +579,10 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     toggleAthenaFormativeEnabled(): void {
-        this.course.athenaFormativeEnabled = !this.course.athenaFormativeEnabled;
         this.courseForm.controls['athenaFormativeEnabled'].setValue(this.course.athenaFormativeEnabled);
     }
 
     toggleAthenaGradingEnabled(): void {
-        this.course.athenaGradingEnabled = !this.course.athenaGradingEnabled;
         this.courseForm.controls['athenaGradingEnabled'].setValue(this.course.athenaGradingEnabled);
     }
 

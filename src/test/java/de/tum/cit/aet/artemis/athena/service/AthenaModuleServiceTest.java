@@ -45,13 +45,13 @@ class AthenaModuleServiceTest {
     }
 
     @Test
-    void applyAthenaCourseSettings_formativeOnlyEnabled_setsFeedbackSuggestionModuleAndAllowRequests() {
+    void applyAthenaCourseSettings_formativeOnlyEnabled_setsAllowRequestsButNotModule() {
         Course course = new Course();
         course.setAthenaFormativeEnabled(true);
         TextExercise exercise = new TextExercise();
         exercise.setCourse(course);
         service.applyAthenaCourseSettings(exercise, course);
-        assertThat(exercise.getFeedbackSuggestionModule()).isEqualTo("module_text_llm");
+        assertThat(exercise.getFeedbackSuggestionModule()).isNull();
         assertThat(exercise.getAllowFeedbackRequests()).isTrue();
     }
 

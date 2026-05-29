@@ -126,18 +126,27 @@ public class AthenaModuleService {
             throw new BadRequestAlertException("Exercise does not have a feedback suggestion module configured", ENTITY_NAME, "missingFeedbackSuggestionModule");
         }
 
-        switch (exercise.getExerciseType()) {
-            case TEXT -> {
-                return athenaUrl + "/modules/text/" + exercise.getFeedbackSuggestionModule();
-            }
-            case PROGRAMMING -> {
-                return athenaUrl + "/modules/programming/" + exercise.getFeedbackSuggestionModule();
-            }
-            case MODELING -> {
-                return athenaUrl + "/modules/modeling/" + exercise.getFeedbackSuggestionModule();
-            }
-            default -> throw new IllegalArgumentException("Exercise type not supported: " + exercise.getExerciseType());
-        }
+        return buildModuleUrl(exercise.getExerciseType(), exercise.getFeedbackSuggestionModule());
+    }
+
+    /**
+     * Returns the Athena module URL for the default module of the given exercise type.
+     * Used for formative (non-graded) feedback when no explicit module is configured on the exercise.
+     *
+     * @param exercise the exercise for which the default module URL is built
+     * @return the URL string for the default Athena module endpoint
+     */
+    public String getDefaultModuleUrl(Exercise exercise) {
+        return buildModuleUrl(exercise.getExerciseType(), getDefaultModule(exercise.getExerciseType()));
+    }
+
+    private String buildModuleUrl(ExerciseType type, String moduleName) {
+        return switch (type) {
+            case TEXT -> athenaUrl + "/modules/text/" + moduleName;
+            case PROGRAMMING -> athenaUrl + "/modules/programming/" + moduleName;
+            case MODELING -> athenaUrl + "/modules/modeling/" + moduleName;
+            default -> throw new IllegalArgumentException("Exercise type not supported: " + type);
+        };
     }
 
     /**
@@ -230,13 +239,18 @@ public class AthenaModuleService {
             return;
         }
 
-        if (course.isAthenaGradingEnabled() || course.isAthenaFormativeEnabled()) {
+        if (course.isAthenaGradingEnabled()) {
             exercise.setFeedbackSuggestionModule(getDefaultModule(exercise.getExerciseType()));
         }
         else {
             exercise.setFeedbackSuggestionModule(null);
         }
-        exercise.setAllowFeedbackRequests(course.isAthenaFormativeEnabled());
+        if (course.isAthenaFormativeEnabled()) {
+            exercise.setAllowFeedbackRequests(true);
+        }
+        else {
+            exercise.setAllowFeedbackRequests(false);
+        }
     }
 
     /**
@@ -265,6 +279,37 @@ public class AthenaModuleService {
             case TEXT -> exerciseRepository.clearTextExerciseAllowFeedbackRequestsByCourseId(courseId);
             case MODELING -> exerciseRepository.clearModelingExerciseAllowFeedbackRequestsByCourseId(courseId);
             case PROGRAMMING -> exerciseRepository.clearProgrammingExerciseAllowFeedbackRequestsByCourseId(courseId);
+            default -> throw new IllegalArgumentException("Unsupported exercise type: " + exerciseType);
+        }
+    }
+
+    /**
+     * Sets the feedbackSuggestionModule to the configured default for all exercises of the given type in the course.
+     *
+     * @param courseId     the course id
+     * @param exerciseType the exercise type whose grading Athena module is being enabled
+     */
+    public void applyFeedbackSuggestionModuleForCourse(Long courseId, ExerciseType exerciseType) {
+        String module = getDefaultModule(exerciseType);
+        switch (exerciseType) {
+            case TEXT -> exerciseRepository.applyTextExerciseFeedbackSuggestionModuleByCourseId(courseId, module);
+            case MODELING -> exerciseRepository.applyModelingExerciseFeedbackSuggestionModuleByCourseId(courseId, module);
+            case PROGRAMMING -> exerciseRepository.applyProgrammingExerciseFeedbackSuggestionModuleByCourseId(courseId, module);
+            default -> throw new IllegalArgumentException("Unsupported exercise type: " + exerciseType);
+        }
+    }
+
+    /**
+     * Sets allowFeedbackRequests to true for all exercises of the given type in the course.
+     *
+     * @param courseId     the course id
+     * @param exerciseType the exercise type whose preliminary Athena feedback is being enabled
+     */
+    public void applyAllowFeedbackRequestsForCourse(Long courseId, ExerciseType exerciseType) {
+        switch (exerciseType) {
+            case TEXT -> exerciseRepository.applyTextExerciseAllowFeedbackRequestsByCourseId(courseId);
+            case MODELING -> exerciseRepository.applyModelingExerciseAllowFeedbackRequestsByCourseId(courseId);
+            case PROGRAMMING -> exerciseRepository.applyProgrammingExerciseAllowFeedbackRequestsByCourseId(courseId);
             default -> throw new IllegalArgumentException("Unsupported exercise type: " + exerciseType);
         }
     }

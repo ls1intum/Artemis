@@ -235,14 +235,20 @@ public class CourseUpdateResource {
             athenaApi.ifPresent(api -> api.revokeAccessToRestrictedFeedbackSuggestionModules(result));
         }
 
-        // Clear feedbackSuggestionModule only when both flags are now off (module is needed if either grading or formative is on)
-        boolean wasAtLeastOneEnabled = wasGradingEnabled || wasFormativeEnabled;
-        boolean isNeitherEnabled = !courseUpdateDTO.athenaGradingEnabled() && !courseUpdateDTO.athenaFormativeEnabled();
-        if (wasAtLeastOneEnabled && isNeitherEnabled) {
+        // if global Athena grading flag transitioned from enabled to disabled, bulk-clear feedbackSuggestionModule for all exercise types
+        if (wasGradingEnabled && !courseUpdateDTO.athenaGradingEnabled()) {
             athenaApi.ifPresent(api -> {
                 api.clearFeedbackSuggestionModuleForCourse(result.getId(), ExerciseType.TEXT);
                 api.clearFeedbackSuggestionModuleForCourse(result.getId(), ExerciseType.MODELING);
                 api.clearFeedbackSuggestionModuleForCourse(result.getId(), ExerciseType.PROGRAMMING);
+            });
+        }
+        // if global Athena grading flag transitioned from disabled to enabled, bulk-apply default feedbackSuggestionModule for all exercise types
+        if (!wasGradingEnabled && courseUpdateDTO.athenaGradingEnabled()) {
+            athenaApi.ifPresent(api -> {
+                api.applyFeedbackSuggestionModuleForCourse(result.getId(), ExerciseType.TEXT);
+                api.applyFeedbackSuggestionModuleForCourse(result.getId(), ExerciseType.MODELING);
+                api.applyFeedbackSuggestionModuleForCourse(result.getId(), ExerciseType.PROGRAMMING);
             });
         }
         // if global Athena formative flag transitioned from enabled to disabled, bulk-clear allowFeedbackRequests for all exercise types
@@ -251,6 +257,14 @@ public class CourseUpdateResource {
                 api.clearAllowFeedbackRequestsForCourse(result.getId(), ExerciseType.TEXT);
                 api.clearAllowFeedbackRequestsForCourse(result.getId(), ExerciseType.MODELING);
                 api.clearAllowFeedbackRequestsForCourse(result.getId(), ExerciseType.PROGRAMMING);
+            });
+        }
+        // if global Athena formative flag transitioned from disabled to enabled, bulk-apply allowFeedbackRequests for all exercise types
+        if (!wasFormativeEnabled && courseUpdateDTO.athenaFormativeEnabled()) {
+            athenaApi.ifPresent(api -> {
+                api.applyAllowFeedbackRequestsForCourse(result.getId(), ExerciseType.TEXT);
+                api.applyAllowFeedbackRequestsForCourse(result.getId(), ExerciseType.MODELING);
+                api.applyAllowFeedbackRequestsForCourse(result.getId(), ExerciseType.PROGRAMMING);
             });
         }
 

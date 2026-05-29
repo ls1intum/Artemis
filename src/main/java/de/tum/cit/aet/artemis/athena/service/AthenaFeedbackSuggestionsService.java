@@ -201,7 +201,7 @@ public class AthenaFeedbackSuggestionsService {
     public List<TextFeedbackDTO> getTextFeedbackSuggestions(TextExercise exercise, TextSubmission submission, boolean isGraded, @Nullable User user) throws NetworkingException {
         log.debug("Start Athena '{}' Feedback Suggestions Service for Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
-        if (exercise.getFeedbackSuggestionModule() == null) {
+        if (exercise.getFeedbackSuggestionModule() == null && isGraded) {
             log.warn("Exercise '{}' (#{}) does not have a feedback suggestion module configured. Returning empty list.", exercise.getTitle(), exercise.getId());
             return List.of();
         }
@@ -212,13 +212,14 @@ public class AthenaFeedbackSuggestionsService {
                     "Exercise", "exerciseIdDoesNotMatch");
         }
 
+        String moduleUrl = exercise.getFeedbackSuggestionModule() != null ? athenaModuleService.getAthenaModuleUrl(exercise) : athenaModuleService.getDefaultModuleUrl(exercise);
         Submission latestSubmission = getLatestSubmission((StudentParticipation) submission.getParticipation());
         SubmissionBaseDTO latestSubmissionDTO = latestSubmission != null ? athenaDTOConverterService.ofSubmission(exercise.getId(), latestSubmission) : null;
         List<CourseCompetencyDTO> competencies = courseCompetencyApi.map(api -> api.findAllByExerciseId(exercise.getId()).stream().map(CourseCompetencyDTO::of).toList())
                 .orElse(null);
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
                 LearnerProfileDTO.of(extractLearnerProfile(submission)), isGraded, extractSelectedLLMUsage(user, isGraded), latestSubmissionDTO, competencies);
-        ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
+        ResponseDTOText response = textAthenaConnector.invokeWithRetry(moduleUrl + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isGraded);
         return response.data.stream().toList();
@@ -237,14 +238,15 @@ public class AthenaFeedbackSuggestionsService {
             throws NetworkingException {
         log.debug("Start Athena '{}' Feedback Suggestions Service for Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
-        if (exercise.getFeedbackSuggestionModule() == null) {
+        if (exercise.getFeedbackSuggestionModule() == null && isGraded) {
             log.warn("Exercise '{}' (#{}) does not have a feedback suggestion module configured. Returning empty list.", exercise.getTitle(), exercise.getId());
             return List.of();
         }
 
+        String moduleUrl = exercise.getFeedbackSuggestionModule() != null ? athenaModuleService.getAthenaModuleUrl(exercise) : athenaModuleService.getDefaultModuleUrl(exercise);
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
                 isGraded, extractSelectedLLMUsage(user, isGraded), null, null);
-        ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
+        ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(moduleUrl + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isGraded);
         return response.data.stream().toList();
@@ -263,7 +265,7 @@ public class AthenaFeedbackSuggestionsService {
             throws NetworkingException {
         log.debug("Start Athena '{}' Feedback Suggestions Service for Modeling Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
-        if (exercise.getFeedbackSuggestionModule() == null) {
+        if (exercise.getFeedbackSuggestionModule() == null && isGraded) {
             log.warn("Exercise '{}' (#{}) does not have a feedback suggestion module configured. Returning empty list.", exercise.getTitle(), exercise.getId());
             return List.of();
         }
@@ -273,9 +275,10 @@ public class AthenaFeedbackSuggestionsService {
                     "Exercise", "exerciseIdDoesNotMatch");
         }
 
+        String moduleUrl = exercise.getFeedbackSuggestionModule() != null ? athenaModuleService.getAthenaModuleUrl(exercise) : athenaModuleService.getDefaultModuleUrl(exercise);
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
                 isGraded, extractSelectedLLMUsage(user, isGraded), null, null);
-        ResponseDTOModeling response = modelingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
+        ResponseDTOModeling response = modelingAthenaConnector.invokeWithRetry(moduleUrl + "/feedback_suggestions", request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isGraded);
         return response.data;
