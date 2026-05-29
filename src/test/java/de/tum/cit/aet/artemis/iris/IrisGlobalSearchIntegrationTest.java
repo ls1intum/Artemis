@@ -16,10 +16,10 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.iris.dto.IrisGlobalSearchAnswerWebsocketDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchAskRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisSearchAskRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
 
@@ -91,7 +91,7 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
             // no assertions needed here; just confirm the mock is consumed
         });
 
-        var requestDTO = new PyrisSearchAskRequestDTO("What is backpropagation?", 5, UUID.randomUUID());
+        var requestDTO = new GlobalSearchAskRequestDTO("What is backpropagation?", 5, UUID.randomUUID());
         request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.ACCEPTED);
     }
 
@@ -101,11 +101,11 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<String> jobIdRef = new AtomicReference<>();
         irisRequestMockProvider.mockGlobalSearchIrisAnswer(dto -> jobIdRef.set(dto.settings().authenticationToken()));
 
-        var requestDTO = new PyrisSearchAskRequestDTO("What is backpropagation?", 5, UUID.randomUUID());
+        var requestDTO = new GlobalSearchAskRequestDTO("What is backpropagation?", 5, UUID.randomUUID());
         request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.ACCEPTED);
 
         var thinkingStage = new PyrisStageDTO("Classifying query", 10, PyrisStageState.IN_PROGRESS, null, false, null);
-        sendLectureSearchStatus(jobIdRef.get(), new PyrisGlobalSearchAnswerStatusUpdateDTO(List.of(thinkingStage), null, null));
+        sendGlobalSearchAnswerStatus(jobIdRef.get(), new PyrisGlobalSearchAnswerStatusUpdateDTO(List.of(thinkingStage), null, null));
 
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", "global-search-answer",
                 obj -> obj instanceof IrisGlobalSearchAnswerWebsocketDTO dto && dto.isThinking() && dto.answer() == null);
@@ -117,13 +117,13 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<String> jobIdRef = new AtomicReference<>();
         irisRequestMockProvider.mockGlobalSearchIrisAnswer(dto -> jobIdRef.set(dto.settings().authenticationToken()));
 
-        var requestDTO = new PyrisSearchAskRequestDTO("What is backpropagation?", 5, UUID.randomUUID());
+        var requestDTO = new GlobalSearchAskRequestDTO("What is backpropagation?", 5, UUID.randomUUID());
         request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.ACCEPTED);
 
         var source = new PyrisLectureSearchResultDTO(new PyrisLectureSearchResultDTO.CourseDTO(1L, "ML"), new PyrisLectureSearchResultDTO.LectureDTO(2L, "Intro"),
                 new PyrisLectureSearchResultDTO.LectureUnitDTO(3L, "Neural Nets", "/link/3", 5, "lecture_unit_slide", Map.of("unit", 3L, "page", 5), "p. 5"), "backprop snippet");
         var doneStage = new PyrisStageDTO("LLM", 90, PyrisStageState.DONE, null, false, null);
-        sendLectureSearchStatus(jobIdRef.get(), new PyrisGlobalSearchAnswerStatusUpdateDTO(List.of(doneStage), "Neural networks learn via backpropagation.", List.of(source)));
+        sendGlobalSearchAnswerStatus(jobIdRef.get(), new PyrisGlobalSearchAnswerStatusUpdateDTO(List.of(doneStage), "Neural networks learn via backpropagation.", List.of(source)));
 
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", "global-search-answer",
                 obj -> obj instanceof IrisGlobalSearchAnswerWebsocketDTO dto && !dto.isThinking() && "Neural networks learn via backpropagation.".equals(dto.answer()));
@@ -135,11 +135,11 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
         AtomicReference<String> jobIdRef = new AtomicReference<>();
         irisRequestMockProvider.mockGlobalSearchIrisAnswer(dto -> jobIdRef.set(dto.settings().authenticationToken()));
 
-        var requestDTO = new PyrisSearchAskRequestDTO("Go to course overview", 5, UUID.randomUUID());
+        var requestDTO = new GlobalSearchAskRequestDTO("Go to course overview", 5, UUID.randomUUID());
         request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.ACCEPTED);
 
         var doneStage = new PyrisStageDTO("Classifying query", 10, PyrisStageState.DONE, null, false, null);
-        sendLectureSearchStatus(jobIdRef.get(), new PyrisGlobalSearchAnswerStatusUpdateDTO(List.of(doneStage), null, null));
+        sendGlobalSearchAnswerStatus(jobIdRef.get(), new PyrisGlobalSearchAnswerStatusUpdateDTO(List.of(doneStage), null, null));
 
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", "global-search-answer",
                 obj -> obj instanceof IrisGlobalSearchAnswerWebsocketDTO dto && !dto.isThinking() && dto.answer() == null);
@@ -150,19 +150,19 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
     void ask_whenPyrisFails_shouldReturnInternalServerError() throws Exception {
         irisRequestMockProvider.mockGlobalSearchIrisAnswerError(HttpStatus.INTERNAL_SERVER_ERROR);
 
-        var requestDTO = new PyrisSearchAskRequestDTO("machine learning", 5, UUID.randomUUID());
+        var requestDTO = new GlobalSearchAskRequestDTO("machine learning", 5, UUID.randomUUID());
         request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
     void ask_asUnauthenticated_shouldReturnUnauthorized() throws Exception {
-        var requestDTO = new PyrisSearchAskRequestDTO("machine learning", 5, UUID.randomUUID());
+        var requestDTO = new GlobalSearchAskRequestDTO("machine learning", 5, UUID.randomUUID());
         request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.UNAUTHORIZED);
     }
 
     // ==================== helpers ====================
 
-    private void sendLectureSearchStatus(String jobId, PyrisGlobalSearchAnswerStatusUpdateDTO statusUpdate) throws Exception {
+    private void sendGlobalSearchAnswerStatus(String jobId, PyrisGlobalSearchAnswerStatusUpdateDTO statusUpdate) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
         request.postWithoutResponseBody("/api/iris/internal/pipelines/global-search/runs/" + jobId + "/status", statusUpdate, HttpStatus.OK, headers);
     }

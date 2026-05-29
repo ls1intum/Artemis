@@ -21,9 +21,9 @@ import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchAskRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisSearchAskRequestDTO;
 
 /**
  * REST controller for Iris global search.
@@ -74,7 +74,7 @@ public class IrisGlobalSearchResource {
     @PostMapping("search-answer")
     @EnforceAtLeastStudent
     @LimitRequestsPerMinute(type = RateLimitType.AI_SEARCH_PIPELINE)
-    public ResponseEntity<Void> ask(@RequestBody @Valid PyrisSearchAskRequestDTO requestDTO, Principal principal) {
+    public ResponseEntity<Void> ask(@RequestBody @Valid GlobalSearchAskRequestDTO requestDTO, Principal principal) {
         var user = userRepository.findOneByLogin(principal.getName()).orElseThrow(() -> new EntityNotFoundException("User", principal.getName()));
         user.hasOptedIntoLLMUsageElseThrow();
         pyrisJobService.addGlobalSearchAnswerJob(principal.getName(), requestDTO.runId().toString());
