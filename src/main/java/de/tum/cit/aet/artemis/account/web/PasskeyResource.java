@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceSuperAdmin;
 @Lazy
 @RestController
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/account/passkey/", AccountLegacyRestPaths.CORE_PASSKEY_PREFIX })
+@RequestMapping({ "api/account/passkeys/", "api/account/passkey/", AccountLegacyRestPaths.CORE_PASSKEY_PREFIX })
 public class PasskeyResource {
 
     private static final Logger log = LoggerFactory.getLogger(PasskeyResource.class);
@@ -112,9 +112,9 @@ public class PasskeyResource {
      * @param passkeyWithUpdatedLabel containing the new label for the passkey
      * @return {@link ResponseEntity} with HTTP status 200 (OK) if the update is successful
      */
-    @PutMapping("{credentialId}")
+    @PutMapping("{passkeyId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<PasskeyDTO> updatePasskeyLabel(@PathVariable @Base64Url String credentialId, @RequestBody PasskeyDTO passkeyWithUpdatedLabel) {
+    public ResponseEntity<PasskeyDTO> updatePasskeyLabel(@PathVariable("passkeyId") @Base64Url String credentialId, @RequestBody PasskeyDTO passkeyWithUpdatedLabel) {
         log.debug("Updating label for passkey with id: {}", credentialId);
 
         User currentUser = userRepository.getUser();
@@ -144,9 +144,9 @@ public class PasskeyResource {
      * @param credentialId of the passkey to be deleted
      * @return {@link ResponseEntity} with HTTP status 204 (No Content) if the deletion is successful
      */
-    @DeleteMapping("{credentialId}")
+    @DeleteMapping("{passkeyId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> deletePasskey(@PathVariable @Base64Url String credentialId) {
+    public ResponseEntity<Void> deletePasskey(@PathVariable("passkeyId") @Base64Url String credentialId) {
         log.debug("Deleting passkey with id: {}", credentialId);
 
         User currentUser = userRepository.getUser();
@@ -173,9 +173,9 @@ public class PasskeyResource {
      * @param isSuperAdminApproved the new approval status for the passkey
      * @return {@link ResponseEntity} with HTTP status 200 (OK) and the updated passkey if successful
      */
-    @PutMapping("{credentialId}/approval")
+    @PutMapping("{passkeyId}/approval")
     @EnforceSuperAdmin
-    public ResponseEntity<PasskeyDTO> updatePasskeyApproval(@PathVariable @Base64Url String credentialId, @RequestBody boolean isSuperAdminApproved) {
+    public ResponseEntity<PasskeyDTO> updatePasskeyApproval(@PathVariable("passkeyId") @Base64Url String credentialId, @RequestBody boolean isSuperAdminApproved) {
         log.debug("Updating approval status for passkey with id: {}", credentialId);
 
         Optional<PasskeyCredential> credentialToBeUpdated = passkeyCredentialsRepository.findByCredentialId(credentialId);

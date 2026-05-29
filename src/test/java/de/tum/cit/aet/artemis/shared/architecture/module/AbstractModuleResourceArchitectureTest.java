@@ -52,8 +52,6 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
      * TODO: drive this set to empty.
      */
     private static final Set<String> PATH_VARIABLE_COLLECTION_BASELINE = Set.of(
-            // account
-            "api/account/passkey/{credentialId}", "api/account/passkey/{credentialId}/approval",
             // assessment
             "api/assessment/exercises/{exerciseId}/example-submissions/import/{sourceSubmissionId}",
             // communication
