@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { CodeEditorBuildOutputComponent } from 'app/programming/manage/code-editor/build-output/code-editor-build-output.component';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
-import { BuildLogEntryArray } from 'app/buildagent/shared/entities/build-log.model';
+import { BuildLogEntryArray } from 'app/localci/shared/entities/build-log.model';
 import { CodeEditorBuildLogService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { ResultService } from 'app/exercise/result/result.service';
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';

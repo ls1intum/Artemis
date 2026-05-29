@@ -118,7 +118,7 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
     void testImportUsers() throws Exception {
         UserImportDTO existingUser = new UserImportDTO(LOGIN, "", "", "", "", null);
         UserImportDTO nonExistingUser = new UserImportDTO(NONEXISTENT_LOGIN, "", "", "", "", null);
-        var output = request.postListWithResponseBody("/api/core/admin/users/import", List.of(existingUser, nonExistingUser), UserImportDTO.class, HttpStatus.OK);
+        var output = request.postListWithResponseBody("/api/account/admin/users/import", List.of(existingUser, nonExistingUser), UserImportDTO.class, HttpStatus.OK);
         assertThat(output).hasSize(1);
         assertThat(output.getFirst().login()).isEqualTo(NONEXISTENT_LOGIN);
     }

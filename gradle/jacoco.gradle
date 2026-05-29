@@ -14,6 +14,8 @@ ext {
         "atlas"         :          ["INSTRUCTION": 0.875, "CLASS":  7],
         // Lowered to accommodate PostgreSQL/MySQL testcontainer configuration classes
         "buildagent"    :          ["INSTRUCTION": 0.750, "CLASS":  3],
+        "localci"       :          ["INSTRUCTION": 0.750, "CLASS": 15],
+        "localvc"       :          ["INSTRUCTION": 0.750, "CLASS":  5],
         // Lowered after notification extraction (~9k LOC moved out, including well-tested course
         // notification services). Remaining communication module covers messaging/conversations
         // only. TODO: ratchet back up as messaging side gets more focused test coverage.
