@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SplitPaneHeaderComponent } from 'app/plagiarism/manage/plagiarism-split-view/split-pane-header/split-pane-header.component';
 import { PlagiarismFileElement } from 'app/plagiarism/shared/entities/PlagiarismFileElement';
@@ -7,6 +9,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('SplitPaneHeaderComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp1: SplitPaneHeaderComponent;
     let comp2: SplitPaneHeaderComponent;
     let fixture1: ComponentFixture<SplitPaneHeaderComponent>;
@@ -44,7 +48,7 @@ describe('SplitPaneHeaderComponent', () => {
     });
 
     it('selects the first file on change', () => {
-        const emitSpy = jest.spyOn(comp1.selectFile, 'emit');
+        const emitSpy = vi.spyOn(comp1.selectFile, 'emit');
         fixture1.detectChanges();
         expect(emitSpy).toHaveBeenCalledOnce();
         expect(emitSpy).toHaveBeenCalledWith(files[0].file);
@@ -55,7 +59,7 @@ describe('SplitPaneHeaderComponent', () => {
         fixture2.detectChanges();
         const activeFile = comp2.hasActiveFile();
 
-        expect(activeFile).toBeFalse();
+        expect(activeFile).toBe(false);
     });
 
     it('returns the active file', () => {
@@ -67,23 +71,23 @@ describe('SplitPaneHeaderComponent', () => {
     it('handles selection of a file', () => {
         const idx = 1;
         comp1.showFiles = true;
-        jest.spyOn(comp1.selectFile, 'emit');
+        vi.spyOn(comp1.selectFile, 'emit');
 
         comp1.handleFileSelect(files[idx], idx, true);
 
         expect(comp1.activeFileIndex).toBe(idx);
-        expect(comp1.showFiles).toBeFalse();
+        expect(comp1.showFiles).toBe(false);
         expect(comp1.selectFile.emit).toHaveBeenCalledOnce();
         expect(comp1.selectFile.emit).toHaveBeenCalledWith(files[idx].file);
     });
 
     it('has no files', () => {
         fixture2.componentRef.setInput('files', []);
-        expect(comp2.hasFiles()).toBeFalse();
+        expect(comp2.hasFiles()).toBe(false);
     });
 
     it('has files', () => {
-        expect(comp1.hasFiles()).toBeTrue();
+        expect(comp1.hasFiles()).toBe(true);
     });
 
     it('toggles "show files"', () => {
@@ -91,7 +95,7 @@ describe('SplitPaneHeaderComponent', () => {
 
         comp1.toggleShowFiles(false);
 
-        expect(comp1.showFiles).toBeTrue();
+        expect(comp1.showFiles).toBe(true);
     });
 
     it('does not toggle "show files"', () => {
@@ -99,7 +103,7 @@ describe('SplitPaneHeaderComponent', () => {
 
         comp2.toggleShowFiles(false);
 
-        expect(comp1.showFiles).toBeFalse();
+        expect(comp1.showFiles).toBe(false);
     });
 
     it('should emit selected file through fileSelectedSubject', () => {
@@ -127,7 +131,7 @@ describe('SplitPaneHeaderComponent', () => {
         fixture1.changeDetectorRef.detectChanges();
         fixture2.changeDetectorRef.detectChanges();
 
-        const handleFileSelectWithoutPropagationSpy = jest.spyOn(comp2, 'handleFileSelect');
+        const handleFileSelectWithoutPropagationSpy = vi.spyOn(comp2, 'handleFileSelect');
 
         comp1.handleFileSelect(selectedFile.file, selectedFile.idx, true);
 
@@ -145,8 +149,8 @@ describe('SplitPaneHeaderComponent', () => {
         fixture1.componentRef.setInput('isLockFilesEnabled', lockFilesEnabled);
         fixture2.componentRef.setInput('isLockFilesEnabled', lockFilesEnabled);
 
-        const handleFileSelect = jest.spyOn(comp1, 'handleFileSelect');
-        const handleFileSelectWithoutPropagationSpy = jest.spyOn(comp2, 'handleFileSelect');
+        const handleFileSelect = vi.spyOn(comp1, 'handleFileSelect');
+        const handleFileSelectWithoutPropagationSpy = vi.spyOn(comp2, 'handleFileSelect');
         comp1.handleFileSelect(selectedFile.file, selectedFile.idx, true);
         fixture1.changeDetectorRef.detectChanges();
         fixture2.changeDetectorRef.detectChanges();
@@ -166,7 +170,7 @@ describe('SplitPaneHeaderComponent', () => {
         expect(fileItems.length).toBeGreaterThan(0);
 
         const firstFileItem = fileItems[0];
-        const triggerMouseEnterSpy = jest.spyOn(comp1 as any, 'triggerMouseEnter');
+        const triggerMouseEnterSpy = vi.spyOn(comp1 as any, 'triggerMouseEnter');
 
         firstFileItem.triggerEventHandler('mouseenter', null);
         expect(triggerMouseEnterSpy).toHaveBeenCalledWith(comp1.files()[0], 0);
@@ -178,7 +182,7 @@ describe('SplitPaneHeaderComponent', () => {
         const mockIdx = 0;
 
         fixture1.componentRef.setInput('isLockFilesEnabled', true);
-        jest.spyOn(comp1 as any, 'handleDropdownHover');
+        vi.spyOn(comp1 as any, 'handleDropdownHover');
 
         comp1.ngOnInit();
         comp1.dropdownHoverSubject()!.next({ file: mockFile, idx: mockIdx });
@@ -188,7 +192,7 @@ describe('SplitPaneHeaderComponent', () => {
     });
 
     it('should update showFiles when hasFiles returns true', () => {
-        comp1.hasFiles = jest.fn().mockReturnValue(true);
+        comp1.hasFiles = vi.fn().mockReturnValue(true);
         const initialShowFiles = comp1.showFiles;
 
         comp1.toggleShowFiles(false);
@@ -197,7 +201,7 @@ describe('SplitPaneHeaderComponent', () => {
     });
 
     it('should not update showFiles when hasFiles returns false', () => {
-        comp1.hasFiles = jest.fn().mockReturnValue(false);
+        comp1.hasFiles = vi.fn().mockReturnValue(false);
         const initialShowFiles = comp1.showFiles;
 
         comp1.toggleShowFiles(false);
@@ -209,7 +213,7 @@ describe('SplitPaneHeaderComponent', () => {
         const mockFile = { file: 'testFile', hasMatch: true };
         const mockIdx = files.length;
 
-        jest.spyOn(comp1 as any, 'getIndexOf').mockReturnValue(-1);
+        vi.spyOn(comp1 as any, 'getIndexOf').mockReturnValue(-1);
 
         (comp1 as any).handleDropdownHover(mockFile, mockIdx);
 

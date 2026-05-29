@@ -63,3 +63,22 @@
         </div>
     </div>
 </div>
+
+<p-dialog
+    [(visible)]="denyAfterConfirmDialogVisible"
+    [modal]="true"
+    [closable]="true"
+    [closeOnEscape]="true"
+    [dismissableMask]="false"
+    [draggable]="false"
+    [appendTo]="'body'"
+    [style]="{ width: '50rem' }"
+    [header]="'artemisApp.plagiarism.denyAfterConfirmModalTitle' | artemisTranslate"
+    (onHide)="onDenyAfterConfirmHide()"
+>
+    <p jhiTranslate="artemisApp.plagiarism.denyAfterConfirmModalText"></p>
+    <ng-template #footer>
+        <button type="button" class="btn btn-outline-secondary" (click)="cancelDenyAfterConfirm()" jhiTranslate="global.form.cancel"></button>
+        <button type="button" class="btn btn-danger" (click)="confirmDenyAfterConfirm()" jhiTranslate="global.form.confirm"></button>
+    </ng-template>
+</p-dialog>
