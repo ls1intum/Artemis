@@ -445,7 +445,7 @@ public class ProgrammingExerciseParticipationResource {
      * @param repositoryId   the id of the repository
      * @return the ResponseEntity with status 200 (OK) and with body a list of commitInfo DTOs with the commits information of the repository
      */
-    @GetMapping("programming-exercise/{exerciseId}/commit-history/{repositoryType}")
+    @GetMapping({ "programming-exercises/{exerciseId}/commit-history/{repositoryType}", "programming-exercise/{exerciseId}/commit-history/{repositoryType}" })
     @EnforceAtLeastTutor
     public ResponseEntity<List<CommitInfoDTO>> getCommitHistoryForTemplateSolutionTestOrAuxRepo(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType,
             @RequestParam Optional<Long> repositoryId) {
@@ -517,7 +517,7 @@ public class ProgrammingExerciseParticipationResource {
      * @param repositoryType  the type of the repository for which to retrieve the files content
      * @return The files of the repository along with their content
      */
-    @GetMapping("programming-exercise/{exerciseId}/files-content-commit-details/{commitId}")
+    @GetMapping({ "programming-exercises/{exerciseId}/files-content-commit-details/{commitId}", "programming-exercise/{exerciseId}/files-content-commit-details/{commitId}" })
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, String>> getParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long exerciseId, @PathVariable String commitId,
             @RequestParam(required = false) Long participationId, @RequestParam(required = false) RepositoryType repositoryType) {
@@ -555,7 +555,7 @@ public class ProgrammingExerciseParticipationResource {
      * @return the ResponseEntity with status 200 (OK) and with body containing a list of vcsAccessLogDTOs of the participation, or 400 (Bad request) if localVC is not enabled.
      * @throws BadRequestAlertException if the repository type is invalid
      */
-    @GetMapping("programming-exercise/{exerciseId}/vcs-access-log/{repositoryType}")
+    @GetMapping({ "programming-exercises/{exerciseId}/vcs-access-log/{repositoryType}", "programming-exercise/{exerciseId}/vcs-access-log/{repositoryType}" })
     @EnforceAtLeastInstructorInExercise
     public ResponseEntity<List<VcsAccessLogDTO>> getVcsAccessLogForExerciseRepository(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType) {
         if (vcsAccessLogRepository.isEmpty()) {

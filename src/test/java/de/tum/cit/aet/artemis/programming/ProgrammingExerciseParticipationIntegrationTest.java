@@ -894,7 +894,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
             commitToRepository(programmingExerciseWithAuxRepo.getTestRepositoryUri(), Map.of("tests/ExampleTest.java", "class Tests {}"), testsCommitMessage);
             AuxiliaryRepository auxiliaryRepository = ensureAuxiliaryRepositoryConfigured();
             commitToRepository(auxiliaryRepository.getRepositoryUri(), Map.of("auxiliary/Example.md", "Aux repo"), auxiliaryCommitMessage);
-            PATH_PREFIX = "/api/programming/programming-exercise/" + programmingExerciseWithAuxRepo.getId() + "/commit-history/";
+            PATH_PREFIX = "/api/programming/programming-exercises/" + programmingExerciseWithAuxRepo.getId() + "/commit-history/";
         }
 
         @Test
@@ -1010,7 +1010,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
             solutionCommitHash = commitToRepository(programmingExercise.getSolutionRepositoryUri(), Map.of("solution/Example.java", "class SolutionDetail {}"),
                     "Solution detail commit").getName();
 
-            basePath = "/api/programming/programming-exercise/" + programmingExercise.getId() + "/files-content-commit-details/";
+            basePath = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/files-content-commit-details/";
         }
 
         @Test

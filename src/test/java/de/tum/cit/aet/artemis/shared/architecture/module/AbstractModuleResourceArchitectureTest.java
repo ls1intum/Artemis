@@ -87,14 +87,12 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
             // localci
             "api/localci/build-log/{buildJobId}", "api/localci/courses/{courseId}/cancel-job/{buildJobId}",
             // lti
-            "api/lti/admin/lti-platform/{platformId}", "api/lti/lti13/deep-linking/{courseId}",
+            "api/lti/lti13/deep-linking/{courseId}",
             // modeling
             "api/modeling/modeling-exercises/import/{sourceExerciseId}", "api/modeling/modeling-submissions/{exampleSubmissionId}/example-assessment",
             // programming
             "api/programming/sharing/export/{exerciseId}", "api/programming/programming-exercise-participations/{participationId}/files-content/{commitId}",
-            "api/programming/programming-exercise/{exerciseId}/commit-history/{repositoryType}",
-            "api/programming/programming-exercise/{exerciseId}/files-content-commit-details/{commitId}",
-            "api/programming/programming-exercise/{exerciseId}/vcs-access-log/{repositoryType}", "api/programming/programming-exercises/import/{sourceExerciseId}",
+            "api/programming/programming-exercises/{exerciseId}/files-content-commit-details/{commitId}", "api/programming/programming-exercises/import/{sourceExerciseId}",
             "api/programming/programming-exercises/{exerciseId}/export-instructor-auxiliary-repository/{repositoryId}",
             "api/programming/programming-exercises/{exerciseId}/export-student-repository/{participationId}",
             "api/programming/programming-submissions/{participationId}/trigger-build", "api/programming/programming-submissions/{participationId}/trigger-failed-build",
@@ -103,10 +101,9 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
             "api/programming/repository/{participationId}/files", "api/programming/repository/{participationId}/files-change",
             "api/programming/repository/{participationId}/files-content", "api/programming/repository/{participationId}/files-plagiarism-view",
             "api/programming/repository/{participationId}/folder", "api/programming/repository/{participationId}/pull", "api/programming/repository/{participationId}/rename-file",
-            "api/programming/repository/{participationId}/reset", "api/programming/ssh-settings/public-key/{keyId}", "api/programming/test-repository/{exerciseId}",
-            "api/programming/test-repository/{exerciseId}/commit", "api/programming/test-repository/{exerciseId}/file", "api/programming/test-repository/{exerciseId}/files",
-            "api/programming/test-repository/{exerciseId}/folder", "api/programming/test-repository/{exerciseId}/pull", "api/programming/test-repository/{exerciseId}/rename-file",
-            "api/programming/test-repository/{exerciseId}/reset",
+            "api/programming/repository/{participationId}/reset", "api/programming/test-repository/{exerciseId}", "api/programming/test-repository/{exerciseId}/commit",
+            "api/programming/test-repository/{exerciseId}/file", "api/programming/test-repository/{exerciseId}/files", "api/programming/test-repository/{exerciseId}/folder",
+            "api/programming/test-repository/{exerciseId}/pull", "api/programming/test-repository/{exerciseId}/rename-file", "api/programming/test-repository/{exerciseId}/reset",
             // quiz
             "api/quiz/courses/{courseId}/training-questions/{quizQuestionId}/submit", "api/quiz/quiz-exercises/{quizBatchId}/start-batch",
             // text

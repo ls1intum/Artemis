@@ -16,7 +16,7 @@ describe('ProgrammingExerciseParticipation Service', () => {
     let accountService: AccountService;
     let entityTitleService: EntityTitleService;
     const resourceUrlParticipations = 'api/programming/programming-exercise-participations/';
-    const resourceUrl = 'api/programming/programming-exercise/';
+    const resourceUrl = 'api/programming/programming-exercises/';
 
     let titleSpy: jest.SpyInstance;
     let accessRightsSpy: jest.SpyInstance;

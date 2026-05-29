@@ -23,7 +23,7 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
     private accountService = inject(AccountService);
 
     public resourceUrlParticipations = 'api/programming/programming-exercise-participations/';
-    public resourceUrl = 'api/programming/programming-exercise/';
+    public resourceUrl = 'api/programming/programming-exercises/';
 
     getLatestResultWithFeedback(participationId: number, withSubmission = true): Observable<Result | undefined> {
         const options = createRequestOption({ withSubmission });
