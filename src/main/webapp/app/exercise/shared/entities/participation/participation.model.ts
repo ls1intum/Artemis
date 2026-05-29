@@ -1,4 +1,4 @@
-import { BaseEntity } from 'app/shared/model/base-entity';
+import { BaseEntity } from 'app/foundation/model/base-entity';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseDTO } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';

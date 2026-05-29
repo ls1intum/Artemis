@@ -4,7 +4,7 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
-import { convertDateFromServer } from 'app/shared/util/date.utils';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 

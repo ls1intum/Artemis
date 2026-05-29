@@ -24,7 +24,7 @@ import { SearchView } from 'app/core/navbar/global-search/models/search-view.mod
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SearchEntityType, SearchableEntity } from 'app/core/navbar/global-search/models/searchable-entity.model';
 import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
 import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';

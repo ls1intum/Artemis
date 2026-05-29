@@ -5,11 +5,11 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import dayjs from 'dayjs/esm';
 import { Conversation } from 'app/communication/shared/entities/conversation/conversation.model';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { NgClass } from '@angular/common';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

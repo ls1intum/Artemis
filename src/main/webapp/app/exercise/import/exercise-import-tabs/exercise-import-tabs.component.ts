@@ -2,7 +2,7 @@ import { Component, Input, OnInit, inject } from '@angular/core';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { NgbNav, NgbNavContent, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { DynamicDialogConfig } from 'primeng/dynamicdialog';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ExerciseImportComponent, ExerciseImportDialogData } from '../exercise-import.component';
 import { ExerciseImportFromFileComponent } from '../from-file/exercise-import-from-file.component';
 

@@ -1,6 +1,6 @@
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { roundValueSpecifiedByCourseSettings, scrollToTopOfPage } from 'app/shared/util/utils';
-import { AlertService } from 'app/shared/service/alert.service';
+import { roundValueSpecifiedByCourseSettings, scrollToTopOfPage } from 'app/foundation/util/utils';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Component, Input, OnInit, inject } from '@angular/core';
@@ -14,8 +14,8 @@ import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { TestCaseResult } from 'app/programming/shared/entities/test-case-result.model';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exercise-scores-export-button',

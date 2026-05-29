@@ -1,4 +1,4 @@
-import { BaseEntity } from 'app/shared/model/base-entity';
+import { BaseEntity } from 'app/foundation/model/base-entity';
 import { BuildJob } from 'app/localci/shared/entities/build-job.model';
 import { BuildAgent } from 'app/localci/shared/entities/build-agent.model';
 import dayjs from 'dayjs/esm';

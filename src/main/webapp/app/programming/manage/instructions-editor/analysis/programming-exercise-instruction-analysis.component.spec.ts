@@ -5,7 +5,7 @@ import { triggerChanges } from 'test/helpers/utils/general-test.utils';
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
 import { MockProgrammingExerciseInstructionAnalysisService } from 'test/helpers/mocks/service/mock-programming-exericse-instruction-analysis.service';
-import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
+import { TaskAction } from 'app/editor/monaco-editor/model/actions/task.action';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 

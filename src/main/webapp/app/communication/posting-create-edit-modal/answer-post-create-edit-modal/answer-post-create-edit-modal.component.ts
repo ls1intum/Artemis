@@ -5,7 +5,7 @@ import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PostContentValidationPattern } from 'app/communication/metis.util';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
-import { deepClone } from 'app/shared/util/deep-clone.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-answer-post-create-edit-modal',

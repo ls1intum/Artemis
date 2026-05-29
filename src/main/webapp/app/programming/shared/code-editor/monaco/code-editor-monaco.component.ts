@@ -19,20 +19,20 @@ import {
     viewChildren,
 } from '@angular/core';
 import { RepositoryFileService } from 'app/programming/shared/services/repository.service';
-import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { Subscription, firstValueFrom, take, timeout } from 'rxjs';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component';
 import { fromPairs, pickBy } from 'lodash-es';
 import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/suggestion/code-editor-tutor-assessment-inline-feedback-suggestion.component';
-import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
-import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { MonacoEditorLineHighlight } from 'app/editor/monaco-editor/model/monaco-editor-line-highlight.model';
+import { Disposable } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
 import { FileTypeService } from 'app/programming/shared/services/file-type.service';
-import { EditorPosition } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { EditorPosition } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, FileType, RenameFileChange, RepositoryType } from '../model/code-editor.model';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';

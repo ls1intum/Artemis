@@ -6,7 +6,7 @@ import { Observable, Subject, of } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith } from 'rxjs/operators';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 
 import {
     faChartBar,
@@ -26,16 +26,16 @@ import {
     faUndo,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseExamArchiveButtonComponent } from 'app/shared/components/buttons/course-exam-archive-button/course-exam-archive-button.component';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { CourseExamArchiveButtonComponent } from 'app/shared-ui/components/buttons/course-exam-archive-button/course-exam-archive-button.component';
 import { CourseSidebarComponent, SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
-import { EventManager } from 'app/shared/service/event-manager.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { BaseCourseContainerComponent } from 'app/course/shared/course-base-container/course-base-container.component';
 import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-item.service';
 import { CourseTitleBarComponent } from 'app/course/shared/course-title-bar/course-title-bar.component';
-import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { ActionType, EntitySummaryCategory } from 'app/shared/delete-dialog/delete-dialog.model';
+import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
+import { ActionType, EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { IrisSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-settings-update.component';
 import { TutorialGroupsChecklistComponent } from 'app/tutorialgroup/manage/tutorial-groups-checklist/tutorial-groups-checklist.component';
 import { CompetencyManagementComponent } from 'app/atlas/manage/competency-management/competency-management.component';
@@ -46,24 +46,24 @@ import { FaqComponent } from 'app/communication/faq/faq.component';
 import { BuildOverviewComponent } from 'app/localci/build-queue/build-overview.component';
 import { CourseDetailComponent } from 'app/course/manage/detail/course-detail.component';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
 import { ExamManagementComponent } from 'app/exam/manage/exam-management/exam-management.component';
 import { CourseManagementExercisesComponent } from 'app/course/manage/exercises/course-management-exercises.component';
 import { LectureComponent } from 'app/lecture/manage/lecture/lecture.component';
 import { CourseManagementStatisticsComponent } from 'app/course/manage/statistics/course-management-statistics.component';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
-import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { CourseSummaryDTO } from 'app/course/shared/entities/course-summary.model';
 import { CourseOperationProgressDTO, CourseOperationType } from 'app/course/shared/entities/course-operation-progress.model';
 import { CourseOperationProgressComponent } from 'app/course/manage/course-operation-progress/course-operation-progress.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants';
 import { Subscription } from 'rxjs';
-import { convertDateFromServer } from 'app/shared/util/date.utils';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
 
 @Component({
     selector: 'jhi-course-management-container',
