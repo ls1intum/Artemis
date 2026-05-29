@@ -1,16 +1,16 @@
-@if (exercise) {
+@if (exercise()) {
     <div id="exercise-headers-information" class="align-self-stretch d-flex flex-row flex-wrap align-items-stretch gap-2 overflow-auto">
         @for (informationBoxItem of informationBoxItems; track informationBoxItem) {
             @if (informationBoxItem.content.type === 'submissionStatus') {
                 <div
-                    [attr.role]="sortedHistoryResults.length ? 'button' : undefined"
-                    [attr.tabindex]="sortedHistoryResults.length ? 0 : undefined"
-                    [attr.aria-disabled]="!sortedHistoryResults.length"
-                    [class.pe-auto]="sortedHistoryResults.length"
-                    [ngbTooltip]="sortedHistoryResults.length ? ('artemisApp.result.progressString.clickToSeeAllResults' | artemisTranslate) : ''"
-                    (click)="sortedHistoryResults.length ? resultHistoryDropdown.toggleResultsPopover($event) : undefined"
-                    (keydown.enter)="sortedHistoryResults.length ? resultHistoryDropdown.toggleResultsPopover($event) : undefined"
-                    (keydown.space)="sortedHistoryResults.length ? resultHistoryDropdown.toggleResultsPopover($event) : undefined"
+                    [attr.role]="sortedHistoryResults().length ? 'button' : undefined"
+                    [attr.tabindex]="sortedHistoryResults().length ? 0 : undefined"
+                    [attr.aria-disabled]="!sortedHistoryResults().length"
+                    [class.pe-auto]="sortedHistoryResults().length"
+                    [ngbTooltip]="sortedHistoryResults().length ? ('artemisApp.result.progressString.clickToSeeAllResults' | artemisTranslate) : ''"
+                    (click)="sortedHistoryResults().length ? resultHistoryDropdown.toggleResultsPopover($event) : undefined"
+                    (keydown.enter)="sortedHistoryResults().length ? resultHistoryDropdown.toggleResultsPopover($event) : undefined"
+                    (keydown.space)="sortedHistoryResults().length ? resultHistoryDropdown.toggleResultsPopover($event) : undefined"
                 >
                     <jhi-information-box [informationBoxData]="informationBoxItem">
                         <span contentComponent class="d-flex align-items-center gap-1">
@@ -29,8 +29,8 @@
                             </span>
                             <jhi-result-history-dropdown
                                 #resultHistoryDropdown
-                                [exercise]="exercise"
-                                [sortedHistoryResults]="sortedHistoryResults"
+                                [exercise]="exercise()"
+                                [sortedHistoryResults]="sortedHistoryResults()"
                                 [studentParticipation]="studentParticipation()"
                                 [showUngradedResults]="isPractice()"
                                 (viewingSubmissionChange)="viewingSubmissionChange.emit($event)"

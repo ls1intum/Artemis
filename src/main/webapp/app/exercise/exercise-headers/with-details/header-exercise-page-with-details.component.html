@@ -1,64 +1,64 @@
-@if (exercise) {
+@if (exercise()) {
     <div class="course-info-bar" id="exercise-header">
         <div class="left-col">
             <div class="title-row">
                 <div class="inner-row">
-                    @if (exercise.type) {
-                        <fa-icon [icon]="getIcon(exercise.type)" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" />
+                    @if (exercise().type) {
+                        <fa-icon [icon]="getIcon(exercise().type)" [ngbTooltip]="getIconTooltip(exercise().type) | artemisTranslate" />
                     }
                     &nbsp;
                     <ng-content select="[pagetitle]" />
                 </div>
-                @if ((exercise.releaseDate && dayjs(exercise.releaseDate).isAfter(dayjs())) || exercise.difficulty || exerciseCategories?.length) {
-                    <jhi-exercise-categories [exercise]="exercise" [showTags]="{ difficulty: true, notReleased: true }" [ngClass]="'badge-row'" />
+                @if ((exercise().releaseDate && dayjs(exercise().releaseDate).isAfter(dayjs())) || exercise().difficulty || exerciseCategories?.length) {
+                    <jhi-exercise-categories [exercise]="exercise()" [showTags]="{ difficulty: true, notReleased: true }" [ngClass]="'badge-row'" />
                 }
             </div>
-            @if (exercise.maxPoints || (exercise.assessmentType && exercise.type === ExerciseType.PROGRAMMING)) {
+            @if (exercise().maxPoints || (exercise().assessmentType && exercise().type === ExerciseType.PROGRAMMING)) {
                 <div class="points-assessment-row">
-                    @if (exercise.maxPoints) {
-                        <span [style.margin-right]="exercise.maxPoints ? '30px' : null">
+                    @if (exercise().maxPoints) {
+                        <span [style.margin-right]="exercise().maxPoints ? '30px' : null">
                             <span class="me-2">
                                 {{ 'artemisApp.courseOverview.exerciseDetails.points' | artemisTranslate }}
                                 @if (achievedPoints !== undefined) {
                                     {{ achievedPoints + ('artemisApp.courseOverview.exerciseDetails.of' | artemisTranslate) }}
                                 }
-                                {{ exercise.maxPoints }}
-                                @if (exercise.bonusPoints) {
-                                    <span>({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | artemisTranslate }} {{ exercise.bonusPoints }})</span>
+                                {{ exercise().maxPoints }}
+                                @if (exercise().bonusPoints) {
+                                    <span>({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | artemisTranslate }} {{ exercise().bonusPoints }})</span>
                                 }
                             </span>
-                            @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                                <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" class="me-2" />
+                            @if (exercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                                <jhi-included-in-score-badge [includedInOverallScore]="exercise().includedInOverallScore" class="me-2" />
                             }
                         </span>
                     }
-                    @if (exercise.assessmentType && exercise.type === ExerciseType.PROGRAMMING) {
+                    @if (exercise().assessmentType && exercise().type === ExerciseType.PROGRAMMING) {
                         <span>
                             <div>
                                 {{ 'artemisApp.courseOverview.exerciseDetails.assessmentType' | artemisTranslate }}
-                                {{ 'artemisApp.AssessmentType.forExerciseHeader.' + exercise.assessmentType | artemisTranslate }}
-                                <fa-icon [icon]="faQuestionCircle" ngbTooltip="{{ 'artemisApp.AssessmentType.tooltip.' + exercise.assessmentType | artemisTranslate }}" />
+                                {{ 'artemisApp.AssessmentType.forExerciseHeader.' + exercise().assessmentType | artemisTranslate }}
+                                <fa-icon [icon]="faQuestionCircle" ngbTooltip="{{ 'artemisApp.AssessmentType.tooltip.' + exercise().assessmentType | artemisTranslate }}" />
                             </div>
                         </span>
                     }
                 </div>
             }
-            @if (submissionPolicy && submissionPolicy.active) {
+            @if (submissionPolicy() && submissionPolicy()!.active) {
                 <div class="submission-row">
                     <div>{{ 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle' | artemisTranslate }}:</div>
                     <div>
                         {{
                             numberOfSubmissions +
                                 '/' +
-                                submissionPolicy.submissionLimit +
-                                (submissionPolicy.exceedingPenalty
+                                submissionPolicy()!.submissionLimit +
+                                (submissionPolicy()!.exceedingPenalty
                                     ? ('artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel'
-                                      | artemisTranslate: { points: submissionPolicy.exceedingPenalty })
+                                      | artemisTranslate: { points: submissionPolicy()!.exceedingPenalty })
                                     : '')
                         }}
                         <fa-icon
                             [icon]="faQuestionCircle"
-                            ngbTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + submissionPolicy.type + '.tooltip' | artemisTranslate }}"
+                            ngbTooltip="{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' + submissionPolicy()!.type + '.tooltip' | artemisTranslate }}"
                         />
                     </div>
                 </div>
@@ -81,24 +81,24 @@
                         </span>
                     </div>
                 }
-                @if (exercise.presentationScoreEnabled) {
+                @if (exercise().presentationScoreEnabled) {
                     <div>
-                        @if (course?.presentationScore) {
+                        @if (effectiveCourse()?.presentationScore) {
                             {{ 'artemisApp.courseOverview.exerciseDetails.presented' | artemisTranslate }}
-                            @if ((studentParticipation?.presentationScore ?? 0) > 0) {
+                            @if ((studentParticipation()?.presentationScore ?? 0) > 0) {
                                 <span class="badge bg-success" jhiTranslate="global.generic.yes"></span>
                             }
-                            @if ((studentParticipation?.presentationScore ?? 0) <= 0) {
+                            @if ((studentParticipation()?.presentationScore ?? 0) <= 0) {
                                 <span class="badge bg-secondary" jhiTranslate="global.generic.no"></span>
                             }
                         } @else {
                             {{ 'artemisApp.courseOverview.exerciseDetails.presentation' | artemisTranslate }}
-                            @if (studentParticipation?.presentationScore) {
+                            @if (studentParticipation()?.presentationScore) {
                                 <span class="badge bg-success">
-                                    {{ studentParticipation!.presentationScore + '%' }}
+                                    {{ studentParticipation()!.presentationScore + '%' }}
                                 </span>
                             }
-                            @if (!studentParticipation?.presentationScore) {
+                            @if (!studentParticipation()?.presentationScore) {
                                 <span class="badge bg-secondary" jhiTranslate="global.generic.unset"></span>
                             }
                         }
@@ -133,25 +133,25 @@
                         </span>
                     </div>
                 }
-                @if (exercise.presentationScoreEnabled) {
+                @if (exercise().presentationScoreEnabled) {
                     <div>
-                        @if (course?.presentationScore) {
+                        @if (effectiveCourse()?.presentationScore) {
                             {{ 'artemisApp.courseOverview.exerciseDetails.presented' | artemisTranslate }}
-                            @if ((studentParticipation?.presentationScore ?? 0) > 0) {
+                            @if ((studentParticipation()?.presentationScore ?? 0) > 0) {
                                 <span class="badge bg-success" jhiTranslate="global.generic.yes"></span>
                             }
-                            @if ((studentParticipation?.presentationScore ?? 0) <= 0) {
+                            @if ((studentParticipation()?.presentationScore ?? 0) <= 0) {
                                 <span class="badge bg-secondary" jhiTranslate="global.generic.no"></span>
                             }
                         }
-                        @if (!course?.presentationScore) {
+                        @if (!effectiveCourse()?.presentationScore) {
                             {{ 'artemisApp.courseOverview.exerciseDetails.presentation' | artemisTranslate }}
-                            @if (studentParticipation?.presentationScore) {
+                            @if (studentParticipation()?.presentationScore) {
                                 <span class="badge bg-success">
-                                    {{ studentParticipation!.presentationScore + '%' }}
+                                    {{ studentParticipation()!.presentationScore + '%' }}
                                 </span>
                             }
-                            @if (!studentParticipation?.presentationScore) {
+                            @if (!studentParticipation()?.presentationScore) {
                                 <span class="badge bg-secondary" jhiTranslate="global.generic.unset"></span>
                             }
                         }
@@ -163,7 +163,7 @@
                     {{ 'artemisApp.courseOverview.exerciseDetails.complaintPossible' | artemisTranslate }}
                     <span
                         class="badge bg-success"
-                        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintPossibleTooltip' | artemisTranslate: { days: course?.maxComplaintTimeDays }"
+                        [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintPossibleTooltip' | artemisTranslate: { days: effectiveCourse()?.maxComplaintTimeDays }"
                         jhiTranslate="global.generic.yes"
                     ></span>
                 </div>

@@ -12,8 +12,8 @@ import { NgClass } from '@angular/common';
 export class DifficultyBadgeComponent implements OnInit, OnDestroy, OnChanges {
     private translateService = inject(TranslateService);
 
-    readonly exercise = input<Exercise>(undefined!);
-    readonly showNoLevel = input<boolean>(undefined!);
+    readonly exercise = input.required<Exercise>();
+    readonly showNoLevel = input<boolean>(false);
     public translatedDifficulty: string;
     public badgeClass: string;
     private translateSubscription: Subscription;

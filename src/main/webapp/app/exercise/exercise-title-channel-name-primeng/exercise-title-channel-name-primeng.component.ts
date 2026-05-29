@@ -1,4 +1,4 @@
-import { Component, OnChanges, SimpleChanges, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TitleChannelNamePrimengComponent } from 'app/shared-ui/form/title-channel-name-primeng/title-channel-name-primeng.component';
@@ -10,49 +10,43 @@ import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercise
     templateUrl: './exercise-title-channel-name-primeng.component.html',
     imports: [TitleChannelNamePrimengComponent],
 })
-export class ExerciseTitleChannelNamePrimengComponent implements OnChanges {
-    course = input<Course>();
-    isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
-    courseId = input<number>();
+export class ExerciseTitleChannelNamePrimengComponent {
+    readonly course = input<Course>();
+    readonly isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
+    readonly courseId = input<number>();
 
-    readonly exercise = input<Exercise>(undefined!);
-    readonly titlePattern = input<string>(undefined!);
-    readonly minTitleLength = input<number>(undefined!);
-    readonly isExamMode = input<boolean>(undefined!);
-    readonly isImport = input<boolean>(undefined!);
-    readonly hideTitleLabel = input<boolean>(undefined!);
-    readonly hideChannelNameLabel = input<boolean>(undefined!);
-    readonly titleHelpIconText = input<string>(undefined!);
-    readonly channelNameHelpIconText = input<string>(undefined!);
+    readonly exercise = input<Exercise>({} as Exercise);
+    readonly titlePattern = input<string>();
+    readonly minTitleLength = input<number>();
+    readonly isExamMode = input<boolean>(false);
+    readonly isImport = input<boolean>(false);
+    readonly hideTitleLabel = input<boolean>(false);
+    readonly hideChannelNameLabel = input<boolean>(false);
+    readonly titleHelpIconText = input<string>();
+    readonly channelNameHelpIconText = input<string>('');
 
     readonly titleChannelNameComponent = viewChild.required(TitleChannelNamePrimengComponent);
 
-    onTitleChange = output<string>();
-    onChannelNameChange = output<string>();
+    readonly onTitleChange = output<string>();
+    readonly onChannelNameChange = output<string>();
 
-    alreadyUsedExerciseNames = signal<Set<string>>(new Set());
+    readonly alreadyUsedExerciseNames = signal<Set<string>>(new Set());
 
-    hideChannelNameInput = false;
+    readonly hideChannelNameInput = computed(() => !this.requiresChannelName(this.exercise(), this.course(), this.isExamMode(), this.isImport()));
 
     constructor() {
         const exerciseService = inject(ExerciseService);
         effect(
             function fetchExistingExerciseNamesOnInit() {
                 const courseId = this.courseId() ?? this.course()?.id;
-                if (courseId && this.exercise.type) {
-                    exerciseService.getExistingExerciseDetailsInCourse(courseId, this.exercise.type).subscribe((exerciseDetails: CourseExistingExerciseDetailsType) => {
+                const exercise = this.exercise();
+                if (courseId && exercise.type) {
+                    exerciseService.getExistingExerciseDetailsInCourse(courseId, exercise.type).subscribe((exerciseDetails: CourseExistingExerciseDetailsType) => {
                         this.alreadyUsedExerciseNames.set(exerciseDetails.exerciseTitles ?? new Set());
                     });
                 }
             }.bind(this),
         );
-    }
-
-    ngOnChanges(changes: SimpleChanges) {
-        const isImport = this.isImport();
-        if (changes.exercise || changes.course || changes.isExamMode || isImport) {
-            this.hideChannelNameInput = !this.requiresChannelName(this.exercise(), this.course(), this.isExamMode(), isImport);
-        }
     }
 
     updateTitle(newTitle: string | undefined) {

@@ -1,4 +1,4 @@
-import { Component, ElementRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -14,7 +14,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { TranslateService } from '@ngx-translate/core';
 import { Badge, ResultService } from 'app/exercise/result/result.service';
 import { MissingResultInformation, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercise/result/result.utils';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { NavigationEnd, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs/operators';
@@ -35,10 +35,11 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
 export class ResultHistoryDropdownComponent {
     private resultService = inject(ResultService);
     private translateService = inject(TranslateService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private router = inject(Router);
     private exerciseService = inject(ExerciseService);
     private exerciseCacheService = inject(ExerciseCacheService, { optional: true });
+    private destroyRef = inject(DestroyRef);
 
     readonly faAngleDown = faAngleDown;
     readonly faClock = faClock;
@@ -267,25 +268,42 @@ export class ResultHistoryDropdownComponent {
         const exerciseServiceToUse = this.exerciseCacheService ?? this.exerciseService;
         const feedbackParams = prepareFeedbackComponentParameters(exercise, result, participation, templateStatus, undefined, exerciseServiceToUse);
 
-        const modalRef = this.modalService.open(FeedbackComponent, { keyboard: true, size: 'xl' });
-        const instance: FeedbackComponent = modalRef.componentInstance;
-        instance.exercise = exercise;
-        instance.result = result;
-        instance.participation = participation;
+        const inputValues: Pick<FeedbackComponent, 'exercise' | 'result' | 'participation'> &
+            Partial<Pick<FeedbackComponent, 'exerciseType' | 'showScoreChart' | 'messageKey' | 'latestDueDate' | 'showMissingAutomaticFeedbackInformation'>> = {
+            exercise,
+            result,
+            participation,
+        };
         if (feedbackParams.exerciseType) {
-            instance.exerciseType = feedbackParams.exerciseType;
+            inputValues.exerciseType = feedbackParams.exerciseType;
         }
         if (feedbackParams.showScoreChart) {
-            instance.showScoreChart = feedbackParams.showScoreChart;
+            inputValues.showScoreChart = feedbackParams.showScoreChart;
         }
         if (feedbackParams.messageKey) {
-            instance.messageKey = feedbackParams.messageKey;
+            inputValues.messageKey = feedbackParams.messageKey;
         }
         if (feedbackParams.latestDueDate) {
-            instance.latestDueDate = feedbackParams.latestDueDate;
+            inputValues.latestDueDate = feedbackParams.latestDueDate;
         }
         if (feedbackParams.showMissingAutomaticFeedbackInformation) {
-            instance.showMissingAutomaticFeedbackInformation = feedbackParams.showMissingAutomaticFeedbackInformation;
+            inputValues.showMissingAutomaticFeedbackInformation = feedbackParams.showMissingAutomaticFeedbackInformation;
         }
+
+        const dialogRef = this.dialogService.open(FeedbackComponent, {
+            width: '90vw',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            inputValues,
+        });
+        dialogRef?.onChildComponentLoaded.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((component) => {
+            component.activeModal = {
+                close: (reason?: unknown) => dialogRef.close(reason),
+                dismiss: (reason?: unknown) => dialogRef.close(reason),
+                update: () => {},
+            };
+        });
     }
 }

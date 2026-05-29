@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, ViewEncapsulation, input } from '@angular/core';
+import { Component, OnChanges, OnInit, ViewEncapsulation, input } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { Exercise, IncludedInOverallScore, getCourseFromExercise, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -36,15 +36,9 @@ import { getLatestResultOfStudentParticipation } from 'app/exercise/participatio
 export class HeaderParticipationPageComponent implements OnInit, OnChanges {
     readonly ButtonType = ButtonType;
     readonly IncludedInOverallScore = IncludedInOverallScore;
-    readonly title = input<string>(undefined!);
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input() exercise: Exercise;
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input() participation: StudentParticipation;
+    readonly title = input<string>();
+    readonly exercise = input<Exercise>();
+    readonly participation = input<StudentParticipation>();
 
     public exerciseStatusBadge = 'bg-success';
     public exerciseCategories: ExerciseCategory[];
@@ -64,9 +58,10 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
      * Returns false if it is an exam exercise and the publishResultsDate is in the future, true otherwise
      */
     get resultsPublished(): boolean {
-        if (this.exercise?.exerciseGroup?.exam) {
-            if (this.exercise.exerciseGroup.exam.publishResultsDate) {
-                return dayjs().isAfter(this.exercise.exerciseGroup.exam.publishResultsDate);
+        const exercise = this.exercise();
+        if (exercise?.exerciseGroup?.exam) {
+            if (exercise.exerciseGroup.exam.publishResultsDate) {
+                return dayjs().isAfter(exercise.exerciseGroup.exam.publishResultsDate);
             }
             // default to false if it is an exam exercise but the publishResultsDate is not set
             return false;
@@ -78,13 +73,15 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
      * Sets the status badge and categories of the exercise on changes
      */
     ngOnChanges() {
-        if (this.exercise) {
-            this.exerciseStatusBadge = hasExerciseDueDatePassed(this.exercise, this.participation) ? 'bg-danger' : 'bg-success';
-            this.exerciseCategories = this.exercise.categories || [];
-            this.dueDate = getExerciseDueDate(this.exercise, this.participation);
-            const result = getLatestResultOfStudentParticipation(this.participation, false, true);
+        const exercise = this.exercise();
+        const participation = this.participation();
+        if (exercise) {
+            this.exerciseStatusBadge = hasExerciseDueDatePassed(exercise, participation) ? 'bg-danger' : 'bg-success';
+            this.exerciseCategories = exercise.categories || [];
+            this.dueDate = getExerciseDueDate(exercise, participation);
+            const result = getLatestResultOfStudentParticipation(participation, false, true);
             if (result?.rated) {
-                this.achievedPoints = roundValueSpecifiedByCourseSettings((result.score! * this.exercise.maxPoints!) / 100, getCourseFromExercise(this.exercise));
+                this.achievedPoints = roundValueSpecifiedByCourseSettings((result.score! * exercise.maxPoints!) / 100, getCourseFromExercise(exercise));
             }
         }
     }
