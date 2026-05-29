@@ -1,8 +1,11 @@
 import { WeekGroupingUtil } from './week-grouping.util';
 import { SidebarCardElement } from '../types/sidebar';
 import dayjs from 'dayjs/esm';
+import { describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('WeekGroupingUtil', () => {
+    setupTestBed({ zoneless: true });
     it('returns a single group for noDate', () => {
         const items: SidebarCardElement[] = [
             { title: 'Item 1', id: 'i1', size: 'M' },

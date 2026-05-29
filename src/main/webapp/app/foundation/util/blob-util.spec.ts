@@ -7,8 +7,11 @@ import {
     createBlob,
     objectToJsonBlob,
 } from 'app/foundation/util/blob-util';
+import { describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('BlobUtil', () => {
+    setupTestBed({ zoneless: true });
     describe('createBlob', () => {
         it('should create blob from no parts', () => {
             const blob = createBlob([]);
@@ -120,7 +123,7 @@ describe('BlobUtil', () => {
             const binary = '';
             const arrayBuffer = binaryStringToArrayBuffer(binary);
             const bytes = new Uint8Array(arrayBuffer);
-            expect(bytes).toBeEmpty();
+            expect(bytes).toHaveLength(0);
         });
 
         it('should return an array buffer with the correct contents', () => {

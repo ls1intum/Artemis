@@ -1,6 +1,9 @@
 import { sha1Hex } from 'app/foundation/util/crypto.utils';
+import { describe, expect, it, test } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CryptoUtils', () => {
+    setupTestBed({ zoneless: true });
     describe('sha1Hex', () => {
         it('should compute Hash for "foo"', () => {
             expect(sha1Hex('foo')).toBe('0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33');

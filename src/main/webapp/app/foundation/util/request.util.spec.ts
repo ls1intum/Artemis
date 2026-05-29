@@ -1,7 +1,10 @@
 import { createNestedRequestOption } from 'app/foundation/util/request.util';
 import { HttpParams } from '@angular/common/http';
+import { describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('createNestedRequestOption', () => {
+    setupTestBed({ zoneless: true });
     it('should create HttpParams with nested keys', () => {
         const req = { key1: 'value1', key2: 'value2' };
         const parentKey = 'parent';

@@ -1,6 +1,10 @@
 import { decodeBase64url, encodeAsBase64Url } from 'app/foundation/util/base64.util';
+import { describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('Base64 Utility Functions', () => {
+    setupTestBed({ zoneless: true });
+
     describe('decodeBase64url', () => {
         const textDecoder = new TextDecoder();
 

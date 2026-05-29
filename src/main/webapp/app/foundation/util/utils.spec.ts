@@ -13,8 +13,12 @@ import {
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Range } from 'app/foundation/util/utils';
+import { describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('Round', () => {
+    setupTestBed({ zoneless: true });
+
     it('Decimal length', () => {
         expect(round(14.821354, 4)).toBe(14.8214);
         expect(round(14.821354, 3)).toBe(14.821);
@@ -49,6 +53,7 @@ describe('Round', () => {
 });
 
 describe('Rounding of scores', () => {
+    setupTestBed({ zoneless: true });
     it('RoundScore', () => {
         expect(roundValueSpecifiedByCourseSettings(13.821354, { accuracyOfScores: 4 })).toBe(13.8214);
         expect(roundValueSpecifiedByCourseSettings(54.821354, { accuracyOfScores: 3 })).toBe(54.821);
@@ -67,6 +72,7 @@ describe('Rounding of scores', () => {
 });
 
 describe('stringifyIgnoringFields', () => {
+    setupTestBed({ zoneless: true });
     it('should ignore nothing', () => {
         expect(stringifyIgnoringFields({})).toBe(JSON.stringify({}));
         expect(stringifyIgnoringFields({}, 'a', 'b')).toBe(JSON.stringify({}));
@@ -82,6 +88,7 @@ describe('stringifyIgnoringFields', () => {
 });
 
 describe('average', () => {
+    setupTestBed({ zoneless: true });
     it('should return an average of 0 for an empty array', () => {
         expect(average([])).toBe(0);
     });
@@ -94,6 +101,7 @@ describe('average', () => {
 });
 
 describe('Range', () => {
+    setupTestBed({ zoneless: true });
     it('should return the correct string representation', () => {
         const range = new Range(10, 50);
         expect(range.toString()).toBe('[10%, 50%)');
@@ -104,6 +112,7 @@ describe('Range', () => {
 });
 
 describe('getAsMutableObject', () => {
+    setupTestBed({ zoneless: true });
     it('should return immutable object as mutable object', () => {
         const immutableObject = Object.freeze({
             name: 'Jane',
@@ -119,22 +128,24 @@ describe('getAsMutableObject', () => {
 });
 
 describe('isExamExercise', () => {
+    setupTestBed({ zoneless: true });
     it('should return true if course is not set', () => {
         const examExercise = { course: undefined } as Exercise;
 
         const isExamExerciseResult = isExamExercise(examExercise);
-        expect(isExamExerciseResult).toBeTrue();
+        expect(isExamExerciseResult).toBe(true);
     });
 
     it('should return false if course is set', () => {
         const courseExercise = { course: new Course() } as Exercise;
 
         const isExamExerciseResult = isExamExercise(courseExercise);
-        expect(isExamExerciseResult).toBeFalse();
+        expect(isExamExerciseResult).toBe(false);
     });
 });
 
 describe('roundUpToNextMultiple', () => {
+    setupTestBed({ zoneless: true });
     it('should round up to multiple of 5 if value is closer to lower multiple', () => {
         expect(roundToNextMultiple(21, 5, true)).toBe(25);
     });
@@ -157,6 +168,7 @@ describe('roundUpToNextMultiple', () => {
 });
 
 describe('removeSpecialCharacters', () => {
+    setupTestBed({ zoneless: true });
     it('should remove special characters', () => {
         expect(removeSpecialCharacters('Hello, World!')).toBe('HelloWorld');
         expect(removeSpecialCharacters('Hello, World! 123')).toBe('HelloWorld123');
@@ -165,6 +177,7 @@ describe('removeSpecialCharacters', () => {
 });
 
 describe('secondsInMilliseconds', () => {
+    setupTestBed({ zoneless: true });
     it('should convert seconds to milliseconds', () => {
         expect(secondsToMilliseconds(1)).toBe(1000);
         expect(secondsToMilliseconds(1.5)).toBe(1500);

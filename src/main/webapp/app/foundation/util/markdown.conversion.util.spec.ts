@@ -1,8 +1,11 @@
 import { MarkdownitTagClass, htmlForMarkdown, markdownForHtml } from './markdown.conversion.util';
 import type { PluginSimple } from 'markdown-it';
 import MarkdownIt from 'markdown-it';
+import { beforeEach, describe, expect, it, test } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('markdown.conversion.util', () => {
+    setupTestBed({ zoneless: true });
     describe('htmlForMarkdown', () => {
         describe('empty and undefined input', () => {
             it('should return empty string for undefined input', () => {
@@ -83,7 +86,7 @@ describe('markdown.conversion.util', () => {
 
             it('should strip trailing newline for legacy compatibility', () => {
                 const result = htmlForMarkdown('text');
-                expect(result.endsWith('\n')).toBeFalse();
+                expect(result.endsWith('\n')).toBe(false);
             });
         });
 
@@ -256,7 +259,7 @@ describe('markdown.conversion.util', () => {
                 };
 
                 htmlForMarkdown('test', [customExtension]);
-                expect(extensionCalled).toBeTrue();
+                expect(extensionCalled).toBe(true);
             });
 
             it('should apply multiple custom extensions', () => {

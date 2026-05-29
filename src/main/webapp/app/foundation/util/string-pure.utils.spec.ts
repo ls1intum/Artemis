@@ -1,6 +1,9 @@
 import { matchRegexWithLineNumbers } from 'app/foundation/util/string-pure.utils';
+import { describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('StringPureUtils', () => {
+    setupTestBed({ zoneless: true });
     describe('matchRegexWithLineNumbers', () => {
         const globalRegex = /.*(def).*/g;
         const nonGlobalRegex = /.*(def).*/;

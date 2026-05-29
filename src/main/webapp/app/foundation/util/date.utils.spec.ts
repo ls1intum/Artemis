@@ -7,8 +7,11 @@ import {
     toISO8601DateTimeString,
 } from 'app/foundation/util/date.utils';
 import dayjs from 'dayjs/esm';
+import { describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('DateUtils', () => {
+    setupTestBed({ zoneless: true });
     // month of js date is 0-based
     const exampleDate = new Date(2019, 8, 10, 12, 30, 20);
     const exampleISO8601DateString = '2019-09-10';
@@ -80,17 +83,17 @@ describe('DateUtils', () => {
     describe('isDateLessThanAWeekInTheFuture', () => {
         it('should return true if date is less than a week away', () => {
             const date = dayjs().add(6, 'days');
-            expect(isDateLessThanAWeekInTheFuture(date)).toBeTrue();
+            expect(isDateLessThanAWeekInTheFuture(date)).toBe(true);
         });
 
         it('should return false if date is more than a week away', () => {
             const date = dayjs().add(8, 'days');
-            expect(isDateLessThanAWeekInTheFuture(date)).toBeFalse();
+            expect(isDateLessThanAWeekInTheFuture(date)).toBe(false);
         });
 
         it('should return false if date is more than a week ago', () => {
             const date = dayjs().subtract(8, 'days');
-            expect(isDateLessThanAWeekInTheFuture(date)).toBeFalse();
+            expect(isDateLessThanAWeekInTheFuture(date)).toBe(false);
         });
     });
 });
