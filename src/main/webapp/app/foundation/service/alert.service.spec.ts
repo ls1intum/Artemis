@@ -1,11 +1,15 @@
 import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { TestBed, fakeAsync, flush, inject, tick } from '@angular/core/testing';
+import { TestBed, inject } from '@angular/core/testing';
 import { MissingTranslationHandler, TranslateModule, TranslateService } from '@ngx-translate/core';
 import { missingTranslationHandler } from 'app/core/config/translation.config';
 import { Alert, AlertCreationProperties, AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('Alert Service Test', () => {
+    setupTestBed({ zoneless: true });
+
     const alertSample = {
         type: AlertType.SUCCESS,
         message: 'Hello Jhipster',
@@ -45,6 +49,10 @@ describe('Alert Service Test', () => {
         eventManager = TestBed.inject(EventManager);
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should produce a proper alert object and fetch it', () => {
         expect(service.addAlert(alertSample)).toEqual(expect.objectContaining(alertSampleWithId as Alert));
         expect(service.get()).toHaveLength(1);
@@ -52,9 +60,9 @@ describe('Alert Service Test', () => {
     });
 
     it('should close an alert correctly', () => {
-        const alert0 = service.addAlert({ type: AlertType.INFO, message: 'Hello Jhipster info', onClose: jest.fn() });
-        const alert1 = service.addAlert({ type: AlertType.INFO, message: 'Hello Jhipster info 2', onClose: jest.fn() });
-        const alert2 = service.addAlert({ type: AlertType.SUCCESS, message: 'Hello Jhipster success', onClose: jest.fn() });
+        const alert0 = service.addAlert({ type: AlertType.INFO, message: 'Hello Jhipster info', onClose: vi.fn() });
+        const alert1 = service.addAlert({ type: AlertType.INFO, message: 'Hello Jhipster info 2', onClose: vi.fn() });
+        const alert2 = service.addAlert({ type: AlertType.SUCCESS, message: 'Hello Jhipster success', onClose: vi.fn() });
         expect(alert2).toEqual(
             expect.objectContaining({
                 type: AlertType.SUCCESS,
@@ -87,25 +95,28 @@ describe('Alert Service Test', () => {
         expect(alert0.onClose).toHaveBeenCalledOnce();
     });
 
-    it('should close an alert on timeout correctly', () => {
-        jest.useFakeTimers();
+    it('should close an alert on timeout correctly', async () => {
+        vi.useFakeTimers();
+        try {
+            const alert = { type: AlertType.INFO, message: 'Hello Jhipster info', onClose: vi.fn() } as AlertCreationProperties;
+            service.addAlert(alert);
 
-        const alert = { type: AlertType.INFO, message: 'Hello Jhipster info', onClose: jest.fn() } as AlertCreationProperties;
-        service.addAlert(alert);
+            expect(service.get()).toHaveLength(1);
 
-        expect(service.get()).toHaveLength(1);
+            await vi.advanceTimersByTimeAsync(16000);
 
-        jest.advanceTimersByTime(16000);
-
-        expect(service.get()).toHaveLength(0);
-        expect(alert.onClose).toHaveBeenCalledOnce();
+            expect(service.get()).toHaveLength(0);
+            expect(alert.onClose).toHaveBeenCalledOnce();
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
     it('should clear alerts', () => {
         const alerts = [
-            { type: AlertType.INFO, message: 'Hello Jhipster info1', onClose: jest.fn() },
-            { type: AlertType.DANGER, message: 'Hello Jhipster info2', onClose: jest.fn() },
-            { type: AlertType.SUCCESS, message: 'Hello Jhipster info3', onClose: jest.fn() },
+            { type: AlertType.INFO, message: 'Hello Jhipster info1', onClose: vi.fn() },
+            { type: AlertType.DANGER, message: 'Hello Jhipster info2', onClose: vi.fn() },
+            { type: AlertType.SUCCESS, message: 'Hello Jhipster info3', onClose: vi.fn() },
         ] as AlertCreationProperties[];
         alerts.forEach((alert) => service.addAlert(alert));
         expect(service.get()).toHaveLength(3);
@@ -269,37 +280,40 @@ describe('Alert Service Test', () => {
         expect(service.get()[0].message).toBe('Error Message');
     });
 
-    it('should not show two alerts with the same content if spawned within 50ms', fakeAsync(() => {
-        const initialAlert = service.addAlert({
-            type: AlertType.DANGER,
-            message: 'Test123',
-        });
-        expect(service.get()).toEqual([initialAlert]);
+    it('should not show two alerts with the same content if spawned within 50ms', async () => {
+        vi.useFakeTimers();
+        try {
+            const initialAlert = service.addAlert({
+                type: AlertType.DANGER,
+                message: 'Test123',
+            });
+            expect(service.get()).toEqual([initialAlert]);
 
-        tick(25);
+            await vi.advanceTimersByTimeAsync(25);
 
-        const secondAlert = service.addAlert({
-            type: AlertType.DANGER,
-            message: 'Test123',
-        });
+            const secondAlert = service.addAlert({
+                type: AlertType.DANGER,
+                message: 'Test123',
+            });
 
-        // Check that it is actually the same object by reference
-        expect(secondAlert).toBe(initialAlert);
-        expect(service.get()).toEqual([initialAlert]);
+            // Check that it is actually the same object by reference
+            expect(secondAlert).toBe(initialAlert);
+            expect(service.get()).toEqual([initialAlert]);
 
-        // After at least 50ms, the new alert should actually be added again
-        tick(30);
+            // After at least 50ms, the new alert should actually be added again
+            await vi.advanceTimersByTimeAsync(30);
 
-        const thirdAlert = service.addAlert({
-            type: AlertType.DANGER,
-            message: 'Test123',
-        });
+            const thirdAlert = service.addAlert({
+                type: AlertType.DANGER,
+                message: 'Test123',
+            });
 
-        expect(thirdAlert).not.toBe(initialAlert);
-        expect(service.get()).toEqual([thirdAlert, initialAlert]);
-
-        flush();
-    }));
+            expect(thirdAlert).not.toBe(initialAlert);
+            expect(service.get()).toEqual([thirdAlert, initialAlert]);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
 
     it.each([400, 403, 405, 412])('should not show alerts with skipAlert=true', (statusCode) => {
         // GIVEN
@@ -316,6 +330,6 @@ describe('Alert Service Test', () => {
         });
         eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
         // THEN
-        expect(service.get()).toBeEmpty();
+        expect(service.get()).toHaveLength(0);
     });
 });

@@ -1,15 +1,23 @@
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ChangeDetectorRef } from '@angular/core';
 import dayjs from 'dayjs/esm';
+// Register the locales used in this spec. Under Jest these were loaded transitively via the global
+// setup importing 'app/core/config/dayjs'; the Vitest setup does not, so import them explicitly here.
+import 'dayjs/esm/locale/en';
+import 'dayjs/esm/locale/de';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClient } from '@angular/common/http';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ArtemisTimeAgoPipe', () => {
+    setupTestBed({ zoneless: true });
+
     let pipe: ArtemisTimeAgoPipe;
     let translateService: TranslateService;
-    const cdRef = { markForCheck: jest.fn() } as any as ChangeDetectorRef;
+    const cdRef = { markForCheck: vi.fn() } as any as ChangeDetectorRef;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -18,6 +26,10 @@ describe('ArtemisTimeAgoPipe', () => {
         translateService = TestBed.inject(TranslateService);
         translateService.use('en');
         pipe = TestBed.inject(ArtemisTimeAgoPipe);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it.each([
@@ -34,16 +46,21 @@ describe('ArtemisTimeAgoPipe', () => {
         });
     });
 
-    it('updates the output automatically as time passes, but removes the timer after destroy', fakeAsync(() => {
-        const time = dayjs().subtract(60, 'seconds');
-        expect(pipe.transform(time)).toBe('a minute ago');
-        expect(cdRef.markForCheck).not.toHaveBeenCalled();
-        tick(30000);
-        expect(cdRef.markForCheck).toHaveBeenCalledOnce();
-        expect(pipe.transform(time)).toBe('2 minutes ago');
+    it('updates the output automatically as time passes, but removes the timer after destroy', async () => {
+        vi.useFakeTimers();
+        try {
+            const time = dayjs().subtract(60, 'seconds');
+            expect(pipe.transform(time)).toBe('a minute ago');
+            expect(cdRef.markForCheck).not.toHaveBeenCalled();
+            await vi.advanceTimersByTimeAsync(30000);
+            expect(cdRef.markForCheck).toHaveBeenCalledOnce();
+            expect(pipe.transform(time)).toBe('2 minutes ago');
 
-        pipe.ngOnDestroy();
-        tick(30000);
-        expect(cdRef.markForCheck).toHaveBeenCalledOnce(); // not a second time
-    }));
+            pipe.ngOnDestroy();
+            await vi.advanceTimersByTimeAsync(30000);
+            expect(cdRef.markForCheck).toHaveBeenCalledOnce(); // not a second time
+        } finally {
+            vi.useRealTimers();
+        }
+    });
 });

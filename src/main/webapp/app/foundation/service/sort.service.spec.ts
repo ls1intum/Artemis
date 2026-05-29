@@ -1,6 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
 import { SortService } from 'app/foundation/service/sort.service';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 type TestObject = {
     a: number;
@@ -15,6 +17,7 @@ type TestObject = {
 };
 
 describe('Sort Service', () => {
+    setupTestBed({ zoneless: true });
     let service: SortService;
     const e1: TestObject = {
         a: 10,
@@ -119,9 +122,13 @@ describe('Sort Service', () => {
                 service.sortByProperty(shuffled, key, ascending);
                 if (ascending) {
                     expect(shuffled.slice(0, expectedDefinedOrder.length)).toEqual(expectedDefinedOrder);
-                    expect(shuffled.slice(expectedDefinedOrder.length, shuffled.length)).toIncludeSameMembers(undefinedObjects);
+                    const tail = shuffled.slice(expectedDefinedOrder.length, shuffled.length);
+                    expect(tail).toHaveLength(undefinedObjects.length);
+                    expect(tail).toEqual(expect.arrayContaining(undefinedObjects));
                 } else {
-                    expect(shuffled.slice(0, undefinedObjects.length)).toIncludeSameMembers(undefinedObjects);
+                    const head = shuffled.slice(0, undefinedObjects.length);
+                    expect(head).toHaveLength(undefinedObjects.length);
+                    expect(head).toEqual(expect.arrayContaining(undefinedObjects));
                     expect(shuffled.slice(undefinedObjects.length, shuffled.length)).toEqual(expectedDefinedOrder);
                 }
             }
