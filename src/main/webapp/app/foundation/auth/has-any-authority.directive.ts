@@ -1,4 +1,4 @@
-import { Directive, Input, TemplateRef, ViewContainerRef, inject } from '@angular/core';
+import { Directive, TemplateRef, ViewContainerRef, effect, inject, input } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/foundation/constants/authority.constants';
 
@@ -19,14 +19,18 @@ export class HasAnyAuthorityDirective {
     private templateRef = inject<TemplateRef<any>>(TemplateRef);
     private viewContainerRef = inject(ViewContainerRef);
 
+    readonly jhiHasAnyAuthority = input.required<string | string[] | readonly Authority[]>();
+
     private authorities: readonly Authority[];
 
-    @Input()
-    set jhiHasAnyAuthority(value: string | string[] | readonly Authority[]) {
-        this.authorities = typeof value === 'string' ? [value as Authority] : (value as readonly Authority[]);
-        this.updateView();
-        // Get notified each time authentication state changes.
-        this.accountService.getAuthenticationState().subscribe(() => this.updateView());
+    constructor() {
+        effect(() => {
+            const value = this.jhiHasAnyAuthority();
+            this.authorities = typeof value === 'string' ? [value as Authority] : (value as readonly Authority[]);
+            this.updateView();
+            // Get notified each time authentication state changes.
+            this.accountService.getAuthenticationState().subscribe(() => this.updateView());
+        });
     }
 
     private updateView(): void {

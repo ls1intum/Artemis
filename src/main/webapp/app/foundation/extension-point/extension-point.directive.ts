@@ -1,4 +1,4 @@
-import { Directive, EmbeddedViewRef, Input, OnChanges, SimpleChanges, TemplateRef, ViewContainerRef, inject } from '@angular/core';
+import { Directive, EmbeddedViewRef, TemplateRef, ViewContainerRef, effect, inject, input, untracked } from '@angular/core';
 
 /**
  * @whatItDoes marks parts of a (parent) template as extendable to allow other (child) components to override them.
@@ -14,7 +14,7 @@ import { Directive, EmbeddedViewRef, Input, OnChanges, SimpleChanges, TemplateRe
  * </div>
  *
  * parent typescript:
- * @ContentChild('overrideId') overrideAttribute: TemplateRef<any>;
+ * \@ContentChild('overrideId') overrideAttribute: TemplateRef<any>;
  *
  * child template:
  * <parent-selector>
@@ -26,28 +26,44 @@ import { Directive, EmbeddedViewRef, Input, OnChanges, SimpleChanges, TemplateRe
  * produces a child component looking exactly like the parent component but with the marked element overridden
  */
 @Directive({ selector: '[jhiExtensionPoint]' })
-export class ExtensionPointDirective implements OnChanges {
+export class ExtensionPointDirective {
     private viewContainerRef = inject(ViewContainerRef);
     private templateRef = inject<TemplateRef<any>>(TemplateRef);
 
     private viewRef: EmbeddedViewRef<any> | undefined = undefined;
 
-    @Input() public jhiExtensionPoint: TemplateRef<any> | undefined = undefined;
-    @Input() public jhiExtensionPointContext?: any = undefined;
+    readonly jhiExtensionPoint = input<TemplateRef<any> | undefined>(undefined);
+    readonly jhiExtensionPointContext = input<any>(undefined);
 
-    ngOnChanges(changes: SimpleChanges) {
-        if (changes['jhiExtensionPoint']) {
-            const viewContainerRef = this.viewContainerRef;
+    // Tracks whether jhiExtensionPoint has ever been processed, so the effect can distinguish a genuine change
+    // of the override template (which recreates the view) from a context-only change (which only updates the
+    // existing view's context) — reproducing the change-discrimination the previous ngOnChanges performed.
+    private extensionPointInitialized = false;
+    private lastExtensionPoint: TemplateRef<any> | undefined = undefined;
 
-            if (this.viewRef) {
-                viewContainerRef.remove(viewContainerRef.indexOf(this.viewRef));
-            }
+    constructor() {
+        effect(() => {
+            const extensionPoint = this.jhiExtensionPoint();
+            const context = this.jhiExtensionPointContext();
 
-            this.viewRef = this.jhiExtensionPoint
-                ? viewContainerRef.createEmbeddedView(this.jhiExtensionPoint, this.jhiExtensionPointContext)
-                : viewContainerRef.createEmbeddedView(this.templateRef, this.jhiExtensionPointContext);
-        } else if (this.viewRef && changes['jhiExtensionPointContext'] && this.jhiExtensionPointContext) {
-            this.viewRef.context = this.jhiExtensionPointContext;
-        }
+            untracked(() => {
+                const extensionPointChanged = !this.extensionPointInitialized || extensionPoint !== this.lastExtensionPoint;
+
+                if (extensionPointChanged) {
+                    this.extensionPointInitialized = true;
+                    this.lastExtensionPoint = extensionPoint;
+
+                    const viewContainerRef = this.viewContainerRef;
+
+                    if (this.viewRef) {
+                        viewContainerRef.remove(viewContainerRef.indexOf(this.viewRef));
+                    }
+
+                    this.viewRef = extensionPoint ? viewContainerRef.createEmbeddedView(extensionPoint, context) : viewContainerRef.createEmbeddedView(this.templateRef, context);
+                } else if (this.viewRef && context) {
+                    this.viewRef.context = context;
+                }
+            });
+        });
     }
 }
