@@ -135,6 +135,7 @@ class CompetencyOrchestrationServiceTest {
         when(contentExtractionService.extractContent(exercise)).thenReturn(new ExtractedContentDTO("Test Exercise", "Learn loops", Map.of()));
         when(orchestratorToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
         when(templateService.render(anyString(), anyMap())).thenReturn("system prompt");
+        when(toolCallbackFactory.createOrchestratorProvider()).thenReturn(mock(org.springframework.ai.tool.ToolCallbackProvider.class));
 
         ChatClient mockChatClient = mock(ChatClient.class);
         ChatClient.ChatClientRequestSpec spec = mock(ChatClient.ChatClientRequestSpec.class);
