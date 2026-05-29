@@ -1,9 +1,9 @@
-import { BaseEntity } from 'app/shared/model/base-entity';
+import { BaseEntity } from 'app/foundation/model/base-entity';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { TutorParticipation } from 'app/exercise/shared/entities/participation/tutor-participation.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -17,7 +17,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ExerciseInfo } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram, faQuestion } from '@fortawesome/free-solid-svg-icons';
-import { CourseScores } from 'app/core/course/manage/course-scores/course-scores';
+import { CourseScores } from 'app/course/manage/course-scores/course-scores';
 
 export enum DifficultyLevel {
     EASY = 'EASY',
@@ -303,4 +303,15 @@ export function hasDueDatePassed(exercise: Exercise): boolean {
  */
 export function getExerciseCompetencies(exercise: Exercise): CourseCompetency[] {
     return exercise.competencyLinks?.map((link) => link.competency).filter((competency): competency is CourseCompetency => competency != null) ?? [];
+}
+
+/**
+ * A DTO representing an exercise.
+ *
+ * @param id   the id of the exercise
+ * @param type the type of the exercise (programming, modeling, quiz, text, file-upload)
+ */
+export class ExerciseDTO {
+    id?: number;
+    type?: ExerciseType;
 }

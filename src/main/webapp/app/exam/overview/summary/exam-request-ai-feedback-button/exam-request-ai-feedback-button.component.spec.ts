@@ -10,11 +10,11 @@ import { ExamRequestAiFeedbackButtonComponent } from 'app/exam/overview/summary/
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { UserService } from 'app/core/user/shared/user.service';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { UserService } from 'app/account/user/shared/user.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -27,8 +27,8 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { User } from 'app/core/user/user.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { User } from 'app/account/user/user.model';
 
 import { MockExamParticipationService } from 'test/helpers/mocks/service/mock-exam-participation.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -103,7 +103,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
     function enableAthena(): void {
         const profileService = TestBed.inject(ProfileService);
-        vi.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
     }
 
     function acceptLLMUsage(): void {
@@ -152,7 +152,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
         it('should hide the button when Athena is not active', () => {
             const profileService = TestBed.inject(ProfileService);
-            vi.spyOn(profileService, 'isProfileActive').mockReturnValue(false);
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
 
             setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));
             fixture.detectChanges();
@@ -283,7 +283,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
 
         it('should skip fetching usage when Athena is not active', () => {
             const profileService = TestBed.inject(ProfileService);
-            vi.spyOn(profileService, 'isProfileActive').mockReturnValue(false);
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
             const usageSpy = vi.spyOn(examParticipationService, 'getAthenaFeedbackUsage');
 
             setStudentExam(withOverrides(studentExamForTestExam, { submitted: true }));

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FEATURE_CARDS, FeatureCard, FeatureCardDownloadLink } from 'app/core/landing/landing-data';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 

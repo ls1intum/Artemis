@@ -3,13 +3,13 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, PROFILE_DEV, PROFILE_PROD } from 'app/app.constants';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
+import { BrowserFingerprintService } from 'app/account/fingerprint/browser-fingerprint.service';
 import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
 
 describe('ProfileService', () => {

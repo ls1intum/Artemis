@@ -1,8 +1,8 @@
 import { Component, computed, effect, input, output, signal, viewChild } from '@angular/core';
-import { isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
+import { isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
-import { deepClone } from 'app/shared/util/deep-clone.util';
+import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name/title-channel-name.component';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-lecture-title-channel-name',

@@ -10,7 +10,7 @@ import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-u
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { of } from 'rxjs';
 import { provideRouter } from '@angular/router';

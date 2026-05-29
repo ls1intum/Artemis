@@ -14,8 +14,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.dto.StudentGroupCountDTO;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeStudentGroupDTO;
@@ -98,8 +98,7 @@ public class ExerciseMetricsService {
 
         if (activeUserIds.isEmpty()) {
             // No active users, return empty counts for each exercise type
-            return typeGroups.stream().map(ExerciseTypeStudentGroupDTO::exerciseType).distinct().map(type -> new ExerciseTypeMetricsEntry(type.getExerciseClass(), 0L))
-                    .collect(Collectors.toSet());
+            return typeGroups.stream().map(ExerciseTypeStudentGroupDTO::exerciseType).distinct().map(type -> new ExerciseTypeMetricsEntry(type, 0L)).collect(Collectors.toSet());
         }
 
         // Step 3: Count active users by student group
@@ -118,7 +117,6 @@ public class ExerciseMetricsService {
             typeToCount.merge(dto.exerciseType(), count, Long::sum);
         }
 
-        // Convert to result set - need to convert ExerciseType back to Class for ExerciseTypeMetricsEntry
-        return typeToCount.entrySet().stream().map(entry -> new ExerciseTypeMetricsEntry(entry.getKey().getExerciseClass(), entry.getValue())).collect(Collectors.toSet());
+        return typeToCount.entrySet().stream().map(entry -> new ExerciseTypeMetricsEntry(entry.getKey(), entry.getValue())).collect(Collectors.toSet());
     }
 }
