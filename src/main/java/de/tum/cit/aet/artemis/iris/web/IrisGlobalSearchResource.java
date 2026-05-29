@@ -26,13 +26,18 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRe
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisSearchAskRequestDTO;
 
 /**
- * REST controller for Iris lecture search.
+ * REST controller for Iris global search.
+ * Exposes two endpoints:
+ * <ul>
+ * <li>{@code POST api/iris/lecture-search} — synchronous semantic lecture-unit search via Pyris.</li>
+ * <li>{@code POST api/iris/search-answer} — asynchronous Iris inline-answer pipeline; results are pushed to the client via WebSocket.</li>
+ * </ul>
  */
 @Conditional(IrisEnabled.class)
 @Lazy
 @RestController
 @RequestMapping("api/iris/")
-public class IrisLectureSearchResource {
+public class IrisGlobalSearchResource {
 
     private final PyrisConnectorService pyrisConnectorService;
 
@@ -40,7 +45,7 @@ public class IrisLectureSearchResource {
 
     private final UserRepository userRepository;
 
-    public IrisLectureSearchResource(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, UserRepository userRepository) {
+    public IrisGlobalSearchResource(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, UserRepository userRepository) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.userRepository = userRepository;

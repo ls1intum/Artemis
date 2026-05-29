@@ -23,9 +23,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisSearchAskReques
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
 
-class IrisLectureSearchIntegrationTest extends AbstractIrisIntegrationTest {
+class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
 
-    private static final String TEST_PREFIX = "lecturesearchit";
+    private static final String TEST_PREFIX = "globalsearchit";
 
     @BeforeEach
     void setupUsers() {
