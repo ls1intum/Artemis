@@ -4,7 +4,7 @@ import { Observable, tap } from 'rxjs';
 
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
 import { UMLDiagramType } from '@tumaet/apollon';
-import { createRequestOption } from 'app/shared/util/request.util';
+import { createRequestOption } from 'app/foundation/util/request.util';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 
 export type EntityResponseType = HttpResponse<ApollonDiagram>;

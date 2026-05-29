@@ -5,7 +5,7 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { createRequestOption } from 'app/shared/util/request.util';
+import { createRequestOption } from 'app/foundation/util/request.util';
 import { Observable, map, tap } from 'rxjs';
 import { VcsAccessLogDTO } from 'app/programming/shared/entities/vcs-access-log-entry.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';

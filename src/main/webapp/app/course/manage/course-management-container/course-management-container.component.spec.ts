@@ -3,7 +3,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { By } from '@angular/platform-browser';
@@ -12,22 +12,22 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 
-import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { EventManager } from 'app/shared/service/event-manager.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 import { MockModule, MockProvider } from 'ng-mocks';
 import { AfterViewInit, Component, EventEmitter, TemplateRef, viewChild } from '@angular/core';
-import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
+import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared-ui/tab-bar/tab-bar';
 import { CourseManagementContainerComponent } from 'app/course/manage/course-management-container/course-management-container.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
@@ -41,13 +41,13 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { CourseAccessStorageService } from 'app/course/shared/services/course-access-storage.service';
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { CourseOperationStatus, CourseOperationType } from 'app/course/shared/entities/course-operation-progress.model';
 
 const endDate1 = dayjs().add(1, 'days');

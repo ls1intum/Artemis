@@ -20,6 +20,7 @@ public record SubmissionWithParticipationDTO(long id, ParticipationWithExerciseD
      * @return the submission DTO
      */
     public static SubmissionWithParticipationDTO of(Submission submission) {
-        return new SubmissionWithParticipationDTO(submission.getId(), ParticipationWithExerciseDTO.of(submission.getParticipation()));
+        return new SubmissionWithParticipationDTO(submission.getId(),
+                submission.getParticipation() != null ? ParticipationWithExerciseDTO.of(submission.getParticipation()) : null);
     }
 }

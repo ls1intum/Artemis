@@ -149,7 +149,7 @@ export class EntityTitleService implements OnDestroy {
         let resourceUrl = 'api/';
         switch (type) {
             case EntityType.COURSE:
-                resourceUrl += 'core/courses';
+                resourceUrl += 'course/courses';
                 break;
             case EntityType.EXERCISE:
                 resourceUrl += 'exercise/exercises';

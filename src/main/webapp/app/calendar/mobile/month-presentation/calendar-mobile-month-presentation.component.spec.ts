@@ -6,7 +6,7 @@ import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { CalendarMobileMonthPresentationComponent } from './calendar-mobile-month-presentation.component';
 import { CalendarDayBadgeComponent } from 'app/calendar/shared/calendar-day-badge/calendar-day-badge.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { IdentifiableCalendarEvent } from 'app/calendar/shared/entities/calendar-event.model';
 import { MockCalendarService } from 'test/helpers/mocks/service/mock-calendar.service';

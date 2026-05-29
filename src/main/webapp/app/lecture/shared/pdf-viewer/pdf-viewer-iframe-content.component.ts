@@ -30,7 +30,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumber, InputNumberModule } from 'primeng/inputnumber';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import type { IframeMessage, IframeMessageData, IframeMessageType } from './pdf-viewer-iframe.types';
 
 // Configure pdf.js default options
