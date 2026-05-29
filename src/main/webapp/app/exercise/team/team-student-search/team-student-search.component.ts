@@ -9,7 +9,7 @@ import { TeamService } from 'app/exercise/team/team.service';
 import { TeamSearchUser } from 'app/exercise/shared/entities/team/team-search-user.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-team-student-search',

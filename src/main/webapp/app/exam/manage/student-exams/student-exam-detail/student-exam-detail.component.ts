@@ -4,7 +4,7 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TestExamWorkingTimeComponent } from 'app/exam/overview/testExam-workingTime/test-exam-working-time.component';
 import { WorkingTimeControlComponent } from 'app/exam/shared/working-time-control/working-time-control.component';
 import dayjs from 'dayjs/esm';
@@ -16,12 +16,12 @@ import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { combineLatest, takeWhile } from 'rxjs';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { StudentExamDetailTableRowComponent } from '../student-exam-detail-table-row/student-exam-detail-table-row.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-student-exam-detail',

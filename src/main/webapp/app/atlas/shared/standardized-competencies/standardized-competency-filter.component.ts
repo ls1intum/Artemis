@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, input, output } from '@angular/core';
 import { KnowledgeAreaDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 import { Subject, Subscription, debounceTime } from 'rxjs';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-standardized-competency-filter',

@@ -3,7 +3,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MemirisMemoriesListComponent } from './memiris-memories-list.component';
 import { IrisMemoriesHttpService } from 'app/iris/overview/services/iris-memories-http.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';

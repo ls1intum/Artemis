@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { CoursePrerequisitesModalComponent } from 'app/course/overview/course-registration/course-registration-prerequisites-modal/course-prerequisites-modal.component';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { HttpResponse } from '@angular/common/http';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';

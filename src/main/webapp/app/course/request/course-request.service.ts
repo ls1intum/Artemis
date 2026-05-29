@@ -4,7 +4,7 @@ import { Observable, map } from 'rxjs';
 
 import { BaseCourseRequest, CourseRequest, CourseRequestStatus, CourseRequestsAdminOverview } from 'app/course/request/course-request.model';
 import { User } from 'app/account/user/user.model';
-import { convertDateFromClient, convertDateStringFromServer } from 'app/shared/util/date.utils';
+import { convertDateFromClient, convertDateStringFromServer } from 'app/foundation/util/date.utils';
 
 interface BaseCourseRequestDTO {
     title: string;

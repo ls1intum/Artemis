@@ -5,7 +5,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import dayjs from 'dayjs/esm';
 import isEqual from 'lodash-es/isEqual';
 
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import {
     ExerciseEditorSyncEvent,

@@ -1,12 +1,12 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { EMPTY } from 'rxjs';
 import { LeaderboardService } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/service/leaderboard-service';
 import { LeaderboardEntry, LeaderboardSettingsDTO } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard-types';
 import { LeaderboardComponent } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DialogModule } from 'primeng/dialog';
 import { FormsModule } from '@angular/forms';
 import { faCheck, faClock, faQuestion, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -17,8 +17,8 @@ import dayjs from 'dayjs/esm';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { QuizTrainingDialogComponent } from 'app/quiz/overview/course-training/quiz-training-dialog.component';
-import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/shared/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 @Component({
     selector: 'jhi-course-training',

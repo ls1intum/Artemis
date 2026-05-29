@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
+import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
 import { CompetencyOrchestrationResultDTO } from 'app/atlas/shared/dto/competency-orchestration-dto';
 
 @Injectable({ providedIn: 'root' })

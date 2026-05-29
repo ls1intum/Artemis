@@ -3,13 +3,13 @@ import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, inject, 
 import { PasswordResetInitService } from './password-reset-init.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FormsModule } from '@angular/forms';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { onError } from 'app/shared/util/global.utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { ExternalUserPasswordResetModalComponent } from 'app/account/password-reset/external/external-user-password-reset-modal.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
  * Component for initiating the password reset process.

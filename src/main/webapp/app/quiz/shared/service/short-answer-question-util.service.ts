@@ -4,7 +4,7 @@ import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mappin
 import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
 import { cloneDeep } from 'lodash-es';
-import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 
 @Injectable({ providedIn: 'root' })
 export class ShortAnswerQuestionUtil {

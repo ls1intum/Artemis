@@ -12,10 +12,10 @@ import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-a
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
 import { areManualResultsAllowed } from 'app/exercise/util/exercise.utils';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
-import { getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
+import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-manage-assessment-buttons',

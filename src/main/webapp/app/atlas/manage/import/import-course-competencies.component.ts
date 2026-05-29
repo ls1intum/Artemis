@@ -1,12 +1,12 @@
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { CourseCompetencyFilter, PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
+import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
+import { CourseCompetencyFilter, PageableSearch, SearchResult, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { CourseCompetency, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
-import { AlertService } from 'app/shared/service/alert.service';
-import { SortService } from 'app/shared/service/sort.service';
-import { onError } from 'app/shared/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { SortService } from 'app/foundation/service/sort.service';
+import { onError } from 'app/foundation/util/global.utils';
 import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { faBan, faFileImport, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';

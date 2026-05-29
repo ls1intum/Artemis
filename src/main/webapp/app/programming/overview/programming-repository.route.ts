@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { IS_AT_LEAST_STUDENT } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_STUDENT } from 'app/foundation/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 export const programmingRepositoryRoutes: Routes = [

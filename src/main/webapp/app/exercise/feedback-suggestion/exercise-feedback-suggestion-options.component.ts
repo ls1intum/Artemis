@@ -6,9 +6,9 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgStyle } from '@angular/common';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FormsModule } from '@angular/forms';
 
 @Component({
