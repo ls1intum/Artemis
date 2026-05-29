@@ -9,6 +9,7 @@ import { RouterModule } from '@angular/router';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DialogModule } from 'primeng/dialog';
+import { AutoFocusModule } from 'primeng/autofocus';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 
@@ -16,7 +17,7 @@ import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismC
     selector: 'jhi-plagiarism-header',
     styleUrls: ['./plagiarism-header.component.scss'],
     templateUrl: './plagiarism-header.component.html',
-    imports: [TranslateDirective, ArtemisTranslatePipe, RouterModule, FaIconComponent, DialogModule],
+    imports: [TranslateDirective, ArtemisTranslatePipe, RouterModule, FaIconComponent, DialogModule, AutoFocusModule],
 })
 export class PlagiarismHeaderComponent {
     private plagiarismCasesService = inject(PlagiarismCasesService);

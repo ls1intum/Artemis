@@ -69,7 +69,7 @@
     [modal]="true"
     [closable]="true"
     [closeOnEscape]="true"
-    [dismissableMask]="false"
+    [dismissableMask]="true"
     [draggable]="false"
     [appendTo]="'body'"
     [style]="{ width: '50rem' }"
@@ -79,6 +79,6 @@
     <p jhiTranslate="artemisApp.plagiarism.denyAfterConfirmModalText"></p>
     <ng-template #footer>
         <button type="button" class="btn btn-outline-secondary" (click)="cancelDenyAfterConfirm()" jhiTranslate="global.form.cancel"></button>
-        <button type="button" class="btn btn-danger" (click)="confirmDenyAfterConfirm()" jhiTranslate="global.form.confirm"></button>
+        <button type="button" [pAutoFocus]="true" class="btn btn-danger" (click)="confirmDenyAfterConfirm()" jhiTranslate="global.form.confirm"></button>
     </ng-template>
 </p-dialog>
