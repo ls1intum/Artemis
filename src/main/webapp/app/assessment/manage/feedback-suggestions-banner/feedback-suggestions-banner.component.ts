@@ -4,8 +4,8 @@ import { faCircleNotch, faQuestionCircle } from '@fortawesome/free-solid-svg-ico
 import dayjs from 'dayjs/esm';
 import { Tag } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-feedback-suggestions-banner',
