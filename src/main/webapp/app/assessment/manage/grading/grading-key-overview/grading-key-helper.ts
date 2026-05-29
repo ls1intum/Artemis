@@ -1,4 +1,4 @@
-import { findParamInRouteHierarchy } from 'app/shared/util/navigation.utils';
+import { findParamInRouteHierarchy } from 'app/foundation/util/navigation.utils';
 import { ActivatedRoute } from '@angular/router';
 
 export type GradingKeyUrlParams = {

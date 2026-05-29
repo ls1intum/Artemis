@@ -1,4 +1,4 @@
-import { sha1Hex } from 'app/shared/util/crypto.utils';
+import { sha1Hex } from 'app/foundation/util/crypto.utils';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 
 export enum TextBlockType {

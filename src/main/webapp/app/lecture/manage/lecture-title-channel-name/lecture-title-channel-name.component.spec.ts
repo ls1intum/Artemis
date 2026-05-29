@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureTitleChannelNameComponent } from 'app/lecture/manage/lecture-title-channel-name/lecture-title-channel-name.component';
-import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 
 describe('LectureTitleChannelNameComponent', () => {
     setupTestBed({ zoneless: true });

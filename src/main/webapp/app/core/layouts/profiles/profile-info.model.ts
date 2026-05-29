@@ -1,6 +1,6 @@
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { Saml2Config } from 'app/core/home/saml2-login/saml2.config';
-import { ActiveFeatureToggles } from 'app/shared/feature-toggle/feature-toggle.service';
+import { ActiveFeatureToggles } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 export class SentryConfig {
     public dsn?: string;

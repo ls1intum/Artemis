@@ -4,8 +4,8 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLearningObjectLink;
-import de.tum.cit.aet.artemis.core.domain.User;
 
 public interface LearningObject {
 

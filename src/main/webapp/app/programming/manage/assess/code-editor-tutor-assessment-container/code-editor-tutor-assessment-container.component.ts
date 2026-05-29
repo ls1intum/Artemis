@@ -6,8 +6,8 @@ import { Observable, Subscription, firstValueFrom } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, CanDeactivateFn, Router, RouterLink } from '@angular/router';
-import { AlertService } from 'app/shared/service/alert.service';
-import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -23,7 +23,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
-import { assessmentNavigateBack } from 'app/shared/util/navigate-back.util';
+import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { switchMap, tap } from 'rxjs/operators';
@@ -32,7 +32,7 @@ import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
-import { getExerciseDashboardLink, getLinkToSubmissionAssessment, getLocalRepositoryLink } from 'app/shared/util/navigation.utils';
+import { getExerciseDashboardLink, getLinkToSubmissionAssessment, getLocalRepositoryLink } from 'app/foundation/util/navigation.utils';
 import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
 import { breakCircularResultBackReferences } from 'app/exercise/result/result.utils';
@@ -43,7 +43,7 @@ import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { FeedbackSuggestionsPendingConfirmationDialogComponent } from 'app/exercise/feedback/feedback-suggestions-pending-confirmation-dialog/feedback-suggestions-pending-confirmation-dialog.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { ProgrammingAssessmentRepoExportButtonComponent } from '../repo-export/export-button/programming-assessment-repo-export-button.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
@@ -504,27 +504,30 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             return;
         }
 
+        // Reassemble the manual result's feedbacks from the editor state first, then snapshot them: getFeedbacksForUpdateAfterComplaint must
+        // capture the freshly assembled feedback list, not the pre-edit one.
         this.setFeedbacksForManualResult();
-        this.manualResultService
-            .updateAfterComplaint(this.manualResult!.feedbacks!, assessmentAfterComplaint.complaintResponse, this.submission!.id!, this.manualResult!.assessmentNote?.note)
-            .subscribe({
-                next: (result: Result) => {
-                    assessmentAfterComplaint.onSuccess();
-                    this!.submission!.results![0] = this.manualResult = result;
-                    this.alertService.closeAll();
-                    this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
-                },
-                error: (httpErrorResponse: HttpErrorResponse) => {
-                    assessmentAfterComplaint.onError();
-                    this.alertService.closeAll();
-                    const error = httpErrorResponse.error;
-                    if (error && error.errorKey && error.errorKey === 'complaintLock') {
-                        this.alertService.error(error.message, error.params);
-                    } else {
-                        this.onError('artemisApp.assessment.messages.updateAfterComplaintFailed');
-                    }
-                },
-            });
+        const feedbacks = this.complaintService.getFeedbacksForUpdateAfterComplaint(this.manualResult!.feedbacks!);
+        const complaintResponse = this.complaintService.getComplaintResponseForUpdateAfterComplaint(assessmentAfterComplaint.complaintResponse);
+
+        this.manualResultService.updateAfterComplaint(feedbacks, complaintResponse, this.submission!.id!, this.manualResult!.assessmentNote?.note).subscribe({
+            next: (result: Result) => {
+                assessmentAfterComplaint.onSuccess();
+                this!.submission!.results![0] = this.manualResult = result;
+                this.alertService.closeAll();
+                this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
+            },
+            error: (httpErrorResponse: HttpErrorResponse) => {
+                assessmentAfterComplaint.onError();
+                this.alertService.closeAll();
+                const error = httpErrorResponse.error;
+                if (error && error.errorKey && error.errorKey === 'complaintLock') {
+                    this.alertService.error(error.message, error.params);
+                } else {
+                    this.onError('artemisApp.assessment.messages.updateAfterComplaintFailed');
+                }
+            },
+        });
     }
 
     /**
@@ -584,7 +587,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     /**
-     * Show an error as an alert in the top of the editor html.
+     * Show an error as an alert in the top of the editor HTML.
      * Used by other components to display errors.
      * The error must already be provided translated by the emitting component.
      */
@@ -657,7 +660,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 if (!res.body) {
                     return;
                 }
-                this.complaint = res.body;
+                this.complaint = this.complaintService.convertComplaintFromServer(res.body, this.manualResult);
             },
             error: (err: HttpErrorResponse) => {
                 this.onError(err?.message);

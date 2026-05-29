@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { onError } from 'app/shared/util/global.utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { finalize } from 'rxjs/operators';
@@ -8,8 +8,8 @@ import { CompetencyFormComponent } from 'app/atlas/manage/forms/competency/compe
 
 import { CreateCourseCompetencyComponent } from 'app/atlas/manage/create/create-course-competency.component';
 import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-create-competency',

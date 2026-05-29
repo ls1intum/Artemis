@@ -2,7 +2,7 @@ import { Component, computed, signal } from '@angular/core';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import * as utils from 'app/calendar/shared/util/calendar-util';
 import { CalendarMobileMonthPresentationComponent } from 'app/calendar/mobile/month-presentation/calendar-mobile-month-presentation.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CalendarMobileDayPresentationComponent } from 'app/calendar/mobile/day-presentation/calendar-mobile-day-presentation.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowUpFromBracket, faFilter } from '@fortawesome/free-solid-svg-icons';
