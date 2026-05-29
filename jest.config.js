@@ -150,6 +150,8 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts', // legacy converter uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // build-plan-phases model uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**', // programming exercise update timeline uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/editor/markdown-editor/monaco/**', // markdown-editor-monaco uses Vitest (see vitest.config.ts); real-Monaco integration specs stay on Jest
+        '!<rootDir>/src/main/webapp/app/editor/monaco-editor/model/**', // monaco-editor model actions/themes use Vitest (see vitest.config.ts); real-Monaco integration specs stay on Jest
         '<rootDir>/src/main/webapp/**/*.ts',
     ],
     // Each entry below excludes a module that has been migrated to Vitest.
@@ -214,6 +216,8 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts',
         '<rootDir>/src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts',
         '<rootDir>/src/main/webapp/app/programming/shared/programming-exercise-update-timeline/',
+        '<rootDir>/src/main/webapp/app/editor/markdown-editor/monaco/', // markdown-editor-monaco uses Vitest
+        '<rootDir>/src/main/webapp/app/editor/monaco-editor/model/', // monaco-editor model actions/themes use Vitest
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
@@ -224,7 +228,7 @@ module.exports = {
         global: {
             statements: 83,
             branches: 72.9,
-            functions: 72.5,
+            functions: 71.2, // re-baselined (was 72.5): editor markdown/monaco + monaco-editor/model specs moved to Vitest; collateral Jest function coverage dropped to 71.25% (per-file coverage unchanged under Vitest)
             lines: 84,
         },
     },
@@ -317,6 +321,8 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/programming/shared/services/build-phases-template.service.spec.ts', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/programming/shared/entities/build-plan-phases.model.spec.ts', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/programming/shared/programming-exercise-update-timeline/', // migrated to Vitest
+        '<rootDir>/src/main/webapp/app/editor/markdown-editor/monaco/', // markdown-editor-monaco migrated to Vitest (real-Monaco integration specs stay on Jest)
+        '<rootDir>/src/main/webapp/app/editor/monaco-editor/model/', // monaco-editor model actions/themes migrated to Vitest (real-Monaco integration specs stay on Jest)
     ],
     testTimeout: 3000,
     testMatch: ['<rootDir>/src/main/webapp/app/**/*.spec.ts', '<rootDir>/src/test/javascript/spec/**/*.integration.spec.ts'],
