@@ -1,5 +1,5 @@
 import { AfterViewChecked, AfterViewInit, Component, ElementRef, OnInit, computed, inject, output, signal, viewChild } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPaperPlane, faRobot, faTimes, faUser } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -29,6 +29,12 @@ interface WeightOption {
     value: number;
 }
 
+export interface AgentChatModalData {
+    courseId: number;
+    /** Invoked whenever the agent likely created/modified competencies, so the opener can refresh its list. */
+    onCompetencyChanged?: () => void;
+}
+
 @Component({
     selector: 'jhi-agent-chat-modal',
     standalone: true,
@@ -56,7 +62,8 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     protected readonly closeIcon = faTimes;
     protected readonly userIcon = faUser;
 
-    private readonly activeModal = inject(NgbActiveModal);
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
     private readonly agentChatService = inject(AgentChatService);
     private readonly translateService = inject(TranslateService);
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
@@ -94,6 +101,15 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     }
 
     ngOnInit(): void {
+        const data = this.dialogConfig?.data as AgentChatModalData | undefined;
+        if (data) {
+            this.courseId.set(data.courseId);
+            if (data.onCompetencyChanged) {
+                const onCompetencyChanged = data.onCompetencyChanged;
+                this.competencyChanged.subscribe(() => onCompetencyChanged());
+            }
+        }
+
         this.agentChatService.getConversationHistory(this.courseId()).subscribe({
             next: (history) => {
                 if (history.length === 0) {
@@ -121,7 +137,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     }
 
     protected closeModal(): void {
-        this.activeModal.close();
+        this.dialogRef.close();
     }
 
     protected sendMessage(): void {
