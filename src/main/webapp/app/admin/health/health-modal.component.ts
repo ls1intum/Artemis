@@ -1,8 +1,8 @@
 import { Component, input, model } from '@angular/core';
 import { HealthDetails, HealthKey } from 'app/admin/health/health.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { KeyValuePipe } from '@angular/common';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CommonModule } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
 

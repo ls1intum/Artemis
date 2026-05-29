@@ -1,16 +1,16 @@
 import { ChangeDetectionStrategy, Component, OnInit, effect, inject, input, signal } from '@angular/core';
 import { BuildJobStatistics, SpanType } from 'app/localci/shared/entities/build-job.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { onError } from 'app/shared/util/global.utils';
-import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { onError } from 'app/foundation/util/global.utils';
+import { NgxChartsSingleSeriesDataEntry } from 'app/exercise/chart/ngx-charts-datatypes';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { Color, NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import { ActivatedRoute } from '@angular/router';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
 /**
  * Component that displays build job statistics with a pie chart visualization.

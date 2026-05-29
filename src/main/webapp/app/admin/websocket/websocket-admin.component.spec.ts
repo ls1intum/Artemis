@@ -9,7 +9,7 @@ import { of, throwError } from 'rxjs';
 import { WebsocketAdminComponent } from 'app/admin/websocket/websocket-admin.component';
 import { WebsocketAdminService } from 'app/admin/websocket/websocket-admin.service';
 import { WebsocketNode } from 'app/admin/websocket/websocket-node.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('WebsocketAdminComponent', () => {
     setupTestBed({ zoneless: true });

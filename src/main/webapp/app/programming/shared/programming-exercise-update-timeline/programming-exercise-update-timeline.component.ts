@@ -11,16 +11,16 @@ import { map } from 'rxjs/operators';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { AutomaticAfterDueDatePreviewRequest, ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { NgStyle } from '@angular/common';
-import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from '../../../shared/exercise-timeline/exercise-timeline.component';
+import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
-import { findParamInRouteHierarchy } from 'app/shared/util/navigation.utils';
-import { convertDateFromClient } from 'app/shared/util/date.utils';
 import { isEqual } from 'lodash-es';
+import { findParamInRouteHierarchy } from 'app/foundation/util/navigation.utils';
+import { convertDateFromClient } from 'app/foundation/util/date.utils';
 
 @Component({
     selector: 'jhi-programming-exercise-update-timeline',

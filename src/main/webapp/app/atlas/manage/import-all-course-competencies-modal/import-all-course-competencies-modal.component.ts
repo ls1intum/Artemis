@@ -3,7 +3,7 @@ import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 import { PagingService } from 'app/exercise/services/paging.service';
-import { Column } from 'app/shared/import/import.component';
+import { Column } from 'app/shared-ui/import/import.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import {
     CourseCompetencyImportSettings,
@@ -11,7 +11,7 @@ import {
 } from 'app/atlas/manage/import-course-competencies-settings/import-course-competencies-settings.component';
 import { CourseCompetencyImportOptionsDTO } from 'app/atlas/shared/entities/competency.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseForImportDTOPagingService } from 'app/course/shared/services/course-for-import-dto-paging-service';
 import { ImportTableComponent } from 'app/atlas/manage/import-list/import-table.component';
 

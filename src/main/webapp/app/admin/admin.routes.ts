@@ -9,9 +9,9 @@ import { adminSbomRoute } from 'app/admin/admin-sbom/admin-sbom.route';
 import { LocalCIGuard } from 'app/localci/shared/localci-guard.service';
 import { ltiConfigurationRoute } from 'app/admin/lti-configuration/lti-configuration.route';
 
-import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
+import { PendingChangesGuard } from 'app/foundation/guard/pending-changes.guard';
 import { UpcomingExamsAndExercisesComponent } from 'app/admin/upcoming-exams-and-exercises/upcoming-exams-and-exercises.component';
-import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_SUPER_ADMIN } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_SUPER_ADMIN } from 'app/foundation/constants/authority.constants';
 import { AdminContainerComponent } from 'app/admin/admin-container/admin-container.component';
 
 const childRoutes: Routes = [

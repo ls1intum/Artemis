@@ -7,7 +7,7 @@ import { BuildJobStatistics, SpanType } from 'app/localci/shared/entities/build-
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
