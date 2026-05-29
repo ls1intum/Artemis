@@ -61,10 +61,7 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
             "api/core/files/attachments/attachment-unit/{attachmentVideoUnitId}/student/*", "api/core/files/attachments/lecture/{lectureId}/merge-pdf",
             "api/core/files/attachments/lecture/{lectureId}/{attachmentName}", "api/core/files/course/icons/{courseId}/*",
             "api/core/files/courses/{courseId}/attachment-units/{attachmentVideoUnitId}", "api/core/files/drag-and-drop/backgrounds/{questionId}/*",
-            "api/core/files/exam-user/signatures/{examUserId}/*", "api/core/files/exam-user/{examUserId}/*", "api/core/files/user/profile-pictures/{userId}/*",
-            // tutorialgroup (collection "tutorial-free-periods" mismatches its id {tutorialGroupFreePeriodId}: rename the
-            // collection to "tutorial-group-free-periods" or the id to {tutorialFreePeriodId} — needs an API naming decision)
-            "api/tutorialgroup/courses/{courseId}/tutorial-groups-configurations/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}");
+            "api/core/files/exam-user/signatures/{examUserId}/*", "api/core/files/exam-user/{examUserId}/*", "api/core/files/user/profile-pictures/{userId}/*");
 
     @Test
     void shouldBeNamedResource() {
