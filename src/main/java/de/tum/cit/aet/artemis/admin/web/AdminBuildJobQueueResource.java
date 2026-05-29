@@ -200,7 +200,7 @@ public class AdminBuildJobQueueResource {
      * @param buildJobId the id of the build job to cancel
      * @return the ResponseEntity with the result of the cancellation
      */
-    @DeleteMapping("cancel-job/{buildJobId}")
+    @DeleteMapping({ "build-jobs/{buildJobId}/cancel", "cancel-job/{buildJobId}" })
     public ResponseEntity<Void> cancelBuildJob(@PathVariable String buildJobId) {
         log.debug("REST request to cancel the build job with id {}", buildJobId);
         // Call the cancelBuildJob method in LocalCIBuildJobManagementService

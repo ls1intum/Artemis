@@ -54,8 +54,6 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
     private static final Set<String> PATH_VARIABLE_COLLECTION_BASELINE = Set.of(
             // account
             "api/account/passkey/{credentialId}", "api/account/passkey/{credentialId}/approval",
-            // admin
-            "api/admin/cancel-job/{buildJobId}",
             // assessment
             "api/assessment/exercises/{exerciseId}/example-submissions/import/{sourceSubmissionId}",
             // atlas
@@ -84,10 +82,6 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
             "api/iris/tutor-suggestion/{postId}/sessions/current",
             // lecture
             "api/lecture/lectures/import/{sourceLectureId}",
-            // localci
-            "api/localci/build-log/{buildJobId}", "api/localci/courses/{courseId}/cancel-job/{buildJobId}",
-            // lti
-            "api/lti/lti13/deep-linking/{courseId}",
             // modeling
             "api/modeling/modeling-exercises/import/{sourceExerciseId}", "api/modeling/modeling-submissions/{exampleSubmissionId}/example-assessment",
             // programming
@@ -100,7 +94,7 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
             // quiz
             "api/quiz/courses/{courseId}/training-questions/{quizQuestionId}/submit", "api/quiz/quiz-exercises/{quizBatchId}/start-batch",
             // text
-            "api/text/admin/event-insights/text-assessment/events/{courseId}", "api/text/text-editor/{participationId}", "api/text/text-exercises/import/{sourceExerciseId}",
+            "api/text/admin/event-insights/text-assessment/events/{courseId}", "api/text/text-exercises/import/{sourceExerciseId}",
             // tutorialgroup (collection "tutorial-free-periods" mismatches its id {tutorialGroupFreePeriodId}: rename the
             // collection to "tutorial-group-free-periods" or the id to {tutorialFreePeriodId} — needs an API naming decision)
             "api/tutorialgroup/courses/{courseId}/tutorial-groups-configurations/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}");

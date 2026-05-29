@@ -280,14 +280,14 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testCancelProcessingBuildJob() throws Exception {
         BuildJobQueueItem buildJob = processingJobs.get(job1.id());
-        request.delete("/api/core/admin/cancel-job/" + buildJob.id(), HttpStatus.NO_CONTENT);
+        request.delete("/api/admin/build-jobs/" + buildJob.id() + "/cancel", HttpStatus.NO_CONTENT);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testCancelQueuedBuildJob() throws Exception {
         queuedJobs.add(job1);
-        request.delete("/api/core/admin/cancel-job/" + job1.id(), HttpStatus.NO_CONTENT);
+        request.delete("/api/admin/build-jobs/" + job1.id() + "/cancel", HttpStatus.NO_CONTENT);
     }
 
     @Test
@@ -306,7 +306,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCancelBuildJobForCourse() throws Exception {
         BuildJobQueueItem buildJob = processingJobs.get(job1.id());
-        request.delete("/api/localci/courses/" + course.getId() + "/cancel-job/" + buildJob.id(), HttpStatus.NO_CONTENT);
+        request.delete("/api/localci/courses/" + course.getId() + "/build-jobs/" + buildJob.id() + "/cancel", HttpStatus.NO_CONTENT);
     }
 
     @Test
@@ -418,7 +418,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
             buildJobRepository.save(finishedJobForLogs);
             BuildLogDTO buildLogEntry = new BuildLogDTO(ZonedDateTime.now(), "Dummy log");
             buildLogEntryService.saveBuildLogsToFile(List.of(buildLogEntry), "6", programmingExercise);
-            var response = request.get("/api/localci/build-log/6", HttpStatus.OK, String.class);
+            var response = request.get("/api/localci/build-jobs/6/build-log", HttpStatus.OK, String.class);
             assertThat(response).contains("Dummy log");
         }
         finally {
