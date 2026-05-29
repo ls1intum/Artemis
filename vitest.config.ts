@@ -96,6 +96,9 @@ export default defineConfig({
             'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.spec.ts', // include build plan phases model tests
             'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.spec.ts', // include legacy build plan converter service tests
             'src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**/*.spec.ts', // include programming exercise update timeline tests
+            'src/main/webapp/app/shared-ui/components/slice-navigator/**/*.spec.ts', // include slice-navigator tests
+            'src/main/webapp/app/shared-ui/components/feature-overlay/**/*.spec.ts', // include feature-overlay tests
+            'src/main/webapp/app/shared-ui/export/**/*.spec.ts', // include export (button/modal/row-builder) tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -171,6 +174,9 @@ export default defineConfig({
                 'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts', // include legacy build plan converter service for code coverage
                 'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // include build plan phases model for code coverage
                 'src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**/*.ts', // include programming exercise update timeline for code coverage
+                'src/main/webapp/app/shared-ui/components/slice-navigator/**/*.ts', // include slice-navigator for code coverage
+                'src/main/webapp/app/shared-ui/components/feature-overlay/**/*.ts', // include feature-overlay for code coverage
+                'src/main/webapp/app/shared-ui/export/**/*.ts', // include export (button/modal/row-builder) for code coverage
             ],
             exclude: [
                 '**/node_modules/**', // exclude node_modules with third-party code
