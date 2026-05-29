@@ -41,7 +41,7 @@ import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-dur
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/ui/table-view/table-view';
 import { ParticipationScoreDTO } from './participation-score-dto.model';
-import { ParticipationScoreSearch } from 'app/ui/table/pageable-table';
+import { ParticipationScoreSearch } from 'app/foundation/pagination/pageable-table';
 import { TableLazyLoadEvent } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
 import { buildDbQueryFromLazyEvent } from 'app/ui/table-view/request-builder';

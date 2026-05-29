@@ -39,7 +39,7 @@ import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { Subscription } from 'rxjs';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { ResizeableContainerComponent } from 'app/ui/resizeable-container/resizeable-container.component';
-import { ScoreDisplayComponent } from 'app/ui/score-display/score-display.component';
+import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

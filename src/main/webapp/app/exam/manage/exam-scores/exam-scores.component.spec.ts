@@ -13,7 +13,7 @@ import {
 import { MockProvider } from 'ng-mocks';
 import { ExamScoresComponent, MedianType } from 'app/exam/manage/exam-scores/exam-scores.component';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { ParticipantScoresService, ScoresDTO } from 'app/ui/participant-scores/participant-scores.service';
+import { ParticipantScoresService, ScoresDTO } from 'app/course/participant-scores/participant-scores.service';
 import { cloneDeep } from 'lodash-es';
 import { EMPTY, of } from 'rxjs';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';

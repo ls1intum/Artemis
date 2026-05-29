@@ -13,7 +13,7 @@ import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/
 import { ExamChecklistComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.component';
 import { ExamDetailComponent } from 'app/exam/manage/exams/detail/exam-detail.component';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
-import { ProgressBarComponent } from 'app/ui/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
+import { ProgressBarComponent } from 'app/exercise/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { FeatureToggleLinkDirective } from 'app/foundation/feature-toggle/feature-toggle-link.directive';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';

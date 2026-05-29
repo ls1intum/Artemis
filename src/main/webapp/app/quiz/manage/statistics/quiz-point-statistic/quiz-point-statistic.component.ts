@@ -23,7 +23,7 @@ import { Subscription } from 'rxjs';
 @Component({
     selector: 'jhi-quiz-point-statistic',
     templateUrl: './quiz-point-statistic.component.html',
-    styleUrls: ['./quiz-point-statistic.component.scss', '../../../../ui/chart/vertical-bar-chart.scss'],
+    styleUrls: ['./quiz-point-statistic.component.scss', '../../../../exercise/chart/vertical-bar-chart.scss'],
     imports: [FaIconComponent, TranslateDirective, BarChartModule, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
 })
 export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent implements OnInit, OnDestroy {

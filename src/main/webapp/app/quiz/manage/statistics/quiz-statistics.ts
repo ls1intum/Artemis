@@ -3,7 +3,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { round } from 'app/foundation/util/utils';
 import { QuizStatistic } from 'app/quiz/shared/entities/quiz-statistic.model';
 import { TranslateService } from '@ngx-translate/core';
-import { NgxChartsSingleSeriesDataEntry } from 'app/ui/chart/ngx-charts-datatypes';
+import { NgxChartsSingleSeriesDataEntry } from 'app/exercise/chart/ngx-charts-datatypes';
 
 @Component({
     template: '',

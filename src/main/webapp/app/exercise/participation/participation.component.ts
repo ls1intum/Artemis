@@ -41,7 +41,7 @@ import { TableLazyLoadEvent } from 'primeng/table';
 import { buildDbQueryFromLazyEvent } from 'app/ui/table-view/request-builder';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/ui/table-view/table-view';
 import { ParticipationManagementDTO } from './participation-management-dto.model';
-import { ParticipationSearch } from 'app/ui/table/pageable-table';
+import { ParticipationSearch } from 'app/foundation/pagination/pageable-table';
 import { FilterDropdownComponent } from 'app/exercise/shared/filter-dropdown/filter-dropdown.component';
 import { TeamStudentsListComponent } from 'app/exercise/team/team-participate/team-students-list.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';

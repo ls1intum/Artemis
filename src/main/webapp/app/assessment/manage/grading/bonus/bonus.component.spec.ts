@@ -9,7 +9,7 @@ import { SafeHtmlPipe } from 'app/foundation/pipes/safe-html.pipe';
 import { BonusService, EntityResponseType } from 'app/assessment/manage/grading/bonus/bonus.service';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
-import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/ui/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { of, throwError } from 'rxjs';
 import { Bonus, BonusExample, BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';

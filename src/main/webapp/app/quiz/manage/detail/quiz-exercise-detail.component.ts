@@ -12,7 +12,7 @@ import { DetailOverviewSection, DetailType } from 'app/ui/detail-overview-list/d
 import { isQuizEditable } from 'app/quiz/shared/service/quiz-manage-util.service';
 import { firstValueFrom } from 'rxjs';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
-import { StatisticsService } from 'app/ui/statistics-graph/service/statistics.service';
+import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

@@ -7,7 +7,7 @@ import { isErrorAlert, onError } from 'app/foundation/util/global.utils';
 import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { SortingOrder } from 'app/ui/table/pageable-table';
+import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { switchMap, tap } from 'rxjs/operators';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { EventManager } from 'app/foundation/service/event-manager.service';

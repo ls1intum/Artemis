@@ -12,7 +12,7 @@ import { FeedbackDetailChannelModalComponent } from 'app/programming/manage/grad
 import { Subject } from 'rxjs';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { SortingOrder } from 'app/ui/table/pageable-table';
+import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 

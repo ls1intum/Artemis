@@ -14,8 +14,8 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/ui/tab-bar/tab-bar';
-import { ChartCategoryFilter } from 'app/ui/chart/chart-category-filter';
-import { NgxChartsSingleSeriesDataEntry } from 'app/ui/chart/ngx-charts-datatypes';
+import { ChartCategoryFilter } from 'app/exercise/chart/chart-category-filter';
+import { NgxChartsSingleSeriesDataEntry } from 'app/exercise/chart/ngx-charts-datatypes';
 import { DocumentationType } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
 import { ScoreType } from 'app/foundation/constants/score-type.constants';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';

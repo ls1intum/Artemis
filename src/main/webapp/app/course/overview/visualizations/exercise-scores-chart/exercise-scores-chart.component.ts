@@ -12,7 +12,7 @@ import { Color, LineChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { round } from 'app/foundation/util/utils';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
-import { ChartExerciseTypeFilter } from 'app/ui/chart/chart-exercise-type-filter';
+import { ChartExerciseTypeFilter } from 'app/exercise/chart/chart-exercise-type-filter';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

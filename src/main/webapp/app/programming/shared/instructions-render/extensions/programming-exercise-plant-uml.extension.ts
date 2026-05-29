@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
-import { ArtemisTextReplacementPlugin } from 'app/editor/markdown-editor/extensions/ArtemisTextReplacementPlugin';
+import { ArtemisTextReplacementPlugin } from 'app/foundation/util/ArtemisTextReplacementPlugin';
 import { escapeStringForUseInRegex } from 'app/foundation/util/string-pure.utils';
 import { Subject } from 'rxjs';
 import { take, tap } from 'rxjs/operators';

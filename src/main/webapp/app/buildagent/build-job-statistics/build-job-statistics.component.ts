@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, effect, inject, input, sign
 import { BuildJobStatistics, SpanType } from 'app/buildagent/shared/entities/build-job.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { onError } from 'app/foundation/util/global.utils';
-import { NgxChartsSingleSeriesDataEntry } from 'app/ui/chart/ngx-charts-datatypes';
+import { NgxChartsSingleSeriesDataEntry } from 'app/exercise/chart/ngx-charts-datatypes';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { Color, NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
 import { BuildOverviewService } from 'app/buildagent/build-queue/build-overview.service';

@@ -106,7 +106,7 @@ import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-gra
 import { DocumentationButtonComponent } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
 import { FormStatusBarComponent } from 'app/ui/form/form-status-bar/form-status-bar.component';
 import { FormFooterComponent } from 'app/ui/form/form-footer/form-footer.component';
-import { CategorySelectorComponent } from 'app/ui/category-selector/category-selector.component';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';

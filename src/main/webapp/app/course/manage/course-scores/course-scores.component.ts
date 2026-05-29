@@ -43,7 +43,7 @@ import { PlagiarismCaseDTO } from 'app/plagiarism/shared/entities/PlagiarismCase
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ParticipantScoresDistributionComponent } from 'app/ui/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
+import { ParticipantScoresDistributionComponent } from 'app/course/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
 import { ExportButtonComponent } from 'app/ui/export/button/export-button.component';

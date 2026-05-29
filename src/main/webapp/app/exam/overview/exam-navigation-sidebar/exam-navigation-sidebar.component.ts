@@ -1,6 +1,6 @@
 import { Component, HostListener, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { SidebarEventService } from 'app/ui/sidebar/service/sidebar-event.service';
+import { SidebarEventService } from 'app/course/sidebar/service/sidebar-event.service';
 import { ExamSession } from 'app/exam/shared/entities/exam-session.model';
 import { Exercise, ExerciseType, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';

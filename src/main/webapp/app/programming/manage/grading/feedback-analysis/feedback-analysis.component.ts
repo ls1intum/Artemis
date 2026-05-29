@@ -4,7 +4,7 @@ import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackChannelReque
 import { NgbModal, NgbModule, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { faCircleQuestion, faFilter, faMessage, faSort, faSpinner, faUsers } from '@fortawesome/free-solid-svg-icons';
-import { SearchResult, SortingOrder } from 'app/ui/table/pageable-table';
+import { SearchResult, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { FeedbackModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback/feedback-modal.component';
 import { FeedbackFilterModalComponent, FilterData } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-filter/feedback-filter-modal.component';
 import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';

@@ -7,7 +7,7 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { LtiService } from 'app/foundation/service/lti.service';
 import { NgClass, NgStyle } from '@angular/common';
-import { SidebarComponent } from 'app/ui/sidebar/sidebar.component';
+import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';

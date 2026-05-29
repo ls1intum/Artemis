@@ -14,7 +14,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SearchResult } from 'app/ui/table/pageable-table';
+import { SearchResult } from 'app/foundation/pagination/pageable-table';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Subject, of } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

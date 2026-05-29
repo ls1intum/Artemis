@@ -1,5 +1,5 @@
 import { Color, ScaleType } from '@swimlane/ngx-charts';
-import { NgxChartsMultiSeriesDataEntry } from 'app/ui/chart/ngx-charts-datatypes';
+import { NgxChartsMultiSeriesDataEntry } from 'app/exercise/chart/ngx-charts-datatypes';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/foundation/util/utils';

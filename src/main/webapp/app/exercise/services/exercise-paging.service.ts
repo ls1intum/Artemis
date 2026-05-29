@@ -2,7 +2,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { PagingService } from 'app/exercise/services/paging.service';
-import { SearchResult, SearchTermPageableSearch } from 'app/ui/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
 import { Observable, map } from 'rxjs';
 
 export abstract class ExercisePagingService<T extends Exercise> extends PagingService<T> {

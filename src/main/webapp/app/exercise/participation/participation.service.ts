@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { createRequestOption } from 'app/foundation/util/request.util';
-import { PageableResult, ParticipationScoreSearch, ParticipationSearch } from 'app/ui/table/pageable-table';
+import { PageableResult, ParticipationScoreSearch, ParticipationSearch } from 'app/foundation/pagination/pageable-table';
 import { ParticipationNameExportDTO } from 'app/exercise/exercise-scores/participation-name-export-dto.model';
 import { ParticipationScoreDTO } from 'app/exercise/exercise-scores/participation-score-dto.model';
 import { ParticipationManagementDTO } from 'app/exercise/participation/participation-management-dto.model';

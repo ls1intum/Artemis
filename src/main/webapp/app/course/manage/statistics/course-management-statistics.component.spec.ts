@@ -5,7 +5,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { SpanType } from 'app/exercise/shared/entities/statistics.model';
 import { CourseManagementStatisticsComponent } from 'app/course/manage/statistics/course-management-statistics.component';
-import { StatisticsService } from 'app/ui/statistics-graph/service/statistics.service';
+import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import { of } from 'rxjs';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ActivatedRoute, RouterModule } from '@angular/router';

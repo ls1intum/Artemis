@@ -20,7 +20,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
-import { ParticipantScoresService, ScoresDTO } from 'app/ui/participant-scores/participant-scores.service';
+import { ParticipantScoresService, ScoresDTO } from 'app/course/participant-scores/participant-scores.service';
 import { captureException } from '@sentry/angular';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
@@ -60,7 +60,7 @@ import {
 import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { ExamScoresAverageScoresGraphComponent } from 'app/exam/manage/exam-scores/average-scores-graph/exam-scores-average-scores-graph.component';
 
-import { ParticipantScoresDistributionComponent } from 'app/ui/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
+import { ParticipantScoresDistributionComponent } from 'app/course/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { ExportButtonComponent } from 'app/ui/export/button/export-button.component';
 import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
@@ -81,7 +81,7 @@ export enum MedianType {
     selector: 'jhi-exam-scores',
     templateUrl: './exam-scores.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrls: ['./exam-scores.component.scss', '../../../ui/chart/vertical-bar-chart.scss'],
+    styleUrls: ['./exam-scores.component.scss', '../../../exercise/chart/vertical-bar-chart.scss'],
     imports: [
         RouterLink,
         ExamScoresAverageScoresGraphComponent,

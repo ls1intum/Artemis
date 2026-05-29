@@ -1,6 +1,6 @@
 import { Component, computed, model } from '@angular/core';
 import { Dayjs } from 'dayjs/esm';
-import { ExerciseTimelineComponent, TimelineItem } from 'app/ui/exercise-timeline/exercise-timeline.component';
+import { ExerciseTimelineComponent, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 
 @Component({
     selector: 'jhi-programming-exercise-timeline',

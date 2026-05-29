@@ -22,7 +22,7 @@ interface SimilarityRangeComparisonStateDTO {
 
 @Component({
     selector: 'jhi-plagiarism-run-details',
-    styleUrls: ['./plagiarism-run-details.component.scss', '../../../ui/chart/vertical-bar-chart.scss'],
+    styleUrls: ['./plagiarism-run-details.component.scss', '../../../exercise/chart/vertical-bar-chart.scss'],
     templateUrl: './plagiarism-run-details.component.html',
     imports: [TranslateDirective, HelpIconComponent, BarChartModule, DatePipe, ArtemisTranslatePipe, ArtemisDatePipe],
 })

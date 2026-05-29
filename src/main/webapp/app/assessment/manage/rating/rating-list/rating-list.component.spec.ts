@@ -15,7 +15,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { PageableResult } from 'app/ui/table/pageable-table';
+import { PageableResult } from 'app/foundation/pagination/pageable-table';
 
 describe('RatingListComponent', () => {
     setupTestBed({ zoneless: true });

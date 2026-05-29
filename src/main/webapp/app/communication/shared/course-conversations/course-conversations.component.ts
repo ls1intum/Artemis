@@ -55,12 +55,12 @@ import { CourseOverviewService } from 'app/course/overview/services/course-overv
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { UserPublicInfoDTO } from 'app/account/user/user.model';
-import { FeatureActivationComponent } from 'app/foundation/feature-activation/feature-activation.component';
+import { FeatureActivationComponent } from 'app/ui/feature-activation/feature-activation.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { LoadingIndicatorContainerComponent } from 'app/ui/loading-indicator-container/loading-indicator-container.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import { SidebarComponent } from 'app/ui/sidebar/sidebar.component';
+import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
 import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map, take, takeUntil } from 'rxjs/operators';

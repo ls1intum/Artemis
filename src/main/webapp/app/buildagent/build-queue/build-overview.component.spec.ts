@@ -12,7 +12,7 @@ import { DataTableComponent } from 'app/ui/data-table/data-table.component';
 import { FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { HttpResponse } from '@angular/common/http';
-import { SortingOrder } from 'app/ui/table/pageable-table';
+import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';

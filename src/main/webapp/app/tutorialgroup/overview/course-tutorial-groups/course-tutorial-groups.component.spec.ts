@@ -18,7 +18,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { SidebarComponent } from 'app/ui/sidebar/sidebar.component';
+import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

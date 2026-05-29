@@ -13,7 +13,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
 import { NgStyle } from '@angular/common';
-import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/ui/exercise-timeline/exercise-timeline.component';
+import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({

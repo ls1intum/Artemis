@@ -1,7 +1,7 @@
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Observable, of } from 'rxjs';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { PageableResult, ParticipationScoreSearch } from 'app/ui/table/pageable-table';
+import { PageableResult, ParticipationScoreSearch } from 'app/foundation/pagination/pageable-table';
 import { ParticipationScoreDTO } from 'app/exercise/exercise-scores/participation-score-dto.model';
 import { ParticipationNameExportDTO } from 'app/exercise/exercise-scores/participation-name-export-dto.model';
 

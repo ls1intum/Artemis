@@ -23,7 +23,7 @@ import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { UMLDiagramType } from '@tumaet/apollon';
-import { SidebarComponent } from 'app/ui/sidebar/sidebar.component';
+import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { SearchFilterPipe } from 'app/foundation/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/ui/search-filter/search-filter.component';
 import { By } from '@angular/platform-browser';

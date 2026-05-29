@@ -20,7 +20,7 @@ import { ExerciseCourseTitlePipe } from 'app/foundation/pipes/exercise-course-ti
 import { SortService } from 'app/foundation/service/sort.service';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/ui/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Subject, of } from 'rxjs';
 import { FileUploadExercisePagingService } from 'app/fileupload/manage/services/file-upload-exercise-paging.service';

@@ -21,7 +21,11 @@ import { addPublicFilePrefix } from 'app/app.constants';
     selector: 'jhi-drag-and-drop-question-statistic',
     templateUrl: './drag-and-drop-question-statistic.component.html',
     providers: [QuizStatisticUtil, DragAndDropQuestionUtil],
-    styleUrls: ['../../../../ui/chart/vertical-bar-chart.scss', '../quiz-point-statistic/quiz-point-statistic.component.scss', './drag-and-drop-question-statistic.component.scss'],
+    styleUrls: [
+        '../../../../exercise/chart/vertical-bar-chart.scss',
+        '../quiz-point-statistic/quiz-point-statistic.component.scss',
+        './drag-and-drop-question-statistic.component.scss',
+    ],
     encapsulation: ViewEncapsulation.None,
     imports: [TranslateDirective, BarChartModule, FaIconComponent, ImageComponent, NgStyle, DragItemComponent, QuizStatisticsFooterComponent],
 })

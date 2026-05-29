@@ -2,7 +2,7 @@ import { Component, computed, input } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 import { faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
-import { SortingOrder } from 'app/ui/table/pageable-table';
+import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 
 @Component({
     selector: 'jhi-sort-icon',

@@ -3,7 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, LineChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { NgxChartsMultiSeriesDataEntry } from 'app/ui/chart/ngx-charts-datatypes';
+import { NgxChartsMultiSeriesDataEntry } from 'app/exercise/chart/ngx-charts-datatypes';
 import { round } from 'app/foundation/util/utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';

@@ -21,7 +21,7 @@ import {
 } from 'app/atlas/shared/entities/competency.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { CompetencyPageableSearch, SearchResult, SortingOrder } from 'app/ui/table/pageable-table';
+import { CompetencyPageableSearch, SearchResult, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import * as dateUtils from 'app/foundation/util/date.utils';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import dayjs from 'dayjs/esm';

@@ -10,7 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { LearningPathInformationDTO } from 'app/atlas/shared/entities/learning-path.model';
-import { SearchResult, SearchTermPageableSearch } from 'app/ui/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
 import { By } from '@angular/platform-browser';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';

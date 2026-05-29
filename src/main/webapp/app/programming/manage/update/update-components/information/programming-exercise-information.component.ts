@@ -45,7 +45,7 @@ import { RemoveAuxiliaryRepositoryButtonComponent } from '../../remove-auxiliary
 import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/ui/components/buttons/button/button.component';
 import { AddAuxiliaryRepositoryButtonComponent } from '../../add-auxiliary-repository-button.component';
-import { CategorySelectorComponent } from 'app/ui/category-selector/category-selector.component';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { ProgrammingExerciseDifficultyComponent } from '../difficulty/programming-exercise-difficulty.component';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

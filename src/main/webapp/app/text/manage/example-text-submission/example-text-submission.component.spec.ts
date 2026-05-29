@@ -27,7 +27,7 @@ import { ExampleTextSubmissionComponent } from 'app/text/manage/example-text-sub
 import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ResizeableContainerComponent } from 'app/ui/resizeable-container/resizeable-container.component';
-import { ScoreDisplayComponent } from 'app/ui/score-display/score-display.component';
+import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';

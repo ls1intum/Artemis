@@ -25,7 +25,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { SelectButton } from 'primeng/selectbutton';
 import { FormsModule } from '@angular/forms';
-import { NgxChartsSingleSeriesDataEntry } from 'app/ui/chart/ngx-charts-datatypes';
+import { NgxChartsSingleSeriesDataEntry } from 'app/exercise/chart/ngx-charts-datatypes';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { Color, PieChartComponent, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { SelectModule } from 'primeng/select';

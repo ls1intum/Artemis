@@ -22,7 +22,7 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/sha
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { DeleteButtonDirective } from 'app/ui/delete-dialog/directive/delete-button.directive';
-import { ParticipantScoresService, ScoresDTO } from 'app/ui/participant-scores/participant-scores.service';
+import { ParticipantScoresService, ScoresDTO } from 'app/course/participant-scores/participant-scores.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/foundation/util/utils';
@@ -36,7 +36,7 @@ import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ParticipantScoresDistributionComponent } from 'app/ui/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
+import { ParticipantScoresDistributionComponent } from 'app/course/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/ui/export/modal/export-modal.component';
 import { ExportButtonComponent } from 'app/ui/export/button/export-button.component';
 import { CommonSpreadsheetCellObject } from 'app/ui/export/row-builder/excel-export-row-builder';

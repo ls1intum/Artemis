@@ -10,7 +10,7 @@ import { faExclamationTriangle, faPlus, faQuestionCircle, faSave, faTimes } from
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { ButtonSize } from 'app/ui/components/buttons/button/button.component';
 import { Subject, forkJoin, of } from 'rxjs';
-import { SearchTermPageableSearch, SortingOrder } from 'app/ui/table/pageable-table';
+import { SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { GradeEditMode } from 'app/assessment/manage/grading/grading.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 

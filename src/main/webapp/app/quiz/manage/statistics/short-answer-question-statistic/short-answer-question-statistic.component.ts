@@ -17,7 +17,11 @@ import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-st
     selector: 'jhi-short-answer-question-statistic',
     templateUrl: './short-answer-question-statistic.component.html',
     providers: [QuizStatisticUtil, ShortAnswerQuestionUtil],
-    styleUrls: ['../../../../ui/chart/vertical-bar-chart.scss', '../quiz-point-statistic/quiz-point-statistic.component.scss', './short-answer-question-statistic.component.scss'],
+    styleUrls: [
+        '../../../../exercise/chart/vertical-bar-chart.scss',
+        '../quiz-point-statistic/quiz-point-statistic.component.scss',
+        './short-answer-question-statistic.component.scss',
+    ],
     imports: [TranslateDirective, BarChartModule, FaIconComponent, QuizStatisticsFooterComponent],
 })
 export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComponent {

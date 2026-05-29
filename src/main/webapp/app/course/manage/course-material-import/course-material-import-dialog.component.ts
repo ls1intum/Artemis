@@ -15,7 +15,7 @@ import { CourseMaterialImportService } from './course-material-import.service';
 import { CourseMaterialImportOptions, CourseMaterialImportOptionsDTO, createDefaultImportOptions } from './course-material-import.model';
 import { CourseForImportDTO } from 'app/course/shared/entities/course.model';
 import { CourseForImportDTOPagingService } from 'app/course/shared/services/course-for-import-dto-paging-service';
-import { SearchTermPageableSearch, SortingOrder } from 'app/ui/table/pageable-table';
+import { SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { lastValueFrom } from 'rxjs';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';

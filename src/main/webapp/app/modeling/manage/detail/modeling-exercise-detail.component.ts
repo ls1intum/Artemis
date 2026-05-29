@@ -11,7 +11,7 @@ import { ModelingExerciseService } from '../services/modeling-exercise.service';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { StatisticsService } from 'app/ui/statistics-graph/service/statistics.service';
+import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
 import { EventManager } from 'app/foundation/service/event-manager.service';

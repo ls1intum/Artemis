@@ -6,7 +6,7 @@ import { CourseInformationSharingConfiguration } from 'app/course/shared/entitie
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FeatureActivationComponent } from 'app/foundation/feature-activation/feature-activation.component';
+import { FeatureActivationComponent } from 'app/ui/feature-activation/feature-activation.component';
 import { By } from '@angular/platform-browser';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockProvider } from 'ng-mocks';

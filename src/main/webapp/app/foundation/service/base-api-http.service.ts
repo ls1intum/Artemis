@@ -2,7 +2,7 @@ import { HttpMethod } from 'app/admin/metrics/metrics.model';
 import { inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
-import { SearchTermPageableSearch } from 'app/ui/table/pageable-table';
+import { SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
 
 export abstract class BaseApiHttpService {
     private readonly httpClient: HttpClient = inject(HttpClient);

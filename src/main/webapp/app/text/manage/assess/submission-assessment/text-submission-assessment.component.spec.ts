@@ -42,7 +42,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { GradingInstructionLinkIconComponent } from 'app/ui/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
-import { ScoreDisplayComponent } from 'app/ui/score-display/score-display.component';
+import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ResizeableContainerComponent } from 'app/ui/resizeable-container/resizeable-container.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';

@@ -15,7 +15,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { QuizExerciseDetailComponent } from 'app/quiz/manage/detail/quiz-exercise-detail.component';
 import dayjs, { Dayjs } from 'dayjs/esm';
-import { StatisticsService } from 'app/ui/statistics-graph/service/statistics.service';
+import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CompetencyExerciseLink, CourseCompetency } from 'app/atlas/shared/entities/competency.model';

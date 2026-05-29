@@ -11,7 +11,7 @@ import { LearningPathsTableComponent } from 'app/atlas/manage/learning-paths-tab
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { LearningPathsAnalyticsComponent } from 'app/atlas/manage/learning-paths-analytics/learning-paths-analytics.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { FeatureActivationComponent } from 'app/foundation/feature-activation/feature-activation.component';
+import { FeatureActivationComponent } from 'app/ui/feature-activation/feature-activation.component';
 import { faNetworkWired } from '@fortawesome/free-solid-svg-icons';
 
 @Component({

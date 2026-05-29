@@ -6,7 +6,7 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ExercisePagingService } from 'app/exercise/services/exercise-paging.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { SortingOrder } from 'app/ui/table/pageable-table';
+import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { take } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { DummyPagingService } from 'test/helpers/mocks/service/dummy-paging-service';

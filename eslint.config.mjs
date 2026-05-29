@@ -158,6 +158,58 @@ export default tseslint.config(
             'localRules/enforce-cleanup-on-destroy': 'warn',
         },
     },
+    // Module-boundary rules: enforce the foundation ← ui ← editor layering.
+    // foundation/ is the base layer (no DOM/UI), ui/ holds generic UI primitives,
+    // editor/ holds the code/markdown editor stacks. The intent:
+    //   - foundation may not import from ui or editor
+    //   - ui may not import from editor
+    //   - editor may import from foundation and ui (e.g. ColorSelector inside the markdown toolbar)
+    {
+        files: ['src/main/webapp/app/foundation/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            'no-restricted-imports': [
+                'error',
+                {
+                    paths: [
+                        { name: 'dayjs', message: "Please import from 'dayjs/esm' instead." },
+                        { name: 'lodash', message: "Please import from 'lodash-es' instead." },
+                    ],
+                    patterns: [
+                        {
+                            group: ['app/ui/**'],
+                            message: 'app/foundation/ must not depend on app/ui/. foundation/ is the base infrastructure layer (no DOM/UI). If a UI primitive is needed here, the file probably belongs in app/ui/ instead.',
+                        },
+                        {
+                            group: ['app/editor/**'],
+                            message: 'app/foundation/ must not depend on app/editor/. foundation/ is the base infrastructure layer. Extract the editor-side dependency to a neutral constant or move the consuming file into app/editor/.',
+                        },
+                    ],
+                },
+            ],
+        },
+    },
+    {
+        files: ['src/main/webapp/app/ui/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            'no-restricted-imports': [
+                'error',
+                {
+                    paths: [
+                        { name: 'dayjs', message: "Please import from 'dayjs/esm' instead." },
+                        { name: 'lodash', message: "Please import from 'lodash-es' instead." },
+                    ],
+                    patterns: [
+                        {
+                            group: ['app/editor/**'],
+                            message: 'app/ui/ must not depend on app/editor/. ui/ holds generic UI primitives; the editor stack is specialised and sits above ui/.',
+                        },
+                    ],
+                },
+            ],
+        },
+    },
     {
         files: ['src/test/javascript/**','src/main/webapp/app/**/*.spec.ts'],
         plugins: {

@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PagingService } from 'app/exercise/services/paging.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Observable, of } from 'rxjs';
-import { SearchResult, SortingOrder } from 'app/ui/table/pageable-table';
+import { SearchResult, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';

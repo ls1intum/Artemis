@@ -18,7 +18,7 @@ import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { SortingOrder } from 'app/ui/table/pageable-table';
+import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { UI_RELOAD_TIME } from 'app/foundation/constants/exercise-exam-constants';
 import { FormsModule } from '@angular/forms';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';

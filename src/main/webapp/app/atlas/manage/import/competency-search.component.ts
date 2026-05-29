@@ -2,7 +2,7 @@ import { Component, model } from '@angular/core';
 import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/ui/components/buttons/button/button.component';
 import { getSemesters } from 'app/foundation/util/semester-utils';
-import { CourseCompetencyFilter } from 'app/ui/table/pageable-table';
+import { CourseCompetencyFilter } from 'app/foundation/pagination/pageable-table';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';

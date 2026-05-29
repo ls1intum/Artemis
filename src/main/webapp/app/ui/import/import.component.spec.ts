@@ -10,7 +10,7 @@ import { BaseEntity } from 'app/foundation/model/base-entity';
 import { SortService } from 'app/foundation/service/sort.service';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/ui/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { Subject, of } from 'rxjs';
 import { DummyPagingService } from 'test/helpers/mocks/service/dummy-paging-service';

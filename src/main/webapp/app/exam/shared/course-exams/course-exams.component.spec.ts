@@ -13,7 +13,7 @@ import { ExamParticipationService } from 'app/exam/overview/services/exam-partic
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { SidebarComponent } from 'app/ui/sidebar/sidebar.component';
+import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { SearchFilterComponent } from 'app/ui/search-filter/search-filter.component';
 import { SearchFilterPipe } from 'app/foundation/pipes/search-filter.pipe';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';

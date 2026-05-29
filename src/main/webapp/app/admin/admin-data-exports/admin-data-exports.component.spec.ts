@@ -23,7 +23,7 @@ import { AdminDataExportsComponent } from 'app/admin/admin-data-exports/admin-da
 import { AdminDataExportsService } from 'app/admin/admin-data-exports/admin-data-exports.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { AdminDataExport, DataExportState } from 'app/admin/admin-data-exports/data-export.model';
-import { PageableResult } from 'app/ui/table/pageable-table';
+import { PageableResult } from 'app/foundation/pagination/pageable-table';
 
 describe('AdminDataExportsComponent', () => {
     setupTestBed({ zoneless: true });

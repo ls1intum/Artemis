@@ -8,8 +8,8 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { ArtemisNavigationUtilService, navigateToExamExercise } from 'app/foundation/util/navigation.utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
-import { NgxChartsSingleSeriesDataEntry } from 'app/ui/chart/ngx-charts-datatypes';
-import { axisTickFormattingWithPercentageSign } from 'app/ui/statistics-graph/util/statistics-graph.utils';
+import { NgxChartsSingleSeriesDataEntry } from 'app/exercise/chart/ngx-charts-datatypes';
+import { axisTickFormattingWithPercentageSign } from 'app/exercise/statistics-graph/util/statistics-graph.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 

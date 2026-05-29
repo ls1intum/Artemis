@@ -1,4 +1,4 @@
-import { ArtemisTextReplacementPlugin } from 'app/editor/markdown-editor/extensions/ArtemisTextReplacementPlugin';
+import { ArtemisTextReplacementPlugin } from 'app/foundation/util/ArtemisTextReplacementPlugin';
 import DOMPurify, { Config } from 'dompurify';
 import type { PluginSimple } from 'markdown-it';
 import type Token from 'markdown-it/lib/token.mjs';

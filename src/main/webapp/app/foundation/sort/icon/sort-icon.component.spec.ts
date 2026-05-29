@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { SortIconComponent } from 'app/foundation/sort/icon/sort-icon.component';
-import { SortingOrder } from 'app/ui/table/pageable-table';
+import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 
 describe('SortIconComponent', () => {
     let component: SortIconComponent;

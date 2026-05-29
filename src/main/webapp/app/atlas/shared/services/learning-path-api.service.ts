@@ -14,7 +14,7 @@ import {
 import { HttpParams } from '@angular/common/http';
 import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
 import { LearningPathHealthDTO } from 'app/atlas/shared/entities/learning-path-health.model';
-import { SearchResult, SearchTermPageableSearch } from 'app/ui/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
 
 @Injectable({
     providedIn: 'root',

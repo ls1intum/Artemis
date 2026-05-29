@@ -71,7 +71,7 @@ export default defineConfig({
             'src/main/webapp/app/foundation/sort/**/*.directive.spec.ts', // include sort directives
             'src/main/webapp/app/ui/user-import/util/**/*.spec.ts', // include user import util tests
             'src/main/webapp/app/ui/range-slider/**/*.spec.ts', // include range slider tests
-            'src/main/webapp/app/ui/dashboards/**/*.spec.ts', // include dashboards tests
+            'src/main/webapp/app/exercise/dashboards/**/*.spec.ts', // include dashboards tests
             'src/main/webapp/app/ui/image-cropper/**/*.spec.ts', // include image cropper tests
             'src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts', // include problem statement service tests
             'src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts', // include problem statement utils tests
@@ -145,7 +145,7 @@ export default defineConfig({
                 'src/main/webapp/app/ui/table-view/**/*.ts', // include shared table view for code coverage
                 'src/main/webapp/app/foundation/sort/**/*.directive.ts', // include sort directives for code coverage
                 'src/main/webapp/app/ui/range-slider/**/*.ts', // include range slider for code coverage
-                'src/main/webapp/app/ui/dashboards/**/*.ts', // include dashboards for code coverage
+                'src/main/webapp/app/exercise/dashboards/**/*.ts', // include dashboards for code coverage
                 'src/main/webapp/app/ui/image-cropper/**/*.ts', // include image cropper for code coverage
                 'src/main/webapp/app/programming/manage/services/problem-statement.service.ts', // include problem statement service for code coverage
                 'src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts', // include problem statement utils for code coverage

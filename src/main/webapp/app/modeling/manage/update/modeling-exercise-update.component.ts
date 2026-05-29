@@ -23,7 +23,7 @@ import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-grou
 import { EditType, SaveExerciseCommand } from 'app/exercise/util/exercise.utils';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import { CategorySelectorComponent } from 'app/ui/category-selector/category-selector.component';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
 import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
 import { FormDateTimePickerComponent } from 'app/ui/date-time-picker/date-time-picker.component';

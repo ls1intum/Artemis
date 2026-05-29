@@ -1,6 +1,6 @@
 import { Component, TemplateRef, contentChild, input, model } from '@angular/core';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
-import { PageableSearch, SearchResult, SortingOrder } from 'app/ui/table/pageable-table';
+import { PageableSearch, SearchResult, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';

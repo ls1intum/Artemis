@@ -50,7 +50,7 @@ import dayjs from 'dayjs/esm';
 import { faCheckCircle, faExclamationTriangle, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { isManualResult } from 'app/exercise/result/result.utils';
-import { TutorParticipationGraphComponent } from 'app/ui/dashboards/tutor-participation-graph/tutor-participation-graph.component';
+import { TutorParticipationGraphComponent } from 'app/exercise/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { SecondCorrectionEnableButtonComponent } from './second-correction-button/second-correction-enable-button.component';
 import { SidePanelComponent } from 'app/ui/side-panel/side-panel.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -64,7 +64,7 @@ import { LanguageTableCellComponent } from './language-table-cell/language-table
 import { NgStyle } from '@angular/common';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
-import { TutorLeaderboardComponent } from 'app/ui/dashboards/tutor-leaderboard/tutor-leaderboard.component';
+import { TutorLeaderboardComponent } from 'app/exercise/dashboards/tutor-leaderboard/tutor-leaderboard.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { AssessmentDashboardInformationEntry } from 'app/assessment/shared/assessment-dashboard/assessment-dashboard-information.component';

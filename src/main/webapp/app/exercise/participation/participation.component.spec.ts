@@ -24,7 +24,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import { PageableResult } from 'app/ui/table/pageable-table';
+import { PageableResult } from 'app/foundation/pagination/pageable-table';
 
 describe('ParticipationComponent', () => {
     setupTestBed({ zoneless: true });

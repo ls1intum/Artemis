@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AdminDataExport, DataExport } from 'app/admin/admin-data-exports/data-export.model';
-import { PageableResult } from 'app/ui/table/pageable-table';
+import { PageableResult } from 'app/foundation/pagination/pageable-table';
 import dayjs from 'dayjs/esm';
 
 /**

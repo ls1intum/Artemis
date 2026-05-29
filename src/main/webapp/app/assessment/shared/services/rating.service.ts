@@ -3,7 +3,7 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { RatingListItem } from 'app/assessment/shared/entities/rating-list-item.model';
-import { PageableResult } from 'app/ui/table/pageable-table';
+import { PageableResult } from 'app/foundation/pagination/pageable-table';
 
 @Injectable({
     providedIn: 'root',

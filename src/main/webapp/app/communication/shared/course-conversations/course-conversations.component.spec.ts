@@ -30,11 +30,11 @@ import { ButtonComponent } from 'app/ui/components/buttons/button/button.compone
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { DocumentationButtonComponent } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
-import { SidebarComponent } from 'app/ui/sidebar/sidebar.component';
+import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { GroupChatCreateDialogComponent } from 'app/communication/course-conversations-components/group-chat-create-dialog/group-chat-create-dialog.component';
-import { SidebarEventService } from 'app/ui/sidebar/service/sidebar-event.service';
-import { SidebarAccordionComponent } from 'app/ui/sidebar/sidebar-accordion/sidebar-accordion.component';
+import { SidebarEventService } from 'app/course/sidebar/service/sidebar-event.service';
+import { SidebarAccordionComponent } from 'app/course/sidebar/sidebar-accordion/sidebar-accordion.component';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { OneToOneChatCreateDialogComponent } from 'app/communication/course-conversations-components/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';

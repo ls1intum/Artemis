@@ -1,9 +1,8 @@
 import { ExerciseHintExplanationInterface } from 'app/quiz/shared/entities/quiz-question.model';
 import { escapeStringForUseInRegex } from 'app/foundation/util/string-pure.utils';
-import { QuizExplanationAction } from 'app/editor/monaco-editor/model/actions/quiz/quiz-explanation.action';
-import { QuizHintAction } from 'app/editor/monaco-editor/model/actions/quiz/quiz-hint.action';
+import { QUIZ_EXPLANATION_IDENTIFIER, QUIZ_HINT_IDENTIFIER } from 'app/foundation/constants/quiz-markdown-identifiers.constants';
 
-const hintOrExpRegex = new RegExp(escapeStringForUseInRegex(`${QuizExplanationAction.IDENTIFIER}`) + '|' + escapeStringForUseInRegex(`${QuizHintAction.IDENTIFIER}`), 'g');
+const hintOrExpRegex = new RegExp(escapeStringForUseInRegex(QUIZ_EXPLANATION_IDENTIFIER) + '|' + escapeStringForUseInRegex(QUIZ_HINT_IDENTIFIER), 'g');
 
 /**
  * Takes a string and removes any symbols used for syntax in the markdown editor.
@@ -27,8 +26,8 @@ export function sanitizeStringForMarkdownEditor(str: string | undefined): string
 /**
  * Parse the markdown text and apply the result to the target object's data
  *
- * The markdown text is split at QuizHintAction.IDENTIFIER and QuizExplanationAction.IDENTIFIER tags.
- *  => First part is text. Everything after QuizHintAction.IDENTIFIER is Hint, anything after QuizExplanationAction.IDENTIFIER is explanation
+ * The markdown text is split at QUIZ_HINT_IDENTIFIER and QUIZ_EXPLANATION_IDENTIFIER tags.
+ *  => First part is text. Everything after QUIZ_HINT_IDENTIFIER is Hint, anything after QUIZ_EXPLANATION_IDENTIFIER is explanation
  *
  * @param markdownText {string} the markdown text to parse
  * @param targetObject {object} the object that the result will be saved in. Fields modified are 'text', 'hint' and 'explanation'.
@@ -40,18 +39,18 @@ export function parseExerciseHintExplanation(markdownText: string, targetObject:
     // split markdownText into main text, hint and explanation
     const markdownTextParts = markdownText.split(hintOrExpRegex);
     targetObject.text = markdownTextParts[0].trim();
-    if (markdownText.indexOf(QuizHintAction.IDENTIFIER) !== -1 && markdownText.indexOf(QuizExplanationAction.IDENTIFIER) !== -1) {
-        if (markdownText.indexOf(QuizHintAction.IDENTIFIER) < markdownText.indexOf(QuizExplanationAction.IDENTIFIER)) {
+    if (markdownText.indexOf(QUIZ_HINT_IDENTIFIER) !== -1 && markdownText.indexOf(QUIZ_EXPLANATION_IDENTIFIER) !== -1) {
+        if (markdownText.indexOf(QUIZ_HINT_IDENTIFIER) < markdownText.indexOf(QUIZ_EXPLANATION_IDENTIFIER)) {
             targetObject.hint = markdownTextParts[1].trim();
             targetObject.explanation = markdownTextParts[2].trim();
         } else {
             targetObject.hint = markdownTextParts[2].trim();
             targetObject.explanation = markdownTextParts[1].trim();
         }
-    } else if (markdownText.indexOf(QuizHintAction.IDENTIFIER) !== -1) {
+    } else if (markdownText.indexOf(QUIZ_HINT_IDENTIFIER) !== -1) {
         targetObject.hint = markdownTextParts[1].trim();
         targetObject.explanation = undefined;
-    } else if (markdownText.indexOf(QuizExplanationAction.IDENTIFIER) !== -1) {
+    } else if (markdownText.indexOf(QUIZ_EXPLANATION_IDENTIFIER) !== -1) {
         targetObject.hint = undefined;
         targetObject.explanation = markdownTextParts[1].trim();
     } else {
@@ -76,6 +75,6 @@ export function generateExerciseHintExplanation(sourceObject: ExerciseHintExplan
     return !sourceObject.text
         ? ''
         : sourceObject.text +
-              (sourceObject.hint ? '\n\t' + QuizHintAction.IDENTIFIER + ' ' + sourceObject.hint : '') +
-              (sourceObject.explanation ? '\n\t' + QuizExplanationAction.IDENTIFIER + ' ' + sourceObject.explanation : '');
+              (sourceObject.hint ? '\n\t' + QUIZ_HINT_IDENTIFIER + ' ' + sourceObject.hint : '') +
+              (sourceObject.explanation ? '\n\t' + QUIZ_EXPLANATION_IDENTIFIER + ' ' + sourceObject.explanation : '');
 }

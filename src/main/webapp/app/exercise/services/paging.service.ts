@@ -1,5 +1,5 @@
 import { HttpParams } from '@angular/common/http';
-import { SearchResult, SearchTermPageableSearch } from 'app/ui/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
 import { Observable } from 'rxjs';
 
 export abstract class PagingService<T> {
