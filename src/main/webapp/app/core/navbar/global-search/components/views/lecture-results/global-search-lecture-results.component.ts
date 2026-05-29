@@ -9,11 +9,6 @@ import { LectureSearchService } from 'app/core/navbar/global-search/services/lec
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { catchError, debounceTime, of, switchMap, tap } from 'rxjs';
 import { SEARCH_DEBOUNCE_MS, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
-import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
-import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
-import { MODULE_FEATURE_IRIS } from 'app/app.constants';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 
 @Component({
     selector: 'jhi-global-search-lecture-results',
@@ -21,30 +16,24 @@ import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iri
     templateUrl: 'global-search-lecture-results.component.html',
     styleUrls: ['./global-search-lecture-results.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ArtemisTranslatePipe, FaIconComponent, RouterLink, SkeletonModule, GlobalSearchActionItemComponent, IrisLogoComponent],
+    imports: [ArtemisTranslatePipe, FaIconComponent, RouterLink, SkeletonModule],
     providers: [{ provide: SearchResultView, useExisting: forwardRef(() => GlobalSearchLectureResultsComponent) }],
 })
 export class GlobalSearchLectureResultsComponent extends SearchResultView {
     readonly searchQuery = input.required<string>();
     readonly selectedIndex = input<number>(-1);
-    readonly irisOpen = input<boolean>(false);
     protected readonly back = output<void>();
-    protected readonly viewSelected = output<SearchView>();
     private readonly searchService = inject(LectureSearchService);
     private readonly router = inject(Router);
     private readonly hostElement = inject(ElementRef<HTMLElement>);
-    private readonly profileService = inject(ProfileService);
     protected readonly lectureResults = signal<LectureSearchResult[]>([]);
     protected readonly isLoading = signal(false);
     protected readonly hasError = signal(false);
-    protected readonly irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
-    readonly itemCount = computed(() => (this.irisEnabled && !this.irisOpen() ? 1 : 0) + this.lectureResults().length);
+    readonly itemCount = computed(() => this.lectureResults().length);
     private readonly selectableItems = viewChildren<ElementRef>('selectableItem');
     protected readonly faArrowLeft = faArrowLeft;
     protected readonly faFileLines = faFileLines;
     protected readonly skeletonItems = Array.from({ length: 5 });
-    protected readonly SearchView = SearchView;
-    protected readonly IrisLogoSize = IrisLogoSize;
 
     constructor() {
         super();
@@ -89,18 +78,10 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
         if (event.key !== 'Enter') return;
         const index = this.selectedIndex();
         if (index < 0) return;
-        // Iris button visible when iris is enabled and the split view is not already open
-        if (this.irisEnabled && !this.irisOpen() && index === 0) {
-            event.preventDefault();
-            this.viewSelected.emit(SearchView.Iris);
-            return;
-        }
-        // Offset by 1 if iris button is visible
-        const resultIndex = this.irisEnabled && !this.irisOpen() ? index - 1 : index;
-        const result = this.lectureResults()[resultIndex];
+        const result = this.lectureResults()[index];
         if (result) {
             event.preventDefault();
-            this.router.navigateByUrl(result.lectureUnit.link);
+            this.router.navigate([result.lectureUnit.link], { queryParams: result.lectureUnit.queryParams });
         }
     }
 }
