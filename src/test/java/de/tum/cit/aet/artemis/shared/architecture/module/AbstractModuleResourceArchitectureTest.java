@@ -60,11 +60,7 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
             "api/assessment/course/{courseId}/rating", "api/assessment/courses/{courseId}/exams/{examId}/bonus/{bonusId}",
             "api/assessment/exercises/{exerciseId}/example-submissions/import/{sourceSubmissionId}",
             // atlas
-            "api/atlas/courses/{courseId}/course-competencies/relations/{competencyRelationId}", "api/atlas/learning-path/{learningPathId}",
-            "api/atlas/learning-path/{learningPathId}/competencies", "api/atlas/learning-path/{learningPathId}/competencies/{competencyId}/learning-objects",
-            "api/atlas/learning-path/{learningPathId}/competency-graph", "api/atlas/learning-path/{learningPathId}/competency-progress",
-            "api/atlas/learning-path/{learningPathId}/navigation", "api/atlas/learning-path/{learningPathId}/navigation-overview",
-            "api/atlas/learning-path/{learningPathId}/relative-navigation", "api/atlas/learning-path/{learningPathId}/start", "api/atlas/metrics/course/{courseId}/student",
+            "api/atlas/courses/{courseId}/course-competencies/relations/{competencyRelationId}", "api/atlas/metrics/course/{courseId}/student",
             // communication
             "api/communication/courses/{courseId}/messages/{postId}/display-priority", "api/communication/courses/{courseId}/one-to-one-chats/{userId}",
             // core (file serving)
