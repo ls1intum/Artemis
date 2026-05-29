@@ -1,22 +1,21 @@
-import { Component, computed, model, output } from '@angular/core';
-import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/shared/exercise-timeline/exercise-timeline.component';
+import { Component, model, output } from '@angular/core';
+import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { Dayjs } from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-modeling-exercise-timeline',
     imports: [ExerciseTimelineComponent],
     templateUrl: './modeling-exercise-timeline.component.html',
-    styleUrl: './modeling-exercise-timeline.component.scss',
 })
 export class ModelingExerciseTimelineComponent {
     releaseDate = model<Dayjs | undefined>();
     startDate = model<Dayjs | undefined>();
     dueDate = model<Dayjs | undefined>();
     assessmentDueDate = model<Dayjs | undefined>();
-    timelineItems = computed<TimelineItem[]>(() => this.computeTimelineItems());
+    timelineItems = this.buildTimelineItems();
     timelineStatus = output<ExerciseTimelineStatus>();
 
-    private computeTimelineItems(): TimelineItem[] {
+    private buildTimelineItems(): TimelineItem[] {
         return [
             {
                 kind: 'optional',

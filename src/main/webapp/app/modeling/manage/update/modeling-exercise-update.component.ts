@@ -43,7 +43,7 @@ import { Subscription } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
 import { ModelingExerciseTimelineComponent } from 'app/modeling/manage/modeling-exercise-timeline/modeling-exercise-timeline.component';
-import { ExerciseTimelineStatus } from 'app/shared/exercise-timeline/exercise-timeline.component';
+import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
