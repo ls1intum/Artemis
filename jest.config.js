@@ -223,7 +223,9 @@ module.exports = {
         global: {
             statements: 83,
             branches: 72.9,
-            functions: 72.5,
+            // Lowered (72.5 -> 72) after moving the well-covered foundation module out of Jest (now under Vitest),
+            // which removed those functions from the Jest denominator and nudged the global average down to ~72.42.
+            functions: 72,
             lines: 84,
         },
     },

@@ -6,8 +6,9 @@ import { ExtensionPointDirective } from 'app/foundation/extension-point/extensio
 
 @Component({
     template: `
-        <ng-template #override let-key="key"
-            ><span class="override">override-{{ key }}</span></ng-template
+        <ng-template #override let-key="key" let-extra="extra"
+            ><span class="override">override-{{ key }}</span
+            ><span class="extra">{{ extra }}</span></ng-template
         >
         <div *jhiExtensionPoint="overrideTemplate(); context: context()">default-content</div>
     `,
@@ -16,7 +17,7 @@ import { ExtensionPointDirective } from 'app/foundation/extension-point/extensio
 class HostComponent {
     readonly overrideRef = viewChild<TemplateRef<any>>('override');
     readonly overrideTemplate = signal<TemplateRef<any> | undefined>(undefined);
-    readonly context = signal<{ key: string }>({ key: 'A' });
+    readonly context = signal<{ key: string; extra?: string }>({ key: 'A' });
 }
 
 describe('ExtensionPointDirective', () => {
@@ -59,5 +60,18 @@ describe('ExtensionPointDirective', () => {
         expect(spanAfter?.textContent).toContain('override-B');
         // The embedded view must NOT be recreated (the recreate effect reads context untracked), so the DOM node is identical.
         expect(spanAfter).toBe(spanBefore);
+    });
+
+    it('drops context keys that are removed when the context shrinks', () => {
+        fixture.componentInstance.overrideTemplate.set(fixture.componentInstance.overrideRef());
+        fixture.componentInstance.context.set({ key: 'A', extra: 'x' });
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.extra')?.textContent).toBe('x');
+
+        // Shrinking the context (removing `extra`) must not leave the stale value rendered.
+        fixture.componentInstance.context.set({ key: 'B' });
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.override')?.textContent).toContain('override-B');
+        expect(fixture.nativeElement.querySelector('.extra')?.textContent).toBe('');
     });
 });
