@@ -1,23 +1,21 @@
-import { Component, input, output } from '@angular/core';
+import { Component, SimpleChange, input, output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { of } from 'rxjs';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { StarRatingChangeEvent, StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
 import { RatingService } from 'app/assessment/shared/services/rating.service';
-import { MockRatingService } from 'test/helpers/mocks/service/mock-rating.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockDirective } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockRatingService } from 'test/helpers/mocks/service/mock-rating.service';
 
-/**
- * Stub component for StarRatingComponent.
- * ng-mocks MockComponent cannot properly handle viewChild.required() signals in Angular 21.
- */
 @Component({
     selector: 'star-rating',
     template: '',
@@ -33,12 +31,15 @@ class StarRatingComponentStub {
 }
 
 describe('RatingComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let ratingComponent: RatingComponent;
     let ratingComponentFixture: ComponentFixture<RatingComponent>;
     let ratingService: RatingService;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [RatingComponent],
             providers: [
                 { provide: RatingService, useClass: MockRatingService },
                 { provide: AccountService, useClass: MockAccountService },
@@ -49,101 +50,121 @@ describe('RatingComponent', () => {
                 remove: { imports: [TranslateDirective, StarRatingComponent] },
                 add: { imports: [MockDirective(TranslateDirective), StarRatingComponentStub] },
             })
-            .compileComponents()
-            .then(() => {
-                ratingComponentFixture = TestBed.createComponent(RatingComponent);
-                ratingComponent = ratingComponentFixture.componentInstance;
-                ratingService = TestBed.inject(RatingService);
+            .compileComponents();
 
-                ratingComponent.result = { id: 89 } as Result;
-                ratingComponentFixture.componentRef.setInput('participation', { id: 1 } as Participation);
-            });
+        ratingComponentFixture = TestBed.createComponent(RatingComponent);
+        ratingComponent = ratingComponentFixture.componentInstance;
+        ratingService = TestBed.inject(RatingService);
+
+        ratingComponentFixture.componentRef.setInput('result', { id: 89 } as Result);
+        ratingComponentFixture.componentRef.setInput('participation', { id: 1 } as Participation);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should get rating', () => {
-        jest.spyOn(ratingService, 'getRating');
+        const getRatingSpy = vi.spyOn(ratingService, 'getRating');
+
         ratingComponent.ngOnInit();
-        expect(ratingService.getRating).toHaveBeenCalledOnce();
-        expect(ratingComponent.result?.id).toBe(89);
+
+        expect(getRatingSpy).toHaveBeenCalledTimes(1);
+        expect(ratingComponent.result()?.id).toBe(89);
     });
 
     it('should return due to missing result', () => {
-        jest.spyOn(ratingService, 'getRating');
-        delete ratingComponent.result;
+        const getRatingSpy = vi.spyOn(ratingService, 'getRating');
+        ratingComponentFixture.componentRef.setInput('result', undefined);
+
         ratingComponent.ngOnInit();
-        expect(ratingService.getRating).not.toHaveBeenCalled();
+
+        expect(getRatingSpy).not.toHaveBeenCalled();
     });
 
     it('should return due to missing participation', () => {
-        jest.spyOn(ratingService, 'getRating');
+        const getRatingSpy = vi.spyOn(ratingService, 'getRating');
         ratingComponentFixture.componentRef.setInput('participation', undefined);
-        // delete ratingComponent.result?.submission?.participation;
+
         ratingComponent.ngOnInit();
-        expect(ratingService.getRating).not.toHaveBeenCalled();
+
+        expect(getRatingSpy).not.toHaveBeenCalled();
     });
 
     it('should create new local rating', () => {
         ratingComponent.ngOnInit();
+
         expect(ratingComponent.rating).toBe(0);
     });
 
     it('should set rating received from server', () => {
-        jest.spyOn(ratingService, 'getRating').mockReturnValue(of(1));
+        vi.spyOn(ratingService, 'getRating').mockReturnValue(of(1));
+
         ratingComponent.ngOnInit();
+
         expect(ratingComponent.rating).toBe(1);
     });
 
     it('should call loadRating on ngOnInit', () => {
-        const loadRatingSpy = jest.spyOn(ratingComponent, 'loadRating');
+        const loadRatingSpy = vi.spyOn(ratingComponent, 'loadRating');
+
         ratingComponent.ngOnInit();
-        expect(loadRatingSpy).toHaveBeenCalledOnce();
+
+        expect(loadRatingSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should not set rating if result participation is not defined', () => {
-        ratingComponent.result = { id: 90 } as Result;
+        ratingComponentFixture.componentRef.setInput('result', { id: 90 } as Result);
         ratingComponentFixture.componentRef.setInput('participation', undefined);
-        const loadRatingSpy = jest.spyOn(ratingComponent, 'loadRating');
-        jest.spyOn(ratingService, 'getRating').mockReturnValue(of(2));
-        ratingComponentFixture.detectChanges();
-        expect(loadRatingSpy).toHaveBeenCalledOnce();
+        const loadRatingSpy = vi.spyOn(ratingComponent, 'loadRating');
+        vi.spyOn(ratingService, 'getRating').mockReturnValue(of(2));
+
+        ratingComponent.ngOnChanges({ result: new SimpleChange({ id: 89 } as Result, { id: 90 } as Result, false) });
+
+        expect(loadRatingSpy).toHaveBeenCalledTimes(1);
         expect(ratingComponent.rating).toBeUndefined();
     });
 
     it('should call loadRating when result changes', () => {
-        const loadRatingSpy = jest.spyOn(ratingComponent, 'loadRating');
-        ratingComponent.result = { id: 90 } as Result;
-        jest.spyOn(ratingService, 'getRating').mockReturnValue(of(2));
-        ratingComponentFixture.detectChanges();
-        expect(loadRatingSpy).toHaveBeenCalledOnce();
+        const loadRatingSpy = vi.spyOn(ratingComponent, 'loadRating');
+        ratingComponentFixture.componentRef.setInput('result', { id: 90 } as Result);
+        vi.spyOn(ratingService, 'getRating').mockReturnValue(of(2));
+
+        ratingComponent.ngOnChanges({ result: new SimpleChange({ id: 89 } as Result, { id: 90 } as Result, false) });
+
+        expect(loadRatingSpy).toHaveBeenCalledTimes(1);
         expect(ratingComponent.rating).toBe(2);
     });
 
     it('should not call loadRating if result ID remains the same', () => {
-        // without this condition the loadRating might be spammed making unnecessary api calls
-        const loadRatingSpy = jest.spyOn(ratingComponent, 'loadRating');
-        ratingComponent.result = { id: 90 } as Result;
-        jest.spyOn(ratingService, 'getRating').mockReturnValue(of(2));
-        ratingComponentFixture.detectChanges();
-        ratingComponent.result = { id: 90 } as Result;
-        ratingComponentFixture.detectChanges();
-        expect(loadRatingSpy).toHaveBeenCalledOnce();
+        const loadRatingSpy = vi.spyOn(ratingComponent, 'loadRating');
+        vi.spyOn(ratingService, 'getRating').mockReturnValue(of(2));
+        ratingComponentFixture.componentRef.setInput('result', { id: 90 } as Result);
+        ratingComponent.ngOnChanges({ result: new SimpleChange({ id: 89 } as Result, { id: 90 } as Result, false) });
+        ratingComponentFixture.componentRef.setInput('result', { id: 90 } as Result);
+
+        ratingComponent.ngOnChanges({ result: new SimpleChange({ id: 90 } as Result, { id: 90 } as Result, false) });
+
+        expect(loadRatingSpy).toHaveBeenCalledTimes(1);
         expect(ratingComponent.rating).toBe(2);
     });
 
     describe('OnRate', () => {
         beforeEach(() => {
             ratingComponent.rating = 0;
-            ratingComponent.result = { id: 89 } as Result;
-            jest.spyOn(ratingService, 'createRating');
-            jest.spyOn(ratingService, 'updateRating');
+            ratingComponentFixture.componentRef.setInput('result', { id: 89 } as Result);
+            vi.spyOn(ratingService, 'createRating');
+            vi.spyOn(ratingService, 'updateRating');
         });
 
         it('should return', () => {
             ratingComponent.disableRating = true;
+
             ratingComponent.onRate({
                 oldValue: 0,
                 newValue: 2,
             });
+
             expect(ratingService.createRating).not.toHaveBeenCalled();
             expect(ratingService.updateRating).not.toHaveBeenCalled();
         });
@@ -153,18 +174,21 @@ describe('RatingComponent', () => {
                 oldValue: 0,
                 newValue: 2,
             });
-            expect(ratingService.createRating).toHaveBeenCalledOnce();
+
+            expect(ratingService.createRating).toHaveBeenCalledTimes(1);
             expect(ratingService.updateRating).not.toHaveBeenCalled();
             expect(ratingComponent.rating).toBe(2);
         });
 
         it('should update rating', () => {
             ratingComponent.rating = 1;
+
             ratingComponent.onRate({
                 oldValue: 1,
                 newValue: 2,
             });
-            expect(ratingService.updateRating).toHaveBeenCalledOnce();
+
+            expect(ratingService.updateRating).toHaveBeenCalledTimes(1);
             expect(ratingService.createRating).not.toHaveBeenCalled();
             expect(ratingComponent.rating).toBe(2);
         });

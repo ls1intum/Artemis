@@ -25,7 +25,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
                             id="field_presentationScoreEnabled"
                             name="presentationScoreEnabled"
                             [ngModel]="exercise().presentationScoreEnabled"
-                            (ngModelChange)="exercise.presentationScoreEnabled = !exercise.presentationScoreEnabled"
+                            (ngModelChange)="exercise().presentationScoreEnabled = $event"
                         />
                         <label class="form-check-label custom-control-label" for="field_presentationScoreEnabled" jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title"
                             >Presentation Score Enabled</label
