@@ -9,7 +9,7 @@ import { TemplateRef, signal } from '@angular/core';
 import { MockDirective } from 'ng-mocks';
 import { AdminTitleBarComponent } from './admin-title-bar.component';
 import { AdminTitleBarService } from 'app/admin/shared/admin-title-bar.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 

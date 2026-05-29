@@ -8,7 +8,7 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { CheckoutDirectoriesDto } from 'app/programming/shared/entities/checkout-directories-dto';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { MockComponent } from 'ng-mocks';
 import { Subscription, of } from 'rxjs';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';

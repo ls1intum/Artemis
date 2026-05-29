@@ -47,7 +47,7 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonalAccessTokenManagementService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCPersonalAccessTokenManagementService;
 
 /**
  * REST controller for managing the current user's account.

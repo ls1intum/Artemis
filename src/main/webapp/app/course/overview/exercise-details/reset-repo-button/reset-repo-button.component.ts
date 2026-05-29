@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { faBackward } from '@fortawesome/free-solid-svg-icons';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -8,15 +8,15 @@ import { ProgrammingExerciseParticipationService } from 'app/programming/manage/
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { finalize } from 'rxjs/operators';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import dayjs from 'dayjs/esm';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
-import { ExerciseActionButtonComponent } from 'app/shared/components/buttons/exercise-action-button/exercise-action-button.component';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
+import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-reset-repo-button',

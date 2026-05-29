@@ -5,7 +5,7 @@ import { map } from 'rxjs/operators';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { convertDateFromServer } from 'app/shared/util/date.utils';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { ComplaintResponseDTO, ComplaintResponseUpdateDTO } from 'app/assessment/shared/entities/complaint-response-dto.model';
 import { User } from 'app/account/user/user.model';
 

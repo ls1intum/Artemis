@@ -6,7 +6,7 @@ import { Signal } from '@angular/core';
 import { CommitsInfoComponent } from 'app/programming/shared/commits-info/commits-info.component';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import dayjs from 'dayjs/esm';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';

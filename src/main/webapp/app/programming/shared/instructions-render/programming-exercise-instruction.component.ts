@@ -31,13 +31,13 @@ import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { ResultService } from 'app/exercise/result/result.service';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { findLatestResult } from 'app/shared/util/utils';
+import { findLatestResult } from 'app/foundation/util/utils';
 import { faFileAlt, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/overview/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
-import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 import diff from 'html-diff-ts';
 import { ProgrammingExerciseInstructionService } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
-import { escapeStringForUseInRegex } from 'app/shared/util/string-pure.utils';
+import { escapeStringForUseInRegex } from 'app/foundation/util/string-pure.utils';
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProgrammingExerciseInstructionStepWizardComponent } from './step-wizard/programming-exercise-instruction-step-wizard.component';
@@ -45,7 +45,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',

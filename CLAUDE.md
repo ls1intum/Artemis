@@ -112,7 +112,9 @@ Organized by feature module:
 - `account/` - User, authority, passkey, account REST, authentication, LDAP
 - `exercise/` - Base exercise functionality
 - `programming/` - Programming exercises (lifecycle, grading, repositories)
-- `jenkins/` - Jenkins CI backend connector (used by `programming` exercises configured to use Jenkins)
+- `jenkins/` - Jenkins CI backend connector
+- `localvc/` - Embedded git server (HTTP + SSH), repo URI handling, VCS access tokens
+- `localci/` - Local CI orchestration: build job queue, dispatch, result processing
 - `quiz/` - Quiz exercises
 - `modeling/` - UML diagram exercises
 - `text/` - Text exercises

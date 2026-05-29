@@ -15,17 +15,17 @@ import {
     PRESENTATION_POINTS_KEY,
     PRESENTATION_SCORE_KEY,
     USERNAME_KEY,
-} from 'app/shared/export/export-constants';
+} from 'app/shared-ui/export/export-constants';
 import { CourseGradeInformationDTO, CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { ParticipantScoresService, ScoresDTO } from 'app/course/participant-scores/participant-scores.service';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { roundScorePercentSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
@@ -33,13 +33,13 @@ import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-translate-values.directive';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
-import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/modal/export-modal.component';
-import { ExportButtonComponent } from 'app/shared/export/button/export-button.component';
-import { CommonSpreadsheetCellObject } from 'app/shared/export/row-builder/excel-export-row-builder';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ParticipantScoresDistributionComponent } from 'app/course/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
+import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared-ui/export/modal/export-modal.component';
+import { ExportButtonComponent } from 'app/shared-ui/export/button/export-button.component';
+import { CommonSpreadsheetCellObject } from 'app/shared-ui/export/row-builder/excel-export-row-builder';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { PlagiarismCaseDTO } from 'app/plagiarism/shared/entities/PlagiarismCase';
@@ -55,7 +55,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { GradingScaleDTO, toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
 describe('CourseScoresComponent', () => {

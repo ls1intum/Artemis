@@ -22,7 +22,7 @@ import { ProgrammingExerciseParticipationService } from 'app/programming/manage/
 import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';

@@ -6,7 +6,7 @@ import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { faCheck, faCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 

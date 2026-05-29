@@ -3,7 +3,7 @@ import { CommitInfo, ProgrammingSubmission } from 'app/programming/shared/entiti
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import dayjs from 'dayjs/esm';
 import { Subscription } from 'rxjs';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CommitsInfoGroupComponent } from './commits-info-group/commits-info-group.component';
 import { NgStyle } from '@angular/common';
 
