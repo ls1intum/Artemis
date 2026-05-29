@@ -1,6 +1,6 @@
 import { Component, input } from '@angular/core';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 
 @Component({
     selector: 'jhi-working-time-change',

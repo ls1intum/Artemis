@@ -1,10 +1,10 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -12,14 +12,15 @@ import { MatDialog } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
-import { UserService } from 'app/core/user/shared/user.service';
+import { UserService } from 'app/account/user/shared/user.service';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
+import { signal } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import {
     mockClientMessage,
     mockClientMessageWithMemories,
@@ -32,26 +33,27 @@ import {
     mockWebsocketServerMessage,
 } from 'test/helpers/sample/iris-sample-data';
 import { By } from '@angular/platform-browser';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { IrisAssistantMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
 import { IrisJsonMessageContent, IrisMessageContentType, IrisTextMessageContent, getMcqData, isMcqContent } from 'app/iris/shared/entities/iris-content-type.model';
 import dayjs from 'dayjs/esm';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisThinkingBubbleComponent } from 'app/iris/overview/base-chatbot/iris-thinking-bubble/iris-thinking-bubble.component';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { User } from 'app/core/user/user.model';
-import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { User } from 'app/account/user/user.model';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { ConfirmationService } from 'primeng/api';
 import { DialogService } from 'primeng/dynamicdialog';
-import { AlertService } from 'app/shared/service/alert.service';
+import { IrisOnboardingService } from 'app/iris/overview/iris-onboarding-modal/iris-onboarding.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { COURSE_SUGGESTION_CHIPS } from 'app/iris/overview/base-chatbot/iris-chatbot-suggestion-chips';
 
 // Must match the constants in the component
@@ -81,6 +83,11 @@ describe('IrisBaseChatbotComponent', () => {
     const mockUserService = {
         updateLLMSelectionDecision: vi.fn().mockReturnValue(of(new HttpResponse<void>())),
     } as any;
+    const mockOnboardingService = {
+        showOnboardingIfNeeded: vi.fn().mockResolvedValue(undefined),
+        currentStep: signal(0),
+        onboardingEvent$: new Subject<any>(),
+    } as any;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -106,6 +113,7 @@ describe('IrisBaseChatbotComponent', () => {
                 { provide: UserService, useValue: mockUserService },
                 { provide: IrisStatusService, useValue: statusMock },
                 { provide: LLMSelectionModalService, useValue: mockLLMModalService },
+                { provide: IrisOnboardingService, useValue: mockOnboardingService },
                 MockProvider(AlertService),
                 MockProvider(DialogService),
                 MockProvider(ActivatedRoute),
@@ -124,9 +132,15 @@ describe('IrisBaseChatbotComponent', () => {
                 // Set up services BEFORE creating component
                 chatService = TestBed.inject(IrisChatService);
                 chatService.setCourseId(456);
+                // The onboarding effect gates on initialLoadComplete$. In production this flips
+                // to true once the chat service finishes its first session-load, but the
+                // mocked HTTP/WebSocket layer here never drives that, so we synthesise the
+                // signal so onboarding-related gating logic actually runs in tests.
+                Object.defineProperty(chatService, 'initialLoadComplete$', { value: of(true), configurable: true });
                 httpService = TestBed.inject(IrisChatHttpService);
                 wsMock = TestBed.inject(IrisWebsocketService);
                 accountService = TestBed.inject(AccountService);
+                mockOnboardingService.showOnboardingIfNeeded.mockResolvedValue(undefined);
 
                 // Set user identity BEFORE creating component (constructor reads this)
                 accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
@@ -151,6 +165,11 @@ describe('IrisBaseChatbotComponent', () => {
 
     it('should set userAccepted to CLOUD_AI if user has accepted the external LLM usage policy', () => {
         expect(component.userAccepted()).toBe(LLMSelectionDecision.CLOUD_AI);
+    });
+
+    it('should trigger onboarding flow once gating signals are satisfied', () => {
+        // The effect runs during change detection, which already ran in beforeEach.
+        expect(mockOnboardingService.showOnboardingIfNeeded).toHaveBeenCalled();
     });
 
     describe('when user has not accepted LLM usage policy', () => {
@@ -1941,7 +1960,7 @@ describe('IrisBaseChatbotComponent', () => {
             const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
             chips[0].click();
-            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.learnStarter');
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.learnStarter', 'artemisApp.iris.chat.suggestions.learn');
         });
 
         it('should call applyChipText with correct starter key when Quiz chip is clicked', () => {
@@ -1949,7 +1968,7 @@ describe('IrisBaseChatbotComponent', () => {
             const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
             chips[1].click();
-            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizTopicStarter');
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizTopicStarter', 'artemisApp.iris.chat.suggestions.quiz');
         });
 
         it('should call applyChipText with correct starter key when Tips chip is clicked', () => {
@@ -1957,7 +1976,7 @@ describe('IrisBaseChatbotComponent', () => {
             const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
             chips[2].click();
-            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.tipsStarter');
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.tipsStarter', 'artemisApp.iris.chat.suggestions.tips');
         });
 
         it('should set textarea content and focus when applyChipText is called', async () => {
@@ -2030,7 +2049,7 @@ describe('IrisBaseChatbotComponent', () => {
             const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
             chips[1].click();
-            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizLectureStarter');
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizLectureStarter', 'artemisApp.iris.chat.suggestions.quiz');
         });
 
         it('should call applyChipText with exercise-specific quiz starter when Quiz chip is clicked in programming exercise mode', () => {
@@ -2038,7 +2057,7 @@ describe('IrisBaseChatbotComponent', () => {
             const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
             chips[1].click();
-            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizExerciseStarter');
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizExerciseStarter', 'artemisApp.iris.chat.suggestions.quiz');
         });
 
         it('should call applyChipText with exercise-specific quiz starter when Quiz chip is clicked in text exercise mode', () => {
@@ -2046,7 +2065,7 @@ describe('IrisBaseChatbotComponent', () => {
             const applyChipTextSpy = vi.spyOn(component, 'applyChipText');
             const chips = fixture.nativeElement.querySelectorAll('.prompt-suggestion-chip');
             chips[1].click();
-            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizExerciseStarter');
+            expect(applyChipTextSpy).toHaveBeenCalledWith('artemisApp.iris.chat.suggestions.quizExerciseStarter', 'artemisApp.iris.chat.suggestions.quiz');
         });
     });
 

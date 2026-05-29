@@ -1,16 +1,16 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
 import { ApollonEditor, ApollonMode, SVG, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { isFullScreen } from 'app/shared/util/fullscreen.util';
+import { isFullScreen } from 'app/foundation/util/fullscreen.util';
 import { faCheck, faCircleNotch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { ModelingComponent } from 'app/modeling/shared/modeling/modeling.component';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ModelingExplanationEditorComponent } from '../modeling-explanation-editor/modeling-explanation-editor.component';
 import { captureException } from '@sentry/angular';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { getModelNodes } from 'app/modeling/shared/apollon-model.util';
 
 @Component({
@@ -244,5 +244,12 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      */
     importPatch(patch: string) {
         this.apollonEditor?.receiveBroadcastedMessage(patch);
+    }
+
+    // Re-announce the full Yjs document state to peers. Needed on (re)connect because Apollon
+    // broadcasts only incremental updates; a peer that missed a window of edits would otherwise
+    // stay out of sync until the next local edit.
+    broadcastFullState(): void {
+        this.apollonEditor?.broadcastFullState();
     }
 }

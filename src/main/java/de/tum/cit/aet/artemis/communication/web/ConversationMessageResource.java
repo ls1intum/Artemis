@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
-import java.util.Collections;
 import java.util.List;
 
 import jakarta.validation.Valid;
@@ -29,22 +28,23 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.CreatedConversationMessage;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.service.ConversationMessagingService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 
 /**
  * REST controller for managing Message Posts.
@@ -83,7 +83,7 @@ public class ConversationMessageResource {
      */
     @PostMapping("courses/{courseId}/messages")
     @EnforceAtLeastStudent
-    public ResponseEntity<Post> createMessage(@PathVariable Long courseId, @Valid @RequestBody CreatePostDTO post) throws URISyntaxException {
+    public ResponseEntity<PostResponseDTO> createMessage(@PathVariable Long courseId, @Valid @RequestBody CreatePostDTO post) throws URISyntaxException {
         log.debug("POST createMessage invoked for course {} with post {}", courseId, post.content());
         long start = System.nanoTime();
 
@@ -94,11 +94,11 @@ public class ConversationMessageResource {
         conversationMessagingService.notifyAboutMessageCreation(createdMessageData);
 
         Post sendToUserPost = createdMessageData.messageWithHiddenDetails();
-        sendToUserPost.setConversation(sendToUserPost.getConversation().copy());
-        sendToUserPost.getConversation().setConversationParticipants(Collections.emptySet());
+        // Note: no payload-trimming on the entity needed — PostResponseDTO.from projects only the fields the
+        // client is allowed to see (ConversationRefDTO drops conversationParticipants by construction).
 
         log.debug("createMessage took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.created(new URI("/api/communication/courses/" + courseId + "/messages/" + sendToUserPost.getId())).body(sendToUserPost);
+        return ResponseEntity.created(new URI("/api/communication/courses/" + courseId + "/messages/" + sendToUserPost.getId())).body(PostResponseDTO.from(sendToUserPost));
     }
 
     /**
@@ -112,7 +112,7 @@ public class ConversationMessageResource {
      */
     @GetMapping("courses/{courseId}/messages")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<Post>> getMessages(Pageable pageable, PostContextFilterDTO postContextFilter, Principal principal) {
+    public ResponseEntity<List<PostResponseDTO>> getMessages(Pageable pageable, PostContextFilterDTO postContextFilter, Principal principal) {
         long timeNanoStart = System.nanoTime();
         Page<Post> posts;
 
@@ -127,18 +127,13 @@ public class ConversationMessageResource {
             throw new BadRequestAlertException("Messages must be associated with at least one conversion", conversationMessagingService.getEntityName(), "conversationMissing");
         }
 
-        // keep the data as small as possible and avoid unnecessary information sent to the client
-        // TODO: in the future we should use a DTO and send only the necessary information
-        posts.getContent().forEach(post -> {
-            if (post.getConversation() != null) {
-                post.getConversation().hideDetails();
-            }
-
-            conversationMessagingService.preparePostForBroadcast(post);
-        });
+        // PostResponseDTO is the cycle-free DTO that does this trimming structurally. preparePostForBroadcast
+        // still enriches transient fields (isSaved, authorRole) that the DTO reads.
+        posts.getContent().forEach(conversationMessagingService::preparePostForBroadcast);
         final var headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), posts);
         logDuration(posts.getContent(), principal, timeNanoStart);
-        return new ResponseEntity<>(posts.getContent(), headers, HttpStatus.OK);
+        List<PostResponseDTO> body = posts.getContent().stream().map(PostResponseDTO::from).toList();
+        return new ResponseEntity<>(body, headers, HttpStatus.OK);
     }
 
     private void logDuration(List<Post> posts, Principal principal, long timeNanoStart) {
@@ -162,13 +157,13 @@ public class ConversationMessageResource {
      */
     @PutMapping("courses/{courseId}/messages/{messageId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Post> updateMessage(@PathVariable Long courseId, @PathVariable Long messageId, @RequestBody UpdatePostingDTO updatedPost) {
+    public ResponseEntity<PostResponseDTO> updateMessage(@PathVariable Long courseId, @PathVariable Long messageId, @RequestBody UpdatePostingDTO updatedPost) {
         log.debug("PUT updateMessage invoked for course {} with post {}", courseId, updatedPost.content());
         long start = System.nanoTime();
         // Note: authorization is checked in the service method
         Post updatedMessagePost = conversationMessagingService.updateMessage(courseId, messageId, updatedPost);
         log.debug("updateMessage took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.ok(updatedMessagePost);
+        return ResponseEntity.ok(PostResponseDTO.from(updatedMessagePost));
     }
 
     /**
@@ -202,10 +197,10 @@ public class ConversationMessageResource {
      */
     @PutMapping("courses/{courseId}/messages/{postId}/display-priority")
     @EnforceAtLeastStudent
-    public ResponseEntity<Post> updateDisplayPriority(@PathVariable Long courseId, @PathVariable Long postId, @RequestParam DisplayPriority displayPriority) {
+    public ResponseEntity<PostResponseDTO> updateDisplayPriority(@PathVariable Long courseId, @PathVariable Long postId, @RequestParam DisplayPriority displayPriority) {
         // Note: authorization is checked in the service method
         Post postWithUpdatedDisplayPriority = conversationMessagingService.changeDisplayPriority(courseId, postId, displayPriority);
-        return ResponseEntity.ok().body(postWithUpdatedDisplayPriority);
+        return ResponseEntity.ok().body(PostResponseDTO.from(postWithUpdatedDisplayPriority));
     }
 
     /**
@@ -218,7 +213,7 @@ public class ConversationMessageResource {
      */
     @GetMapping("courses/{courseId}/messages-source-posts")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<List<Post>> getSourcePostsByIds(@PathVariable Long courseId, @RequestParam List<Long> postIds) {
+    public ResponseEntity<List<PostResponseDTO>> getSourcePostsByIds(@PathVariable Long courseId, @RequestParam List<Long> postIds) {
         log.debug("GET getSourcePostsByIds invoked for course {} with {} posts", courseId, postIds != null ? postIds.size() : 0);
         long start = System.nanoTime();
 
@@ -241,6 +236,7 @@ public class ConversationMessageResource {
         }
 
         log.debug("getSourcePostsByIds took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.ok().body(posts);
+        List<PostResponseDTO> body = posts.stream().map(PostResponseDTO::from).toList();
+        return ResponseEntity.ok().body(body);
     }
 }

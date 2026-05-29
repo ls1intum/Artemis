@@ -1,6 +1,6 @@
 import { Component, ViewEncapsulation, computed, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SelectModule } from 'primeng/select';
 
 export interface FilterGroup {

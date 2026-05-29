@@ -7,7 +7,7 @@ import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Subject, combineLatest, map, takeUntil } from 'rxjs';
 import { MetisService } from 'app/communication/service/metis.service';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { HttpResponse } from '@angular/common/http';
 import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faLongArrowRight } from '@fortawesome/free-solid-svg-icons';
@@ -18,14 +18,14 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 
 @Component({
     selector: 'jhi-discussion-section',

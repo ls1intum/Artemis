@@ -23,12 +23,12 @@ import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
 import { faBookmark, faBullhorn, faComments, faEnvelopeOpenText, faPencilAlt, faShare, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
+import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
-import { deepClone } from 'app/shared/util/deep-clone.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -36,13 +36,13 @@ import { PostingHeaderComponent } from '../posting-header/posting-header.compone
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MessageInlineInputComponent } from '../message/message-inline-input/message-inline-input.component';
 import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { throwError } from 'rxjs';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ForwardedMessageComponent } from 'app/communication/forwarded-message/forwarded-message.component';
 import { CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
 
@@ -353,7 +353,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
                 this.changeDetector.markForCheck();
             }
         } catch (error) {
-            throw new Error(error.toString());
+            throw new Error(error.toString(), { cause: error });
         }
     }
 

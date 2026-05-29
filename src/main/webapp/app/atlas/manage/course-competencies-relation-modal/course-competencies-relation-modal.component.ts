@@ -1,13 +1,13 @@
 import { Component, effect, inject, input, signal, viewChild } from '@angular/core';
 import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
 import { CompetencyRelationDTO, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
-import { AlertService } from 'app/shared/service/alert.service';
-import { onError } from 'app/shared/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CourseCompetencyRelationFormComponent } from 'app/atlas/manage/course-competency-relation-form/course-competency-relation-form.component';
 import { CourseCompetenciesRelationGraphComponent } from '../course-competencies-relation-graph/course-competencies-relation-graph.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-course-competencies-relation-modal',

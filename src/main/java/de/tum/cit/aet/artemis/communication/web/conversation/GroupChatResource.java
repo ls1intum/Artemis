@@ -23,21 +23,21 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.AddedToChannelNotification;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.RemovedFromChannelNotification;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository;
-import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTOService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.GroupChatService;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.GroupChatAuthorizationService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.AddedToChannelNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.RemovedFromChannelNotification;
+import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
 
 @Profile(PROFILE_CORE)
 @Lazy

@@ -8,8 +8,8 @@ import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable, filter, map, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { Course } from 'app/course/shared/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { catchError } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })

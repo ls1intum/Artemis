@@ -7,15 +7,15 @@ import { GradeEditMode } from 'app/assessment/manage/grading/grading.component';
 import { BonusService } from 'app/assessment/manage/grading/bonus/bonus.service';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-import { ScoreType } from 'app/shared/constants/score-type.constants';
+import { ScoreType } from 'app/foundation/constants/score-type.constants';
 import { ActivatedRoute } from '@angular/router';
 import { loadGradingKeyUrlParams } from 'app/assessment/manage/grading/grading-key-overview/grading-key-helper';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
-import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { GradeStepBoundsPipe } from 'app/foundation/pipes/grade-step-bounds.pipe';
+import { SafeHtmlPipe } from 'app/foundation/pipes/safe-html.pipe';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 
 @Component({
     selector: 'jhi-grade-key-table',

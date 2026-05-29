@@ -12,8 +12,8 @@ import { FaqService } from 'app/communication/faq/faq.service';
 import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
 
 import { FaqComponent } from 'app/communication/faq/faq.component';
-import { AlertService } from 'app/shared/service/alert.service';
-import { SortService } from 'app/shared/service/sort.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { SortService } from 'app/foundation/service/sort.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';

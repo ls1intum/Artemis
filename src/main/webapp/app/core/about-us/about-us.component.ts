@@ -2,11 +2,11 @@ import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { VERSION } from 'app/app.constants';
-import { StaticContentService } from 'app/shared/service/static-content.service';
+import { StaticContentService } from 'app/foundation/service/static-content.service';
 import { AboutUsModel } from 'app/core/about-us/models/about-us-model';
 import { ContributorModel } from 'app/core/about-us/models/contributor-model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-about-us',
