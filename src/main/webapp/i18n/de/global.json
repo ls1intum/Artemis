@@ -90,7 +90,8 @@
             "irisAnswerShowLess": "Weniger anzeigen",
             "irisAnswerMore": "weitere",
             "irisAnswerThinking": "Nachdenken…",
-            "irisCollapseSources": "Weniger Quellen anzeigen"
+            "irisCollapseSources": "Weniger Quellen anzeigen",
+            "irisAiBadge": "KI"
         },
         "menu": {
             "home": "Startseite",

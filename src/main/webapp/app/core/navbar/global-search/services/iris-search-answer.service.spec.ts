@@ -36,6 +36,7 @@ describe('IrisSearchAnswerService', () => {
 
     afterEach(() => {
         httpTesting.verify();
+        vi.restoreAllMocks();
     });
 
     it('should be created', () => {
@@ -113,15 +114,18 @@ describe('IrisSearchAnswerService', () => {
 
     it('should error if the WebSocket does not respond within the timeout', () => {
         vi.useFakeTimers();
-        let errorReceived: unknown;
-        service.ask('timed out query').subscribe({ error: (e) => (errorReceived = e) });
+        try {
+            let errorReceived: unknown;
+            service.ask('timed out query').subscribe({ error: (e) => (errorReceived = e) });
 
-        const req = httpTesting.expectOne('api/iris/search-answer');
-        req.flush(null, { status: 202, statusText: 'Accepted' });
+            const req = httpTesting.expectOne('api/iris/search-answer');
+            req.flush(null, { status: 202, statusText: 'Accepted' });
 
-        vi.advanceTimersByTime(IRIS_SEARCH_ANSWER_WS_TIMEOUT_MS + 1);
+            vi.advanceTimersByTime(IRIS_SEARCH_ANSWER_WS_TIMEOUT_MS + 1);
 
-        expect(errorReceived).toBeDefined();
-        vi.useRealTimers();
+            expect(errorReceived).toBeDefined();
+        } finally {
+            vi.useRealTimers();
+        }
     });
 });

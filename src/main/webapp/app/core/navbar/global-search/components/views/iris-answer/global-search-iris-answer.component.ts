@@ -57,16 +57,15 @@ export class GlobalSearchIrisAnswerComponent {
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly INITIAL_VISIBLE_SOURCE_COUNT = 2;
     protected readonly faChevronUp = faChevronUp;
+    protected readonly faFile = faFile;
 
-    private readonly SOURCE_ICONS: Record<string, IconDefinition> = {
+    protected readonly SOURCE_ICONS: Record<string, IconDefinition> = {
         lecture_unit_slide: faFilePdf,
         lecture_unit_slide_video: faFileVideo,
         lecture_unit_video: faVideo,
     };
 
-    protected iconFor(sourceType: string): IconDefinition {
-        return this.SOURCE_ICONS[sourceType] ?? faFile;
-    }
+    protected readonly visibleSources = computed(() => (this.moreOpen() ? this.sources() : this.sources().slice(0, this.INITIAL_VISIBLE_SOURCE_COUNT)));
 
     constructor() {
         // Measure answer overflow after each new result; reset when the result clears.

@@ -385,21 +385,21 @@ describe('GlobalSearchIrisAnswerComponent', () => {
         });
     });
 
-    describe('iconFor()', () => {
-        it('should return faFilePdf for lecture_unit_slide', () => {
-            expect(component['iconFor']('lecture_unit_slide')).toBe(faFilePdf);
+    describe('SOURCE_ICONS', () => {
+        it('should map lecture_unit_slide to faFilePdf', () => {
+            expect(component['SOURCE_ICONS']['lecture_unit_slide']).toBe(faFilePdf);
         });
 
-        it('should return faFileVideo for lecture_unit_slide_video', () => {
-            expect(component['iconFor']('lecture_unit_slide_video')).toBe(faFileVideo);
+        it('should map lecture_unit_slide_video to faFileVideo', () => {
+            expect(component['SOURCE_ICONS']['lecture_unit_slide_video']).toBe(faFileVideo);
         });
 
-        it('should return faVideo for lecture_unit_video', () => {
-            expect(component['iconFor']('lecture_unit_video')).toBe(faVideo);
+        it('should map lecture_unit_video to faVideo', () => {
+            expect(component['SOURCE_ICONS']['lecture_unit_video']).toBe(faVideo);
         });
 
-        it('should return faFile for an unknown source type', () => {
-            expect(component['iconFor']('unknown_type')).toBe(faFile);
+        it('should fall back to faFile for an unknown source type', () => {
+            expect(component['SOURCE_ICONS']['unknown_type'] ?? component['faFile']).toBe(faFile);
         });
     });
 });

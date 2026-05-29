@@ -4,7 +4,7 @@
         <div class="iris-card-header d-flex align-items-center gap-2">
             <jhi-iris-logo [size]="IrisLogoSize.TEXT" [class.iris-logo-pulse]="irisThinking()" [style.filter]="'none'" aria-hidden="true" />
             <span class="iris-card-label fw-bold">Iris</span>
-            <span class="iris-ai-badge d-inline-flex align-items-center rounded-pill fw-bold">AI</span>
+            <span class="iris-ai-badge d-inline-flex align-items-center rounded-pill fw-bold">{{ 'global.search.irisAiBadge' | artemisTranslate }}</span>
         </div>
 
         <!-- Body -->
@@ -39,13 +39,13 @@
             <!-- Source chips — first INITIAL_VISIBLE_SOURCE_COUNT inline; all chips in one wrapping row when expanded -->
             @if (sources().length > 0) {
                 <div class="iris-chips d-flex align-items-center" [class.iris-chips--expanded]="moreOpen()">
-                    @for (source of moreOpen() ? sources() : sources().slice(0, INITIAL_VISIBLE_SOURCE_COUNT); track $index) {
+                    @for (source of visibleSources(); track $index) {
                         <a
                             class="iris-chip d-inline-flex align-items-center text-decoration-none text-nowrap rounded-pill"
                             [routerLink]="source.lectureUnit.link"
                             [queryParams]="source.lectureUnit.queryParams"
                         >
-                            <fa-icon [icon]="iconFor(source.lectureUnit.sourceType)" class="iris-chip-icon flex-shrink-0" aria-hidden="true" />
+                            <fa-icon [icon]="SOURCE_ICONS[source.lectureUnit.sourceType] ?? faFile" class="iris-chip-icon flex-shrink-0" aria-hidden="true" />
                             <span class="iris-chip-name text-truncate">{{ source.lectureUnit.name }}</span>
                             @if (source.lectureUnit.displayMeta) {
                                 <span class="iris-chip-meta text-body-secondary">· {{ source.lectureUnit.displayMeta }}</span>
