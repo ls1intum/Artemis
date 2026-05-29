@@ -241,10 +241,11 @@ public class FileUploadExerciseResource {
      *         (403) if the user is not at least an editor in the target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
-    @PostMapping("file-upload-exercises/import/{sourceId}")
+    @PostMapping({ "file-upload-exercises/import", "file-upload-exercises/import/{sourceId}" })
     @EnforceAtLeastEditor
-    public ResponseEntity<FileUploadExercise> importFileUploadExercise(@PathVariable long sourceId, @RequestBody FileUploadExercise importedFileUploadExercise)
-            throws URISyntaxException {
+    public ResponseEntity<FileUploadExercise> importFileUploadExercise(@RequestParam(name = "sourceId", required = false) Long sourceIdQuery,
+            @PathVariable(name = "sourceId", required = false) Long sourceIdPath, @RequestBody FileUploadExercise importedFileUploadExercise) throws URISyntaxException {
+        long sourceId = sourceIdQuery != null ? sourceIdQuery : (sourceIdPath != null ? sourceIdPath : -1L);
 
         if (sourceId <= 0 || (importedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedFileUploadExercise.getExerciseGroup() == null)) {
             throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");

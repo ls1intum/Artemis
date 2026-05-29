@@ -195,11 +195,13 @@ public class ProgrammingExerciseExportImportResource {
      *         (403) if the user is not at least an instructor in the target course.
      * @see ProgrammingExerciseImportService#importProgrammingExercise(ProgrammingExercise, ProgrammingExercise, boolean, boolean, boolean)
      */
-    @PostMapping("programming-exercises/import/{sourceExerciseId}")
+    @PostMapping({ "programming-exercises/import", "programming-exercises/import/{sourceExerciseId}" })
     @EnforceAtLeastEditor
-    public ResponseEntity<ProgrammingExercise> importProgrammingExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise,
+    public ResponseEntity<ProgrammingExercise> importProgrammingExercise(@RequestParam(name = "sourceExerciseId", required = false) Long sourceExerciseIdQuery,
+            @PathVariable(name = "sourceExerciseId", required = false) Long sourceExerciseIdPath, @RequestBody ProgrammingExercise newExercise,
             @RequestParam(defaultValue = "false") boolean recreateBuildPlans, @RequestParam(defaultValue = "false") boolean updateTemplate,
             @RequestParam(defaultValue = "false") boolean setTestCaseVisibilityToAfterDueDate) throws JsonProcessingException {
+        long sourceExerciseId = sourceExerciseIdQuery != null ? sourceExerciseIdQuery : (sourceExerciseIdPath != null ? sourceExerciseIdPath : -1L);
         if (sourceExerciseId < 0) {
             throw new BadRequestAlertException("Invalid source id when importing programming exercises", ENTITY_NAME, "invalidSourceExerciseId");
         }

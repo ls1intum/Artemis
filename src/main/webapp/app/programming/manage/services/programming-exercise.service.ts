@@ -146,7 +146,7 @@ export class ProgrammingExerciseService {
 
         exercise.categories = ExerciseService.stringifyExerciseCategories(exercise);
         return this.http
-            .post<ProgrammingExercise>(`${this.resourceUrl}/import/${adaptedSourceProgrammingExercise.id}`, exercise, {
+            .post<ProgrammingExercise>(`${this.resourceUrl}/import?sourceExerciseId=${adaptedSourceProgrammingExercise.id}`, exercise, {
                 params: options,
                 observe: 'response',
             })

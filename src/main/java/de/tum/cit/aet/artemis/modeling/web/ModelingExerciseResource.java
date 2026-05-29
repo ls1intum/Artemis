@@ -420,9 +420,11 @@ public class ModelingExerciseResource {
      *         (403) if the user is not at least an instructor in the target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
-    @PostMapping("modeling-exercises/import/{sourceExerciseId}")
+    @PostMapping({ "modeling-exercises/import", "modeling-exercises/import/{sourceExerciseId}" })
     @EnforceAtLeastEditor
-    public ResponseEntity<ModelingExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody ModelingExercise importedExercise) throws URISyntaxException {
+    public ResponseEntity<ModelingExercise> importExercise(@RequestParam(name = "sourceExerciseId", required = false) Long sourceExerciseIdQuery,
+            @PathVariable(name = "sourceExerciseId", required = false) Long sourceExerciseIdPath, @RequestBody ModelingExercise importedExercise) throws URISyntaxException {
+        long sourceExerciseId = sourceExerciseIdQuery != null ? sourceExerciseIdQuery : (sourceExerciseIdPath != null ? sourceExerciseIdPath : -1L);
         if (sourceExerciseId <= 0 || (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedExercise.getExerciseGroup() == null)) {
             log.debug("Either the courseId or exerciseGroupId must be set for an import");
             throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");

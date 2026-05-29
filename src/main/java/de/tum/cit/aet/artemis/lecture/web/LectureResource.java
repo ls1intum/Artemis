@@ -441,9 +441,11 @@ public class LectureResource {
      *         or a forbidden error (403) if the user is not at least an editor in the source or target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
-    @PostMapping("lectures/import/{sourceLectureId}")
+    @PostMapping({ "lectures/import", "lectures/import/{sourceLectureId}" })
     @EnforceAtLeastEditor
-    public ResponseEntity<SimpleLectureDTO> importLecture(@PathVariable long sourceLectureId, @RequestParam long courseId) throws URISyntaxException {
+    public ResponseEntity<SimpleLectureDTO> importLecture(@RequestParam(name = "sourceLectureId", required = false) Long sourceLectureIdQuery,
+            @PathVariable(name = "sourceLectureId", required = false) Long sourceLectureIdPath, @RequestParam long courseId) throws URISyntaxException {
+        long sourceLectureId = sourceLectureIdQuery != null ? sourceLectureIdQuery : (sourceLectureIdPath != null ? sourceLectureIdPath : -1L);
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var sourceLecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(sourceLectureId);
         final var destinationCourse = courseRepository.findByIdWithLecturesElseThrow(courseId);

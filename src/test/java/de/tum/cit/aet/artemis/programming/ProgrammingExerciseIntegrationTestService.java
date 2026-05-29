@@ -1317,34 +1317,34 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void importProgrammingExercise_sourceExerciseIdNegative_badRequest() throws Exception {
         programmingExercise.setId(-1L);
-        request.post("/api/programming/programming-exercises/import/" + programmingExercise.getId(), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExerciseMaxScoreInvalidBadRequest() throws Exception {
         programmingExercise.setMaxPoints(0.0);
-        request.post("/api/programming/programming-exercises/import/" + programmingExercise.getId(), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_noParticipationModeSelected_badRequest() throws Exception {
         programmingExercise.setAllowOfflineIde(false);
         programmingExercise.setAllowOnlineEditor(false);
-        request.post("/api/programming/programming-exercises/import/" + programmingExercise.getId(), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_noProgrammingLanguage_badRequest() throws Exception {
         programmingExercise.setProgrammingLanguage(null);
-        request.post("/api/programming/programming-exercises/import/" + programmingExercise.getId(), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt1");
-        request.post("/api/programming/programming-exercises/import/" + programmingExercise.getId(), programmingExercise, HttpStatus.FORBIDDEN);
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), programmingExercise, HttpStatus.FORBIDDEN);
     }
 
     void importProgrammingExercise_templateIdDoesNotExist_notFound() throws Exception {
         programmingExercise.setShortName("newShortName");
         programmingExercise.setTitle("newTitle");
-        request.post("/api/programming/programming-exercises/import/" + NON_EXISTING_ID, programmingExercise, HttpStatus.NOT_FOUND);
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + NON_EXISTING_ID, programmingExercise, HttpStatus.NOT_FOUND);
     }
 
     void importProgrammingExercise_sameShortNameInCourse_badRequest() throws Exception {
@@ -1355,8 +1355,8 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExerciseInExam.setId(null);
         programmingExerciseInExam.setTitle(programmingExerciseInExam.getTitle() + "change");
         // short name will still be the same
-        request.post("/api/programming/programming-exercises/import/" + sourceId, programmingExercise, HttpStatus.BAD_REQUEST);
-        request.post("/api/programming/programming-exercises/import/" + sourceIdExam, programmingExerciseInExam, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceId, programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceIdExam, programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_sameTitleInCourse_badRequest() throws Exception {
@@ -1367,15 +1367,15 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExerciseInExam.setId(null);
         programmingExerciseInExam.setShortName(programmingExerciseInExam.getShortName() + "change");
         // title will still be the same
-        request.post("/api/programming/programming-exercises/import/" + sourceId, programmingExercise, HttpStatus.BAD_REQUEST);
-        request.post("/api/programming/programming-exercises/import/" + sourceIdExam, programmingExerciseInExam, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceId, programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceIdExam, programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest() throws Exception {
         var id = programmingExercise.getId();
         programmingExercise.setId(null);
         programmingExercise.setStaticCodeAnalysisEnabled(null);
-        request.post("/api/programming/programming-exercises/import/" + id, programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + id, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_scaChanged_badRequest(boolean recreateBuildPlan, boolean updateTemplate) throws Exception {
@@ -1393,7 +1393,8 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setTitle("NewTitle1");
         programmingExercise.setShortName("NewShortname1");
         programmingExercise.setStaticCodeAnalysisEnabled(true);
-        request.postWithResponseBody("/api/programming/programming-exercises/import/" + sourceId, programmingExercise, ProgrammingExercise.class, params, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceId, programmingExercise, ProgrammingExercise.class, params,
+                HttpStatus.BAD_REQUEST);
 
         // true -> false
         sourceId = programmingExerciseSca.getId();
@@ -1402,27 +1403,27 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExerciseSca.setMaxStaticCodeAnalysisPenalty(null);
         programmingExerciseSca.setTitle("NewTitle2");
         programmingExerciseSca.setShortName("NewShortname2");
-        request.postWithResponseBody("/api/programming/programming-exercises/import/" + sourceId, programmingExerciseSca, ProgrammingExercise.class, params,
+        request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceId, programmingExerciseSca, ProgrammingExercise.class, params,
                 HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest() throws Exception {
         programmingExercise.setCourse(null);
-        request.post("/api/programming/programming-exercises/import/" + NON_EXISTING_ID, programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + NON_EXISTING_ID, programmingExercise, HttpStatus.BAD_REQUEST);
         programmingExerciseInExam.setCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
-        request.post("/api/programming/programming-exercises/import/" + NON_EXISTING_ID, programmingExerciseInExam, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + NON_EXISTING_ID, programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_vcsProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName("testShortName");
-        request.post("/api/programming/programming-exercises/import/" + NON_EXISTING_ID, programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + NON_EXISTING_ID, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName("testShortName");
-        request.post("/api/programming/programming-exercises/import/" + NON_EXISTING_ID, programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post("/api/programming/programming-exercises/import?sourceExerciseId=" + NON_EXISTING_ID, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_updatesTestCaseIds() throws Exception {
@@ -1446,7 +1447,8 @@ public class ProgrammingExerciseIntegrationTestService {
         mockBuildPlanAndRepositoryCheck(programmingExercise);
         doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any(), any());
 
-        var response = request.postWithResponseBody("/api/programming/programming-exercises/import/" + sourceId, exerciseToBeImported, ProgrammingExercise.class, HttpStatus.OK);
+        var response = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceId, exerciseToBeImported, ProgrammingExercise.class,
+                HttpStatus.OK);
 
         assertThat(response.getProblemStatement()).isEqualTo("[task][Taskname](test1)");
 

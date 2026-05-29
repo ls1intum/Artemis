@@ -52,8 +52,6 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
      * TODO: drive this set to empty.
      */
     private static final Set<String> PATH_VARIABLE_COLLECTION_BASELINE = Set.of(
-            // assessment
-            "api/assessment/exercises/{exerciseId}/example-submissions/import/{sourceSubmissionId}",
             // communication
             "api/communication/courses/{courseId}/one-to-one-chats/{userId}",
             // core (file serving — the collection segment doubles as a key in FilePathConverter's external-URI <-> filesystem
@@ -64,29 +62,23 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
             "api/core/files/attachments/lecture/{lectureId}/{attachmentName}", "api/core/files/course/icons/{courseId}/*",
             "api/core/files/courses/{courseId}/attachment-units/{attachmentVideoUnitId}", "api/core/files/drag-and-drop/backgrounds/{questionId}/*",
             "api/core/files/exam-user/signatures/{examUserId}/*", "api/core/files/exam-user/{examUserId}/*", "api/core/files/user/profile-pictures/{userId}/*",
-            // course
-            "api/course/courses/{courseId}/import-summary/{sourceCourseId}",
             // exercise
             "api/exercise/exercises/{destinationExerciseId}/teams/import-from-exercise/{sourceExerciseId}",
             "api/exercise/exercises/{exerciseId}/resume-programming-participation/{participationId}",
-            // fileupload
-            "api/fileupload/file-upload-exercises/import/{sourceId}",
             // iris
             "api/iris/chat/{courseId}/session/{sessionId}", "api/iris/chat/{courseId}/sessions/overview", "api/iris/tutor-suggestion/{postId}/sessions",
             "api/iris/tutor-suggestion/{postId}/sessions/current",
-            // lecture
-            "api/lecture/lectures/import/{sourceLectureId}",
             // modeling
-            "api/modeling/modeling-exercises/import/{sourceExerciseId}", "api/modeling/modeling-submissions/{exampleSubmissionId}/example-assessment",
+            "api/modeling/modeling-submissions/{exampleSubmissionId}/example-assessment",
             // programming
             "api/programming/sharing/export/{exerciseId}", "api/programming/programming-exercise-participations/{participationId}/files-content/{commitId}",
-            "api/programming/programming-exercises/{exerciseId}/files-content-commit-details/{commitId}", "api/programming/programming-exercises/import/{sourceExerciseId}",
+            "api/programming/programming-exercises/{exerciseId}/files-content-commit-details/{commitId}",
             "api/programming/programming-exercises/{exerciseId}/export-instructor-auxiliary-repository/{repositoryId}",
             "api/programming/programming-exercises/{exerciseId}/export-student-repository/{participationId}",
             "api/programming/programming-submissions/{participationId}/trigger-build", "api/programming/programming-submissions/{participationId}/trigger-failed-build",
             "api/programming/repository-files-content/{commitId}",
             // text
-            "api/text/admin/event-insights/text-assessment/events/{courseId}", "api/text/text-exercises/import/{sourceExerciseId}",
+            "api/text/admin/event-insights/text-assessment/events/{courseId}",
             // tutorialgroup (collection "tutorial-free-periods" mismatches its id {tutorialGroupFreePeriodId}: rename the
             // collection to "tutorial-group-free-periods" or the id to {tutorialFreePeriodId} — needs an API naming decision)
             "api/tutorialgroup/courses/{courseId}/tutorial-groups-configurations/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}");

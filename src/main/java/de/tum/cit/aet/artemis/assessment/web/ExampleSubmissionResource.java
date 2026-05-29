@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
@@ -197,9 +198,12 @@ public class ExampleSubmissionResource {
      * @param sourceSubmissionId the submission id to be imported as an example submission
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
-    @PostMapping("exercises/{exerciseId}/example-submissions/import/{sourceSubmissionId}")
+    @PostMapping({ "exercises/{exerciseId}/example-submissions/import", "exercises/{exerciseId}/example-submissions/import/{sourceSubmissionId}" })
     @EnforceAtLeastInstructor
-    public ResponseEntity<ExampleSubmission> importExampleSubmission(@PathVariable Long exerciseId, @PathVariable Long sourceSubmissionId) {
+    public ResponseEntity<ExampleSubmission> importExampleSubmission(@PathVariable Long exerciseId,
+            @RequestParam(name = "sourceSubmissionId", required = false) Long sourceSubmissionIdQuery,
+            @PathVariable(name = "sourceSubmissionId", required = false) Long sourceSubmissionIdPath) {
+        Long sourceSubmissionId = sourceSubmissionIdQuery != null ? sourceSubmissionIdQuery : sourceSubmissionIdPath;
         log.debug("REST request to import Student Submission as ExampleSubmission : {}", sourceSubmissionId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);

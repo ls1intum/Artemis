@@ -319,8 +319,8 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     private ExampleSubmission importExampleSubmission(Long exerciseId, Long submissionId, HttpStatus expectedStatus) throws Exception {
-        return request.postWithResponseBody("/api/assessment/exercises/" + exerciseId + "/example-submissions/import/" + submissionId, null, ExampleSubmission.class,
-                expectedStatus);
+        return request.postWithResponseBody("/api/assessment/exercises/" + exerciseId + "/example-submissions/import?sourceSubmissionId=" + submissionId, null,
+                ExampleSubmission.class, expectedStatus);
     }
 
     @Test

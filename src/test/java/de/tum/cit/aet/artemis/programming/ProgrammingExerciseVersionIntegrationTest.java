@@ -183,7 +183,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         params.add("recreateBuildPlans", String.valueOf(true));
 
         // Import the exercise and load all referenced entities
-        var importedExercise = request.postWithResponseBody("/api/programming/programming-exercises/import/" + programmingExercise.getId(), exerciseToBeImported,
+        var importedExercise = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
 
         exerciseVersionUtilService.verifyExerciseVersionCreated(importedExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);

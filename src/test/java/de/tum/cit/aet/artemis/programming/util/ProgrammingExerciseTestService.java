@@ -887,7 +887,7 @@ public class ProgrammingExerciseTestService {
         // Import the exercise and load all referenced entities
         exerciseToBeImported.setChannelName("testchannel-pe-import");
 
-        var importedExercise = request.postWithResponseBody("/api/programming/programming-exercises/import/" + sourceExercise.getId(), exerciseToBeImported,
+        var importedExercise = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
         importedExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(importedExercise);
 
@@ -923,7 +923,7 @@ public class ProgrammingExerciseTestService {
         params.add("recreateBuildPlans", String.valueOf(recreateBuildPlans));
 
         // Import the exercise and load all referenced entities
-        var importedExercise = request.postWithResponseBody("/api/programming/programming-exercises/import/" + sourceExercise.getId(), exerciseToBeImported,
+        var importedExercise = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
         importedExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(importedExercise);
 
@@ -977,7 +977,7 @@ public class ProgrammingExerciseTestService {
             params.add("recreateBuildPlans", String.valueOf(false));
 
             // Import the exercise and load all referenced entities
-            var importedExercise = request.postWithResponseBody("/api/programming/programming-exercises/import/" + sourceExercise.getId(), exerciseToBeImported,
+            var importedExercise = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
                     ProgrammingExercise.class, params, HttpStatus.OK);
 
             // other calls are for repository URI replacements, we only care about build plan URL replacements
@@ -1011,8 +1011,8 @@ public class ProgrammingExerciseTestService {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "false");
         params.add("updateTemplate", "true");
-        request.postWithResponseBody("/api/programming/programming-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, ProgrammingExercise.class, params,
-                HttpStatus.INTERNAL_SERVER_ERROR);
+        request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported, ProgrammingExercise.class,
+                params, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     // TEST
@@ -1033,8 +1033,8 @@ public class ProgrammingExerciseTestService {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "false");
         params.add("updateTemplate", "true");
-        request.postWithResponseBody("/api/programming/programming-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, ProgrammingExercise.class, params,
-                HttpStatus.INTERNAL_SERVER_ERROR);
+        request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported, ProgrammingExercise.class,
+                params, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     // TEST
@@ -1063,7 +1063,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
-        exerciseToBeImported = request.postWithResponseBody("/api/programming/programming-exercises/import/" + sourceExercise.getId(), exerciseToBeImported,
+        exerciseToBeImported = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
                 ProgrammingExercise.class, HttpStatus.OK);
         assertThat(exerciseToBeImported.getMode()).isEqualTo(TEAM);
         assertThat(exerciseToBeImported.getTeamAssignmentConfig().getMinTeamSize()).isEqualTo(teamAssignmentConfig.getMinTeamSize());
@@ -1106,7 +1106,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
-        exerciseToBeImported = request.postWithResponseBody("/api/programming/programming-exercises/import/" + sourceExercise.getId(), exerciseToBeImported,
+        exerciseToBeImported = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
                 ProgrammingExercise.class, HttpStatus.OK);
 
         assertThat(exerciseToBeImported.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
@@ -1135,7 +1135,7 @@ public class ProgrammingExerciseTestService {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "true");
         params.add("updateTemplate", "true");
-        exerciseToBeImported = request.postWithResponseBody("/api/programming/programming-exercises/import/" + sourceExercise.getId(), exerciseToBeImported,
+        exerciseToBeImported = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
 
         // Assertions
@@ -1164,7 +1164,7 @@ public class ProgrammingExerciseTestService {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "true");
         params.add("updateTemplate", "true");
-        exerciseToBeImported = request.postWithResponseBody("/api/programming/programming-exercises/import/" + sourceExercise.getId(), exerciseToBeImported,
+        exerciseToBeImported = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
 
         // Assertions
@@ -1196,7 +1196,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
-        exerciseToBeImported = request.postWithResponseBody("/api/programming/programming-exercises/import/" + sourceExercise.getId(), exerciseToBeImported,
+        exerciseToBeImported = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
                 ProgrammingExercise.class, HttpStatus.OK);
 
         assertThat(exerciseToBeImported.getSubmissionPolicy().getClass()).isEqualTo(LockRepositoryPolicy.class);
@@ -1227,7 +1227,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
-        exerciseToBeImported = request.postWithResponseBody("/api/programming/programming-exercises/import/" + sourceExercise.getId(), exerciseToBeImported,
+        exerciseToBeImported = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported,
                 ProgrammingExercise.class, HttpStatus.OK);
 
         assertThat(exerciseToBeImported.getSubmissionPolicy()).isNull();
@@ -2591,8 +2591,8 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
-        ProgrammingExercise newProgrammingExercise = request.postWithResponseBody("/api/programming/programming-exercises/import/" + sourceExercise.getId(), exerciseToBeImported,
-                ProgrammingExercise.class, HttpStatus.OK);
+        ProgrammingExercise newProgrammingExercise = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + sourceExercise.getId(),
+                exerciseToBeImported, ProgrammingExercise.class, HttpStatus.OK);
         assertThat(newProgrammingExercise.getExampleSolutionPublicationDate()).as("programming example solution publication date was correctly set to null in the response")
                 .isNull();
 
