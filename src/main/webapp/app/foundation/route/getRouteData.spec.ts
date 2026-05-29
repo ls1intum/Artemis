@@ -1,6 +1,8 @@
 import { ActivatedRoute, ActivatedRouteSnapshot, Data } from '@angular/router';
 
 import { getRouteData } from 'app/foundation/route/getRouteData';
+import { describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 function createSnapshot(data: Data, parentPathFromRoot: ActivatedRouteSnapshot[] = []): ActivatedRouteSnapshot {
     const snapshot = { data } as ActivatedRouteSnapshot;
@@ -16,6 +18,7 @@ function createRouteSnapshot(data: Data, parentPathFromRoot: ActivatedRouteSnaps
 }
 
 describe('getRouteData', () => {
+    setupTestBed({ zoneless: true });
     it('should return data from the current route', () => {
         const route = createRouteSnapshot({ courseId: 42 });
 

@@ -3,6 +3,8 @@ import { ActivatedRoute, ParamMap, convertToParamMap } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 
 import { getNumericPathVariableSignal } from 'app/foundation/route/getPathVariable';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 interface TestActivatedRoute extends ActivatedRoute {
     paramMapSubject: BehaviorSubject<ParamMap>;
@@ -22,6 +24,7 @@ function createActivatedRoute(params: Record<string, string>, parent?: Activated
 }
 
 describe('getNumericPathVariableSignal', () => {
+    setupTestBed({ zoneless: true });
     beforeEach(() => {
         TestBed.configureTestingModule({});
     });

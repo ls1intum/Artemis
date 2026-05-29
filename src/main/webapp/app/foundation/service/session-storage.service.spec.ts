@@ -1,5 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { SessionStorageService } from './session-storage.service';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 enum TestStringEnum {
     Category1 = 'category1',
@@ -8,6 +10,7 @@ enum TestStringEnum {
 }
 
 describe('SessionStorageService', () => {
+    setupTestBed({ zoneless: true });
     let service: SessionStorageService;
     const testKey = 'testKey';
 

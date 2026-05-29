@@ -1,7 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { EventManager, EventWithContent } from 'app/foundation/service/event-manager.service';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('Event Manager tests', () => {
+    setupTestBed({ zoneless: true });
     describe('EventWithContent', () => {
         it('should create correctly EventWithContent', () => {
             // WHEN

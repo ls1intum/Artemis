@@ -4,14 +4,17 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ArtemisServerDateService', () => {
+    setupTestBed({ zoneless: true });
     let service: ArtemisServerDateService;
     let httpMock: HttpTestingController;
 
     beforeEach(() => {
-        jest.useFakeTimers();
-        jest.setSystemTime(new Date('2024-01-01T00:00:00.000Z'));
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2024-01-01T00:00:00.000Z'));
 
         TestBed.configureTestingModule({
             providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()],
@@ -23,7 +26,7 @@ describe('ArtemisServerDateService', () => {
 
     afterEach(() => {
         httpMock.verify();
-        jest.useRealTimers();
+        vi.useRealTimers();
     });
 
     it('should request server time when sync is needed', () => {
@@ -70,7 +73,7 @@ describe('ArtemisServerDateService', () => {
 
     it('should return client date when no offsets are available', () => {
         const now = service.now();
-        expect(now.isSame(dayjs())).toBeTrue();
+        expect(now.isSame(dayjs())).toBe(true);
     });
 
     it('should average offsets when five values exist', () => {

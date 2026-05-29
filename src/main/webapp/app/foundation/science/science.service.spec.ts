@@ -10,12 +10,15 @@ import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-togg
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { of } from 'rxjs';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ScienceService', () => {
+    setupTestBed({ zoneless: true });
     let scienceService: ScienceService;
     let httpService: HttpClient;
     let featureToggleService: FeatureToggleService;
-    let putStub: jest.SpyInstance;
+    let putStub: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -30,14 +33,14 @@ describe('ScienceService', () => {
             .then(() => {
                 httpService = TestBed.inject(HttpClient);
                 featureToggleService = TestBed.inject(FeatureToggleService);
-                jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
+                vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
                 scienceService = TestBed.inject(ScienceService);
-                putStub = jest.spyOn(httpService, 'put');
+                putStub = vi.spyOn(httpService, 'put');
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should send a request to the server to log event', () => {

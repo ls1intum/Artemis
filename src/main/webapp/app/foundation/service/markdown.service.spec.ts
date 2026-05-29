@@ -2,8 +2,11 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { parseExerciseHintExplanation } from 'app/foundation/util/markdown.util';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
+import { describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('Markdown Service', () => {
+    setupTestBed({ zoneless: true });
     const hintText = 'Add an explanation here (only visible in feedback after quiz has ended)';
     const markdownHint = '[hint] ' + hintText;
     const explanationText = 'Add an explanation here (only visible in feedback after quiz has ended)';

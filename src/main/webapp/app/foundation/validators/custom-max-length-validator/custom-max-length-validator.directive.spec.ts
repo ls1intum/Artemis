@@ -4,6 +4,8 @@ import { FormControl, FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 
 import { CustomMaxLengthDirective } from './custom-max-length-validator.directive';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 @Component({
     template: `<input [customMaxLength]="maxLength" ngModel />`,
@@ -15,6 +17,7 @@ class TestHostComponent {
 }
 
 describe('CustomMaxLengthDirective', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<TestHostComponent>;
     let host: TestHostComponent;
 
