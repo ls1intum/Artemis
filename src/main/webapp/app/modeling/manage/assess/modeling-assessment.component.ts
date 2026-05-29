@@ -203,7 +203,8 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             const instruction = dropInfo?.instruction ?? (dropInfo?.id ? dropInfo : undefined);
             let feedback = this.elementFeedback.get(assessment.modelElementId);
             if (feedback) {
-                if (feedback.credits !== assessment.score && feedback.gradingInstruction) {
+                const scoreChanged = feedback.credits !== assessment.score;
+                if (scoreChanged && feedback.gradingInstruction) {
                     feedback.gradingInstruction = undefined;
                 }
                 feedback.credits = assessment.score;
@@ -216,12 +217,15 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                         }
                     } else {
                         const lastShown = this.shownInApollon.get(assessment.modelElementId);
-                        if (assessment.feedback !== undefined && lastShown !== undefined && assessment.feedback !== lastShown) {
-                            // Instructor changed the content — preserve original title in text, update detailText
+                        const textChanged = assessment.feedback !== undefined && lastShown !== undefined && assessment.feedback !== lastShown;
+                        if (textChanged || scoreChanged) {
+                            // Instructor changed the content or score — preserve original title in text, update detailText
                             const originalTitle = this.stripSuggestionPrefix(feedback.text ?? '');
                             feedback.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + originalTitle;
-                            feedback.detailText = assessment.feedback;
-                            this.shownInApollon.set(assessment.modelElementId, assessment.feedback);
+                            if (textChanged) {
+                                feedback.detailText = assessment.feedback;
+                                this.shownInApollon.set(assessment.modelElementId, assessment.feedback);
+                            }
                         }
                     }
                     // else: auto-emit or unchanged content, keep original ACCEPTED/IDENTIFIER prefix
