@@ -100,6 +100,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
     quizHeader = viewChild<ElementRef>('quizHeader');
     stepWizard = viewChild<ElementRef>('stepWizard');
+    private quizRoot = viewChild<ElementRef<HTMLElement>>('quizRoot');
 
     private routeAndDataSubscription: Subscription;
 
@@ -188,6 +189,22 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 const headerHeight = this.quizHeader()!.nativeElement.offsetHeight;
                 this.stepWizard()!.nativeElement.style.top = `${headerHeight}px`;
             }
+        });
+        effect((onCleanup) => {
+            // Center the overlays over the quiz by publishing its horizontal center. A ResizeObserver re-measures
+            // whenever the quiz changes size (window resize, sidebar toggle, ...); its first callback covers the initial layout.
+            const root = this.quizRoot()?.nativeElement;
+            if (!root) {
+                return;
+            }
+            const observer = new ResizeObserver(() => {
+                const rect = root.getBoundingClientRect();
+                root.style.setProperty('--quiz-overlay-center-x', `${rect.left + rect.width / 2}px`);
+                root.style.setProperty('--quiz-overlay-max-width', `${rect.width}px`);
+                root.style.setProperty('--quiz-overlay-display', rect.width === 0 ? 'none' : 'block');
+            });
+            observer.observe(root);
+            onCleanup(() => observer.disconnect());
         });
     }
 
