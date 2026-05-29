@@ -44,7 +44,11 @@ export class ExportButtonComponent {
             modal: true,
             closable: true,
             closeOnEscape: true,
+            // dismissableMask false reproduces the original NgbModal `backdrop: 'static'` (backdrop click does not dismiss).
             dismissableMask: false,
+            // The original NgbModal dialog was neither draggable nor resizable; make that explicit.
+            draggable: false,
+            resizable: false,
         });
         dialogRef?.onClose.subscribe((result: ExportModalResult | undefined) => {
             if (!result) {

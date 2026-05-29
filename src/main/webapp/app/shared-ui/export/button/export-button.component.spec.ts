@@ -44,6 +44,17 @@ describe('ExportButtonComponent', () => {
         const csvExportButton = fixture.debugElement.query(By.css('jhi-button'));
         expect(csvExportButton).not.toBeNull();
         expect(dialogServiceOpenStub).toHaveBeenCalledOnce();
+        // Assert the dialog config reproduces the original NgbModal contract: closable (X button), Esc dismissal,
+        // static backdrop (dismissableMask false), and a non-draggable/non-resizable dialog.
+        const config = dialogServiceOpenStub.mock.calls[0][1];
+        expect(config).toMatchObject({
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            draggable: false,
+            resizable: false,
+        });
     });
 
     it('should emit chosen csv options when the dialog returns a csv result', () => {
