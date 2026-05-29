@@ -57,6 +57,7 @@ export class ProgrammingExerciseService {
     private sortService = inject(SortService);
 
     public resourceUrl = 'api/programming/programming-exercises';
+    public localCIResourceUrl = 'api/localci/programming-exercises';
 
     /**
      * Sets a new programming exercise up.
@@ -192,7 +193,7 @@ export class ProgrammingExerciseService {
 
     previewAutomaticAfterDueDateDate(requestData: AutomaticAfterDueDatePreviewRequest): Observable<dayjs.Dayjs | undefined> {
         return this.http
-            .post<string | undefined>(`${this.resourceUrl}/timeline/automatic-after-due-date-preview`, requestData, { observe: 'response' })
+            .post<string | undefined>(`${this.localCIResourceUrl}/timeline/automatic-after-due-date-preview`, requestData, { observe: 'response' })
             .pipe(map((res) => (res.body ? dayjs(res.body) : undefined)));
     }
 

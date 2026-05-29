@@ -276,7 +276,7 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
         createTestComponent();
 
-        const req = httpTestingController.expectOne('api/programming/programming-exercises/timeline/automatic-after-due-date-preview');
+        const req = httpTestingController.expectOne('api/localci/programming-exercises/timeline/automatic-after-due-date-preview');
         expect(req.request.method).toBe('POST');
         expect(req.request.body.programmingExerciseId).toBe(42);
         expect(req.request.body.dueDate).toBeTruthy();
@@ -296,7 +296,7 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         exercise.allowFeedbackRequests = true;
         createTestComponent();
 
-        const req = httpTestingController.expectOne('api/programming/programming-exercises/timeline/automatic-after-due-date-preview');
+        const req = httpTestingController.expectOne('api/localci/programming-exercises/timeline/automatic-after-due-date-preview');
         req.flush(afterDueDate.toISOString());
         fixture.detectChanges();
         await fixture.whenStable();
@@ -326,7 +326,7 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         } as any;
         createTestComponent();
 
-        httpTestingController.expectNone('api/programming/programming-exercises/timeline/automatic-after-due-date-preview');
+        httpTestingController.expectNone('api/localci/programming-exercises/timeline/automatic-after-due-date-preview');
         expect(component.buildAndTestStudentSubmissionsAfterDueDate()).toBeUndefined();
         expect(component.isDatePickerForRunningTestsAfterDueDateVisible()).toBe(false);
     });

@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 @Profile(PROFILE_LOCALCI)
 @Lazy
 @RestController
-@RequestMapping("api/programming/")
+@RequestMapping("api/localci/")
 public class AutomaticAfterDueDateResource {
 
     private static final String ENTITY_NAME = "programmingExercise";

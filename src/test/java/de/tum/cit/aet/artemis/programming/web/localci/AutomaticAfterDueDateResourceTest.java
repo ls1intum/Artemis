@@ -39,7 +39,7 @@ class AutomaticAfterDueDateResourceTest extends AbstractSpringIntegrationLocalCI
      */
     private static final String OTHER_EDITOR_LOGIN = TEST_PREFIX + "othereditor";
 
-    private static final String BASE_URL = "/api/programming/programming-exercises/timeline/automatic-after-due-date-preview";
+    private static final String BASE_URL = "/api/localci/programming-exercises/timeline/automatic-after-due-date-preview";
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

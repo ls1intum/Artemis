@@ -26,6 +26,7 @@ describe('ProgrammingExercise Service', () => {
 
     let defaultProgrammingExercise: ProgrammingExercise;
     const resourceUrl = 'api/programming/programming-exercises';
+    const localCIResourceUrl = 'api/localci/programming-exercises';
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -493,7 +494,7 @@ describe('ProgrammingExercise Service', () => {
             expect(result!.toISOString()).toBe(dayjs(isoDate).toISOString());
         });
 
-        const url = `${resourceUrl}/timeline/automatic-after-due-date-preview`;
+        const url = `${localCIResourceUrl}/timeline/automatic-after-due-date-preview`;
         const req = httpMock.expectOne({ method: 'POST', url });
         req.flush(isoDate);
         tick();
@@ -509,7 +510,7 @@ describe('ProgrammingExercise Service', () => {
             expect(result).toBeUndefined();
         });
 
-        const url = `${resourceUrl}/timeline/automatic-after-due-date-preview`;
+        const url = `${localCIResourceUrl}/timeline/automatic-after-due-date-preview`;
         const req = httpMock.expectOne({ method: 'POST', url });
         req.flush(null);
         tick();
