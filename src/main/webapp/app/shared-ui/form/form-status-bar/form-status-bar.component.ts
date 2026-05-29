@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, HostListener, ViewChild, input } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, input, viewChild } from '@angular/core';
 import { updateHeaderHeight } from 'app/foundation/util/navbar.util';
 import { ChecklistCheckComponent } from 'app/shared-ui/components/checklist-check/checklist-check.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -18,7 +18,7 @@ export type FormSectionStatus = {
 export class FormStatusBarComponent implements AfterViewInit {
     formStatusSections = input.required<FormSectionStatus[]>();
 
-    @ViewChild('statusBar', { static: false }) statusBar?: ElementRef;
+    statusBar = viewChild<ElementRef>('statusBar');
 
     @HostListener('window:resize')
     onResizeAddDistanceFromStatusBarToNavbar() {
@@ -43,7 +43,7 @@ export class FormStatusBarComponent implements AfterViewInit {
 
         const navbarElement = document.querySelector('jhi-navbar') as HTMLElement | null;
         const navbarHeightPx = navbarElement?.getBoundingClientRect().height ?? 0;
-        const statusBarHeightPx = this.statusBar?.nativeElement?.getBoundingClientRect().height ?? 0;
+        const statusBarHeightPx = this.statusBar()?.nativeElement?.getBoundingClientRect().height ?? 0;
 
         // Total vertical offset so the headline is not hidden behind status bar.
         const headerOverlapOffsetPx = navbarHeightPx + statusBarHeightPx;

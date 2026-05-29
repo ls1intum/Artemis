@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, computed, effect, input, model, output, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, computed, effect, input, model, output, signal, viewChild } from '@angular/core';
 import { ControlContainer, FormsModule, NgForm, NgModel } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
@@ -31,7 +31,7 @@ export class TitleChannelNamePrimengComponent implements AfterViewInit, OnDestro
 
     titleOnPageLoad = signal<string | undefined>(undefined);
 
-    @ViewChild('field_title') field_title: NgModel;
+    field_title = viewChild<NgModel>('field_title');
     field_channel_name = viewChild<NgModel>('field_channel_name');
 
     titleChange = output<string>();
@@ -78,7 +78,7 @@ export class TitleChannelNamePrimengComponent implements AfterViewInit, OnDestro
     }
 
     private registerChangeListeners() {
-        this.fieldTitleSubscription = this.field_title?.valueChanges?.subscribe(() => this.calculateFormValid());
+        this.fieldTitleSubscription = this.field_title()?.valueChanges?.subscribe(() => this.calculateFormValid());
         this.fieldChannelNameSubscription = this.field_channel_name()?.valueChanges?.subscribe(() => this.calculateFormValid());
     }
 
@@ -88,7 +88,7 @@ export class TitleChannelNamePrimengComponent implements AfterViewInit, OnDestro
     }
 
     calculateFormValid(): void {
-        const updatedFormValidValue = Boolean(this.field_title.valid && (!this.isChannelFieldDisplayed() || this.field_channel_name()?.valid));
+        const updatedFormValidValue = Boolean(this.field_title()?.valid && (!this.isChannelFieldDisplayed() || this.field_channel_name()?.valid));
         this.isValid.set(updatedFormValidValue);
     }
 

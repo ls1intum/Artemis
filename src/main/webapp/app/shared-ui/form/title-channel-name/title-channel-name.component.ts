@@ -33,6 +33,11 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
 
     titleOnPageLoad = signal<string | undefined>(undefined);
 
+    // DEFERRED (Angular 21 migration): kept as @ViewChild instead of viewChild() because the public `field_title`
+    // (an NgModel) is read imperatively as a property from the programming exercise carve-out
+    // (programming/manage/.../programming-exercise-update + programming-exercise-information, via
+    // ExerciseTitleChannelNameComponent -> `...field_title?.control?.errors` / `.field_title?.valueChanges`).
+    // Converting it to a signal viewChild() would require touching those carve-out consumers, so it is deferred.
     @ViewChild('field_title') field_title: NgModel;
     field_channel_name = viewChild<NgModel>('field_channel_name');
 
@@ -90,7 +95,7 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     }
 
     calculateFormValid(): void {
-        const updatedFormValidValue = Boolean(this.field_title.valid && (!this.isChannelFieldDisplayed() || this.field_channel_name()?.valid));
+        const updatedFormValidValue = Boolean(this.field_title?.valid && (!this.isChannelFieldDisplayed() || this.field_channel_name()?.valid));
         this.isValid.set(updatedFormValidValue);
     }
 

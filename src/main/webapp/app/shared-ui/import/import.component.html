@@ -44,7 +44,7 @@
                         <td class="col-1">
                             <jhi-button
                                 (onClick)="selectImport(entity)"
-                                [disabled]="disabledIds.includes(entity.id!)"
+                                [disabled]="disabledIds().includes(entity.id!)"
                                 [title]="'artemisApp.' + entityName + '.import.table.doImport'"
                             />
                         </td>

@@ -47,6 +47,11 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     protected readonly faCircleXmark = faCircleXmark;
     protected readonly faTriangleExclamation = faTriangleExclamation;
 
+    // DEFERRED (Angular 21 migration): kept as @ViewChild instead of viewChild() because the public `dateInput`
+    // (an NgModel) is read imperatively as a property by external consumers in the text/fileupload/modeling
+    // exercise-update components (e.g. `this.releaseDateField()?.dateInput.valid`). Converting it to a signal
+    // viewChild() would require touching those consumers (some on the in-flight modeling/text/fileupload PR),
+    // so it is deferred to a follow-up to keep this PR's scope clean and avoid cross-PR collisions.
     @ViewChild('dateInput', { static: false }) dateInput: NgModel;
 
     labelName = input<string>();

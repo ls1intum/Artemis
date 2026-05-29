@@ -1,18 +1,4 @@
-import {
-    Component,
-    ContentChild,
-    ElementRef,
-    EventEmitter,
-    Input,
-    OnChanges,
-    OnInit,
-    Output,
-    SimpleChanges,
-    TemplateRef,
-    ViewChild,
-    ViewEncapsulation,
-    inject,
-} from '@angular/core';
+import { Component, ElementRef, OnInit, TemplateRef, ViewEncapsulation, contentChild, effect, inject, input, output, untracked, viewChild } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
@@ -77,19 +63,19 @@ type PagingValue = number | 'all';
         ArtemisTranslatePipe,
     ],
 })
-export class DataTableComponent implements OnInit, OnChanges {
+export class DataTableComponent implements OnInit {
     private sortService = inject(SortService);
     private localStorageService = inject(LocalStorageService);
 
     /**
      * @property templateRef Ref to the content child of this component (which is ngx-datatable)
      */
-    @ContentChild(TemplateRef, { read: TemplateRef, static: false }) templateRef: TemplateRef<any>;
+    templateRef = contentChild(TemplateRef, { read: TemplateRef });
 
     /**
      * @property ngbTypeahead Ref to the autocomplete component from Angular
      */
-    @ViewChild('ngbTypeahead', { static: false }) ngbTypeahead: ElementRef;
+    ngbTypeahead = viewChild<ElementRef>('ngbTypeahead');
 
     /**
      * @property isLoading Loading state of the data that is fetched by the ancestral component
@@ -116,36 +102,36 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @function customFilter Function that takes an entity and returns true or false depending on whether this entity should be shown (combine with customFilterKey)
      * @property customFilterKey Filter state of an ancestral component which triggers a table re-rendering if it changes
      */
-    @Input() isLoading = false;
-    @Input() isSearching = false;
-    @Input() searchFailed = false;
-    @Input() searchNoResults = false;
-    @Input() isTransitioning = false;
-    @Input() showPageSizeDropdown = true;
-    @Input() showSearchField = true;
-    @Input() entityType = 'entity';
-    @Input() allEntities: (BaseEntity | StringBaseEntity)[] = [];
-    @Input() entitiesPerPageTranslation: string;
-    @Input() showAllEntitiesTranslation: string;
-    @Input() searchNoResultsTranslation = 'artemisApp.dataTable.search.noResults';
-    @Input() searchPlaceholderTranslation: string;
-    @Input() minQueryLengthHintTranslation = 'artemisApp.dataTable.search.minQueryLengthHint';
-    @Input() searchFields: string[] = [];
-    @Input() searchEnabled = true;
-    @Input() searchEntityFilterEnabled = true;
-    @Input() searchTextFromEntity: (entity: BaseEntity | StringBaseEntity) => string = entityToString;
-    @Input() searchResultFormatter: (entity: BaseEntity | StringBaseEntity) => string = entityToString;
-    @Input() onSearchWrapper: (stream: Observable<{ text: string; entities: (BaseEntity | StringBaseEntity)[] }>) => Observable<(BaseEntity | StringBaseEntity)[]> =
-        onSearchDefaultWrapper;
-    @Input() onAutocompleteSelectWrapper: (entity: BaseEntity | StringBaseEntity, callback: (entity: BaseEntity | StringBaseEntity) => void) => void =
-        onAutocompleteSelectDefaultWrapper;
-    @Input() customFilter: (entity: BaseEntity | StringBaseEntity) => boolean = () => true;
-    @Input() customFilterKey: any = {};
+    isLoading = input<boolean>(false);
+    isSearching = input<boolean>(false);
+    searchFailed = input<boolean>(false);
+    searchNoResults = input<boolean>(false);
+    isTransitioning = input<boolean>(false);
+    showPageSizeDropdown = input<boolean>(true);
+    showSearchField = input<boolean>(true);
+    entityType = input<string>('entity');
+    allEntities = input<(BaseEntity | StringBaseEntity)[]>([]);
+    entitiesPerPageTranslation = input<string>();
+    showAllEntitiesTranslation = input<string>();
+    searchNoResultsTranslation = input<string>('artemisApp.dataTable.search.noResults');
+    searchPlaceholderTranslation = input<string>();
+    minQueryLengthHintTranslation = input<string>('artemisApp.dataTable.search.minQueryLengthHint');
+    searchFields = input<string[]>([]);
+    searchEnabled = input<boolean>(true);
+    searchEntityFilterEnabled = input<boolean>(true);
+    searchTextFromEntity = input<(entity: BaseEntity | StringBaseEntity) => string>(entityToString);
+    searchResultFormatter = input<(entity: BaseEntity | StringBaseEntity) => string>(entityToString);
+    onSearchWrapper =
+        input<(stream: Observable<{ text: string; entities: (BaseEntity | StringBaseEntity)[] }>) => Observable<(BaseEntity | StringBaseEntity)[]>>(onSearchDefaultWrapper);
+    onAutocompleteSelectWrapper =
+        input<(entity: BaseEntity | StringBaseEntity, callback: (entity: BaseEntity | StringBaseEntity) => void) => void>(onAutocompleteSelectDefaultWrapper);
+    customFilter = input<(entity: BaseEntity | StringBaseEntity) => boolean>(() => true);
+    customFilterKey = input<any>({});
 
     /**
      * @property entitiesSizeChange Emits an event when the number of entities displayed changes (e.g. by filtering)
      */
-    @Output() entitiesSizeChange = new EventEmitter<number>();
+    entitiesSizeChange = output<number>();
 
     /**
      * @property PAGING_VALUES Possible values for the number of entities shown per page of the table
@@ -184,6 +170,15 @@ export class DataTableComponent implements OnInit, OnChanges {
             textSearch: [],
             sortProp: { field: 'id', order: SortOrder.ASC },
         };
+
+        // Re-render the table whenever the source entities or the parent filter key change.
+        // Mirrors the previous ngOnChanges behavior which only reacted to `allEntities` and `customFilterKey`,
+        // so the actual recomputation is wrapped in untracked() to avoid reacting to other inputs read inside updateEntities().
+        effect(() => {
+            this.allEntities();
+            this.customFilterKey();
+            untracked(() => this.updateEntities());
+        });
     }
 
     /**
@@ -196,17 +191,6 @@ export class DataTableComponent implements OnInit, OnChanges {
         // so that they can be used from child components
         this.onSort = this.onSort.bind(this);
         this.iconForSortPropField = this.iconForSortPropField.bind(this);
-    }
-
-    /**
-     * Method is called when Inputs of this component have changed.
-     *
-     * @param changes List of Inputs that were changed
-     */
-    ngOnChanges(changes: SimpleChanges) {
-        if (changes.allEntities || changes.customFilterKey) {
-            this.updateEntities();
-        }
     }
 
     /**
@@ -239,7 +223,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      * or rendering (managed by this component).
      */
     get isPreparing() {
-        return this.isLoading || this.isRendering;
+        return this.isLoading() || this.isRendering;
     }
 
     /**
@@ -255,14 +239,14 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @param quantifier Number of entities per page or 'all'
      */
     perPageTranslation(quantifier: PagingValue) {
-        return isNumber(quantifier) ? this.entitiesPerPageTranslation : this.showAllEntitiesTranslation;
+        return isNumber(quantifier) ? this.entitiesPerPageTranslation() : this.showAllEntitiesTranslation();
     }
 
     /**
      * Key that is used for storing this "items per page" setting in local storage
      */
     private get perPageCacheKey() {
-        return `${this.entityType}-items-per-page`;
+        return `${this.entityType()}-items-per-page`;
     }
 
     /**
@@ -300,9 +284,10 @@ export class DataTableComponent implements OnInit, OnChanges {
      */
     private updateEntities() {
         const searchPredicate = (entity: BaseEntity | StringBaseEntity) => {
-            return !this.searchEntityFilterEnabled || this.filterEntityByTextSearch(this.entityCriteria.textSearch, entity, this.searchFields);
+            return !this.searchEntityFilterEnabled() || this.filterEntityByTextSearch(this.entityCriteria.textSearch, entity, this.searchFields());
         };
-        const filteredEntities = this.allEntities.filter((entity) => this.customFilter(entity) && searchPredicate(entity));
+        const customFilter = this.customFilter();
+        const filteredEntities = this.allEntities().filter((entity) => customFilter(entity) && searchPredicate(entity));
         this.entities = this.sortService.sortByProperty(filteredEntities, this.entityCriteria.sortProp.field, this.entityCriteria.sortProp.order === SortOrder.ASC);
         // defer execution of change emit to prevent ExpressionChangedAfterItHasBeenCheckedError, see explanation at https://blog.angular-university.io/angular-debugging/
         setTimeout(() => this.entitiesSizeChange.emit(this.entities.length));
@@ -402,7 +387,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @param text$ stream of text input.
      */
     onSearch = (text$: Observable<string>): Observable<(BaseEntity | StringBaseEntity)[]> => {
-        return this.onSearchWrapper(
+        return this.onSearchWrapper()(
             text$.pipe(
                 debounceTime(200),
                 distinctUntilChanged(),
@@ -431,7 +416,7 @@ export class DataTableComponent implements OnInit, OnChanges {
                     return {
                         text,
                         entities: this.entities.filter((entity) => {
-                            const fieldValues = this.entityFieldValues(entity, this.searchFields);
+                            const fieldValues = this.entityFieldValues(entity, this.searchFields());
                             return fieldValues.some((fieldValue) => this.foundIn(fieldValue)(lastSearchWord));
                         }),
                     };
@@ -452,7 +437,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      * Property that exposes the typeahead buttons (= autocomplete suggestion options) as DOM elements
      */
     get typeaheadButtons() {
-        return get(this.ngbTypeahead, 'nativeElement.nextSibling.children', []);
+        return get(this.ngbTypeahead(), 'nativeElement.nextSibling.children', []);
     }
 
     /**
@@ -462,8 +447,8 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @param entity Entity that was selected via autocomplete
      */
     onAutocompleteSelect = (entity: BaseEntity | StringBaseEntity) => {
-        this.entityCriteria.textSearch[this.entityCriteria.textSearch.length - 1] = this.searchTextFromEntity(entity);
-        this.onAutocompleteSelectWrapper(entity, this.filterAfterAutocompleteSelect);
+        this.entityCriteria.textSearch[this.entityCriteria.textSearch.length - 1] = this.searchTextFromEntity()(entity);
+        this.onAutocompleteSelectWrapper()(entity, this.filterAfterAutocompleteSelect);
     };
 
     /**

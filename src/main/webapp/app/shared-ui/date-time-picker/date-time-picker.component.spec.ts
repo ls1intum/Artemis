@@ -1,12 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import dayjs from 'dayjs/esm';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('FormDateTimePickerComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: FormDateTimePickerComponent;
     let fixture: ComponentFixture<FormDateTimePickerComponent>;
 
@@ -15,19 +21,19 @@ describe('FormDateTimePickerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(OwlDateTimeModule), MockPipe(ArtemisTranslatePipe), MockModule(NgbTooltipModule)],
-            declarations: [FormDateTimePickerComponent],
+            imports: [OwlNativeDateTimeModule, MockPipe(ArtemisTranslatePipe), MockModule(NgbTooltipModule), FormDateTimePickerComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(FormDateTimePickerComponent);
                 component = fixture.componentInstance;
-                component.dateInput = { reset: jest.fn() } as any;
+                component.dateInput = { reset: vi.fn() } as any;
             });
     });
 
     it('should emit if a value is changed', () => {
-        const emitStub = jest.spyOn(component.valueChange, 'emit').mockImplementation();
+        const emitStub = vi.spyOn(component.valueChange, 'emit').mockImplementation();
 
         component.valueChanged();
 
@@ -51,7 +57,7 @@ describe('FormDateTimePickerComponent', () => {
         it('should return null if dayjs is invalid', () => {
             const unconvertedDate = dayjs('2022-31-02T00:00+00:00');
 
-            expect(unconvertedDate.isValid()).toBeFalse();
+            expect(unconvertedDate.isValid()).toBe(false);
 
             convertedDate = component.convertToDate(unconvertedDate);
 
@@ -74,7 +80,7 @@ describe('FormDateTimePickerComponent', () => {
     });
 
     it('should register callback function', () => {
-        const onChangeSpy = jest.fn();
+        const onChangeSpy = vi.fn();
         component.registerOnChange(onChangeSpy);
 
         (component as any).onChange?.(normalDate);
@@ -84,9 +90,9 @@ describe('FormDateTimePickerComponent', () => {
     });
 
     it('should update field', () => {
-        const onChangeSpy = jest.fn();
+        const onChangeSpy = vi.fn();
         component.registerOnChange(onChangeSpy);
-        const valueChangedStub = jest.spyOn(component, 'valueChanged').mockImplementation();
+        const valueChangedStub = vi.spyOn(component, 'valueChanged').mockImplementation();
         const newDate = normalDate.add(2, 'days');
         fixture.componentRef.setInput('value', normalDate);
         fixture.changeDetectorRef.detectChanges();
@@ -116,8 +122,8 @@ describe('FormDateTimePickerComponent', () => {
     });
 
     it('should clear the datepicker value', () => {
-        const resetSpy = jest.spyOn(component.dateInput, 'reset').mockImplementation();
-        const updateSignalsSpy = jest.spyOn(component, 'updateSignals').mockImplementation();
+        const resetSpy = vi.spyOn(component.dateInput, 'reset').mockImplementation();
+        const updateSignalsSpy = vi.spyOn(component, 'updateSignals').mockImplementation();
 
         component.clearDate();
 

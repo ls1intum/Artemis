@@ -1,5 +1,7 @@
 import { Component, inject } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FormsModule } from '@angular/forms';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -23,14 +25,16 @@ class DummyImportComponent extends ImportComponent<BaseEntity> {
     }
 }
 describe('ImportComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<DummyImportComponent>;
     let comp: DummyImportComponent;
     let pagingService: DummyPagingService;
     let sortService: SortService;
-    let searchStub: jest.SpyInstance;
-    let sortByPropertyStub: jest.SpyInstance;
+    let searchStub: ReturnType<typeof vi.spyOn>;
+    let sortByPropertyStub: ReturnType<typeof vi.spyOn>;
     let dialogRef: DynamicDialogRef;
-    let dialogRefCloseSpy: jest.SpyInstance;
+    let dialogRefCloseSpy: ReturnType<typeof vi.fn>;
 
     let searchResult: SearchResult<BaseEntity>;
     let state: SearchTermPageableSearch;
@@ -38,15 +42,21 @@ describe('ImportComponent', () => {
     const content: BaseEntity = { id: 2 };
 
     beforeEach(() => {
-        dialogRefCloseSpy = jest.fn();
+        dialogRefCloseSpy = vi.fn();
         dialogRef = {
             close: dialogRefCloseSpy,
             onClose: new Subject<any>(),
         } as unknown as DynamicDialogRef;
 
         TestBed.configureTestingModule({
-            imports: [FormsModule, MockComponent(NgbPagination)],
-            declarations: [DummyImportComponent, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
+            imports: [
+                FormsModule,
+                DummyImportComponent,
+                MockComponent(NgbPagination),
+                MockComponent(ButtonComponent),
+                MockDirective(SortByDirective),
+                MockDirective(SortDirective),
+            ],
             providers: [MockProvider(DummyPagingService), MockProvider(SortService), { provide: DynamicDialogRef, useValue: dialogRef }],
         })
             .compileComponents()
@@ -56,13 +66,14 @@ describe('ImportComponent', () => {
                 pagingService = TestBed.inject(DummyPagingService);
                 sortService = TestBed.inject(SortService);
 
-                searchStub = jest.spyOn(pagingService, 'search');
-                sortByPropertyStub = jest.spyOn(sortService, 'sortByProperty');
+                searchStub = vi.spyOn(pagingService, 'search');
+                sortByPropertyStub = vi.spyOn(sortService, 'sortByProperty');
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.useRealTimers();
+        vi.restoreAllMocks();
     });
 
     beforeEach(() => {
@@ -84,7 +95,7 @@ describe('ImportComponent', () => {
     });
 
     it('should initialize the subjects', () => {
-        const searchSpy = jest.spyOn(comp, 'performSearch' as any);
+        const searchSpy = vi.spyOn(comp, 'performSearch' as any);
 
         fixture.detectChanges();
 
@@ -93,57 +104,64 @@ describe('ImportComponent', () => {
         expect(searchSpy).toHaveBeenCalledWith(expect.any(Subject), 300);
     });
 
-    const setStateAndCallOnInit = (middleExpectation: () => void) => {
+    const setStateAndCallOnInit = async (middleExpectation: () => Promise<void> | void) => {
         comp.state = { ...state };
-        comp.ngOnInit();
-        middleExpectation();
+        // Trigger the component lifecycle through the framework so Angular runs ngOnInit exactly once.
+        // Calling comp.ngOnInit() manually would leave Angular's own deferred initial change detection
+        // pending, which then re-runs ngOnInit when the fake clock advances and resets content.
+        fixture.detectChanges();
+        await middleExpectation();
         expect(comp.content).toEqual(searchResult);
         comp.sortRows();
         expect(sortByPropertyStub).toHaveBeenCalledWith(searchResult.resultsOnPage, comp.sortedColumn, comp.listSorting);
     };
 
-    it('should set content to paging result on sort', fakeAsync(() => {
-        expect(comp.listSorting).toBeFalse();
-        setStateAndCallOnInit(() => {
+    it('should set content to paging result on sort', async () => {
+        vi.useFakeTimers();
+        expect(comp.listSorting).toBe(false);
+        await setStateAndCallOnInit(async () => {
             comp.listSorting = true;
-            tick(10);
+            await vi.advanceTimersByTimeAsync(10);
             expect(searchStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING }, undefined);
-            expect(comp.listSorting).toBeTrue();
+            expect(comp.listSorting).toBe(true);
         });
-    }));
+    });
 
-    it('should set content to paging result on pageChange', fakeAsync(() => {
+    it('should set content to paging result on pageChange', async () => {
+        vi.useFakeTimers();
         expect(comp.page).toBe(1);
-        setStateAndCallOnInit(() => {
+        await setStateAndCallOnInit(async () => {
             comp.onPageChange(5);
-            tick(10);
+            await vi.advanceTimersByTimeAsync(10);
             expect(searchStub).toHaveBeenCalledWith({ ...state, page: 5 }, undefined);
             expect(comp.page).toBe(5);
         });
-    }));
+    });
 
-    it('should set content to paging result on search', fakeAsync(() => {
+    it('should set content to paging result on search', async () => {
+        vi.useFakeTimers();
         expect(comp.searchTerm).toBe('');
-        setStateAndCallOnInit(() => {
+        await setStateAndCallOnInit(async () => {
             const givenSearchTerm = 'givenSearchTerm';
             comp.searchTerm = givenSearchTerm;
-            tick(10);
+            await vi.advanceTimersByTimeAsync(10);
             expect(searchStub).not.toHaveBeenCalled();
-            tick(290);
+            await vi.advanceTimersByTimeAsync(290);
             expect(searchStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, undefined);
             expect(comp.searchTerm).toEqual(givenSearchTerm);
         });
-    }));
+    });
 
-    it('should set content to paging result on sortedColumn change', fakeAsync(() => {
+    it('should set content to paging result on sortedColumn change', async () => {
+        vi.useFakeTimers();
         expect(comp.sortedColumn).toBe('ID');
-        setStateAndCallOnInit(() => {
+        await setStateAndCallOnInit(async () => {
             comp.sortedColumn = 'TITLE';
-            tick(10);
+            await vi.advanceTimersByTimeAsync(10);
             expect(searchStub).toHaveBeenCalledWith({ ...state, sortedColumn: 'TITLE' }, undefined);
             expect(comp.sortedColumn).toBe('TITLE');
         });
-    }));
+    });
 
     it('should return tracked id', () => {
         expect(comp.trackId(0, content)).toEqual(content.id);
@@ -169,37 +187,38 @@ describe('ImportComponent', () => {
         expect(dialogRefCloseSpy).toHaveBeenCalledWith(exam);
     });
 
-    it('should change the page on active modal', fakeAsync(() => {
+    it('should change the page on active modal', async () => {
+        vi.useFakeTimers();
         const defaultPageSize = 10;
         const numberOfPages = 5;
-        const pagingServiceSpy = jest.spyOn(pagingService, 'search');
+        const pagingServiceSpy = vi.spyOn(pagingService, 'search');
         pagingServiceSpy.mockReturnValue(of({ numberOfPages } as SearchResult<Exam>));
 
         fixture.detectChanges();
 
         let expectedPageNumber = 1;
         comp.onPageChange(expectedPageNumber);
-        tick();
+        await vi.advanceTimersByTimeAsync(0);
         expect(comp.page).toBe(expectedPageNumber);
         expect(comp.total).toBe(numberOfPages * defaultPageSize);
 
         expectedPageNumber = 2;
         comp.onPageChange(expectedPageNumber);
-        tick();
+        await vi.advanceTimersByTimeAsync(0);
         expect(comp.page).toBe(expectedPageNumber);
         expect(comp.total).toBe(numberOfPages * defaultPageSize);
 
         // Page number should be changed unless it is falsy.
         comp.onPageChange(0);
-        tick();
+        await vi.advanceTimersByTimeAsync(0);
         expect(comp.page).toBe(expectedPageNumber);
 
         // Number of times onPageChange is called with a truthy value.
         expect(pagingServiceSpy).toHaveBeenCalledTimes(2);
-    }));
+    });
 
     it('should sort rows with default values', () => {
-        const sortServiceSpy = jest.spyOn(sortService, 'sortByProperty');
+        const sortServiceSpy = vi.spyOn(sortService, 'sortByProperty');
 
         fixture.detectChanges();
         comp.sortRows();
@@ -208,25 +227,27 @@ describe('ImportComponent', () => {
         expect(sortServiceSpy).toHaveBeenCalledWith([], 'ID', false);
     });
 
-    it('should call createOptions when performing a search request', fakeAsync(() => {
+    it('should call createOptions when performing a search request', async () => {
+        vi.useFakeTimers();
         // @ts-ignore (the method is protected but exists)
-        const createOptionsSpy = jest.spyOn(comp, 'createOptions').mockReturnValue({ test: true });
-        setStateAndCallOnInit(() => {
+        const createOptionsSpy = vi.spyOn(comp, 'createOptions').mockReturnValue({ test: true });
+        await setStateAndCallOnInit(async () => {
             comp.searchTerm = state.searchTerm = 'newSearchTerm';
-            tick(300);
+            await vi.advanceTimersByTimeAsync(300);
             expect(searchStub).toHaveBeenCalledWith({ ...state }, { test: true });
             expect(createOptionsSpy).toHaveBeenCalled();
         });
-    }));
+    });
 
-    it('should call onSearchResult after performing a search request', fakeAsync(() => {
+    it('should call onSearchResult after performing a search request', async () => {
+        vi.useFakeTimers();
         // @ts-ignore (the method is protected but exists)
-        const onSearchResultSpy = jest.spyOn(comp, 'onSearchResult');
-        setStateAndCallOnInit(() => {
+        const onSearchResultSpy = vi.spyOn(comp, 'onSearchResult');
+        await setStateAndCallOnInit(async () => {
             comp.searchTerm = state.searchTerm = 'newSearchTerm';
-            tick(300);
+            await vi.advanceTimersByTimeAsync(300);
             expect(searchStub).toHaveBeenCalledWith({ ...state }, undefined);
             expect(onSearchResultSpy).toHaveBeenCalled();
         });
-    }));
+    });
 });

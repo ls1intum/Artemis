@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, model } from '@angular/core';
 import { Router } from '@angular/router';
 import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -44,7 +44,7 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     entityName: string;
     columns: Column<T>[];
 
-    @Input() public disabledIds: number[] = [];
+    readonly disabledIds = model<number[]>([]);
 
     /**
      * Returns true if the component is opened via PrimeNG DialogService.

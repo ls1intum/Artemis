@@ -77,7 +77,7 @@ export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImp
         const dialogData = this.dialogConfig?.data as ImportAllCompetenciesDialogData | undefined;
         if (dialogData) {
             if (dialogData.disabledIds) {
-                this.disabledIds = dialogData.disabledIds;
+                this.disabledIds.set(dialogData.disabledIds);
             }
             if (dialogData.competencyType) {
                 this.competencyType.set(dialogData.competencyType);

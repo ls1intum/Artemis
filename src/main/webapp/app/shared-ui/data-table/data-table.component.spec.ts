@@ -1,5 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { SimpleChange } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DataTableComponent } from './data-table.component';
 import { MockModule, MockProvider } from 'ng-mocks';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -28,6 +29,8 @@ interface TestArrayEntity extends BaseEntity {
 }
 
 describe('DataTableComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: DataTableComponent;
     let fixture: ComponentFixture<DataTableComponent>;
     let localStorageService: LocalStorageService;
@@ -35,44 +38,48 @@ describe('DataTableComponent', () => {
 
     const mockLocalStorage: { [key: string]: string } = {};
 
+    // Helper that sets the allEntities input and flushes the effect that reacts to it.
+    const setTestEntities = <T extends BaseEntity | StringBaseEntity>(entities: T[]): void => {
+        fixture.componentRef.setInput('allEntities', entities);
+        fixture.detectChanges();
+    };
+
     beforeEach(() => {
-        TestBed.configureTestingModule({
+        return TestBed.configureTestingModule({
             imports: [MockModule(FontAwesomeModule), MockModule(NgbTypeaheadModule), DataTableComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(LocalStorageService), SortService],
-        }).compileComponents();
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(DataTableComponent);
+                component = fixture.componentInstance;
+                localStorageService = TestBed.inject(LocalStorageService);
+                sortService = TestBed.inject(SortService);
 
-        fixture = TestBed.createComponent(DataTableComponent);
-        component = fixture.componentInstance;
-        localStorageService = TestBed.inject(LocalStorageService);
-        sortService = TestBed.inject(SortService);
+                // Setup mock localStorage behavior
+                vi.spyOn(localStorageService, 'retrieve').mockImplementation(<T>(key: string): T | undefined => {
+                    const value = mockLocalStorage[key];
+                    if (value === undefined) return undefined;
+                    // Parse numeric values
+                    const numValue = Number(value);
+                    if (!isNaN(numValue)) return numValue as T;
+                    return value as T;
+                });
+                vi.spyOn(localStorageService, 'store').mockImplementation(<T>(key: string, value: T) => {
+                    mockLocalStorage[key] = String(value);
+                });
 
-        // Setup mock localStorage behavior
-        jest.spyOn(localStorageService, 'retrieve').mockImplementation(<T>(key: string): T | undefined => {
-            const value = mockLocalStorage[key];
-            if (value === undefined) return undefined;
-            // Parse numeric values
-            const numValue = Number(value);
-            if (!isNaN(numValue)) return numValue as T;
-            return value as T;
-        });
-        jest.spyOn(localStorageService, 'store').mockImplementation(<T>(key: string, value: T) => {
-            mockLocalStorage[key] = String(value);
-        });
+                // Clear mock storage before each test
+                Object.keys(mockLocalStorage).forEach((key) => delete mockLocalStorage[key]);
 
-        // Clear mock storage before each test
-        Object.keys(mockLocalStorage).forEach((key) => delete mockLocalStorage[key]);
-
-        fixture.detectChanges();
+                fixture.detectChanges();
+            });
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.useRealTimers();
+        vi.clearAllMocks();
     });
-
-    // Helper function to set entities with proper typing
-    const setTestEntities = <T extends BaseEntity | StringBaseEntity>(entities: T[]): void => {
-        component.allEntities = entities;
-    };
 
     describe('Component initialization', () => {
         it('should create', () => {
@@ -122,33 +129,30 @@ describe('DataTableComponent', () => {
         });
     });
 
-    describe('ngOnChanges', () => {
+    describe('entity update effect', () => {
         it('should update entities when allEntities changes', () => {
-            const updateEntitiesSpy = jest.spyOn(component as any, 'updateEntities');
+            const updateEntitiesSpy = vi.spyOn(component as any, 'updateEntities');
 
-            component.ngOnChanges({
-                allEntities: new SimpleChange([], [{ id: 1 }], false),
-            });
+            fixture.componentRef.setInput('allEntities', [{ id: 1 }]);
+            fixture.detectChanges();
 
             expect(updateEntitiesSpy).toHaveBeenCalled();
         });
 
         it('should update entities when customFilterKey changes', () => {
-            const updateEntitiesSpy = jest.spyOn(component as any, 'updateEntities');
+            const updateEntitiesSpy = vi.spyOn(component as any, 'updateEntities');
 
-            component.ngOnChanges({
-                customFilterKey: new SimpleChange({}, { filter: true }, false),
-            });
+            fixture.componentRef.setInput('customFilterKey', { filter: true });
+            fixture.detectChanges();
 
             expect(updateEntitiesSpy).toHaveBeenCalled();
         });
 
         it('should not update entities when other inputs change', () => {
-            const updateEntitiesSpy = jest.spyOn(component as any, 'updateEntities');
+            const updateEntitiesSpy = vi.spyOn(component as any, 'updateEntities');
 
-            component.ngOnChanges({
-                isLoading: new SimpleChange(false, true, false),
-            });
+            fixture.componentRef.setInput('isLoading', true);
+            fixture.detectChanges();
 
             expect(updateEntitiesSpy).not.toHaveBeenCalled();
         });
@@ -157,7 +161,6 @@ describe('DataTableComponent', () => {
     describe('Context getter', () => {
         it('should return correct context structure', () => {
             setTestEntities([{ id: 1 }, { id: 2 }]);
-            component.ngOnChanges({ allEntities: new SimpleChange([], component.allEntities, false) });
 
             const context = component.context;
 
@@ -167,7 +170,7 @@ describe('DataTableComponent', () => {
             expect(context.settings.headerHeight).toBe(50);
             expect(context.settings.footerHeight).toBe(50);
             expect(context.settings.rowHeight).toBe('auto');
-            expect(context.settings.scrollbarH).toBeTrue();
+            expect(context.settings.scrollbarH).toBe(true);
 
             expect(context.controls).toBeDefined();
             expect(context.controls.onSort).toBeDefined();
@@ -183,24 +186,24 @@ describe('DataTableComponent', () => {
 
     describe('isPreparing getter', () => {
         it('should return true when isLoading is true', () => {
-            component.isLoading = true;
+            fixture.componentRef.setInput('isLoading', true);
             component.isRendering = false;
 
-            expect(component.isPreparing).toBeTrue();
+            expect(component.isPreparing).toBe(true);
         });
 
         it('should return true when isRendering is true', () => {
-            component.isLoading = false;
+            fixture.componentRef.setInput('isLoading', false);
             component.isRendering = true;
 
-            expect(component.isPreparing).toBeTrue();
+            expect(component.isPreparing).toBe(true);
         });
 
         it('should return false when neither isLoading nor isRendering is true', () => {
-            component.isLoading = false;
+            fixture.componentRef.setInput('isLoading', false);
             component.isRendering = false;
 
-            expect(component.isPreparing).toBeFalse();
+            expect(component.isPreparing).toBe(false);
         });
     });
 
@@ -220,8 +223,8 @@ describe('DataTableComponent', () => {
 
     describe('perPageTranslation', () => {
         beforeEach(() => {
-            component.entitiesPerPageTranslation = 'items.perPage';
-            component.showAllEntitiesTranslation = 'items.showAll';
+            fixture.componentRef.setInput('entitiesPerPageTranslation', 'items.perPage');
+            fixture.componentRef.setInput('showAllEntitiesTranslation', 'items.showAll');
         });
 
         it('should return entitiesPerPageTranslation for numeric values', () => {
@@ -238,35 +241,37 @@ describe('DataTableComponent', () => {
         it('should set isRendering to true initially', () => {
             component.setEntitiesPerPage(100);
 
-            expect(component.isRendering).toBeTrue();
+            expect(component.isRendering).toBe(true);
         });
 
-        it('should update pagingValue after timeout', fakeAsync(() => {
+        it('should update pagingValue after timeout', async () => {
+            vi.useFakeTimers();
             component.setEntitiesPerPage(100);
 
-            tick(500);
+            await vi.advanceTimersByTimeAsync(500);
 
             expect(component.pagingValue).toBe(100);
-            expect(component.isRendering).toBeFalse();
-        }));
+            expect(component.isRendering).toBe(false);
+        });
 
         it('should store value in local storage', () => {
-            const storeSpy = jest.spyOn(localStorageService, 'store');
+            const storeSpy = vi.spyOn(localStorageService, 'store');
 
             component.setEntitiesPerPage(200);
 
             expect(storeSpy).toHaveBeenCalledWith('entity-items-per-page', '200');
         });
 
-        it('should handle "all" value', fakeAsync(() => {
-            const storeSpy = jest.spyOn(localStorageService, 'store');
+        it('should handle "all" value', async () => {
+            vi.useFakeTimers();
+            const storeSpy = vi.spyOn(localStorageService, 'store');
 
             component.setEntitiesPerPage('all');
-            tick(500);
+            await vi.advanceTimersByTimeAsync(500);
 
             expect(component.pagingValue).toBe('all');
             expect(storeSpy).toHaveBeenCalledWith('entity-items-per-page', 'all');
-        }));
+        });
     });
 
     describe('Sorting functionality', () => {
@@ -277,7 +282,6 @@ describe('DataTableComponent', () => {
                 { id: 2, name: 'Bob' },
             ];
             setTestEntities(entities);
-            component.ngOnChanges({ allEntities: new SimpleChange([], component.allEntities, false) });
         });
 
         it('should sort entities by field in ascending order by default', () => {
@@ -307,7 +311,7 @@ describe('DataTableComponent', () => {
         });
 
         it('should call sortService.sortByProperty', () => {
-            const sortSpy = jest.spyOn(sortService, 'sortByProperty');
+            const sortSpy = vi.spyOn(sortService, 'sortByProperty');
 
             component.onSort('name');
 
@@ -336,47 +340,55 @@ describe('DataTableComponent', () => {
     });
 
     describe('Custom filter functionality', () => {
+        const activeEntities: TestUserEntity[] = [
+            { id: 1, name: 'Alice', active: true },
+            { id: 2, name: 'Bob', active: false },
+            { id: 3, name: 'Charlie', active: true },
+        ];
+
         beforeEach(() => {
-            const entities: TestUserEntity[] = [
-                { id: 1, name: 'Alice', active: true },
-                { id: 2, name: 'Bob', active: false },
-                { id: 3, name: 'Charlie', active: true },
-            ];
-            setTestEntities(entities);
+            setTestEntities(activeEntities);
         });
 
         it('should apply custom filter', () => {
-            component.customFilter = (entity) => (entity as TestUserEntity).active === true;
-            component.ngOnChanges({ allEntities: new SimpleChange([], component.allEntities, false) });
+            // The entity update effect only reacts to allEntities and customFilterKey (mirroring the previous
+            // ngOnChanges), so re-applying allEntities after setting customFilter triggers the re-filter.
+            fixture.componentRef.setInput('customFilter', (entity: BaseEntity | StringBaseEntity) => (entity as TestUserEntity).active === true);
+            fixture.componentRef.setInput('allEntities', [...activeEntities]);
+            fixture.detectChanges();
 
             expect(component.entities).toHaveLength(2);
             expect(component.entities.map((e) => (e as TestUserEntity).name)).toEqual(['Alice', 'Charlie']);
         });
 
-        it('should combine custom filter with text search', fakeAsync(() => {
-            component.searchFields = ['name'];
-            component.searchEntityFilterEnabled = true;
-            component.customFilter = (entity) => (entity as TestUserEntity).active === true;
-            component.ngOnChanges({ allEntities: new SimpleChange([], component.allEntities, false) });
+        it('should combine custom filter with text search', async () => {
+            vi.useFakeTimers();
+            fixture.componentRef.setInput('searchFields', ['name']);
+            fixture.componentRef.setInput('searchEntityFilterEnabled', true);
+            fixture.componentRef.setInput('customFilter', (entity: BaseEntity | StringBaseEntity) => (entity as TestUserEntity).active === true);
+            fixture.componentRef.setInput('allEntities', [...activeEntities]);
+            fixture.detectChanges();
 
             const text$ = new Subject<string>();
             component.onSearch(text$).subscribe();
 
             text$.next('Alice');
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
             expect(component.entities).toHaveLength(1);
             expect((component.entities[0] as TestUserEntity).name).toBe('Alice');
-        }));
+        });
     });
 
     describe('Text search functionality', () => {
         beforeEach(() => {
-            component.searchFields = ['name', 'login'];
-            component.searchEntityFilterEnabled = true;
+            fixture.componentRef.setInput('searchFields', ['name', 'login']);
+            fixture.componentRef.setInput('searchEntityFilterEnabled', true);
+            fixture.detectChanges();
         });
 
-        it('should return all entities when search is empty', fakeAsync(() => {
+        it('should return all entities when search is empty', async () => {
+            vi.useFakeTimers();
             const entities: TestUserEntity[] = [
                 { id: 1, name: 'Alice', login: 'alice' },
                 { id: 2, name: 'Bob', login: 'bob' },
@@ -387,12 +399,13 @@ describe('DataTableComponent', () => {
             component.onSearch(text$).subscribe();
 
             text$.next('');
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
             expect(component.entities).toHaveLength(2);
-        }));
+        });
 
-        it('should filter entities by search term', fakeAsync(() => {
+        it('should filter entities by search term', async () => {
+            vi.useFakeTimers();
             const entities: TestUserEntity[] = [
                 { id: 1, name: 'Alice', login: 'alice' },
                 { id: 2, name: 'Bob', login: 'bob' },
@@ -404,13 +417,14 @@ describe('DataTableComponent', () => {
             component.onSearch(text$).subscribe();
 
             text$.next('Alice');
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
             expect(component.entities).toHaveLength(1);
             expect(component.entities[0].id).toBe(1);
-        }));
+        });
 
-        it('should support comma-separated search terms', fakeAsync(() => {
+        it('should support comma-separated search terms', async () => {
+            vi.useFakeTimers();
             const entities: TestUserEntity[] = [
                 { id: 1, name: 'Alice', login: 'alice' },
                 { id: 2, name: 'Bob', login: 'bob' },
@@ -422,13 +436,14 @@ describe('DataTableComponent', () => {
             component.onSearch(text$).subscribe();
 
             text$.next('Alice, Bob');
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
             // Both Alice and Bob should match (OR logic for comma-separated terms)
             expect(component.entities).toHaveLength(2);
-        }));
+        });
 
-        it('should search in login field as well', fakeAsync(() => {
+        it('should search in login field as well', async () => {
+            vi.useFakeTimers();
             const entities: TestUserEntity[] = [
                 { id: 1, name: 'Alice Smith', login: 'asmith' },
                 { id: 2, name: 'Bob Jones', login: 'bjones' },
@@ -439,13 +454,14 @@ describe('DataTableComponent', () => {
             component.onSearch(text$).subscribe();
 
             text$.next('bjones');
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
             expect(component.entities).toHaveLength(1);
             expect(component.entities[0].id).toBe(2);
-        }));
+        });
 
-        it('should support wildcard * for multiple characters', fakeAsync(() => {
+        it('should support wildcard * for multiple characters', async () => {
+            vi.useFakeTimers();
             const entities: TestUserEntity[] = [
                 { id: 1, name: 'Alexander', login: 'alex' },
                 { id: 2, name: 'Alexandra', login: 'alexa' },
@@ -457,12 +473,13 @@ describe('DataTableComponent', () => {
             component.onSearch(text$).subscribe();
 
             text$.next('Alex*');
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
             expect(component.entities).toHaveLength(2);
-        }));
+        });
 
-        it('should support wildcard ? for single character', fakeAsync(() => {
+        it('should support wildcard ? for single character', async () => {
+            vi.useFakeTimers();
             const entities: TestUserEntity[] = [
                 { id: 1, name: 'A1B', login: 'a1b' },
                 { id: 2, name: 'A2B', login: 'a2b' },
@@ -476,13 +493,14 @@ describe('DataTableComponent', () => {
 
             // A?B should match A1B and A2B (? matches exactly one character)
             text$.next('A?B');
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
             expect(component.entities).toHaveLength(2);
             expect(component.entities.map((e) => e.id)).toEqual(expect.arrayContaining([1, 2]));
-        }));
+        });
 
-        it('should support space-separated search terms (AND logic)', fakeAsync(() => {
+        it('should support space-separated search terms (AND logic)', async () => {
+            vi.useFakeTimers();
             const entities: TestUserEntity[] = [
                 { id: 1, name: 'Max Mustermann', login: 'mmuster' },
                 { id: 2, name: 'Max Gregor Mustermann', login: 'mgmuster' },
@@ -494,13 +512,14 @@ describe('DataTableComponent', () => {
             component.onSearch(text$).subscribe();
 
             text$.next('Max Mustermann');
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
             expect(component.entities).toHaveLength(2);
             expect(component.entities.map((e) => e.id)).toEqual(expect.arrayContaining([1, 2]));
-        }));
+        });
 
-        it('should set searchQueryTooShort when query is less than MIN_SEARCH_QUERY_LENGTH', fakeAsync(() => {
+        it('should set searchQueryTooShort when query is less than MIN_SEARCH_QUERY_LENGTH', async () => {
+            vi.useFakeTimers();
             const entities: TestUserEntity[] = [{ id: 1, name: 'Alice', login: 'alice' }];
             setTestEntities(entities);
 
@@ -508,12 +527,13 @@ describe('DataTableComponent', () => {
             component.onSearch(text$).subscribe();
 
             text$.next('Al');
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
-            expect(component.searchQueryTooShort).toBeTrue();
-        }));
+            expect(component.searchQueryTooShort).toBe(true);
+        });
 
-        it('should not set searchQueryTooShort when query meets MIN_SEARCH_QUERY_LENGTH', fakeAsync(() => {
+        it('should not set searchQueryTooShort when query meets MIN_SEARCH_QUERY_LENGTH', async () => {
+            vi.useFakeTimers();
             const entities: TestUserEntity[] = [{ id: 1, name: 'Alice', login: 'alice' }];
             setTestEntities(entities);
 
@@ -521,20 +541,19 @@ describe('DataTableComponent', () => {
             component.onSearch(text$).subscribe();
 
             text$.next('Ali');
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
-            expect(component.searchQueryTooShort).toBeFalse();
-        }));
+            expect(component.searchQueryTooShort).toBe(false);
+        });
 
-        it('should debounce search input', fakeAsync(() => {
+        it('should debounce search input', async () => {
+            vi.useFakeTimers();
             const entities: TestUserEntity[] = [
                 { id: 1, name: 'Alice', login: 'alice' },
                 { id: 2, name: 'Bob', login: 'bob' },
             ];
             setTestEntities(entities);
-            // Initialize entities first
-            component.ngOnChanges({ allEntities: new SimpleChange([], component.allEntities, false) });
-            tick(0);
+            await vi.advanceTimersByTimeAsync(0);
 
             expect(component.entities).toHaveLength(2);
 
@@ -542,43 +561,45 @@ describe('DataTableComponent', () => {
             component.onSearch(text$).subscribe();
 
             text$.next('Alice');
-            tick(100); // Before debounce time (200ms)
+            await vi.advanceTimersByTimeAsync(100); // Before debounce time (200ms)
 
             // Should still have all entities since debounce hasn't fired yet
             expect(component.entities).toHaveLength(2);
 
-            tick(150); // After debounce time (total 250ms > 200ms)
+            await vi.advanceTimersByTimeAsync(150); // After debounce time (total 250ms > 200ms)
 
             expect(component.entities).toHaveLength(1);
-        }));
+        });
 
-        it('should not filter when searchEntityFilterEnabled is false', fakeAsync(() => {
-            component.searchEntityFilterEnabled = false;
+        it('should not filter when searchEntityFilterEnabled is false', async () => {
+            vi.useFakeTimers();
+            fixture.componentRef.setInput('searchEntityFilterEnabled', false);
             const entities: TestUserEntity[] = [
                 { id: 1, name: 'Alice', login: 'alice' },
                 { id: 2, name: 'Bob', login: 'bob' },
             ];
             setTestEntities(entities);
-            component.ngOnChanges({ allEntities: new SimpleChange([], component.allEntities, false) });
 
             const text$ = new Subject<string>();
             component.onSearch(text$).subscribe();
 
             text$.next('Alice');
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
             // All entities should still be present
             expect(component.entities).toHaveLength(2);
-        }));
+        });
     });
 
     describe('Nested field search', () => {
         beforeEach(() => {
-            component.searchFields = ['student.name', 'student.login'];
-            component.searchEntityFilterEnabled = true;
+            fixture.componentRef.setInput('searchFields', ['student.name', 'student.login']);
+            fixture.componentRef.setInput('searchEntityFilterEnabled', true);
+            fixture.detectChanges();
         });
 
-        it('should search in nested fields', fakeAsync(() => {
+        it('should search in nested fields', async () => {
+            vi.useFakeTimers();
             const entities: TestNestedEntity[] = [
                 { id: 1, student: { name: 'Alice', login: 'alice' } },
                 { id: 2, student: { name: 'Bob', login: 'bob' } },
@@ -589,14 +610,15 @@ describe('DataTableComponent', () => {
             component.onSearch(text$).subscribe();
 
             text$.next('Alice');
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
             expect(component.entities).toHaveLength(1);
             expect(component.entities[0].id).toBe(1);
-        }));
+        });
 
-        it('should search in array fields', fakeAsync(() => {
-            component.searchFields = ['students.name'];
+        it('should search in array fields', async () => {
+            vi.useFakeTimers();
+            fixture.componentRef.setInput('searchFields', ['students.name']);
             const entities: TestArrayEntity[] = [
                 { id: 1, students: [{ name: 'Alice' }, { name: 'Bob' }] },
                 { id: 2, students: [{ name: 'Charlie' }, { name: 'David' }] },
@@ -607,13 +629,14 @@ describe('DataTableComponent', () => {
             component.onSearch(text$).subscribe();
 
             text$.next('Alice');
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
             expect(component.entities).toHaveLength(1);
             expect(component.entities[0].id).toBe(1);
-        }));
+        });
 
-        it('should handle missing nested fields gracefully', fakeAsync(() => {
+        it('should handle missing nested fields gracefully', async () => {
+            vi.useFakeTimers();
             const entities: TestNestedEntity[] = [
                 { id: 1, student: { name: 'Alice', login: 'alice' } },
                 { id: 2, student: undefined },
@@ -625,20 +648,22 @@ describe('DataTableComponent', () => {
             component.onSearch(text$).subscribe();
 
             text$.next('Alice');
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
             expect(component.entities).toHaveLength(1);
             expect(component.entities[0].id).toBe(1);
-        }));
+        });
     });
 
     describe('Unicode normalization in search', () => {
         beforeEach(() => {
-            component.searchFields = ['name', 'login'];
-            component.searchEntityFilterEnabled = true;
+            fixture.componentRef.setInput('searchFields', ['name', 'login']);
+            fixture.componentRef.setInput('searchEntityFilterEnabled', true);
+            fixture.detectChanges();
         });
 
-        it('should find users with Turkish special characters when searching without diacritics', fakeAsync(() => {
+        it('should find users with Turkish special characters when searching without diacritics', async () => {
+            vi.useFakeTimers();
             const entities: TestUserEntity[] = [
                 { id: 1, name: 'Doğan Yılmaz', login: 'dyilmaz' },
                 { id: 2, name: 'Max Müller', login: 'mmueller' },
@@ -650,13 +675,14 @@ describe('DataTableComponent', () => {
             component.onSearch(text$).subscribe();
 
             text$.next('Dogan');
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
             expect(component.entities).toHaveLength(1);
             expect(component.entities[0].id).toBe(1);
-        }));
+        });
 
-        it('should find users with German umlauts when searching without diacritics', fakeAsync(() => {
+        it('should find users with German umlauts when searching without diacritics', async () => {
+            vi.useFakeTimers();
             const entities: TestUserEntity[] = [
                 { id: 1, name: 'Max Müller', login: 'mmueller' },
                 { id: 2, name: 'Hans Schröder', login: 'hschroeder' },
@@ -668,13 +694,14 @@ describe('DataTableComponent', () => {
             component.onSearch(text$).subscribe();
 
             text$.next('Muller');
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
             expect(component.entities).toHaveLength(1);
             expect(component.entities[0].id).toBe(1);
-        }));
+        });
 
-        it('should find users when searching with diacritics for non-diacritic names', fakeAsync(() => {
+        it('should find users when searching with diacritics for non-diacritic names', async () => {
+            vi.useFakeTimers();
             const entities: TestUserEntity[] = [
                 { id: 1, name: 'Dogan Yilmaz', login: 'dyilmaz' },
                 { id: 2, name: 'Muller Hans', login: 'mhans' },
@@ -686,13 +713,14 @@ describe('DataTableComponent', () => {
             component.onSearch(text$).subscribe();
 
             text$.next('Doğan');
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
             expect(component.entities).toHaveLength(1);
             expect(component.entities[0].id).toBe(1);
-        }));
+        });
 
-        it('should find users with French accents when searching without diacritics', fakeAsync(() => {
+        it('should find users with French accents when searching without diacritics', async () => {
+            vi.useFakeTimers();
             const entities: TestUserEntity[] = [
                 { id: 1, name: 'François Lefèvre', login: 'flefevre' },
                 { id: 2, name: 'John Smith', login: 'jsmith' },
@@ -703,13 +731,14 @@ describe('DataTableComponent', () => {
             component.onSearch(text$).subscribe();
 
             text$.next('Francois');
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
             expect(component.entities).toHaveLength(1);
             expect(component.entities[0].id).toBe(1);
-        }));
+        });
 
-        it('should still support case-insensitive search', fakeAsync(() => {
+        it('should still support case-insensitive search', async () => {
+            vi.useFakeTimers();
             const entities: TestUserEntity[] = [
                 { id: 1, name: 'Max Müller', login: 'mmueller' },
                 { id: 2, name: 'John Smith', login: 'jsmith' },
@@ -720,13 +749,14 @@ describe('DataTableComponent', () => {
             component.onSearch(text$).subscribe();
 
             text$.next('MULLER');
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
             expect(component.entities).toHaveLength(1);
             expect(component.entities[0].id).toBe(1);
-        }));
+        });
 
-        it('should still support wildcard search with diacritics normalization', fakeAsync(() => {
+        it('should still support wildcard search with diacritics normalization', async () => {
+            vi.useFakeTimers();
             const entities: TestUserEntity[] = [
                 { id: 1, name: 'Doğan Yılmaz', login: 'dyilmaz' },
                 { id: 2, name: 'Dogan Smith', login: 'dsmith' },
@@ -738,12 +768,13 @@ describe('DataTableComponent', () => {
             component.onSearch(text$).subscribe();
 
             text$.next('Dog*');
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
             expect(component.entities).toHaveLength(2);
-        }));
+        });
 
-        it('should find users with Spanish characters', fakeAsync(() => {
+        it('should find users with Spanish characters', async () => {
+            vi.useFakeTimers();
             const entities: TestUserEntity[] = [
                 { id: 1, name: 'José García', login: 'jgarcia' },
                 { id: 2, name: 'María Núñez', login: 'mnunez' },
@@ -755,13 +786,14 @@ describe('DataTableComponent', () => {
             component.onSearch(text$).subscribe();
 
             text$.next('Jose');
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
             expect(component.entities).toHaveLength(1);
             expect(component.entities[0].id).toBe(1);
-        }));
+        });
 
-        it('should find users with Nordic characters', fakeAsync(() => {
+        it('should find users with Nordic characters', async () => {
+            vi.useFakeTimers();
             const entities: TestUserEntity[] = [
                 { id: 1, name: 'Björk Guðmundsdóttir', login: 'bguom' },
                 { id: 2, name: 'Søren Kierkegaard', login: 'skierk' },
@@ -773,17 +805,18 @@ describe('DataTableComponent', () => {
             component.onSearch(text$).subscribe();
 
             text$.next('Bjork');
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
             expect(component.entities).toHaveLength(1);
             expect(component.entities[0].id).toBe(1);
-        }));
+        });
     });
 
     describe('Autocomplete functionality', () => {
         beforeEach(() => {
-            component.searchFields = ['name', 'login'];
-            component.searchEntityFilterEnabled = true;
+            fixture.componentRef.setInput('searchFields', ['name', 'login']);
+            fixture.componentRef.setInput('searchEntityFilterEnabled', true);
+            fixture.detectChanges();
         });
 
         it('should call onAutocompleteSelect and update search text', () => {
@@ -796,7 +829,7 @@ describe('DataTableComponent', () => {
         });
 
         it('should use custom searchTextFromEntity function', () => {
-            component.searchTextFromEntity = (entity) => (entity as TestUserEntity).name ?? '';
+            fixture.componentRef.setInput('searchTextFromEntity', (entity: BaseEntity | StringBaseEntity) => (entity as TestUserEntity).name ?? '');
             component.entityCriteria.textSearch = ['Ali'];
             const entity: TestUserEntity = { id: 1, name: 'Alice' };
 
@@ -806,7 +839,7 @@ describe('DataTableComponent', () => {
         });
 
         it('should call filterAfterAutocompleteSelect through wrapper', () => {
-            const filterSpy = jest.spyOn(component, 'filterAfterAutocompleteSelect');
+            const filterSpy = vi.spyOn(component, 'filterAfterAutocompleteSelect');
             const entity: BaseEntity = { id: 1 };
 
             component.onAutocompleteSelect(entity);
@@ -816,15 +849,15 @@ describe('DataTableComponent', () => {
 
         it('should use custom onAutocompleteSelectWrapper', () => {
             let wrapperCalled = false;
-            component.onAutocompleteSelectWrapper = (entity, callback) => {
+            fixture.componentRef.setInput('onAutocompleteSelectWrapper', (entity: BaseEntity | StringBaseEntity, callback: (entity: BaseEntity | StringBaseEntity) => void) => {
                 wrapperCalled = true;
                 callback(entity);
-            };
+            });
             const entity: BaseEntity = { id: 1 };
 
             component.onAutocompleteSelect(entity);
 
-            expect(wrapperCalled).toBeTrue();
+            expect(wrapperCalled).toBe(true);
         });
     });
 
@@ -854,33 +887,32 @@ describe('DataTableComponent', () => {
 
             component.onSearchInputBlur();
 
-            expect(component.searchQueryTooShort).toBeFalse();
+            expect(component.searchQueryTooShort).toBe(false);
         });
     });
 
     describe('entitiesSizeChange event', () => {
-        it('should emit entities size when entities are updated', fakeAsync(() => {
-            const emitSpy = jest.spyOn(component.entitiesSizeChange, 'emit');
+        it('should emit entities size when entities are updated', async () => {
+            vi.useFakeTimers();
+            const emitSpy = vi.spyOn(component.entitiesSizeChange, 'emit');
             setTestEntities([{ id: 1 }, { id: 2 }, { id: 3 }]);
-
-            component.ngOnChanges({ allEntities: new SimpleChange([], component.allEntities, false) });
-            tick(0); // Allow setTimeout to execute
+            await vi.advanceTimersByTimeAsync(0); // Allow setTimeout to execute
 
             expect(emitSpy).toHaveBeenCalledWith(3);
-        }));
+        });
 
-        it('should emit updated size after filtering', fakeAsync(() => {
-            const emitSpy = jest.spyOn(component.entitiesSizeChange, 'emit');
-            component.searchFields = ['name'];
-            component.searchEntityFilterEnabled = true;
+        it('should emit updated size after filtering', async () => {
+            vi.useFakeTimers();
+            const emitSpy = vi.spyOn(component.entitiesSizeChange, 'emit');
+            fixture.componentRef.setInput('searchFields', ['name']);
+            fixture.componentRef.setInput('searchEntityFilterEnabled', true);
             const entities: TestUserEntity[] = [
                 { id: 1, name: 'Alice' },
                 { id: 2, name: 'Bob' },
                 { id: 3, name: 'Charlie' },
             ];
             setTestEntities(entities);
-            component.ngOnChanges({ allEntities: new SimpleChange([], component.allEntities, false) });
-            tick(0);
+            await vi.advanceTimersByTimeAsync(0);
 
             emitSpy.mockClear();
 
@@ -888,23 +920,23 @@ describe('DataTableComponent', () => {
             component.onSearch(text$).subscribe();
 
             text$.next('Alice');
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
             expect(emitSpy).toHaveBeenCalledWith(1);
-        }));
+        });
     });
 
     describe('Edge cases', () => {
         it('should handle empty allEntities', () => {
             setTestEntities([]);
-            component.ngOnChanges({ allEntities: new SimpleChange([], [], false) });
 
             expect(component.entities).toEqual([]);
         });
 
-        it('should handle entities with undefined fields', fakeAsync(() => {
-            component.searchFields = ['name'];
-            component.searchEntityFilterEnabled = true;
+        it('should handle entities with undefined fields', async () => {
+            vi.useFakeTimers();
+            fixture.componentRef.setInput('searchFields', ['name']);
+            fixture.componentRef.setInput('searchEntityFilterEnabled', true);
             const entities: TestUserEntity[] = [
                 { id: 1, name: undefined },
                 { id: 2 }, // No name field at all
@@ -916,15 +948,16 @@ describe('DataTableComponent', () => {
             component.onSearch(text$).subscribe();
 
             text$.next('Alice');
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
             expect(component.entities).toHaveLength(1);
             expect(component.entities[0].id).toBe(3);
-        }));
+        });
 
-        it('should handle special regex characters in search', fakeAsync(() => {
-            component.searchFields = ['name'];
-            component.searchEntityFilterEnabled = true;
+        it('should handle special regex characters in search', async () => {
+            vi.useFakeTimers();
+            fixture.componentRef.setInput('searchFields', ['name']);
+            fixture.componentRef.setInput('searchEntityFilterEnabled', true);
             const entities: TestUserEntity[] = [
                 { id: 1, name: 'Test (1)' },
                 { id: 2, name: 'Test [2]' },
@@ -937,15 +970,16 @@ describe('DataTableComponent', () => {
 
             // Search with special characters that need escaping
             text$.next('Test (1)');
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
             expect(component.entities).toHaveLength(1);
             expect(component.entities[0].id).toBe(1);
-        }));
+        });
 
-        it('should handle very long search terms', fakeAsync(() => {
-            component.searchFields = ['name'];
-            component.searchEntityFilterEnabled = true;
+        it('should handle very long search terms', async () => {
+            vi.useFakeTimers();
+            fixture.componentRef.setInput('searchFields', ['name']);
+            fixture.componentRef.setInput('searchEntityFilterEnabled', true);
             const longName = 'A'.repeat(1000);
             const entities: TestUserEntity[] = [{ id: 1, name: longName }];
             setTestEntities(entities);
@@ -954,15 +988,14 @@ describe('DataTableComponent', () => {
             component.onSearch(text$).subscribe();
 
             text$.next(longName);
-            tick(250);
+            await vi.advanceTimersByTimeAsync(250);
 
             expect(component.entities).toHaveLength(1);
-        }));
+        });
 
         it('should handle entities with string IDs', () => {
             const entities: StringBaseEntity[] = [{ id: 'abc-123' }, { id: 'def-456' }];
             setTestEntities(entities);
-            component.ngOnChanges({ allEntities: new SimpleChange([], component.allEntities, false) });
 
             expect(component.entities).toHaveLength(2);
         });

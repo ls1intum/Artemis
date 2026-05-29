@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockComponent } from 'ng-mocks';
 import { ExerciseUpdateNotificationComponent } from 'app/exercise/exercise-update-notification/exercise-update-notification.component';
 import { By } from '@angular/platform-browser';
@@ -8,6 +10,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
 
 describe('FormFooterComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<FormFooterComponent>;
     let comp: FormFooterComponent;
 
@@ -24,7 +28,7 @@ describe('FormFooterComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('update title depending on input signals', () => {
@@ -70,7 +74,7 @@ describe('FormFooterComponent', () => {
         fixture.componentRef.setInput('isGeneratingWithAi', false);
         fixture.detectChanges();
         const saveButton = fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
-        expect(saveButton.disabled).toBeFalse();
+        expect(saveButton.disabled).toBe(false);
     });
 
     it('should disable save button when saving is in progress', () => {
@@ -79,7 +83,7 @@ describe('FormFooterComponent', () => {
         fixture.componentRef.setInput('isSaving', true);
         fixture.detectChanges();
         const saveButton = fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
-        expect(saveButton.disabled).toBeTrue();
+        expect(saveButton.disabled).toBe(true);
     });
 
     it('should disable save button while generating with AI', () => {
@@ -88,6 +92,6 @@ describe('FormFooterComponent', () => {
         fixture.componentRef.setInput('isGeneratingWithAi', true);
         fixture.detectChanges();
         const saveButton = fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
-        expect(saveButton.disabled).toBeTrue();
+        expect(saveButton.disabled).toBe(true);
     });
 });

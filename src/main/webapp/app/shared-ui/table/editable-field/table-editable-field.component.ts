@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, ViewChild, effect, input } from '@angular/core';
 import { FormsModule, NgModel } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { KeyValuePipe } from '@angular/common';
@@ -14,19 +14,30 @@ import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
     imports: [FormsModule, TranslateDirective, KeyValuePipe, RemoveKeysPipe],
 })
 export class TableEditableFieldComponent {
+    // DEFERRED (Angular 21 migration): kept as @ViewChild instead of viewChild() because the public `editingInput`
+    // (an NgModel) is read imperatively as a property from the programming exercise carve-out
+    // (programming/manage/.../programming-exercise-information reads `field.editingInput?.valueChanges` / `.valid`
+    // over a QueryList<TableEditableFieldComponent>). Converting it to a signal viewChild() would require touching
+    // that carve-out consumer, so it is deferred to a follow-up.
     @ViewChild('editingInput') editingInput: NgModel;
 
-    @Input() id: string;
-    @Input() pattern?: RegExp;
-    @Input() isRequired: boolean;
-    @Input() translationBase: string;
+    id = input<string>();
+    pattern = input<RegExp>();
+    isRequired = input<boolean>();
+    translationBase = input<string>();
 
-    @Input() set value(value: any) {
-        this.inputValue = value;
-    }
-    @Input() onValueUpdate: (value: any) => any;
+    readonly value = input<any>();
+    onValueUpdate = input<(value: any) => any>();
 
     inputValue: any;
+
+    constructor() {
+        // Mirror the `value` input into the internal mutable `inputValue` used by [(ngModel)],
+        // preserving the original `@Input() set value` behavior.
+        effect(() => {
+            this.inputValue = this.value();
+        });
+    }
 
     /**
      * Triggers a value update signal and delegates the task to method specified in the Output decorator,
@@ -34,6 +45,6 @@ export class TableEditableFieldComponent {
      * @param event The event that occurred.
      */
     sendValueUpdate(event: any) {
-        this.inputValue = this.onValueUpdate(event.target.value);
+        this.inputValue = this.onValueUpdate()?.(event.target.value);
     }
 }

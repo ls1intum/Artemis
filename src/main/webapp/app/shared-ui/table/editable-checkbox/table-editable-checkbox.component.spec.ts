@@ -1,10 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement } from '@angular/core';
 import { TableEditableCheckboxComponent } from 'app/shared-ui/table/editable-checkbox/table-editable-checkbox.component';
 
 describe('TableEditableFieldComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: TableEditableCheckboxComponent;
     let fixture: ComponentFixture<TableEditableCheckboxComponent>;
     let debugElement: DebugElement;
@@ -23,27 +27,32 @@ describe('TableEditableFieldComponent', () => {
             });
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should render checkbox with its state as the boolean value provided and send an update on change', async () => {
-        const checkbox = debugElement.query(By.css(tableCheckbox));
-        const fakeUpdateValue = { emit: jest.fn(() => {}) } as any;
+        const updateSpy = vi.fn(() => {});
+        comp.onValueUpdate.subscribe(updateSpy);
 
-        comp.value = true;
-        comp.onValueUpdate = fakeUpdateValue;
+        fixture.componentRef.setInput('value', true);
         fixture.detectChanges();
+        await fixture.whenStable();
 
-        await fixture.whenStable;
+        const checkbox = debugElement.query(By.css(tableCheckbox));
         expect(checkbox).not.toBeNull();
-        expect(checkbox.nativeElement.checked).toBeTrue();
+        expect(checkbox.nativeElement.checked).toBe(true);
 
         checkbox.nativeElement.click();
 
-        await fixture.whenStable;
+        await fixture.whenStable();
 
-        expect(comp.value).toBeTrue();
+        // The input is one-way bound, so the (unchanged) value signal still reflects the provided input.
+        expect(comp.value()).toBe(true);
         expect(checkbox).not.toBeNull();
-        expect(checkbox.nativeElement.checked).toBeFalse();
+        expect(checkbox.nativeElement.checked).toBe(false);
 
         // Send one update value after click.
-        expect(fakeUpdateValue.emit.mock.calls).toHaveLength(1);
+        expect(updateSpy.mock.calls).toHaveLength(1);
     });
 });
