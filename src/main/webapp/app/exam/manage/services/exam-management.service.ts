@@ -25,7 +25,7 @@ import { toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model'
 import { ExportExamUserDTO } from 'app/exam/manage/students/export-users/students-export.model';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
 import { ExamStudentDTO } from 'app/exam/manage/students/exam-student-dto.model';
-import { PageableResult } from 'app/shared/table/pageable-table';
+import { PageableResult } from 'app/foundation/pagination/pageable-table';
 import { ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
 import { UserForRegistration, UserSearchResult } from 'app/shared/user-registration-modal/user-for-registration.model';
 

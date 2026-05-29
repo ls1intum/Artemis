@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { SearchTermPageableSearch } from 'app/shared/table/pageable-table';
+import { SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
 
 export interface ExamStudentSearch extends SearchTermPageableSearch {
     filterProp?: string;

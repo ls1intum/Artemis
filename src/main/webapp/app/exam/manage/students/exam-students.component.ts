@@ -1,7 +1,7 @@
 import { Component, DestroyRef, ElementRef, EventEmitter, OnDestroy, TemplateRef, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { Observable, Subject, forkJoin, of } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ConfirmDialog } from 'primeng/confirmdialog';
@@ -48,8 +48,8 @@ import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-compo
 import { Tooltip } from 'primeng/tooltip';
 import { ProgressBar } from 'primeng/progressbar';
 import { TableLazyLoadEvent } from 'primeng/table';
-import { CellRendererParams, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared/table-view/table-view';
-import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
+import { CellRendererParams, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
+import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
 import { ExamStudentDTO, ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
 import { FilterDropdownComponent, FilterGroup } from 'app/exercise/shared/filter-dropdown/filter-dropdown.component';
 

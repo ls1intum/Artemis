@@ -5,15 +5,15 @@ import { Dialog } from 'primeng/dialog';
 import { ButtonDirective } from 'primeng/button';
 import { Message } from 'primeng/message';
 import { TableLazyLoadEvent } from 'primeng/table';
-import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AlertService } from 'app/shared/service/alert.service';
+import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { addPublicFilePrefix } from 'app/app.constants';
-import { CellRendererParams, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared/table-view/table-view';
-import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
-import { HighlightMatchPipe } from 'app/shared/pipes/highlight-match.pipe';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { CellRendererParams, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
+import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
+import { HighlightMatchPipe } from 'app/foundation/pipes/highlight-match.pipe';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { UserForRegistration, UserSearchResult } from 'app/shared/user-registration-modal/user-for-registration.model';
 
 @Component({
