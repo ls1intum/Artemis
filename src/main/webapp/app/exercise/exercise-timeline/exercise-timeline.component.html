@@ -48,12 +48,9 @@
                         [invalid]="internalItem.isBeforePreviousDate || (dateModel.touched && internalItem.isInputRequiredButUndefined)"
                         [disabled]="readonly()"
                     />
-                    <i
-                        class="pi pi-info-circle timeline-datepicker-info-icon"
-                        [class.visible]="internalItem.isBeforePreviousDate || (dateModel.touched && internalItem.isInputRequiredButUndefined)"
-                        [pTooltip]="internalItem.tooltip"
-                        tooltipPosition="right"
-                    ></i>
+                    @if (internalItem.isBeforePreviousDate || (dateModel.touched && internalItem.isInputRequiredButUndefined)) {
+                        <i class="pi pi-info-circle timeline-datepicker-info-icon" [pTooltip]="internalItem.tooltip" tooltipPosition="right"></i>
+                    }
                 </div>
             </div>
         </div>
