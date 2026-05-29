@@ -1,4 +1,4 @@
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import {
     AfterViewInit,
     ChangeDetectorRef,
@@ -15,7 +15,6 @@ import {
     viewChild,
     viewChildren,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { faArrowDown, faCircleNotch, faEnvelope, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Observable, Subject, forkJoin, map, takeUntil } from 'rxjs';
@@ -43,6 +42,7 @@ import { Posting, PostingType } from 'app/communication/shared/entities/posting.
 import { canCreateNewMessageInConversation } from 'app/communication/conversations/conversation-permissions.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { getIsMobileSignal } from 'app/foundation/util/global.utils';
 
 interface PostGroup {
     author: User | undefined;
@@ -73,9 +73,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     cdr = inject(ChangeDetectorRef);
 
     private ngUnsubscribe = new Subject<void>();
-    readonly isMobile = toSignal(this.breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), {
-        initialValue: this.breakpointObserver.isMatched(Breakpoints.Handset),
-    });
+    readonly isMobile = getIsMobileSignal(this.breakpointObserver);
     readonly sessionStorageKey = 'conversationId.scrollPosition.';
 
     readonly PageType = PageType;

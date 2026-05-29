@@ -1,5 +1,6 @@
 import { Signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { map } from 'rxjs/operators';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -57,6 +58,10 @@ export function getCurrentLocaleSignal(translateService: TranslateService): Sign
     return toSignal(translateService.onLangChange.pipe(map((event) => event.lang)), {
         initialValue: translateService.getCurrentLang(),
     });
+}
+
+export function getIsMobileSignal(breakpointObserver: BreakpointObserver): Signal<boolean> {
+    return toSignal(breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), { initialValue: false });
 }
 
 /**

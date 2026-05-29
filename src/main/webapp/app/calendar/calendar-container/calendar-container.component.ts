@@ -1,9 +1,8 @@
 import { Component, inject } from '@angular/core';
-import { map } from 'rxjs/operators';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { CalendarDesktopOverviewComponent } from 'app/calendar/desktop/overview/calendar-desktop-overview.component';
 import { CalendarMobileOverviewComponent } from 'app/calendar/mobile/overview/calendar-mobile-overview.component';
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { getIsMobileSignal } from 'app/foundation/util/global.utils';
 
 @Component({
     selector: 'jhi-calendar-container',
@@ -13,5 +12,5 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 export class CalendarContainerComponent {
     private breakpointObserver = inject(BreakpointObserver);
 
-    readonly isMobile = toSignal(this.breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), { initialValue: false });
+    readonly isMobile = getIsMobileSignal(this.breakpointObserver);
 }
