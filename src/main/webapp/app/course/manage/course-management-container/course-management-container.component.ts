@@ -43,7 +43,7 @@ import { LearningPathInstructorPageComponent } from 'app/atlas/manage/learning-p
 import { AssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/assessment-dashboard.component';
 import { CourseScoresComponent } from 'app/course/manage/course-scores/course-scores.component';
 import { FaqComponent } from 'app/communication/faq/faq.component';
-import { BuildOverviewComponent } from 'app/buildagent/build-queue/build-overview.component';
+import { BuildOverviewComponent } from 'app/localci/build-queue/build-overview.component';
 import { CourseDetailComponent } from 'app/course/manage/detail/course-detail.component';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { DeleteButtonDirective } from 'app/ui/delete-dialog/directive/delete-button.directive';

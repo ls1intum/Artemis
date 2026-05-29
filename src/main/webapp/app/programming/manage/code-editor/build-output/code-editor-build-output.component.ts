@@ -2,7 +2,7 @@ import { ParticipationWebsocketService } from 'app/course/shared/services/partic
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, effect, inject, input, output } from '@angular/core';
 import { Observable, Subscription, of } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
-import { BuildLogEntry, BuildLogEntryArray } from 'app/buildagent/shared/entities/build-log.model';
+import { BuildLogEntry, BuildLogEntryArray } from 'app/localci/shared/entities/build-log.model';
 import { Participation, getExercise } from 'app/exercise/shared/entities/participation/participation.model';
 import { CodeEditorSubmissionService } from 'app/programming/shared/code-editor/services/code-editor-submission.service';
 import { CodeEditorBuildLogService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';

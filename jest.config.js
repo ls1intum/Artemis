@@ -93,7 +93,8 @@ module.exports = {
         '!<rootDir>/src/main/webapp/**/*.route.ts', // ignore route files because they cannot be properly tested
         '!<rootDir>/src/main/webapp/**/*.routes.ts', // ignore routes files because they cannot be properly tested
         '!<rootDir>/src/main/webapp/app/assessment/**', // assessment module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/buildagent/**', // buildagent module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/localci/**', // localci module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/localvc/**', // localvc module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/communication/**', // communication module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/core/**', // core module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/calendar/**', // calendar module uses Vitest (see vitest.config.ts)
@@ -156,7 +157,8 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/account/', // account module uses Vitest
         '<rootDir>/src/main/webapp/app/admin/', // admin module uses Vitest
         '<rootDir>/src/main/webapp/app/assessment/', // assessment module uses Vitest
-        '<rootDir>/src/main/webapp/app/buildagent/', // buildagent module uses Vitest
+        '<rootDir>/src/main/webapp/app/localci/', // localci module uses Vitest
+        '<rootDir>/src/main/webapp/app/localvc/', // localvc module uses Vitest
         '<rootDir>/src/main/webapp/app/communication/', // communication module uses Vitest
         '<rootDir>/src/main/webapp/app/core/', // core module uses Vitest
         '<rootDir>/src/main/webapp/app/course/', // course module uses Vitest
@@ -258,7 +260,8 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/account/', // account module
         '<rootDir>/src/main/webapp/app/admin/', // admin module
         '<rootDir>/src/main/webapp/app/assessment/', // assessment module
-        '<rootDir>/src/main/webapp/app/buildagent/', // buildagent module
+        '<rootDir>/src/main/webapp/app/localci/', // localci module
+        '<rootDir>/src/main/webapp/app/localvc/', // localvc module
         '<rootDir>/src/main/webapp/app/communication/', // communication module
         '<rootDir>/src/main/webapp/app/core/', // core module
         '<rootDir>/src/main/webapp/app/course/', // course module
