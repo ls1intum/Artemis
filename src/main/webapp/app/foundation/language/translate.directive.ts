@@ -1,4 +1,4 @@
-import { DestroyRef, Directive, ElementRef, effect, inject, input } from '@angular/core';
+import { DestroyRef, Directive, ElementRef, OnInit, effect, inject, input } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
@@ -9,7 +9,7 @@ import { translationNotFoundMessage } from 'app/core/config/translation.config';
 @Directive({
     selector: '[jhiTranslate]',
 })
-export class TranslateDirective {
+export class TranslateDirective implements OnInit {
     private el = inject(ElementRef);
     private translateService = inject(TranslateService);
     private destroyRef = inject(DestroyRef);
@@ -18,10 +18,16 @@ export class TranslateDirective {
     readonly translateValues = input<{ [key: string]: unknown }>();
 
     constructor() {
-        this.translateService.onLangChange.pipe(takeUntilDestroyed()).subscribe(() => this.getTranslation());
-        this.translateService.onTranslationChange.pipe(takeUntilDestroyed()).subscribe(() => this.getTranslation());
         // Re-render whenever the key or interpolation values change.
         effect(() => this.getTranslation());
+    }
+
+    ngOnInit(): void {
+        // Re-translate on language / loaded-translation changes. Subscribed in ngOnInit (not the constructor) so that
+        // merely constructing the directive does not touch the TranslateService observables — some component specs use
+        // partial TranslateService doubles and never trigger change detection.
+        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.getTranslation());
+        this.translateService.onTranslationChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.getTranslation());
     }
 
     private getTranslation(): void {
