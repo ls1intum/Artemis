@@ -223,11 +223,8 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         // remove all students
         request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", HttpStatus.OK);
 
-        // Get the exam with all registered users
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("withStudents", "true");
-        Exam storedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
-        assertThat(storedExam.getExamUsers()).isEmpty();
+        // Verify all exam users were removed
+        assertThat(examUserRepository.findAllByExamId(exam.getId())).isEmpty();
 
         // Fetch student exams
         studentExamsDB = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
@@ -271,11 +268,8 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         paramsParticipations.add("withParticipationsAndSubmission", "true");
         request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students", HttpStatus.OK, paramsParticipations);
 
-        // Get the exam with all registered users
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("withStudents", "true");
-        Exam storedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
-        assertThat(storedExam.getExamUsers()).isEmpty();
+        // Verify all exam users were removed
+        assertThat(examUserRepository.findAllByExamId(exam.getId())).isEmpty();
 
         // Fetch student exams
         studentExamsDB = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
@@ -300,20 +294,15 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         // Remove student1 from the exam
         request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.OK);
 
-        // Get the exam with all registered users
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("withStudents", "true");
-        Exam storedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
-
         // Ensure that student1 was removed from the exam
-        var examUser = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student1.getId());
+        var examUser = examUserRepository.findByExamIdAndUserId(exam.getId(), student1.getId());
         assertThat(examUser).isEmpty();
-        assertThat(storedExam.getExamUsers()).hasSize(2);
+        assertThat(examUserRepository.countByExamId(exam.getId())).isEqualTo(2);
 
         // Create individual student exams
         List<StudentExam> generatedStudentExams = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
                 Optional.empty(), StudentExam.class, HttpStatus.OK);
-        assertThat(generatedStudentExams).hasSize(storedExam.getExamUsers().size());
+        assertThat(generatedStudentExams).hasSize(2);
 
         // Start the exam to create participations
         ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course1);
@@ -328,19 +317,14 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         // Remove student2 from the exam
         request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/" + TEST_PREFIX + "student2", HttpStatus.OK);
 
-        // Get the exam with all registered users
-        params = new LinkedMultiValueMap<>();
-        params.add("withStudents", "true");
-        storedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
-
         // Ensure that student2 was removed from the exam
-        var examUser2 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student2.getId());
+        var examUser2 = examUserRepository.findByExamIdAndUserId(exam.getId(), student2.getId());
         assertThat(examUser2).isEmpty();
-        assertThat(storedExam.getExamUsers()).hasSize(1);
+        assertThat(examUserRepository.countByExamId(exam.getId())).isEqualTo(1);
 
         // Ensure that the student exam of student2 was deleted
         List<StudentExam> studentExams = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
-        assertThat(studentExams).hasSameSizeAs(storedExam.getExamUsers()).doesNotContain(studentExam2);
+        assertThat(studentExams).hasSize(1).doesNotContain(studentExam2);
 
         // Ensure that the participations were not deleted
         List<StudentParticipation> participationsStudent2 = studentParticipationRepository
@@ -413,19 +397,14 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
         params.add("withParticipationsAndSubmission", "true");
         request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.OK, params);
 
-        // Get the exam with all registered users
-        params = new LinkedMultiValueMap<>();
-        params.add("withStudents", "true");
-        Exam storedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
-
         // Ensure that student1 was removed from the exam
-        var examUser1 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student1.getId());
+        var examUser1 = examUserRepository.findByExamIdAndUserId(exam.getId(), student1.getId());
         assertThat(examUser1).isEmpty();
-        assertThat(storedExam.getExamUsers()).hasSize(2);
+        assertThat(examUserRepository.countByExamId(exam.getId())).isEqualTo(2);
 
         // Ensure that the student exam of student1 was deleted
         List<StudentExam> studentExams = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
-        assertThat(studentExams).hasSameSizeAs(storedExam.getExamUsers()).doesNotContain(studentExam1);
+        assertThat(studentExams).hasSize(2).doesNotContain(studentExam1);
 
         // Ensure that the participations of student1 were deleted
         participationsStudent1 = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(student1.getId(),

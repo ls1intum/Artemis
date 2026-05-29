@@ -113,11 +113,10 @@ export class ExamManagementService {
      * Find an exam on the server using a GET request.
      * @param courseId The course id.
      * @param examId The id of the exam to get.
-     * @param withStudents Boolean flag whether to fetch all students registered for the exam
      * @param withExerciseGroups Boolean flag whether to fetch all exercise groups of the exam
      */
-    find(courseId: number, examId: number, withStudents = false, withExerciseGroups = false): Observable<EntityResponseType> {
-        const options = createRequestOption({ withStudents, withExerciseGroups });
+    find(courseId: number, examId: number, withExerciseGroups = false): Observable<EntityResponseType> {
+        const options = createRequestOption({ withExerciseGroups });
         return this.http
             .get<Exam>(`${this.resourceUrl}/${courseId}/exams/${examId}`, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));

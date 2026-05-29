@@ -38,7 +38,6 @@ describe('Exam Resolve', () => {
             },
             data: {
                 requestOptions: {
-                    withStudents: true,
                     withExerciseGroups: true,
                 },
             },
@@ -49,7 +48,7 @@ describe('Exam Resolve', () => {
         await Promise.resolve();
 
         expect(findSpy).toHaveBeenCalledOnce();
-        expect(findSpy).toHaveBeenCalledWith(1, 2, true, true);
+        expect(findSpy).toHaveBeenCalledWith(1, 2, true);
         expect(receivedExam).toEqual({ id: 1 });
     });
 
@@ -59,7 +58,6 @@ describe('Exam Resolve', () => {
             params: {},
             data: {
                 requestOptions: {
-                    withStudents: true,
                     withExerciseGroups: true,
                 },
             },

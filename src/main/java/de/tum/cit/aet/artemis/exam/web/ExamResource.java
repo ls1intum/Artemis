@@ -637,24 +637,17 @@ public class ExamResource {
      *
      * @param courseId           the course to which the exam belongs
      * @param examId             the exam to find
-     * @param withStudents       boolean flag whether to include all students registered for the exam
      * @param withExerciseGroups boolean flag whether to include all exercise groups of the exam
      * @return the ResponseEntity with status 200 (OK) and with the found exam as body
      */
     @GetMapping("courses/{courseId}/exams/{examId}")
     @EnforceAtLeastEditor
-    public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(defaultValue = "false") boolean withStudents,
-            @RequestParam(defaultValue = "false") boolean withExerciseGroups) {
+    public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(defaultValue = "false") boolean withExerciseGroups) {
         log.debug("REST request to get exam : {}", examId);
 
-        if (withStudents) {
-            examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-        }
-        else {
-            examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
-        }
+        examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
 
-        if (!withStudents && !withExerciseGroups) {
+        if (!withExerciseGroups) {
             Exam exam = examRepository.findByIdElseThrow(examId);
             Channel channel = channelRepository.findChannelByExamId(exam.getId());
             if (channel != null) {
@@ -663,21 +656,8 @@ public class ExamResource {
             return ResponseEntity.ok(exam);
         }
 
-        if (withExerciseGroups) {
-            Exam exam;
-            if (withStudents) {
-                exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
-            }
-            else {
-                exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, true);
-            }
-            examService.setExamProperties(exam);
-            return ResponseEntity.ok(exam);
-        }
-
-        Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
-        exam.getExamUsers().forEach(examUser -> examUser.getUser().setVisibleRegistrationNumber(examUser.getUser().getRegistrationNumber()));
-
+        Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, true);
+        examService.setExamProperties(exam);
         return ResponseEntity.ok(exam);
     }
 

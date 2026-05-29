@@ -925,45 +925,25 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         Exam exam = examUtilService.addExamWithUser(course, student1, false, now().minusHours(3), now().minusHours(2), now().minusHours(1));
         exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true, true);
 
-        // Get the exam with all registered users
         // 1. without options
         var exam1 = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class);
         assertThat(exam1.getExamUsers()).isEmpty();
         assertThat(exam1.getExerciseGroups()).isEmpty();
 
-        // 2. with students, without exercise groups
+        // 2. with exercise groups
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("withStudents", "true");
+        params.add("withExerciseGroups", "true");
         var exam2 = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
-        assertThat(exam2.getExamUsers()).hasSize(1);
-        assertThat(exam2.getExerciseGroups()).isEmpty();
-
-        // 3. with students, with exercise groups
-        params.add("withExerciseGroups", "true");
-        var exam3 = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
-        assertThat(exam3.getExamUsers()).hasSize(1);
-        assertThat(exam3.getExerciseGroups()).hasSize(exam.getExerciseGroups().size());
-        for (int i = 0; i < exam3.getExerciseGroups().size(); i++) {
-            assertThat(exam3.getExerciseGroups().get(i).getExercises()).isEqualTo(exam.getExerciseGroups().get(i).getExercises());
-        }
-        assertThat(exam3.getNumberOfExamUsers()).isNotNull().isEqualTo(1);
-
-        // 4. without students, with exercise groups
-        params = new LinkedMultiValueMap<>();
-        params.add("withExerciseGroups", "true");
-        var exam4 = request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
-        assertThat(exam4.getExamUsers()).isEmpty();
-        assertThat(exam4.getExerciseGroups()).hasSize(exam.getExerciseGroups().size());
-
-        for (int i = 0; i < exam3.getExerciseGroups().size(); i++) {
-            var exercises = exam3.getExerciseGroups().get(i).getExercises();
-            assertThat(exercises).isEqualTo(exam.getExerciseGroups().get(i).getExercises());
+        assertThat(exam2.getExamUsers()).isEmpty();
+        assertThat(exam2.getExerciseGroups()).hasSize(exam.getExerciseGroups().size());
+        for (int i = 0; i < exam2.getExerciseGroups().size(); i++) {
+            assertThat(exam2.getExerciseGroups().get(i).getExercises()).isEqualTo(exam.getExerciseGroups().get(i).getExercises());
         }
 
-        var quiz = exam4.getExerciseGroups().get(1).getExercises();
+        var quiz = exam2.getExerciseGroups().get(1).getExercises();
         assertThat(quiz).isNotEmpty().allMatch(exercise -> exercise instanceof QuizExercise quizExercise && !quizExercise.getQuizQuestions().isEmpty());
 
-        ProgrammingExercise programming = (ProgrammingExercise) exam4.getExerciseGroups().get(6).getExercises().iterator().next();
+        ProgrammingExercise programming = (ProgrammingExercise) exam2.getExerciseGroups().get(6).getExercises().iterator().next();
         assertThat(programming.getTemplateParticipation()).isNotNull();
         assertThat(programming.getSolutionParticipation()).isNotNull();
     }
