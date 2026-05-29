@@ -14,7 +14,7 @@ export class CourseDashboardService {
     public resourceUrl = 'api/atlas/metrics';
 
     getCourseMetricsForUser(courseId: number): Observable<HttpResponse<StudentMetrics>> {
-        return this.http.get<StudentMetrics>(`${this.resourceUrl}/course/${courseId}/student`, { observe: 'response' }).pipe(
+        return this.http.get<StudentMetrics>(`${this.resourceUrl}/courses/${courseId}/student`, { observe: 'response' }).pipe(
             map((response) => {
                 if (response.body) {
                     if (response.body.exerciseMetrics && response.body.exerciseMetrics.exerciseInformation) {

@@ -25,7 +25,7 @@ export class TutorialGroupFreePeriodService {
     getOneOfConfiguration(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupFreePeriodId: number): Observable<EntityResponseType> {
         return this.httpClient
             .get<TutorialGroupFreePeriod>(
-                `${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupsConfigurationId}/tutorial-free-periods/${tutorialGroupFreePeriodId}`,
+                `${this.resourceURL}/courses/${courseId}/tutorial-groups-configurations/${tutorialGroupsConfigurationId}/tutorial-free-periods/${tutorialGroupFreePeriodId}`,
                 { observe: 'response' },
             )
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupFreePeriodResponseDatesFromServer(res)));
@@ -34,7 +34,7 @@ export class TutorialGroupFreePeriodService {
     create(courseId: number, tutorialGroupConfigurationId: number, tutorialGroupFreePeriodDTO: TutorialGroupFreePeriodDTO): Observable<EntityResponseType> {
         const copy = this.convertTutorialGroupFreePeriodDatesFromClient(tutorialGroupFreePeriodDTO);
         return this.httpClient
-            .post<TutorialGroupFreePeriod>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupConfigurationId}/tutorial-free-periods`, copy, {
+            .post<TutorialGroupFreePeriod>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configurations/${tutorialGroupConfigurationId}/tutorial-free-periods`, copy, {
                 observe: 'response',
             })
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupFreePeriodResponseDatesFromServer(res)));
@@ -49,7 +49,7 @@ export class TutorialGroupFreePeriodService {
         const copy = this.convertTutorialGroupFreePeriodDatesFromClient(tutorialGroupFreePeriodDTO);
         return this.httpClient
             .put<TutorialGroupFreePeriod>(
-                `${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupConfigurationId}/tutorial-free-periods/${tutorialGroupFreePeriodId}`,
+                `${this.resourceURL}/courses/${courseId}/tutorial-groups-configurations/${tutorialGroupConfigurationId}/tutorial-free-periods/${tutorialGroupFreePeriodId}`,
                 copy,
                 {
                     observe: 'response',

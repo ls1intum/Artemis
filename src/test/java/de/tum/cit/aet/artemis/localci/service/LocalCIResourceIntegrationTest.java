@@ -558,7 +558,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetBuildJobById_runningJob() throws Exception {
-        var result = request.get("/api/core/admin/build-job/" + job1.id(), HttpStatus.OK, BuildJobQueueItem.class);
+        var result = request.get("/api/admin/build-jobs/" + job1.id(), HttpStatus.OK, BuildJobQueueItem.class);
         assertThat(result.id()).isEqualTo(job1.id());
         assertThat(result.name()).isEqualTo(job1.name());
     }
@@ -569,7 +569,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         queuedJobs.add(job1);
         // Remove from processing to only have it in the queue
         processingJobs.remove(job1.id());
-        var result = request.get("/api/core/admin/build-job/" + job1.id(), HttpStatus.OK, BuildJobQueueItem.class);
+        var result = request.get("/api/admin/build-jobs/" + job1.id(), HttpStatus.OK, BuildJobQueueItem.class);
         assertThat(result.id()).isEqualTo(job1.id());
     }
 
@@ -577,7 +577,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetBuildJobById_finishedJob() throws Exception {
         buildJobRepository.save(finishedJob1);
-        var result = request.get("/api/core/admin/build-job/" + finishedJob1.getBuildJobId(), HttpStatus.OK, FinishedBuildJobDTO.class);
+        var result = request.get("/api/admin/build-jobs/" + finishedJob1.getBuildJobId(), HttpStatus.OK, FinishedBuildJobDTO.class);
         assertThat(result.id()).isEqualTo(finishedJob1.getBuildJobId());
         assertThat(result.status()).isEqualTo(BuildStatus.SUCCESSFUL);
     }
@@ -585,19 +585,19 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetBuildJobById_notFound() throws Exception {
-        request.get("/api/core/admin/build-job/nonexistent", HttpStatus.NOT_FOUND, Void.class);
+        request.get("/api/admin/build-jobs/nonexistent", HttpStatus.NOT_FOUND, Void.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBuildJobById_instructorForbidden() throws Exception {
-        request.get("/api/core/admin/build-job/" + job1.id(), HttpStatus.FORBIDDEN, Void.class);
+        request.get("/api/admin/build-jobs/" + job1.id(), HttpStatus.FORBIDDEN, Void.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBuildJobByIdForCourse_runningJob() throws Exception {
-        var result = request.get("/api/localci/courses/" + course.getId() + "/build-job/" + job1.id(), HttpStatus.OK, BuildJobQueueItem.class);
+        var result = request.get("/api/localci/courses/" + course.getId() + "/build-jobs/" + job1.id(), HttpStatus.OK, BuildJobQueueItem.class);
         assertThat(result.id()).isEqualTo(job1.id());
     }
 
@@ -605,25 +605,25 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBuildJobByIdForCourse_finishedJob() throws Exception {
         buildJobRepository.save(finishedJob1);
-        var result = request.get("/api/localci/courses/" + course.getId() + "/build-job/" + finishedJob1.getBuildJobId(), HttpStatus.OK, FinishedBuildJobDTO.class);
+        var result = request.get("/api/localci/courses/" + course.getId() + "/build-jobs/" + finishedJob1.getBuildJobId(), HttpStatus.OK, FinishedBuildJobDTO.class);
         assertThat(result.id()).isEqualTo(finishedJob1.getBuildJobId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBuildJobByIdForCourse_wrongCourse() throws Exception {
-        request.get("/api/localci/courses/" + Long.MAX_VALUE + "/build-job/" + job1.id(), HttpStatus.FORBIDDEN, Void.class);
+        request.get("/api/localci/courses/" + Long.MAX_VALUE + "/build-jobs/" + job1.id(), HttpStatus.FORBIDDEN, Void.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBuildJobByIdForCourse_notFound() throws Exception {
-        request.get("/api/localci/courses/" + course.getId() + "/build-job/nonexistent", HttpStatus.NOT_FOUND, Void.class);
+        request.get("/api/localci/courses/" + course.getId() + "/build-jobs/nonexistent", HttpStatus.NOT_FOUND, Void.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testGetBuildJobByIdForCourse_wrongInstructorForbidden() throws Exception {
-        request.get("/api/localci/courses/" + course.getId() + "/build-job/" + job1.id(), HttpStatus.FORBIDDEN, Void.class);
+        request.get("/api/localci/courses/" + course.getId() + "/build-jobs/" + job1.id(), HttpStatus.FORBIDDEN, Void.class);
     }
 }

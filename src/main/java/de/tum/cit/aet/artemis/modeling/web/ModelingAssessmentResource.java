@@ -115,7 +115,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @param submissionId the id of the example submission
      * @return the result linked to the example submission
      */
-    @GetMapping("exercise/{exerciseId}/modeling-submissions/{submissionId}/example-assessment")
+    @GetMapping({ "exercises/{exerciseId}/modeling-submissions/{submissionId}/example-assessment", "exercise/{exerciseId}/modeling-submissions/{submissionId}/example-assessment" })
     @EnforceAtLeastTutor
     public ResponseEntity<Result> getModelingExampleAssessment(@PathVariable long exerciseId, @PathVariable long submissionId) {
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
@@ -132,7 +132,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @return result after saving/submitting modeling assessment
      */
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping("modeling-submissions/{submissionId}/result/{resultId}/assessment")
+    @PutMapping({ "modeling-submissions/{submissionId}/results/{resultId}/assessment", "modeling-submissions/{submissionId}/result/{resultId}/assessment" })
     @EnforceAtLeastTutor
     public ResponseEntity<Result> saveModelingAssessment(@PathVariable long submissionId, @PathVariable long resultId,
             @RequestParam(value = "submit", defaultValue = "false") boolean submit, @RequestBody ModelingAssessmentDTO modelingAssessment) {

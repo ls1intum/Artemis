@@ -414,8 +414,8 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         Long auxiliaryRepositoryId = auxiliaryRepositories.getFirst().getId();
         assertThat(auxiliaryRepositoryId).isNotNull();
 
-        request.postWithoutLocation("/api/programming/auxiliary-repository/" + auxiliaryRepositoryId + "/file?file=Template.java", null, HttpStatus.OK, null);
-        request.postWithoutLocation("/api/programming/auxiliary-repository/" + auxiliaryRepositoryId + "/commit", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/programming/auxiliary-repositories/" + auxiliaryRepositoryId + "/file?file=Template.java", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/programming/auxiliary-repositories/" + auxiliaryRepositoryId + "/commit", null, HttpStatus.OK, null);
 
         await().untilAsserted(() -> {
             ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",

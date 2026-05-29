@@ -630,7 +630,7 @@ describe('BuildOverviewService', () => {
 
         const resultPromise = firstValueFrom(service.getBuildJobById(buildJobId));
 
-        const req = httpMock.expectOne(`${service.adminResourceUrl}/build-job/${buildJobId}`);
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/build-jobs/${buildJobId}`);
         expect(req.request.method).toBe('GET');
         req.flush(expectedResponse);
 
@@ -645,7 +645,7 @@ describe('BuildOverviewService', () => {
 
         const resultPromise = firstValueFrom(service.getBuildJobByIdForCourse(courseId, buildJobId));
 
-        const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/build-job/${buildJobId}`);
+        const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/build-jobs/${buildJobId}`);
         expect(req.request.method).toBe('GET');
         req.flush(expectedResponse);
 

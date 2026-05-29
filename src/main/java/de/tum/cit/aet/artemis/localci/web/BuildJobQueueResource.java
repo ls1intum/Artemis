@@ -77,7 +77,7 @@ public class BuildJobQueueResource {
      * @param buildJobId the id of the build job
      * @return the build job, or 404 if not found or does not belong to the course
      */
-    @GetMapping("courses/{courseId}/build-job/{buildJobId}")
+    @GetMapping({ "courses/{courseId}/build-jobs/{buildJobId}", "courses/{courseId}/build-job/{buildJobId}" })
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<BuildJobDTO> getBuildJobById(@PathVariable long courseId, @PathVariable String buildJobId) {
         if (buildJobId == null || buildJobId.isBlank()) {

@@ -34,7 +34,7 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
             case DomainType.TEST_REPOSITORY:
                 return `api/programming/test-repository/${domainValue.id}`;
             case DomainType.AUXILIARY_REPOSITORY:
-                return `api/programming/auxiliary-repository/${domainValue.id}`;
+                return `api/programming/auxiliary-repositories/${domainValue.id}`;
         }
     }
 }

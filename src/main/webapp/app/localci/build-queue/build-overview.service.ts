@@ -197,7 +197,7 @@ export class BuildOverviewService {
      * @param buildJobId the id of the build job
      */
     getBuildJobById(buildJobId: string): Observable<any> {
-        return this.http.get<any>(`${this.adminResourceUrl}/build-job/${buildJobId}`);
+        return this.http.get<any>(`${this.adminResourceUrl}/build-jobs/${buildJobId}`);
     }
 
     /**
@@ -206,7 +206,7 @@ export class BuildOverviewService {
      * @param buildJobId the id of the build job
      */
     getBuildJobByIdForCourse(courseId: number, buildJobId: string): Observable<any> {
-        return this.http.get<any>(`${this.resourceUrl}/courses/${courseId}/build-job/${buildJobId}`);
+        return this.http.get<any>(`${this.resourceUrl}/courses/${courseId}/build-jobs/${buildJobId}`);
     }
 
     /**

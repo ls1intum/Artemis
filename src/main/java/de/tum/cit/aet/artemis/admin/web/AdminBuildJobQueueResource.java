@@ -69,7 +69,7 @@ public class AdminBuildJobQueueResource {
      * @param buildJobId the id of the build job
      * @return the build job, or 404 if not found
      */
-    @GetMapping("build-job/{buildJobId}")
+    @GetMapping({ "build-jobs/{buildJobId}", "build-job/{buildJobId}" })
     public ResponseEntity<BuildJobDTO> getBuildJobById(@PathVariable String buildJobId) {
         if (buildJobId == null || buildJobId.isBlank()) {
             return ResponseEntity.badRequest().build();

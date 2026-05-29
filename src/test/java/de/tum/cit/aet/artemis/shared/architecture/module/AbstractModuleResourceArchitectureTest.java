@@ -55,15 +55,16 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
             // account
             "api/account/passkey/{credentialId}", "api/account/passkey/{credentialId}/approval",
             // admin
-            "api/admin/build-job/{buildJobId}", "api/admin/cancel-job/{buildJobId}",
+            "api/admin/cancel-job/{buildJobId}",
             // assessment
-            "api/assessment/course/{courseId}/rating", "api/assessment/courses/{courseId}/exams/{examId}/bonus/{bonusId}",
             "api/assessment/exercises/{exerciseId}/example-submissions/import/{sourceSubmissionId}",
             // atlas
-            "api/atlas/courses/{courseId}/course-competencies/relations/{competencyRelationId}", "api/atlas/metrics/course/{courseId}/student",
+            "api/atlas/courses/{courseId}/course-competencies/relations/{competencyRelationId}",
             // communication
             "api/communication/courses/{courseId}/messages/{postId}/display-priority", "api/communication/courses/{courseId}/one-to-one-chats/{userId}",
-            // core (file serving)
+            // core (file serving — the collection segment doubles as a key in FilePathConverter's external-URI <-> filesystem
+            // mapping, in StaticResourcesConfiguration resource handlers, and in stored attachment links / embedded markdown.
+            // Pluralizing the route alone would desync it from server-generated and persisted URIs; needs a coordinated data migration.)
             "api/core/files/attachments/attachment-unit/{attachmentVideoUnitId}/*", "api/core/files/attachments/attachment-unit/{attachmentVideoUnitId}/slide/{slideNumber}",
             "api/core/files/attachments/attachment-unit/{attachmentVideoUnitId}/student/*", "api/core/files/attachments/lecture/{lectureId}/merge-pdf",
             "api/core/files/attachments/lecture/{lectureId}/{attachmentName}", "api/core/files/course/icons/{courseId}/*",
@@ -72,7 +73,6 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
             // course
             "api/course/courses/{courseId}/import-summary/{sourceCourseId}",
             // exam
-            "api/exam/courses/{courseId}/exams/{examId}/test-run/{testRunId}", "api/exam/courses/{courseId}/exams/{examId}/test-run/{testRunId}/conduction",
             "api/exam/rooms/{examRoomId}/seats",
             // exercise
             "api/exercise/exercises/{destinationExerciseId}/teams/import-from-exercise/{sourceExerciseId}",
@@ -81,23 +81,17 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
             "api/fileupload/file-upload-exercises/import/{sourceId}",
             // iris
             "api/iris/chat/{courseId}/session/{sessionId}", "api/iris/chat/{courseId}/sessions/overview", "api/iris/tutor-suggestion/{postId}/sessions",
-            "api/iris/tutor-suggestion/{postId}/sessions/current", "api/iris/user/memory/{memoryId}",
+            "api/iris/tutor-suggestion/{postId}/sessions/current",
             // lecture
-            "api/lecture/lecture-unit/{lectureUnitId}/transcript", "api/lecture/lecture-unit/{lectureUnitId}/transcript/status", "api/lecture/lectures/import/{sourceLectureId}",
+            "api/lecture/lectures/import/{sourceLectureId}",
             // localci
-            "api/localci/build-log/{buildJobId}", "api/localci/courses/{courseId}/build-job/{buildJobId}", "api/localci/courses/{courseId}/cancel-job/{buildJobId}",
+            "api/localci/build-log/{buildJobId}", "api/localci/courses/{courseId}/cancel-job/{buildJobId}",
             // lti
             "api/lti/admin/lti-platform/{platformId}", "api/lti/lti13/deep-linking/{courseId}",
             // modeling
-            "api/modeling/course/{courseId}/apollon-diagrams", "api/modeling/course/{courseId}/apollon-diagrams/{apollonDiagramId}",
-            "api/modeling/exercise/{exerciseId}/modeling-submissions/{submissionId}/example-assessment", "api/modeling/modeling-exercises/import/{sourceExerciseId}",
-            "api/modeling/modeling-submissions/{exampleSubmissionId}/example-assessment", "api/modeling/modeling-submissions/{submissionId}/result/{resultId}/assessment",
+            "api/modeling/modeling-exercises/import/{sourceExerciseId}", "api/modeling/modeling-submissions/{exampleSubmissionId}/example-assessment",
             // programming
-            "api/programming/sharing/export/{exerciseId}", "api/programming/auxiliary-repository/{auxiliaryRepositoryId}",
-            "api/programming/auxiliary-repository/{auxiliaryRepositoryId}/commit", "api/programming/auxiliary-repository/{auxiliaryRepositoryId}/file",
-            "api/programming/auxiliary-repository/{auxiliaryRepositoryId}/files", "api/programming/auxiliary-repository/{auxiliaryRepositoryId}/folder",
-            "api/programming/auxiliary-repository/{auxiliaryRepositoryId}/pull", "api/programming/auxiliary-repository/{auxiliaryRepositoryId}/rename-file",
-            "api/programming/auxiliary-repository/{auxiliaryRepositoryId}/reset", "api/programming/programming-exercise-participations/{participationId}/files-content/{commitId}",
+            "api/programming/sharing/export/{exerciseId}", "api/programming/programming-exercise-participations/{participationId}/files-content/{commitId}",
             "api/programming/programming-exercise/{exerciseId}/commit-history/{repositoryType}",
             "api/programming/programming-exercise/{exerciseId}/files-content-commit-details/{commitId}",
             "api/programming/programming-exercise/{exerciseId}/vcs-access-log/{repositoryType}", "api/programming/programming-exercises/import/{sourceExerciseId}",
@@ -117,10 +111,9 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
             "api/quiz/courses/{courseId}/training-questions/{quizQuestionId}/submit", "api/quiz/quiz-exercises/{quizBatchId}/start-batch",
             // text
             "api/text/admin/event-insights/text-assessment/events/{courseId}", "api/text/text-editor/{participationId}", "api/text/text-exercises/import/{sourceExerciseId}",
-            // tutorialgroup
-            "api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}",
-            "api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods",
-            "api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}");
+            // tutorialgroup (collection "tutorial-free-periods" mismatches its id {tutorialGroupFreePeriodId}: rename the
+            // collection to "tutorial-group-free-periods" or the id to {tutorialFreePeriodId} — needs an API naming decision)
+            "api/tutorialgroup/courses/{courseId}/tutorial-groups-configurations/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}");
 
     @Test
     void shouldBeNamedResource() {
