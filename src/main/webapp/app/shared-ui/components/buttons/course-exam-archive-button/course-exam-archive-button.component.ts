@@ -1,9 +1,9 @@
-import { Component, OnDestroy, OnInit, TemplateRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { TranslateService } from '@ngx-translate/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogModule } from 'primeng/dialog';
 import { tap } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -31,7 +31,7 @@ export type CourseExamArchiveState = {
     templateUrl: './course-exam-archive-button.component.html',
     styleUrls: ['./course-exam-archive-button.component.scss'],
     styles: [':host {display: contents}'],
-    imports: [TranslateDirective, FeatureToggleDirective, FaIconComponent, DeleteButtonDirective],
+    imports: [TranslateDirective, FeatureToggleDirective, FaIconComponent, DeleteButtonDirective, DialogModule],
 })
 export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     private courseService = inject(CourseManagementService);
@@ -39,7 +39,6 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private websocketService = inject(WebsocketService);
     private translateService = inject(TranslateService);
-    private modalService = inject(NgbModal);
     private accountService = inject(AccountService);
     private websocketRegistered = false;
 
@@ -117,9 +116,10 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         return this.accountService.isAtLeastInstructorInCourse(course) && hasBeenArchived;
     });
 
-    archiveCompleteWithWarningsModal = viewChild.required<TemplateRef<any>>('archiveCompleteWithWarningsModal');
-
-    archiveConfirmModal = viewChild.required<TemplateRef<any>>('archiveConfirmModal');
+    // Dialog visibility signals (replaces the NgbModal-opened ng-templates)
+    archiveCompleteWithWarningsModalVisible = signal(false);
+    archiveWarningPopupVisible = signal(false);
+    archiveConfirmModalVisible = signal(false);
 
     // Subscriptions
     private dialogErrorSource = new Subject<string>();
@@ -216,7 +216,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
             this.alertService.success(this.getArchiveSuccessText());
             this.reloadCourseOrExam();
         } else if (exportState === 'COMPLETED_WITH_WARNINGS') {
-            this.openModal(this.archiveCompleteWithWarningsModal());
+            this.archiveCompleteWithWarningsModalVisible.set(true);
             this.reloadCourseOrExam();
         } else if (exportState === 'COMPLETED_WITH_ERRORS') {
             this.alertService.error(this.getArchiveErrorText(subMessage!));
@@ -265,18 +265,33 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         } else return null;
     }
 
-    openModal(modalRef: TemplateRef<any>) {
-        this.modalService.open(modalRef).result.then(
-            (result: string) => {
-                if (result === 'archive-confirm' && this.canDownloadArchive()) {
-                    this.openModal(this.archiveConfirmModal());
-                }
-                if (result === 'archive' || !this.canDownloadArchive()) {
-                    this.archive();
-                }
-            },
-            () => {},
-        );
+    /**
+     * Opens the initial archive-warning confirmation dialog.
+     */
+    openArchiveWarningPopup() {
+        this.archiveWarningPopupVisible.set(true);
+    }
+
+    /**
+     * Handles the user confirming the archive-warning dialog (the "Archive" button).
+     * If an archive already exists (canDownloadArchive), an overwrite confirmation is shown first;
+     * otherwise the archive is started immediately. Mirrors the original NgbModal result chaining.
+     */
+    onArchiveWarningConfirm() {
+        this.archiveWarningPopupVisible.set(false);
+        if (this.canDownloadArchive()) {
+            this.archiveConfirmModalVisible.set(true);
+        } else {
+            this.archive();
+        }
+    }
+
+    /**
+     * Handles the user confirming the overwrite-archive dialog (the "Yes" button).
+     */
+    onArchiveConfirm() {
+        this.archiveConfirmModalVisible.set(false);
+        this.archive();
     }
 
     archive() {

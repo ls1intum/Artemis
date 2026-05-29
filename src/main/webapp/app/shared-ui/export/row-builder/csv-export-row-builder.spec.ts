@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest';
 import { CourseScoresStudentStatistics } from 'app/course/manage/course-scores/course-scores-student-statistics';
 import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, USERNAME_KEY } from 'app/shared-ui/export/export-constants';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';

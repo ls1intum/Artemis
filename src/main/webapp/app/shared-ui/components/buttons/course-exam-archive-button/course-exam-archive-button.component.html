@@ -1,6 +1,15 @@
 <ng-container>
-    <ng-template #archiveCompleteWithWarningsModal let-modal>
-        <div class="modal-header">
+    <p-dialog
+        [(visible)]="archiveCompleteWithWarningsModalVisible"
+        [modal]="true"
+        [closable]="true"
+        [closeOnEscape]="true"
+        [dismissableMask]="true"
+        [draggable]="false"
+        [appendTo]="'body'"
+        [style]="{ width: '40rem' }"
+    >
+        <ng-template #header>
             <h4 class="modal-title">
                 @if (archiveMode() === 'Course') {
                     <span [jhiTranslate]="'artemisApp.courseExamArchive.archiveCourseSuccess'">The course has been archived!</span>
@@ -9,25 +18,31 @@
                     <span [jhiTranslate]="'artemisApp.courseExamArchive.archiveExamSuccess'">The exam has been archived!</span>
                 }
             </h4>
-            <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
-        </div>
-        <div class="modal-body">
-            <ng-container>
-                <p [jhiTranslate]="'artemisApp.courseExamArchive.archiveSuccessWithWarnings'">The archival process has completed with the following warnings:</p>
-                <br />
-                <ul style="height: 200px; overflow: auto">
-                    @for (item of archiveWarnings(); track item) {
-                        <li>{{ item }}</li>
-                    }
-                </ul>
-            </ng-container>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-warning" (click)="modal.close()">Close</button>
-        </div>
-    </ng-template>
-    <ng-template #archiveWarningPopup let-modal>
-        <div class="modal-header">
+        </ng-template>
+        <ng-container>
+            <p [jhiTranslate]="'artemisApp.courseExamArchive.archiveSuccessWithWarnings'">The archival process has completed with the following warnings:</p>
+            <br />
+            <ul style="height: 200px; overflow: auto">
+                @for (item of archiveWarnings(); track item) {
+                    <li>{{ item }}</li>
+                }
+            </ul>
+        </ng-container>
+        <ng-template #footer>
+            <button type="button" class="btn btn-warning" (click)="archiveCompleteWithWarningsModalVisible.set(false)">Close</button>
+        </ng-template>
+    </p-dialog>
+    <p-dialog
+        [(visible)]="archiveWarningPopupVisible"
+        [modal]="true"
+        [closable]="true"
+        [closeOnEscape]="true"
+        [dismissableMask]="true"
+        [draggable]="false"
+        [appendTo]="'body'"
+        [style]="{ width: '40rem' }"
+    >
+        <ng-template #header>
             <h4 class="modal-title">
                 @if (archiveMode() === 'Course') {
                     <span [jhiTranslate]="'artemisApp.courseExamArchive.popup.course.title'">Confirm Archive Course Operation</span>
@@ -36,61 +51,61 @@
                     <span [jhiTranslate]="'artemisApp.courseExamArchive.popup.exam.title'">Confirm Archive Exam Operation</span>
                 }
             </h4>
-            <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
-        </div>
-        <div class="modal-body">
-            @if (archiveMode() === 'Course') {
-                <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.course.question'" [translateValues]="{ title: currentCourse()?.title }">
-                    Are you sure you want to archive??
-                </p>
-                <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.course.statement1'">
-                    The process will compress all student code repositories, file upload exercises, modeling exercises, and text exercises for exercises and exams.
-                </p>
-                <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.course.statement1b'">Additionally, the archive will include comprehensive student data.</p>
-            }
-            @if (archiveMode() === 'Exam') {
-                <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.exam.question'" [translateValues]="{ title: currentExam()?.title || '' }">
-                    Are you sure you want to archive??
-                </p>
-                <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.exam.statement1'">
-                    The process will compress all student code repositories, file upload exercises, modeling exercises, and text exercises in the exam.
-                </p>
-            }
-            <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.statement2'">
-                This process can take several hours depending on the number of students and programming exercises and will take up many server resources. Please start this process
-                only once when the server load is low (e.g. early in the morning)
+        </ng-template>
+        @if (archiveMode() === 'Course') {
+            <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.course.question'" [translateValues]="{ title: currentCourse()?.title }">Are you sure you want to archive??</p>
+            <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.course.statement1'">
+                The process will compress all student code repositories, file upload exercises, modeling exercises, and text exercises for exercises and exams.
             </p>
-            <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.footerStatement'">
-                You will receive a notification when the process is finished. Then you can download the archive as zip file on this page.
+            <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.course.statement1b'">Additionally, the archive will include comprehensive student data.</p>
+        }
+        @if (archiveMode() === 'Exam') {
+            <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.exam.question'" [translateValues]="{ title: currentExam()?.title || '' }">Are you sure you want to archive??</p>
+            <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.exam.statement1'">
+                The process will compress all student code repositories, file upload exercises, modeling exercises, and text exercises in the exam.
             </p>
-        </div>
-        <div class="modal-footer">
+        }
+        <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.statement2'">
+            This process can take several hours depending on the number of students and programming exercises and will take up many server resources. Please start this process only
+            once when the server load is low (e.g. early in the morning)
+        </p>
+        <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.footerStatement'">
+            You will receive a notification when the process is finished. Then you can download the archive as zip file on this page.
+        </p>
+        <ng-template #footer>
             <button
                 type="button"
                 class="btn btn-warning"
-                (click)="modal.close('archive-confirm')"
+                (click)="onArchiveWarningConfirm()"
                 [jhiTranslate]="archiveMode() === 'Course' ? 'artemisApp.courseExamArchive.archiveCourse' : 'artemisApp.courseExamArchive.archiveExam'"
             >
                 Archive
             </button>
-        </div>
-    </ng-template>
-    <ng-template #archiveConfirmModal let-modal>
-        <div class="modal-header">
+        </ng-template>
+    </p-dialog>
+    <p-dialog
+        [(visible)]="archiveConfirmModalVisible"
+        [modal]="true"
+        [closable]="true"
+        [closeOnEscape]="true"
+        [dismissableMask]="true"
+        [draggable]="false"
+        [appendTo]="'body'"
+        [style]="{ width: '40rem' }"
+    >
+        <ng-template #header>
             <h4 class="modal-title">
                 <span [jhiTranslate]="'artemisApp.courseExamArchive.confirmArchive.title'">Warning: an archive already exists!</span>
             </h4>
-        </div>
-        <div class="modal-body">
-            <p [jhiTranslate]="'artemisApp.courseExamArchive.confirmArchive.message'">
-                Warning! The course has already been archived. If you continue, the archive will be overwritten! Are you sure you want to continue?
-            </p>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-warning" (click)="modal.close('archive')" [jhiTranslate]="'global.generic.yes'">Yes</button>
-            <button type="button" class="btn btn-success" [jhiTranslate]="'global.generic.no'" (click)="modal.dismiss()">No</button>
-        </div>
-    </ng-template>
+        </ng-template>
+        <p [jhiTranslate]="'artemisApp.courseExamArchive.confirmArchive.message'">
+            Warning! The course has already been archived. If you continue, the archive will be overwritten! Are you sure you want to continue?
+        </p>
+        <ng-template #footer>
+            <button type="button" class="btn btn-warning" (click)="onArchiveConfirm()" [jhiTranslate]="'global.generic.yes'">Yes</button>
+            <button type="button" class="btn btn-success" [jhiTranslate]="'global.generic.no'" (click)="archiveConfirmModalVisible.set(false)">No</button>
+        </ng-template>
+    </p-dialog>
     @if (canArchive()) {
         <button
             [jhiFeatureToggle]="FeatureToggle.Exports"
@@ -99,7 +114,7 @@
             [attr.data-mode]="archiveMode()"
             id="archiveButton"
             class="btn btn-sm btn-warning"
-            (click)="openModal(archiveWarningPopup)"
+            (click)="openArchiveWarningPopup()"
         >
             <fa-icon [hidden]="!isBeingArchived()" animation="spin" [icon]="faCircleNotch" />
             <fa-icon [hidden]="isBeingArchived()" [icon]="faArchive" />&nbsp;

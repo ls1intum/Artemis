@@ -17,7 +17,6 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CourseExamArchiveButtonComponent, CourseExamArchiveState } from 'app/shared-ui/components/buttons/course-exam-archive-button/course-exam-archive-button.component';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -56,9 +55,10 @@ describe('Course Exam Archive Button Component', () => {
                 LocalStorageService,
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useValue: { open: vi.fn(), close: vi.fn() } },
+                // DialogService is required transitively by DeleteButtonDirective -> DeleteDialogService,
+                // not by this component itself (its dialogs are inline <p-dialog> bound to visibility signals).
+                MockProvider(DialogService),
                 MockProvider(AlertService),
-                MockProvider(NgbModal),
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: AccountService, useClass: MockAccountService },
@@ -207,6 +207,45 @@ describe('Course Exam Archive Button Component', () => {
             expect(downloadStub).toHaveBeenCalledOnce();
         });
 
+        it('openArchiveWarningPopup shows the archive warning dialog', () => {
+            comp.openArchiveWarningPopup();
+            expect(comp.archiveWarningPopupVisible()).toBe(true);
+        });
+
+        it('onArchiveWarningConfirm archives directly when no existing archive can be downloaded', () => {
+            comp.archiveWarningPopupVisible.set(true);
+            vi.spyOn(comp, 'canDownloadArchive').mockReturnValue(false);
+            const archiveSpy = vi.spyOn(comp, 'archive').mockImplementation(() => {});
+
+            comp.onArchiveWarningConfirm();
+
+            expect(comp.archiveWarningPopupVisible()).toBe(false);
+            expect(comp.archiveConfirmModalVisible()).toBe(false);
+            expect(archiveSpy).toHaveBeenCalledOnce();
+        });
+
+        it('onArchiveWarningConfirm opens the overwrite confirmation when an archive already exists', () => {
+            comp.archiveWarningPopupVisible.set(true);
+            vi.spyOn(comp, 'canDownloadArchive').mockReturnValue(true);
+            const archiveSpy = vi.spyOn(comp, 'archive').mockImplementation(() => {});
+
+            comp.onArchiveWarningConfirm();
+
+            expect(comp.archiveWarningPopupVisible()).toBe(false);
+            expect(comp.archiveConfirmModalVisible()).toBe(true);
+            expect(archiveSpy).not.toHaveBeenCalled();
+        });
+
+        it('onArchiveConfirm closes the overwrite dialog and archives', () => {
+            comp.archiveConfirmModalVisible.set(true);
+            const archiveSpy = vi.spyOn(comp, 'archive').mockImplementation(() => {});
+
+            comp.onArchiveConfirm();
+
+            expect(comp.archiveConfirmModalVisible()).toBe(false);
+            expect(archiveSpy).toHaveBeenCalledOnce();
+        });
+
         it('should reload course on archive complete', () => {
             const alertService = TestBed.inject(AlertService);
             const alertServiceSpy = vi.spyOn(alertService, 'success');
@@ -222,15 +261,12 @@ describe('Course Exam Archive Button Component', () => {
         });
 
         it('should display warning and reload course on archive complete with warnings', () => {
-            const modalService = TestBed.inject(NgbModal);
-
             vi.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ status: 200, body: course })));
-            const ngModalRef: NgbModalRef = { result: Promise.resolve('') } as any;
-            vi.spyOn(modalService, 'open').mockReturnValue(ngModalRef);
 
             const archiveState: CourseExamArchiveState = { exportState: 'COMPLETED_WITH_WARNINGS', message: 'warning 1\nwarning 2' };
             comp.handleArchiveStateChanges(archiveState);
 
+            expect(comp.archiveCompleteWithWarningsModalVisible()).toBe(true);
             expect(comp.isBeingArchived()).toBe(false);
             expect(comp.archiveWarnings()).toEqual(archiveState.message.split('\n'));
             expect(comp.course()).toBeDefined();

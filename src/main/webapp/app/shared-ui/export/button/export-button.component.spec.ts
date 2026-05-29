@@ -1,39 +1,87 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockModule } from 'ng-mocks';
+import { MockComponent } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
-import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
+import { Subject } from 'rxjs';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ExportButtonComponent } from 'app/shared-ui/export/button/export-button.component';
+import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings, ExportModalResult } from 'app/shared-ui/export/modal/export-modal.component';
 
 describe('ExportButtonComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ExportButtonComponent>;
     let comp: ExportButtonComponent;
-    let modalService: NgbModal;
+    let dialogService: DialogService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbModule)],
-            declarations: [ExportButtonComponent, MockComponent(ButtonComponent)],
+            imports: [ExportButtonComponent, MockComponent(ButtonComponent)],
+            providers: [DialogService, { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ExportButtonComponent);
                 comp = fixture.componentInstance;
-                modalService = TestBed.inject(NgbModal);
+                dialogService = TestBed.inject(DialogService);
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        const result = new Promise((resolve) => resolve(true));
-        const modalServiceOpenStub = jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ result });
+    it('should initialize and open the export dialog', () => {
+        const onClose = new Subject<ExportModalResult | undefined>();
+        const dialogServiceOpenStub = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as DynamicDialogRef);
 
         comp.openExportModal(new MouseEvent('click'));
+
         const csvExportButton = fixture.debugElement.query(By.css('jhi-button'));
         expect(csvExportButton).not.toBeNull();
-        expect(modalServiceOpenStub).toHaveBeenCalledOnce();
+        expect(dialogServiceOpenStub).toHaveBeenCalledOnce();
+    });
+
+    it('should emit chosen csv options when the dialog returns a csv result', () => {
+        const onClose = new Subject<ExportModalResult | undefined>();
+        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as DynamicDialogRef);
+        const emitSpy = vi.spyOn(comp.onExport, 'emit');
+        const options: CsvExportOptions = {
+            fieldSeparator: CsvFieldSeparator.COMMA,
+            quoteStrings: true,
+            quoteCharacter: CsvQuoteStrings.QUOTES_DOUBLE,
+            decimalSeparator: CsvDecimalSeparator.PERIOD,
+        };
+
+        comp.openExportModal(new MouseEvent('click'));
+        onClose.next({ type: 'csv', options });
+
+        expect(emitSpy).toHaveBeenCalledWith(options);
+    });
+
+    it('should emit undefined when the dialog returns an excel result', () => {
+        const onClose = new Subject<ExportModalResult | undefined>();
+        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as DynamicDialogRef);
+        const emitSpy = vi.spyOn(comp.onExport, 'emit');
+
+        comp.openExportModal(new MouseEvent('click'));
+        onClose.next({ type: 'excel' });
+
+        expect(emitSpy).toHaveBeenCalledWith(undefined);
+    });
+
+    it('should not emit when the dialog is dismissed', () => {
+        const onClose = new Subject<ExportModalResult | undefined>();
+        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as DynamicDialogRef);
+        const emitSpy = vi.spyOn(comp.onExport, 'emit');
+
+        comp.openExportModal(new MouseEvent('click'));
+        onClose.next(undefined);
+
+        expect(emitSpy).not.toHaveBeenCalled();
     });
 });

@@ -9,6 +9,13 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     templateUrl: './confirm-autofocus-modal.component.html',
     imports: [NgTemplateOutlet, TranslateDirective, ArtemisTranslatePipe],
 })
+// NOTE: This shared dialog intentionally still uses NgbActiveModal and @Input decorators. It is opened
+// via `NgbModal.open(ConfirmAutofocusModalComponent)` + `modalRef.componentInstance.* = ...` by several
+// callers, two of which live in the deferred programming/** carve-out (and others in separate migration
+// groups: atlas, quiz, plagiarism). Converting it to PrimeNG DynamicDialog or signal inputs would
+// silently break the `componentInstance` write contract for all callers, including carve-out files we are
+// not allowed to touch. Therefore both the modal mechanism and the decorators are DEFERRED until the
+// carve-out lifts and every caller can be migrated together.
 export class ConfirmAutofocusModalComponent {
     modal = inject(NgbActiveModal);
 

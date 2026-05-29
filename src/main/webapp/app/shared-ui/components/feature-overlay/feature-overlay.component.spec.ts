@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { NgbTooltip, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -6,6 +8,8 @@ import { By } from '@angular/platform-browser';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('Feature Overlay Component Tests', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<FeatureOverlayComponent>;
 
     beforeEach(() => {

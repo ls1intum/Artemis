@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { NgbActiveModal, NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavLinkBase, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
+import { NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavLinkBase, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { faBan, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
@@ -34,6 +35,12 @@ export interface CsvExportOptions {
     decimalSeparator: CsvDecimalSeparator;
 }
 
+/**
+ * Discriminated result of the export modal so the caller can distinguish a confirmed Excel export
+ * (no custom CSV options) from a confirmed CSV export, while a dismiss/cancel resolves to `undefined`.
+ */
+export type ExportModalResult = { type: 'excel' } | { type: 'csv'; options: CsvExportOptions };
+
 @Component({
     selector: 'jhi-csv-export-modal',
     templateUrl: './export-modal.component.html',
@@ -54,7 +61,7 @@ export interface CsvExportOptions {
     ],
 })
 export class ExportModalComponent implements OnInit {
-    private activeModal = inject(NgbActiveModal);
+    private dialogRef = inject(DynamicDialogRef);
     private translateService = inject(TranslateService);
 
     readonly CsvFieldSeparator = CsvFieldSeparator;
@@ -118,7 +125,7 @@ export class ExportModalComponent implements OnInit {
      * Dismisses the csv export options modal
      */
     cancel() {
-        this.activeModal.dismiss();
+        this.dialogRef.close();
     }
 
     /**
@@ -126,11 +133,11 @@ export class ExportModalComponent implements OnInit {
      */
     onFinish() {
         if (this.activeTab === 1) {
-            // Excel export
-            this.activeModal.close();
+            // Excel export: confirmed, but no custom CSV options to return
+            this.dialogRef.close({ type: 'excel' } satisfies ExportModalResult);
         } else {
             // CSV export
-            this.activeModal.close(this.options);
+            this.dialogRef.close({ type: 'csv', options: this.options } satisfies ExportModalResult);
         }
     }
 }

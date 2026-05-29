@@ -11,6 +11,13 @@ import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/bu
     imports: [ButtonComponent],
 })
 export class ConfirmAutofocusButtonComponent {
+    // NOTE: This button intentionally still uses NgbModal to open ConfirmAutofocusModalComponent.
+    // ConfirmAutofocusModalComponent is a shared dialog opened by several callers, two of which live
+    // in the deferred programming/** carve-out (and others in separate migration groups: atlas, quiz,
+    // plagiarism). All of them rely on the `modalRef.componentInstance.* = ...` write contract, which
+    // would silently break if the dialog's @Inputs became signal inputs or it switched to PrimeNG's
+    // DynamicDialog. Migrating it here would require editing carve-out files, so it is DEFERRED until
+    // the carve-out lifts and all callers can be migrated together.
     private modalService = inject(NgbModal);
 
     icon = input<IconProp | undefined>(undefined);
