@@ -63,7 +63,7 @@ describe('CourseNotificationService', () => {
 
             expect(service['courseNotificationMap'][courseId]).toEqual([]);
 
-            const req = httpMock.expectOne(`/api/notification/notification/${courseId}?page=0&size=10`);
+            const req = httpMock.expectOne(`/api/notification/${courseId}?page=0&size=10`);
             req.flush({ content: [], totalPages: 0 });
             vi.advanceTimersByTime(0);
         });
@@ -97,7 +97,7 @@ describe('CourseNotificationService', () => {
 
             const result = service.getNextNotificationPage(courseId);
 
-            const req = httpMock.expectOne(`/api/notification/notification/${courseId}?page=0&size=10`);
+            const req = httpMock.expectOne(`/api/notification/${courseId}?page=0&size=10`);
             expect(req.request.method).toBe('GET');
             req.flush(mockResponse);
             vi.advanceTimersByTime(0);
@@ -114,7 +114,7 @@ describe('CourseNotificationService', () => {
 
             service.getNextNotificationPage(courseId);
 
-            const req = httpMock.expectOne(`/api/notification/notification/${courseId}?page=0&size=10`);
+            const req = httpMock.expectOne(`/api/notification/${courseId}?page=0&size=10`);
             req.flush(null);
             vi.advanceTimersByTime(0);
 
@@ -132,7 +132,7 @@ describe('CourseNotificationService', () => {
 
             service.setNotificationStatus(courseId, notificationIds, statusType);
 
-            const req = httpMock.expectOne(`/api/notification/notification/${courseId}/status`);
+            const req = httpMock.expectOne(`/api/notification/${courseId}/status`);
             expect(req.request.method).toBe('PUT');
             expect(req.request.body).toEqual({
                 notificationIds,
@@ -149,7 +149,7 @@ describe('CourseNotificationService', () => {
 
             service.archiveAll(courseId);
 
-            const req = httpMock.expectOne(`/api/notification/notification/${courseId}/archive-all`);
+            const req = httpMock.expectOne(`/api/notification/${courseId}/archive-all`);
             expect(req.request.method).toBe('PUT');
             expect(req.request.body).toEqual({});
             req.flush({});
@@ -585,7 +585,7 @@ describe('CourseNotificationService', () => {
         it('should ignore in-flight pagination responses after logout', () => {
             const courseId = 7;
             scoped.getNextNotificationPage(courseId);
-            const inFlight = scopedHttpMock.expectOne(`/api/notification/notification/${courseId}?page=0&size=10`);
+            const inFlight = scopedHttpMock.expectOne(`/api/notification/${courseId}?page=0&size=10`);
 
             authState.next(undefined);
 

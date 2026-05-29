@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.notification.service.UserCourseNotificationStatusS
 // The legacy "api/communication/" prefix is kept for backwards compatibility with deployed clients and will be removed
 // once those clients have migrated. New clients should use the "api/notification/" prefix.
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/notification/", NotificationLegacyRestPaths.COMMUNICATION_PREFIX })
+@RequestMapping({ "api/notification/", NotificationLegacyRestPaths.COMMUNICATION_NOTIFICATION_PREFIX })
 public class UserCourseNotificationStatusResource {
 
     private static final Logger log = LoggerFactory.getLogger(UserCourseNotificationStatusResource.class);
@@ -47,7 +47,7 @@ public class UserCourseNotificationStatusResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @EnforceAtLeastStudentInCourse
-    @PutMapping("notification/{courseId}/status")
+    @PutMapping("{courseId}/status")
     public ResponseEntity<Void> updateNotificationStatus(@PathVariable Long courseId, @RequestBody UserCourseNotificationStatusUpdateRequestDTO requestDTO) {
         log.debug("REST request to update notification status to {} for notifications {} in course {}", requestDTO.statusType(), requestDTO.notificationIds(), courseId);
 
@@ -65,7 +65,7 @@ public class UserCourseNotificationStatusResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @EnforceAtLeastStudentInCourse
-    @PutMapping("notification/{courseId}/archive-all")
+    @PutMapping("{courseId}/archive-all")
     public ResponseEntity<Void> archiveAll(@PathVariable Long courseId) {
         log.debug("REST request to update notification status to ARCHIVED for all notifications in course {}", courseId);
 

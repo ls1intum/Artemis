@@ -56,8 +56,7 @@ class UserCourseNotificationStatusResourceIntegrationTest extends AbstractSpring
 
         String requestBody = "{\"statusType\":\"SEEN\", \"notificationIds\":[" + courseNotification.getId() + "]}";
 
-        request.performMvcRequest(
-                MockMvcRequestBuilders.put("/api/notification/notification/" + course.getId() + "/status").contentType(MediaType.APPLICATION_JSON).content(requestBody))
+        request.performMvcRequest(MockMvcRequestBuilders.put("/api/notification/" + course.getId() + "/status").contentType(MediaType.APPLICATION_JSON).content(requestBody))
                 .andExpect(status().isOk());
 
         var newStatus = userCourseNotificationStatusRepository.findByCourseNotificationId(courseNotification.getId());
@@ -76,8 +75,7 @@ class UserCourseNotificationStatusResourceIntegrationTest extends AbstractSpring
 
         String requestBody = "{\"statusType\":\"SEEN\", \"notificationIds\":[" + 999 + "]}";
 
-        request.performMvcRequest(
-                MockMvcRequestBuilders.put("/api/notification/notification/" + course.getId() + "/status").contentType(MediaType.APPLICATION_JSON).content(requestBody))
+        request.performMvcRequest(MockMvcRequestBuilders.put("/api/notification/" + course.getId() + "/status").contentType(MediaType.APPLICATION_JSON).content(requestBody))
                 .andExpect(status().isOk());
 
         var newStatus = userCourseNotificationStatusRepository.findByCourseNotificationId(courseNotification.getId());
@@ -102,8 +100,7 @@ class UserCourseNotificationStatusResourceIntegrationTest extends AbstractSpring
         String requestBody = "{\"statusType\":\"SEEN\", \"notificationIds\":[" + String.join(", ", notifications.stream().map(DomainObject::getId).map(Object::toString).toList())
                 + "]}";
 
-        request.performMvcRequest(
-                MockMvcRequestBuilders.put("/api/notification/notification/" + course.getId() + "/status").contentType(MediaType.APPLICATION_JSON).content(requestBody))
+        request.performMvcRequest(MockMvcRequestBuilders.put("/api/notification/" + course.getId() + "/status").contentType(MediaType.APPLICATION_JSON).content(requestBody))
                 .andExpect(status().isOk());
 
         for (var courseNotification : notifications) {
@@ -127,7 +124,7 @@ class UserCourseNotificationStatusResourceIntegrationTest extends AbstractSpring
             notifications.add(courseNotification);
         }
 
-        request.performMvcRequest(MockMvcRequestBuilders.put("/api/notification/notification/" + course.getId() + "/archive-all").contentType(MediaType.APPLICATION_JSON))
+        request.performMvcRequest(MockMvcRequestBuilders.put("/api/notification/" + course.getId() + "/archive-all").contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
         for (var courseNotification : notifications) {

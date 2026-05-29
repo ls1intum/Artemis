@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingPres
 // The legacy "api/communication/" prefix is kept for backwards compatibility with deployed clients and will be removed
 // once those clients have migrated. New clients should use the "api/notification/" prefix.
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/notification/", NotificationLegacyRestPaths.COMMUNICATION_PREFIX })
+@RequestMapping({ "api/notification/", NotificationLegacyRestPaths.COMMUNICATION_NOTIFICATION_PREFIX })
 public class CourseNotificationResource {
 
     private final CourseNotificationService courseNotificationService;
@@ -59,7 +59,7 @@ public class CourseNotificationResource {
      */
     // TODO: not a good REST URL design, consider changing courseId to a QueryParam or put it into the front of the URL: courses/{courseId}/notifications
     @EnforceAtLeastStudentInCourse
-    @GetMapping("notification/{courseId}")
+    @GetMapping("{courseId}")
     public ResponseEntity<CourseNotificationPageableDTO<CourseNotificationDTO>> getCourseNotifications(@PathVariable Long courseId, Pageable pageable) {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
                 .body(courseNotificationService.getCourseNotifications(pageable, courseId, userRepository.getUser().getId()));
@@ -71,7 +71,7 @@ public class CourseNotificationResource {
      * @return the ResponseEntity with status 200 (OK) and the list of all notification types and presets
      */
     @EnforceAtLeastStudent
-    @GetMapping("notification/info")
+    @GetMapping("info")
     public ResponseEntity<CourseNotificationInfoDTO> getCourseNotificationInfo() {
         var presetDTOs = courseNotificationSettingPresetRegistryService.getSettingPresetDTOs();
         var notificationTypes = courseNotificationRegistryService.getNotificationTypes();

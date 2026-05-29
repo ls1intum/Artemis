@@ -56,7 +56,7 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCPersonalAccessTokenManageme
 @Lazy
 @RestController
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/account/", AccountLegacyRestPaths.CORE_PREFIX })
+@RequestMapping({ "api/account/", AccountLegacyRestPaths.CORE_ACCOUNT_PREFIX })
 public class AccountResource {
 
     public static final String ENTITY_NAME = "user";
@@ -88,14 +88,14 @@ public class AccountResource {
     }
 
     /**
-     * PUT /account : update the provided account.
+     * PUT basic-information : update the basic information (name, email, language, image) of the current user's account.
      *
      * @param userDTO the current user information.
      * @return the ResponseEntity with status 200 (OK) when the user information is updated.
      * @throws EmailAlreadyUsedException {@code 400 (Bad Request)} if the email is already used.
      * @throws RuntimeException          {@code 500 (Internal Server Error)} if the user login wasn't found.
      */
-    @PutMapping("account")
+    @PutMapping("basic-information")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> saveAccount(@Valid @RequestBody UserDTO userDTO) {
         User currentUser = userRepository.getUser();
@@ -130,7 +130,7 @@ public class AccountResource {
      * @return the ResponseEntity with status 200 (OK) when the password has been changed.
      * @throws PasswordViolatesRequirementsException {@code 400 (Bad Request)} if the new password does not meet the requirements.
      */
-    @PostMapping("account/change-password")
+    @PostMapping("change-password")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> changePassword(@RequestBody PasswordChangeDTO passwordChangeDto) {
         User user = userRepository.getUser();
@@ -146,12 +146,12 @@ public class AccountResource {
     }
 
     /**
-     * PUT account/user-vcs-access-token : creates a vcsAccessToken for a user
+     * PUT user-vcs-access-token : creates a vcsAccessToken for a user
      *
      * @param expiryDate The expiry date which should be set for the token
      * @return the ResponseEntity with a userDTO containing the token: with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */
-    @PutMapping("account/user-vcs-access-token")
+    @PutMapping("user-vcs-access-token")
     @EnforceAtLeastStudent
     public ResponseEntity<UserDTO> createVcsAccessToken(@RequestParam("expiryDate") ZonedDateTime expiryDate) {
         User user = userRepository.getUser();
@@ -171,11 +171,11 @@ public class AccountResource {
     }
 
     /**
-     * DELETE account/user-vcs-access-token : deletes the vcsAccessToken of a user
+     * DELETE user-vcs-access-token : deletes the vcsAccessToken of a user
      *
      * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */
-    @DeleteMapping("account/user-vcs-access-token")
+    @DeleteMapping("user-vcs-access-token")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteVcsAccessToken() {
         User user = userRepository.getUser();
@@ -186,13 +186,13 @@ public class AccountResource {
     }
 
     /**
-     * GET account/participation-vcs-access-token : get the vcsToken for of a user for a participation
+     * GET participation-vcs-access-token : get the vcsToken for of a user for a participation
      *
      * @param participationId the participation for which the access token should be fetched
      *
      * @return the versionControlAccessToken belonging to the provided participation and user
      */
-    @GetMapping("account/participation-vcs-access-token")
+    @GetMapping("participation-vcs-access-token")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<String> getVcsAccessToken(@RequestParam("participationId") Long participationId) {
@@ -203,13 +203,13 @@ public class AccountResource {
     }
 
     /**
-     * PUT account/participation-vcs-access-token : add a vcsToken for of a user for a participation
+     * PUT participation-vcs-access-token : add a vcsToken for of a user for a participation
      *
      * @param participationId the participation for which the access token should be fetched
      *
      * @return the versionControlAccessToken belonging to the provided participation and user
      */
-    @PutMapping("account/participation-vcs-access-token")
+    @PutMapping("participation-vcs-access-token")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<String> createVcsAccessToken(@RequestParam("participationId") Long participationId) {
@@ -220,12 +220,12 @@ public class AccountResource {
     }
 
     /**
-     * PUT account/profile-picture : upload a profile picture
+     * PUT profile-picture : upload a profile picture
      *
      * @param file the image file that is being uploaded
      * @return the ResponseEntity with status 200 (OK) and with body of current user
      */
-    @PutMapping("account/profile-picture")
+    @PutMapping("profile-picture")
     @EnforceAtLeastStudent
     public ResponseEntity<UserDTO> updateProfilePicture(@RequestPart MultipartFile file) throws URISyntaxException {
         log.debug("REST request to update profile picture for logged-in user");
@@ -256,11 +256,11 @@ public class AccountResource {
     }
 
     /**
-     * DELETE account/profile-picture : remove current users profile picture
+     * DELETE profile-picture : remove current users profile picture
      *
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("account/profile-picture")
+    @DeleteMapping("profile-picture")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> removeProfilePicture() throws URISyntaxException {
         log.debug("REST request to remove profile picture for logged-in user");
@@ -273,12 +273,12 @@ public class AccountResource {
     }
 
     /**
-     * PUT account/enable-memiris : sets the memirisEnabled flag for the user to true or false.
+     * PUT enable-memiris : sets the memirisEnabled flag for the user to true or false.
      *
      * @param memirisEnabled the boolean indicating whether Memiris is enabled or not
      * @return the ResponseEntity with status 200 (OK)
      */
-    @PutMapping("account/enable-memiris")
+    @PutMapping("enable-memiris")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> setMemirisEnabled(@RequestBody boolean memirisEnabled) {
         User user = userRepository.getUser();

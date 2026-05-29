@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingServ
 // The legacy "api/communication/" prefix is kept for backwards compatibility with deployed clients and will be removed
 // once those clients have migrated. New clients should use the "api/notification/" prefix.
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/notification/", NotificationLegacyRestPaths.COMMUNICATION_PREFIX })
+@RequestMapping({ "api/notification/", NotificationLegacyRestPaths.COMMUNICATION_NOTIFICATION_PREFIX })
 public class UserCourseNotificationSettingResource {
 
     private static final Logger log = LoggerFactory.getLogger(UserCourseNotificationSettingResource.class);
@@ -55,7 +55,7 @@ public class UserCourseNotificationSettingResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @EnforceAtLeastStudentInCourse
-    @GetMapping("notification/{courseId}/settings")
+    @GetMapping("{courseId}/settings")
     public ResponseEntity<CourseNotificationSettingInfoDTO> getSettingInfo(@PathVariable Long courseId) {
         log.debug("REST request to get notification setting info for course {}", courseId);
 
@@ -72,7 +72,7 @@ public class UserCourseNotificationSettingResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @EnforceAtLeastStudentInCourse
-    @PutMapping("notification/{courseId}/setting-preset")
+    @PutMapping("{courseId}/setting-preset")
     public ResponseEntity<Void> setSettingPreset(@PathVariable Long courseId, @RequestBody Short presetId) {
         log.debug("REST request to update notification setting preset to {} in course {}", presetId, courseId);
 
@@ -95,7 +95,7 @@ public class UserCourseNotificationSettingResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @EnforceAtLeastStudentInCourse
-    @PutMapping("notification/{courseId}/setting-specification")
+    @PutMapping("{courseId}/setting-specification")
     public ResponseEntity<Void> setSettingSpecification(@PathVariable Long courseId, @RequestBody CourseNotificationSettingSpecificationRequestDTO notificationSpecifications) {
         log.debug("REST request to update notification setting specification in course {}", courseId);
 

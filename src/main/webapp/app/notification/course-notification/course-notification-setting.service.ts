@@ -16,7 +16,7 @@ import { AccountService } from 'app/core/auth/account.service';
     providedIn: 'root',
 })
 export class CourseNotificationSettingService implements OnDestroy {
-    private readonly apiEndpoint = '/api/notification/notification/';
+    private readonly apiEndpoint = '/api/notification/';
 
     private http = inject(HttpClient);
     private readonly accountService = inject(AccountService);
