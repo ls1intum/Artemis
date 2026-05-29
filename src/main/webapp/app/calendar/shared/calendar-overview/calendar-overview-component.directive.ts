@@ -5,7 +5,7 @@ import { Dayjs } from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ActivatedRoute } from '@angular/router';
-import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { faChevronLeft, faChevronRight, faXmark } from '@fortawesome/free-solid-svg-icons';
 
 @Directive()

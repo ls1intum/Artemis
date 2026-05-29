@@ -8,7 +8,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';

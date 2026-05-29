@@ -21,7 +21,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { UMLDiagramType } from '@tumaet/apollon';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';

@@ -5,7 +5,7 @@ import { TutorialGroupsRegistrationImportDialogComponent } from 'app/tutorialgro
 import { MockProvider } from 'ng-mocks';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ParseError, ParseResult, ParseWorkerConfig, parse } from 'papaparse';
 import { of } from 'rxjs';

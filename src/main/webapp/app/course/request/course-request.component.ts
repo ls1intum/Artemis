@@ -7,13 +7,13 @@ import dayjs from 'dayjs/esm';
 import { CourseRequestService } from 'app/course/request/course-request.service';
 import { CourseRequestFormComponent } from 'app/course/request/course-request-form.component';
 import { BaseCourseRequest } from 'app/course/request/course-request.model';
-import { AlertService } from 'app/shared/service/alert.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { getCurrentAndFutureSemesters, getDefaultSemester } from 'app/shared/util/semester-utils';
-import { regexValidator } from 'app/shared/form/shortname-validator.directive';
-import { onError } from 'app/shared/util/global.utils';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { getCurrentAndFutureSemesters, getDefaultSemester } from 'app/foundation/util/semester-utils';
+import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
+import { onError } from 'app/foundation/util/global.utils';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
 
 @Component({
     selector: 'jhi-course-request',

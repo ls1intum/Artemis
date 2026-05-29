@@ -6,7 +6,7 @@ import { firstValueFrom } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { CourseForImportDTO } from 'app/course/shared/entities/course.model';
-import { SortingOrder } from 'app/shared/table/pageable-table';
+import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { provideHttpClient } from '@angular/common/http';
 import { CourseForImportDTOPagingService } from 'app/course/shared/services/course-for-import-dto-paging-service';
 

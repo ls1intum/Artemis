@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
@@ -22,7 +23,8 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 @EnforceAdmin
 @Lazy
 @RestController
-@RequestMapping("api/core/admin/")
+@SuppressWarnings("deprecation")
+@RequestMapping({ "api/admin/", LegacyAdminRestPaths.CORE_ADMIN_PREFIX })
 public class AdminFeatureToggleResource {
 
     private final FeatureToggleService featureToggleService;

@@ -2,18 +2,18 @@ import { Component, Input, OnChanges, OnInit, ViewEncapsulation } from '@angular
 import dayjs from 'dayjs/esm';
 import { Exercise, IncludedInOverallScore, getCourseFromExercise, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgClass, NgStyle } from '@angular/common';
 import { DifficultyBadgeComponent } from '../difficulty-badge/difficulty-badge.component';
 import { IncludedInScoreBadgeComponent } from '../included-in-score-badge/included-in-score-badge.component';
 import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { getLatestResultOfStudentParticipation } from 'app/exercise/participation/participation.utils';
 
 @Component({

@@ -6,9 +6,9 @@ import { RouterLink } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ResultComponent } from 'app/exercise/result/result.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { TruncatePipe } from 'app/shared/pipes/truncate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { TruncatePipe } from 'app/foundation/pipes/truncate.pipe';
 
 @Component({
     selector: 'jhi-commits-info-row',

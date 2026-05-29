@@ -64,7 +64,7 @@ export class ExerciseTeamsPage {
      * single trailing HTTP rather than cascading through switchMap cancellations. We still
      * pre-fetch the tutor list via Playwright's request API and install a `page.route`
      * intercept so the typeahead's HTTP is fulfilled instantly regardless of server load —
-     * under heavy parallel multi-node load the real `GET /api/core/courses/{id}/tutors`
+     * under heavy parallel multi-node load the real `GET /api/course/courses/{id}/tutors`
      * round-trip can occasionally exceed the listbox wait timeout even with debounce.
      *
      * We deliberately serve the REAL server response (rather than a synthetic one) so the
@@ -80,8 +80,8 @@ export class ExerciseTeamsPage {
 
         const courseIdMatch = this.page.url().match(/\/course-management\/(\d+)/);
         const courseId = courseIdMatch?.[1];
-        const tutorsUrlSubstring = courseId ? `/api/core/courses/${courseId}/tutors` : undefined;
-        const routePattern = courseId ? `**/api/core/courses/${courseId}/tutors` : undefined;
+        const tutorsUrlSubstring = courseId ? `/api/course/courses/${courseId}/tutors` : undefined;
+        const routePattern = courseId ? `**/api/course/courses/${courseId}/tutors` : undefined;
         let routeInstalled = false;
 
         if (routePattern && courseId) {
@@ -184,7 +184,7 @@ export class ExerciseTeamsPage {
      * real (slower) network path with a more generous per-attempt timeout.
      */
     private async fetchTutorListWithRetries(courseId: string, expectedUsername: string): Promise<Buffer | undefined> {
-        const url = `api/core/courses/${courseId}/tutors`;
+        const url = `api/course/courses/${courseId}/tutors`;
         const maxAttempts = 8;
         const perAttemptTimeoutMs = 15_000;
         const backoffMs = 1_000;

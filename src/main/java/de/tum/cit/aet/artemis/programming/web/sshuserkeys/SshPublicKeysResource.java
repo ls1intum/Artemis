@@ -24,9 +24,9 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.localvc.service.sshuserkeys.UserSshPublicKeyService;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.dto.UserSshPublicKeyDTO;
-import de.tum.cit.aet.artemis.programming.service.sshuserkeys.UserSshPublicKeyService;
 
 @Profile(PROFILE_LOCALVC)
 @Lazy

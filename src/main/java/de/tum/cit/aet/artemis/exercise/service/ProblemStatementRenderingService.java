@@ -41,13 +41,13 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownRelativeToAbsolutePathAttributeProvider;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ResultSummaryInputDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TestFeedbackInputDTO;
+import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownRelativeToAbsolutePathAttributeProvider;
 import de.tum.cit.aet.artemis.programming.service.PlantUmlService;
 
 /**

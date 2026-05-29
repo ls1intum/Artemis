@@ -5,7 +5,7 @@ import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-s
 import { Bonus, BonusExample, BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 
 export type EntityResponseType = HttpResponse<Bonus>;
 
