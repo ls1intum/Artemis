@@ -10,7 +10,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { take } from 'rxjs';
 
 import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
-import { KnowledgeAreaDTO, KnowledgeAreasForImportDTO, StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
+import { KnowledgeAreaDTO, KnowledgeAreasForImportDTO, StandardizedCompetencyCatalogDTO, StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 
 describe('AdminStandardizedCompetencyService', () => {
@@ -159,8 +159,8 @@ describe('AdminStandardizedCompetencyService', () => {
     });
 
     it('should export competencies', async () => {
-        let actualResult = new HttpResponse<string>();
-        const expectedResult: string = '{ knowledgeAreas: [], sources: [] }';
+        let actualResult = new HttpResponse<StandardizedCompetencyCatalogDTO>();
+        const expectedResult: StandardizedCompetencyCatalogDTO = { knowledgeAreas: [], sources: [] };
         const returnedFromService = expectedResult;
 
         adminStandardizedCompetencyService
