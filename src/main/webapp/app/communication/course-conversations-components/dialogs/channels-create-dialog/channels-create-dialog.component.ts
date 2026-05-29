@@ -3,9 +3,9 @@ import { ChannelFormData, ChannelType } from 'app/communication/course-conversat
 import { Course } from 'app/course/shared/entities/course.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { AbstractDialogComponent } from 'app/communication/course-conversations-components/abstract-dialog.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ChannelFormComponent } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channel-form/channel-form.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-channels-create-dialog',

@@ -12,7 +12,7 @@ import { TutorialRegistrationsRegisterSearchBarComponent } from 'app/tutorialgro
 import { TutorialRegistrationsRegisterSearchBarStubComponent } from 'test/helpers/stubs/tutorialgroup/tutorial-registrations-register-search-bar-stub.component';
 import { TutorialRegistrationsStudentsTableComponent } from 'app/tutorialgroup/manage/tutorial-registrations-students-table/tutorial-registrations-students-table.component';
 import { TutorialRegistrationsStudentsTableStubComponent } from 'test/helpers/stubs/tutorialgroup/tutorial-registrations-students-table-stub.component';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';

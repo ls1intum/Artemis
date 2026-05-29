@@ -17,7 +17,7 @@ import { Subject, of, throwError } from 'rxjs';
 import { FileSyncState } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
 import { DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
@@ -36,7 +36,7 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { MockParticipationService } from 'test/helpers/mocks/service/mock-participation.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
@@ -56,7 +56,7 @@ import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/c
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
 import { WritableSignal, signal } from '@angular/core';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 
 /**
  * Creates a typed mock ProgrammingExercise for testing.
@@ -135,7 +135,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let artemisIntelligenceService: ArtemisIntelligenceService;
     let consistencyCheckService: ConsistencyCheckService;
     let sessionStorageService: SessionStorageService;
-    let reviewCommentService: jest.Mocked<Pick<ExerciseReviewCommentService, 'setExercise' | 'reloadThreads'>> & { threads: WritableSignal<any[]> };
+    let reviewCommentService: jest.Mocked<Pick<ExerciseReviewCommentService, 'setExercise' | 'reloadThreads' | 'getSelectedFeedbackThreadIdsForRepository'>> & {
+        threads: WritableSignal<any[]>;
+    };
 
     const mockIssues: ConsistencyIssue[] = [
         {
@@ -285,6 +287,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         reviewCommentService = {
             setExercise: jest.fn(),
             reloadThreads: jest.fn(),
+            getSelectedFeedbackThreadIdsForRepository: jest.fn(() => []),
             threads: signal([]),
         } as any;
         (reviewCommentService.reloadThreads as jest.Mock).mockImplementation((onLoaded?: () => void) => onLoaded?.());

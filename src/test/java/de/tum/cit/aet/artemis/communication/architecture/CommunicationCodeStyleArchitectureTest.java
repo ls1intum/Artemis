@@ -16,6 +16,6 @@ class CommunicationCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest
 
     @Override
     protected int dtoNameEndingThreshold() {
-        return 6;
+        return 4;
     }
 }

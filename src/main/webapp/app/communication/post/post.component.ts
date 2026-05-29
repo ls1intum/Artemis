@@ -28,7 +28,7 @@ import { PostingFooterComponent } from 'app/communication/posting-footer/posting
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
-import { deepClone } from 'app/shared/util/deep-clone.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -36,13 +36,13 @@ import { PostingHeaderComponent } from '../posting-header/posting-header.compone
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MessageInlineInputComponent } from '../message/message-inline-input/message-inline-input.component';
 import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { throwError } from 'rxjs';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ForwardedMessageComponent } from 'app/communication/forwarded-message/forwarded-message.component';
 import { CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
 

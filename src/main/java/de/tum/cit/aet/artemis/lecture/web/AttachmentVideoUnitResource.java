@@ -32,7 +32,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLearningObjectLink;
-import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
@@ -62,6 +61,7 @@ import de.tum.cit.aet.artemis.lecture.service.AttachmentVideoUnitService;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitProcessingService;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 import de.tum.cit.aet.artemis.lecture.service.SlideSplitterService;
+import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
 
 @Conditional(LectureEnabled.class)

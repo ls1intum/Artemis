@@ -34,13 +34,13 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { BehaviorSubject, Observable, ReplaySubject, Subscription, catchError, forkJoin, map, of, switchMap, take, tap, throwError } from 'rxjs';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/shared/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -177,7 +177,7 @@ export class MetisService implements OnDestroy {
                 this.courseWideTopicSubscription.unsubscribe();
             }
 
-            const coursewideTopic = `/topic/metis/courses/${this.courseId}`;
+            const coursewideTopic = `/topic/communication/courses/${this.courseId}`;
             this.courseWideTopicSubscription = this.websocketService.subscribe<MetisPostDTO>(coursewideTopic).subscribe((postDTO: MetisPostDTO) => {
                 this.handleNewOrUpdatedMessage(postDTO);
             });
@@ -840,7 +840,7 @@ export class MetisService implements OnDestroy {
 
     /**
      * Determines the channel to be used for websocket communication based on the current post context filter,
-     * i.e., when being on a lecture page, the context is a certain lectureId (e.g., 1), the channel is set to '/topic/metis/lectures/1';
+     * i.e., when being on a lecture page, the context is a certain lectureId (e.g., 1), the channel is set to '/topic/communication/lectures/1';
      * By calling the createWebsocketSubscription method with this channel as parameter, the metis service also subscribes to that messages in this channel
      */
     private createSubscriptionFromPostContextFilter(): void {

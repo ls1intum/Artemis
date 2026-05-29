@@ -11,12 +11,12 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Router } from '@angular/router';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CodeButtonComponent } from 'app/shared/components/buttons/code-button/code-button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
 import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 

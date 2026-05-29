@@ -3,11 +3,11 @@ import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { catchError, filter, map, tap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
-import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -18,7 +18,7 @@ import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/en
 import { DomainChange, DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
-import { isExamExercise } from 'app/shared/util/utils';
+import { isExamExercise } from 'app/foundation/util/utils';
 import { Subject } from 'rxjs';
 import { debounceTime, shareReplay } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';

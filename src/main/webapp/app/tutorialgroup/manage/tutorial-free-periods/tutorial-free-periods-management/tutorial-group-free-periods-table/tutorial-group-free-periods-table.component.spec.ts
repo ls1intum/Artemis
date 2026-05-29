@@ -7,8 +7,8 @@ import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/t
 import { Course } from 'app/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { MockPipe } from 'ng-mocks';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 

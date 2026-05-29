@@ -7,9 +7,9 @@ import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/course-lti-configuration.component';
-import { SortService } from 'app/shared/service/sort.service';
+import { SortService } from 'app/foundation/service/sort.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
@@ -17,7 +17,7 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
 import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { UMLDiagramType } from '@tumaet/apollon';
@@ -25,10 +25,10 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { CopyToClipboardButtonComponent } from 'app/shared/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 
 describe('Course LTI Configuration Component', () => {
     setupTestBed({ zoneless: true });
