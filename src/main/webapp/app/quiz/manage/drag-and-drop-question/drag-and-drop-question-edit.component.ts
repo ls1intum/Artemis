@@ -29,7 +29,7 @@ import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and
 import { cloneDeep } from 'lodash-es';
 import { round } from 'app/foundation/util/utils';
 import { MAX_SIZE_UNIT } from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
-import { ImageComponent, ImageLoadingStatus } from 'app/foundation/image/image.component';
+import { ImageComponent, ImageLoadingStatus } from 'app/ui/image/image.component';
 import { generateExerciseHintExplanation } from 'app/foundation/util/markdown.util';
 import { faFileImage } from '@fortawesome/free-regular-svg-icons';
 import { CdkDrag, CdkDragDrop, CdkDragPlaceholder, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';

@@ -18,7 +18,7 @@ import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { FitTextDirective } from 'app/quiz/shared/fit-text/fit-text.directive';
 import { MockProfileService } from 'src/test/javascript/spec/helpers/mocks/service/mock-profile.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ImageComponent } from 'app/foundation/image/image.component';
+import { ImageComponent } from 'app/ui/image/image.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('DragAndDropQuestionComponent', () => {

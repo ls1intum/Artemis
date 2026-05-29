@@ -11,7 +11,7 @@ import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, 
 import { CourseManagementService } from '../services/course-management.service';
 import { ColorSelectorComponent } from 'app/ui/color-selector/color-selector.component';
 import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI } from 'app/app.constants';
-import { ImageComponent } from 'app/foundation/image/image.component';
+import { ImageComponent } from 'app/ui/image/image.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';

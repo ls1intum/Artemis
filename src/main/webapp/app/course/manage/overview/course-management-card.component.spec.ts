@@ -19,7 +19,7 @@ import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LECTURE, MODU
 import { ComponentRef } from '@angular/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { ImageComponent } from 'app/foundation/image/image.component';
+import { ImageComponent } from 'app/ui/image/image.component';
 import { CourseManagementExerciseRowComponent } from 'app/course/manage/overview/course-management-exercise-row.component';
 import { CourseManagementOverviewStatisticsComponent } from 'app/course/manage/overview/course-management-overview-statistics.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

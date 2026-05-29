@@ -29,7 +29,7 @@ import { By } from '@angular/platform-browser';
 import { QuizConfiguration } from 'app/quiz/shared/entities/quiz-configuration.model';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
-import { ImageComponent } from 'app/foundation/image/image.component';
+import { ImageComponent } from 'app/ui/image/image.component';
 import { captureException } from '@sentry/angular';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import * as QuizStepWizardUtil from 'app/quiz/shared/questions/quiz-stepwizard.util';

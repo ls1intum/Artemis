@@ -5,7 +5,7 @@ import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.serv
 import { NgClass, NgTemplateOutlet, SlicePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ImageComponent } from 'app/foundation/image/image.component';
+import { ImageComponent } from 'app/ui/image/image.component';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { Course } from 'app/course/shared/entities/course.model';

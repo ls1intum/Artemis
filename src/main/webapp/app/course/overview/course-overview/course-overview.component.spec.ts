@@ -9,7 +9,7 @@ import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ImageComponent } from 'app/foundation/image/image.component';
+import { ImageComponent } from 'app/ui/image/image.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, TemplateRef, viewChild } from '@angular/core';
 import { By } from '@angular/platform-browser';

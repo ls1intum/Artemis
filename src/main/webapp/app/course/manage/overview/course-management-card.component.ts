@@ -27,7 +27,7 @@ import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { NgStyle } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { ImageComponent } from 'app/foundation/image/image.component';
+import { ImageComponent } from 'app/ui/image/image.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseManagementExerciseRowComponent } from './course-management-exercise-row.component';

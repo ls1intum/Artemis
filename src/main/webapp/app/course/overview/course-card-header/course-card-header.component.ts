@@ -1,5 +1,5 @@
 import { Component, OnInit, input } from '@angular/core';
-import { ImageComponent } from 'app/foundation/image/image.component';
+import { ImageComponent } from 'app/ui/image/image.component';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { RouterModule } from '@angular/router';
 import { CommonModule, SlicePipe } from '@angular/common';

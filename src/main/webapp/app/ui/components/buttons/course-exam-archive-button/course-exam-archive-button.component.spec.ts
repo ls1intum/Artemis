@@ -8,7 +8,7 @@ import { of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ImageComponent } from 'app/foundation/image/image.component';
+import { ImageComponent } from 'app/ui/image/image.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import dayjs from 'dayjs/esm';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
