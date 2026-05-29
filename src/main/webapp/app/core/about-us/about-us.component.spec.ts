@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AboutUsComponent } from 'app/core/about-us/about-us.component';
 import { ActivatedRoute } from '@angular/router';
-import { StaticContentService } from 'app/shared/service/static-content.service';
+import { StaticContentService } from 'app/foundation/service/static-content.service';
 import { AboutUsModel } from 'app/core/about-us/models/about-us-model';
 import { of } from 'rxjs';
 import { MockDirective, MockProvider } from 'ng-mocks';

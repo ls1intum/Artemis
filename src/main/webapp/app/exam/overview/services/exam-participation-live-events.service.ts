@@ -1,12 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { ConnectionState, WebsocketService } from 'app/shared/service/websocket.service';
+import { ConnectionState, WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import dayjs from 'dayjs/esm';
 import { BehaviorSubject, Observable, Subject, Subscription, distinct, filter, map, tap } from 'rxjs';
-import { convertDateFromServer } from 'app/shared/util/date.utils';
-import { User } from 'app/core/user/user.model';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { User } from 'app/account/user/user.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 
 const EVENT_ACKNOWLEDGEMENT_LOCAL_STORAGE_KEY = 'examLastAcknowledgedEvent';

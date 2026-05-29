@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
@@ -18,20 +20,19 @@ import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.communication.service.PostingService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostCreationResponseDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismPostUpdateRequestDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 
 @Conditional(PlagiarismEnabled.class)
@@ -101,34 +102,36 @@ public class PlagiarismPostService extends PostingService {
     /**
      * Checks course, user, and post-validity,
      * updates non-restricted field of the post, persists the post,
-     * and ensures that sensitive information is filtered out
+     * and ensures that sensitive information is filtered out.
      *
      * @param courseId id of course the post belongs to
      * @param postId   id of the post to update
-     * @param post     post to update
+     * @param request  update payload carrying the fields the instructor may mutate
      * @return updated post that was persisted
      */
-    public Post updatePost(Long courseId, Long postId, Post post) {
-        // check
-        if (post.getId() == null || !Objects.equals(post.getId(), postId)) {
-            throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idNull");
-        }
-
+    public Post updatePost(Long courseId, Long postId, PlagiarismPostUpdateRequestDTO request) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
         Post existingPost = postRepository.findPostByIdElseThrow(postId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
 
-        parseUserMentions(course, post.getContent());
+        parseUserMentions(course, request.content());
 
-        boolean hasContentChanged = !Objects.equals(existingPost.getContent(), post.getContent());
+        boolean hasContentChanged = request.content() != null && !Objects.equals(existingPost.getContent(), request.content());
         if (hasContentChanged) {
             existingPost.setUpdatedDate(ZonedDateTime.now());
         }
 
-        // update: allow overwriting of values only for depicted fields if the user is at least an INSTRUCTOR
-        existingPost.setTitle(post.getTitle());
-        existingPost.setContent(post.getContent());
+        // Partial-update semantics: only overwrite a field when the client explicitly sent a non-null value.
+        // Omitting `title` from the JSON body leaves the existing title untouched; sending `"title": null` is
+        // equivalent to omission here. Use a sentinel field on the DTO if a future caller needs to explicitly
+        // clear the title.
+        if (request.title() != null) {
+            existingPost.setTitle(request.title());
+        }
+        if (request.content() != null) {
+            existingPost.setContent(request.content());
+        }
 
         Post updatedPost = postRepository.save(existingPost);
 

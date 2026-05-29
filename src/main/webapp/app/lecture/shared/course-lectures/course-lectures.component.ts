@@ -1,18 +1,18 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { NgClass } from '@angular/common';
-import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
-import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/shared/types/sidebar';
-import { LtiService } from 'app/shared/service/lti.service';
+import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
+import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
+import { LtiService } from 'app/foundation/service/lti.service';
 import { forkJoin } from 'rxjs';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -41,7 +41,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
 @Component({
     selector: 'jhi-course-lectures',
     templateUrl: './course-lectures.component.html',
-    styleUrls: ['../../../core/course/overview/course-overview/course-overview.scss'],
+    styleUrls: ['../../../course/overview/course-overview/course-overview.scss'],
     imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
 })
 export class CourseLecturesComponent implements OnInit, OnDestroy {

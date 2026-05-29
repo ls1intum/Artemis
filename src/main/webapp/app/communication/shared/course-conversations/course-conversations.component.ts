@@ -51,17 +51,17 @@ import { ConversationDTO } from 'app/communication/shared/entities/conversation/
 import { FaqState } from 'app/communication/shared/entities/faq.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Posting, PostingType, SavedPostStatus, toSavedPostStatus } from 'app/communication/shared/entities/posting.model';
-import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
-import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
-import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
-import { FeatureActivationComponent } from 'app/shared/feature-activation/feature-activation.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
-import { AlertService } from 'app/shared/service/alert.service';
-import { EventManager } from 'app/shared/service/event-manager.service';
-import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
-import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/shared/types/sidebar';
+import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
+import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
+import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
+import { UserPublicInfoDTO } from 'app/account/user/user.model';
+import { FeatureActivationComponent } from 'app/shared-ui/feature-activation/feature-activation.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
+import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
 import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map, take, takeUntil } from 'rxjs/operators';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
@@ -127,7 +127,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
 @Component({
     selector: 'jhi-course-conversations',
     templateUrl: './course-conversations.component.html',
-    styleUrls: ['../../../core/course/overview/course-overview/course-overview.scss', './course-conversations.component.scss'],
+    styleUrls: ['../../../course/overview/course-overview/course-overview.scss', './course-conversations.component.scss'],
     encapsulation: ViewEncapsulation.None,
     providers: [MetisService, LinkifyService, LinkPreviewService],
     imports: [
