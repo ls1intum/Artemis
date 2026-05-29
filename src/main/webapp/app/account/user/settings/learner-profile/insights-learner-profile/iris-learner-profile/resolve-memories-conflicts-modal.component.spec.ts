@@ -5,7 +5,7 @@ import { ResolveMemoriesConflictsModalComponent } from './resolve-memories-confl
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockProvider } from 'ng-mocks';
 import { IrisMemoriesHttpService } from 'app/iris/overview/services/iris-memories-http.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { of, throwError } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

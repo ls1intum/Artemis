@@ -13,10 +13,10 @@ export class LegalDocumentService {
 
     private resourceUrlPublicPrivacyStatement = 'api/core/public/privacy-statement';
     private resourceUrlPublicImprint = 'api/core/public/imprint';
-    private resourceUrlImprintForUpdate = 'api/core/admin/imprint-for-update';
-    private resourceUrlPrivacyStatementForUpdate = 'api/core/admin/privacy-statement-for-update';
-    private resourceUrlImprintUpdate = 'api/core/admin/imprint';
-    private resourceUrlPrivacyStatementUpdate = 'api/core/admin/privacy-statement';
+    private resourceUrlImprintForUpdate = 'api/admin/imprint-for-update';
+    private resourceUrlPrivacyStatementForUpdate = 'api/admin/privacy-statement-for-update';
+    private resourceUrlImprintUpdate = 'api/admin/imprint';
+    private resourceUrlPrivacyStatementUpdate = 'api/admin/privacy-statement';
 
     getPrivacyStatement(language: LegalDocumentLanguage): Observable<PrivacyStatement> {
         return this.getRequestToResource(language, LegalDocumentType.PRIVACY_STATEMENT) as Observable<PrivacyStatement>;

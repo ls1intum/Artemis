@@ -1,7 +1,7 @@
 import { Component, input, output } from '@angular/core';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { NgClass } from '@angular/common';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-exam-mode-picker',

@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed,
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft, faFileLines } from '@fortawesome/free-solid-svg-icons';
 import { Router, RouterLink } from '@angular/router';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SkeletonModule } from 'primeng/skeleton';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
 import { LectureSearchService } from 'app/core/navbar/global-search/services/lecture-search.service';

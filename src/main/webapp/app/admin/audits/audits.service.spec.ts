@@ -37,7 +37,7 @@ describe('AuditsService', () => {
         });
 
         const req = httpMock.expectOne({ method: 'GET' });
-        expect(req.request.url).toBe('api/core/admin/audits');
+        expect(req.request.url).toBe('api/admin/audits');
         req.flush([audit]);
     });
 

@@ -1,9 +1,9 @@
 import { Component, ElementRef, NgZone, OnInit, SecurityContext, inject, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
+import { SafeResourceUrlPipe } from 'app/foundation/pipes/safe-resource-url.pipe';
 
 /**
  * Component responsible for sending deep linking content.

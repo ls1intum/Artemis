@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseMaterialImportOptionsDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseMaterialImportResultDTO;
@@ -33,7 +34,8 @@ import de.tum.cit.aet.artemis.course.service.CourseMaterialImportService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/core/")
+@SuppressWarnings("deprecation")
+@RequestMapping({ "api/course/", CourseLegacyRestPaths.CORE_PREFIX })
 @Lazy
 public class CourseMaterialImportResource {
 

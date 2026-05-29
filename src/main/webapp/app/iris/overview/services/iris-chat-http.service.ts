@@ -9,7 +9,7 @@ import dayjs from 'dayjs/esm';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
-import { randomInt } from 'app/shared/util/utils';
+import { randomInt } from 'app/foundation/util/utils';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 
 export type Response<T> = Observable<HttpResponse<T>>;

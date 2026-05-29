@@ -9,7 +9,7 @@ import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-fo
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 import { ActivatedRoute } from '@angular/router';

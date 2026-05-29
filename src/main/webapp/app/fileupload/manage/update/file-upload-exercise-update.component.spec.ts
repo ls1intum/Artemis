@@ -73,13 +73,13 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
-import 'app/shared/util/array.extension';
+import 'app/foundation/util/array.extension';
 
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 import { FileUploadExerciseUpdateComponent } from './file-upload-exercise-update.component';
 import { FileUploadExerciseService } from '../services/file-upload-exercise.service';
@@ -92,23 +92,23 @@ import { EditType } from 'app/exercise/util/exercise.utils';
 
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
 import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
-import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
-import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
+import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 // NOTE: Do NOT import MarkdownEditorMonacoComponent here - it transitively imports monaco-editor
 // which causes static initializers to run before mocks are applied.

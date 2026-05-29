@@ -60,7 +60,7 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = USER_LOGIN, roles = "USER", password = FAKE_TOKEN)
     void shouldRegisterTokenWhenCredentialsAreValid() throws Exception {
         PushNotificationRegisterBodyDTO body = new PushNotificationRegisterBodyDTO(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE);
-        PushNotificationRegisterDTO response = request.postWithResponseBody("/api/communication/push_notification/register", body, PushNotificationRegisterDTO.class);
+        PushNotificationRegisterDTO response = request.postWithResponseBody("/api/notification/push_notification/register", body, PushNotificationRegisterDTO.class);
         assertThat(response.secretKey()).isNotEmpty();
 
         var deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user), PushNotificationDeviceType.FIREBASE);
@@ -76,7 +76,7 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
     void shouldRegisterVersionCodeWhenSupplied() throws Exception {
         PushNotificationRegisterBodyDTO body = new PushNotificationRegisterBodyDTO(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE, PushNotificationApiType.DEFAULT,
                 "1.1.1");
-        PushNotificationRegisterDTO response = request.postWithResponseBody("/api/communication/push_notification/register", body, PushNotificationRegisterDTO.class);
+        PushNotificationRegisterDTO response = request.postWithResponseBody("/api/notification/push_notification/register", body, PushNotificationRegisterDTO.class);
         assertThat(response.secretKey()).isNotEmpty();
 
         var deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user), PushNotificationDeviceType.FIREBASE);
@@ -104,7 +104,7 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
         shouldRegisterTokenWhenCredentialsAreValid();
 
         PushNotificationUnregisterRequestDTO body = new PushNotificationUnregisterRequestDTO(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE);
-        request.delete("/api/communication/push_notification/unregister", HttpStatus.OK, body);
+        request.delete("/api/notification/push_notification/unregister", HttpStatus.OK, body);
         var deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Set.of(user), PushNotificationDeviceType.FIREBASE);
         assertThat(deviceConfigurations).isEmpty();
     }
@@ -113,6 +113,6 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = USER_LOGIN, roles = "USER")
     void testUnregisterNonExistentRegistration() throws Exception {
         PushNotificationUnregisterRequestDTO body = new PushNotificationUnregisterRequestDTO("Does not exist", PushNotificationDeviceType.FIREBASE);
-        request.delete("/api/communication/push_notification/unregister", HttpStatus.NOT_FOUND, body);
+        request.delete("/api/notification/push_notification/unregister", HttpStatus.NOT_FOUND, body);
     }
 }

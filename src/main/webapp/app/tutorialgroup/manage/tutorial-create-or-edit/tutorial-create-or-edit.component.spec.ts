@@ -8,9 +8,9 @@ import { Observable, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { AlertService } from 'app/shared/service/alert.service';
-import { ValidationStatus } from 'app/shared/util/validation';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ValidationStatus } from 'app/foundation/util/validation';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 import { TutorialEditLanguagesInputComponent } from 'app/tutorialgroup/manage/tutorial-edit-languages-input/tutorial-edit-languages-input.component';
 import {

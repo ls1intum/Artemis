@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, effect, model, signal, viewChild } from '@angular/core';
-import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 
 @Component({
     selector: 'jhi-monaco-editor-fit-text',

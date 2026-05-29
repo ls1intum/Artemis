@@ -1,9 +1,9 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 
