@@ -43,6 +43,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     exampleSolutionPublicationDateSet = input(true);
     isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
     customizeBuildPlan = input<boolean | undefined>(undefined);
+    skipAutomaticAfterDueDatePreview = input(false);
     exercise = input.required<ProgrammingExercise>();
 
     releaseDate = model<Dayjs | undefined>();
@@ -246,8 +247,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     }
 
     private updateAutomaticAfterDueDatePreview() {
-        const programmingExercise = this.exercise();
-        if (!this.isLocalCIEnabled || (!programmingExercise.id && !programmingExercise.programmingLanguage)) {
+        if (!this.isLocalCIEnabled || this.skipAutomaticAfterDueDatePreview()) {
             return;
         }
 
@@ -268,12 +268,14 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
             hasAfterDueDateBuildPhase = this.getImportedHasAfterDueDateBuildPhase();
         }
 
+        const programmingExercise = this.exercise();
+
         const requestData: AutomaticAfterDueDatePreviewRequest = {
             programmingExerciseId: programmingExercise.id,
             examId: this.isExamMode() ? (routeExamId ? Number(routeExamId) : undefined) : undefined,
             dueDate: this.isExamMode() ? undefined : convertDateFromClient(dueDate),
             hasAfterDueDateBuildPhase: hasAfterDueDateBuildPhase,
-            programmingLanguage: programmingExercise.programmingLanguage!,
+            programmingLanguage: programmingExercise.programmingLanguage,
             projectType: programmingExercise.projectType,
             staticCodeAnalysisEnabled: !!programmingExercise.staticCodeAnalysisEnabled,
             sequentialTestRuns: !!programmingExercise.buildConfig?.sequentialTestRuns,
