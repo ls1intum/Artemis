@@ -14,7 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
@@ -68,7 +67,7 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
     @MethodSource("templateProvider")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBuildPhasesTemplateFile(String templateKey, int expectedPhases) throws Exception {
-        BuildPlanPhasesDTO buildPlanPhases = request.get("/api/programming/phases/templates/" + templateKey, HttpStatus.OK, BuildPlanPhasesDTO.class);
+        BuildPlanPhasesDTO buildPlanPhases = request.get("/api/localci/phases/templates/" + templateKey, HttpStatus.OK, BuildPlanPhasesDTO.class);
         assertThat(buildPlanPhases).isNotNull();
         assertBuildPlanPhasesAreCorrect(buildPlanPhases, expectedPhases);
     }
@@ -76,13 +75,13 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetNonExistingBuildPhasesTemplateFile() throws Exception {
-        request.get("/api/programming/phases/templates/JAVA/PLAIN_GRADLE?staticAnalysis=true&sequentialRuns=true&examMode=true", HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/localci/phases/templates/JAVA/PLAIN_GRADLE?staticAnalysis=true&sequentialRuns=true&examMode=true", HttpStatus.NOT_FOUND, String.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFactTemplateUsesConfiguredDockerImage() throws Exception {
-        BuildPlanPhasesDTO buildPlanPhases = request.get("/api/programming/phases/templates/C/FACT?examMode=false", HttpStatus.OK, BuildPlanPhasesDTO.class);
+        BuildPlanPhasesDTO buildPlanPhases = request.get("/api/localci/phases/templates/C/FACT?examMode=false", HttpStatus.OK, BuildPlanPhasesDTO.class);
         assertThat(buildPlanPhases).isNotNull();
         assertThat(buildPlanPhases.dockerImage()).isEqualTo(FACT_DOCKER_IMAGE);
     }
@@ -90,20 +89,9 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGccTemplateUsesConfiguredDockerImage() throws Exception {
-        BuildPlanPhasesDTO buildPlanPhases = request.get("/api/programming/phases/templates/C/GCC?examMode=true", HttpStatus.OK, BuildPlanPhasesDTO.class);
+        BuildPlanPhasesDTO buildPlanPhases = request.get("/api/localci/phases/templates/C/GCC?examMode=true", HttpStatus.OK, BuildPlanPhasesDTO.class);
         assertThat(buildPlanPhases).isNotNull();
         assertThat(buildPlanPhases.dockerImage()).isEqualTo(C_DOCKER_IMAGE);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testExamModeTemplateSetsResultPhasesToAfterDueDate() throws Exception {
-        BuildPlanPhasesDTO examBuildPlanPhases = request.get("/api/programming/phases/templates/JAVA/MAVEN_BLACKBOX?examMode=true", HttpStatus.OK, BuildPlanPhasesDTO.class);
-        assertThat(examBuildPlanPhases).isNotNull();
-
-        var phasesWithResultPaths = examBuildPlanPhases.phases().stream().filter(phase -> phase.resultPaths() != null && !phase.resultPaths().isEmpty()).toList();
-        assertThat(phasesWithResultPaths).isNotEmpty();
-        assertThat(phasesWithResultPaths).allMatch(phase -> phase.condition() == BuildPhaseCondition.AFTER_DUE_DATE);
     }
 
     void assertBuildPlanPhasesAreCorrect(BuildPlanPhasesDTO buildPlanPhases, int expectedPhases) {

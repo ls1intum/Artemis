@@ -115,6 +115,11 @@ import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestReposito
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.jenkins.service.build_plan.JenkinsBuildPlanUtils;
+import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
+import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -1879,7 +1884,7 @@ public class ProgrammingExerciseTestService {
      */
     private void waitForSingleRepositoryToBeClonable(String repositoryUri, String repoType) {
         try {
-            var localVcUri = new de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri(repositoryUri);
+            var localVcUri = new de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri(repositoryUri);
             Path repoPath = localVcUri.getLocalRepositoryPath(localVCBasePath);
 
             await().atMost(15, TimeUnit.SECONDS).pollInterval(200, TimeUnit.MILLISECONDS).until(() -> {
@@ -1947,7 +1952,7 @@ public class ProgrammingExerciseTestService {
      */
     private void verifyLocalVcRepositoryExists(String repositoryUri, String repoType) {
         try {
-            var localVcUri = new de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri(repositoryUri);
+            var localVcUri = new de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri(repositoryUri);
             Path repoPath = localVcUri.getLocalRepositoryPath(localVCBasePath);
             assertThat(Files.exists(repoPath)).as("LocalVC %s repository should exist at %s", repoType, repoPath).isTrue();
             assertThat(Files.exists(repoPath.resolve("HEAD"))).as("LocalVC %s repository should have HEAD file", repoType).isTrue();
@@ -2063,7 +2068,7 @@ public class ProgrammingExerciseTestService {
         // Verify that repository URIs are properly set before triggering archive
         verifyExerciseRepositoryUrisAreSet();
 
-        request.put("/api/core/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
+        request.put("/api/course/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
         await().until(() -> courseRepository.findById(course.getId()).orElseThrow().getCourseArchivePath() != null);
 
         var updatedCourse = courseRepository.findByIdElseThrow(course.getId());
@@ -2251,7 +2256,7 @@ public class ProgrammingExerciseTestService {
         testArchiveCourseWithProgrammingExercise();
 
         // Download the archive
-        var archive = request.getFile("/api/core/courses/" + course.getId() + "/download-archive", HttpStatus.OK, new LinkedMultiValueMap<>());
+        var archive = request.getFile("/api/course/courses/" + course.getId() + "/download-archive", HttpStatus.OK, new LinkedMultiValueMap<>());
         assertThat(archive).isNotNull();
         assertThat(archive).exists();
 
@@ -2728,7 +2733,7 @@ public class ProgrammingExerciseTestService {
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         programmingExerciseRepository.save(exercise);
 
-        CourseForDashboardDTO courseForDashboardFromServer = request.get("/api/core/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard",
+        CourseForDashboardDTO courseForDashboardFromServer = request.get("/api/course/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard",
                 HttpStatus.OK, CourseForDashboardDTO.class);
         Course courseFromServer = courseForDashboardFromServer.course();
         ProgrammingExercise programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);
@@ -2739,7 +2744,7 @@ public class ProgrammingExerciseTestService {
         exercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(exercise);
 
-        courseForDashboardFromServer = request.get("/api/core/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+        courseForDashboardFromServer = request.get("/api/course/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
                 CourseForDashboardDTO.class);
         courseFromServer = courseForDashboardFromServer.course();
         programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);
@@ -2750,7 +2755,7 @@ public class ProgrammingExerciseTestService {
         exercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
         programmingExerciseRepository.save(exercise);
 
-        courseForDashboardFromServer = request.get("/api/core/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+        courseForDashboardFromServer = request.get("/api/course/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
                 CourseForDashboardDTO.class);
         courseFromServer = courseForDashboardFromServer.course();
         programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);

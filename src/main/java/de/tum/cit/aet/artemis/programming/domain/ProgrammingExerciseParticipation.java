@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
 import de.tum.cit.aet.artemis.exercise.domain.participation.ParticipationInterface;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 
 public interface ProgrammingExerciseParticipation extends ParticipationInterface {
 

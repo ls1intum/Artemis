@@ -9,7 +9,7 @@ import { catchError, switchMap } from 'rxjs/operators';
 export class BuildPhasesTemplateService {
     private http = inject(HttpClient);
 
-    private resourceUrl = 'api/programming/phases/templates';
+    private resourceUrl = 'api/localci/phases/templates';
 
     // shared signal
     readonly buildPlan = signal<BuildPlanPhases | undefined>(BuildPhasesTemplateService.createDefaultBuildPlan());

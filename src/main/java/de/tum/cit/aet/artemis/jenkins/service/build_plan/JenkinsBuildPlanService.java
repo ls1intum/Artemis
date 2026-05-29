@@ -29,6 +29,8 @@ import de.tum.cit.aet.artemis.jenkins.service.JenkinsEndpoints;
 import de.tum.cit.aet.artemis.jenkins.service.JenkinsInternalUrlService;
 import de.tum.cit.aet.artemis.jenkins.service.JenkinsXmlConfigBuilder;
 import de.tum.cit.aet.artemis.jenkins.service.jobs.JenkinsJobService;
+import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.localci.service.ci.notification.dto.TestResultsDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -38,8 +40,6 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
-import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResultsDTO;
 
 @Lazy
 @Service
