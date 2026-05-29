@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.dto.export;
+package de.tum.cit.aet.artemis.iris.dto.export;
 
 import java.time.ZonedDateTime;
 import java.util.List;

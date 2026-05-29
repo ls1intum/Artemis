@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.dto.export;
+package de.tum.cit.aet.artemis.atlas.dto.export;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
