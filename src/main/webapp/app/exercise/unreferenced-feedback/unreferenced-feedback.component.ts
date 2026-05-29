@@ -1,4 +1,4 @@
-import { Component, Input, inject, input, output } from '@angular/core';
+import { Component, inject, input, model, output } from '@angular/core';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -15,7 +15,6 @@ export class UnreferencedFeedbackComponent {
 
     FeedbackType = FeedbackType;
 
-    unreferencedFeedback: Feedback[] = [];
     assessmentsAreValid: boolean;
 
     readonly readOnly = input<boolean>(undefined!);
@@ -28,24 +27,24 @@ export class UnreferencedFeedbackComponent {
      */
     readonly addReferenceIdForExampleSubmission = input(false);
 
-    // TODO: Skipped for migration because:
-    //  Accessor inputs cannot be migrated as they are too complex.
-    @Input() set feedbacks(feedbacks: Feedback[]) {
-        this.unreferencedFeedback = [...feedbacks];
-    }
-
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() feedbackSuggestions: Feedback[] = [];
-
-    readonly feedbacksChange = output<Feedback[]>();
+    readonly feedbacks = model<Feedback[]>([]);
+    readonly feedbackSuggestions = model<Feedback[]>([]);
     readonly onAcceptSuggestion = output<Feedback>();
     readonly onDiscardSuggestion = output<Feedback>();
 
+    get unreferencedFeedback(): Feedback[] {
+        return this.feedbacks();
+    }
+
+    set unreferencedFeedback(feedbacks: Feedback[]) {
+        this.feedbacks.set([...feedbacks]);
+    }
+
     public deleteFeedback(feedbackToDelete: Feedback): void {
-        const indexToDelete = this.unreferencedFeedback.indexOf(feedbackToDelete);
-        this.unreferencedFeedback.splice(indexToDelete, 1);
-        this.feedbacksChange.emit(this.unreferencedFeedback);
+        const unreferencedFeedback = [...this.unreferencedFeedback];
+        const indexToDelete = unreferencedFeedback.indexOf(feedbackToDelete);
+        unreferencedFeedback.splice(indexToDelete, 1);
+        this.unreferencedFeedback = unreferencedFeedback;
         this.validateFeedback();
     }
 
@@ -73,14 +72,15 @@ export class UnreferencedFeedbackComponent {
      * @param feedback The feedback to update
      */
     updateFeedback(feedback: Feedback) {
-        const indexToUpdate = this.unreferencedFeedback.indexOf(feedback);
+        const unreferencedFeedback = [...this.unreferencedFeedback];
+        const indexToUpdate = unreferencedFeedback.indexOf(feedback);
         if (indexToUpdate < 0) {
-            this.unreferencedFeedback.push(feedback);
+            unreferencedFeedback.push(feedback);
         } else {
-            this.unreferencedFeedback[indexToUpdate] = feedback;
+            unreferencedFeedback[indexToUpdate] = feedback;
         }
+        this.unreferencedFeedback = unreferencedFeedback;
         this.validateFeedback();
-        this.feedbacksChange.emit(this.unreferencedFeedback);
     }
 
     public addUnreferencedFeedback(): void {
@@ -92,9 +92,8 @@ export class UnreferencedFeedbackComponent {
             feedback.reference = this.generateNewUnreferencedFeedbackReference().toString();
         }
 
-        this.unreferencedFeedback.push(feedback);
+        this.unreferencedFeedback = [...this.unreferencedFeedback, feedback];
         this.validateFeedback();
-        this.feedbacksChange.emit(this.unreferencedFeedback);
     }
 
     /**
@@ -119,7 +118,7 @@ export class UnreferencedFeedbackComponent {
      * Accept a feedback suggestion: Make it "real" feedback and remove the suggestion card
      */
     acceptSuggestion(feedback: Feedback) {
-        this.feedbackSuggestions = this.feedbackSuggestions.filter((f) => f !== feedback); // Remove the suggestion card
+        this.feedbackSuggestions.update((feedbackSuggestions) => feedbackSuggestions.filter((f) => f !== feedback)); // Remove the suggestion card
         // We need to change the feedback type to "manual" because non-manual feedback is never editable in the editor
         // and will be filtered out in all kinds of places
         feedback.type = FeedbackType.MANUAL_UNREFERENCED;
@@ -133,7 +132,7 @@ export class UnreferencedFeedbackComponent {
      * Discard a feedback suggestion: Remove the suggestion card and emit the event
      */
     discardSuggestion(feedback: Feedback) {
-        this.feedbackSuggestions = this.feedbackSuggestions.filter((f) => f !== feedback); // Remove the suggestion card
+        this.feedbackSuggestions.update((feedbackSuggestions) => feedbackSuggestions.filter((f) => f !== feedback)); // Remove the suggestion card
         this.onDiscardSuggestion.emit(feedback);
     }
 

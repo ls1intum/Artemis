@@ -8,7 +8,7 @@
         ></button>
         <div class="row mt-4">
             <h4 class="col-12" jhiTranslate="artemisApp.assessment.detail.feedback"></h4>
-            @if (unreferencedFeedback.length + feedbackSuggestions.length === 0) {
+            @if (unreferencedFeedback.length + feedbackSuggestions().length === 0) {
                 <div class="col-12 col-lg-8 col-xl-6">
                     <div class="alert alert-secondary text-center" role="alert">
                         <p jhiTranslate="artemisApp.fileUploadAssessment.assessInstructionWithDropOption"></p>
@@ -28,7 +28,7 @@
                     />
                 </div>
             }
-            @for (suggestion of feedbackSuggestions; track suggestion) {
+            @for (suggestion of feedbackSuggestions(); track suggestion) {
                 <div class="col-12 col-lg-6 col-xl-6">
                     <jhi-unreferenced-feedback-detail
                         [feedback]="suggestion"
