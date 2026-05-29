@@ -5,9 +5,9 @@ import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedbac
 import { Dayjs } from 'dayjs/esm';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { Subject } from 'rxjs';
+import { EMPTY, Subject } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { map } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { AutomaticAfterDueDatePreviewRequest, ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { FormsModule } from '@angular/forms';
@@ -15,7 +15,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { NgStyle } from '@angular/common';
 import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 import { isEqual } from 'lodash-es';
@@ -80,9 +80,30 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     formValidChanges = new Subject<boolean>();
     isAthenaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA);
     isLocalCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
+
     private previousAutomaticAfterDueDatePreviewRequest: AutomaticAfterDueDatePreviewRequest | undefined = undefined;
+    private automaticAfterDueDatePreviewRequests = new Subject<AutomaticAfterDueDatePreviewRequest>();
 
     constructor() {
+        this.automaticAfterDueDatePreviewRequests
+            .pipe(
+                switchMap((requestData) =>
+                    this.programmingExerciseService.previewAutomaticAfterDueDateDate(requestData).pipe(
+                        catchError(() => {
+                            this.buildAndTestStudentSubmissionsAfterDueDate.set(undefined);
+                            this.isDatePickerForRunningTestsAfterDueDateVisible.set(false);
+                            this.previousAutomaticAfterDueDatePreviewRequest = undefined;
+                            return EMPTY;
+                        }),
+                    ),
+                ),
+                takeUntilDestroyed(),
+            )
+            .subscribe((previewDate) => {
+                this.buildAndTestStudentSubmissionsAfterDueDate.set(previewDate);
+                this.isDatePickerForRunningTestsAfterDueDateVisible.set(previewDate !== undefined);
+            });
+
         effect(() => {
             if (this.isLocalCIEnabled) {
                 return;
@@ -292,17 +313,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
             return;
         }
 
-        this.programmingExerciseService.previewAutomaticAfterDueDateDate(requestData).subscribe({
-            next: (previewDate) => {
-                this.buildAndTestStudentSubmissionsAfterDueDate.set(previewDate);
-                this.isDatePickerForRunningTestsAfterDueDateVisible.set(previewDate !== undefined);
-            },
-            error: () => {
-                this.buildAndTestStudentSubmissionsAfterDueDate.set(undefined);
-                this.isDatePickerForRunningTestsAfterDueDateVisible.set(false);
-                this.previousAutomaticAfterDueDatePreviewRequest = undefined;
-            },
-        });
+        this.automaticAfterDueDatePreviewRequests.next(requestData);
     }
 
     private getImportedHasAfterDueDateBuildPhase(): boolean | undefined {

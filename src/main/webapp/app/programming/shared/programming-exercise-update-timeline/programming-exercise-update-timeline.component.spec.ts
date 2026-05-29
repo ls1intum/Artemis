@@ -5,7 +5,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ProgrammingExerciseUpdateTimelineComponent } from './programming-exercise-update-timeline.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -20,6 +20,7 @@ import { ProgrammingExerciseInputField } from 'app/programming/manage/update/pro
 import { Course } from 'app/course/shared/entities/course.model';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 import { PROFILE_LOCALCI } from 'app/app.constants';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 
 describe('ProgrammingExerciseUpdateTimelineComponent', () => {
     setupTestBed({ zoneless: true });

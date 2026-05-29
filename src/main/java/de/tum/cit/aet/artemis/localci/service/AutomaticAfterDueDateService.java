@@ -103,22 +103,17 @@ public class AutomaticAfterDueDateService {
             return null;
         }
 
-        Optional<Exam> originalExamOfExercise = Optional.empty();
-
         final Duration offset;
         if (relevantData.programmingExerciseId() == null) { // no reference exercise
             offset = null; // no previous offset
         }
-        // reference exercise exists and not in exam
-        else if (relevantData.examId() == null || (originalExamOfExercise = examApi.flatMap(api -> api.findByExerciseId(loadedProgrammingExercise.getId()))).isEmpty()) {
-            offset = loadedProgrammingExercise.getDueDate() == null || loadedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null ? null
-                    : Duration.between(loadedProgrammingExercise.getDueDate(), loadedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
-        }
-        else { // exercise and exam exist
-            final ZonedDateTime originalDueDate = loadedExam.getId().equals(originalExamOfExercise.orElseThrow().getId()) ? dueDate
-                    : getLatestExamEndDateWithGrace(originalExamOfExercise.orElseThrow());
+        else {
+            final Optional<Exam> originalExamOfExercise = examApi.flatMap(api -> api.findByExerciseId(loadedProgrammingExercise.getId()));
+            final ZonedDateTime originalDueDate = originalExamOfExercise
+                    .map(originalExam -> relevantData.examId() != null && loadedExam.getId().equals(originalExam.getId()) ? dueDate : getLatestExamEndDateWithGrace(originalExam))
+                    .orElse(loadedProgrammingExercise.getDueDate());
 
-            offset = loadedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null ? null
+            offset = originalDueDate == null || loadedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() == null ? null
                     : Duration.between(originalDueDate, loadedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         }
 

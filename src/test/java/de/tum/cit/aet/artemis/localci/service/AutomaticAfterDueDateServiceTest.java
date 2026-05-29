@@ -280,6 +280,25 @@ class AutomaticAfterDueDateServiceTest {
     }
 
     @Test
+    void getAutomaticBuildAndTestDate_existingExamExerciseImportedIntoCourse_preservesOffsetFromSourceExam() throws IOException, JsonProcessingException {
+        var exerciseId = 13L;
+        var sourceExamEndDate = BASE_TIME.plusDays(3);
+        var targetCourseDueDate = BASE_TIME.plusDays(8);
+        var exercise = createExamExercise(null, BuildPhaseCondition.AFTER_DUE_DATE, 60);
+        exercise.setId(exerciseId);
+        var sourceExam = exercise.getExam();
+        sourceExam.setId(1L);
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(sourceExamEndDate.plusSeconds(60).plusMinutes(45));
+        when(examApi.findByExerciseId(exerciseId)).thenReturn(Optional.of(sourceExam));
+        when(examDateApi.getLatestIndividualExamEndDate(sourceExam)).thenReturn(sourceExamEndDate);
+
+        var previewDate = service.getAutomaticBuildAndTestDate(new AutomaticAfterDueDatePreviewRequestDTO(exerciseId, null, targetCourseDueDate, null, null, null, null, null),
+                exercise, null);
+
+        assertThat(previewDate).isEqualTo(targetCourseDueDate.plusMinutes(45));
+    }
+
+    @Test
     void getAutomaticBuildAndTestDate_existingExamExerciseInSameExam_preservesOffsetFromTargetExam() throws IOException, JsonProcessingException {
         var exerciseId = 12L;
         var examEndDate = BASE_TIME.plusDays(4);
