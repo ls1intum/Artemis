@@ -96,6 +96,11 @@ export default defineConfig({
             'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.spec.ts', // include build plan phases model tests
             'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.spec.ts', // include legacy build plan converter service tests
             'src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**/*.spec.ts', // include programming exercise update timeline tests
+            'src/main/webapp/app/shared-ui/form/**/*.spec.ts', // include shared-ui form tests
+            'src/main/webapp/app/shared-ui/table/**/*.spec.ts', // include shared-ui table tests
+            'src/main/webapp/app/shared-ui/data-table/**/*.spec.ts', // include shared-ui data-table tests
+            'src/main/webapp/app/shared-ui/date-time-picker/**/*.spec.ts', // include shared-ui date-time-picker tests
+            'src/main/webapp/app/shared-ui/import/**/*.spec.ts', // include shared-ui import tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -171,6 +176,11 @@ export default defineConfig({
                 'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts', // include legacy build plan converter service for code coverage
                 'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // include build plan phases model for code coverage
                 'src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**/*.ts', // include programming exercise update timeline for code coverage
+                'src/main/webapp/app/shared-ui/form/**/*.ts', // include shared-ui form for code coverage
+                'src/main/webapp/app/shared-ui/table/**/*.ts', // include shared-ui table for code coverage
+                'src/main/webapp/app/shared-ui/data-table/**/*.ts', // include shared-ui data-table for code coverage
+                'src/main/webapp/app/shared-ui/date-time-picker/**/*.ts', // include shared-ui date-time-picker for code coverage
+                'src/main/webapp/app/shared-ui/import/**/*.ts', // include shared-ui import for code coverage
             ],
             exclude: [
                 '**/node_modules/**', // exclude node_modules with third-party code
