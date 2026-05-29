@@ -290,21 +290,30 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         expect(fixture.debugElement.nativeElement.querySelector('#defineDateForRunningTestsAfterDueDate')).toBeNull();
     });
 
-    it('should keep the automatically managed run tests after due date in LocalCI mode when feedback requests are enabled', () => {
+    it('should disable and reset feedback requests in LocalCI mode when the automatically managed run tests after due date exists', async () => {
         vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile) => profile === PROFILE_LOCALCI);
         exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-        exercise.allowFeedbackRequests = false;
+        exercise.allowFeedbackRequests = true;
         createTestComponent();
 
         const req = httpTestingController.expectOne('api/programming/programming-exercises/timeline/automatic-after-due-date-preview');
         req.flush(afterDueDate.toISOString());
         fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowFeedbackRequests');
+
+        expect(component.assessmentDueDate()).toBeUndefined();
+        expect(component.allowFeedbackRequests()).toBe(false);
+        expect(component.buildAndTestStudentSubmissionsAfterDueDate()?.toISOString()).toBe(afterDueDate.toISOString());
+        expect(component.isFeedbackRequestsToggleEnabled()).toBe(false);
+        expect(checkbox.disabled).toBe(true);
 
         component.allowFeedbackRequests.set(true);
         fixture.detectChanges();
 
-        expect(component.assessmentDueDate()).toBeUndefined();
-        expect(component.buildAndTestStudentSubmissionsAfterDueDate()?.toISOString()).toBe(afterDueDate.toISOString());
+        expect(component.allowFeedbackRequests()).toBe(false);
     });
 
     it('should not preview a LocalCI import when the imported build plan has no after due date phase', () => {

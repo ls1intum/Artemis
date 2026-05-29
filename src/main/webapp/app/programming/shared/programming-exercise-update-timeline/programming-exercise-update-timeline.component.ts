@@ -68,6 +68,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     isSemiAutomaticAssessmentToggleVisible = computed(() => this.computeIsSemiAutomaticAssessmentToggleVisible());
     isSemiAutomaticAssessmentToggleEnabled = computed(() => this.isExamMode() || this.isImport() || !!this.dueDate());
     isDatePickerForSemiAutomaticAssessmentDueDateVisible = computed<boolean>(() => this.computeIfDatePickableForSemiAutomaticAssessmentDueDateVisible());
+    isFeedbackRequestsToggleEnabled = computed(() => this.computeIsFeedbackRequestsToggleEnabled());
     isExampleSolutionPublicationDateToggleVisible = computed(() => this.computeIsExampleSolutionPublicationDateToggleVisible());
     isDatePickerForExampleSolutionPublicationDateVisible = signal(false);
 
@@ -125,6 +126,11 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
                 if (!this.isLocalCIEnabled) {
                     this.buildAndTestStudentSubmissionsAfterDueDate.set(undefined);
                 }
+            }
+        });
+        effect(() => {
+            if (this.isLocalCIEnabled && this.buildAndTestStudentSubmissionsAfterDueDate() && this.allowFeedbackRequests()) {
+                this.allowFeedbackRequests.set(false);
             }
         });
         effect(() => {
@@ -221,6 +227,10 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
         return (
             isSemiAutomaticAssessmentToggleVisible && isSemiAutomaticAssessmentToggleEnabled && assessmentTypeIsSemiAutomatic && !this.isExamMode() && !this.allowFeedbackRequests()
         );
+    }
+
+    private computeIsFeedbackRequestsToggleEnabled(): boolean {
+        return this.assessmentType() === AssessmentType.SEMI_AUTOMATIC && !(this.isLocalCIEnabled && this.buildAndTestStudentSubmissionsAfterDueDate());
     }
 
     private computeIsExampleSolutionPublicationDateToggleVisible(): boolean {
