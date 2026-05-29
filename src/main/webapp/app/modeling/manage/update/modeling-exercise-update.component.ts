@@ -12,7 +12,6 @@ import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/cour
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
-import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -61,7 +60,6 @@ import { ModelingExerciseService } from '../services/modeling-exercise.service';
         ModelingEditorComponent,
         FormDateTimePickerComponent,
         IncludedInOverallScorePickerComponent,
-        ExerciseFeedbackSuggestionOptionsComponent,
         PresentationScoreComponent,
         GradingInstructionsDetailsComponent,
         FormFooterComponent,
