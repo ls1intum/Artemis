@@ -11,7 +11,10 @@ import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import dayjs from 'dayjs/esm';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
+import { DialogModule } from 'primeng/dialog';
+import { ButtonModule } from 'primeng/button';
+import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -61,6 +64,8 @@ import { FinishedJobsTableComponent } from './tables/finished-jobs-table/finishe
         RunningJobsTableComponent,
         QueuedJobsTableComponent,
         FinishedJobsTableComponent,
+        DialogModule,
+        ButtonModule,
     ],
 })
 export class BuildOverviewComponent implements OnInit, OnDestroy {
@@ -70,7 +75,8 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     private buildQueueService = inject(BuildOverviewService);
     private buildAgentsService = inject(BuildAgentsService);
     private alertService = inject(AlertService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
+    private translateService = inject(TranslateService);
 
     /** Reference to the statistics component for real-time updates */
     statisticsComponent = viewChild<BuildJobStatisticsComponent>('statisticsComponent');
@@ -161,6 +167,9 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
 
     /** Raw build log content as a string for display and download */
     rawBuildLogsString: string = '';
+
+    /** Controls the visibility of the inline build logs dialog */
+    buildLogsModalVisible = signal(false);
 
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
@@ -470,14 +479,13 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
 
     /**
      * View the build logs of a specific build job
-     * @param modal The modal to open
      * @param buildJobId The id of the build job
      */
-    viewBuildLogs(modal: any, buildJobId: string | undefined): void {
+    viewBuildLogs(buildJobId: string | undefined): void {
         this.rawBuildLogsString = '';
         this.displayedBuildJobId = undefined;
         if (buildJobId) {
-            this.openModal(modal, true);
+            this.buildLogsModalVisible.set(true);
             this.displayedBuildJobId = buildJobId;
             this.buildQueueService.getBuildJobLogs(buildJobId).subscribe({
                 next: (buildLogs: string) => {
@@ -540,24 +548,26 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
         });
     }
 
-    /**
-     * Opens the modal.
-     */
-    openModal(modal: any, fullscreen?: boolean, size?: 'sm' | 'lg' | 'xl', scrollable = true, keyboard = true) {
-        this.modalService.open(modal, { size, keyboard, scrollable, fullscreen });
-    }
-
     openFilterModal() {
-        const modalRef = this.modalService.open(FinishedBuildsFilterModalComponent as Component);
-        modalRef.componentInstance.finishedBuildJobFilter = this.finishedBuildJobFilter;
-        modalRef.componentInstance.buildAgentFilterable = true;
-        modalRef.componentInstance.finishedBuildJobs = this.finishedBuildJobs();
-        modalRef.result
-            .then((result: FinishedBuildJobFilter) => {
+        const dialogRef = this.dialogService.open(FinishedBuildsFilterModalComponent, {
+            header: this.translateService.instant('artemisApp.buildQueue.filter.title'),
+            width: '60rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            data: {
+                finishedBuildJobFilter: this.finishedBuildJobFilter,
+                buildAgentFilterable: true,
+                finishedBuildJobs: this.finishedBuildJobs(),
+            },
+        });
+        dialogRef?.onClose.subscribe((result: FinishedBuildJobFilter | undefined) => {
+            if (result) {
                 this.finishedBuildJobFilter = result;
                 this.loadFinishedBuildJobs();
-            })
-            .catch(() => {});
+            }
+        });
     }
 
     /**

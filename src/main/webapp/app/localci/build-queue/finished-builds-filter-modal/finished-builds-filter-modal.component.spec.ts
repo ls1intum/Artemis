@@ -6,7 +6,7 @@ import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/
 import dayjs from 'dayjs/esm';
 import { FinishedBuildJob } from 'app/localci/shared/entities/build-job.model';
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -59,7 +59,7 @@ describe('FinishedBuildsFilterModalComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [OwlNativeDateTimeModule, FinishedBuildsFilterModalComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(NgbActiveModal)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(DynamicDialogRef), { provide: DynamicDialogConfig, useValue: { data: {} } }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(FinishedBuildsFilterModalComponent);
