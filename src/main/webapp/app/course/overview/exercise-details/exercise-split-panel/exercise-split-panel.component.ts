@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { ActivatedRoute, ChildrenOutletContexts, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -10,7 +10,8 @@ import { CodeEditorStudentContainerComponent } from 'app/programming/overview/co
 import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-submission/modeling-submission.component';
 import { FileUploadSubmissionComponent } from 'app/fileupload/overview/file-upload-submission/file-upload-submission.component';
 import { QuizParticipationComponent } from 'app/quiz/overview/participation/quiz-participation.component';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { LiveQuizParticipationStatus, QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { PanelDirective, ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
@@ -72,6 +73,13 @@ export class ExerciseSplitPanelComponent {
     private readonly _quizHasStarted = signal(false);
     private readonly _quizComponent = signal<QuizParticipationComponent | undefined>(undefined);
     private quizStartedSubscription: { unsubscribe(): void } | undefined;
+    private quizSubmittedSubscription: { unsubscribe(): void } | undefined;
+    private liveQuizStatusSubscription: { unsubscribe(): void } | undefined;
+    private quizPracticeParticipationSubscription: { unsubscribe(): void } | undefined;
+
+    readonly quizSubmitted = output<QuizSubmission>();
+    readonly quizPracticeParticipationChanged = output<StudentParticipation>();
+    readonly liveQuizStatusChange = output<LiveQuizParticipationStatus | undefined>();
 
     readonly quizSubmitDisabled = computed(() => this._quizComponent()?.isSubmitDisabled() ?? false);
     readonly quizSubmitTitle = computed(() => this._quizComponent()?.submitTitleKey() ?? 'entity.action.submit');
@@ -286,6 +294,15 @@ export class ExerciseSplitPanelComponent {
             this.quizStartedSubscription = component.quizStartedEvent.subscribe(() => {
                 this._quizHasStarted.set(true);
             });
+            this.quizSubmittedSubscription = component.quizSubmittedEvent.subscribe((submission: QuizSubmission) => {
+                this.quizSubmitted.emit(submission);
+            });
+            this.liveQuizStatusSubscription = component.liveQuizStatusChange.subscribe((status: LiveQuizParticipationStatus | undefined) => {
+                this.liveQuizStatusChange.emit(status);
+            });
+            this.quizPracticeParticipationSubscription = component.practiceParticipationChanged.subscribe((participation: StudentParticipation) => {
+                this.quizPracticeParticipationChanged.emit(participation);
+            });
         }
     }
 
@@ -293,6 +310,12 @@ export class ExerciseSplitPanelComponent {
         this._quizComponent.set(undefined);
         this.quizStartedSubscription?.unsubscribe();
         this.quizStartedSubscription = undefined;
+        this.quizSubmittedSubscription?.unsubscribe();
+        this.quizSubmittedSubscription = undefined;
+        this.liveQuizStatusSubscription?.unsubscribe();
+        this.liveQuizStatusSubscription = undefined;
+        this.quizPracticeParticipationSubscription?.unsubscribe();
+        this.quizPracticeParticipationSubscription = undefined;
         this._quizHasStarted.set(false);
     }
 }

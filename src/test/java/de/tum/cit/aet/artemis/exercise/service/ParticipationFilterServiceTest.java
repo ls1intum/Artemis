@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +22,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
@@ -74,6 +76,45 @@ class ParticipationFilterServiceTest extends AbstractSpringIntegrationIndependen
         studentParticipation.setSubmissions(Set.of());
         participationFilterService.filterParticipationForCourseDashboard(studentParticipation, true);
         assertThat(studentParticipation.getSubmissions()).isEmpty();
+    }
+
+    @Test
+    void filterForCourseDashboard_submittedOpenQuiz_exposesSanitizedSubmission() {
+        var quizExercise = exerciseByType.get(ExerciseType.QUIZ);
+        var participation = new StudentParticipation().exercise(quizExercise);
+        var quizSubmission = new QuizSubmission();
+        quizSubmission.setId(42L);
+        quizSubmission.setSubmitted(true);
+        quizSubmission.setSubmissionDate(ZonedDateTime.now());
+        quizSubmission.setScoreInPoints(5.0);
+        quizSubmission.setParticipation(participation);
+        participation.setSubmissions(Set.of(quizSubmission));
+
+        participationFilterService.filterParticipationForCourseDashboard(participation, true);
+
+        assertThat(participation.getSubmissions()).hasSize(1);
+        var sanitized = participation.getSubmissions().iterator().next();
+        assertThat(sanitized).isInstanceOf(QuizSubmission.class);
+        assertThat(sanitized.isSubmitted()).isTrue();
+        assertThat(sanitized.getResults()).isEmpty();
+        // answers and score must not leak before the quiz has ended
+        assertThat(((QuizSubmission) sanitized).getSubmittedAnswers()).isNullOrEmpty();
+        assertThat(((QuizSubmission) sanitized).getScoreInPoints()).isNull();
+    }
+
+    @Test
+    void filterForCourseDashboard_savedButNotSubmittedQuiz_returnsNoSubmission() {
+        var quizExercise = exerciseByType.get(ExerciseType.QUIZ);
+        var participation = new StudentParticipation().exercise(quizExercise);
+        var quizSubmission = new QuizSubmission();
+        quizSubmission.setSubmitted(false);
+        quizSubmission.setSubmissionDate(ZonedDateTime.now());
+        quizSubmission.setParticipation(participation);
+        participation.setSubmissions(Set.of(quizSubmission));
+
+        participationFilterService.filterParticipationForCourseDashboard(participation, true);
+
+        assertThat(participation.getSubmissions()).isEmpty();
     }
 
     @ParameterizedTest

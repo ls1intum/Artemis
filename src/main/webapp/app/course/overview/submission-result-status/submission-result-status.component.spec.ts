@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { QuizBatch, QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { LiveQuizParticipationStatus, QuizBatch, QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -128,6 +128,67 @@ describe('SubmissionResultStatusComponent', () => {
             } else {
                 expect(updatingResult).toBeNull();
             }
+        });
+    });
+
+    describe('data-driven quiz status', () => {
+        it.each([
+            [[{ started: true }] as QuizBatch[], 'artemisApp.courseOverview.exerciseList.userParticipatingShort'],
+            [[{ started: false }] as QuizBatch[], 'artemisApp.courseOverview.exerciseList.quizNotStartedShort'],
+            [[] as QuizBatch[], 'artemisApp.courseOverview.exerciseList.quizNotStartedShort'],
+        ])('should only show "participating" when the quiz batch has started', async (quizBatches: QuizBatch[], expectedKey: string) => {
+            fixture.componentRef.setInput('exercise', {
+                type: ExerciseType.QUIZ,
+                quizBatches,
+                studentParticipations: [{ initializationState: InitializationState.INITIALIZED }],
+            } as QuizExercise);
+            fixture.componentRef.setInput('studentParticipation', {
+                initializationState: InitializationState.INITIALIZED,
+                submissions: [{ submitted: false }],
+            } as StudentParticipation);
+            TestBed.tick();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const span = fixture.debugElement.query(By.css('span[jhiTranslate]'));
+            expect(span?.attributes['jhiTranslate']).toBe(expectedKey);
+        });
+
+        it('should show "missed due date" for an ended quiz that was not submitted', async () => {
+            fixture.componentRef.setInput('exercise', {
+                type: ExerciseType.QUIZ,
+                quizEnded: true,
+                quizBatches: [] as QuizBatch[],
+                studentParticipations: [{ initializationState: InitializationState.INITIALIZED }],
+            } as QuizExercise);
+            fixture.componentRef.setInput('studentParticipation', {
+                initializationState: InitializationState.INITIALIZED,
+                submissions: [{ submitted: false }],
+            } as StudentParticipation);
+            TestBed.tick();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const span = fixture.debugElement.query(By.css('span[jhiTranslate]'));
+            expect(span?.attributes['jhiTranslate']).toBe('artemisApp.courseOverview.exerciseList.exerciseMissedDueDateShort');
+        });
+    });
+
+    describe('live quiz status override', () => {
+        it.each([
+            [LiveQuizParticipationStatus.PARTICIPATING, 'artemisApp.courseOverview.exerciseList.userParticipatingShort'],
+            [LiveQuizParticipationStatus.SUBMITTED, 'artemisApp.courseOverview.exerciseList.userWaitingForDueDateShort'],
+            [LiveQuizParticipationStatus.MISSED, 'artemisApp.courseOverview.exerciseList.exerciseMissedDueDateShort'],
+            [LiveQuizParticipationStatus.NOT_STARTED, 'artemisApp.courseOverview.exerciseList.quizNotStartedShort'],
+        ])('should render the overridden quiz status text', async (status: LiveQuizParticipationStatus, expectedKey: string) => {
+            fixture.componentRef.setInput('exercise', { type: ExerciseType.QUIZ } as QuizExercise);
+            fixture.componentRef.setInput('quizLiveStatusOverride', status);
+            TestBed.tick();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const span = fixture.debugElement.query(By.css('span[jhiTranslate]'));
+            expect(span?.attributes['jhiTranslate']).toBe(expectedKey);
         });
     });
 });

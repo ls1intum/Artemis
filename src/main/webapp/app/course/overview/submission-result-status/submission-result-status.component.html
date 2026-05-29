@@ -17,6 +17,23 @@
                 [showProgressBar]="showProgressBar()"
             />
         </span>
+    } @else if (quizLiveStatusOverride()) {
+        <div>
+            @switch (quizLiveStatusOverride()) {
+                @case (LiveQuizParticipationStatus.PARTICIPATING) {
+                    <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.userParticipatingShort"></span>
+                }
+                @case (LiveQuizParticipationStatus.SUBMITTED) {
+                    <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.userWaitingForDueDateShort"></span>
+                }
+                @case (LiveQuizParticipationStatus.MISSED) {
+                    <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseMissedDueDateShort"></span>
+                }
+                @default {
+                    <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.quizNotStartedShort"></span>
+                }
+            }
+        </div>
     } @else {
         <div>
             @if (exercise().teamMode && exercise().studentAssignedTeamIdComputed && !exercise().studentAssignedTeamId) {
@@ -29,10 +46,14 @@
                 <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseNotSubmittedShort"></span>
             } @else if (!notSubmitted() && studentParticipation()?.initializationState === InitializationState.FINISHED) {
                 <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.userSubmittedShort"></span>
-            } @else if (studentParticipation()?.initializationState === InitializationState.INITIALIZED && exercise().type === ExerciseType.QUIZ && !submitted()) {
-                <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.userParticipatingShort"></span>
             } @else if (studentParticipation()?.initializationState === InitializationState.INITIALIZED && exercise().type === ExerciseType.QUIZ && submitted()) {
                 <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.userWaitingForDueDateShort"></span>
+            } @else if (studentParticipation()?.initializationState === InitializationState.INITIALIZED && exercise().type === ExerciseType.QUIZ && quizBatchStarted()) {
+                <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.userParticipatingShort"></span>
+            } @else if (studentParticipation()?.initializationState === InitializationState.INITIALIZED && exercise().type === ExerciseType.QUIZ && quizEnded()) {
+                <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseMissedDueDateShort"></span>
+            } @else if (studentParticipation()?.initializationState === InitializationState.INITIALIZED && exercise().type === ExerciseType.QUIZ) {
+                <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.quizNotStartedShort"></span>
             } @else if (quizNotStarted()) {
                 <span class="text-body-secondary" jhiTranslate="artemisApp.courseOverview.exerciseList.quizNotStartedShort"></span>
             } @else {

@@ -7,7 +7,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { LiveQuizParticipationStatus, QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
@@ -547,6 +547,85 @@ describe('QuizParticipationComponent - live mode', () => {
         component.syncSubmitState();
 
         expect(component.shouldTreatAsSubmittedForUi()).toBe(true);
+    });
+
+    it.each([
+        ['live', true, false, 0, false, LiveQuizParticipationStatus.NOT_STARTED],
+        ['live', false, false, 0, false, LiveQuizParticipationStatus.PARTICIPATING],
+        ['live', false, true, -100, false, LiveQuizParticipationStatus.SUBMITTED],
+        ['live', false, false, -1, true, LiveQuizParticipationStatus.MISSED],
+    ])('should emit the live quiz status from syncSubmitState', (mode, waiting, submitted, remaining, quizEnded, expected) => {
+        component.mode = mode as string;
+        component.quizExercise = { id: 1, quizEnded: quizEnded as boolean } as QuizExercise;
+        component.waitingForQuizStart = waiting as boolean;
+        component.showingResult = false;
+        component.submission.submitted = submitted as boolean;
+        component.remainingTimeSeconds = remaining as number;
+        let emitted: LiveQuizParticipationStatus | undefined;
+        component.liveQuizStatusChange.subscribe((status) => (emitted = status));
+
+        component.syncSubmitState();
+
+        expect(emitted).toBe(expected);
+    });
+
+    it('should not emit a live quiz status before the quiz has loaded', () => {
+        component.mode = 'live';
+        component.quizExercise = undefined as unknown as QuizExercise;
+        component.waitingForQuizStart = false;
+        let emitCount = 0;
+        component.liveQuizStatusChange.subscribe(() => emitCount++);
+
+        component.syncSubmitState();
+
+        expect(emitCount).toBe(0);
+    });
+
+    it('should clear the live quiz status override when leaving live mode', () => {
+        // Start in live mode so an override is emitted, then switch away and ensure it is cleared.
+        component.mode = 'live';
+        component.quizExercise = { id: 1 } as QuizExercise;
+        component.waitingForQuizStart = false;
+        component.showingResult = false;
+        const emitted: (LiveQuizParticipationStatus | undefined)[] = [];
+        component.liveQuizStatusChange.subscribe((status) => emitted.push(status));
+
+        component.syncSubmitState();
+        component.mode = 'practice';
+        component.syncSubmitState();
+
+        expect(emitted).toEqual([LiveQuizParticipationStatus.PARTICIPATING, undefined]);
+    });
+
+    it('should emit the practice participation with its result after a practice submission', () => {
+        component.mode = 'practice';
+        component.quizExercise = { id: 1, quizQuestions: [] } as unknown as QuizExercise;
+        const participation = { id: 7, exercise: { id: 1, quizQuestions: [] } } as unknown as StudentParticipation;
+        const submission = { participation } as QuizSubmission;
+        const result = { score: 80, submission } as Result;
+        let emitted: StudentParticipation | undefined;
+        component.practiceParticipationChanged.subscribe((p) => (emitted = p));
+
+        component.onSubmitPracticeOrPreviewSuccess(result);
+
+        expect(emitted).toBe(participation);
+        expect(emitted!.testRun).toBe(true);
+        expect(emitted!.submissions).toEqual([submission]);
+        expect(submission.results).toEqual([result]);
+    });
+
+    it('should not emit a practice participation in preview mode', () => {
+        component.mode = 'preview';
+        component.quizExercise = { id: 1, quizQuestions: [] } as unknown as QuizExercise;
+        const participation = { id: 7, exercise: { id: 1, quizQuestions: [] } } as unknown as StudentParticipation;
+        const submission = { participation } as QuizSubmission;
+        const result = { score: 80, submission } as Result;
+        let emitted = false;
+        component.practiceParticipationChanged.subscribe(() => (emitted = true));
+
+        component.onSubmitPracticeOrPreviewSuccess(result);
+
+        expect(emitted).toBe(false);
     });
 
     it('should show missed deadline message and hide quiz UI when quiz ended and student did not submit', () => {

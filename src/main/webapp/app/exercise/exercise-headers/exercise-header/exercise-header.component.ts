@@ -9,6 +9,7 @@ import { ExerciseHeaderActionsComponent } from 'app/exercise/exercise-headers/ex
 import { ParticipationMode, ParticipationModeToggleComponent } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { LiveQuizParticipationStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 
 @Component({
     selector: 'jhi-exercise-header',
@@ -29,6 +30,7 @@ export class ExerciseHeaderComponent {
     readonly participationMode = model<ParticipationMode>('graded');
     readonly athenaEnabled = input<boolean>(false);
     readonly feedbackRequestLimit = input<number>(DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT);
+    readonly quizLiveStatus = input<LiveQuizParticipationStatus>();
     readonly newParticipation = output<StudentParticipation>();
 
     // Local signal to track a practice participation created in this session,

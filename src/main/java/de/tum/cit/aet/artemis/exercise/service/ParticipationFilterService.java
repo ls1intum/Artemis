@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -18,6 +19,8 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 
 /**
  * A service to handle participation filtering.
@@ -81,6 +84,8 @@ public class ParticipationFilterService {
 
         Set<Result> results = Set.of();
 
+        Optional<Submission> submissionForDashboard = optionalSubmission;
+
         if (optionalSubmission.isPresent()) {
             Submission submission = optionalSubmission.get();
             Result latestResult = submission.getLatestResult();
@@ -92,12 +97,42 @@ public class ParticipationFilterService {
             }
             submission.setResults(new ArrayList<>(results));
         }
+        else {
+            // A quiz that has not ended yet intentionally exposes neither its submission's answers nor its result (see
+            // SubmissionFilterService). The student dashboard still needs to know whether the student already submitted
+            // ("Submitted, waiting for due date"), so expose a sanitized submission carrying only the submitted flag and
+            // submission date (no answers, no results).
+            submissionForDashboard = getSanitizedSubmittedQuizSubmission(participation);
+        }
 
         // add submission to participation or set it to empty set if no submission is available
-        participation.setSubmissions(optionalSubmission.map(Set::of).orElse(Set.of()));
+        participation.setSubmissions(submissionForDashboard.map(Set::of).orElse(Set.of()));
 
         // remove inner exercise from participation
         participation.setExercise(null);
+    }
+
+    /**
+     * Builds a sanitized copy of the student's latest submitted quiz submission for the course dashboard, exposing only
+     * the submitted flag and submission date, so the dashboard can show the
+     * "Submitted, waiting for due date" status without leaking quiz answers or scores before the quiz has ended.
+     *
+     * @param participation the quiz participation whose submissions should be inspected
+     * @return a sanitized submitted submission, or empty if the participation is not a quiz or has no submitted submission
+     */
+    private Optional<Submission> getSanitizedSubmittedQuizSubmission(StudentParticipation participation) {
+        if (!(participation.getExercise() instanceof QuizExercise) || participation.getSubmissions() == null) {
+            return Optional.empty();
+        }
+        return participation.getSubmissions().stream().filter(submission -> submission instanceof QuizSubmission && submission.isSubmitted()).max(Comparator.naturalOrder())
+                .map(submission -> {
+                    QuizSubmission sanitizedSubmission = new QuizSubmission();
+                    sanitizedSubmission.setId(submission.getId());
+                    sanitizedSubmission.setSubmitted(true);
+                    sanitizedSubmission.setSubmissionDate(submission.getSubmissionDate());
+                    sanitizedSubmission.setResults(new ArrayList<>());
+                    return sanitizedSubmission;
+                });
     }
 
     /**

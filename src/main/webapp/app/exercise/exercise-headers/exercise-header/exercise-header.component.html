@@ -36,6 +36,7 @@
             [isPractice]="participationMode() === 'practice'"
             [athenaEnabled]="athenaEnabled()"
             [feedbackRequestLimit]="feedbackRequestLimit()"
+            [quizLiveStatus]="quizLiveStatus()"
             (viewingSubmissionChange)="isViewingSubmission.set($event)"
         />
         <jhi-participation-mode-toggle

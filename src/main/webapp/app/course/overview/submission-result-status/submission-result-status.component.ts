@@ -2,7 +2,7 @@ import { Component, computed, input } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { LiveQuizParticipationStatus, QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import dayjs from 'dayjs/esm';
 
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
@@ -20,6 +20,7 @@ export class SubmissionResultStatusComponent {
     private readonly initializationStatesToShowProgrammingResult = [InitializationState.INITIALIZED, InitializationState.INACTIVE, InitializationState.FINISHED];
     readonly ExerciseType = ExerciseType;
     readonly InitializationState = InitializationState;
+    readonly LiveQuizParticipationStatus = LiveQuizParticipationStatus;
     readonly dayjs = dayjs;
 
     /**
@@ -41,6 +42,7 @@ export class SubmissionResultStatusComponent {
     readonly short = input(true);
     readonly triggerLastGraded = input(true);
     readonly showProgressBar = input(false);
+    readonly quizLiveStatusOverride = input<LiveQuizParticipationStatus>();
 
     // Computed signal for whether due date has passed
     private readonly afterDueDate = computed(() => {
@@ -54,6 +56,19 @@ export class SubmissionResultStatusComponent {
             return false;
         }
         return ArtemisQuizService.notStarted(exercise as QuizExercise);
+    });
+
+    readonly quizBatchStarted = computed(() => {
+        const exercise = this.exercise();
+        if (exercise?.type !== ExerciseType.QUIZ) {
+            return false;
+        }
+        return (exercise as QuizExercise).quizBatches?.some((batch) => batch.started) ?? false;
+    });
+
+    readonly quizEnded = computed(() => {
+        const exercise = this.exercise();
+        return exercise?.type === ExerciseType.QUIZ && !!(exercise as QuizExercise).quizEnded;
     });
 
     readonly exerciseMissedDueDate = computed(() => {

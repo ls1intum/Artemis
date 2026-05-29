@@ -22,7 +22,7 @@ import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
 import { QuizParticipationService } from 'app/quiz/overview/service/quiz-participation.service';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
-import { QuizBatch, QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { LiveQuizParticipationStatus, QuizBatch, QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-drop-submitted-answer.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
@@ -136,6 +136,10 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     readonly inputCourseId = input<number>();
     readonly inputMode = input<string>();
     readonly quizStartedEvent = output<void>();
+    readonly quizSubmittedEvent = output<QuizSubmission>();
+    readonly practiceParticipationChanged = output<StudentParticipation>();
+    readonly liveQuizStatusChange = output<LiveQuizParticipationStatus | undefined>();
+    private lastEmittedLiveQuizStatus: LiveQuizParticipationStatus | undefined;
 
     private readonly _isSubmitDisabled = signal(true);
     private readonly _submitTitleKey = signal('entity.action.submit');
@@ -989,6 +993,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                             this.updateSubmissionTime();
                             this.applySubmission();
                             this.syncSubmitState();
+                            // Notify the surrounding exercise page so the participation status badge
+                            // ("Submitted, waiting for due date") updates without requiring a page refresh.
+                            this.quizSubmittedEvent.emit(this.submission);
                             if (this.quizExercise.quizMode !== QuizMode.SYNCHRONIZED) {
                                 this.alertService.success('artemisApp.quizExercise.submitSuccess');
                             }
@@ -1009,10 +1016,21 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.syncSubmitState();
         this.submission = result.submission as QuizSubmission;
         // make sure the additional information (explanations, correct answers) is available
-        const quizExercise = (this.submission.participation! as StudentParticipation).exercise as QuizExercise;
+        const participation = this.submission.participation as StudentParticipation;
+        const quizExercise = participation.exercise as QuizExercise;
         this.transferInformationToQuizExercise(quizExercise);
         this.applySubmission();
         this.showResult(result);
+
+        if (this.mode === 'practice') {
+            // Surface the practice participation (with its result) to the surrounding exercise page so the status badge
+            // shows the practice score immediately, without requiring a page refresh. The result payload omits the
+            // practice flag, so set it explicitly and link the result to the submission for the badge to render it.
+            participation.testRun = true;
+            this.submission.results = [result];
+            participation.submissions = [this.submission];
+            this.practiceParticipationChanged.emit(participation);
+        }
     }
 
     /**
@@ -1156,5 +1174,32 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         const disabled = submittedForUi || this.isSubmitting || this.waitingForQuizStart || this.remainingTimeSeconds < 0;
         this._isSubmitDisabled.set(disabled);
         this._submitTitleKey.set(submittedForUi ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit');
+        this.emitLiveQuizStatus(submittedForUi);
+    }
+
+    /**
+     * Emits the display-only live quiz status to the surrounding exercise page (only when it changes), so the
+     * participation status badge reflects the actual in-quiz progress without a page refresh. While the quiz shows
+     * results, or outside live mode, no override is emitted so the badge falls back to its result/data-driven logic.
+     */
+    private emitLiveQuizStatus(submittedForUi: boolean): void {
+        let status: LiveQuizParticipationStatus | undefined;
+        // Only report once the quiz has actually loaded. Before that, waitingForQuizStart still holds its default
+        // (false) and would briefly report PARTICIPATING, flashing the wrong badge when opening/switching quizzes.
+        if (this.mode === 'live' && this.quizExercise && !this.showingResult) {
+            if (submittedForUi) {
+                status = LiveQuizParticipationStatus.SUBMITTED;
+            } else if (this.quizExercise.quizEnded) {
+                status = LiveQuizParticipationStatus.MISSED;
+            } else if (!this.waitingForQuizStart) {
+                status = LiveQuizParticipationStatus.PARTICIPATING;
+            } else {
+                status = LiveQuizParticipationStatus.NOT_STARTED;
+            }
+        }
+        if (status !== this.lastEmittedLiveQuizStatus) {
+            this.lastEmittedLiveQuizStatus = status;
+            this.liveQuizStatusChange.emit(status);
+        }
     }
 }
