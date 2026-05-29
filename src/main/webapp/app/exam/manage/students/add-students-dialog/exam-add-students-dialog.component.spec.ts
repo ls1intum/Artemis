@@ -1,4 +1,4 @@
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { CourseGroup } from 'app/course/shared/entities/course.model';
@@ -129,6 +129,32 @@ describe('ExamAddStudentsDialogComponent', () => {
         expect(addStudentToExamSpy).toHaveBeenCalledWith(courseId, examId, studentAlice.login);
         expect(component.isAlreadyRegistered(studentAlice)).toBe(true);
         expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('registerStudent should show specific alert for cannotRegisterInstructor', async () => {
+        vi.spyOn(courseManagementService, 'getAllUsersInCourseGroup').mockReturnValue(of(new HttpResponse({ body: [studentAlice] })));
+        const alertErrorSpy = vi.spyOn(alertService, 'error');
+        vi.spyOn(examManagementService, 'addStudentToExam').mockReturnValue(throwError(() => new HttpErrorResponse({ error: { errorKey: 'cannotRegisterInstructor' } })));
+
+        await openDialogAndRender();
+        getRegisterButtonForLogin(studentAlice.login!).click();
+
+        expect(alertErrorSpy).toHaveBeenCalledOnce();
+        expect(alertErrorSpy).toHaveBeenCalledWith('artemisApp.exam.error.cannotRegisterInstructor');
+        expect(component.isAlreadyRegistered(studentAlice)).toBe(false);
+    });
+
+    it('registerStudent should show specific alert for cannotRegisterEditor', async () => {
+        vi.spyOn(courseManagementService, 'getAllUsersInCourseGroup').mockReturnValue(of(new HttpResponse({ body: [studentAlice] })));
+        const alertErrorSpy = vi.spyOn(alertService, 'error');
+        vi.spyOn(examManagementService, 'addStudentToExam').mockReturnValue(throwError(() => new HttpErrorResponse({ error: { errorKey: 'cannotRegisterEditor' } })));
+
+        await openDialogAndRender();
+        getRegisterButtonForLogin(studentAlice.login!).click();
+
+        expect(alertErrorSpy).toHaveBeenCalledOnce();
+        expect(alertErrorSpy).toHaveBeenCalledWith('artemisApp.exam.error.cannotRegisterEditor');
+        expect(component.isAlreadyRegistered(studentAlice)).toBe(false);
     });
 
     it('registerStudent should show alert on error', async () => {

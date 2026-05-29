@@ -4,6 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -17,7 +21,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
@@ -77,11 +83,19 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     private static final int NUMBER_OF_TUTORS = 1;
 
+    private static final int NUMBER_OF_EDITORS = 1;
+
+    private static final int NUMBER_OF_INSTRUCTORS = 1;
+
     private User student1;
+
+    @Autowired
+    private MockMvc mockMvc;
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, NUMBER_OF_EDITORS, NUMBER_OF_INSTRUCTORS);
+
         // Add a student that is not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42", passwordService.hashPassword(UserFactory.USER_PASSWORD));
 
@@ -342,9 +356,44 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testRegisterInstructorToExam() throws Exception {
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + TEST_PREFIX + "instructor1", null, HttpStatus.FORBIDDEN,
-                null);
+    void testRegisterPlainStudentToExam_successful() throws Exception {
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + TEST_PREFIX + "student1", null, HttpStatus.OK, null);
+
+        Exam storedExam = examRepository.findWithExamUsersById(exam1.getId()).orElseThrow();
+        ExamUser examUser = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student1.getId()).orElseThrow();
+
+        assertThat(storedExam.getExamUsers()).contains(examUser);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testRegisterInstructorToExam_forbiddenWithErrorKey() throws Exception {
+        assertRegisterUserForbiddenWithErrorKey(TEST_PREFIX + "instructor1", "cannotRegisterInstructor");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testRegisterEditorToExam_forbiddenWithErrorKey() throws Exception {
+        assertRegisterUserForbiddenWithErrorKey(TEST_PREFIX + "editor1", "cannotRegisterEditor");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testRegisterTutorToExam_forbiddenWithErrorKey() throws Exception {
+        assertRegisterUserForbiddenWithErrorKey(TEST_PREFIX + "tutor1", "cannotRegisterEditor");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testRegisterAdminToExam_forbiddenWithErrorKey() throws Exception {
+        userUtilService.addAdmin(TEST_PREFIX);
+        assertRegisterUserForbiddenWithErrorKey(TEST_PREFIX + "admin", "cannotRegisterInstructor");
+    }
+
+    private void assertRegisterUserForbiddenWithErrorKey(String login, String expectedErrorKey) throws Exception {
+        mockMvc.perform(post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + login).contentType(MediaType.APPLICATION_JSON).with(csrf()))
+                .andExpect(status().isForbidden()).andExpect(jsonPath("$.errorKey").value(expectedErrorKey)).andExpect(jsonPath("$.message").value("error." + expectedErrorKey))
+                .andExpect(jsonPath("$.params").value("exam"));
     }
 
     // ExamRegistration Service - checkRegistrationOrRegisterStudentToTestExam
