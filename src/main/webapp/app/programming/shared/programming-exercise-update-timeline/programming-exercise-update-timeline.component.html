@@ -173,9 +173,6 @@
                     <jhi-help-icon placement="right auto" text="artemisApp.programmingExercise.timeline.includeTestsIntoExampleSolutionTooltip" />
                 </div>
             }
-            @if (!isExamMode()) {
-                <jhi-exercise-feedback-suggestion-options [exercise]="exercise()" [dueDate]="dueDate()" />
-            }
         }
     </div>
     @if (timelineItems().length > 0) {
