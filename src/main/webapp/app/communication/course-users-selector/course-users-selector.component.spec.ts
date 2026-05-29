@@ -13,7 +13,7 @@ import { CourseUsersSelectorComponent, SearchRoleGroup } from 'app/communication
 import { UserPublicInfoDTO } from 'app/account/user/user.model';
 
 import { TranslateModule } from '@ngx-translate/core';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 
 @Component({
     template: ` <jhi-course-users-selector [courseId]="courseId" [rolesToAllowSearchingIn]="rolesToAllowSearchingIn" [multiSelect]="multiSelect" [showUserList]="showUserList" />`,

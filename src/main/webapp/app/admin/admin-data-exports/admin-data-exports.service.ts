@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AdminDataExport, DataExport } from 'app/admin/admin-data-exports/data-export.model';
-import { PageableResult } from 'app/shared/table/pageable-table';
+import { PageableResult } from 'app/foundation/pagination/pageable-table';
 import dayjs from 'dayjs/esm';
 
 /**
@@ -20,7 +20,7 @@ import dayjs from 'dayjs/esm';
 export class AdminDataExportsService {
     private http = inject(HttpClient);
 
-    private readonly resourceUrl = 'api/core/admin/data-exports';
+    private readonly resourceUrl = 'api/admin/data-exports';
 
     /**
      * Retrieves data exports in the system with associated user information, with pagination.

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import {
     faBullseye,
     faCalendarDays,

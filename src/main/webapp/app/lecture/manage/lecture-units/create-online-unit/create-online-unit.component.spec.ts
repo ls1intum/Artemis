@@ -5,7 +5,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CreateOnlineUnitComponent } from 'app/lecture/manage/lecture-units/create-online-unit/create-online-unit.component';
 import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/online-unit.service';
 import { MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { of } from 'rxjs';

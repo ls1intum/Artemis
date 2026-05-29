@@ -1,0 +1,78 @@
+import { TranslateService } from '@ngx-translate/core';
+import { MetisService } from 'app/communication/service/metis.service';
+import { TextEditorDomainActionWithOptions } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action-with-options.model';
+import { ValueItem } from 'app/editor/markdown-editor/value-item.model';
+import { Disposable } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
+import { TextEditor } from 'app/editor/monaco-editor/model/actions/adapter/text-editor.interface';
+import { TextEditorCompletionItem, TextEditorCompletionItemKind } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-completion-item.model';
+import { TextEditorRange } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-range.model';
+import { Subscription } from 'rxjs';
+
+/**
+ * Action to insert a reference to a faq into the editor. Users that type a / will see a list of available faqs to reference.
+ */
+export class FaqReferenceAction extends TextEditorDomainActionWithOptions {
+    static readonly ID = 'faq-reference.action';
+    static readonly DEFAULT_INSERT_TEXT = '/faq';
+
+    disposableCompletionProvider?: Disposable;
+    faqSubscription?: Subscription;
+
+    constructor(private readonly metisService: MetisService) {
+        super(FaqReferenceAction.ID, 'artemisApp.metis.editor.faq');
+    }
+
+    /**
+     * Registers this action in the provided editor. This will register a completion provider that shows the available faqs.
+     * @param editor The editor to register the completion provider for.
+     * @param translateService The translate service to use for translations.
+     */
+    register(editor: TextEditor, translateService: TranslateService): void {
+        super.register(editor, translateService);
+        this.faqSubscription?.unsubscribe();
+        // Rebuild completion values when FAQs arrive from MetisService (which now emits after REST load)
+        this.faqSubscription = this.metisService.getFaqs().subscribe((faqs) => {
+            this.setValues(
+                faqs.map((faq) => ({
+                    id: faq.id!.toString(),
+                    value: faq.questionTitle!,
+                    type: 'faq',
+                })),
+            );
+        });
+
+        this.disposableCompletionProvider = this.registerCompletionProviderForCurrentModel<ValueItem>(
+            editor,
+            () => Promise.resolve(this.getValues()),
+            (item: ValueItem, range: TextEditorRange) =>
+                new TextEditorCompletionItem(
+                    `/faq ${item.value}`,
+                    item.type,
+                    `[${item.type}]${item.value}(${this.metisService.getLinkForFaq()}?faqId=${item.id})[/${item.type}]`,
+                    TextEditorCompletionItemKind.Default,
+                    range,
+                ),
+            '/',
+        );
+    }
+
+    /**
+     * Inserts the text '/faq' into the editor and focuses it. This method will trigger the completion provider to show the available faqs.
+     * @param editor The editor to insert the text into.
+     */
+    run(editor: TextEditor): void {
+        this.replaceTextAtCurrentSelection(editor, FaqReferenceAction.DEFAULT_INSERT_TEXT);
+        editor.triggerCompletion();
+        editor.focus();
+    }
+
+    dispose(): void {
+        super.dispose();
+        this.disposableCompletionProvider?.dispose();
+        this.faqSubscription?.unsubscribe();
+    }
+
+    getOpeningIdentifier(): string {
+        return '[faq]';
+    }
+}

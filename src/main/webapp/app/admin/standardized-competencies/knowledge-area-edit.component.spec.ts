@@ -13,11 +13,11 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 import { KnowledgeAreaEditComponent } from 'app/admin/standardized-competencies/knowledge-area-edit.component';
 import { KnowledgeAreaDTO } from 'app/atlas/shared/entities/standardized-competency.model';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 
 describe('KnowledgeAreaEditComponent', () => {
     setupTestBed({ zoneless: true });

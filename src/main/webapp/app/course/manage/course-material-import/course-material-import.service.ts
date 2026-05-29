@@ -11,7 +11,7 @@ import { CourseMaterialImportOptionsDTO, CourseMaterialImportResultDTO } from '.
 @Injectable({ providedIn: 'root' })
 export class CourseMaterialImportService {
     private readonly http = inject(HttpClient);
-    private readonly resourceUrl = 'api/core/courses';
+    private readonly resourceUrl = 'api/course/courses';
 
     /**
      * Get a summary of what can be imported from the source course.

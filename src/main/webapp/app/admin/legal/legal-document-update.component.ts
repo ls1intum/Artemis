@@ -7,11 +7,11 @@ import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/adm
 import { ActivatedRoute } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
-import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 
 /**

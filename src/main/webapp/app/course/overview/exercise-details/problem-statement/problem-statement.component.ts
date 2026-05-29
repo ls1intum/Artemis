@@ -8,8 +8,8 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 @Component({
