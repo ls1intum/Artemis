@@ -4,7 +4,7 @@ import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-s
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { TranslateService } from '@ngx-translate/core';
-import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { createStageRotation, translateLabel } from 'app/iris/overview/iris-stage-rotation.util';
 
 @Component({

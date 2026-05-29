@@ -35,7 +35,7 @@ describe('WebsocketAdminService', () => {
             expect(nodes).toEqual(mockNodes);
         });
 
-        const req = httpMock.expectOne('api/core/admin/websocket/nodes');
+        const req = httpMock.expectOne('api/admin/websocket/nodes');
         expect(req.request.method).toBe('GET');
         req.flush(mockNodes);
     });
@@ -44,7 +44,7 @@ describe('WebsocketAdminService', () => {
         service.triggerAction('RECONNECT', 'abc').subscribe();
 
         const req = httpMock.expectOne((request) => {
-            return request.url === 'api/core/admin/websocket/reconnect' && request.params.get('action') === 'RECONNECT' && request.params.get('targetNodeId') === 'abc';
+            return request.url === 'api/admin/websocket/reconnect' && request.params.get('action') === 'RECONNECT' && request.params.get('targetNodeId') === 'abc';
         });
 
         expect(req.request.method).toBe('POST');
@@ -56,7 +56,7 @@ describe('WebsocketAdminService', () => {
         service.triggerAction('DISCONNECT').subscribe();
 
         const req = httpMock.expectOne((request) => {
-            return request.url === 'api/core/admin/websocket/reconnect' && request.params.get('action') === 'DISCONNECT' && !request.params.has('targetNodeId');
+            return request.url === 'api/admin/websocket/reconnect' && request.params.get('action') === 'DISCONNECT' && !request.params.has('targetNodeId');
         });
 
         expect(req.request.method).toBe('POST');

@@ -55,8 +55,8 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseMetricsService;
-import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
-import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
+import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MultiGauge;
@@ -751,7 +751,7 @@ public class MetricsBean {
 
     private void extractExerciseTypeMetricsAndAddToMetricsResults(Set<ExerciseTypeMetricsEntry> resultFromDatabase, Set<MultiGauge.Row<?>> resultForMetrics, Tags existingTags) {
         for (var exerciseType : ExerciseType.values()) {
-            var resultForExerciseType = resultFromDatabase.stream().filter(entry -> entry.exerciseType() == exerciseType.getExerciseClass()).findAny();
+            var resultForExerciseType = resultFromDatabase.stream().filter(entry -> entry.exerciseType() == exerciseType).findAny();
             var value = 0L;
             if (resultForExerciseType.isPresent()) {
                 value = resultForExerciseType.get().value();

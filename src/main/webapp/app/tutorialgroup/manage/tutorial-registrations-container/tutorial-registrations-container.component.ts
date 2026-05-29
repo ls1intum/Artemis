@@ -1,8 +1,8 @@
 import { Component, computed, effect, inject } from '@angular/core';
-import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariable';
+import { getNumericPathVariableSignal } from 'app/foundation/route/getPathVariable';
 import { ActivatedRoute } from '@angular/router';
 import { TutorialRegistrationsComponent } from 'app/tutorialgroup/manage/tutorial-registrations/tutorial-registrations.component';
-import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
+import { LoadingIndicatorOverlayComponent } from 'app/shared-ui/loading-indicator-overlay/loading-indicator-overlay.component';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
 import { TutorialGroupCourseAndGroupService } from 'app/tutorialgroup/shared/service/tutorial-group-course-and-group.service';
 import { AccountService } from 'app/core/auth/account.service';

@@ -7,7 +7,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockProvider } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Router } from '@angular/router';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';

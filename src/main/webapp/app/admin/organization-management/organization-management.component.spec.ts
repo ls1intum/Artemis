@@ -12,9 +12,9 @@ import { Router } from '@angular/router';
 import { TableLazyLoadEvent } from 'primeng/table';
 import { MockProvider } from 'ng-mocks';
 
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { OrganizationManagementComponent } from 'app/admin/organization-management/organization-management.component';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/admin/organization-management/organization.model';

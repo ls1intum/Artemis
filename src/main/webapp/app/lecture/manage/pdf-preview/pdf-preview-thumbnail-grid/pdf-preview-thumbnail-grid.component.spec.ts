@@ -23,21 +23,21 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { PdfPreviewThumbnailGridComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-thumbnail-grid/pdf-preview-thumbnail-grid.component';
 import { ElementRef, Signal, SimpleChanges, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { HiddenPage, HiddenPageMap, OrderedPage } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
-import { onError } from 'app/shared/util/global.utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 
 vi.mock('pdfjs-dist/build/pdf.worker', () => {
     return {};
 });
 
-vi.mock('app/shared/util/global.utils', () => ({
+vi.mock('app/foundation/util/global.utils', () => ({
     onError: vi.fn(),
 }));
 
@@ -629,7 +629,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
     describe('renderPages method', () => {
         let mockCanvas: HTMLCanvasElement;
 
-        vi.mock('app/shared/util/global.utils', () => ({
+        vi.mock('app/foundation/util/global.utils', () => ({
             onError: vi.fn(),
         }));
 
