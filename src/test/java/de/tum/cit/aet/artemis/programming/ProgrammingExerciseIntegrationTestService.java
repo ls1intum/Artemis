@@ -2223,7 +2223,7 @@ public class ProgrammingExerciseIntegrationTestService {
         var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
         var queryParams = "?omitBinaries=true";
         request.getWithForwardedUrl("/api/programming/programming-exercises/" + programmingExercise.getId() + "/template-files-content" + queryParams, HttpStatus.OK,
-                "/api/programming/repository/" + savedExercise.getTemplateParticipation().getId() + "/files-content" + queryParams);
+                "/api/programming/participations/" + savedExercise.getTemplateParticipation().getId() + "/repository/files-content" + queryParams);
     }
 
     void test_redirectGetTemplateRepositoryFilesWithContent() throws Exception {
@@ -2236,7 +2236,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
         var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
         request.getWithForwardedUrl("/api/programming/programming-exercises/" + programmingExercise.getId() + "/template-files-content", HttpStatus.OK,
-                "/api/programming/repository/" + savedExercise.getTemplateParticipation().getId() + "/files-content");
+                "/api/programming/participations/" + savedExercise.getTemplateParticipation().getId() + "/repository/files-content");
     }
 
     // Legacy BiFunction-based helper is no longer needed after LocalVC conversion; removed to simplify the suite.

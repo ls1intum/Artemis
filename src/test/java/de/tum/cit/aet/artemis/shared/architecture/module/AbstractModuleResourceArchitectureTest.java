@@ -96,14 +96,7 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
             "api/programming/programming-exercises/{exerciseId}/export-instructor-auxiliary-repository/{repositoryId}",
             "api/programming/programming-exercises/{exerciseId}/export-student-repository/{participationId}",
             "api/programming/programming-submissions/{participationId}/trigger-build", "api/programming/programming-submissions/{participationId}/trigger-failed-build",
-            "api/programming/repository-files-content/{commitId}", "api/programming/repository/{participationId}", "api/programming/repository/{participationId}/commit",
-            "api/programming/repository/{participationId}/file", "api/programming/repository/{participationId}/file-plagiarism-view",
-            "api/programming/repository/{participationId}/files", "api/programming/repository/{participationId}/files-change",
-            "api/programming/repository/{participationId}/files-content", "api/programming/repository/{participationId}/files-plagiarism-view",
-            "api/programming/repository/{participationId}/folder", "api/programming/repository/{participationId}/pull", "api/programming/repository/{participationId}/rename-file",
-            "api/programming/repository/{participationId}/reset", "api/programming/test-repository/{exerciseId}", "api/programming/test-repository/{exerciseId}/commit",
-            "api/programming/test-repository/{exerciseId}/file", "api/programming/test-repository/{exerciseId}/files", "api/programming/test-repository/{exerciseId}/folder",
-            "api/programming/test-repository/{exerciseId}/pull", "api/programming/test-repository/{exerciseId}/rename-file", "api/programming/test-repository/{exerciseId}/reset",
+            "api/programming/repository-files-content/{commitId}",
             // quiz
             "api/quiz/courses/{courseId}/training-questions/{quizQuestionId}/submit", "api/quiz/quiz-exercises/{quizBatchId}/start-batch",
             // text

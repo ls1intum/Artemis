@@ -195,7 +195,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitViaOnlineEditor() throws Exception {
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
-        request.postWithoutLocation("/api/programming/repository/" + studentParticipation.getId() + "/commit", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/programming/participations/" + studentParticipation.getId() + "/repository/commit", null, HttpStatus.OK, null);
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), null, 1, false);
     }
 

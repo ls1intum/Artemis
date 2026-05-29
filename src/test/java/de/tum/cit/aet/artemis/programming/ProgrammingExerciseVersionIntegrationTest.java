@@ -365,8 +365,8 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
         Long templateParticipationId = programmingExercise.getTemplateParticipation().getId();
 
-        request.postWithoutLocation("/api/programming/repository/" + templateParticipationId + "/file?file=Template.java", null, HttpStatus.OK, null);
-        request.postWithoutLocation("/api/programming/repository/" + templateParticipationId + "/commit", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/programming/participations/" + templateParticipationId + "/repository/file?file=Template.java", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/programming/participations/" + templateParticipationId + "/repository/commit", null, HttpStatus.OK, null);
 
         await().untilAsserted(() -> {
             ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",
@@ -388,8 +388,8 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
         Long solutionParticipationId = programmingExercise.getSolutionParticipation().getId();
 
-        request.postWithoutLocation("/api/programming/repository/" + solutionParticipationId + "/file?file=Template.java", null, HttpStatus.OK, null);
-        request.postWithoutLocation("/api/programming/repository/" + solutionParticipationId + "/commit", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/programming/participations/" + solutionParticipationId + "/repository/file?file=Template.java", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/programming/participations/" + solutionParticipationId + "/repository/commit", null, HttpStatus.OK, null);
 
         await().untilAsserted(() -> {
             ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",

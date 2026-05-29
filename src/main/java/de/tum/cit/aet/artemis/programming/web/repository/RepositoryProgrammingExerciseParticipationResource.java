@@ -182,7 +182,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     @Override
-    @GetMapping(value = "repository/{participationId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = { "participations/{participationId}/repository/files", "repository/{participationId}/files" }, produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, FileType>> getFiles(@PathVariable Long participationId) {
         return super.getFiles(participationId);
@@ -194,7 +194,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @param participationId the participationId of the repository we want to get the files from
      * @return a map with the file path as key and the file type as value
      */
-    @GetMapping(value = "repository/{participationId}/files-plagiarism-view", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = { "participations/{participationId}/repository/files-plagiarism-view",
+            "repository/{participationId}/files-plagiarism-view" }, produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, FileType>> getFilesForPlagiarismView(@PathVariable Long participationId) {
         log.debug("REST request to files for plagiarism view for domainId : {}", participationId);
@@ -235,7 +236,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @param participationId participation of the student
      * @return the ResponseEntity with status 200 (OK) and a map of files with the information if they were changed/are new.
      */
-    @GetMapping(value = "repository/{participationId}/files-change", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = { "participations/{participationId}/repository/files-change", "repository/{participationId}/files-change" }, produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     public ResponseEntity<Map<String, Boolean>> getFilesWithInformationAboutChange(@PathVariable Long participationId) {
         return super.executeAndCheckForExceptions(() -> {
@@ -250,7 +251,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     @Override
-    @GetMapping(value = "repository/{participationId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value = { "participations/{participationId}/repository/file", "repository/{participationId}/file" }, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getFile(@PathVariable Long participationId, @RequestParam("file") String filename) {
         return super.getFile(participationId, filename);
@@ -263,7 +264,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @param filename        the name of the file to retrieve
      * @return the file with the given filename
      */
-    @GetMapping(value = "repository/{participationId}/file-plagiarism-view", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value = { "participations/{participationId}/repository/file-plagiarism-view",
+            "repository/{participationId}/file-plagiarism-view" }, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getFileForPlagiarismView(@PathVariable Long participationId, @RequestParam("file") String filename) {
         log.debug("REST request to file {} for plagiarism view for domainId : {}", filename, participationId);
@@ -283,7 +285,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @param omitBinaries    do not send binaries to reduce payload size
      * @return the ResponseEntity with status 200 (OK) and a map of files with their content
      */
-    @GetMapping(value = "repository/{participationId}/files-content", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = { "participations/{participationId}/repository/files-content", "repository/{participationId}/files-content" }, produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     public ResponseEntity<Map<String, String>> getFilesWithContent(@PathVariable Long participationId,
             @RequestParam(value = "omitBinaries", required = false, defaultValue = "false") boolean omitBinaries) {
@@ -295,7 +297,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     @Override
-    @PostMapping(value = "repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = { "participations/{participationId}/repository/file", "repository/{participationId}/file" }, produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
     @EnforceAtLeastStudent
     public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filePath, HttpServletRequest request) {
@@ -303,7 +305,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     @Override
-    @PostMapping(value = "repository/{participationId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = { "participations/{participationId}/repository/folder", "repository/{participationId}/folder" }, produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
     @EnforceAtLeastStudent
     public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderPath, HttpServletRequest request) {
@@ -311,7 +313,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     @Override
-    @PostMapping(value = "repository/{participationId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = { "participations/{participationId}/repository/rename-file", "repository/{participationId}/rename-file" }, produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
     @EnforceAtLeastStudent
     public ResponseEntity<Void> renameFile(@PathVariable Long participationId, @RequestBody FileMove fileMove) {
@@ -319,14 +321,14 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     @Override
-    @DeleteMapping(value = "repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping(value = { "participations/{participationId}/repository/file", "repository/{participationId}/file" }, produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("file") String filename) {
         return super.deleteFile(participationId, filename);
     }
 
     @Override
-    @GetMapping(value = "repository/{participationId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = { "participations/{participationId}/repository/pull", "repository/{participationId}/pull" }, produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<Void> pullChanges(@PathVariable Long participationId) {
         return super.pullChanges(participationId);
@@ -340,7 +342,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @param commit          whether to commit after updating the files
      * @return {Map<String, String>} file submissions or the appropriate http error
      */
-    @PutMapping("repository/{participationId}/files")
+    @PutMapping({ "participations/{participationId}/repository/files", "repository/{participationId}/files" })
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, String>> updateParticipationFiles(@PathVariable("participationId") Long participationId, @RequestBody List<FileSubmission> submissions,
             @RequestParam(defaultValue = "false") boolean commit) {
@@ -386,7 +388,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      *         participation OR the buildAndTestAfterDueDate is set and the repository is now locked.
      */
     @Override
-    @PostMapping(value = "repository/{participationId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = { "participations/{participationId}/repository/commit", "repository/{participationId}/commit" }, produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
     @EnforceAtLeastStudent
     public ResponseEntity<Void> commitChanges(@PathVariable Long participationId) {
@@ -394,7 +396,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     @Override
-    @PostMapping(value = "repository/{participationId}/reset", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = { "participations/{participationId}/repository/reset", "repository/{participationId}/reset" }, produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
     @EnforceAtLeastStudent
     public ResponseEntity<Void> resetToLastCommit(@PathVariable Long participationId) {
@@ -402,7 +404,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     @Override
-    @GetMapping(value = "repository/{participationId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = { "participations/{participationId}/repository", "repository/{participationId}" }, produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long participationId) throws GitAPIException {
         return super.getStatus(participationId);

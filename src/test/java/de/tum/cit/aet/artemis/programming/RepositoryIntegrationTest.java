@@ -87,8 +87,6 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
     private static final String TEST_PREFIX = "repositoryintegration";
 
-    private final String studentRepoBaseUrl = "/api/programming/repository/";
-
     private final String participationsBaseUrl = "/api/programming/participations/";
 
     private final String filesContentBaseUrl = "/api/programming/repository-files-content/";
@@ -190,7 +188,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetFiles() throws Exception {
-        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).isNotEmpty();
 
         synchronizeWithRemote(studentRepository);
@@ -206,7 +204,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testGetFilesWithFileAndDirectoryFilter() throws Exception {
         // This case tests the FileAndDirectoryFilter inner class in GitRepositoryExportService
         // by calling the getFiles endpoint which internally uses the filter
-        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).isNotEmpty();
 
         validateFilesExcludeGitAndFolders(files, false);
@@ -223,7 +221,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testGetFilesWithContentAndFileAndDirectoryFilter() throws Exception {
         // This case tests the FileAndDirectoryFilter inner class in GitRepositoryExportService
         // by calling the files-content endpoint which internally uses the filter
-        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-content", HttpStatus.OK, String.class, String.class);
+        var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-content", HttpStatus.OK, String.class, String.class);
         assertThat(files).isNotEmpty();
 
         validateFilesExcludeGitAndFolders(files, true);
@@ -248,7 +246,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
-        request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.FORBIDDEN, byte[].class, params);
+        request.get(participationsBaseUrl + participation.getId() + "/repository/file", HttpStatus.FORBIDDEN, byte[].class, params);
     }
 
     @Test
@@ -260,13 +258,13 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
-        request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.FORBIDDEN, byte[].class, params);
+        request.get(participationsBaseUrl + participation.getId() + "/repository/file", HttpStatus.FORBIDDEN, byte[].class, params);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFilesWithContent() throws Exception {
-        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-content", HttpStatus.OK, String.class, String.class);
+        var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-content", HttpStatus.OK, String.class, String.class);
         assertThat(files).isNotEmpty();
 
         // Check if all files exist
@@ -280,7 +278,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFilesWithOmitBinaries() throws Exception {
         var queryParams = "?omitBinaries=true";
-        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-content" + queryParams, HttpStatus.OK, String.class, String.class);
+        var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-content" + queryParams, HttpStatus.OK, String.class, String.class);
         assertThat(files).isNotEmpty();
 
         for (String key : files.keySet()) {
@@ -372,7 +370,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         MockedStatic<FileUtils> mockedFileUtils = mockStatic(FileUtils.class);
         mockedFileUtils.when(() -> FileUtils.readFileToString(any(File.class), eq(StandardCharsets.UTF_8))).thenThrow(IOException.class);
 
-        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-content", HttpStatus.OK, String.class, String.class);
+        var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-content", HttpStatus.OK, String.class, String.class);
         assertThat(files).isEmpty();
         mockedFileUtils.close();
     }
@@ -381,7 +379,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFilesWithInfoAboutChange_noChange() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
-        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-change", HttpStatus.OK, String.class, Boolean.class);
+        var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-change", HttpStatus.OK, String.class, Boolean.class);
         assertThat(files).isNotEmpty();
 
         synchronizeWithRemote(studentRepository);
@@ -397,10 +395,10 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFilesWithInfoAboutChange_withChange() throws Exception {
         userUtilService.changeUser(TEST_PREFIX + "student1");
-        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", getFileSubmissions("newContent123"), HttpStatus.OK);
+        request.put(participationsBaseUrl + participation.getId() + "/repository/files?commit=false", getFileSubmissions("newContent123"), HttpStatus.OK);
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
 
-        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-change", HttpStatus.OK, String.class, Boolean.class);
+        var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-change", HttpStatus.OK, String.class, Boolean.class);
         assertThat(files).isNotEmpty();
 
         synchronizeWithRemote(studentRepository);
@@ -422,10 +420,10 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         newSubmission.setFileName(newFileName);
         newSubmission.setFileContent(currentLocalFileContent + "test1");
         userUtilService.changeUser(TEST_PREFIX + "student1");
-        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", List.of(newSubmission), HttpStatus.OK);
+        request.put(participationsBaseUrl + participation.getId() + "/repository/files?commit=false", List.of(newSubmission), HttpStatus.OK);
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
 
-        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-change", HttpStatus.OK, String.class, Boolean.class);
+        var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-change", HttpStatus.OK, String.class, Boolean.class);
         assertThat(files).isNotEmpty();
 
         synchronizeWithRemote(studentRepository);
@@ -443,7 +441,8 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFiles_solutionParticipation() throws Exception {
-        var files = request.getMap(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        var files = request.getMap(participationsBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/repository/files", HttpStatus.OK, String.class,
+                FileType.class);
 
         synchronizeWithRemote(solutionRepository);
 
@@ -458,7 +457,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testGetFile() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
-        var file = request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.OK, byte[].class, params);
+        var file = request.get(participationsBaseUrl + participation.getId() + "/repository/file", HttpStatus.OK, byte[].class, params);
         assertThat(file).isNotEmpty();
         assertThat(new String(file)).isEqualTo(currentLocalFileContent);
     }
@@ -466,7 +465,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testGetFilesAsDifferentStudentForbidden() throws Exception {
-        request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.FORBIDDEN, String.class, FileType.class);
+        request.getMap(participationsBaseUrl + participation.getId() + "/repository/files", HttpStatus.FORBIDDEN, String.class, FileType.class);
     }
 
     @Test
@@ -475,7 +474,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
-        request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.FORBIDDEN, byte[].class, params);
+        request.get(participationsBaseUrl + participation.getId() + "/repository/file", HttpStatus.FORBIDDEN, byte[].class, params);
     }
 
     private void addPlagiarismCaseToProgrammingExercise(String studentLoginWithoutPost, String studentLoginWithPost) {
@@ -519,7 +518,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         addPlagiarismCaseToProgrammingExercise(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
 
-        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-plagiarism-view", HttpStatus.OK, String.class, FileType.class);
+        var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-plagiarism-view", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).isNotEmpty();
 
         synchronizeWithRemote(studentRepository);
@@ -540,7 +539,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
-        var file = request.get(studentRepoBaseUrl + participation.getId() + "/file-plagiarism-view", HttpStatus.OK, byte[].class, params);
+        var file = request.get(participationsBaseUrl + participation.getId() + "/repository/file-plagiarism-view", HttpStatus.OK, byte[].class, params);
         assertThat(file).isNotEmpty();
         assertThat(new String(file)).isEqualTo(currentLocalFileContent);
     }
@@ -555,7 +554,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
-        request.get(studentRepoBaseUrl + participation.getId() + "/file-plagiarism-view", HttpStatus.FORBIDDEN, byte[].class, params);
+        request.get(participationsBaseUrl + participation.getId() + "/repository/file-plagiarism-view", HttpStatus.FORBIDDEN, byte[].class, params);
     }
 
     @Test
@@ -568,7 +567,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
-        var file = request.get(studentRepoBaseUrl + participation.getId() + "/file-plagiarism-view", HttpStatus.OK, byte[].class, params);
+        var file = request.get(participationsBaseUrl + participation.getId() + "/repository/file-plagiarism-view", HttpStatus.OK, byte[].class, params);
         assertThat(file).isNotEmpty();
         assertThat(new String(file)).isEqualTo(currentLocalFileContent);
     }
@@ -589,7 +588,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
-        var file = request.get(studentRepoBaseUrl + participation.getId() + "/file-plagiarism-view", HttpStatus.OK, byte[].class, params);
+        var file = request.get(participationsBaseUrl + participation.getId() + "/repository/file-plagiarism-view", HttpStatus.OK, byte[].class, params);
         assertThat(file).isNotEmpty();
         assertThat(new String(file)).isEqualTo(currentLocalFileContent);
     }
@@ -610,7 +609,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
-        var file = request.get(studentRepoBaseUrl + participation.getId() + "/file-plagiarism-view", HttpStatus.OK, byte[].class, params);
+        var file = request.get(participationsBaseUrl + participation.getId() + "/repository/file-plagiarism-view", HttpStatus.OK, byte[].class, params);
         assertThat(file).isNotEmpty();
         assertThat(new String(file)).isEqualTo(currentLocalFileContent);
     }
@@ -630,7 +629,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         // student1 is NOT notified yet.
         addPlagiarismCaseToProgrammingExercise(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
 
-        request.getMap(studentRepoBaseUrl + participation.getId() + "/files-plagiarism-view", HttpStatus.FORBIDDEN, String.class, FileType.class);
+        request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-plagiarism-view", HttpStatus.FORBIDDEN, String.class, FileType.class);
     }
 
     @Test
@@ -648,7 +647,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         // student1 is notified.
         addPlagiarismCaseToProgrammingExercise(TEST_PREFIX + "student2", TEST_PREFIX + "student1");
 
-        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-plagiarism-view", HttpStatus.OK, String.class, FileType.class);
+        var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-plagiarism-view", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).isNotEmpty();
 
         // Check if all files exist
@@ -662,7 +661,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testGetFile_shouldThrowException() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", "does-not-exist.txt");
-        var file = request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.NOT_FOUND, byte[].class, params);
+        var file = request.get(participationsBaseUrl + participation.getId() + "/repository/file", HttpStatus.NOT_FOUND, byte[].class, params);
         assertThat(file).isNull();
     }
 
@@ -671,8 +670,8 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testCreateFile() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", "newFile");
-        request.postWithoutResponseBody(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.OK, params);
-        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        request.postWithoutResponseBody(participationsBaseUrl + participation.getId() + "/repository/file", HttpStatus.OK, params);
+        var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).containsKey("newFile");
     }
 
@@ -681,8 +680,8 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testCreateFolder() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("folder", "newFolder");
-        request.postWithoutResponseBody(studentRepoBaseUrl + participation.getId() + "/folder", HttpStatus.OK, params);
-        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        request.postWithoutResponseBody(participationsBaseUrl + participation.getId() + "/repository/folder", HttpStatus.OK, params);
+        var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).containsEntry("newFolder", FileType.FOLDER);
     }
 
@@ -691,8 +690,8 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testRenameFile() throws Exception {
         String newLocalFileName = "newFileName";
         FileMove fileMove = new FileMove(currentLocalFileName, newLocalFileName);
-        request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
-        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        request.postWithoutLocation(participationsBaseUrl + participation.getId() + "/repository/rename-file", fileMove, HttpStatus.OK, null);
+        var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).doesNotContainKey(currentLocalFileName).containsKey(newLocalFileName);
     }
 
@@ -701,8 +700,8 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testRenameFolder() throws Exception {
         String newLocalFolderName = "newFolderName";
         FileMove fileMove = new FileMove(currentLocalFolderName, newLocalFolderName);
-        request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
-        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        request.postWithoutLocation(participationsBaseUrl + participation.getId() + "/repository/rename-file", fileMove, HttpStatus.OK, null);
+        var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).doesNotContainKey(currentLocalFolderName).containsEntry(newLocalFolderName, FileType.FOLDER);
     }
 
@@ -711,8 +710,8 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testDeleteFile() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
-        request.delete(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.OK, params);
-        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        request.delete(participationsBaseUrl + participation.getId() + "/repository/file", HttpStatus.OK, params);
+        var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).doesNotContainKey(currentLocalFileName);
     }
 
@@ -720,10 +719,10 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCommitChanges() throws Exception {
-        var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        var receivedStatusBeforeCommit = request.get(participationsBaseUrl + participation.getId() + "/repository", HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
-        request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.OK, null);
-        var receivedStatusAfterCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        request.postWithoutLocation(participationsBaseUrl + participation.getId() + "/repository/commit", null, HttpStatus.OK, null);
+        var receivedStatusAfterCommit = request.get(participationsBaseUrl + participation.getId() + "/repository", HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
         var testRepoCommits = studentRepository.getAllLocalCommits();
         assertThat(testRepoCommits).hasSize(1);
@@ -734,10 +733,10 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSaveFiles() throws Exception {
         assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + currentLocalFileName)).exists();
-        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
+        request.put(participationsBaseUrl + participation.getId() + "/repository/files?commit=false", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
-        var updatedFile = request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.OK, byte[].class, params);
+        var updatedFile = request.get(participationsBaseUrl + participation.getId() + "/repository/file", HttpStatus.OK, byte[].class, params);
         assertThat(new String(updatedFile, StandardCharsets.UTF_8)).isEqualTo("updatedFileContent");
     }
 
@@ -747,17 +746,17 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testSaveFilesAndCommit() throws Exception {
         assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + currentLocalFileName)).exists();
 
-        var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        var receivedStatusBeforeCommit = request.get(participationsBaseUrl + participation.getId() + "/repository", HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
 
-        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=true", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
+        request.put(participationsBaseUrl + participation.getId() + "/repository/files?commit=true", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
 
-        var receivedStatusAfterCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        var receivedStatusAfterCommit = request.get(participationsBaseUrl + participation.getId() + "/repository", HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
-        var updatedFile = request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.OK, byte[].class, params);
+        var updatedFile = request.get(participationsBaseUrl + participation.getId() + "/repository/file", HttpStatus.OK, byte[].class, params);
         assertThat(new String(updatedFile, StandardCharsets.UTF_8)).isEqualTo("updatedFileContent");
 
         var testRepoCommits = studentRepository.getAllLocalCommits();
@@ -775,7 +774,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         ProgrammingExerciseStudentParticipation instructorAssignmentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "instructor1");
-        request.put(studentRepoBaseUrl + instructorAssignmentParticipation.getId() + "/files?commit=true", List.of(), HttpStatus.OK);
+        request.put(participationsBaseUrl + instructorAssignmentParticipation.getId() + "/repository/files?commit=true", List.of(), HttpStatus.OK);
     }
 
     @Disabled
@@ -783,7 +782,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testUpdateParticipationFiles_cannotAccessParticipation() throws Exception {
         // student2 should not have access to student1's participation.
-        request.put(studentRepoBaseUrl + participation.getId() + "/files", List.of(), HttpStatus.FORBIDDEN);
+        request.put(participationsBaseUrl + participation.getId() + "/repository/files", List.of(), HttpStatus.FORBIDDEN);
     }
 
     @Disabled
@@ -793,7 +792,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         String fileName = "remoteFile";
 
         // Create a commit for the local and the remote repository
-        request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.OK, null);
+        request.postWithoutLocation(participationsBaseUrl + participation.getId() + "/repository/commit", null, HttpStatus.OK, null);
         LocalVCRepositoryUri repositoryUri = new LocalVCRepositoryUri(participation.getRepositoryUri());
         Path remoteClonePath = tempFileUtilService.createTempDirectory("repositoryintegration-remote-clone");
         try (Repository remoteRepository = gitService.getOrCheckoutRepositoryWithLocalPath(repositoryUri, remoteClonePath, true, true);
@@ -817,7 +816,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
             assertThat(studentRepository.getAllLocalCommits().getFirst()).isNotEqualTo(studentRepository.getAllOriginCommits().getFirst());
 
             // Execute the Rest call
-            request.get(studentRepoBaseUrl + participation.getId() + "/pull", HttpStatus.OK, Void.class);
+            request.get(participationsBaseUrl + participation.getId() + "/repository/pull", HttpStatus.OK, Void.class);
 
             // Check if the current commit is the same on the local and the remote repository and if the file exists on the local repository
             assertThat(studentRepository.getAllLocalCommits().getFirst()).isEqualTo(studentRepository.getAllOriginCommits().getFirst());
@@ -839,14 +838,14 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
                 Git remoteGit = Git.wrap(remoteRepository)) {
 
             // Check status of git before the commit
-            var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+            var receivedStatusBeforeCommit = request.get(participationsBaseUrl + participation.getId() + "/repository", HttpStatus.OK, RepositoryStatusDTO.class);
             assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
 
             // Create a commit for the local and the remote repository
-            request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.OK, null);
+            request.postWithoutLocation(participationsBaseUrl + participation.getId() + "/repository/commit", null, HttpStatus.OK, null);
 
             // Check status of git after the commit
-            var receivedStatusAfterCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+            var receivedStatusAfterCommit = request.get(participationsBaseUrl + participation.getId() + "/repository", HttpStatus.OK, RepositoryStatusDTO.class);
             assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
 
             // Create file in the local repository and commit it
@@ -877,13 +876,13 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
             assertThat(result.getMergeStatus()).isEqualTo(MergeResult.MergeStatus.CONFLICTING);
 
             // Execute the reset Rest call
-            request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/reset", null, HttpStatus.OK, null);
+            request.postWithoutLocation(participationsBaseUrl + participation.getId() + "/repository/reset", null, HttpStatus.OK, null);
 
             // Check the git status after the reset
             status = studentRepository.workingCopyGitRepo.status().call();
             assertThat(status.getConflicting()).isEmpty();
             assertThat(studentRepository.getAllLocalCommits().getFirst()).isEqualTo(studentRepository.getAllOriginCommits().getFirst());
-            var receivedStatusAfterReset = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+            var receivedStatusAfterReset = request.get(participationsBaseUrl + participation.getId() + "/repository", HttpStatus.OK, RepositoryStatusDTO.class);
             assertThat(receivedStatusAfterReset.repositoryStatus()).hasToString("CLEAN");
         }
         finally {
@@ -895,16 +894,16 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStatus() throws Exception {
-        var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        var receivedStatusBeforeCommit = request.get(participationsBaseUrl + participation.getId() + "/repository", HttpStatus.OK, RepositoryStatusDTO.class);
 
         // The current status is "uncommited changes", since we added files and folders, but we didn't commit yet
         assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
 
         // Perform a commit to check if the status changes
-        request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.OK, null);
+        request.postWithoutLocation(participationsBaseUrl + participation.getId() + "/repository/commit", null, HttpStatus.OK, null);
 
         // Check if the status of git is "clean" after the commit
-        var receivedStatusAfterCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        var receivedStatusAfterCommit = request.get(participationsBaseUrl + participation.getId() + "/repository", HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
     }
 
@@ -1063,13 +1062,13 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     private void assertUnchangedRepositoryStatusForForbiddenReset(boolean ensureUncommittedChanges) throws Exception {
         if (ensureUncommittedChanges) {
             userUtilService.changeUser(TEST_PREFIX + "student1");
-            request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
+            request.put(participationsBaseUrl + participation.getId() + "/repository/files?commit=false", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
             userUtilService.changeUser(TEST_PREFIX + "tutor1");
         }
 
-        var receivedStatusBeforeReset = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/reset", null, HttpStatus.FORBIDDEN, null);
-        var receivedStatusAfterReset = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        var receivedStatusBeforeReset = request.get(participationsBaseUrl + participation.getId() + "/repository", HttpStatus.OK, RepositoryStatusDTO.class);
+        request.postWithoutLocation(participationsBaseUrl + participation.getId() + "/repository/reset", null, HttpStatus.FORBIDDEN, null);
+        var receivedStatusAfterReset = request.get(participationsBaseUrl + participation.getId() + "/repository", HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterReset.repositoryStatus()).hasToString(receivedStatusBeforeReset.repositoryStatus().name());
     }
 
