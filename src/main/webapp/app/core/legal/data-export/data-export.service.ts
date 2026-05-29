@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { DataExport } from 'app/core/shared/entities/data-export.model';
+import { DataExport } from 'app/admin/admin-data-exports/data-export.model';
 
 @Injectable({ providedIn: 'root' })
 export class DataExportService {
@@ -28,6 +28,6 @@ export class DataExportService {
     }
 
     requestDataExportForAnotherUser(login: string): Observable<DataExport> {
-        return this.http.post<DataExport>(`api/core/admin/data-exports/${login}`, {});
+        return this.http.post<DataExport>(`api/admin/data-exports/${login}`, {});
     }
 }

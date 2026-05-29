@@ -5,11 +5,11 @@ import { vi } from 'vitest';
 import { Subject, of, throwError } from 'rxjs';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ProblemStatementService } from './problem-statement.service';
-import { FileService } from 'app/shared/service/file.service';
+import { FileService } from 'app/foundation/service/file.service';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('ProblemStatementService', () => {

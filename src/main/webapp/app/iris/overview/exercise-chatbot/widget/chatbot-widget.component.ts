@@ -7,7 +7,7 @@ import { DOCUMENT } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { NavigationStart, Router } from '@angular/router';
 import { filter, map } from 'rxjs';
-import { ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { IrisBaseChatbotComponent } from '../../base-chatbot/iris-base-chatbot.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 

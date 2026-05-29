@@ -1,18 +1,18 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
-import { User } from 'app/core/user/user.model';
-import { WebsocketService } from 'app/shared/service/websocket.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { User } from 'app/account/user/user.model';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentWithTeam, Team, TeamAssignmentPayload, TeamImportStrategyType } from 'app/exercise/shared/entities/team/team.model';
 import { TeamSearchUser } from 'app/exercise/shared/entities/team/team-search-user.model';
-import { downloadFile } from 'app/shared/util/download.util';
-import { createRequestOption } from 'app/shared/util/request.util';
+import { downloadFile } from 'app/foundation/util/download.util';
+import { createRequestOption } from 'app/foundation/util/request.util';
 import { Observable, Subscription } from 'rxjs';
 import { filter, map, shareReplay } from 'rxjs/operators';
 import { EntityResponseType } from 'app/exercise/services/exercise.service';
-import { convertDateFromServer } from 'app/shared/util/date.utils';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
 
 /**
  * DTO for creating and updating teams.

@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { inject } from '@angular/core';
 import { DomainDependentService } from 'app/programming/shared/code-editor/services/code-editor-domain-dependent.service';
 import { DomainChange, DomainType } from 'app/programming/shared/code-editor/model/code-editor.model';

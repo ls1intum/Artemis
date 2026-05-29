@@ -2,14 +2,14 @@ import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, com
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { faCog, faExclamationTriangle, faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { faClock, faUser } from '@fortawesome/free-regular-svg-icons';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { cloneDeep, isEqual } from 'lodash-es';
 import { AccountService } from 'app/core/auth/account.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
 import { captureException } from '@sentry/angular';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
@@ -26,8 +26,8 @@ import {
     createDefaultCourseSettings,
 } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
-import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
+import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { TabsModule } from 'primeng/tabs';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { SliderModule } from 'primeng/slider';

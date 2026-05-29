@@ -6,11 +6,11 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faRobot, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
-import { UserService } from 'app/core/user/shared/user.service';
-import { PROFILE_ATHENA } from 'app/app.constants';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { UserService } from 'app/account/user/shared/user.service';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { getLatestResultOfStudentParticipation } from 'app/exercise/participation/participation.utils';
@@ -20,9 +20,9 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 
 const FEEDBACK_REQUESTED_LOCAL_STORAGE_PREFIX = 'artemis_exam_ai_feedback_requested_';
 
@@ -134,7 +134,7 @@ export class ExamRequestAiFeedbackButtonComponent {
                 return;
             }
             initialized = true;
-            this.athenaEnabled.set(this.profileService.isProfileActive(PROFILE_ATHENA));
+            this.athenaEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA));
             this.hasUserAcceptedLLMUsage.set(this.isAcceptedLLMSelection(this.accountService.userIdentity()?.selectedLLMUsage));
         });
 

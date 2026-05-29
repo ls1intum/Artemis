@@ -7,7 +7,7 @@ import { of, throwError } from 'rxjs';
 import { QuizAiQuestionRefinementPanelComponent } from './quiz-ai-question-refinement-panel.component';
 import { QuizAiGenerationService } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

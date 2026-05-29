@@ -10,7 +10,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 
 describe('FileUploadExerciseService', () => {

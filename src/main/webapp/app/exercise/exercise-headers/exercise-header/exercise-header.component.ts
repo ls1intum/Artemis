@@ -8,7 +8,7 @@ import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-heade
 import { ExerciseHeaderActionsComponent } from 'app/exercise/exercise-headers/exercise-header-actions/exercise-header-actions.component';
 import { ParticipationMode, ParticipationModeToggleComponent } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
-import { DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 
 @Component({
     selector: 'jhi-exercise-header',

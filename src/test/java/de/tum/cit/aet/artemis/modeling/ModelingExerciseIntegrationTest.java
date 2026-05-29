@@ -49,12 +49,12 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
@@ -1127,7 +1127,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         classExercise.setExampleSolutionPublicationDate(null);
         modelingExerciseTestRepository.save(classExercise);
 
-        CourseForDashboardDTO courseForDashboard = request.get("/api/core/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard",
+        CourseForDashboardDTO courseForDashboard = request.get("/api/course/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard",
                 HttpStatus.OK, CourseForDashboardDTO.class);
         Course course = courseForDashboard.course();
         ModelingExercise modelingExercise = modelingExerciseGetter.apply(course);
@@ -1145,7 +1145,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         classExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
         modelingExerciseTestRepository.save(classExercise);
 
-        courseForDashboard = request.get("/api/core/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+        courseForDashboard = request.get("/api/course/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
                 CourseForDashboardDTO.class);
         course = courseForDashboard.course();
         modelingExercise = modelingExerciseGetter.apply(course);
@@ -1157,7 +1157,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         classExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
         modelingExerciseTestRepository.save(classExercise);
 
-        courseForDashboard = request.get("/api/core/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+        courseForDashboard = request.get("/api/course/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
                 CourseForDashboardDTO.class);
         course = courseForDashboard.course();
         modelingExercise = modelingExerciseGetter.apply(course);

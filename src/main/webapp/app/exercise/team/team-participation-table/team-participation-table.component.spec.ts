@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { TeamService } from 'app/exercise/team/team.service';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { of } from 'rxjs';
 import { MockTeamService, mockTeam } from 'test/helpers/mocks/service/mock-team.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -11,13 +11,13 @@ import { TeamParticipationTableComponent } from 'app/exercise/team/team-particip
 import { Exercise, ExerciseMode, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
 import { Router } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 describe('TeamParticipationTableComponent', () => {
     let comp: TeamParticipationTableComponent;

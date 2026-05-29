@@ -8,12 +8,12 @@ import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseUsersSelectorComponent, SearchRoleGroup } from 'app/communication/course-users-selector/course-users-selector.component';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { UserPublicInfoDTO } from 'app/account/user/user.model';
 
 import { TranslateModule } from '@ngx-translate/core';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 
 @Component({
     template: ` <jhi-course-users-selector [courseId]="courseId" [rolesToAllowSearchingIn]="rolesToAllowSearchingIn" [multiSelect]="multiSelect" [showUserList]="showUserList" />`,

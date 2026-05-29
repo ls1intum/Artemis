@@ -1,116 +1,180 @@
-:host {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+/* ── Iris inline answer card ───────────────────────────────────────────────── */
+
+.iris-inline-answer {
+    border-radius: 0.75rem;
+    border: 1px solid color-mix(in srgb, var(--bs-primary) 18%, transparent);
+    background: color-mix(in srgb, var(--bs-primary) 4.5%, transparent);
 }
 
-.iris-answer-panel {
-    border-left: 1px solid var(--bs-border-color);
-}
-
-.iris-answer-header {
+.iris-card-header {
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid var(--bs-border-color);
-    gap: 0.5rem;
-
-    // Suppress the logo's default drop-shadow — it looks too heavy at small sizes
-    :host ::ng-deep .iris-logo {
-        filter: none;
-    }
+    border-bottom: 1px solid color-mix(in srgb, var(--bs-primary) 12%, transparent);
+    border-radius: 0.75rem 0.75rem 0 0;
 }
 
-.iris-answer-title {
-    font-size: 0.875rem;
+.iris-card-label {
+    font-size: 0.75rem;
     color: var(--bs-primary);
 }
 
-.iris-close-btn {
-    width: 1.75rem;
-    height: 1.75rem;
-    border-radius: 0.25rem;
-    font-size: 0.75rem;
-    background: transparent;
-    border: none;
-    transition:
-        color 0.15s,
-        background 0.15s;
+.iris-ai-badge {
+    padding: 0.125rem 0.375rem;
+    font-size: 0.5625rem;
+    letter-spacing: 0.04em;
+    color: var(--bs-primary);
+    background: color-mix(in srgb, var(--bs-primary) 12%, transparent);
+}
 
-    &:hover,
-    &:focus-visible {
-        color: var(--bs-body-color);
-        background: var(--bs-secondary-bg);
+@keyframes iris-logo-pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.45;
     }
 }
 
-.iris-answer-content {
-    padding: 0.75rem;
-    min-height: 0; // Required: prevents flex-grow-1 from expanding beyond its container, allowing overflow-y-auto to scroll
+.iris-logo-pulse {
+    animation: iris-logo-pulse 1.4s ease-in-out infinite;
+}
+
+/* Thinking bubble wrapper — provides padding; .thinking-bubble overrides live in global.scss */
+.iris-thinking-wrapper {
+    display: block;
+    padding: 0.5rem 0.75rem 0.625rem;
+}
+
+/* ── Answer collapse ────────────────────────────────────────────────────────── */
+
+.iris-answer-region {
+    padding: 0.625rem 0.75rem 0;
 }
 
 .iris-answer-text {
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     line-height: 1.6;
     color: var(--bs-body-color);
-    margin-bottom: 1rem;
+    transition: max-height 0.38s cubic-bezier(0.4, 0, 0.2, 1);
 
-    // Tighten up paragraph spacing inside the rendered markdown
-    :host ::ng-deep p {
-        margin-bottom: 0.5rem;
+    &.is-clamped {
+        /* 4 lines × line-height 1.6 × font-size 0.8125rem — matches the JS measurement: lineHeight * CLAMP_LINE_COUNT */
+        max-height: calc(4 * 1.6 * 0.8125rem);
+        overflow: hidden;
+        -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+        mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+    }
 
-        &:last-child {
-            margin-bottom: 0;
-        }
+    &.is-expanded {
+        max-height: none;
     }
 }
 
-.iris-error-msg {
-    font-size: 0.875rem;
+.iris-toggle-btn {
+    padding: 0.125rem 0.75rem 0;
+    font-size: 0.6875rem;
+    color: color-mix(in srgb, var(--bs-primary) 60%, transparent);
+    cursor: pointer;
+    transition: color 0.15s;
+
+    &:hover {
+        color: var(--bs-primary);
+    }
 }
 
-.iris-sources-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+/* ── Source chips ─────────────────────────────────────────────────────────── */
+
+.iris-chips {
+    gap: 0.375rem;
+    flex-wrap: nowrap;
+    padding: 0.5rem 0.75rem 0;
+    animation: fade-slide-up 0.3s ease both;
+
+    &--expanded {
+        flex-wrap: wrap;
+        padding-bottom: 0.125rem;
+        animation: fade-slide-up 0.15s ease both;
+    }
 }
 
-.iris-source-card {
-    background: var(--module-bg);
-    border-radius: 0.375rem;
+.iris-collapse-btn {
+    width: 1.5rem;
+    height: 1.5rem;
+    background: transparent;
+    border: 1px solid color-mix(in srgb, var(--bs-primary) 30%, transparent);
+    color: color-mix(in srgb, var(--bs-primary) 60%, transparent);
+    font-size: 0.5rem;
+    cursor: pointer;
+    transition:
+        border-color 0.15s,
+        color 0.15s,
+        background 0.15s;
+
+    &:hover {
+        border-color: color-mix(in srgb, var(--bs-primary) 60%, transparent);
+        color: var(--bs-primary);
+        background: color-mix(in srgb, var(--bs-primary) 8%, transparent);
+    }
+}
+
+/* Give the first chip row bottom padding when it's the last thing in the card */
+.iris-chips:last-child {
+    padding-bottom: 0.625rem;
+}
+
+/* "+N more" — same chip shape but accent-colored */
+.iris-more-btn {
+    flex-shrink: 0;
+    color: var(--bs-primary);
+    border-color: color-mix(in srgb, var(--bs-primary) 30%, transparent);
+    background: color-mix(in srgb, var(--bs-primary) 6%, transparent);
+    cursor: pointer;
+
+    &:hover {
+        border-color: color-mix(in srgb, var(--bs-primary) 60%, transparent);
+        background: color-mix(in srgb, var(--bs-primary) 8%, transparent);
+    }
+}
+
+@keyframes fade-slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.iris-chip {
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    min-width: 0;
+    background: transparent;
+    border: 1px solid color-mix(in srgb, var(--bs-primary) 30%, transparent);
+    font-size: 0.6875rem;
+    color: var(--bs-body-color);
     transition:
         border-color 0.15s,
         background 0.15s;
 
     &:hover,
-    &:focus-visible,
-    &.is-selected {
-        border-color: var(--bs-primary) !important;
-        background: rgba(var(--bs-primary-rgb), 0.05);
+    &:focus-visible {
+        border-color: color-mix(in srgb, var(--bs-primary) 60%, transparent);
+        background: color-mix(in srgb, var(--bs-primary) 8%, transparent);
+        color: var(--bs-body-color);
         text-decoration: none !important;
     }
 }
 
-:host .iris-source-card:hover {
-    text-decoration: none !important;
-}
-
-.iris-source-title {
-    font-size: 0.8125rem;
-}
-
-.iris-source-meta {
-    font-size: 0.6875rem;
+.iris-chip-icon {
     color: var(--bs-primary);
-    opacity: 0.75;
+    font-size: 0.625rem;
 }
 
-.iris-continue-link {
-    font-size: 0.8125rem;
-    color: var(--bs-primary);
-    background: none;
-    border: none;
-    padding: 0;
-    opacity: 0.5;
-    cursor: not-allowed;
-    font-weight: 500;
+.iris-chip-name {
+    max-width: 9rem;
 }
