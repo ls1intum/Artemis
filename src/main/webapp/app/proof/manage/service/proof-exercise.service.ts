@@ -35,9 +35,11 @@ export class ProofExerciseService implements ExerciseServicable<ProofExercise> {
     }
 
     reevaluateAndUpdate(proofExercise: ProofExercise, req?: any): Observable<EntityResponseType> {
+        const options = createRequestOption(req);
         const copy = ExerciseService.convertExerciseFromClient(proofExercise);
+        Object.assign(copy, { courseId: proofExercise.course?.id });
         return this.http
-            .put<ProofExercise>(`${this.resourceUrl}/reevaluate`, copy, { params: req, observe: 'response' })
+            .put<ProofExercise>(`${this.resourceUrl}/${proofExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 

@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.proof.config.ProofEnabled;
 import de.tum.cit.aet.artemis.proof.domain.MathNodes;
@@ -65,14 +67,17 @@ public class ProofExerciseResource {
 
     private final ProofGradingService proofGradingService;
 
+    private final ExerciseService exerciseService;
+
     public ProofExerciseResource(ProofExerciseRepository proofExerciseRepository, ProofExerciseImportService proofExerciseImportService, CourseRepository courseRepository,
-            UserRepository userRepository, ExerciseSpecificationService exerciseSpecificationService, ProofGradingService proofGradingService) {
+            UserRepository userRepository, ExerciseSpecificationService exerciseSpecificationService, ProofGradingService proofGradingService, ExerciseService exerciseService) {
         this.proofExerciseRepository = proofExerciseRepository;
         this.proofExerciseImportService = proofExerciseImportService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.exerciseSpecificationService = exerciseSpecificationService;
         this.proofGradingService = proofGradingService;
+        this.exerciseService = exerciseService;
     }
 
     /**
@@ -119,6 +124,34 @@ public class ProofExerciseResource {
         proofExerciseDTO.applyToEntity(existing);
         normalizeExpressions(existing);
         applyCourse(proofExerciseDTO, existing);
+        ProofExercise saved = proofExerciseRepository.findByIdWithCategories(proofExerciseRepository.save(existing).getId()).orElseThrow();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, saved.getId().toString())).body(ProofExerciseDTO.of(saved));
+    }
+
+    /**
+     * PUT /proof-exercises/{exerciseId}/re-evaluate : update an existing proof exercise and re-evaluate
+     * feedback associated with structured grading instructions. Mirrors the pattern used by the other
+     * exercise resources (e.g. {@code TextExerciseCreationUpdateResource#reEvaluateAndUpdateTextExercise}).
+     *
+     * @param exerciseId                                  path id of the exercise to update; must match the DTO id
+     * @param proofExerciseDTO                            the updated exercise payload
+     * @param deleteFeedbackAfterGradingInstructionUpdate if true, drop feedback whose grading instructions were removed
+     * @return the updated exercise
+     */
+    @PutMapping("proof-exercises/{exerciseId}/re-evaluate")
+    @EnforceAtLeastEditor
+    public ResponseEntity<ProofExerciseDTO> reEvaluateAndUpdateProofExercise(@PathVariable long exerciseId, @RequestBody ProofExerciseDTO proofExerciseDTO,
+            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
+        log.debug("REST request to re-evaluate ProofExercise : {}", proofExerciseDTO);
+        if (proofExerciseDTO.id() == null || !proofExerciseDTO.id().equals(exerciseId)) {
+            throw new BadRequestAlertException("Exercise ID in path and body must match", ENTITY_NAME, "idMismatch");
+        }
+        validateExpressionsWildcardFree(proofExerciseDTO);
+        ProofExercise existing = proofExerciseRepository.findByIdWithCategories(exerciseId).orElseThrow();
+        proofExerciseDTO.applyToEntity(existing);
+        normalizeExpressions(existing);
+        applyCourse(proofExerciseDTO, existing);
+        exerciseService.reEvaluateExercise(existing, Boolean.TRUE.equals(deleteFeedbackAfterGradingInstructionUpdate));
         ProofExercise saved = proofExerciseRepository.findByIdWithCategories(proofExerciseRepository.save(existing).getId()).orElseThrow();
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, saved.getId().toString())).body(ProofExerciseDTO.of(saved));
     }

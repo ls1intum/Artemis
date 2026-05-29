@@ -127,6 +127,25 @@ class ProofExerciseIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void reEvaluateAndUpdateProofExercise_asInstructor_returnsOk() throws Exception {
+        exercise.setDescription("Re-evaluated description");
+        ProofExerciseDTO updateDTO = ProofExerciseDTO.of(exercise);
+
+        ProofExerciseDTO result = request.putWithResponseBody("/api/proof/proof-exercises/" + exercise.getId() + "/re-evaluate", updateDTO, ProofExerciseDTO.class, HttpStatus.OK);
+
+        assertThat(result.description()).isEqualTo("Re-evaluated description");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void reEvaluateAndUpdateProofExercise_idMismatch_returnsBadRequest() throws Exception {
+        ProofExerciseDTO updateDTO = ProofExerciseDTO.of(exercise);
+
+        request.putWithResponseBody("/api/proof/proof-exercises/" + (exercise.getId() + 1) + "/re-evaluate", updateDTO, ProofExerciseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importProofExercise_asInstructor_returnsCreated() throws Exception {
         ProofExerciseDTO importTarget = ProofExerciseFactory.generateProofExerciseDTO(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
                 ZonedDateTime.now().plusDays(2), course);

@@ -23,7 +23,6 @@ import {
     faCheckDouble,
     faFileImport,
     faFileUpload,
-    faFlask,
     faFont,
     faKeyboard,
     faPlus,
@@ -220,8 +219,6 @@ export class ExerciseGroupsComponent implements OnInit {
                 return faProjectDiagram;
             case ExerciseType.PROGRAMMING:
                 return faKeyboard;
-            case ExerciseType.PROOF:
-                return faFlask;
             default:
                 return faFont;
         }

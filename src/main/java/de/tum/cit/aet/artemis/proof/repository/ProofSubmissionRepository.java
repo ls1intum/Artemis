@@ -1,12 +1,9 @@
 package de.tum.cit.aet.artemis.proof.repository;
 
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
-
 import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,9 +19,6 @@ import de.tum.cit.aet.artemis.proof.domain.ProofSubmission;
 @Lazy
 @Repository
 public interface ProofSubmissionRepository extends JpaRepository<ProofSubmission, Long> {
-
-    @EntityGraph(type = LOAD, attributePaths = { "results", "participation.exercise" })
-    Optional<ProofSubmission> findWithEagerParticipationExerciseResultsById(Long submissionId);
 
     @Query("SELECT s FROM ProofSubmission s LEFT JOIN FETCH s.steps LEFT JOIN FETCH s.results WHERE s.id = :id")
     Optional<ProofSubmission> findByIdWithStepsAndResults(@Param("id") Long id);

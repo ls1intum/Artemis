@@ -79,13 +79,11 @@
             "cancel": "Cancel",
             "blocksPanel": "Blocks",
             "expressionsTitle": "Proof Expressions",
-            "stepsCount": "Steps",
             "expressions": "Expressions",
             "expressionsRequired": "Both a source and a target expression are required for the derivation workspace to appear for students.",
             "exampleSolutions": "Example Solutions",
             "addExampleSolution": "Add example solution",
             "noExampleSolutions": "No example solutions yet. Click \"Add example solution\" to add one.",
-            "exampleSolutionN": "Example Solution",
             "builder": {
                 "palette": "Blocks",
                 "blockType": "Block type",

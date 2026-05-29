@@ -79,7 +79,7 @@ public record ProofExerciseDTO(Long id, String title, String shortName, String p
 
     /**
      * Applies the fields of this DTO to an existing {@link ProofExercise} entity.
-     * Course and ExerciseGroup associations are NOT applied here — the caller must set those from the database.
+     * The Course association is not applied here — the caller must set it from the database.
      */
     public void applyToEntity(ProofExercise exercise) {
         exercise.setTitle(title);
