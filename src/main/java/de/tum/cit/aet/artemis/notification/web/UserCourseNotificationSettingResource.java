@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingServ
 // The legacy "api/communication/" prefix is kept for backwards compatibility with deployed clients and will be removed
 // once those clients have migrated. New clients should use the "api/notification/" prefix.
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/notification/", NotificationLegacyRestPaths.COMMUNICATION_NOTIFICATION_PREFIX })
+@RequestMapping({ "api/notification/courses/", NotificationLegacyRestPaths.COMMUNICATION_NOTIFICATION_PREFIX })
 public class UserCourseNotificationSettingResource {
 
     private static final Logger log = LoggerFactory.getLogger(UserCourseNotificationSettingResource.class);

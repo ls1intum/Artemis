@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingPres
 // The legacy "api/communication/" prefix is kept for backwards compatibility with deployed clients and will be removed
 // once those clients have migrated. New clients should use the "api/notification/" prefix.
 @SuppressWarnings("deprecation")
-@RequestMapping({ "api/notification/", NotificationLegacyRestPaths.COMMUNICATION_NOTIFICATION_PREFIX })
+@RequestMapping({ "api/notification/courses/", NotificationLegacyRestPaths.COMMUNICATION_NOTIFICATION_PREFIX })
 public class CourseNotificationResource {
 
     private final CourseNotificationService courseNotificationService;
@@ -57,7 +57,6 @@ public class CourseNotificationResource {
      * @param pageable the pagination information
      * @return the ResponseEntity with status 200 (OK) and the list of course notifications in body
      */
-    // TODO: not a good REST URL design, consider changing courseId to a QueryParam or put it into the front of the URL: courses/{courseId}/notifications
     @EnforceAtLeastStudentInCourse
     @GetMapping("{courseId}")
     public ResponseEntity<CourseNotificationPageableDTO<CourseNotificationDTO>> getCourseNotifications(@PathVariable Long courseId, Pageable pageable) {

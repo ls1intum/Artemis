@@ -60,7 +60,7 @@ describe('CourseNotificationSettingService', () => {
                 result = response;
             });
 
-            const req = httpMock.expectOne(`/api/notification/${courseId}/settings`);
+            const req = httpMock.expectOne(`/api/notification/courses/${courseId}/settings`);
             expect(req.request.method).toBe('GET');
             req.flush(mockSettingInfo);
             vi.advanceTimersByTime(0);
@@ -82,7 +82,7 @@ describe('CourseNotificationSettingService', () => {
             };
 
             service.getSettingInfo(courseId).subscribe();
-            const firstReq = httpMock.expectOne(`/api/notification/${courseId}/settings`);
+            const firstReq = httpMock.expectOne(`/api/notification/courses/${courseId}/settings`);
             firstReq.flush(mockSettingInfo);
             vi.advanceTimersByTime(0);
 
@@ -92,7 +92,7 @@ describe('CourseNotificationSettingService', () => {
             });
             vi.advanceTimersByTime(0);
 
-            httpMock.expectNone(`/api/notification/${courseId}/settings`);
+            httpMock.expectNone(`/api/notification/courses/${courseId}/settings`);
             expect(result).toEqual(mockSettingInfo);
         });
 
@@ -115,7 +115,7 @@ describe('CourseNotificationSettingService', () => {
             };
 
             service.getSettingInfo(courseId).subscribe();
-            const firstReq = httpMock.expectOne(`/api/notification/${courseId}/settings`);
+            const firstReq = httpMock.expectOne(`/api/notification/courses/${courseId}/settings`);
             firstReq.flush(mockSettingInfo);
             vi.advanceTimersByTime(0);
 
@@ -124,7 +124,7 @@ describe('CourseNotificationSettingService', () => {
                 result = response;
             });
 
-            const secondReq = httpMock.expectOne(`/api/notification/${courseId}/settings`);
+            const secondReq = httpMock.expectOne(`/api/notification/courses/${courseId}/settings`);
             secondReq.flush(updatedMockSettingInfo);
             vi.advanceTimersByTime(0);
 
@@ -139,7 +139,7 @@ describe('CourseNotificationSettingService', () => {
 
             service.setSettingPreset(courseId, presetTypeId, undefined);
 
-            const req = httpMock.expectOne(`/api/notification/${courseId}/setting-preset`);
+            const req = httpMock.expectOne(`/api/notification/courses/${courseId}/setting-preset`);
             expect(req.request.method).toBe('PUT');
             expect(req.request.body).toBe(presetTypeId);
             req.flush({});
@@ -161,12 +161,12 @@ describe('CourseNotificationSettingService', () => {
             };
 
             service.getSettingInfo(courseId).subscribe();
-            const firstReq = httpMock.expectOne(`/api/notification/${courseId}/settings`);
+            const firstReq = httpMock.expectOne(`/api/notification/courses/${courseId}/settings`);
             firstReq.flush(mockSettingInfo);
             vi.advanceTimersByTime(0);
 
             service.setSettingPreset(courseId, presetTypeId, undefined);
-            const updateReq = httpMock.expectOne(`/api/notification/${courseId}/setting-preset`);
+            const updateReq = httpMock.expectOne(`/api/notification/courses/${courseId}/setting-preset`);
             updateReq.flush({});
             vi.advanceTimersByTime(0);
 
@@ -207,12 +207,12 @@ describe('CourseNotificationSettingService', () => {
             };
 
             service.getSettingInfo(courseId).subscribe();
-            const firstReq = httpMock.expectOne(`/api/notification/${courseId}/settings`);
+            const firstReq = httpMock.expectOne(`/api/notification/courses/${courseId}/settings`);
             firstReq.flush(mockSettingInfo);
             vi.advanceTimersByTime(0);
 
             service.setSettingPreset(courseId, presetTypeId, mockPreset);
-            const updateReq = httpMock.expectOne(`/api/notification/${courseId}/setting-preset`);
+            const updateReq = httpMock.expectOne(`/api/notification/courses/${courseId}/setting-preset`);
             updateReq.flush({});
             vi.advanceTimersByTime(0);
 
@@ -241,7 +241,7 @@ describe('CourseNotificationSettingService', () => {
 
             service.setSettingSpecification(courseId, specification, undefined);
 
-            const req = httpMock.expectOne(`/api/notification/${courseId}/setting-specification`);
+            const req = httpMock.expectOne(`/api/notification/courses/${courseId}/setting-specification`);
             expect(req.request.method).toBe('PUT');
             expect(req.request.body).toEqual({
                 notificationTypeChannels: {
@@ -274,12 +274,12 @@ describe('CourseNotificationSettingService', () => {
             const specification = new CourseNotificationSettingSpecification('notification1', 1, channelSetting);
 
             service.getSettingInfo(courseId).subscribe();
-            const firstReq = httpMock.expectOne(`/api/notification/${courseId}/settings`);
+            const firstReq = httpMock.expectOne(`/api/notification/courses/${courseId}/settings`);
             firstReq.flush(mockSettingInfo);
             vi.advanceTimersByTime(0);
 
             service.setSettingSpecification(courseId, specification, undefined);
-            const updateReq = httpMock.expectOne(`/api/notification/${courseId}/setting-specification`);
+            const updateReq = httpMock.expectOne(`/api/notification/courses/${courseId}/setting-specification`);
             updateReq.flush({});
             vi.advanceTimersByTime(0);
 
@@ -328,12 +328,12 @@ describe('CourseNotificationSettingService', () => {
             const specification = new CourseNotificationSettingSpecification('notification1', 1, channelSetting);
 
             service.getSettingInfo(courseId).subscribe();
-            const firstReq = httpMock.expectOne(`/api/notification/${courseId}/settings`);
+            const firstReq = httpMock.expectOne(`/api/notification/courses/${courseId}/settings`);
             firstReq.flush(mockSettingInfo);
             vi.advanceTimersByTime(0);
 
             service.setSettingSpecification(courseId, specification, mockPreset);
-            const updateReq = httpMock.expectOne(`/api/notification/${courseId}/setting-specification`);
+            const updateReq = httpMock.expectOne(`/api/notification/courses/${courseId}/setting-specification`);
             updateReq.flush({});
             vi.advanceTimersByTime(0);
 
@@ -410,7 +410,7 @@ describe('CourseNotificationSettingService', () => {
             const courseId = 7;
             const settingInfo: CourseNotificationSettingInfo = { selectedPreset: 1, notificationTypeChannels: {} };
             scoped.getSettingInfo(courseId).subscribe();
-            scopedHttpMock.expectOne(`/api/notification/${courseId}/settings`).flush(settingInfo);
+            scopedHttpMock.expectOne(`/api/notification/courses/${courseId}/settings`).flush(settingInfo);
             const before = await firstValueFrom(scoped.getSettingInfo(courseId));
             expect(before).toEqual(settingInfo);
 
@@ -418,7 +418,7 @@ describe('CourseNotificationSettingService', () => {
 
             // Subsequent getSettingInfo creates a fresh subject and triggers a new HTTP request
             const after$ = scoped.getSettingInfo(courseId);
-            scopedHttpMock.expectOne(`/api/notification/${courseId}/settings`).flush(settingInfo);
+            scopedHttpMock.expectOne(`/api/notification/courses/${courseId}/settings`).flush(settingInfo);
             const after = await firstValueFrom(after$);
             expect(after).toEqual(settingInfo);
         });
@@ -426,7 +426,7 @@ describe('CourseNotificationSettingService', () => {
         it('should ignore in-flight HTTP responses after logout', async () => {
             const courseId = 7;
             scoped.getSettingInfo(courseId).subscribe();
-            const inFlight = scopedHttpMock.expectOne(`/api/notification/${courseId}/settings`);
+            const inFlight = scopedHttpMock.expectOne(`/api/notification/courses/${courseId}/settings`);
 
             authState.next(undefined);
 
@@ -439,7 +439,7 @@ describe('CourseNotificationSettingService', () => {
         it('should not clear settings when the same user re-emits', () => {
             const courseId = 7;
             scoped.getSettingInfo(courseId).subscribe();
-            scopedHttpMock.expectOne(`/api/notification/${courseId}/settings`).flush({ selectedPreset: 1, notificationTypeChannels: {} });
+            scopedHttpMock.expectOne(`/api/notification/courses/${courseId}/settings`).flush({ selectedPreset: 1, notificationTypeChannels: {} });
 
             authState.next({ id: 99 } as User);
 

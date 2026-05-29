@@ -68,7 +68,7 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
 
         userCourseNotificationStatusTestRepository.save(userCourseNotificationStatus);
 
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/notification/" + course.getId() + "?page=0&size=20")).andExpect(status().isOk())
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/notification/courses/" + course.getId() + "?page=0&size=20")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(1))).andExpect(jsonPath("$.content[0].notificationType").value("newPostNotification"))
                 .andExpect(jsonPath("$.content[0].courseId").value(course.getId()));
     }
@@ -98,7 +98,7 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
 
         courseNotificationService.sendCourseNotification(notification, List.of(user));
 
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/notification/" + course.getId() + "?page=0&size=20")).andExpect(status().isOk())
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/notification/courses/" + course.getId() + "?page=0&size=20")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(1))).andExpect(jsonPath("$.content[0].notificationType").value("newAnnouncementNotification"))
                 .andExpect(jsonPath("$.content[0].courseId").value(course.getId())).andExpect(jsonPath("$.content[0].parameters['authorName']").value("Test Author"))
                 .andExpect(jsonPath("$.content[0].parameters['courseTitle']").value(course.getTitle()));
@@ -107,7 +107,7 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnEmptyResultWhenNoNotificationsAreFound() throws Exception {
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/notification/" + course.getId() + "?page=0&size=20")).andExpect(status().isOk())
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/notification/courses/" + course.getId() + "?page=0&size=20")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(0));
     }
 
@@ -126,14 +126,14 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
             userCourseNotificationStatusTestRepository.save(userCourseNotificationStatus);
         }
 
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/notification/" + course.getId() + "?page=0&size=" + pageSize)).andExpect(status().isOk())
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/notification/courses/" + course.getId() + "?page=0&size=" + pageSize)).andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(pageSize)));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnNotificationInfoWhenGetCourseNotificationInfoIsCalled() throws Exception {
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/notification/info")).andExpect(status().isOk()).andExpect(jsonPath("$.presets").isArray())
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/notification/courses/info")).andExpect(status().isOk()).andExpect(jsonPath("$.presets").isArray())
                 .andExpect(jsonPath("$.presets").isNotEmpty())
                 .andExpect(jsonPath("$.channels[*]").value(org.hamcrest.Matchers.containsInAnyOrder(NotificationChannelOption.values()[0].name(),
                         NotificationChannelOption.values()[1].name(), NotificationChannelOption.values()[2].name())))
