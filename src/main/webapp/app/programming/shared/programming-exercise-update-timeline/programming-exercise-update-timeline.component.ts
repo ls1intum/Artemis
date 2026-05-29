@@ -246,7 +246,8 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
     }
 
     private updateAutomaticAfterDueDatePreview() {
-        if (!this.isLocalCIEnabled || !this.exercise()) {
+        const programmingExercise = this.exercise();
+        if (!this.isLocalCIEnabled || (!programmingExercise.id && !programmingExercise.programmingLanguage)) {
             return;
         }
 
@@ -258,7 +259,6 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
             return;
         }
 
-        const exercise = this.exercise();
         const routeExamId = findParamInRouteHierarchy(this.activatedRoute, 'examId');
 
         let hasAfterDueDateBuildPhase: boolean | undefined = undefined;
@@ -269,14 +269,14 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
         }
 
         const requestData: AutomaticAfterDueDatePreviewRequest = {
-            programmingExerciseId: exercise.id,
+            programmingExerciseId: programmingExercise.id,
             examId: this.isExamMode() ? (routeExamId ? Number(routeExamId) : undefined) : undefined,
             dueDate: this.isExamMode() ? undefined : convertDateFromClient(dueDate),
             hasAfterDueDateBuildPhase: hasAfterDueDateBuildPhase,
-            programmingLanguage: exercise.programmingLanguage!,
-            projectType: exercise.projectType,
-            staticCodeAnalysisEnabled: !!exercise.staticCodeAnalysisEnabled,
-            sequentialTestRuns: !!exercise.buildConfig?.sequentialTestRuns,
+            programmingLanguage: programmingExercise.programmingLanguage!,
+            projectType: programmingExercise.projectType,
+            staticCodeAnalysisEnabled: !!programmingExercise.staticCodeAnalysisEnabled,
+            sequentialTestRuns: !!programmingExercise.buildConfig?.sequentialTestRuns,
         };
 
         if (isEqual(requestData, this.previousAutomaticAfterDueDatePreviewRequest)) {
