@@ -188,11 +188,17 @@ jobs:
       - name: Remove project-wide node options set in .npmrc just for this test
         # `sed` with no match exits 0; missing .npmrc would fail loudly (intended).
         run: sed -i '/^node-options=/d' .npmrc
+      # The self-hosted runners have no usable npm on PATH; install Node first so
+      # pnpm/action-setup's npm-based self-installer (v6) finds a working npm.
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '${{ env.node }}'
       - name: Setup pnpm
         uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093  # v6.0.8
         with:
           run_install: false
-      - name: Setup Node.js
+      - name: Enable pnpm store cache
         uses: actions/setup-node@v6
         with:
           node-version: '${{ env.node }}'
