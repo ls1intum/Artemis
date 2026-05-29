@@ -72,16 +72,17 @@
                             'channel-search-height': sidebarDataInternal()?.sidebarType === 'conversation',
                         }"
                     >
-                        @if (sidebarDataInternal()?.groupByCategory && sidebarDataInternal().groupedData) {
+                        @let data = sidebarDataInternal();
+                        @if (data?.groupByCategory && data.groupedData) {
                             <jhi-sidebar-accordion
                                 [searchValue]="searchValue()"
-                                [groupedData]="sidebarDataInternal().groupedData"
-                                [sidebarType]="sidebarDataInternal().sidebarType"
-                                [storageId]="sidebarDataInternal().storageId"
+                                [groupedData]="data.groupedData"
+                                [sidebarType]="data.sidebarType"
+                                [storageId]="data.storageId ?? ''"
                                 [routeParams]="routeParams"
                                 [courseId]="courseId()"
                                 [itemSelected]="itemSelected()"
-                                [showLeadingIcon]="sidebarDataInternal().showAccordionLeadingIcon ?? false"
+                                [showLeadingIcon]="data.showAccordionLeadingIcon ?? false"
                                 [channelTypeIcon]="channelTypeIcon()"
                                 [sidebarItemAlwaysShow]="sidebarItemAlwaysShow()"
                                 [collapseState]="collapseState()"

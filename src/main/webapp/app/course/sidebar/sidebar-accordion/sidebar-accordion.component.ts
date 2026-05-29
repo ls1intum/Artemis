@@ -27,9 +27,9 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
 
     readonly onUpdateSidebar = output<void>();
-    readonly searchValue = input<string>();
+    readonly searchValue = input<string>('');
     readonly routeParams = input<Params>();
-    readonly groupedData = input<AccordionGroups>();
+    readonly groupedData = input.required<AccordionGroups>();
     readonly sidebarType = input<SidebarTypes>();
     readonly storageId = input<string>('');
     readonly courseId = input<number>();
@@ -146,6 +146,6 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
     }
 
     getGroupedByWeek(groupKey: string): WeekGroup[] {
-        return WeekGroupingUtil.getGroupedByWeek(this.groupedData()![groupKey].entityData, this.storageId(), groupKey, this.searchValue());
+        return WeekGroupingUtil.getGroupedByWeek(this.groupedData()[groupKey].entityData, this.storageId(), groupKey, this.searchValue());
     }
 }
