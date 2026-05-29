@@ -20,7 +20,7 @@ public final class LocalVCLegacyRestPaths {
      * Legacy class-level prefix from when {@link de.tum.cit.aet.artemis.localvc.web.ssh.SshFingerprintsProviderResource}
      * lived in the programming module. Successor: {@code "api/localvc/"}.
      */
-    @Deprecated(forRemoval = true, since = "8.5")
+    @Deprecated(forRemoval = true, since = "9.3")
     public static final String PROGRAMMING_PREFIX = "api/programming/";
 
     private LocalVCLegacyRestPaths() {

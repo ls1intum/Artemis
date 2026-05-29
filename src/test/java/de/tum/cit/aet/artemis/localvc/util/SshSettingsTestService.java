@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.localci.util;
+package de.tum.cit.aet.artemis.localvc.util;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;

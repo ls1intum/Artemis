@@ -7,7 +7,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.localci.util.SshSettingsTestService;
+import de.tum.cit.aet.artemis.localvc.util.SshSettingsTestService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 class LocalVCSshSettingsIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {

@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
@@ -128,11 +128,11 @@ describe('CommitHistoryComponent', () => {
         programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
 
         activatedRoute.setParameters({ repositoryId: 2 });
-        jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(mockParticipation));
-        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation').mockReturnValue(of(mockCommits));
+        vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(mockParticipation));
+        vi.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation').mockReturnValue(of(mockCommits));
 
         const mockExerciseResponse: HttpResponse<ProgrammingExercise> = new HttpResponse({ body: mockExerciseWithTemplateAndSolution });
-        jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation').mockReturnValue(of(mockExerciseResponse));
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation').mockReturnValue(of(mockExerciseResponse));
 
         fixture.detectChanges();
     }
@@ -213,7 +213,7 @@ describe('CommitHistoryComponent', () => {
     it('should load template participation and handle commits', () => {
         setupComponent();
         activatedRoute.setParameters({ repositoryType: 'TEMPLATE' });
-        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(of(mockTemplateCommits));
+        vi.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(of(mockTemplateCommits));
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -241,7 +241,7 @@ describe('CommitHistoryComponent', () => {
     it('should load solution participation', () => {
         setupComponent();
         activatedRoute.setParameters({ repositoryType: 'SOLUTION' });
-        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(of(mockSolutionCommits));
+        vi.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(of(mockSolutionCommits));
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -268,7 +268,7 @@ describe('CommitHistoryComponent', () => {
     it('should load test participation', () => {
         setupComponent();
         activatedRoute.setParameters({ repositoryType: 'TESTS' });
-        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(of(mockTestCommits));
+        vi.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(of(mockTestCommits));
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -293,7 +293,7 @@ describe('CommitHistoryComponent', () => {
     it('should load auxiliary repository commits', () => {
         setupComponent();
         activatedRoute.setParameters({ repositoryType: 'AUXILIARY', repositoryId: 5 });
-        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForAuxiliaryRepository').mockReturnValue(of(mockTestCommits));
+        vi.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForAuxiliaryRepository').mockReturnValue(of(mockTestCommits));
 
         // Trigger ngOnInit
         component.ngOnInit();

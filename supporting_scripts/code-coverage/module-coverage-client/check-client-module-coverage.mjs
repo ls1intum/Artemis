@@ -78,11 +78,14 @@ const moduleThresholds = {
         functions:  84.00,
         lines:      89.00,
     },
+    // localvc client = repository-view + commit-history components (moved from programming/shared).
+    // Baselines set a few points below the measured coverage (stmts 98.6 / branch 88.5 / funcs 95.5 / lines 99.3)
+    // so the gate is meaningful while leaving headroom for minor future variance.
     localvc: {
-        statements: 80.00,
-        branches:   60.00,
-        functions:  70.00,
-        lines:      80.00,
+        statements: 95.00,
+        branches:   82.00,
+        functions:  90.00,
+        lines:      95.00,
     },
     communication: {
         // Lowered after notification extraction moved ~5k lines (course-notification subtree)

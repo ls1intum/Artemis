@@ -16,9 +16,12 @@ class LocalCIResourceArchitectureTest extends AbstractModuleResourceArchitecture
         return ARTEMIS_PACKAGE + ".localci";
     }
 
-    // TODO: The localci REST resources still expose their endpoints under "api/programming/..." for
-    // backwards compatibility with existing clients. Once the URLs are migrated to "api/localci/..."
-    // these exemptions should be removed.
+    // The localci REST resources now expose their endpoints under the canonical "api/localci/..." prefix,
+    // but each @RequestMapping still carries the legacy "api/programming/..." alias for backwards
+    // compatibility with existing clients. The prefix rule checks every declared path value, so the legacy
+    // alias trips it — hence these exemptions remain necessary.
+    // TODO: remove these exemptions once the legacy "api/programming/..." aliases are dropped at the sunset
+    // date (2026-09-30, see LegacyApiPathDeprecationInterceptor#SUNSET_DATE).
     @Override
     protected Set<Class<?>> getIgnoredModulePathPrefixResources() {
         return Set.of(BuildJobQueueResource.class, BuildLogResource.class, BuildPhasesTemplateResource.class, BuildPlanResource.class, PublicBuildPlanResource.class);

@@ -17,24 +17,24 @@ package de.tum.cit.aet.artemis.localci.config;
 public final class LocalCILegacyRestPaths {
 
     /**
-     * Legacy class-level prefix from when the localci controllers (build plan, queue, log, phases)
+     * Legacy class-level prefix from when the localci controllers (build plan, queue, log)
      * lived in the programming module. Successor: {@code "api/localci/"}.
      */
-    @Deprecated(forRemoval = true, since = "8.5")
+    @Deprecated(forRemoval = true, since = "9.3")
     public static final String PROGRAMMING_PREFIX = "api/programming/";
 
     /**
      * Legacy class-level prefix from when {@link de.tum.cit.aet.artemis.localci.web.open.PublicBuildPlanResource}
      * lived in the programming module. Successor: {@code "api/localci/public/"}.
      */
-    @Deprecated(forRemoval = true, since = "8.5")
+    @Deprecated(forRemoval = true, since = "9.3")
     public static final String PROGRAMMING_PUBLIC_PREFIX = "api/programming/public/";
 
     /**
      * Legacy class-level prefix for {@link de.tum.cit.aet.artemis.localci.web.BuildPhasesTemplateResource}
      * which previously lived under {@code api/programming/phases/}. Successor: {@code "api/localci/phases/"}.
      */
-    @Deprecated(forRemoval = true, since = "8.5")
+    @Deprecated(forRemoval = true, since = "9.3")
     public static final String PROGRAMMING_PHASES_PREFIX = "api/programming/phases/";
 
     private LocalCILegacyRestPaths() {

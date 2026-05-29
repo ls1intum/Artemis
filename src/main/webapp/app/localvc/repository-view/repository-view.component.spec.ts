@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { ActivatedRoute } from '@angular/router';
@@ -41,8 +41,8 @@ describe('RepositoryViewComponent', () => {
     });
     beforeEach(async () => {
         mockDomainService = {
-            setDomain: jest.fn(),
-            subscribeDomainChange: jest.fn().mockReturnValue(of([DomainType.PARTICIPATION, { id: 1 }])),
+            setDomain: vi.fn(),
+            subscribeDomainChange: vi.fn().mockReturnValue(of([DomainType.PARTICIPATION, { id: 1 }])),
         };
         // Mock the ResizeObserver, which is not available in the test environment.
         // Assign the class directly — vi.fn().mockImplementation(...) does not yield a constructable mock under Vitest.
@@ -100,7 +100,7 @@ describe('RepositoryViewComponent', () => {
         const exerciseId = 1;
 
         activatedRoute.setParameters({ exerciseId: exerciseId, repositoryType: 'TEMPLATE' });
-        jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(of(mockExerciseResponse));
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(of(mockExerciseResponse));
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -137,7 +137,7 @@ describe('RepositoryViewComponent', () => {
         const exerciseId = 1;
 
         activatedRoute.setParameters({ exerciseId: exerciseId, repositoryType: 'SOLUTION' });
-        jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(of(mockExerciseResponse));
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(of(mockExerciseResponse));
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -173,7 +173,7 @@ describe('RepositoryViewComponent', () => {
         const exerciseId = 1;
 
         activatedRoute.setParameters({ exerciseId: exerciseId, repositoryType: 'TESTS' });
-        jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(of(mockExerciseResponse));
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(of(mockExerciseResponse));
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -212,7 +212,7 @@ describe('RepositoryViewComponent', () => {
         const auxiliaryRepositoryId = 5;
 
         activatedRoute.setParameters({ exerciseId: exerciseId, repositoryType: 'AUXILIARY', repositoryId: auxiliaryRepositoryId });
-        jest.spyOn(programmingExerciseService, 'findWithAuxiliaryRepository').mockReturnValue(of(mockExerciseResponse));
+        vi.spyOn(programmingExerciseService, 'findWithAuxiliaryRepository').mockReturnValue(of(mockExerciseResponse));
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -249,7 +249,7 @@ describe('RepositoryViewComponent', () => {
         activatedRoute.setParameters({ exerciseId: exerciseId, repositoryType: 'UNKNOWN' });
 
         // Mock the service to return an error
-        jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(of(mockExerciseResponse));
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(of(mockExerciseResponse));
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -315,7 +315,7 @@ describe('RepositoryViewComponent', () => {
         const participationId = 2;
 
         activatedRoute.setParameters({ participationId: participationId });
-        jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(of(mockParticipation));
+        vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(of(mockParticipation));
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -344,7 +344,7 @@ describe('RepositoryViewComponent', () => {
         activatedRoute.setParameters({ participationId: 8 });
 
         // Mock the service to return an error
-        jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(
+        vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(
             new Observable((subscriber) => {
                 subscriber.error('Error');
             }),
@@ -372,7 +372,7 @@ describe('RepositoryViewComponent', () => {
         // in order to call the mocked findWithTemplateAndSolutionParticipationAndLatestResults
         activatedRoute.setParameters({ exerciseId: 8, repositoryType: 'TEMPLATE' });
         // Mock the service to return an error
-        jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
             new Observable((subscriber) => {
                 subscriber.error('Error');
             }),
