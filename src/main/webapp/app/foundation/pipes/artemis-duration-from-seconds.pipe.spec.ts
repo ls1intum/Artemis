@@ -1,6 +1,9 @@
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
+import { describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ArtemisDurationFromSecondsPipe', () => {
+    setupTestBed({ zoneless: true });
     const pipe: ArtemisDurationFromSecondsPipe = new ArtemisDurationFromSecondsPipe();
 
     describe('long format', () => {

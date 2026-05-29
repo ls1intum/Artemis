@@ -1,6 +1,9 @@
 import { SearchFilterPipe } from 'app/foundation/pipes/search-filter.pipe';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('SearchFilterPipe', () => {
+    setupTestBed({ zoneless: true });
     let pipe: SearchFilterPipe;
 
     beforeEach(() => {

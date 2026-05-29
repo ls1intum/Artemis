@@ -7,11 +7,14 @@ import {
     getSemesterProgress,
     getSemesters,
 } from 'app/foundation/util/semester-utils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('SemesterUtils', () => {
+    setupTestBed({ zoneless: true });
     describe('getSemesters', () => {
         it('should get semesters around current year', () => {
-            jest.useFakeTimers().setSystemTime(new Date('2019-01-10'));
+            vi.useFakeTimers().setSystemTime(new Date('2019-01-10'));
             const expectedSemesters = ['WS20/21', 'SS20', 'WS19/20', 'SS19', 'WS18/19', 'SS18', ''];
 
             const semesters = getSemesters();
@@ -24,79 +27,79 @@ describe('SemesterUtils', () => {
 
     describe('getCurrentSemester', () => {
         afterEach(() => {
-            jest.useRealTimers();
+            vi.useRealTimers();
         });
 
         it('should return winter semester for October-December', () => {
-            jest.useFakeTimers().setSystemTime(new Date('2025-10-15'));
+            vi.useFakeTimers().setSystemTime(new Date('2025-10-15'));
             expect(getCurrentSemester()).toBe('WS25/26');
 
-            jest.useFakeTimers().setSystemTime(new Date('2025-11-15'));
+            vi.useFakeTimers().setSystemTime(new Date('2025-11-15'));
             expect(getCurrentSemester()).toBe('WS25/26');
 
-            jest.useFakeTimers().setSystemTime(new Date('2025-12-15'));
+            vi.useFakeTimers().setSystemTime(new Date('2025-12-15'));
             expect(getCurrentSemester()).toBe('WS25/26');
         });
 
         it('should return winter semester for January-March (continuation)', () => {
-            jest.useFakeTimers().setSystemTime(new Date('2026-01-15'));
+            vi.useFakeTimers().setSystemTime(new Date('2026-01-15'));
             expect(getCurrentSemester()).toBe('WS25/26');
 
-            jest.useFakeTimers().setSystemTime(new Date('2026-02-15'));
+            vi.useFakeTimers().setSystemTime(new Date('2026-02-15'));
             expect(getCurrentSemester()).toBe('WS25/26');
 
-            jest.useFakeTimers().setSystemTime(new Date('2026-03-15'));
+            vi.useFakeTimers().setSystemTime(new Date('2026-03-15'));
             expect(getCurrentSemester()).toBe('WS25/26');
         });
 
         it('should return summer semester for April-September', () => {
-            jest.useFakeTimers().setSystemTime(new Date('2025-04-15'));
+            vi.useFakeTimers().setSystemTime(new Date('2025-04-15'));
             expect(getCurrentSemester()).toBe('SS25');
 
-            jest.useFakeTimers().setSystemTime(new Date('2025-07-15'));
+            vi.useFakeTimers().setSystemTime(new Date('2025-07-15'));
             expect(getCurrentSemester()).toBe('SS25');
 
-            jest.useFakeTimers().setSystemTime(new Date('2025-09-15'));
+            vi.useFakeTimers().setSystemTime(new Date('2025-09-15'));
             expect(getCurrentSemester()).toBe('SS25');
         });
     });
 
     describe('getNextSemester', () => {
         afterEach(() => {
-            jest.useRealTimers();
+            vi.useRealTimers();
         });
 
         it('should return summer semester when in winter semester (Oct-Dec)', () => {
-            jest.useFakeTimers().setSystemTime(new Date('2025-10-15'));
+            vi.useFakeTimers().setSystemTime(new Date('2025-10-15'));
             expect(getNextSemester()).toBe('SS26');
         });
 
         it('should return summer semester when in winter semester (Jan-Mar)', () => {
-            jest.useFakeTimers().setSystemTime(new Date('2026-02-15'));
+            vi.useFakeTimers().setSystemTime(new Date('2026-02-15'));
             expect(getNextSemester()).toBe('SS26');
         });
 
         it('should return winter semester when in summer semester', () => {
-            jest.useFakeTimers().setSystemTime(new Date('2025-06-15'));
+            vi.useFakeTimers().setSystemTime(new Date('2025-06-15'));
             expect(getNextSemester()).toBe('WS25/26');
         });
     });
 
     describe('getSemesterProgress', () => {
         afterEach(() => {
-            jest.useRealTimers();
+            vi.useRealTimers();
         });
 
         it('should return 0 at start of semester', () => {
             // Start of winter semester
-            jest.useFakeTimers().setSystemTime(new Date(2025, 9, 1, 12));
+            vi.useFakeTimers().setSystemTime(new Date(2025, 9, 1, 12));
             const progress = getSemesterProgress();
             expect(progress).toBeCloseTo(0, 0);
         });
 
         it('should return approximately 50 at mid-semester', () => {
             // Mid-winter semester (around mid-December)
-            jest.useFakeTimers().setSystemTime(new Date(2025, 11, 15, 12));
+            vi.useFakeTimers().setSystemTime(new Date(2025, 11, 15, 12));
             const progress = getSemesterProgress();
             expect(progress).toBeGreaterThan(40);
             expect(progress).toBeLessThan(60);
@@ -104,7 +107,7 @@ describe('SemesterUtils', () => {
 
         it('should return close to 100 at end of semester', () => {
             // End of winter semester
-            jest.useFakeTimers().setSystemTime(new Date(2026, 2, 30, 12));
+            vi.useFakeTimers().setSystemTime(new Date(2026, 2, 30, 12));
             const progress = getSemesterProgress();
             expect(progress).toBeGreaterThan(95);
         });
@@ -112,29 +115,29 @@ describe('SemesterUtils', () => {
 
     describe('getDefaultSemester', () => {
         afterEach(() => {
-            jest.useRealTimers();
+            vi.useRealTimers();
         });
 
         it('should return current semester when progress < 50%', () => {
             // Early in winter semester
-            jest.useFakeTimers().setSystemTime(new Date('2025-10-15'));
+            vi.useFakeTimers().setSystemTime(new Date('2025-10-15'));
             expect(getDefaultSemester()).toBe('WS25/26');
         });
 
         it('should return next semester when progress >= 50%', () => {
             // Late in winter semester (February)
-            jest.useFakeTimers().setSystemTime(new Date('2026-02-15'));
+            vi.useFakeTimers().setSystemTime(new Date('2026-02-15'));
             expect(getDefaultSemester()).toBe('SS26');
         });
     });
 
     describe('getCurrentAndFutureSemesters', () => {
         afterEach(() => {
-            jest.useRealTimers();
+            vi.useRealTimers();
         });
 
         it('should return current and future semesters only', () => {
-            jest.useFakeTimers().setSystemTime(new Date('2025-10-15'));
+            vi.useFakeTimers().setSystemTime(new Date('2025-10-15'));
             const semesters = getCurrentAndFutureSemesters();
 
             expect(semesters).toContain('WS25/26');
@@ -145,14 +148,14 @@ describe('SemesterUtils', () => {
         });
 
         it('should start with current semester', () => {
-            jest.useFakeTimers().setSystemTime(new Date('2025-06-15'));
+            vi.useFakeTimers().setSystemTime(new Date('2025-06-15'));
             const semesters = getCurrentAndFutureSemesters();
 
             expect(semesters[0]).toBe('SS25');
         });
 
         it('should include winter semester spanning previous/current year in Jan-Mar', () => {
-            jest.useFakeTimers().setSystemTime(new Date('2025-02-15'));
+            vi.useFakeTimers().setSystemTime(new Date('2025-02-15'));
             const semesters = getCurrentAndFutureSemesters();
 
             // Current semester should be WS24/25 (winter semester spanning 2024/2025)
@@ -163,7 +166,7 @@ describe('SemesterUtils', () => {
         });
 
         it('should have SS26 as default while WS25/26 is still selectable in Jan-Mar 2026', () => {
-            jest.useFakeTimers().setSystemTime(new Date('2026-02-15'));
+            vi.useFakeTimers().setSystemTime(new Date('2026-02-15'));
             const semesters = getCurrentAndFutureSemesters();
 
             // Default semester should be SS26 (next semester, since we're > 50% through WS)

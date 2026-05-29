@@ -1,8 +1,11 @@
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { GradeStepBoundsPipe } from 'app/foundation/pipes/grade-step-bounds.pipe';
 import { GradeEditMode } from 'app/assessment/manage/grading/grading.component';
+import { describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('GradeStepBoundsPipe', () => {
+    setupTestBed({ zoneless: true });
     const pipe = new GradeStepBoundsPipe();
 
     it('should format non-last step percentage', () => {
