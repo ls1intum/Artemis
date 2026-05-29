@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.service.connectors;
+package de.tum.cit.aet.artemis.account.security;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.SYSTEM_ACCOUNT;
 
@@ -31,6 +31,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.config.SAML2Properties;
+import de.tum.cit.aet.artemis.account.config.Saml2Enabled;
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.exception.UserNotActivatedException;
@@ -38,8 +40,6 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.ArtemisSuccessfulLoginService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
-import de.tum.cit.aet.artemis.core.config.SAML2Properties;
-import de.tum.cit.aet.artemis.core.config.Saml2Enabled;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;

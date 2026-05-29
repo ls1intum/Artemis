@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.config;
+package de.tum.cit.aet.artemis.account.config;
 
 import java.security.Security;
 
@@ -58,7 +58,7 @@ public class SAML2Configuration {
     }
 
     /**
-     * Since this configuration is annotated with {@link Order} and {@link SecurityConfiguration}
+     * Since this configuration is annotated with {@link Order} and {@link de.tum.cit.aet.artemis.core.config.SecurityConfiguration}
      * is not, this configuration is evaluated first when the SAML2 Profile is active.
      *
      * @param http The Spring http security configurer.
@@ -71,7 +71,7 @@ public class SAML2Configuration {
         // @formatter:off
         http
             // This filter chain is only applied if the URL matches
-            // Else the request is filtered by {@link SecurityConfiguration}.
+            // Else the request is filtered by {@link de.tum.cit.aet.artemis.core.config.SecurityConfiguration}.
             .securityMatcher("/api/core/public/saml2", "/saml2/**", "/login/saml2/**")
             // Needed for SAML to work properly
             .csrf(AbstractHttpConfigurer::disable)

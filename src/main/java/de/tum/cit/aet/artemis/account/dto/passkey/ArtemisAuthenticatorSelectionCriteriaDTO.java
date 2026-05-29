@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.dto.passkey;
+package de.tum.cit.aet.artemis.account.dto.passkey;
 
 import java.io.Serializable;
 import java.util.Objects;

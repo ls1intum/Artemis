@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.config;
+package de.tum.cit.aet.artemis.account.config;
 
 import java.util.HashSet;
 import java.util.List;
@@ -11,6 +11,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+
+import de.tum.cit.aet.artemis.core.config.Constants;
 
 /**
  * This class describes SAML2 properties. Those values are specified in application-saml2.yml.example and automatically mapped to the below Java attributes when SAML2 is enabled.

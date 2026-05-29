@@ -1,8 +1,10 @@
-package de.tum.cit.aet.artemis.core.config;
+package de.tum.cit.aet.artemis.account.config;
 
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.core.type.AnnotatedTypeMetadata;
+
+import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 
 /**
  * Condition to check if LDAP-based user synchronization is enabled.
