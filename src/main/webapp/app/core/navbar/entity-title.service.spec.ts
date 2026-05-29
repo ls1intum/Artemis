@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import 'app/shared/util/map.extension';
+import 'app/foundation/util/map.extension';
 
 vi.mock('@sentry/angular', async (importOriginal) => {
     const originalModule = await importOriginal<typeof import('@sentry/angular')>();

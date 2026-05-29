@@ -22,11 +22,11 @@ import {
     UserStorageKey,
 } from 'app/admin/user-management/user-management.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/account/user/user.model';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { EventManager } from 'app/shared/service/event-manager.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';

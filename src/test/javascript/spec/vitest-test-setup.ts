@@ -16,7 +16,7 @@ import { vi } from 'vitest';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 require('jest-canvas-mock');
 
-import 'app/shared/util/array.extension';
+import 'app/foundation/util/array.extension';
 
 import dayjs from 'dayjs/esm';
 import relativeTime from 'dayjs/esm/plugin/relativeTime';

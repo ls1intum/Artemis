@@ -17,7 +17,7 @@ export const PROMPT_LENGTH_WARNING_THRESHOLD = 0.9;
 /**
  * Approximate pixel width of the expanded inline refinement prompt.
  * Derived from the `min-width: 20rem` rule in
- * `app/shared/monaco-editor/inline-refinement-button/inline-refinement-button.component.scss`
+ * `app/editor/monaco-editor/inline-refinement-button/inline-refinement-button.component.scss`
  * (≈ 320 px at default font size) plus padding and action buttons.
  * Keep in sync with that SCSS value.
  */

@@ -4,8 +4,8 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
-import { createRequestOption } from 'app/shared/util/request.util';
-import { stringifyCircular } from 'app/shared/util/utils';
+import { createRequestOption } from 'app/foundation/util/request.util';
+import { stringifyCircular } from 'app/foundation/util/utils';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 
 export type EntityResponseType = HttpResponse<ModelingSubmission>;

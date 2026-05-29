@@ -3,7 +3,7 @@ import { ListOfComplaintsComponent } from 'app/assessment/manage/list-of-complai
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
-import { IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { exerciseTypes } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseManagementResolve } from 'app/course/manage/services/course-management-resolve.service';
 
