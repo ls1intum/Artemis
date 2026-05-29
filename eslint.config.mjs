@@ -10,6 +10,24 @@ import tseslint from 'typescript-eslint';
 import eslint from '@eslint/js';
 import localRulesPlugin from './rules/index.mjs';
 
+// Builds `no-restricted-imports` patterns that block importing a sibling client layer
+// (e.g. `ui` or `editor`) from another layer — covering both the absolute alias path
+// (`app/<layer>/...`) and relative parent-traversal paths (`../<layer>/...`, `../../<layer>/...`, …).
+//
+// Each relative depth is listed explicitly on purpose: ESLint's minimatch wildcard does NOT
+// traverse `..` segments, so a single globstar pattern fails to flag nested imports such as
+// `../../ui/foo` (verified). Enumerating depths up to 6 covers every realistic file location
+// under `app/foundation/` and `app/ui/`.
+const blockLayerImportPatterns = (layer) => [
+    `app/${layer}/**`,
+    `../${layer}/**`,
+    `../../${layer}/**`,
+    `../../../${layer}/**`,
+    `../../../../${layer}/**`,
+    `../../../../../${layer}/**`,
+    `../../../../../../${layer}/**`,
+];
+
 export default tseslint.config(
     {
         // Only src/main/webapp/ and src/test/javascript/ contain lintable client code.
@@ -179,11 +197,11 @@ export default tseslint.config(
                         {
                             // Block both absolute (app/ui/**) and relative (../ui, ../../ui, …) imports
                             // so the layer cannot be bypassed with a relative path.
-                            group: ['app/ui/**', '../**/ui/**'],
+                            group: blockLayerImportPatterns('ui'),
                             message: 'app/foundation/ must not depend on app/ui/. foundation/ is the base infrastructure layer (no DOM/UI). If a UI primitive is needed here, the file probably belongs in app/ui/ instead.',
                         },
                         {
-                            group: ['app/editor/**', '../**/editor/**'],
+                            group: blockLayerImportPatterns('editor'),
                             message: 'app/foundation/ must not depend on app/editor/. foundation/ is the base infrastructure layer. Extract the editor-side dependency to a neutral constant or move the consuming file into app/editor/.',
                         },
                     ],
@@ -204,8 +222,8 @@ export default tseslint.config(
                     ],
                     patterns: [
                         {
-                            // Block both absolute (app/editor/**) and relative (../editor, …) imports.
-                            group: ['app/editor/**', '../**/editor/**'],
+                            // Block both absolute (app/editor/**) and relative (../editor, ../../editor, …) imports.
+                            group: blockLayerImportPatterns('editor'),
                             message: 'app/ui/ must not depend on app/editor/. ui/ holds generic UI primitives; the editor stack is specialised and sits above ui/.',
                         },
                     ],
