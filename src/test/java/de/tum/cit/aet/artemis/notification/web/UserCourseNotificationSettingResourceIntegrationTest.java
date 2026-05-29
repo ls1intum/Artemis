@@ -65,7 +65,7 @@ class UserCourseNotificationSettingResourceIntegrationTest extends AbstractSprin
     void shouldApplyPresetWhenSetSettingPresetIsCalled() throws Exception {
         Short presetId = 2;
 
-        var result = request.performMvcRequest(MockMvcRequestBuilders.put("/api/communication/notification/{courseId}/setting-preset", course.getId())
+        var result = request.performMvcRequest(MockMvcRequestBuilders.put("/api/notification/notification/{courseId}/setting-preset", course.getId())
                 .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(presetId)));
 
         result.andExpect(status().isOk());
@@ -91,7 +91,7 @@ class UserCourseNotificationSettingResourceIntegrationTest extends AbstractSprin
 
         CourseNotificationSettingSpecificationRequestDTO requestDTO = new CourseNotificationSettingSpecificationRequestDTO(notificationTypeChannels);
 
-        var result = request.performMvcRequest(MockMvcRequestBuilders.put("/api/communication/notification/{courseId}/setting-specification", course.getId())
+        var result = request.performMvcRequest(MockMvcRequestBuilders.put("/api/notification/notification/{courseId}/setting-specification", course.getId())
                 .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)));
 
         result.andExpect(status().isOk());
@@ -126,7 +126,7 @@ class UserCourseNotificationSettingResourceIntegrationTest extends AbstractSprin
 
         CourseNotificationSettingSpecificationRequestDTO requestDTO = new CourseNotificationSettingSpecificationRequestDTO(notificationTypeChannels);
 
-        request.performMvcRequest(MockMvcRequestBuilders.put("/api/communication/notification/{courseId}/setting-specification", course.getId())
+        request.performMvcRequest(MockMvcRequestBuilders.put("/api/notification/notification/{courseId}/setting-specification", course.getId())
                 .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO))).andExpect(status().isOk());
 
         var presetBeforeChange = userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(user.getId(), course.getId());
@@ -139,7 +139,7 @@ class UserCourseNotificationSettingResourceIntegrationTest extends AbstractSprin
 
         Short presetId = 2;
 
-        request.performMvcRequest(MockMvcRequestBuilders.put("/api/communication/notification/{courseId}/setting-preset", course.getId()).contentType(MediaType.APPLICATION_JSON)
+        request.performMvcRequest(MockMvcRequestBuilders.put("/api/notification/notification/{courseId}/setting-preset", course.getId()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(presetId))).andExpect(status().isOk());
 
         // Hazelcast-backed @CacheEvict propagation can lag behind the database write inside a single
@@ -160,11 +160,11 @@ class UserCourseNotificationSettingResourceIntegrationTest extends AbstractSprin
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnCorrectSettingInfoWhenGetSettingInfoIsCalled() throws Exception {
         Short presetId = 2;
-        request.performMvcRequest(MockMvcRequestBuilders.put("/api/communication/notification/{courseId}/setting-preset", course.getId()).contentType(MediaType.APPLICATION_JSON)
+        request.performMvcRequest(MockMvcRequestBuilders.put("/api/notification/notification/{courseId}/setting-preset", course.getId()).contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(presetId))).andExpect(status().isOk());
 
         var result = request
-                .performMvcRequest(MockMvcRequestBuilders.get("/api/communication/notification/{courseId}/settings", course.getId()).contentType(MediaType.APPLICATION_JSON))
+                .performMvcRequest(MockMvcRequestBuilders.get("/api/notification/notification/{courseId}/settings", course.getId()).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()).andReturn();
 
         String responseContent = result.getResponse().getContentAsString();
@@ -181,7 +181,7 @@ class UserCourseNotificationSettingResourceIntegrationTest extends AbstractSprin
         userCourseNotificationSettingPresetRepository.deleteAll();
 
         var result = request
-                .performMvcRequest(MockMvcRequestBuilders.get("/api/communication/notification/{courseId}/settings", course.getId()).contentType(MediaType.APPLICATION_JSON))
+                .performMvcRequest(MockMvcRequestBuilders.get("/api/notification/notification/{courseId}/settings", course.getId()).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk()).andReturn();
 
         String responseContent = result.getResponse().getContentAsString();

@@ -5,7 +5,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 export const programmingRepositoryRoutes: Routes = [
     {
         path: ':repositoryId',
-        loadComponent: () => import('app/programming/shared/repository-view/repository-view.component').then((m) => m.RepositoryViewComponent),
+        loadComponent: () => import('app/localvc/repository-view/repository-view.component').then((m) => m.RepositoryViewComponent),
         data: {
             authorities: IS_AT_LEAST_STUDENT,
             pageTitle: 'artemisApp.repository.title',
@@ -14,7 +14,7 @@ export const programmingRepositoryRoutes: Routes = [
     },
     {
         path: ':repositoryId/commit-history',
-        loadComponent: () => import('app/programming/shared/commit-history/commit-history.component').then((m) => m.CommitHistoryComponent),
+        loadComponent: () => import('app/localvc/commit-history/commit-history.component').then((m) => m.CommitHistoryComponent),
         data: {
             authorities: IS_AT_LEAST_STUDENT,
             pageTitle: 'artemisApp.repository.commitHistory.title',
