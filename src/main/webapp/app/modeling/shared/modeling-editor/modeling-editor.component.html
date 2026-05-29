@@ -1,10 +1,8 @@
 <div class="modeling-editor">
-    <ng-template #help let-close="close" let-dismiss="dismiss">
-        <div class="modal-header">
-            <h4 class="modal-title" jhiTranslate="artemisApp.modelingEditor.helpModal.title"></h4>
-
-            <button type="button" class="btn-close" aria-label="Close" (click)="dismiss()"><span aria-hidden="true"></span></button>
-        </div>
+    <p-dialog [(visible)]="helpVisible" [modal]="true" [closable]="true" [dismissableMask]="false" [draggable]="false" [appendTo]="'body'" [style]="{ width: '50rem' }" header="">
+        <ng-template #header>
+            <h4 jhiTranslate="artemisApp.modelingEditor.helpModal.title"></h4>
+        </ng-template>
         <div class="modal-body">
             <table class="table">
                 <tr>
@@ -63,14 +61,14 @@
                 </tr>
             </table>
         </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-outline" (click)="close()" jhiTranslate="entity.action.close"></button>
-        </div>
-    </ng-template>
+        <ng-template #footer>
+            <button type="button" class="btn btn-outline" (click)="helpVisible.set(false)" jhiTranslate="entity.action.close"></button>
+        </ng-template>
+    </p-dialog>
     @if (!readOnly() && !isFullScreen) {
         <div class="help-and-status">
             @if (!readOnly() && showHelpButton()) {
-                <button type="button" class="btn btn-warning" (click)="open(help)">
+                <button type="button" class="btn btn-warning" (click)="openHelp()">
                     <fa-icon [icon]="farQuestionCircle" />&nbsp;
                     <span jhiTranslate="artemisApp.modelingEditor.helpModal.help"></span>
                 </button>
