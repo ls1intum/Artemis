@@ -211,7 +211,7 @@ public class UserTestService {
         student.setImageUrl("images/user/profiles-pictures/image.jpg");
         userTestRepository.save(student);
 
-        request.delete("/api/core/admin/users/" + student.getLogin(), HttpStatus.OK);
+        request.delete("/api/account/admin/users/" + student.getLogin(), HttpStatus.OK);
 
         final var deletedUser = userTestRepository.findById(student.getId()).orElseThrow();
         assertThatUserWasSoftDeleted(student, deletedUser);
@@ -219,7 +219,7 @@ public class UserTestService {
 
     // Test
     public void deleteSelf_isNotSuccessful(String currentUserLogin) throws Exception {
-        request.delete("/api/core/admin/users/" + currentUserLogin, HttpStatus.BAD_REQUEST);
+        request.delete("/api/account/admin/users/" + currentUserLogin, HttpStatus.BAD_REQUEST);
         final var deletedUser = userTestRepository.findById(student.getId()).orElseThrow();
         assertThatUserWasNotSoftDeleted(student, deletedUser);
     }
@@ -236,7 +236,7 @@ public class UserTestService {
         }).collect(Collectors.toSet());
 
         var logins = users.stream().map(User::getLogin).toList();
-        request.delete("/api/core/admin/users", HttpStatus.OK, logins);
+        request.delete("/api/account/admin/users", HttpStatus.OK, logins);
 
         for (var user : users) {
             final var deletedUser = userTestRepository.findById(user.getId()).orElseThrow();
@@ -275,7 +275,7 @@ public class UserTestService {
 
         var managedUserVM = new ManagedUserVM(student, newPassword);
         managedUserVM.setPassword(newPassword);
-        final var response = request.putWithResponseBody("/api/core/admin/users", managedUserVM, UserDTO.class, HttpStatus.OK);
+        final var response = request.putWithResponseBody("/api/account/admin/users", managedUserVM, UserDTO.class, HttpStatus.OK);
         final var updatedUserIndDB = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
 
         assertThat(response).isNotNull();
@@ -297,7 +297,7 @@ public class UserTestService {
 
         var managedUserVM = new ManagedUserVM(student, "foobar1234");
 
-        final var response = request.putWithResponseBody("/api/core/admin/users", managedUserVM, UserDTO.class, HttpStatus.OK);
+        final var response = request.putWithResponseBody("/api/account/admin/users", managedUserVM, UserDTO.class, HttpStatus.OK);
         assertThat(response).isNotNull();
 
         // do not allow empty authorities
@@ -310,7 +310,7 @@ public class UserTestService {
         student.setPassword(null);
         final var oldPassword = userTestRepository.findById(student.getId()).orElseThrow().getPassword();
 
-        request.put("/api/core/admin/users", new ManagedUserVM(student), HttpStatus.OK);
+        request.put("/api/account/admin/users", new ManagedUserVM(student), HttpStatus.OK);
         final var userInDB = userTestRepository.findById(student.getId()).orElseThrow();
 
         assertThat(oldPassword).as("Password did not change").isEqualTo(userInDB.getPassword());
@@ -320,7 +320,7 @@ public class UserTestService {
     public void updateUserLogin() throws Exception {
         student.setLogin("new-login");
 
-        request.put("/api/core/admin/users", new ManagedUserVM(student), HttpStatus.OK);
+        request.put("/api/account/admin/users", new ManagedUserVM(student), HttpStatus.OK);
         final var userInDB = userTestRepository.findById(student.getId()).orElseThrow();
 
         assertThat(userInDB.getLogin()).isEqualTo(student.getLogin());
@@ -340,7 +340,7 @@ public class UserTestService {
         // We will then update the user by modifying the groups
         var updatedUser = student;
         updatedUser.setGroups(Set.of("tutor"));
-        request.put("/api/core/admin/users", new ManagedUserVM(updatedUser, "this is a password"), HttpStatus.OK);
+        request.put("/api/account/admin/users", new ManagedUserVM(updatedUser, "this is a password"), HttpStatus.OK);
 
         var updatedUserOrEmpty = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(updatedUser.getLogin());
         assertThat(updatedUserOrEmpty).isPresent();
@@ -358,7 +358,7 @@ public class UserTestService {
         student.setPassword(password);
         student.setEmail("batman@secret.invalid");
 
-        final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student, password), UserDTO.class, HttpStatus.CREATED);
+        final var response = request.postWithResponseBody("/api/account/admin/users", new ManagedUserVM(student, password), UserDTO.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
         final var userInDB = userTestRepository.findById(response.getId()).orElseThrow();
         assertThat(passwordService.checkPasswordMatch(password, userInDB.getPassword())).isTrue();
@@ -401,7 +401,7 @@ public class UserTestService {
         final Set<Authority> authorities = roles.stream().map(Role::getAuthority).map(auth -> authorityRepository.findById(auth).orElseThrow()).collect(Collectors.toSet());
         student.setAuthorities(authorities);
 
-        final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student, student.getPassword()), UserDTO.class, HttpStatus.CREATED);
+        final var response = request.postWithResponseBody("/api/account/admin/users", new ManagedUserVM(student, student.getPassword()), UserDTO.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
         final var userInDB = userTestRepository.findById(response.getId()).orElseThrow();
         userInDB.setPassword(password);
@@ -421,7 +421,7 @@ public class UserTestService {
         student.setEmail("batman@secret.invalid");
         student = userTestRepository.save(student);
 
-        final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student), UserDTO.class, HttpStatus.BAD_REQUEST);
+        final var response = request.postWithResponseBody("/api/account/admin/users", new ManagedUserVM(student), UserDTO.class, HttpStatus.BAD_REQUEST);
         assertThat(response).isNull();
     }
 
@@ -432,7 +432,7 @@ public class UserTestService {
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
 
-        final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student), UserDTO.class, HttpStatus.CREATED);
+        final var response = request.postWithResponseBody("/api/account/admin/users", new ManagedUserVM(student), UserDTO.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
 
         User student2 = new User();
@@ -441,7 +441,7 @@ public class UserTestService {
         student2.setPassword("barfoo");
         student2.setEmail("batman2@secret.stillinvalid");
 
-        final var response2 = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student2), UserDTO.class, HttpStatus.BAD_REQUEST);
+        final var response2 = request.postWithResponseBody("/api/account/admin/users", new ManagedUserVM(student2), UserDTO.class, HttpStatus.BAD_REQUEST);
         assertThat(response2).isNull();
     }
 
@@ -451,7 +451,7 @@ public class UserTestService {
         student.setLogin("batman");
         student.setPassword("foobar");
 
-        final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student), UserDTO.class, HttpStatus.BAD_REQUEST);
+        final var response = request.postWithResponseBody("/api/account/admin/users", new ManagedUserVM(student), UserDTO.class, HttpStatus.BAD_REQUEST);
         assertThat(response).isNull();
     }
 
@@ -462,7 +462,7 @@ public class UserTestService {
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
 
-        final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student), UserDTO.class, HttpStatus.CREATED);
+        final var response = request.postWithResponseBody("/api/account/admin/users", new ManagedUserVM(student), UserDTO.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
     }
 
@@ -475,7 +475,7 @@ public class UserTestService {
         student.setLogin("batman");
         student.setPassword(null);
 
-        final var response = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student), UserDTO.class, HttpStatus.CREATED);
+        final var response = request.postWithResponseBody("/api/account/admin/users", new ManagedUserVM(student), UserDTO.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
         final var userInDB = userTestRepository.findById(response.getId()).orElseThrow();
 
@@ -491,7 +491,7 @@ public class UserTestService {
         newUser.setLogin("batman");
         newUser.setEmail("foobar@tum.com");
 
-        request.post("/api/core/admin/users", new ManagedUserVM(newUser), HttpStatus.CREATED);
+        request.post("/api/account/admin/users", new ManagedUserVM(newUser), HttpStatus.CREATED);
 
         var createdUser = userTestRepository.findOneByEmailIgnoreCase(newUser.getEmail());
         assertThat(createdUser).isPresent();
@@ -518,7 +518,7 @@ public class UserTestService {
         newUser.setEmail("foobar@tum.com");
         newUser.setGroups(Set.of("tutor", "instructor2"));
 
-        request.post("/api/core/admin/users", new ManagedUserVM(newUser), HttpStatus.CREATED);
+        request.post("/api/account/admin/users", new ManagedUserVM(newUser), HttpStatus.CREATED);
 
         var createdUserOrEmpty = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(newUser.getLogin());
         assertThat(createdUserOrEmpty).isPresent();
@@ -543,27 +543,27 @@ public class UserTestService {
         params.add("registrationNumbers", "");
         params.add("status", "");
         params.add("courseIds", "");
-        List<UserDTO> users = request.getList("/api/core/admin/users", HttpStatus.OK, UserDTO.class, params);
+        List<UserDTO> users = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
         assertThat(users).hasSize(NUMBER_OF_STUDENTS + NUMBER_OF_TUTORS + NUMBER_OF_EDITORS + NUMBER_OF_INSTRUCTORS); // admin is not returned
     }
 
     // Test
     public void searchUsers_asInstructor_isSuccessful() throws Exception {
         final String loginOrName = TEST_PREFIX + "student1";
-        List<UserDTO> users = request.getList("/api/core/users/search?loginOrName=" + loginOrName, HttpStatus.OK, UserDTO.class);
+        List<UserDTO> users = request.getList("/api/account/users/search?loginOrName=" + loginOrName, HttpStatus.OK, UserDTO.class);
         assertThat(users).hasSize(1); // size([student1]) = 1
     }
 
     // Test
     public void searchUsers_asAdmin_badRequest() throws Exception {
         final String loginOrName = "ab"; // too short (needs at least 3 characters)
-        request.getList("/api/core/users/search?loginOrName=" + loginOrName, HttpStatus.BAD_REQUEST, UserDTO.class);
+        request.getList("/api/account/users/search?loginOrName=" + loginOrName, HttpStatus.BAD_REQUEST, UserDTO.class);
     }
 
     // Test
     public void searchUsers_asTutor_forbidden() throws Exception {
         final String loginOrName = "student";
-        request.getList("/api/core/users/search?loginOrName=" + loginOrName, HttpStatus.FORBIDDEN, UserDTO.class);
+        request.getList("/api/account/users/search?loginOrName=" + loginOrName, HttpStatus.FORBIDDEN, UserDTO.class);
     }
 
     // Test
@@ -581,14 +581,14 @@ public class UserTestService {
         params.add("status", "");
         params.add("registrationNumbers", "");
         params.add("courseIds", "");
-        List<UserDTO> users = request.getList("/api/core/admin/users", HttpStatus.OK, UserDTO.class, params);
+        List<UserDTO> users = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
         assertThat(users).hasSize(1);
         assertThat(users.getFirst().getEmail()).isEqualTo(student.getEmail());
     }
 
     // Test
     public void getAuthorities_asAdmin_isSuccessful() throws Exception {
-        List<String> authorities = request.getList("/api/core/admin/users/authorities", HttpStatus.OK, String.class);
+        List<String> authorities = request.getList("/api/account/admin/users/authorities", HttpStatus.OK, String.class);
         assertThat(authorities).hasSameElementsAs(List.of("ROLE_ADMIN", "ROLE_EDITOR", "ROLE_INSTRUCTOR", "ROLE_SUPER_ADMIN", "ROLE_TA", "ROLE_USER"));
     }
 
@@ -608,14 +608,14 @@ public class UserTestService {
     }
 
     private void getUsersOrAuthorities_forbidden() throws Exception {
-        request.getList("/api/core/admin/users", HttpStatus.FORBIDDEN, UserDTO.class);
-        request.getList("/api/core/admin/users/authorities", HttpStatus.FORBIDDEN, String.class);
+        request.getList("/api/account/admin/users", HttpStatus.FORBIDDEN, UserDTO.class);
+        request.getList("/api/account/admin/users/authorities", HttpStatus.FORBIDDEN, String.class);
     }
 
     // Test
     public void getUser_asAdmin_isSuccessful() throws Exception {
         final String userLogin = TEST_PREFIX + "student1";
-        UserDTO userDTO = request.get("/api/core/admin/users/" + userLogin, HttpStatus.OK, UserDTO.class);
+        UserDTO userDTO = request.get("/api/account/admin/users/" + userLogin, HttpStatus.OK, UserDTO.class);
         assertThat(userDTO.getLogin()).isEqualTo(userLogin);
     }
 
@@ -626,7 +626,7 @@ public class UserTestService {
 
         MockMultipartFile mockImageFile = new MockMultipartFile("file", "test-image.jpeg", "image/jpeg", "test image".getBytes());
 
-        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/core/account/profile-picture").file(mockImageFile).with(request -> {
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/account/account/profile-picture").file(mockImageFile).with(request -> {
             request.setMethod("PUT");
             return request;
         })).andExpect(status().isOk());
@@ -642,14 +642,14 @@ public class UserTestService {
 
         MockMultipartFile mockImageFile = new MockMultipartFile("file", "test-image.jpeg", "image/jpeg", "test image".getBytes());
 
-        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/core/account/profile-picture").file(mockImageFile).with(request -> {
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/account/account/profile-picture").file(mockImageFile).with(request -> {
             request.setMethod("PUT");
             return request;
         })).andExpect(status().isOk());
         userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userInDB.getImageUrl()).isNotNull();
 
-        request.delete("/api/core/account/profile-picture", HttpStatus.OK);
+        request.delete("/api/account/account/profile-picture", HttpStatus.OK);
         userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userInDB.getImageUrl()).isNull();
     }
@@ -664,7 +664,7 @@ public class UserTestService {
         repoUser.setGroups(Set.of(LtiService.LTI_GROUP_NAME));
         userTestRepository.save(repoUser);
 
-        UserInitializationDTO dto = request.putWithResponseBody("/api/core/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
+        UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
 
         assertThat(dto.password()).isNotEmpty();
 
@@ -686,7 +686,7 @@ public class UserTestService {
         user.setGroups(Set.of(LtiService.LTI_GROUP_NAME));
         userTestRepository.save(user);
 
-        UserInitializationDTO dto = request.putWithResponseBody("/api/core/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
+        UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
 
         assertThat(dto.password()).isNull();
 
@@ -706,7 +706,7 @@ public class UserTestService {
         user.setActivated(false);
         userTestRepository.save(user);
 
-        UserInitializationDTO dto = request.putWithResponseBody("/api/core/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
+        UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
         assertThat(dto.password()).isNull();
 
         User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
@@ -724,7 +724,7 @@ public class UserTestService {
         user.setActivated(false);
         userTestRepository.save(user);
 
-        UserInitializationDTO dto = request.putWithResponseBody("/api/core/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
+        UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
 
         assertThat(dto.password()).isNull();
 
@@ -740,7 +740,7 @@ public class UserTestService {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         // try to get token for non existent participation
-        request.get("/api/core/account/participation-vcs-access-token?participationId=11", HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/account/account/participation-vcs-access-token?participationId=11", HttpStatus.NOT_FOUND, String.class);
 
         var course = courseUtilService.addEmptyCourse();
         var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
@@ -749,16 +749,16 @@ public class UserTestService {
         var submission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").type(SubmissionType.MANUAL).submitted(true);
         submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, user.getLogin());
         // request existing token
-        var token = request.get("/api/core/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.OK, String.class);
+        var token = request.get("/api/account/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.OK, String.class);
         assertThat(token).isNotNull();
 
         // delete all tokens
         participationVCSAccessTokenRepository.deleteAll();
 
         // check that token was deleted
-        request.get("/api/core/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.NOT_FOUND, String.class);
-        var newToken = request.putWithResponseBody("/api/core/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), null, String.class,
-                HttpStatus.OK);
+        request.get("/api/account/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.NOT_FOUND, String.class);
+        var newToken = request.putWithResponseBody("/api/account/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), null,
+                String.class, HttpStatus.OK);
         assertThat(newToken).isNotEqualTo(token);
 
         submissionRepository.delete(submission);
@@ -781,13 +781,13 @@ public class UserTestService {
         submission = programmingExerciseUtilService.addProgrammingSubmissionToTeamExercise(exercise, submission, team);
 
         // request existing token
-        request.get("/api/core/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/account/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.NOT_FOUND, String.class);
 
-        var token = request.putWithResponseBody("/api/core/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), null, String.class,
+        var token = request.putWithResponseBody("/api/account/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), null, String.class,
                 HttpStatus.OK);
         assertThat(token).isNotNull();
 
-        var token2 = request.get("/api/core/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.OK, String.class);
+        var token2 = request.get("/api/account/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.OK, String.class);
         assertThat(token2).isEqualTo(token);
 
         submissionRepository.delete(submission);
@@ -803,18 +803,18 @@ public class UserTestService {
 
         // Set expiry date to already past date -> Bad Request
         ZonedDateTime expiryDate = ZonedDateTime.now().minusMonths(1);
-        var userDTO = request.putWithResponseBody("/api/core/account/user-vcs-access-token?expiryDate=" + expiryDate, null, UserDTO.class, HttpStatus.BAD_REQUEST);
+        var userDTO = request.putWithResponseBody("/api/account/account/user-vcs-access-token?expiryDate=" + expiryDate, null, UserDTO.class, HttpStatus.BAD_REQUEST);
         assertThat(userDTO).isNull();
 
         // Correct expiry date -> OK
         expiryDate = ZonedDateTime.now().plusMonths(1);
-        userDTO = request.putWithResponseBody("/api/core/account/user-vcs-access-token?expiryDate=" + expiryDate, null, UserDTO.class, HttpStatus.OK);
+        userDTO = request.putWithResponseBody("/api/account/account/user-vcs-access-token?expiryDate=" + expiryDate, null, UserDTO.class, HttpStatus.OK);
         user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(user.getVcsAccessToken()).isEqualTo(userDTO.getVcsAccessToken());
         assertThat(user.getVcsAccessTokenExpiryDate()).isEqualTo(userDTO.getVcsAccessTokenExpiryDate());
 
         // Delete token
-        request.delete("/api/core/account/user-vcs-access-token", HttpStatus.OK);
+        request.delete("/api/account/account/user-vcs-access-token", HttpStatus.OK);
         user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(user.getVcsAccessToken()).isNull();
         assertThat(user.getVcsAccessTokenExpiryDate()).isNull();
@@ -885,7 +885,7 @@ public class UserTestService {
             user1.setGroups(Collections.emptySet());
             user2.setGroups(Set.of("tumuser"));
             userTestRepository.saveAll(List.of(user1, user2));
-            result = request.getList("/api/core/admin/users", HttpStatus.OK, UserDTO.class, params);
+            result = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
             assertThat(result).extracting(UserDTO::getLogin).contains(user1.getLogin(), user2.getLogin());
         }
     }
@@ -909,7 +909,7 @@ public class UserTestService {
             user1.setGroups(Collections.emptySet());
             user2.setGroups(Set.of("tumuser"));
             userTestRepository.saveAll(List.of(user1, user2));
-            result = request.getList("/api/core/admin/users", HttpStatus.OK, UserDTO.class, params);
+            result = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
             assertThat(result).extracting(UserDTO::getLogin).contains(user1.getLogin()).doesNotContain(user2.getLogin());
         }
     }
@@ -931,7 +931,7 @@ public class UserTestService {
             user1.setActivated(true);
             user2.setActivated(false);
             userTestRepository.saveAll(List.of(user1, user2, admin));
-            result = request.getList("/api/core/admin/users", HttpStatus.OK, UserDTO.class, params);
+            result = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
             assertThat(result).extracting(UserDTO::getLogin).contains(user1.getLogin(), admin.getLogin()).doesNotContain(user2.getLogin());
         }
     }
@@ -954,7 +954,7 @@ public class UserTestService {
             user1.setActivated(true);
             user2.setActivated(false);
             userTestRepository.saveAll(List.of(user1, user2));
-            result = request.getList("/api/core/admin/users", HttpStatus.OK, UserDTO.class, params);
+            result = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
             assertThat(result).extracting(UserDTO::getLogin).contains(user2.getLogin()).doesNotContain(user1.getLogin());
         }
     }
@@ -978,7 +978,7 @@ public class UserTestService {
             user1.setInternal(true);
             user2.setInternal(false);
             userTestRepository.saveAll(List.of(user1, user2, admin));
-            result = request.getList("/api/core/admin/users", HttpStatus.OK, UserDTO.class, params);
+            result = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
             assertThat(result).extracting(UserDTO::getLogin).contains(user1.getLogin(), admin.getLogin()).doesNotContain(user2.getLogin());
         }
     }
@@ -1001,7 +1001,7 @@ public class UserTestService {
             user1.setInternal(true);
             user2.setInternal(false);
             userTestRepository.saveAll(List.of(user1, user2));
-            result = request.getList("/api/core/admin/users", HttpStatus.OK, UserDTO.class, params);
+            result = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
             assertThat(result).extracting(UserDTO::getLogin).contains(user2.getLogin()).doesNotContain(user1.getLogin());
         }
     }
@@ -1032,7 +1032,7 @@ public class UserTestService {
             user1.setInternal(true);
             user2.setInternal(false);
             userTestRepository.saveAll(List.of(user1, user2));
-            result = request.getList("/api/core/admin/users", HttpStatus.OK, UserDTO.class, params);
+            result = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
             assertThat(result).isEqualTo(Collections.emptyList());
         }
     }
@@ -1059,7 +1059,7 @@ public class UserTestService {
             user1.setRegistrationNumber(null);
             user2.setRegistrationNumber(null);
             userTestRepository.saveAll(List.of(user1, user2));
-            result = request.getList("/api/core/admin/users", HttpStatus.OK, UserDTO.class, params);
+            result = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
             assertThat(result).isEqualTo(Collections.emptyList());
         }
     }
@@ -1087,7 +1087,7 @@ public class UserTestService {
             user2.setRegistrationNumber("");
             User admin = userTestRepository.getUserByLoginElseThrow("admin");
             userTestRepository.saveAll(List.of(user1, user2, admin));
-            result = request.getList("/api/core/admin/users", HttpStatus.OK, UserDTO.class, params);
+            result = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
             assertThat(result).extracting(UserDTO::getLogin).contains(admin.getLogin()).doesNotContain(user1.getLogin(), user2.getLogin());
         }
     }

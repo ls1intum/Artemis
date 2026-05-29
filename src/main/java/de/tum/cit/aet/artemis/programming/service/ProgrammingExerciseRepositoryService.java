@@ -30,14 +30,15 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Profile(PROFILE_CORE)
 @Lazy

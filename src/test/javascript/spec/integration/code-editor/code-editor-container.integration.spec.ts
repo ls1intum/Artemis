@@ -24,7 +24,7 @@ import { MockProgrammingSubmissionService } from 'test/helpers/mocks/service/moc
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
-import { BuildLogEntryArray } from 'app/buildagent/shared/entities/build-log.model';
+import { BuildLogEntryArray } from 'app/localci/shared/entities/build-log.model';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
 import { ResultService } from 'app/exercise/result/result.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';

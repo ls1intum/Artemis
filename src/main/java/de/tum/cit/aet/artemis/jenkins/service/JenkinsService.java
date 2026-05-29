@@ -21,14 +21,14 @@ import de.tum.cit.aet.artemis.core.exception.JenkinsException;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.jenkins.service.build_plan.JenkinsBuildPlanService;
 import de.tum.cit.aet.artemis.jenkins.service.jobs.JenkinsJobService;
+import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.localci.service.ci.notification.dto.TestResultsDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
-import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResultsDTO;
 
 @Profile(PROFILE_JENKINS)
 @Lazy

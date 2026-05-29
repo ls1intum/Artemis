@@ -101,7 +101,7 @@ import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
 import de.tum.cit.aet.artemis.core.service.TitleCacheEvictionService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisIntegrationTest;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTestBase;
@@ -433,8 +433,9 @@ class ArchitectureTest extends AbstractArchitectureTest {
     void testNoRestControllersImported() {
         final var exceptions = new String[] { "AccountResourceIntegrationTest", "AdminResourceArchitectureTest", "AndroidAppSiteAssociationResourceTest",
                 "AppleAppSiteAssociationResourceTest", "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest", "CourseResourceArchitectureTest",
-                "NotificationResourceArchitectureTest", "PlagiarismApiArchitectureTest", "LtiApiArchitectureTest", "IrisTutorSuggestionIntegrationTest",
-                "IrisAutonomousTutorPipelineIntegrationTest", "HyperionCodeGenerationResourceTest", "LegacyCalendarResource" };
+                "LocalCIResourceArchitectureTest", "LocalVCResourceArchitectureTest", "NotificationResourceArchitectureTest", "PlagiarismApiArchitectureTest",
+                "LtiApiArchitectureTest", "IrisTutorSuggestionIntegrationTest", "IrisAutonomousTutorPipelineIntegrationTest", "HyperionCodeGenerationResourceTest",
+                "LegacyCalendarResource" };
         final var classes = classesExcept(allClasses, exceptions);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }
