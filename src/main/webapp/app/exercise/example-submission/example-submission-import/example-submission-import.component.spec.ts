@@ -1,83 +1,60 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { Subject, of } from 'rxjs';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
+import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { ExampleSubmissionImportComponent } from 'app/exercise/example-submission/example-submission-import/example-submission-import.component';
+import { ExampleSubmissionImportPagingService } from 'app/exercise/example-submission/example-submission-import/example-submission-import-paging.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
+import { SearchResult } from 'app/shared/table/pageable-table';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
-import { ExampleSubmissionImportPagingService } from 'app/exercise/example-submission/example-submission-import/example-submission-import-paging.service';
-import { ExampleSubmissionImportComponent } from 'app/exercise/example-submission/example-submission-import/example-submission-import.component';
-import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
-import { ResultComponent } from 'app/exercise/result/result.component';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
-import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { SearchResult } from 'app/foundation/pagination/pageable-table';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { Subject, of } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
 
 describe('ExampleSubmissionImportComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ExampleSubmissionImportComponent;
     let fixture: ComponentFixture<ExampleSubmissionImportComponent>;
     let pagingService: ExampleSubmissionImportPagingService;
-    let searchSpy: jest.SpyInstance;
-    let searchResult: SearchResult<Submission>;
+    let searchSpy: ReturnType<typeof vi.spyOn>;
     let submission: Submission;
     let exampleSubmissionService: ExampleSubmissionService;
-    let getSubmissionSizeSpy: jest.SpyInstance;
+    let getSubmissionSizeSpy: ReturnType<typeof vi.spyOn>;
     let exercise: Exercise;
     let dialogRef: DynamicDialogRef;
 
     beforeEach(() => {
         dialogRef = {
-            close: jest.fn(),
-            onClose: new Subject<any>(),
+            close: vi.fn(),
+            onClose: new Subject<Submission | undefined>(),
         } as unknown as DynamicDialogRef;
 
         TestBed.configureTestingModule({
-            imports: [MockComponent(NgbPagination)],
-            declarations: [
-                ExampleSubmissionImportComponent,
-                MockComponent(ButtonComponent),
-                MockComponent(ResultComponent),
-                MockDirective(SortByDirective),
-                MockDirective(SortDirective),
-                MockPipe(ArtemisDatePipe),
-                MockPipe(ArtemisTranslatePipe),
-            ],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: DynamicDialogRef, useValue: dialogRef },
-                { provide: NgbActiveModal, useValue: { dismiss: jest.fn() } },
+                { provide: Router, useValue: { navigate: vi.fn() } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExampleSubmissionImportComponent);
-                component = fixture.componentInstance;
-                pagingService = TestBed.inject(ExampleSubmissionImportPagingService);
-                exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
-                searchSpy = jest.spyOn(pagingService, 'search');
-                getSubmissionSizeSpy = jest.spyOn(exampleSubmissionService, 'getSubmissionSize').mockReturnValue(2);
-            });
-    });
+            .overrideTemplate(ExampleSubmissionImportComponent, '')
+            .compileComponents();
 
-    afterEach(() => {
-        jest.clearAllMocks();
-        if (dialogRef?.onClose && typeof (dialogRef.onClose as Subject<any>).complete === 'function') {
-            (dialogRef.onClose as Subject<any>).complete();
-        }
-    });
+        fixture = TestBed.createComponent(ExampleSubmissionImportComponent);
+        component = fixture.componentInstance;
+        pagingService = TestBed.inject(ExampleSubmissionImportPagingService);
+        exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
+        searchSpy = vi.spyOn(pagingService, 'search');
+        getSubmissionSizeSpy = vi.spyOn(exampleSubmissionService, 'getSubmissionSize').mockReturnValue(2);
 
-    beforeEach(() => {
-        fixture.detectChanges();
         submission = {
             id: 1,
             submitted: true,
@@ -91,21 +68,44 @@ describe('ExampleSubmissionImportComponent', () => {
             shortName: 'titleShort',
             type: ExerciseType.TEXT,
         } as Exercise;
-        component.exercise = exercise;
-        searchResult = { numberOfPages: 3, resultsOnPage: [submission] };
+        const searchResult: SearchResult<Submission> = { numberOfPages: 3, resultsOnPage: [submission] };
         searchSpy.mockReturnValue(of(searchResult));
+
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.detectChanges();
     });
 
-    it('should pass the exercise id to the paging service', fakeAsync(() => {
-        component.searchTerm = 'search';
-        tick(300);
-        expect(searchSpy).toHaveBeenCalledExactlyOnceWith(component.state, { exerciseId: 3 });
-    }));
+    afterEach(() => {
+        vi.restoreAllMocks();
+        vi.clearAllTimers();
+        vi.useRealTimers();
+        if (dialogRef?.onClose && typeof (dialogRef.onClose as Subject<Submission | undefined>).complete === 'function') {
+            (dialogRef.onClose as Subject<Submission | undefined>).complete();
+        }
+    });
 
-    it('should set the submission size when retrieving search results', fakeAsync(() => {
+    it('should pass the exercise id to the paging service', async () => {
+        vi.useFakeTimers();
+
         component.searchTerm = 'search';
-        tick(300);
+        await vi.advanceTimersByTimeAsync(300);
+
+        expect(searchSpy).toHaveBeenCalledExactlyOnceWith(component.state, { exerciseId: 3 });
+    });
+
+    it('should set the submission size when retrieving search results', async () => {
+        vi.useFakeTimers();
+
+        component.searchTerm = 'search';
+        await vi.advanceTimersByTimeAsync(300);
+
         expect(getSubmissionSizeSpy).toHaveBeenCalledExactlyOnceWith(submission, exercise);
         expect(component.content.resultsOnPage[0].submissionSize).toBe(2);
-    }));
+    });
+
+    it('should close the dialog on dismiss', () => {
+        component.dismiss();
+
+        expect(dialogRef.close).toHaveBeenCalledOnce();
+    });
 });

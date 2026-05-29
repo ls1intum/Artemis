@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { NgbNav, NgbNavContent, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { DynamicDialogConfig } from 'primeng/dynamicdialog';
@@ -22,19 +22,10 @@ import { ExerciseImportFromFileComponent } from '../from-file/exercise-import-fr
         NgbNavOutlet,
     ],
 })
-export class ExerciseImportTabsComponent implements OnInit {
+export class ExerciseImportTabsComponent {
     private dialogConfig = inject(DynamicDialogConfig, { optional: true });
 
     activeTab = 1;
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() exerciseType: ExerciseType;
-
-    ngOnInit(): void {
-        // Get data from DynamicDialogConfig if available (when opened via DialogService)
-        const dialogData = this.dialogConfig?.data as ExerciseImportDialogData | undefined;
-        if (dialogData?.exerciseType) {
-            this.exerciseType = dialogData.exerciseType;
-        }
-    }
+    exerciseType = input<ExerciseType | undefined>();
+    protected readonly selectedExerciseType = computed(() => (this.dialogConfig?.data as ExerciseImportDialogData | undefined)?.exerciseType ?? this.exerciseType());
 }

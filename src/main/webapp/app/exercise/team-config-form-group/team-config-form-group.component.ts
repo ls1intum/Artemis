@@ -21,8 +21,8 @@ export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy
     readonly INDIVIDUAL = ExerciseMode.INDIVIDUAL;
     readonly TEAM = ExerciseMode.TEAM;
 
-    readonly exercise = input<Exercise>(undefined!);
-    readonly isImport = input<boolean>(undefined!);
+    readonly exercise = input.required<Exercise>();
+    readonly isImport = input(false);
 
     readonly minTeamSizeField = viewChild<NgModel>('minTeamSize');
     readonly maxTeamsizeField = viewChild<NgModel>('maxTeamSize');
@@ -56,10 +56,10 @@ export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy
 
     ngAfterViewChecked() {
         const minTeamSizeField = this.minTeamSizeField();
+        const maxTeamsizeField = this.maxTeamsizeField();
         if (!(minTeamSizeField?.valueChanges as EventEmitter<number>)?.observed) {
             this.inputFieldSubscriptions.push(minTeamSizeField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         }
-        const maxTeamsizeField = this.maxTeamsizeField();
         if (!(maxTeamsizeField?.valueChanges as EventEmitter<number>)?.observed) {
             this.inputFieldSubscriptions.push(maxTeamsizeField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         }
@@ -72,16 +72,14 @@ export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy
     }
 
     calculateFormValid() {
-        const exercise = this.exercise();
-        this.formValid = Boolean(!exercise.mode || exercise.mode === ExerciseMode.INDIVIDUAL || (this.maxTeamsizeField()?.valid && this.minTeamSizeField()?.valid));
+        this.formValid = Boolean(!this.exercise().mode || this.exercise().mode === ExerciseMode.INDIVIDUAL || (this.maxTeamsizeField()?.valid && this.minTeamSizeField()?.valid));
         this.formValidChanges.next(this.formValid);
     }
 
     get changeExerciseModeDisabled(): boolean {
         // Should be disabled if exercise is present (-> edit menu), but not if menu is shown during import
         // (old exercise id is present). Should also not be present for exam exercises.
-        const exercise = this.exercise();
-        return (!this.isImport() && Boolean(exercise.id)) || !!exercise.exerciseGroup;
+        return (!this.isImport() && Boolean(this.exercise().id)) || !!this.exercise().exerciseGroup;
     }
 
     /**

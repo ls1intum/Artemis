@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Router } from '@angular/router';
@@ -13,6 +15,8 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('ExerciseCreateButtonComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ExerciseCreateButtonComponent;
     let fixture: ComponentFixture<ExerciseCreateButtonComponent>;
     let router: Router;
@@ -41,9 +45,9 @@ describe('ExerciseCreateButtonComponent', () => {
 
     it.each([ExerciseType.MODELING, ExerciseType.FILE_UPLOAD, ExerciseType.TEXT, ExerciseType.QUIZ])('should link to' + ' exercise creation', (exerciseType: ExerciseType) => {
         fixture.componentRef.setInput('exerciseType', exerciseType);
-        jest.spyOn(router, 'navigate');
-        jest.spyOn(modalService, 'dismissAll');
-        const beforeNavigateSpy = jest.spyOn(component.beforeNavigate, 'emit');
+        vi.spyOn(router, 'navigate');
+        vi.spyOn(modalService, 'dismissAll');
+        const beforeNavigateSpy = vi.spyOn(component.beforeNavigate, 'emit');
 
         component.linkToExerciseCreation();
 

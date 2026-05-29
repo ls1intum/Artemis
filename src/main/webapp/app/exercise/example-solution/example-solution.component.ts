@@ -20,7 +20,7 @@ export class ExampleSolutionComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private artemisMarkdown = inject(ArtemisMarkdownService);
 
-    private displayedExerciseId: number;
+    private displayedExerciseId?: number;
     public exercise?: Exercise;
     public exampleSolutionInfo?: ExampleSolutionInfo;
 
@@ -29,7 +29,7 @@ export class ExampleSolutionComponent implements OnInit {
 
     ngOnInit() {
         this.route.params.subscribe((params) => {
-            const exerciseId = this.exerciseId() || parseInt(params['exerciseId'], 10);
+            const exerciseId = this.exerciseId() ?? parseInt(params['exerciseId'], 10);
 
             const didExerciseChange = this.displayedExerciseId !== exerciseId;
             this.displayedExerciseId = exerciseId;
@@ -41,7 +41,7 @@ export class ExampleSolutionComponent implements OnInit {
 
     loadExercise() {
         this.exercise = undefined;
-        this.exerciseService.getExerciseForExampleSolution(this.displayedExerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
+        this.exerciseService.getExerciseForExampleSolution(this.displayedExerciseId!).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             const newExercise = exerciseResponse.body!;
             this.exercise = newExercise;
             this.exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo(newExercise, this.artemisMarkdown);
