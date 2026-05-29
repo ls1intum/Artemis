@@ -292,7 +292,7 @@ jobs:
       needs.determine-tests.result == 'success' &&
       needs.determine-tests.outputs.run_all_tests != 'true' &&
       needs.determine-tests.outputs.remaining_tests != '' &&
-      (needs.run-e2e-relevant.result == 'success' || needs.run-e2e-relevant.result == 'skipped')
+      ((needs.run-e2e-relevant.result == 'success' && needs.run-e2e-relevant.outputs.tests != 'failure') || needs.run-e2e-relevant.result == 'skipped')
     runs-on: [self-hosted, e2e-test]
     timeout-minutes: 120
     environment: playwright-e2e-tests
