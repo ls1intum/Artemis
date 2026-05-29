@@ -155,7 +155,14 @@
     </div>
 
     <!-- Modal -->
-    <p-dialog [modal]="true" [visible]="buildLogsModalVisible()" (visibleChange)="buildLogsModalVisible.set($event)" [style]="{ width: '50rem' }" [draggable]="false">
+    <p-dialog
+        [modal]="true"
+        [visible]="buildLogsModalVisible()"
+        (visibleChange)="buildLogsModalVisible.set($event)"
+        [style]="{ width: '90dvw', height: '90dvh' }"
+        [contentStyle]="{ overflow: 'auto' }"
+        [draggable]="false"
+    >
         <ng-template pTemplate="header">
             <span jhiTranslate="artemisApp.buildQueue.logs.title"></span>
             <span>&nbsp;{{ displayedBuildJobId }}</span>
