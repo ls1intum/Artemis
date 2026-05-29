@@ -261,6 +261,8 @@ describe('CompetencyManagementComponent', () => {
                 modal: true,
                 showHeader: false,
                 dismissableMask: false,
+                draggable: false,
+                resizable: false,
                 data: { courseId: 1 },
             }),
         );
@@ -279,6 +281,8 @@ describe('CompetencyManagementComponent', () => {
                 modal: true,
                 showHeader: false,
                 dismissableMask: true,
+                draggable: false,
+                resizable: false,
                 data: expect.objectContaining({ courseId: 1 }),
             }),
         );

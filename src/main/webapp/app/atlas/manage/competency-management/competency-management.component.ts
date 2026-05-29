@@ -162,6 +162,8 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             closable: true,
             closeOnEscape: true,
             dismissableMask: false,
+            draggable: false,
+            resizable: false,
             showHeader: false,
             styleClass: 'course-competencies-relation-graph-modal',
             data: <CourseCompetenciesRelationModalData>{
@@ -181,6 +183,8 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             closable: true,
             closeOnEscape: true,
             dismissableMask: false,
+            draggable: false,
+            resizable: false,
             showHeader: false,
             data: <ImportAllCourseCompetenciesModalData>{ courseId: this.courseId() },
         });
@@ -241,6 +245,8 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             closable: true,
             closeOnEscape: true,
             dismissableMask: false,
+            draggable: false,
+            resizable: false,
             showHeader: false,
             styleClass: 'course-competency-explanation-modal',
         });
@@ -257,6 +263,8 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             closable: true,
             closeOnEscape: true,
             dismissableMask: true,
+            draggable: false,
+            resizable: false,
             showHeader: false,
             data: <AgentChatModalData>{
                 courseId: this.courseId(),

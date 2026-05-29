@@ -70,6 +70,8 @@ export class CompetencyGraphModalComponent {
             closable: true,
             closeOnEscape: true,
             dismissableMask: false,
+            draggable: false,
+            resizable: false,
             showHeader: false,
             styleClass: 'competency-graph-modal',
             data: <CompetencyGraphModalData>{ learningPathId, name },
