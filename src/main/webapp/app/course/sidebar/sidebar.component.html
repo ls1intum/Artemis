@@ -2,13 +2,13 @@
     <div class="d-flex sidebar rounded-3 px-2 sidebar-width hide-on_print" [ngClass]="{ collapsed: isCollapsed }">
         <div class="w-100 bg-module">
             <div class="sidebar-content" [ngClass]="{ collapsed: isCollapsed }">
-                @if (searchFieldEnabled) {
+                @if (searchFieldEnabled()) {
                     <div class="mt-2" [ngClass]="{ 'd-flex align-items-center': inCommunication() }">
                         <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="flex-grow-1 search-filter" />
-                        @if (showFilter) {
+                        @if (showFilter()) {
                             <div class="ms-2 mt-2 text-primary">
                                 <a (click)="openFilterExercisesDialog()">
-                                    @if (isFilterActive) {
+                                    @if (isFilterActive()) {
                                         <fa-icon [icon]="faFilterCurrentlyApplied" />
                                     } @else {
                                         <fa-icon [icon]="faFilter" />
@@ -25,7 +25,7 @@
                                 </button>
 
                                 <div ngbDropdownMenu>
-                                    @if (sidebarData?.messagingEnabled) {
+                                    @if (sidebarDataInternal()?.messagingEnabled) {
                                         <button (click)="createDirectChat()" class="p-2" ngbDropdownItem>
                                             <fa-icon [icon]="faUser" class="item-icon" [fixedWidth]="true" />
                                             <span jhiTranslate="artemisApp.courseOverview.sidebar.createDirectChat"></span>
@@ -35,7 +35,7 @@
                                             <span jhiTranslate="artemisApp.courseOverview.sidebar.createGroupChat"></span>
                                         </button>
                                     }
-                                    @if (sidebarData?.canCreateChannel) {
+                                    @if (sidebarDataInternal()?.canCreateChannel) {
                                         <button (click)="createNewChannel()" class="p-2 createChannel" ngbDropdownItem>
                                             <fa-icon [icon]="faHashtag" class="item-icon" />
                                             <span jhiTranslate="artemisApp.courseOverview.sidebar.createChannel"></span>
@@ -55,10 +55,10 @@
                     </div>
                 }
 
-                @if (!sidebarData?.ungroupedData || !(sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue)?.length) {
+                @if (!sidebarDataInternal()?.ungroupedData || !(sidebarDataInternal()?.ungroupedData | searchFilter: ['title', 'type'] : searchValue())?.length) {
                     <div
                         [jhiTranslate]="
-                            (sidebarDataBeforeFiltering?.ungroupedData?.length ?? 0) > 0 && sidebarData.ungroupedData?.length === 0
+                            (sidebarDataBeforeFiltering()?.ungroupedData?.length ?? 0) > 0 && sidebarDataInternal().ungroupedData?.length === 0
                                 ? 'artemisApp.courseOverview.general.noElementFoundWithAppliedFilter'
                                 : 'artemisApp.courseOverview.general.noDataFound'
                         "
@@ -68,34 +68,34 @@
                     <div
                         class="scrollable-item-content my-2"
                         [ngClass]="{
-                            'filter-height': sidebarData?.sidebarType === 'exercise',
-                            'channel-search-height': sidebarData?.sidebarType === 'conversation',
+                            'filter-height': sidebarDataInternal()?.sidebarType === 'exercise',
+                            'channel-search-height': sidebarDataInternal()?.sidebarType === 'conversation',
                         }"
                     >
-                        @if (sidebarData?.groupByCategory && sidebarData.groupedData) {
+                        @if (sidebarDataInternal()?.groupByCategory && sidebarDataInternal().groupedData) {
                             <jhi-sidebar-accordion
-                                [searchValue]="searchValue"
-                                [groupedData]="sidebarData.groupedData"
-                                [sidebarType]="sidebarData.sidebarType"
-                                [storageId]="sidebarData.storageId"
+                                [searchValue]="searchValue()"
+                                [groupedData]="sidebarDataInternal().groupedData"
+                                [sidebarType]="sidebarDataInternal().sidebarType"
+                                [storageId]="sidebarDataInternal().storageId"
                                 [routeParams]="routeParams"
-                                [courseId]="courseId"
-                                [itemSelected]="itemSelected"
-                                [showLeadingIcon]="sidebarData.showAccordionLeadingIcon ?? false"
-                                [channelTypeIcon]="channelTypeIcon"
+                                [courseId]="courseId()"
+                                [itemSelected]="itemSelected()"
+                                [showLeadingIcon]="sidebarDataInternal().showAccordionLeadingIcon ?? false"
+                                [channelTypeIcon]="channelTypeIcon()"
                                 [sidebarItemAlwaysShow]="sidebarItemAlwaysShow()"
-                                [collapseState]="collapseState"
+                                [collapseState]="collapseState()"
                                 (onUpdateSidebar)="onUpdateSidebar.emit()"
-                                [isFilterActive]="isFilterActive"
+                                [isFilterActive]="isFilterActive()"
                             />
                         } @else {
-                            @for (sidebarItem of sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue; track sidebarItem.id; let last = $last) {
+                            @for (sidebarItem of sidebarDataInternal()?.ungroupedData | searchFilter: ['title', 'type'] : searchValue(); track sidebarItem.id; let last = $last) {
                                 <div [ngClass]="{ 'mb-2': !last }">
                                     <div
                                         jhiSidebarCard
                                         [size]="sidebarItem.size"
-                                        [itemSelected]="itemSelected"
-                                        [sidebarType]="sidebarData.sidebarType"
+                                        [itemSelected]="itemSelected()"
+                                        [sidebarType]="sidebarDataInternal().sidebarType"
                                         [sidebarItem]="sidebarItem"
                                     ></div>
                                 </div>

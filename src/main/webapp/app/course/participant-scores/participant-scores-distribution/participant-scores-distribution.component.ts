@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
+import { Component, HostListener, OnInit, effect, inject, input, output } from '@angular/core';
 import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsSingleSeriesDataEntry } from 'app/exercise/chart/ngx-charts-datatypes';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
@@ -22,30 +22,23 @@ interface NgxClickEvent {
     styleUrls: ['./participant-score-distribution.component.scss', '../../../exercise/chart/vertical-bar-chart.scss'],
     imports: [BarChartModule, TranslateDirective, HelpIconComponent, ArtemisTranslatePipe],
 })
-export class ParticipantScoresDistributionComponent implements OnInit, OnChanges {
+export class ParticipantScoresDistributionComponent implements OnInit {
     private gradingService = inject(GradingService);
     private translateService = inject(TranslateService);
 
-    @Input()
-    scores?: number[];
+    readonly scores = input<number[]>();
 
-    @Input()
-    gradeNames?: string[];
+    readonly gradeNames = input<string[]>();
 
-    @Input()
-    gradingScale?: GradingScale;
+    readonly gradingScale = input<GradingScale>();
 
-    @Input()
-    isCourseScore = true;
+    readonly isCourseScore = input<boolean>(true);
 
-    @Input()
-    dataLabelFormatting?: (submissionCount: number) => string;
+    readonly dataLabelFormatting = input<(submissionCount: number) => string>();
 
-    @Input()
-    scoreToHighlight?: number;
+    readonly scoreToHighlight = input<number>();
 
-    @Output()
-    onSelect = new EventEmitter<NgxClickEvent>();
+    readonly onSelect = output<NgxClickEvent>();
 
     gradingScaleExists = false;
     isBonus?: boolean;
@@ -69,6 +62,19 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
     } as Color;
     backupDomain: string[];
 
+    constructor() {
+        // Replaces ngOnChanges: recompute the chart whenever any of the data inputs change.
+        effect(() => {
+            // Track inputs so the effect re-runs on change.
+            this.scores();
+            this.gradeNames();
+            this.gradingScale();
+            this.isCourseScore();
+            this.scoreToHighlight();
+            this.updateChart();
+        });
+    }
+
     ngOnInit() {
         this.setupAxisLabels();
 
@@ -78,12 +84,13 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
         this.realignChart();
     }
 
-    ngOnChanges() {
-        if (this.gradingScale) {
+    updateChart() {
+        const gradingScale = this.gradingScale();
+        if (gradingScale) {
             this.gradingScaleExists = true;
-            this.isBonus = this.gradingScale.gradeType === GradeType.BONUS;
+            this.isBonus = gradingScale.gradeType === GradeType.BONUS;
         }
-        if (!this.isCourseScore) {
+        if (!this.isCourseScore()) {
             // This is the old height for the exam statistics. We would like to keep it, but for course scores we increased it by 100px
             this.height = 400;
         }
@@ -117,7 +124,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
         this.ngxData = [];
         if (this.gradingScaleExists) {
             this.ngxData = [];
-            this.gradingScale!.gradeSteps.forEach((step) => {
+            this.gradingScale()!.gradeSteps.forEach((step) => {
                 this.ngxData.push({
                     name: step.gradeName,
                     value: 0,
@@ -140,7 +147,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
      */
     private createChartLabels(): void {
         if (this.gradingScaleExists) {
-            this.gradingScale!.gradeSteps.forEach((gradeStep, i) => {
+            this.gradingScale()!.gradeSteps.forEach((gradeStep, i) => {
                 let label = gradeStep.lowerBoundInclusive || i === 0 ? '[' : '(';
                 label += `${gradeStep.lowerBoundPercentage},${gradeStep.upperBoundPercentage}`;
                 label += gradeStep.upperBoundInclusive || i === 100 ? ']' : ')';
@@ -165,7 +172,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
      * @param percentageOrGradeName the percentage which will be mapped to a grade step.
      */
     findGradeStepIndex(percentageOrGradeName: number | string): number {
-        return this.scores ? this.findGradeStepIndexByPercentage(percentageOrGradeName as number) : this.findGradeStepIndexByGradeName(percentageOrGradeName as string);
+        return this.scores() ? this.findGradeStepIndexByPercentage(percentageOrGradeName as number) : this.findGradeStepIndexByGradeName(percentageOrGradeName as string);
     }
 
     /**
@@ -175,7 +182,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
     findGradeStepIndexByPercentage(percentage: number): number {
         let index = 0;
         if (this.gradingScaleExists) {
-            this.gradingScale!.gradeSteps.forEach((gradeStep, i) => {
+            this.gradingScale()!.gradeSteps.forEach((gradeStep, i) => {
                 if (this.gradingService.matchGradePercentage(gradeStep, percentage)) {
                     index = i;
                 }
@@ -196,7 +203,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
      */
     findGradeStepIndexByGradeName(gradeName: string): number {
         // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-        const index = this.gradingScale?.gradeSteps.findIndex((gradeStep) => gradeStep.gradeName === gradeName)!;
+        const index = this.gradingScale()?.gradeSteps.findIndex((gradeStep) => gradeStep.gradeName === gradeName)!;
         return index >= 0 ? index : 0;
     }
 
@@ -217,7 +224,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
         this.generateDefaultNgxChartsSetting();
         this.setupChartColoring();
         this.setupAxisLabels();
-        const elements = this.scores ?? this.gradeNames;
+        const elements = this.scores() ?? this.gradeNames();
         if (!elements) {
             throw new Error('Either "scores" or "gradeNames" should be given as input.');
         }
@@ -287,7 +294,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
                 }
             }
         } else {
-            this.gradingScale!.gradeSteps.forEach((gradeStep) => {
+            this.gradingScale()!.gradeSteps.forEach((gradeStep) => {
                 const color = this.getGradeStepColor(gradeStep);
                 this.ngxColor.domain.push(color);
             });
@@ -314,7 +321,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
      * Auxiliary method that returns the translation path for the tooltip if a grading scale exists that is not Bonus
      */
     private getHelpIconTooltipNotBonus(): string {
-        if (this.isCourseScore) {
+        if (this.isCourseScore()) {
             return 'artemisApp.instructorDashboard.courseScoreChart.gradingScaleExplanationNotBonus';
         } else {
             return 'artemisApp.examScores.gradingScaleExplanationNotBonus';
@@ -325,7 +332,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
      * Auxiliary method that returns the translation path for the tooltip if no grading scale exists
      */
     private getHelpIconNoGradingScale(): string {
-        if (this.isCourseScore) {
+        if (this.isCourseScore()) {
             return 'artemisApp.instructorDashboard.courseScoreChart.noGradingScaleExplanation';
         } else {
             return 'artemisApp.examScores.noGradingScaleExplanation';
@@ -336,12 +343,12 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
      * Highlights the score passed to the component by its parent component (if any is set).
      */
     private highlightScore(): void {
-        if (this.scoreToHighlight === undefined) {
+        if (this.scoreToHighlight() === undefined) {
             this.ngxColor.domain = this.backupDomain;
             this.ngxData = [...this.ngxData];
             return;
         }
-        const index = this.findGradeStepIndex(this.scoreToHighlight);
+        const index = this.findGradeStepIndex(this.scoreToHighlight()!);
         const bar = this.ngxData[index];
 
         if (bar.value > 0) {

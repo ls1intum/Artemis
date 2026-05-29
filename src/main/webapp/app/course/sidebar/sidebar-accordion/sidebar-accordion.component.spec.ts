@@ -29,6 +29,9 @@ describe('SidebarAccordionComponent', () => {
     let fixture: ComponentFixture<SidebarAccordionComponent>;
 
     beforeEach(async () => {
+        // The real LocalStorageService persists across tests in the same worker. Clear it so a collapse state
+        // stored by one test (e.g. the toggle test) does not leak into setStoredCollapseState() of the next.
+        localStorage.clear();
         await TestBed.configureTestingModule({
             imports: [
                 MockModule(NgbTooltipModule),
@@ -55,7 +58,7 @@ describe('SidebarAccordionComponent', () => {
         component = fixture.componentInstance;
         localStorageService = TestBed.inject(LocalStorageService);
 
-        component.groupedData = {
+        fixture.componentRef.setInput('groupedData', {
             current: {
                 entityData: [{ title: 'Title 1', type: 'Type A', id: 1, size: 'M', conversation: { unreadMessagesCount: 2, isMuted: false } }],
             },
@@ -68,9 +71,9 @@ describe('SidebarAccordionComponent', () => {
             noDate: {
                 entityData: [{ title: 'Title 4', type: 'Type D', id: 4, size: 'M', conversation: { unreadMessagesCount: 3, isMuted: true } }],
             },
-        };
-        component.routeParams = { exerciseId: 3 };
-        component.collapseState = { current: false, dueSoon: false, past: false, future: true, noDate: true };
+        });
+        fixture.componentRef.setInput('routeParams', { exerciseId: 3 });
+        fixture.componentRef.setInput('collapseState', { current: false, dueSoon: false, past: false, future: true, noDate: true });
         fixture.componentRef.setInput('sidebarItemAlwaysShow', { current: false, dueSoon: false, past: false, future: false, noDate: false });
         fixture.detectChanges();
         component.calculateUnreadMessagesOfGroup();
@@ -82,23 +85,23 @@ describe('SidebarAccordionComponent', () => {
 
     it('should toggle collapse state for a group', () => {
         const storeSpy = vi.spyOn(localStorageService, 'store');
-        const storageKey = `sidebar.accordion.collapseState.${component.storageId}.byCourse.${component.courseId}`;
+        const storageKey = `sidebar.accordion.collapseState.${component.storageId()}.byCourse.${component.courseId()}`;
         const groupKey = 'noDate';
 
         component.toggleGroupCategoryCollapse(groupKey);
         expect(storeSpy).toHaveBeenCalledWith(storageKey, expect.objectContaining({ [groupKey]: false }));
-        expect(component.collapseState[groupKey]).toBe(false);
+        expect(component.collapseStateInternal()[groupKey]).toBe(false);
 
         component.toggleGroupCategoryCollapse(groupKey);
-        expect(component.collapseState[groupKey]).toBe(true);
+        expect(component.collapseStateInternal()[groupKey]).toBe(true);
         expect(storeSpy).toHaveBeenCalledWith(storageKey, expect.objectContaining({ [groupKey]: true }));
     });
 
     it('should toggle collapse state when group header is clicked', () => {
         const groupKey = 'current';
-        const initialCollapseState = component.collapseState[groupKey];
+        const initialCollapseState = component.collapseStateInternal()[groupKey];
 
-        component.searchValue = '';
+        fixture.componentRef.setInput('searchValue', '');
         fixture.changeDetectorRef.detectChanges();
 
         const headerElement: DebugElement = fixture.debugElement.query(By.css('#test-accordion-item-header-' + groupKey));
@@ -107,14 +110,14 @@ describe('SidebarAccordionComponent', () => {
         headerElement.triggerEventHandler('click', null);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(component.collapseState[groupKey]).toBe(!initialCollapseState);
+        expect(component.collapseStateInternal()[groupKey]).toBe(!initialCollapseState);
     });
 
     it('should call expandAll when searchValue changes to a non-empty string', () => {
         vi.spyOn(component, 'expandAll');
 
-        component.searchValue = 'test';
-        component.ngOnChanges();
+        fixture.componentRef.setInput('searchValue', 'test');
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.expandAll).toHaveBeenCalledOnce();
     });
@@ -122,34 +125,31 @@ describe('SidebarAccordionComponent', () => {
     it('should call expandAll when filter is active', () => {
         vi.spyOn(component, 'expandAll');
 
-        component.isFilterActive = true;
-        component.ngOnChanges();
-
+        fixture.componentRef.setInput('isFilterActive', true);
         fixture.changeDetectorRef.detectChanges();
 
         expect(component.expandAll).toHaveBeenCalledOnce();
     });
 
     it('should correctly call setStoredCollapseState when searchValue is cleared', () => {
-        const expectedStateAfterClear = component.collapseState;
-        component.searchValue = 'initial value';
+        fixture.componentRef.setInput('searchValue', 'initial value');
         fixture.changeDetectorRef.detectChanges();
+        // Capture the collapse state after the search was applied; clearing the search must not clobber it
+        // when there is no persisted state to restore.
+        const expectedStateAfterClear = { ...component.collapseStateInternal() };
 
         vi.spyOn(component, 'setStoredCollapseState');
 
         // Simulate clearing the search value
-        component.searchValue = '';
-        component.ngOnChanges();
-
+        fixture.componentRef.setInput('searchValue', '');
         fixture.changeDetectorRef.detectChanges();
 
         expect(component.setStoredCollapseState).toHaveBeenCalledOnce();
-        expect(component.collapseState).toEqual(expectedStateAfterClear);
+        expect(component.collapseStateInternal()).toEqual(expectedStateAfterClear);
     });
 
     it('should correctly add the d-none class when searchValue is set', () => {
-        component.searchValue = '3';
-        component.ngOnChanges();
+        fixture.componentRef.setInput('searchValue', '3');
         fixture.changeDetectorRef.detectChanges();
 
         const displayedDivIndex = 2;
@@ -167,7 +167,7 @@ describe('SidebarAccordionComponent', () => {
 
     it('should expand the group containing the selected item', () => {
         component.expandGroupWithSelectedItem();
-        expect(component.collapseState['future']).toBe(false);
+        expect(component.collapseStateInternal()['future']).toBe(false);
     });
 
     it('should calculate unread messages of each group correctly', () => {

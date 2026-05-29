@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, input, signal } from '@angular/core';
+import { Component, computed, effect, input, signal } from '@angular/core';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -27,46 +27,28 @@ import { SidebarCardElement, SidebarTypes } from 'app/foundation/types/sidebar';
         ArtemisDurationFromSecondsPipe,
     ],
 })
-export class SidebarCardItemComponent implements OnInit, OnChanges {
-    @Input() sidebarItem: SidebarCardElement;
-    @Input() sidebarType?: SidebarTypes;
-    @Input() groupKey?: string;
-    unreadCount = input<number>(0);
-    otherUser: any;
+export class SidebarCardItemComponent {
+    readonly sidebarItem = input.required<SidebarCardElement>();
+    readonly sidebarType = input<SidebarTypes>();
+    readonly groupKey = input<string>();
+    readonly unreadCount = input<number>(0);
+    readonly otherUser = signal<any>(undefined);
 
     readonly faPeopleGroup = faPeopleGroup;
-    readonly shouldDisplayUnreadCount = signal<boolean>(false);
-
-    formattedUnreadCount: string = '';
-
-    ngOnInit(): void {
-        this.formattedUnreadCount = this.getFormattedUnreadCount();
-        this.extractMessageUser();
-        this.updateShouldDisplayUnreadCount();
-    }
-
-    ngOnChanges(changes: SimpleChanges): void {
-        // Recompute unread count string if value changes
-        if (changes['unreadCount']) {
-            this.formattedUnreadCount = this.getFormattedUnreadCount();
-        }
-        if (changes['sidebarItem']) {
-            this.updateShouldDisplayUnreadCount();
-        }
-    }
+    readonly shouldDisplayUnreadCount = computed<boolean>(() => !this.sidebarItem().conversation?.isMuted);
 
     /**
      * Converts the unread count into a human-friendly string (e.g. '99+' if >99).
      */
-    private getFormattedUnreadCount(): string {
+    readonly formattedUnreadCount = computed<string>(() => {
         if (this.unreadCount() > 99) {
             return '99+';
         }
         return this.unreadCount().toString() || '';
-    }
+    });
 
-    protected updateShouldDisplayUnreadCount(): void {
-        this.shouldDisplayUnreadCount.set(!this.sidebarItem.conversation?.isMuted);
+    constructor() {
+        effect(() => this.extractMessageUser());
     }
 
     /**
@@ -74,14 +56,15 @@ export class SidebarCardItemComponent implements OnInit, OnChanges {
      * If it's a group chat, sets the group icon explicitly.
      */
     extractMessageUser(): void {
-        if (this.sidebarItem.type === 'oneToOneChat' && (this.sidebarItem.conversation as OneToOneChatDTO)?.members) {
-            this.otherUser = (this.sidebarItem.conversation as OneToOneChatDTO).members!.find((user) => !user.isRequestingUser);
+        const sidebarItem = this.sidebarItem();
+        if (sidebarItem.type === 'oneToOneChat' && (sidebarItem.conversation as OneToOneChatDTO)?.members) {
+            this.otherUser.set((sidebarItem.conversation as OneToOneChatDTO).members!.find((user) => !user.isRequestingUser));
         } else {
-            this.otherUser = null;
+            this.otherUser.set(undefined);
         }
 
-        if (this.sidebarItem.type === 'groupChat') {
-            this.sidebarItem.icon = this.faPeopleGroup;
+        if (sidebarItem.type === 'groupChat') {
+            sidebarItem.icon = this.faPeopleGroup;
         }
     }
 
