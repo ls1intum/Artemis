@@ -1,7 +1,6 @@
 <p-dialog
     [attr.aria-label]="'global.search.placeholder' | artemisTranslate"
     [visible]="overlay.isOpen()"
-    [style.max-width]="dialogMaxWidth()"
     (visibleChange)="$event ? overlay.open() : overlay.close()"
     (onHide)="overlay.close()"
     (onShow)="focusInput()"
