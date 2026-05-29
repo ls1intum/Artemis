@@ -593,7 +593,9 @@ describe('BuildQueueComponent', () => {
         component.openFilterModal();
 
         expect(openSpy).toHaveBeenCalledOnce();
-        const dialogConfig = openSpy.mock.calls[0][1];
+        const dialogConfig = openSpy.mock.calls[0][1] as {
+            data?: { finishedBuildJobFilter?: FinishedBuildJobFilter; finishedBuildJobs?: FinishedBuildJob[]; buildAgentFilterable?: boolean };
+        };
         expect(dialogConfig?.data?.finishedBuildJobFilter).toEqual(filterOptionsEmpty);
         expect(dialogConfig?.data?.finishedBuildJobs).toEqual(component.finishedBuildJobs());
         expect(dialogConfig?.data?.buildAgentFilterable).toBeTruthy();
