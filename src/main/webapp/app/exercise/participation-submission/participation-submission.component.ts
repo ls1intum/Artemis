@@ -14,8 +14,8 @@ import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
-import { ButtonSize } from 'app/ui/components/buttons/button/button.component';
-import { ActionType } from 'app/ui/delete-dialog/delete-dialog.model';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
+import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
@@ -27,12 +27,12 @@ import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ResultComponent } from '../result/result.component';
-import { DeleteButtonDirective } from 'app/ui/delete-dialog/directive/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
-import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/ui/table-view/table-view';
+import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
 import { AlertService } from 'app/foundation/service/alert.service';
 
 @Component({

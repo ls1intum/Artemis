@@ -5,7 +5,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheck, faComments, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { DocumentationButtonComponent } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { NgClass } from '@angular/common';
 
 @Component({

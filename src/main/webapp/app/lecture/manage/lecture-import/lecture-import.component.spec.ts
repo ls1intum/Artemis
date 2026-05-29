@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureImportComponent } from 'app/lecture/manage/lecture-import/lecture-import.component';
-import { ButtonComponent } from 'app/ui/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';

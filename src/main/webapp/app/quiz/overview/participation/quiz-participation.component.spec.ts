@@ -27,7 +27,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { MockWebsocketService } from 'src/test/javascript/spec/helpers/mocks/service/mock-websocket.service';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { QuizParticipationService } from 'app/quiz/overview/service/quiz-participation.service';
-import { ButtonComponent } from 'app/ui/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';

@@ -6,7 +6,7 @@ import { SidebarCardMediumComponent } from 'app/course/sidebar/sidebar-card-medi
 import { SidebarCardItemComponent } from 'app/course/sidebar/sidebar-card-item/sidebar-card-item.component';
 import { SidebarCardDirective } from 'app/course/sidebar/directive/sidebar-card.directive';
 import { SearchFilterPipe } from 'app/foundation/pipes/search-filter.pipe';
-import { SearchFilterComponent } from 'app/ui/search-filter/search-filter.component';
+import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';

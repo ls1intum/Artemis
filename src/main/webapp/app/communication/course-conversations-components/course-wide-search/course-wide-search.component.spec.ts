@@ -10,7 +10,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ButtonComponent } from 'app/ui/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { BehaviorSubject } from 'rxjs';
 import { DialogService } from 'primeng/dynamicdialog';

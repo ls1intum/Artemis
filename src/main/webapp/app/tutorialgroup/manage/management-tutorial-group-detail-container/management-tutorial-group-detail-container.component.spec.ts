@@ -13,7 +13,7 @@ import { TutorialGroupSessionApiService } from 'app/openapi/api/tutorialGroupSes
 import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/model/createOrUpdateTutorialGroupSessionRequest';
 import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorialGroupSession';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { LoadingIndicatorOverlayComponent } from 'app/ui/loading-indicator-overlay/loading-indicator-overlay.component';
+import { LoadingIndicatorOverlayComponent } from 'app/shared-ui/loading-indicator-overlay/loading-indicator-overlay.component';
 import {
     CreateTutorialGroupSessionEvent,
     DeleteTutorialGroupEvent,

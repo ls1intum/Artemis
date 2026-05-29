@@ -9,7 +9,7 @@ import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-cr
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
-import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ViewContainerRef } from '@angular/core';
 import { MockViewContainerRef } from 'test/helpers/mocks/service/mock-view-container-ref.service';
 import { metisAnswerPostToCreateUser1, metisAnswerPostUser2, metisResolvingAnswerPostUser1 } from 'test/helpers/sample/metis-sample-data';

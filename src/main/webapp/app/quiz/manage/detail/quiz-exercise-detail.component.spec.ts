@@ -19,7 +19,7 @@ import { StatisticsService } from 'app/exercise/statistics-graph/service/statist
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CompetencyExerciseLink, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
-import { DetailType } from 'app/ui/detail-overview-list/detail-overview-list.component';
+import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 
 describe('QuizExercise Details Component', () => {
     setupTestBed({ zoneless: true });

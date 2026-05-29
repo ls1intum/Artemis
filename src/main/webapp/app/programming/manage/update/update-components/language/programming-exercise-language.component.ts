@@ -11,7 +11,7 @@ import { ProgrammingExerciseTheiaComponent } from 'app/programming/manage/update
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { APP_NAME_PATTERN_FOR_SWIFT } from 'app/foundation/constants/input.constants';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { KeyValuePipe } from '@angular/common';
 import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';

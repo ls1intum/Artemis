@@ -5,7 +5,7 @@ import { OWL_DATE_TIME_FORMATS, OwlDateTimeModule } from '@danielmoncada/angular
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { DateTimePickerType, FormDateTimePickerComponent } from 'app/ui/date-time-picker/date-time-picker.component';
+import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import dayjs from 'dayjs/esm';
 
 export const MY_NATIVE_FORMATS = {

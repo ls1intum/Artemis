@@ -10,7 +10,7 @@ import { ComplaintRequestDTO } from 'app/assessment/shared/entities/complaint-re
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TextareaCounterComponent } from 'app/ui/textarea/textarea-counter.component';
+import { TextareaCounterComponent } from 'app/shared-ui/textarea/textarea-counter.component';
 
 @Component({
     selector: 'jhi-complaint-form',

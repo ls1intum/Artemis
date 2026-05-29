@@ -6,7 +6,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
-import { RangeSliderComponent } from 'app/ui/range-slider/range-slider.component';
+import { RangeSliderComponent } from 'app/shared-ui/range-slider/range-slider.component';
 import {
     DifficultyFilterOption,
     ExerciseCategoryFilterOption,

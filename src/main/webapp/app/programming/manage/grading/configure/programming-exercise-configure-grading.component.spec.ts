@@ -36,7 +36,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { TableEditableFieldComponent } from 'app/ui/table/editable-field/table-editable-field.component';
+import { TableEditableFieldComponent } from 'app/shared-ui/table/editable-field/table-editable-field.component';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { Subject, of } from 'rxjs';

@@ -9,7 +9,7 @@ import { faAngleDown, faAngleUp, faArrowDown19, faArrowUp19, faQuestionCircle } 
 import { SizeProp } from '@fortawesome/fontawesome-svg-core';
 import { CourseCardHeaderComponent } from '../course-card-header/course-card-header.component';
 import { CourseForArchiveDTO } from 'app/course/shared/entities/course-for-archive-dto';
-import { SearchFilterComponent } from 'app/ui/search-filter/search-filter.component';
+import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { SearchFilterPipe } from 'app/foundation/pipes/search-filter.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

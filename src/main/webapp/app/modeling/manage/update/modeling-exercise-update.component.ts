@@ -24,11 +24,11 @@ import { EditType, SaveExerciseCommand } from 'app/exercise/util/exercise.utils'
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
-import { DocumentationButtonComponent, DocumentationType } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
-import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
-import { FormDateTimePickerComponent } from 'app/ui/date-time-picker/date-time-picker.component';
-import { FormFooterComponent } from 'app/ui/form/form-footer/form-footer.component';
-import { FormSectionStatus, FormStatusBarComponent } from 'app/ui/form/form-status-bar/form-status-bar.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
+import { FormSectionStatus, FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';

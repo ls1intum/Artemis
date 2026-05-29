@@ -4,7 +4,7 @@ import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { IdeSettingsService } from 'app/account/user/settings/ide-preferences/ide-settings.service';
 import { Ide, ideEquals } from 'app/account/user/settings/ide-preferences/ide.model';

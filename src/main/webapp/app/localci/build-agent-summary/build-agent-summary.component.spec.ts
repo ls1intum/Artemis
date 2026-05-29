@@ -6,7 +6,7 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Subject, of, throwError } from 'rxjs';
 import { BuildJob } from 'app/localci/shared/entities/build-job.model';
 import dayjs from 'dayjs/esm';
-import { DataTableComponent } from 'app/ui/data-table/data-table.component';
+import { DataTableComponent } from 'app/shared-ui/data-table/data-table.component';
 import { MockProvider } from 'ng-mocks';
 import { BuildAgentInformation, BuildAgentStatus } from 'app/localci/shared/entities/build-agent-information.model';
 import { RepositoryInfo, TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';

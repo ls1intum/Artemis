@@ -6,7 +6,7 @@ import { User } from 'app/account/user/user.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { PasswordManagerIgnoreDirective } from 'app/ui/form/password-manager-ignore.directive';
+import { PasswordManagerIgnoreDirective } from 'app/shared-ui/form/password-manager-ignore.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ButtonDirective } from 'primeng/button';

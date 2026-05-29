@@ -1,6 +1,6 @@
 import { Component, input, output } from '@angular/core';
 import { StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
-import { ButtonSize, ButtonType } from 'app/ui/components/buttons/button/button.component';
+import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 

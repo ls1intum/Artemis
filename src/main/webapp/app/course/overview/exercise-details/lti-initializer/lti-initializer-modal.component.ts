@@ -3,7 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { CopyToClipboardButtonComponent } from 'app/ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
+import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
 import { DialogModule } from 'primeng/dialog';
 
 @Component({

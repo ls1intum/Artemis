@@ -6,7 +6,7 @@ import { LeaderboardSettingsDTO } from 'app/quiz/overview/course-training/course
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { TooltipModule } from 'primeng/tooltip';
-import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
 @Component({
     selector: 'jhi-quiz-training-settings',

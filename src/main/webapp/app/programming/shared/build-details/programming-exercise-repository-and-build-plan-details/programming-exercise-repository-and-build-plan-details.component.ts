@@ -10,7 +10,7 @@ import type { CheckoutDirectoriesDto } from 'app/programming/shared/entities/che
 
 import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/programming/shared/build-details/programming-exercise-build-plan-checkout-directories/programming-exercise-build-plan-checkout-directories.component';
 import { BuildPlanCheckoutDirectoriesDTO } from 'app/programming/shared/entities/build-plan-checkout-directories-dto';
-import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CommonModule } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 

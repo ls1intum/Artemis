@@ -15,7 +15,7 @@ import { CourseCardComponent } from '../course-card/course-card.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { SearchFilterPipe } from 'app/foundation/pipes/search-filter.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { SearchFilterComponent } from 'app/ui/search-filter/search-filter.component';
+import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseAccessStorageService } from 'app/course/shared/services/course-access-storage.service';

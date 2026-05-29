@@ -6,7 +6,7 @@ import { SortService } from 'app/foundation/service/sort.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { faBan, faFileImport, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { ButtonType } from 'app/ui/components/buttons/button/button.component';
+import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';

@@ -2,7 +2,7 @@ import { Component, OnInit, TemplateRef, computed, inject, signal } from '@angul
 import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
-import { DocumentationButtonComponent, DocumentationType } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseManagementExercisesSearchComponent } from '../exercises-search/course-management-exercises-search.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

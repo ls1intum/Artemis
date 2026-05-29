@@ -1,7 +1,7 @@
 import { Component, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
-import { ImageComponent } from 'app/ui/image/image.component';
+import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { QuizQuestion, RenderedQuizQuestionMarkDownElement } from 'app/quiz/shared/entities/quiz-question.model';

@@ -23,7 +23,7 @@ import { InlineRefinementEvent, MAX_USER_PROMPT_LENGTH } from 'app/programming/m
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { TranslateService } from '@ngx-translate/core';
-import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ChecklistPanelComponent } from './checklist-panel/checklist-panel.component';
 import { AlertService } from 'app/foundation/service/alert.service';

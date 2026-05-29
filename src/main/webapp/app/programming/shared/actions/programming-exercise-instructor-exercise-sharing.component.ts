@@ -1,5 +1,5 @@
 import { Component, inject, input } from '@angular/core';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/ui/components/buttons/button/button.component';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseSharingService } from '../../manage/services/programming-exercise-sharing.service';

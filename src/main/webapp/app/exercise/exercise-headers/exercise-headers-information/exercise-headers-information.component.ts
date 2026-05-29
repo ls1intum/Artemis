@@ -10,7 +10,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { InformationBox, InformationBoxComponent } from 'app/ui/information-box/information-box.component';
+import { InformationBox, InformationBoxComponent } from 'app/shared-ui/information-box/information-box.component';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { isDateLessThanAWeekInTheFuture } from 'app/foundation/util/date.utils';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';

@@ -5,7 +5,7 @@ import { ComplaintService } from 'app/assessment/shared/services/complaint.servi
 import { ComplaintResponseService } from 'app/assessment/manage/services/complaint-response.service';
 import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { TextareaCounterComponent } from 'app/ui/textarea/textarea-counter.component';
+import { TextareaCounterComponent } from 'app/shared-ui/textarea/textarea-counter.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

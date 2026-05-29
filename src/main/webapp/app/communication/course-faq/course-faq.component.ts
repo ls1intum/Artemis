@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { debounceTime, map } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
-import { ButtonType } from 'app/ui/components/buttons/button/button.component';
+import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 
 import { CourseFaqAccordionComponent } from 'app/communication/course-faq/course-faq-accordion-component';
 import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
@@ -13,7 +13,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/communication/faq/faq.utils';
 import { onError } from 'app/foundation/util/global.utils';
-import { SearchFilterComponent } from 'app/ui/search-filter/search-filter.component';
+import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';

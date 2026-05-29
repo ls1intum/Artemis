@@ -8,13 +8,13 @@ import { Competency, CompetencyWithTailRelationDTO, CourseCompetencyProgress, Co
 import { CompetencyManagementComponent } from 'app/atlas/manage/competency-management/competency-management.component';
 import { AgentChatModalComponent } from 'app/atlas/manage/agent-chat-modal/agent-chat-modal.component';
 import { ActivatedRoute, provideRouter } from '@angular/router';
-import { DeleteButtonDirective } from 'app/ui/delete-dialog/directive/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { NgbModal, NgbModalRef, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { DocumentationButtonComponent } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import '@angular/localize/init';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';

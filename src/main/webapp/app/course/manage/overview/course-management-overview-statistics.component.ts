@@ -9,7 +9,7 @@ import { CurveFactory } from 'd3-shape';
 import * as shape from 'd3-shape';
 import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ActiveStudentsChart } from 'app/course/shared/entities/active-students-chart';
 

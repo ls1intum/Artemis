@@ -27,7 +27,7 @@ import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { NgStyle } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { ImageComponent } from 'app/ui/image/image.component';
+import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseManagementExerciseRowComponent } from './course-management-exercise-row.component';
@@ -36,7 +36,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { FeatureOverlayComponent } from 'app/ui/components/feature-overlay/feature-overlay.component';
+import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { getContrastingTextColor } from 'app/foundation/util/color.utils';
 
 @Component({

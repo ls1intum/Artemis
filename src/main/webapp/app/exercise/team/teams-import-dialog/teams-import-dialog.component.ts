@@ -7,18 +7,18 @@ import { Subject } from 'rxjs';
 import { TeamService } from 'app/exercise/team/team.service';
 import { TeamImportStrategyType as ImportStrategy, Team } from 'app/exercise/shared/entities/team/team.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ActionType } from 'app/ui/delete-dialog/delete-dialog.model';
+import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { flatMap } from 'lodash-es';
 import { User } from 'app/account/user/user.model';
 import { faBan, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgClass } from '@angular/common';
 import { TeamsImportFromFileFormComponent } from './teams-import-from-file-form.component';
-import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TeamExerciseSearchComponent } from '../team-exercise-search/team-exercise-search.component';
 import { TeamStudentsListComponent } from '../team-participate/team-students-list.component';
-import { DeleteButtonDirective } from 'app/ui/delete-dialog/directive/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({

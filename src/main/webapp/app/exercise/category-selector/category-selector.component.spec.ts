@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { ColorSelectorComponent } from 'app/ui/color-selector/color-selector.component';
+import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
 import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatChipInput, MatChipInputEvent, MatChipsModule } from '@angular/material/chips';

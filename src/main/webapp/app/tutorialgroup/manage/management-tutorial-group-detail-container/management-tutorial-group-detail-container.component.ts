@@ -14,7 +14,7 @@ import {
 } from 'app/tutorialgroup/shared/tutorial-group-detail/tutorial-group-detail.component';
 import { TutorialGroupSessionApiService } from 'app/openapi/api/tutorialGroupSessionApi.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { LoadingIndicatorOverlayComponent } from 'app/ui/loading-indicator-overlay/loading-indicator-overlay.component';
+import { LoadingIndicatorOverlayComponent } from 'app/shared-ui/loading-indicator-overlay/loading-indicator-overlay.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { getRouteData } from 'app/foundation/route/getRouteData';
 import { TutorialGroupCourseAndGroupService } from 'app/tutorialgroup/shared/service/tutorial-group-course-and-group.service';

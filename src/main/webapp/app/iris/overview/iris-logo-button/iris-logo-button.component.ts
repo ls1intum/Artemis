@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { ButtonSize, ButtonType } from 'app/ui/components/buttons/button/button.component';
+import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { NgClass } from '@angular/common';

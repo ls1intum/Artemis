@@ -16,7 +16,7 @@ import { ComplaintAction, ComplaintResponseUpdateDTO } from 'app/assessment/shar
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TextareaCounterComponent } from 'app/ui/textarea/textarea-counter.component';
+import { TextareaCounterComponent } from 'app/shared-ui/textarea/textarea-counter.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 export type AssessmentAfterComplaint = { complaintResponse: ComplaintResponse; onSuccess: () => void; onError: () => void };

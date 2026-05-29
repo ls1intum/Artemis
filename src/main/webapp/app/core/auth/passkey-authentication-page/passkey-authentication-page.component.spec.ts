@@ -15,7 +15,7 @@ import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service'
 import { WebauthnService } from 'app/account/user/settings/passkey-settings/webauthn.service';
 import { User } from 'app/account/user/user.model';
 import { By } from '@angular/platform-browser';
-import { ButtonComponent } from 'app/ui/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent, MockDirective } from 'ng-mocks';
 

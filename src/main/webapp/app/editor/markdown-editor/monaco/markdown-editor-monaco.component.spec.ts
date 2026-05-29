@@ -1,5 +1,5 @@
 import { AlertService } from 'app/foundation/service/alert.service';
-import { ColorSelectorComponent } from 'app/ui/color-selector/color-selector.component';
+import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';

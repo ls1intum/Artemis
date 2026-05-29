@@ -13,8 +13,8 @@ import dayjs from 'dayjs/esm';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ConfirmEntityNameComponent } from 'app/ui/confirm-entity-name/confirm-entity-name.component';
-import { ExerciseActionButtonComponent } from 'app/ui/components/buttons/exercise-action-button/exercise-action-button.component';
+import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
+import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 

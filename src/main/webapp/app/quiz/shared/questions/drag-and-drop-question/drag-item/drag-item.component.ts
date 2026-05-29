@@ -4,7 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { NgClass, NgStyle } from '@angular/common';
 import { CdkDrag, CdkDragPlaceholder, CdkDragPreview } from '@angular/cdk/drag-drop';
-import { ImageComponent } from 'app/ui/image/image.component';
+import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { FitTextDirective } from 'app/quiz/shared/fit-text/fit-text.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';

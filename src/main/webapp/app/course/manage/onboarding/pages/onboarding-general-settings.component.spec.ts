@@ -11,8 +11,8 @@ import { OnboardingGeneralSettingsComponent } from './onboarding-general-setting
 import { Course, Language } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ColorSelectorComponent } from 'app/ui/color-selector/color-selector.component';
-import { FormDateTimePickerComponent } from 'app/ui/date-time-picker/date-time-picker.component';
+import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
+import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';

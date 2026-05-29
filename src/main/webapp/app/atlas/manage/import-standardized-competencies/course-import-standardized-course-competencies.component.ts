@@ -1,5 +1,5 @@
 import { getIcon } from 'app/atlas/shared/entities/competency.model';
-import { ButtonSize, ButtonType } from 'app/ui/components/buttons/button/button.component';
+import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import {
     KnowledgeAreaDTO,
     KnowledgeAreaForTree,
@@ -20,7 +20,7 @@ import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.mode
 import { TranslateService } from '@ngx-translate/core';
 import { SortService } from 'app/foundation/service/sort.service';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
-import { DocumentationType } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { StandardizedCompetencyFilterPageComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-filter-page.component';
 import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';

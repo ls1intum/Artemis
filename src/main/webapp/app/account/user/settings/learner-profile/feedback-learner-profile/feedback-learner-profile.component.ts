@@ -7,7 +7,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { NgClass } from '@angular/common';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { LearnerProfileDTO } from 'app/account/user/settings/learner-profile/dto/learner-profile-dto.model';
-import { SegmentedToggleComponent } from 'app/ui/segmented-toggle/segmented-toggle.component';
+import { SegmentedToggleComponent } from 'app/shared-ui/segmented-toggle/segmented-toggle.component';
 import { FeedbackOnboardingModalComponent } from 'app/account/user/settings/learner-profile/feedback-learner-profile/onboarding-modal/feedback-onboarding-modal.component';
 
 @Component({

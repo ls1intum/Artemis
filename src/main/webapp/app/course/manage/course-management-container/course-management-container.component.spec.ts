@@ -27,7 +27,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 
 import { MockModule, MockProvider } from 'ng-mocks';
 import { AfterViewInit, Component, EventEmitter, TemplateRef, viewChild } from '@angular/core';
-import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/ui/tab-bar/tab-bar';
+import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared-ui/tab-bar/tab-bar';
 import { CourseManagementContainerComponent } from 'app/course/manage/course-management-container/course-management-container.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 

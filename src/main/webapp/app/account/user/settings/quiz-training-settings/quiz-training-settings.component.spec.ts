@@ -13,7 +13,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import * as globalUtils from 'app/foundation/util/global.utils';
 import { HttpResponse } from '@angular/common/http';
 import { LeaderboardSettingsDTO } from 'app/quiz/overview/course-training/course-training-quiz/leaderboard/leaderboard-types';
-import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 

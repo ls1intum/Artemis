@@ -35,7 +35,7 @@ import { TextExamSubmissionComponent } from '../exercises/text/text-exam-submiss
 import { ModelingExamSubmissionComponent } from '../exercises/modeling/modeling-exam-submission.component';
 import { ProgrammingExamSubmissionComponent } from '../exercises/programming/programming-exam-submission.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { JhiConnectionStatusComponent } from 'app/ui/connection-status/connection-status.component';
+import { JhiConnectionStatusComponent } from 'app/shared-ui/connection-status/connection-status.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamResultSummaryComponent } from '../summary/exam-result-summary.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

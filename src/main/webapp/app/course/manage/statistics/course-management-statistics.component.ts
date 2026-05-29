@@ -4,7 +4,7 @@ import { Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/s
 import { Subscription } from 'rxjs';
 import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import { CourseManagementStatisticsDTO } from '../../shared/entities/course-management-statistics-dto';
-import { DocumentationButtonComponent, DocumentationType } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { StatisticsAverageScoreGraphComponent } from 'app/exercise/statistics-graph/average-score-graph/statistics-average-score-graph.component';
 import { StatisticsGraphComponent } from 'app/exercise/statistics-graph/statistics-graph.component';

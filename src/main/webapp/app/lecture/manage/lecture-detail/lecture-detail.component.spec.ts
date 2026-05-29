@@ -10,7 +10,7 @@ import { LectureDetailComponent } from 'app/lecture/manage/lecture-detail/lectur
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { DetailOverviewListComponent } from 'app/ui/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

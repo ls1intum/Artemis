@@ -16,7 +16,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { GradeStepBoundsPipe } from 'app/foundation/pipes/grade-step-bounds.pipe';
 import { SafeHtmlPipe } from 'app/foundation/pipes/safe-html.pipe';
-import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { MockComponent } from 'ng-mocks';
 import { HttpResponse } from '@angular/common/http';
 import { Bonus, BonusStrategy } from 'app/assessment/shared/entities/bonus.model';

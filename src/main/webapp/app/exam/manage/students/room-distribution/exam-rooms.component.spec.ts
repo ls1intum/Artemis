@@ -21,7 +21,7 @@ import {
 } from 'app/exam/manage/students/room-distribution/exam-rooms.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
-import { DeleteDialogService } from 'app/ui/delete-dialog/service/delete-dialog.service';
+import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { MockDeleteDialogService } from 'test/helpers/mocks/service/mock-delete-dialog.service';
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

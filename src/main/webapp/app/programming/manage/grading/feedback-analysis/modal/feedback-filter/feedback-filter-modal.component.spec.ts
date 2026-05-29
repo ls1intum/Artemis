@@ -3,7 +3,7 @@ import { FeedbackFilterModalComponent } from 'app/programming/manage/grading/fee
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 
-import { RangeSliderComponent } from 'app/ui/range-slider/range-slider.component';
+import { RangeSliderComponent } from 'app/shared-ui/range-slider/range-slider.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 
 describe('FeedbackFilterModalComponent', () => {

@@ -3,7 +3,7 @@ import { LockRepositoryPolicy, SubmissionPenaltyPolicy, SubmissionPolicyType } f
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { KeyValuePipe } from '@angular/common';
 
 @Component({

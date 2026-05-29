@@ -12,7 +12,7 @@ import { DebugElement } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { Subject } from 'rxjs';
-import { ConfirmEntityNameComponent } from 'app/ui/confirm-entity-name/confirm-entity-name.component';
+import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
 
 describe('DataExportConfirmationDialogComponent', () => {
     setupTestBed({ zoneless: true });

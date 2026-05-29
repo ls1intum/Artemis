@@ -7,7 +7,7 @@ import { RouterLink } from '@angular/router';
 import { IncludedInScoreBadgeComponent } from '../exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { DifficultyBadgeComponent } from '../exercise-headers/difficulty-badge/difficulty-badge.component';
 import { TruncatePipe } from 'app/foundation/pipes/truncate.pipe';
-import { NotReleasedTagComponent } from 'app/ui/components/not-released-tag/not-released-tag.component';
+import { NotReleasedTagComponent } from 'app/shared-ui/components/not-released-tag/not-released-tag.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 interface ShowTagsConfig {

@@ -8,7 +8,7 @@ import { OnlineResourceDTO } from 'app/lecture/manage/lecture-units/online-resou
 import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/online-unit.service';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormDateTimePickerComponent } from 'app/ui/date-time-picker/date-time-picker.component';
+import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

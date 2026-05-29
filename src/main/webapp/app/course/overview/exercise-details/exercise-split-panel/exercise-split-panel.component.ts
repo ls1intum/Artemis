@@ -13,7 +13,7 @@ import { QuizParticipationComponent } from 'app/quiz/overview/participation/quiz
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
-import { PanelDirective, ResizablePanelsComponent } from 'app/ui/components/resizable-panels/resizable-panels.component';
+import { PanelDirective, ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';

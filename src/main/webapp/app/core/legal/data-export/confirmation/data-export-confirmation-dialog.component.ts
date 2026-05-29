@@ -5,7 +5,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { FormsModule, NgForm } from '@angular/forms';
 import { faBan, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ConfirmEntityNameComponent } from 'app/ui/confirm-entity-name/confirm-entity-name.component';
+import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TypeAheadUserSearchFieldComponent } from 'app/core/legal/data-export/type-ahead-search-field/type-ahead-user-search-field.component';
 import { User } from 'app/account/user/user.model';

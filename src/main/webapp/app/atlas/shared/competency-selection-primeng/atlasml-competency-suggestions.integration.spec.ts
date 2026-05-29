@@ -20,7 +20,7 @@ import { CompetencySelectionPrimengComponent } from 'app/atlas/shared/competency
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonComponent } from 'app/ui/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 /**

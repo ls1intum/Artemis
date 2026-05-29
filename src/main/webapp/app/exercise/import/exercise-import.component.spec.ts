@@ -14,7 +14,7 @@ import { QuizExercisePagingService } from 'app/quiz/manage/service/quiz-exercise
 import { ExerciseImportComponent } from 'app/exercise/import/exercise-import.component';
 import { PagingService } from 'app/exercise/services/paging.service';
 import { TextExercisePagingService } from 'app/text/manage/text-exercise/service/text-exercise-paging.service';
-import { ButtonComponent } from 'app/ui/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ExerciseCourseTitlePipe } from 'app/foundation/pipes/exercise-course-title.pipe';
 import { SortService } from 'app/foundation/service/sort.service';

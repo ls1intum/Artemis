@@ -10,7 +10,7 @@ import { StatisticsService } from 'app/exercise/statistics-graph/service/statist
 import dayjs from 'dayjs/esm';
 import { onError } from 'app/foundation/util/global.utils';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import { DocumentationType } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import {
     getExerciseGeneralDetailsSection,
     getExerciseGradingDefaultDetails,
@@ -21,8 +21,8 @@ import {
 } from 'app/exercise/util/utils';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
-import { DetailOverviewListComponent } from 'app/ui/detail-overview-list/detail-overview-list.component';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { map } from 'rxjs/operators';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';

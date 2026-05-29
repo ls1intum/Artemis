@@ -1,6 +1,6 @@
 import { Component, effect, input } from '@angular/core';
 
-import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/ui/information-box/information-box.component';
+import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared-ui/information-box/information-box.component';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import dayjs from 'dayjs/esm';

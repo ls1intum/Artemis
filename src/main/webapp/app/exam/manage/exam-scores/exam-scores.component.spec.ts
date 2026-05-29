@@ -19,7 +19,7 @@ import { EMPTY, of } from 'rxjs';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
-import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/ui/export/modal/export-modal.component';
+import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared-ui/export/modal/export-modal.component';
 import {
     BONUS_GRADE_KEY,
     EMAIL_KEY,
@@ -35,7 +35,7 @@ import {
     PLAGIARISM_VERDICT_KEY,
     REGISTRATION_NUMBER_KEY,
     USERNAME_KEY,
-} from 'app/ui/export/export-constants';
+} from 'app/shared-ui/export/export-constants';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';

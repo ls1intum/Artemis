@@ -7,8 +7,8 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { faUpload } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise, copyBuildConfigFromExerciseJson } from 'app/programming/shared/entities/programming-exercise.model';
 import JSZip from 'jszip';
-import { ButtonComponent } from 'app/ui/components/buttons/button/button.component';
-import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseImportDialogData } from '../exercise-import.component';
 

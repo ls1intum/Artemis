@@ -27,7 +27,7 @@ import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exer
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
-import { ExerciseActionButtonComponent } from 'app/ui/components/buttons/exercise-action-button/exercise-action-button.component';
+import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

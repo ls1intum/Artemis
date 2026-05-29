@@ -9,11 +9,11 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { User, UserPublicInfoDTO } from 'app/account/user/user.model';
 import { Subject, catchError, map, of, takeUntil } from 'rxjs';
-import { ProfilePictureComponent } from 'app/ui/profile-picture/profile-picture.component';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { ButtonComponent, ButtonType } from 'app/ui/components/buttons/button/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
 

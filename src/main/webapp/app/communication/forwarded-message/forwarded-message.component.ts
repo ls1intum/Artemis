@@ -5,7 +5,7 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import dayjs from 'dayjs/esm';
 import { Conversation } from 'app/communication/shared/entities/conversation/conversation.model';
-import { ProfilePictureComponent } from 'app/ui/profile-picture/profile-picture.component';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

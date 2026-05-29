@@ -10,13 +10,13 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { Observable, of, throwError } from 'rxjs';
-import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/ui/export/export-constants';
+import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared-ui/export/export-constants';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CourseGroupComponent } from 'app/course/shared/course-group/course-group.component';
-import { ExportUserInformationRow } from 'app/ui/user-import/util/write-users-to-csv';
-import * as csvUtils from 'app/ui/user-import/util/write-users-to-csv';
+import { ExportUserInformationRow } from 'app/shared-ui/user-import/util/write-users-to-csv';
+import * as csvUtils from 'app/shared-ui/user-import/util/write-users-to-csv';
 
 describe('CourseGroupComponent', () => {
     setupTestBed({ zoneless: true });

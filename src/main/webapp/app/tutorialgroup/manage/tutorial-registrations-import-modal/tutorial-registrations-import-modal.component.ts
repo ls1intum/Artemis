@@ -4,7 +4,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { ButtonDirective } from 'primeng/button';
-import { readStudentDTOsFromCSVFile } from 'app/ui/user-import/util/read-users-from-csv';
+import { readStudentDTOsFromCSVFile } from 'app/shared-ui/user-import/util/read-users-from-csv';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpResponse } from '@angular/common/http';
 import {
@@ -12,7 +12,7 @@ import {
     TutorialRegistrationsImportModalTableRow,
 } from 'app/tutorialgroup/manage/tutorial-registrations-import-modal-table/tutorial-registrations-import-modal-table.component';
 import { TutorialGroupRegisterStudentRequest } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { LoadingIndicatorOverlayComponent } from 'app/ui/loading-indicator-overlay/loading-indicator-overlay.component';
+import { LoadingIndicatorOverlayComponent } from 'app/shared-ui/loading-indicator-overlay/loading-indicator-overlay.component';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 

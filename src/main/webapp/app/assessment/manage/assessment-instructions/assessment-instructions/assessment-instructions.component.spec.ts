@@ -15,7 +15,7 @@ import { UMLDiagramType } from '@tumaet/apollon';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive';
-import { ButtonComponent } from 'app/ui/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { Component, input, output } from '@angular/core';
 

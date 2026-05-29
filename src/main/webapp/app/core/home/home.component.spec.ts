@@ -21,7 +21,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
-import { ButtonComponent } from 'app/ui/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { RouterLink } from '@angular/router';
 
 describe('HomeComponent', () => {

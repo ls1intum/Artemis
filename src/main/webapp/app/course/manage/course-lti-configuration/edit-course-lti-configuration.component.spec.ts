@@ -16,11 +16,11 @@ import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-ac
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { regexValidator } from 'app/ui/form/shortname-validator.directive';
+import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
 import { LOGIN_PATTERN } from 'app/foundation/constants/input.constants';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';

@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExerciseFilterModalComponent } from 'app/exercise/exercise-filter/exercise-filter-modal.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
-import { RangeSliderComponent } from 'app/ui/range-slider/range-slider.component';
+import { RangeSliderComponent } from 'app/shared-ui/range-slider/range-slider.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';

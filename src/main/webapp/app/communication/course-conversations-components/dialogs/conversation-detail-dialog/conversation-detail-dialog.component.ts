@@ -13,7 +13,7 @@ import { RouterLink } from '@angular/router';
 import { ConversationMembersComponent } from './tabs/conversation-members/conversation-members.component';
 import { ConversationInfoComponent } from './tabs/conversation-info/conversation-info.component';
 import { ConversationSettingsComponent } from './tabs/conversation-settings/conversation-settings.component';
-import { ProfilePictureComponent } from 'app/ui/profile-picture/profile-picture.component';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';

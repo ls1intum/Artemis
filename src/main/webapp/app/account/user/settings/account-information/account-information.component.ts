@@ -2,7 +2,7 @@ import { Component, DestroyRef, ElementRef, Signal, inject, signal, viewChild } 
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { ImageComponent, ImageLoadingStatus } from 'app/ui/image/image.component';
+import { ImageComponent, ImageLoadingStatus } from 'app/shared-ui/image/image.component';
 import { faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
 import { DialogService } from 'primeng/dynamicdialog';

@@ -3,7 +3,7 @@ import { User } from 'app/account/user/user.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamStartInformationComponent } from 'app/exam/overview/exam-start-information/exam-start-information.component';
-import { InformationBoxComponent } from 'app/ui/information-box/information-box.component';
+import { InformationBoxComponent } from 'app/shared-ui/information-box/information-box.component';
 import { StudentExamWorkingTimeComponent } from 'app/exam/overview/student-exam-working-time/student-exam-working-time.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';

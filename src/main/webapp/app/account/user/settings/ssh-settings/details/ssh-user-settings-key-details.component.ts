@@ -1,13 +1,13 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { DocumentationLinkComponent } from 'app/ui/components/documentation-link/documentation-link.component';
-import { DateTimePickerType, FormDateTimePickerComponent } from 'app/ui/date-time-picker/date-time-picker.component';
+import { DocumentationLinkComponent } from 'app/shared-ui/components/documentation-link/documentation-link.component';
+import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Subject, Subscription, concatMap, filter, tap } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
-import { DocumentationType } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/ui/components/buttons/button/button.component';
+import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { getOS } from 'app/foundation/util/os-detector.util';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';

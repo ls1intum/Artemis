@@ -3,7 +3,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
 @Component({
     selector: 'jhi-programming-exercise-version-control',

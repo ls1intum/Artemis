@@ -11,8 +11,8 @@ import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise
 import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
-import { ButtonComponent } from 'app/ui/components/buttons/button/button.component';
-import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SortService } from 'app/foundation/service/sort.service';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';

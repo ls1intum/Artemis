@@ -10,9 +10,9 @@ import { BaseCourseRequest } from 'app/course/request/course-request.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { getCurrentAndFutureSemesters, getDefaultSemester } from 'app/foundation/util/semester-utils';
-import { regexValidator } from 'app/ui/form/shortname-validator.directive';
+import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
 import { onError } from 'app/foundation/util/global.utils';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/ui/components/buttons/button/button.component';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
 
 @Component({

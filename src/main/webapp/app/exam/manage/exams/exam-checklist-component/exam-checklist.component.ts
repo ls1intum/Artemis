@@ -12,7 +12,7 @@ import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.s
 import { Subject, Subscription } from 'rxjs';
 import { captureException } from '@sentry/angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ChecklistCheckComponent } from 'app/ui/components/checklist-check/checklist-check.component';
+import { ChecklistCheckComponent } from 'app/shared-ui/components/checklist-check/checklist-check.component';
 import { ExamChecklistExerciseGroupTableComponent } from './exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -24,7 +24,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
-import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
 @Component({
     selector: 'jhi-exam-checklist',

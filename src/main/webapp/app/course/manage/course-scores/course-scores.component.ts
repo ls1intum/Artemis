@@ -15,14 +15,14 @@ import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-
 import { catchError } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
 import { faClipboard, faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { CsvExportRowBuilder } from 'app/ui/export/row-builder/csv-export-row-builder';
+import { CsvExportRowBuilder } from 'app/shared-ui/export/row-builder/csv-export-row-builder';
 import { mean, median, standardDeviation } from 'simple-statistics';
-import { CsvExportOptions } from 'app/ui/export/modal/export-modal.component';
-import { ButtonSize } from 'app/ui/components/buttons/button/button.component';
+import { CsvExportOptions } from 'app/shared-ui/export/modal/export-modal.component';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import * as XLSX from 'xlsx';
 import { MODULE_FEATURE_PLAGIARISM, VERSION } from 'app/app.constants';
-import { ExcelExportRowBuilder } from 'app/ui/export/row-builder/excel-export-row-builder';
-import { ExportRow, ExportRowBuilder } from 'app/ui/export/row-builder/export-row-builder';
+import { ExcelExportRowBuilder } from 'app/shared-ui/export/row-builder/excel-export-row-builder';
+import { ExportRow, ExportRowBuilder } from 'app/shared-ui/export/row-builder/export-row-builder';
 import {
     BONUS_KEY,
     COURSE_OVERALL_POINTS_KEY,
@@ -36,7 +36,7 @@ import {
     REGISTRATION_NUMBER_KEY,
     SCORE_KEY,
     USERNAME_KEY,
-} from 'app/ui/export/export-constants';
+} from 'app/shared-ui/export/export-constants';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { PlagiarismCaseDTO } from 'app/plagiarism/shared/entities/PlagiarismCase';
@@ -46,7 +46,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ParticipantScoresDistributionComponent } from 'app/course/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
-import { ExportButtonComponent } from 'app/ui/export/button/export-button.component';
+import { ExportButtonComponent } from 'app/shared-ui/export/button/export-button.component';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -55,7 +55,7 @@ import { ExerciseTypeStatisticsMap } from 'app/course/manage/course-scores/exerc
 import { CourseManagementService, GradeScoreDTO, StudentGradeDTO } from 'app/course/manage/services/course-management.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
-import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { GradingScaleDTO, toEntity } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
 export enum HighlightType {

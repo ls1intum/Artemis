@@ -36,7 +36,7 @@ import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { FileService } from 'app/foundation/service/file.service';
 import { ScienceService } from 'app/foundation/science/science.service';
-import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/ui/information-box/information-box.component';
+import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared-ui/information-box/information-box.component';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;

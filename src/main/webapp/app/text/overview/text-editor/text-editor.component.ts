@@ -18,7 +18,7 @@ import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.mode
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { ButtonComponent, ButtonType } from 'app/ui/components/buttons/button/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
@@ -33,7 +33,7 @@ import { faChevronDown, faCircleNotch, faEye, faTimeline } from '@fortawesome/fr
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/foundation/constants/input.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
-import { ResizeableContainerComponent } from 'app/ui/resizeable-container/resizeable-container.component';
+import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { TextResultComponent } from '../text-result/text-result.component';

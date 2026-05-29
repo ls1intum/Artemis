@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, computed, inject, input, model, output, s
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { ButtonSize } from 'app/ui/components/buttons/button/button.component';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/git-diff-report/git-diff-report.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Dialog } from 'primeng/dialog';
@@ -17,7 +17,7 @@ import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/inc
 import { CommitsInfoComponent } from 'app/programming/shared/commits-info/commits-info.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
-import { ButtonComponent } from 'app/ui/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';

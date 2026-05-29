@@ -19,7 +19,7 @@ import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 
-import { BarControlConfiguration } from 'app/ui/tab-bar/tab-bar';
+import { BarControlConfiguration } from 'app/shared-ui/tab-bar/tab-bar';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LtiService } from 'app/foundation/service/lti.service';
 import { sortCourses } from 'app/foundation/util/course.util';

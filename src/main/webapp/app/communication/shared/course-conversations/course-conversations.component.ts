@@ -55,9 +55,9 @@ import { CourseOverviewService } from 'app/course/overview/services/course-overv
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { UserPublicInfoDTO } from 'app/account/user/user.model';
-import { FeatureActivationComponent } from 'app/ui/feature-activation/feature-activation.component';
+import { FeatureActivationComponent } from 'app/shared-ui/feature-activation/feature-activation.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { LoadingIndicatorContainerComponent } from 'app/ui/loading-indicator-container/loading-indicator-container.component';
+import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';

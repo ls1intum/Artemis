@@ -10,7 +10,7 @@ import { MockTeamService, mockEmptyTeam, mockExercise, mockNonTeamStudents, mock
 import { TeamService } from 'app/exercise/team/team.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TeamOwnerSearchComponent } from 'app/exercise/team/team-owner-search/team-owner-search.component';

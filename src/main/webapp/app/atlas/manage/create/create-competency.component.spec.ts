@@ -12,7 +12,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { HttpResponse } from '@angular/common/http';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { By } from '@angular/platform-browser';
-import { DocumentationButtonComponent } from 'app/ui/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
 
 import { CompetencyFormComponent } from 'app/atlas/manage/forms/competency/competency-form.component';

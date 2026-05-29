@@ -17,7 +17,7 @@ import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/n
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgClass } from '@angular/common';
-import { JhiConnectionStatusComponent } from 'app/ui/connection-status/connection-status.component';
+import { JhiConnectionStatusComponent } from 'app/shared-ui/connection-status/connection-status.component';
 import { TruncatePipe } from 'app/foundation/pipes/truncate.pipe';
 
 @Component({

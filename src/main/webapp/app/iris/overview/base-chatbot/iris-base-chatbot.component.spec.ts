@@ -20,7 +20,7 @@ import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.
 import { BehaviorSubject, Subject, of } from 'rxjs';
 import { signal } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ButtonComponent } from 'app/ui/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import {
     mockClientMessage,
     mockClientMessageWithMemories,

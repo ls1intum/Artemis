@@ -24,7 +24,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { CompetencyExerciseLink, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
-import { DetailType } from 'app/ui/detail-overview-list/detail-overview-list.component';
+import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 
 describe('ModelingExercise Management Detail Component', () => {
     setupTestBed({ zoneless: true });

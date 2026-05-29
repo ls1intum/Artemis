@@ -7,7 +7,7 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Posting, PostingType } from 'app/communication/shared/entities/posting.model';
-import { ProfilePictureComponent } from 'app/ui/profile-picture/profile-picture.component';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';

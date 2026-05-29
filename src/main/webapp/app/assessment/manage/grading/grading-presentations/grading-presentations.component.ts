@@ -4,7 +4,7 @@ import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 import { FormsModule } from '@angular/forms';
-import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
 /**
  * Enum representing the available presentation types in a course grading system.

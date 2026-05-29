@@ -1,6 +1,6 @@
 import { SafeHtml } from '@angular/platform-browser';
-import { DetailOverviewSection, DetailType } from 'app/ui/detail-overview-list/detail-overview-list.component';
-import { Detail } from 'app/ui/detail-overview-list/detail.model';
+import { DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
+import { Detail } from 'app/shared-ui/detail-overview-list/detail.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, getExerciseCompetencies } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 export function getExerciseGeneralDetailsSection(exercise: Exercise): DetailOverviewSection {

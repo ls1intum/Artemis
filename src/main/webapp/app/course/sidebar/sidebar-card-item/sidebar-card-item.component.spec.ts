@@ -5,7 +5,7 @@ import { SidebarCardItemComponent } from 'app/course/sidebar/sidebar-card-item/s
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
-import { ProfilePictureComponent } from 'app/ui/profile-picture/profile-picture.component';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { MockComponent } from 'ng-mocks';
 import { SidebarCardSize } from 'app/foundation/types/sidebar';
 

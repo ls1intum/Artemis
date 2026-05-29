@@ -14,7 +14,7 @@ import { CourseRequestComponent } from 'app/course/request/course-request.compon
 import { CourseRequestService } from 'app/course/request/course-request.service';
 import { CourseRequestFormComponent } from 'app/course/request/course-request-form.component';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { ButtonComponent } from 'app/ui/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 describe('CourseRequestComponent', () => {

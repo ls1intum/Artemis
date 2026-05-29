@@ -8,7 +8,7 @@ import { faArrowRight, faBookmark, faCheck, faEnvelopeOpenText, faInfoCircle, fa
 import { faBookmark as farBookmark } from '@fortawesome/free-regular-svg-icons';
 import { EmojiComponent } from 'app/communication/emoji/emoji.component';
 import { EmojiPickerComponent } from 'app/communication/emoji/emoji-picker.component';
-import { ConfirmIconComponent } from 'app/ui/confirm-icon/confirm-icon.component';
+import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService } from 'primeng/dynamicdialog';

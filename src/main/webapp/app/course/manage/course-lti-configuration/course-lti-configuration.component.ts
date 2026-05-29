@@ -12,8 +12,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavLinkBase, NgbNavOutlet, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { CopyToClipboardButtonComponent } from 'app/ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
-import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';

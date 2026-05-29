@@ -12,7 +12,7 @@ import { generateDragAndDropQuizExercise } from 'app/quiz/manage/apollon-diagram
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
-import { ConfirmAutofocusModalComponent } from 'app/ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
+import { ConfirmAutofocusModalComponent } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { lastValueFrom } from 'rxjs';
 import { FormsModule, NgModel } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

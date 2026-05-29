@@ -3,7 +3,7 @@ import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 import { PagingService } from 'app/exercise/services/paging.service';
-import { Column } from 'app/ui/import/import.component';
+import { Column } from 'app/shared-ui/import/import.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import {
     CourseCompetencyImportSettings,

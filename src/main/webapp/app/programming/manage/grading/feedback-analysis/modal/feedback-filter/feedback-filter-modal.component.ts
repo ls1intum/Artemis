@@ -1,6 +1,6 @@
 import { Component, inject, output, signal } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { RangeSliderComponent } from 'app/ui/range-slider/range-slider.component';
+import { RangeSliderComponent } from 'app/shared-ui/range-slider/range-slider.component';
 import { FeedbackAnalysisService } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

@@ -12,7 +12,7 @@ import { faRobot, faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-
 import { DisplayPriority, UserRole } from 'app/communication/metis.util';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { ProfilePictureComponent } from 'app/ui/profile-picture/profile-picture.component';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';

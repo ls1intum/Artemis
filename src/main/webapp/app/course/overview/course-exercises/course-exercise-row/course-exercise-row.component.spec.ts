@@ -20,7 +20,7 @@ import { InitializationState } from 'app/exercise/shared/entities/participation/
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { NotReleasedTagComponent } from 'app/ui/components/not-released-tag/not-released-tag.component';
+import { NotReleasedTagComponent } from 'app/shared-ui/components/not-released-tag/not-released-tag.component';
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';

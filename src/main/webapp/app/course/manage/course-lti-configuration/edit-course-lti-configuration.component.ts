@@ -6,7 +6,7 @@ import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.
 import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
-import { regexValidator } from 'app/ui/form/shortname-validator.directive';
+import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
 import { LOGIN_PATTERN } from 'app/foundation/constants/input.constants';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
@@ -20,7 +20,7 @@ import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
 import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
-import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants';
 
 @Component({

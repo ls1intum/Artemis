@@ -57,7 +57,7 @@ import { TextEditorActionGroup } from 'app/editor/monaco-editor/model/actions/te
 import { HeadingAction } from 'app/editor/monaco-editor/model/actions/heading.action';
 import { FullscreenAction } from 'app/editor/monaco-editor/model/actions/fullscreen.action';
 import { ColorAction } from 'app/editor/monaco-editor/model/actions/color.action';
-import { ColorSelectorComponent } from 'app/ui/color-selector/color-selector.component';
+import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
 import { CdkDrag, CdkDragMove, Point } from '@angular/cdk/drag-drop';
 import { TextEditorDomainAction } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action.model';
 import { TextEditorDomainActionWithOptions } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action-with-options.model';

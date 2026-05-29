@@ -19,7 +19,7 @@ import { By } from '@angular/platform-browser';
 import { CourseArchiveComponent } from 'app/course/overview/course-archive/course-archive.component';
 import { CourseCardHeaderComponent } from 'app/course/overview/course-card-header/course-card-header.component';
 import { SearchFilterPipe } from 'app/foundation/pipes/search-filter.pipe';
-import { SearchFilterComponent } from 'app/ui/search-filter/search-filter.component';
+import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { CourseForArchiveDTO } from 'app/course/shared/entities/course-for-archive-dto';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';

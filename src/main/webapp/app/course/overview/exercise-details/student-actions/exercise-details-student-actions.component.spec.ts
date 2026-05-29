@@ -19,8 +19,8 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/student-actions/exercise-details-student-actions.component';
-import { CodeButtonComponent } from 'app/ui/components/buttons/code-button/code-button.component';
-import { ExerciseActionButtonComponent } from 'app/ui/components/buttons/exercise-action-button/exercise-action-button.component';
+import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { ExtensionPointDirective } from 'app/foundation/extension-point/extension-point.directive';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';

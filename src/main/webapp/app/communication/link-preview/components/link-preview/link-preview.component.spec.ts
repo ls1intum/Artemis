@@ -9,7 +9,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
-import { ConfirmIconComponent } from 'app/ui/confirm-icon/confirm-icon.component';
+import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { LinkPreviewComponent } from 'app/communication/link-preview/components/link-preview/link-preview.component';

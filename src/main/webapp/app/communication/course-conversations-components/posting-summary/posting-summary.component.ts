@@ -6,7 +6,7 @@ import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgClass } from '@angular/common';
-import { ProfilePictureComponent } from 'app/ui/profile-picture/profile-picture.component';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';

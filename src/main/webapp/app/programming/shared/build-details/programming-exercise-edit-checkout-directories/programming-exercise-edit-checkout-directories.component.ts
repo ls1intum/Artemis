@@ -5,7 +5,7 @@ import { BuildPlanCheckoutDirectoriesDTO } from 'app/programming/shared/entities
 
 import { Subject } from 'rxjs';
 import { FormsModule, NgModel } from '@angular/forms';
-import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({

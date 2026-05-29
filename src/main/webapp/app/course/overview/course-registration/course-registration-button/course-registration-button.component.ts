@@ -5,7 +5,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { Course } from 'app/course/shared/entities/course.model';
 import { matchesRegexFully } from 'app/foundation/util/regex.util';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { ConfirmAutofocusButtonComponent } from 'app/ui/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
+import { ConfirmAutofocusButtonComponent } from 'app/shared-ui/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({

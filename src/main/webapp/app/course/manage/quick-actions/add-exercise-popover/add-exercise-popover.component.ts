@@ -1,6 +1,6 @@
 import { Component, computed, inject, input, viewChild } from '@angular/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ButtonSize, ButtonType } from 'app/ui/components/buttons/button/button.component';
+import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { Popover } from 'primeng/popover';

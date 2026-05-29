@@ -8,11 +8,11 @@ import { faPlus, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { TableLazyLoadEvent } from 'primeng/table';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DeleteButtonDirective } from 'app/ui/delete-dialog/directive/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
-import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/ui/table-view/table-view';
-import { buildDbQueryFromLazyEvent } from 'app/ui/table-view/request-builder';
+import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
+import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 

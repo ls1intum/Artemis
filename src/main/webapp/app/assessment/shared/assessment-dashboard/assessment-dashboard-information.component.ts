@@ -3,7 +3,7 @@ import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date
 import { LegendPosition, PieChartModule } from '@swimlane/ngx-charts';
 import { TranslateService } from '@ngx-translate/core';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { SidePanelComponent } from 'app/ui/side-panel/side-panel.component';
+import { SidePanelComponent } from 'app/shared-ui/side-panel/side-panel.component';
 import { Subscription } from 'rxjs';
 import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

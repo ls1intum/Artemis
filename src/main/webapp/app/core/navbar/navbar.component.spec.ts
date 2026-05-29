@@ -31,7 +31,7 @@ class StubThemeSwitchComponent {
 import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
-import { JhiConnectionWarningComponent } from 'app/ui/connection-warning/connection-warning.component';
+import { JhiConnectionWarningComponent } from 'app/shared-ui/connection-warning/connection-warning.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { Authority } from 'app/foundation/constants/authority.constants';

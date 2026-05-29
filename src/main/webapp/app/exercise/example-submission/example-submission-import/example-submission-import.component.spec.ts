@@ -9,7 +9,7 @@ import { ExampleSubmissionImportPagingService } from 'app/exercise/example-submi
 import { ExampleSubmissionImportComponent } from 'app/exercise/example-submission/example-submission-import/example-submission-import.component';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { ResultComponent } from 'app/exercise/result/result.component';
-import { ButtonComponent } from 'app/ui/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';

@@ -6,7 +6,7 @@ import { StudentWithTeam, Team } from 'app/exercise/shared/entities/team/team.mo
 import { SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
 import { parse } from 'papaparse';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 const csvColumns = Object.freeze({

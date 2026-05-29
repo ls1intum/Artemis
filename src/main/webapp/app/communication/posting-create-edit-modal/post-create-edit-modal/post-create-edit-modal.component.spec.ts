@@ -9,7 +9,7 @@ import { PostCreateEditModalComponent } from 'app/communication/posting-create-e
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
-import { HelpIconComponent } from 'app/ui/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { PageType } from 'app/communication/metis.util';
 
 import { provideHttpClientTesting } from '@angular/common/http/testing';

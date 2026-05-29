@@ -29,9 +29,9 @@ import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.serv
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/ui/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
-import { Detail } from 'app/ui/detail-overview-list/detail.model';
+import { Detail } from 'app/shared-ui/detail-overview-list/detail.model';
 import { CourseDetailDoughnutChartComponent } from './course-detail-doughnut-chart.component';
 import { CourseDetailLineChartComponent } from './course-detail-line-chart.component';
 import { QuickActionsComponent } from 'app/course/manage/quick-actions/quick-actions.component';

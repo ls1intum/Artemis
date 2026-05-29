@@ -11,13 +11,13 @@ import eslint from '@eslint/js';
 import localRulesPlugin from './rules/index.mjs';
 
 // Builds `no-restricted-imports` patterns that block importing a sibling client layer
-// (e.g. `ui` or `editor`) from another layer — covering both the absolute alias path
+// (e.g. `shared-ui` or `editor`) from another layer — covering both the absolute alias path
 // (`app/<layer>/...`) and relative parent-traversal paths (`../<layer>/...`, `../../<layer>/...`, …).
 //
 // Each relative depth is listed explicitly on purpose: ESLint's minimatch wildcard does NOT
 // traverse `..` segments, so a single globstar pattern fails to flag nested imports such as
-// `../../ui/foo` (verified). Enumerating depths up to 6 covers every realistic file location
-// under `app/foundation/` and `app/ui/`.
+// `../../shared-ui/foo` (verified). Enumerating depths up to 6 covers every realistic file location
+// under `app/foundation/` and `app/shared-ui/`.
 const blockLayerImportPatterns = (layer) => [
     `app/${layer}/**`,
     `../${layer}/**`,
@@ -176,12 +176,12 @@ export default tseslint.config(
             'localRules/enforce-cleanup-on-destroy': 'warn',
         },
     },
-    // Module-boundary rules: enforce the foundation ← ui ← editor layering.
-    // foundation/ is the base layer (no DOM/UI), ui/ holds generic UI primitives,
+    // Module-boundary rules: enforce the foundation ← shared-ui ← editor layering.
+    // foundation/ is the base layer (no DOM/UI), shared-ui/ holds generic UI primitives,
     // editor/ holds the code/markdown editor stacks. The intent:
-    //   - foundation may not import from ui or editor
-    //   - ui may not import from editor
-    //   - editor may import from foundation and ui (e.g. ColorSelector inside the markdown toolbar)
+    //   - foundation may not import from shared-ui or editor
+    //   - shared-ui may not import from editor
+    //   - editor may import from foundation and shared-ui (e.g. ColorSelector inside the markdown toolbar)
     {
         files: ['src/main/webapp/app/foundation/**/*.ts'],
         ignores: ['**/*.spec.ts'],
@@ -195,10 +195,10 @@ export default tseslint.config(
                     ],
                     patterns: [
                         {
-                            // Block both absolute (app/ui/**) and relative (../ui, ../../ui, …) imports
+                            // Block both absolute (app/shared-ui/**) and relative (../shared-ui, ../../shared-ui, …) imports
                             // so the layer cannot be bypassed with a relative path.
-                            group: blockLayerImportPatterns('ui'),
-                            message: 'app/foundation/ must not depend on app/ui/. foundation/ is the base infrastructure layer (no DOM/UI). If a UI primitive is needed here, the file probably belongs in app/ui/ instead.',
+                            group: blockLayerImportPatterns('shared-ui'),
+                            message: 'app/foundation/ must not depend on app/shared-ui/. foundation/ is the base infrastructure layer (no DOM/UI). If a UI primitive is needed here, the file probably belongs in app/shared-ui/ instead.',
                         },
                         {
                             group: blockLayerImportPatterns('editor'),
@@ -210,7 +210,7 @@ export default tseslint.config(
         },
     },
     {
-        files: ['src/main/webapp/app/ui/**/*.ts'],
+        files: ['src/main/webapp/app/shared-ui/**/*.ts'],
         ignores: ['**/*.spec.ts'],
         rules: {
             'no-restricted-imports': [
@@ -224,7 +224,7 @@ export default tseslint.config(
                         {
                             // Block both absolute (app/editor/**) and relative (../editor, ../../editor, …) imports.
                             group: blockLayerImportPatterns('editor'),
-                            message: 'app/ui/ must not depend on app/editor/. ui/ holds generic UI primitives; the editor stack is specialised and sits above ui/.',
+                            message: 'app/shared-ui/ must not depend on app/editor/. shared-ui/ holds generic UI primitives; the editor stack is specialised and sits above shared-ui/.',
                         },
                     ],
                 },

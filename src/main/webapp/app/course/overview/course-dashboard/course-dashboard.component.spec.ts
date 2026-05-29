@@ -25,7 +25,7 @@ import { of, throwError } from 'rxjs';
 import { CourseDashboardService } from 'app/course/overview/course-dashboard/course-dashboard.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CompetencyAccordionComponent, CompetencyAccordionToggleEvent } from 'app/atlas/overview/competency-accordion/competency-accordion.component';
-import { FeatureOverlayComponent } from 'app/ui/components/feature-overlay/feature-overlay.component';
+import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import dayjs from 'dayjs/esm';
 import { StudentMetrics } from 'app/atlas/shared/entities/student-metrics.model';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
