@@ -62,9 +62,6 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
             "api/core/files/attachments/lecture/{lectureId}/{attachmentName}", "api/core/files/course/icons/{courseId}/*",
             "api/core/files/courses/{courseId}/attachment-units/{attachmentVideoUnitId}", "api/core/files/drag-and-drop/backgrounds/{questionId}/*",
             "api/core/files/exam-user/signatures/{examUserId}/*", "api/core/files/exam-user/{examUserId}/*", "api/core/files/user/profile-pictures/{userId}/*",
-            // iris
-            "api/iris/chat/{courseId}/session/{sessionId}", "api/iris/chat/{courseId}/sessions/overview", "api/iris/tutor-suggestion/{postId}/sessions",
-            "api/iris/tutor-suggestion/{postId}/sessions/current",
             // tutorialgroup (collection "tutorial-free-periods" mismatches its id {tutorialGroupFreePeriodId}: rename the
             // collection to "tutorial-group-free-periods" or the id to {tutorialFreePeriodId} — needs an API naming decision)
             "api/tutorialgroup/courses/{courseId}/tutorial-groups-configurations/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}");
