@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import dayjs from 'dayjs/esm';
-import * as dateUtils from 'app/shared/util/date.utils';
+import * as dateUtils from 'app/foundation/util/date.utils';
 
 import { TutorialGroupFreePeriodDTO, fromTutorialGroupFreePeriodDTO, toTutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
 

@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.programming.service.InternalUrlService;
+import de.tum.cit.aet.artemis.localvc.service.InternalUrlService;
 
 @Profile(PROFILE_JENKINS)
 @Lazy

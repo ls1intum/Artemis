@@ -18,11 +18,11 @@ import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/ht
 import { SystemNotificationManagementComponent } from 'app/admin/system-notification-management/system-notification-management.component';
 import { SystemNotification } from 'app/admin/system-notification-management/system-notification.model';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { EventManager } from 'app/shared/service/event-manager.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
 

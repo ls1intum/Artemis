@@ -1,6 +1,6 @@
 import { Component, input } from '@angular/core';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 /**
  * This shows an alert, notifying the assessor on possible complaints at the bottom of the page.

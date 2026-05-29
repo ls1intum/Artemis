@@ -4,7 +4,7 @@ import { Posting } from 'app/communication/shared/entities/posting.model';
 import { MetisService } from 'app/communication/service/metis.service';
 import { PostingEditType } from 'app/communication/metis.util';
 
-import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MarkdownEditorHeight } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 
 // Note: this number should be the same as in Posting.java
 export const MAX_CONTENT_LENGTH = 5000;

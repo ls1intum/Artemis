@@ -7,7 +7,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { UserService } from 'app/account/user/shared/user.service';
 import { Subscription } from 'rxjs';
 import { capitalize } from 'lodash-es';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { captureException } from '@sentry/angular';
 import { CourseGroupComponent } from 'app/course/shared/course-group/course-group.component';
 

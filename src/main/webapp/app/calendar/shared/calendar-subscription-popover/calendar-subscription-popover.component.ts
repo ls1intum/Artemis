@@ -7,9 +7,9 @@ import { TextFieldModule } from '@angular/cdk/text-field';
 import { FormsModule } from '@angular/forms';
 import { faCheck, faCopy } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
-import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 
 @Component({
     selector: 'jhi-calendar-subscription-popover',

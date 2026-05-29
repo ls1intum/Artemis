@@ -16,11 +16,11 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { AccordionGroups, ChannelGroupCategory, SidebarCardElement, TimeGroupCategory } from 'app/shared/types/sidebar';
+import { AccordionGroups, ChannelGroupCategory, SidebarCardElement, TimeGroupCategory } from 'app/foundation/types/sidebar';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },

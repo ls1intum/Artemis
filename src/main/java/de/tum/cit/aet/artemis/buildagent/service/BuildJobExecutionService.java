@@ -48,13 +48,13 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.localci.service.scaparser.ReportParser;
+import de.tum.cit.aet.artemis.localci.service.scaparser.exception.UnsupportedToolException;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
-import de.tum.cit.aet.artemis.programming.service.localci.scaparser.ReportParser;
-import de.tum.cit.aet.artemis.programming.service.localci.scaparser.exception.UnsupportedToolException;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 /**
  * This service contains the logic to execute a build job for a programming exercise participation in the local CI system.

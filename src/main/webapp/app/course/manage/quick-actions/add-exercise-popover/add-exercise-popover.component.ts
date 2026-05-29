@@ -1,8 +1,8 @@
 import { Component, computed, inject, input, viewChild } from '@angular/core';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { Course } from 'app/course/shared/entities/course.model';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { Popover } from 'primeng/popover';
 import { ExerciseCreateButtonComponent } from 'app/exercise/exercise-create-buttons/exercise-create-button/exercise-create-button.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';

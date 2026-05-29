@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
+import { UserSettingsCategory } from 'app/foundation/constants/user-settings.constants';
 import { User } from 'app/account/user/user.model';
 import { Setting, SettingGroup, UserSettingsStructure } from 'app/account/user/settings/user-settings.model';
 import { ScienceSetting, scienceSettingsStructure } from 'app/account/user/settings/science-settings/science-settings-structure';
