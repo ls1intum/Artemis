@@ -50,7 +50,7 @@ describe('PasskeySettingsApiService', () => {
     describe('getRegisteredPasskeys', () => {
         it('should get registered passkeys for the current user', async () => {
             const promise = service.getRegisteredPasskeys();
-            const req = httpMock.expectOne('api/core/passkey/user');
+            const req = httpMock.expectOne('api/account/passkey/user');
             expect(req.request.method).toBe('GET');
             req.flush(mockPasskeys);
             const result = await promise;
@@ -59,7 +59,7 @@ describe('PasskeySettingsApiService', () => {
 
         it('should return an empty array when no passkeys are registered', async () => {
             const promise = service.getRegisteredPasskeys();
-            const req = httpMock.expectOne('api/core/passkey/user');
+            const req = httpMock.expectOne('api/account/passkey/user');
             expect(req.request.method).toBe('GET');
             req.flush([]);
             const result = await promise;
@@ -75,7 +75,7 @@ describe('PasskeySettingsApiService', () => {
                 label: 'Updated Passkey Label',
             };
             const promise = service.updatePasskeyLabel(credentialId, updatedPasskey);
-            const req = httpMock.expectOne(`api/core/passkey/${credentialId}`);
+            const req = httpMock.expectOne(`api/account/passkey/${credentialId}`);
             expect(req.request.method).toBe('PUT');
             expect(req.request.body).toEqual(updatedPasskey);
             req.flush(updatedPasskey);
@@ -93,7 +93,7 @@ describe('PasskeySettingsApiService', () => {
                 isSuperAdminApproved: false,
             };
             const promise = service.updatePasskeyLabel(credentialId, updatedPasskey);
-            const req = httpMock.expectOne(`api/core/passkey/${credentialId}`);
+            const req = httpMock.expectOne(`api/account/passkey/${credentialId}`);
             expect(req.request.method).toBe('PUT');
             req.flush(updatedPasskey);
             const result = await promise;
@@ -105,7 +105,7 @@ describe('PasskeySettingsApiService', () => {
         it('should delete a passkey', async () => {
             const credentialId = 'credential-id-1';
             const promise = service.deletePasskey(credentialId);
-            const req = httpMock.expectOne(`api/core/passkey/${credentialId}`);
+            const req = httpMock.expectOne(`api/account/passkey/${credentialId}`);
             expect(req.request.method).toBe('DELETE');
             req.flush(null);
             const result = await promise;
@@ -115,7 +115,7 @@ describe('PasskeySettingsApiService', () => {
         it('should handle deleting passkey with special characters in credential ID', async () => {
             const credentialId = 'credential-id-with-special-chars_456';
             const promise = service.deletePasskey(credentialId);
-            const req = httpMock.expectOne(`api/core/passkey/${credentialId}`);
+            const req = httpMock.expectOne(`api/account/passkey/${credentialId}`);
             expect(req.request.method).toBe('DELETE');
             req.flush(null);
             const result = await promise;

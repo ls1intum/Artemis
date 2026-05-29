@@ -2,18 +2,18 @@ import { AfterViewChecked, Component, ElementRef, OnDestroy, OnInit, Renderer2, 
 import dayjs from 'dayjs/esm';
 import { SystemNotification, SystemNotificationType } from 'app/admin/system-notification-management/system-notification.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { User } from 'app/account/user/user.model';
 import { faExclamationTriangle, faInfoCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { DOCUMENT, NgClass } from '@angular/common';
 import { Subscription, filter } from 'rxjs';
-import { convertDateFromServer } from 'app/shared/util/date.utils';
-import { updateHeaderHeight } from 'app/shared/util/navbar.util';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { updateHeaderHeight } from 'app/foundation/util/navbar.util';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 
-export const WEBSOCKET_CHANNEL = '/topic/system-notification';
+export const WEBSOCKET_CHANNEL = '/topic/notification/system-notification';
 export const CLOSED_NOTIFICATION_IDS_STORAGE_KEY = 'system-notification.closedIds';
 
 @Component({

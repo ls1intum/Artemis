@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { CompetencyContributionCardComponent } from './competency-contribution-card.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { provideRouter } from '@angular/router';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { NgbProgressbar, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';

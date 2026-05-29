@@ -33,12 +33,12 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.AndroidFingerprintService;
 import de.tum.cit.aet.artemis.account.service.ArtemisSuccessfulLoginService;
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
-import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
-import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.PasskeyEnabled;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.util.AndroidApkKeyHashUtil;
+import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 
 /**
  * Configurer for WebAuthn passkey authentication in Artemis.

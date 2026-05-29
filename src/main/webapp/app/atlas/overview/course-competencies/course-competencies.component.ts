@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, computed, inject, input } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { AlertService } from 'app/shared/service/alert.service';
-import { onError } from 'app/shared/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Competency, CourseCompetencyType, compareSoftDueDate, getMastery } from 'app/atlas/shared/entities/competency.model';
 import { Subscription } from 'rxjs';
@@ -11,10 +11,10 @@ import { CourseStorageService } from 'app/course/manage/services/course-storage.
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ScienceEventType } from 'app/shared/science/science.model';
-import { ScienceService } from 'app/shared/science/science.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ScienceEventType } from 'app/foundation/science/science.model';
+import { ScienceService } from 'app/foundation/science/science.service';
 
 @Component({
     selector: 'jhi-course-competencies',

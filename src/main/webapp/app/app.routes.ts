@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { Router, Routes, UrlTree } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_STUDENT } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_STUDENT } from 'app/foundation/constants/authority.constants';
 import { navbarRoute } from 'app/core/navbar/navbar.route';
 import { errorRoute } from 'app/core/layouts/error/error.route';
 import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';

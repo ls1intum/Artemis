@@ -19,13 +19,15 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 
 @Profile(PROFILE_CORE)
 @Lazy
 @RestController
 @EnforceAdmin
-@RequestMapping("api/core/admin/metrics/")
+@SuppressWarnings("deprecation")
+@RequestMapping({ "api/admin/metrics/", LegacyAdminRestPaths.CORE_ADMIN_METRICS_PREFIX })
 public class AdminMetricsResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminMetricsResource.class);

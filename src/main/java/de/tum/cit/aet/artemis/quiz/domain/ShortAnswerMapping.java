@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.quiz.domain;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -36,6 +37,7 @@ public class ShortAnswerMapping extends DomainObject implements QuizQuestionComp
     private ShortAnswerSpot spot;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "question_id")
     @JsonIgnore
     private ShortAnswerQuestion question;
 
@@ -104,4 +106,16 @@ public class ShortAnswerMapping extends DomainObject implements QuizQuestionComp
                 + ", invalid='" + isInvalid() + "'" + "}";
     }
 
+    /**
+     * Stable, constant hashCode that does not change when Hibernate assigns the id on persist. This is required because
+     * {@link ShortAnswerQuestion#correctMappings} is a {@code Set<ShortAnswerMapping>}: factories and DTO mappers add
+     * transient mappings (id == null) to the set, and the id-based default would change after persist and silently
+     * break HashSet membership. Returning a constant forces all instances into the same bucket; the (id-based)
+     * {@code equals} contract still distinguishes them. The performance impact is negligible — a question's mapping
+     * set is small. Mirrors the same pattern on {@link de.tum.cit.aet.artemis.assessment.domain.Feedback}.
+     */
+    @Override
+    public int hashCode() {
+        return ShortAnswerMapping.class.hashCode();
+    }
 }

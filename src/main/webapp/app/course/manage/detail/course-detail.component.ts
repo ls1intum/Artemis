@@ -8,9 +8,9 @@ import { Subscription } from 'rxjs';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
 import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
-import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/shared/service/alert.service';
-import { EventManager } from 'app/shared/service/event-manager.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import {
     faBolt,
     faChartBar,
@@ -25,20 +25,20 @@ import {
     faTimes,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
-import { Detail } from 'app/shared/detail-overview-list/detail.model';
+import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { Detail } from 'app/shared-ui/detail-overview-list/detail.model';
 import { CourseDetailDoughnutChartComponent } from './course-detail-doughnut-chart.component';
 import { CourseDetailLineChartComponent } from './course-detail-line-chart.component';
 import { QuickActionsComponent } from 'app/course/manage/quick-actions/quick-actions.component';
 import { ControlCenterComponent } from 'app/course/manage/control-center/control-center.component';
 import { OnboardingExploreComponent } from 'app/course/manage/onboarding/pages/onboarding-explore.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',

@@ -9,7 +9,7 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { ExamAddStudentsDialogComponent } from 'app/exam/manage/students/add-students-dialog/exam-add-students-dialog.component';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { of, throwError } from 'rxjs';

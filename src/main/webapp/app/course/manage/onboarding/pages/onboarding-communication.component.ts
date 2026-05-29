@@ -1,11 +1,11 @@
 import { Component, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheck, faComments, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { NgClass } from '@angular/common';
 
 @Component({

@@ -4,15 +4,15 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { DataExportConfirmationDialogComponent } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.component';
-import { AlertService } from 'app/shared/service/alert.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { DebugElement } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { Subject } from 'rxjs';
-import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
+import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
 
 describe('DataExportConfirmationDialogComponent', () => {
     setupTestBed({ zoneless: true });

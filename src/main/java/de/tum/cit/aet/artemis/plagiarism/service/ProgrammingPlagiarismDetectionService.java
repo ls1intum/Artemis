@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCheckState;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
@@ -61,7 +62,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 

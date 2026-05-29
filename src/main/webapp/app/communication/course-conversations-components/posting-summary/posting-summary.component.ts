@@ -4,13 +4,13 @@ import { faBarsProgress, faBookmark, faBoxArchive, faCheckSquare, faEllipsis, fa
 import { ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgClass } from '@angular/common';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({

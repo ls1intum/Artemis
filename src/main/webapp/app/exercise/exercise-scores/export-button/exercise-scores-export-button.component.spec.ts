@@ -21,7 +21,7 @@ import { User } from 'app/account/user/user.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 

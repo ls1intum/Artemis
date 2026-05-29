@@ -43,8 +43,8 @@ import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
-import de.tum.cit.aet.artemis.programming.service.GitService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 
 /**
  * Service responsible for mapping review thread anchors and inline-fix ranges across exercise versions.

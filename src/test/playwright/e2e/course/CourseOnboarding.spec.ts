@@ -5,7 +5,7 @@ import { expect } from '@playwright/test';
 import { generateUUID } from '../../support/utils';
 import { BASE_API } from '../../support/constants';
 
-const COURSE_UPDATE_BASE = `${BASE_API}/core/courses`;
+const COURSE_UPDATE_BASE = `${BASE_API}/course/courses`;
 
 test.describe('Course onboarding wizard', { tag: '@fast' }, () => {
     let course: Course;

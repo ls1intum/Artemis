@@ -1,10 +1,10 @@
 import { Component, OnInit, input } from '@angular/core';
-import { ImageComponent } from 'app/shared/image/image.component';
+import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { RouterModule } from '@angular/router';
 import { CommonModule, SlicePipe } from '@angular/common';
-import { getContrastingTextColor } from 'app/shared/util/color.utils';
-import { CourseNotificationBubbleComponent } from 'app/communication/course-notification/course-notification-bubble/course-notification-bubble.component';
+import { getContrastingTextColor } from 'app/foundation/util/color.utils';
+import { CourseNotificationBubbleComponent } from 'app/notification/course-notification/course-notification-bubble/course-notification-bubble.component';
 
 @Component({
     selector: 'jhi-course-card-header',
