@@ -55,7 +55,7 @@ jobs:
           path: android-repo
 
       - name: Gradle Wrapper Verification
-        uses: gradle/actions/wrapper-validation@v6
+        uses: gradle/actions/wrapper-validation@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e  # v6.1.0
 
         # sanity cleanup
       - name: Stop mysql server
@@ -83,7 +83,7 @@ jobs:
 
         # Use check to wait for the artemis server to come online. Periodically ping the server for sign of life.
       - name: Wait for Artemis Server to be healthy
-        uses: nick-fields/retry@v4
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60  # v4.0.0
         with:
           timeout_minutes: 10
           retry_wait_seconds: 10
@@ -106,7 +106,7 @@ jobs:
         continue-on-error: true
 
       - name: Test Report
-        uses: dorny/test-reporter@v3
+        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2  # v3.0.0
         if: ${{ !cancelled() }}    # run this step even if previous step failed
         with:
           name: Android E2E Test Results
