@@ -1,10 +1,10 @@
-package de.tum.cit.aet.artemis.core.repository;
+package de.tum.cit.aet.artemis.account.repository;
 
-import static de.tum.cit.aet.artemis.core.repository.OrganizationSpecs.getCoursePredicate;
-import static de.tum.cit.aet.artemis.core.repository.OrganizationSpecs.getCourseSpecification;
-import static de.tum.cit.aet.artemis.core.repository.OrganizationSpecs.getMemberPredicate;
-import static de.tum.cit.aet.artemis.core.repository.OrganizationSpecs.getMemberSpecification;
-import static de.tum.cit.aet.artemis.core.repository.OrganizationSpecs.getOrganizationSpecification;
+import static de.tum.cit.aet.artemis.account.repository.OrganizationSpecs.getCoursePredicate;
+import static de.tum.cit.aet.artemis.account.repository.OrganizationSpecs.getCourseSpecification;
+import static de.tum.cit.aet.artemis.account.repository.OrganizationSpecs.getMemberPredicate;
+import static de.tum.cit.aet.artemis.account.repository.OrganizationSpecs.getMemberSpecification;
+import static de.tum.cit.aet.artemis.account.repository.OrganizationSpecs.getOrganizationSpecification;
 
 import java.util.List;
 
@@ -26,13 +26,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
+import de.tum.cit.aet.artemis.account.domain.Organization;
+import de.tum.cit.aet.artemis.account.domain.Organization_;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.domain.User_;
-import de.tum.cit.aet.artemis.core.domain.Organization;
-import de.tum.cit.aet.artemis.core.domain.Organization_;
-import de.tum.cit.aet.artemis.core.dto.OrganizationCourseDTO;
-import de.tum.cit.aet.artemis.core.dto.OrganizationDTO;
-import de.tum.cit.aet.artemis.core.dto.OrganizationMemberDTO;
+import de.tum.cit.aet.artemis.account.dto.OrganizationCourseDTO;
+import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
+import de.tum.cit.aet.artemis.account.dto.OrganizationMemberDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;

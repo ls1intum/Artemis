@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.repository;
+package de.tum.cit.aet.artemis.account.repository;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -13,10 +13,10 @@ import jakarta.persistence.criteria.Root;
 import org.jspecify.annotations.NonNull;
 import org.springframework.data.jpa.domain.Specification;
 
+import de.tum.cit.aet.artemis.account.domain.Organization;
+import de.tum.cit.aet.artemis.account.domain.Organization_;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.domain.User_;
-import de.tum.cit.aet.artemis.core.domain.Organization;
-import de.tum.cit.aet.artemis.core.domain.Organization_;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.Course_;
 

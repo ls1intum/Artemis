@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.web;
+package de.tum.cit.aet.artemis.account.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -15,8 +15,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.domain.Organization;
-import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
+import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
+import de.tum.cit.aet.artemis.account.domain.Organization;
+import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 
 /**
@@ -25,7 +26,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 @Profile(PROFILE_CORE)
 @Lazy
 @RestController
-@RequestMapping("api/core/")
+@RequestMapping({ "api/account/", AccountLegacyRestPaths.CORE_PREFIX })
 public class OrganizationResource {
 
     private static final Logger log = LoggerFactory.getLogger(OrganizationResource.class);

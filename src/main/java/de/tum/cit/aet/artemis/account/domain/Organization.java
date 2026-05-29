@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.domain;
+package de.tum.cit.aet.artemis.account.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -8,6 +8,8 @@ import jakarta.validation.constraints.Size;
 import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 @Entity
 @Table(name = "organization")
