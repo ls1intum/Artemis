@@ -1,4 +1,6 @@
+import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { SidebarCardItemComponent } from 'app/course/sidebar/sidebar-card-item/sidebar-card-item.component';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
@@ -8,6 +10,7 @@ import { MockComponent } from 'ng-mocks';
 import { SidebarCardSize } from 'app/foundation/types/sidebar';
 
 describe('SidebarCardItemComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: SidebarCardItemComponent;
     let fixture: ComponentFixture<SidebarCardItemComponent>;
     let sidebarItemMock: any;

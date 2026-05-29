@@ -1,4 +1,6 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -14,6 +16,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('OrganizationSelectorComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: OrganizationSelectorComponent;
     let fixture: ComponentFixture<OrganizationSelectorComponent>;
     let organizationService: OrganizationManagementService;
@@ -51,22 +54,22 @@ describe('OrganizationSelectorComponent', () => {
         fixture = TestBed.createComponent(OrganizationSelectorComponent);
         component = fixture.componentInstance;
         organizationService = TestBed.inject(OrganizationManagementService);
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should load organizations via paginated endpoint', () => {
-        jest.spyOn(organizationService, 'getOrganizations').mockReturnValue(of({ content: [organization1, organization2], totalElements: 2 }));
+        vi.spyOn(organizationService, 'getOrganizations').mockReturnValue(of({ content: [organization1, organization2], totalElements: 2 }));
 
         component.loadOrganizations({} as TableLazyLoadEvent);
 
         expect(component).toBeTruthy();
-        expect(component.isLoading()).toBeFalse();
+        expect(component.isLoading()).toBe(false);
         expect(component.totalCount()).toBe(2);
         expect(component.organizations()).toHaveLength(2);
     });
 
     it('should call getOrganizations without withCounts (uses default false)', () => {
-        const spy = jest.spyOn(organizationService, 'getOrganizations').mockReturnValue(of({ content: [], totalElements: 0 }));
+        const spy = vi.spyOn(organizationService, 'getOrganizations').mockReturnValue(of({ content: [], totalElements: 0 }));
 
         component.loadOrganizations({} as TableLazyLoadEvent);
 
@@ -77,23 +80,23 @@ describe('OrganizationSelectorComponent', () => {
 
     it('should mark already-assigned organizations as disabled', () => {
         // organization1 (id=5) is in the dialog config as already assigned
-        expect(component.isAlreadyAssigned()(organization1)).toBeTrue();
-        expect(component.isAlreadyAssigned()(organization2)).toBeFalse();
+        expect(component.isAlreadyAssigned()(organization1)).toBe(true);
+        expect(component.isAlreadyAssigned()(organization2)).toBe(false);
     });
 
     it('should handle error when loading organizations', () => {
-        jest.spyOn(organizationService, 'getOrganizations').mockReturnValue(throwError(() => new Error('Network error')));
+        vi.spyOn(organizationService, 'getOrganizations').mockReturnValue(throwError(() => new Error('Network error')));
 
         component.loadOrganizations({} as TableLazyLoadEvent);
 
-        expect(component.isLoading()).toBeFalse();
+        expect(component.isLoading()).toBe(false);
         expect(component.totalCount()).toBe(0);
         expect(component.organizations()).toHaveLength(0);
     });
 
     it('should close modal with organization', () => {
         const dialogRef = TestBed.inject(DynamicDialogRef);
-        const closeSpy = jest.spyOn(dialogRef, 'close');
+        const closeSpy = vi.spyOn(dialogRef, 'close');
 
         component.selectOrganization(organization1);
 
@@ -102,7 +105,7 @@ describe('OrganizationSelectorComponent', () => {
 
     it('should close modal with undefined on cancel', () => {
         const dialogRef = TestBed.inject(DynamicDialogRef);
-        const closeSpy = jest.spyOn(dialogRef, 'close');
+        const closeSpy = vi.spyOn(dialogRef, 'close');
 
         component.closeModal(undefined);
 

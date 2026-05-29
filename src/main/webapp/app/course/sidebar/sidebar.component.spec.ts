@@ -1,4 +1,6 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { SidebarCardMediumComponent } from 'app/course/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardItemComponent } from 'app/course/sidebar/sidebar-card-item/sidebar-card-item.component';
@@ -26,8 +28,11 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('SidebarComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: SidebarComponent;
     let fixture: ComponentFixture<SidebarComponent>;
     let modalService: NgbModal;
@@ -41,8 +46,6 @@ describe('SidebarComponent', () => {
                 MockDirective(TranslateDirective),
                 MockComponent(ExerciseFilterModalComponent),
                 FaIconComponent,
-            ],
-            declarations: [
                 SidebarComponent,
                 SidebarCardMediumComponent,
                 SidebarCardItemComponent,
@@ -58,6 +61,7 @@ describe('SidebarComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 
@@ -176,9 +180,9 @@ describe('SidebarComponent', () => {
                     filterApplied: filterAppliedMock,
                 },
             } as NgbModalRef;
-            const openModalSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
-            const openFilterExercisesDialogSpy = jest.spyOn(component, 'openFilterExercisesDialog');
-            const initFilterOptionsSpy = jest.spyOn(component, 'initializeFilterOptions');
+            const openModalSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+            const openFilterExercisesDialogSpy = vi.spyOn(component, 'openFilterExercisesDialog');
+            const initFilterOptionsSpy = vi.spyOn(component, 'initializeFilterOptions');
 
             const filterLink = fixture.debugElement.query(By.css(FILTER_LINK_SELECTOR)).nativeElement;
             filterLink.click();
@@ -195,7 +199,7 @@ describe('SidebarComponent', () => {
         });
 
         it('should emit onDirectChatPressed and set showChatDropdown to false when createDirectChat is called', () => {
-            jest.spyOn(component.onDirectChatPressed, 'emit');
+            vi.spyOn(component.onDirectChatPressed, 'emit');
 
             component.createDirectChat();
 
@@ -203,7 +207,7 @@ describe('SidebarComponent', () => {
         });
 
         it('should emit onGroupChatPressed and set showChatDropdown to false when createGroupChat is called', () => {
-            jest.spyOn(component.onGroupChatPressed, 'emit');
+            vi.spyOn(component.onGroupChatPressed, 'emit');
 
             component.createGroupChat();
 
@@ -211,7 +215,7 @@ describe('SidebarComponent', () => {
         });
 
         it('should emit onBrowsePressed and set showChannelDropdown to false when browseChannels is called', () => {
-            jest.spyOn(component.onBrowsePressed, 'emit');
+            vi.spyOn(component.onBrowsePressed, 'emit');
 
             component.browseChannels();
 
@@ -219,7 +223,7 @@ describe('SidebarComponent', () => {
         });
 
         it('should emit onCreateChannelPressed and set showChannelDropdown to false when createNewChannel is called', () => {
-            jest.spyOn(component.onCreateChannelPressed, 'emit');
+            vi.spyOn(component.onCreateChannelPressed, 'emit');
 
             component.createNewChannel();
 
@@ -235,8 +239,8 @@ describe('SidebarComponent', () => {
                     filterApplied: filterAppliedEmitter,
                 },
             };
-            const openSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
-            const subscribeSpy = jest.spyOn(filterAppliedEmitter, 'subscribe');
+            const openSpy = vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+            const subscribeSpy = vi.spyOn(filterAppliedEmitter, 'subscribe');
 
             component.openFilterExercisesDialog();
 
@@ -251,7 +255,7 @@ describe('SidebarComponent', () => {
                     filterApplied: filterAppliedEmitter,
                 },
             };
-            jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+            vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
 
             const mockFilterResults: ExerciseFilterResults = {
                 filteredSidebarData: {
@@ -294,7 +298,7 @@ describe('SidebarComponent', () => {
 
             expect(component.sidebarData).toEqual(mockFilterResults.filteredSidebarData);
             expect(component.exerciseFilters).toEqual(mockFilterResults.appliedExerciseFilters);
-            expect(component.isFilterActive).toBeTrue();
+            expect(component.isFilterActive).toBe(true);
         });
 
         it('should show "Create Channel" button when canCreateChannel is true', () => {

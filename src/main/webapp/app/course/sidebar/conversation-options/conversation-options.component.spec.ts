@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DialogService } from 'primeng/dynamicdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -36,12 +38,13 @@ examples.forEach((conversation) => {
     const testDescription = conversation();
 
     describe('ConversationOptionsComponent with ' + (testDescription instanceof ChannelDTO ? testDescription.subType + ' ' : '') + testDescription.type, () => {
+        setupTestBed({ zoneless: true });
         let component: ConversationOptionsComponent;
         let fixture: ComponentFixture<ConversationOptionsComponent>;
         let conversationService: ConversationService;
-        let updateIsFavoriteSpy: jest.SpyInstance;
-        let updateIsHiddenSpy: jest.SpyInstance;
-        let updateIsMutedSpy: jest.SpyInstance;
+        let updateIsFavoriteSpy: ReturnType<typeof vi.spyOn>;
+        let updateIsHiddenSpy: ReturnType<typeof vi.spyOn>;
+        let updateIsMutedSpy: ReturnType<typeof vi.spyOn>;
         const course = { id: 1 } as any;
 
         beforeEach(() => {
@@ -64,9 +67,9 @@ examples.forEach((conversation) => {
 
             fixture = TestBed.createComponent(ConversationOptionsComponent);
             conversationService = TestBed.inject(ConversationService);
-            updateIsFavoriteSpy = jest.spyOn(conversationService, 'updateIsFavorite').mockReturnValue(of(new HttpResponse<void>()));
-            updateIsHiddenSpy = jest.spyOn(conversationService, 'updateIsHidden').mockReturnValue(of(new HttpResponse<void>()));
-            updateIsMutedSpy = jest.spyOn(conversationService, 'updateIsMuted').mockReturnValue(of(new HttpResponse<void>()));
+            updateIsFavoriteSpy = vi.spyOn(conversationService, 'updateIsFavorite').mockReturnValue(of(new HttpResponse<void>()));
+            updateIsHiddenSpy = vi.spyOn(conversationService, 'updateIsHidden').mockReturnValue(of(new HttpResponse<void>()));
+            updateIsMutedSpy = vi.spyOn(conversationService, 'updateIsMuted').mockReturnValue(of(new HttpResponse<void>()));
 
             component = fixture.componentInstance;
             component.conversation = conversation();
@@ -74,18 +77,23 @@ examples.forEach((conversation) => {
             fixture.detectChanges();
         });
 
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
         it('should create', () => {
             expect(component).toBeTruthy();
         });
 
-        it('should remove conversation from favorites when hidden', fakeAsync(() => {
+        it('should remove conversation from favorites when hidden', async () => {
+            vi.useFakeTimers();
             component.conversation.isFavorite = true;
             component.conversation.isHidden = false;
             fixture.changeDetectorRef.detectChanges();
 
             const hideButton = fixture.debugElement.nativeElement.querySelector('.hide');
             hideButton.click();
-            tick(501);
+            await vi.advanceTimersByTimeAsync(501);
 
             expect(updateIsFavoriteSpy).toHaveBeenCalledOnce();
             expect(updateIsFavoriteSpy).toHaveBeenCalledWith(course.id, component.conversation.id, false);
@@ -93,18 +101,19 @@ examples.forEach((conversation) => {
             expect(updateIsHiddenSpy).toHaveBeenCalledOnce();
             expect(updateIsHiddenSpy).toHaveBeenCalledWith(course.id, component.conversation.id, true);
 
-            expect(component.conversation.isFavorite).toBeFalse();
-            expect(component.conversation.isHidden).toBeTrue();
-        }));
+            expect(component.conversation.isFavorite).toBe(false);
+            expect(component.conversation.isHidden).toBe(true);
+        });
 
-        it('should remove conversation from hidden when favorited', fakeAsync(() => {
+        it('should remove conversation from hidden when favorited', async () => {
+            vi.useFakeTimers();
             component.conversation.isFavorite = false;
             component.conversation.isHidden = true;
             fixture.changeDetectorRef.detectChanges();
 
             const favoriteButton = fixture.debugElement.nativeElement.querySelector('.favorite');
             favoriteButton.click();
-            tick(501);
+            await vi.advanceTimersByTimeAsync(501);
 
             expect(updateIsHiddenSpy).toHaveBeenCalledOnce();
             expect(updateIsHiddenSpy).toHaveBeenCalledWith(course.id, component.conversation.id, false);
@@ -112,51 +121,54 @@ examples.forEach((conversation) => {
             expect(updateIsFavoriteSpy).toHaveBeenCalledOnce();
             expect(updateIsFavoriteSpy).toHaveBeenCalledWith(course.id, component.conversation.id, true);
 
-            expect(component.conversation.isHidden).toBeFalse();
-            expect(component.conversation.isFavorite).toBeTrue();
-        }));
+            expect(component.conversation.isHidden).toBe(false);
+            expect(component.conversation.isFavorite).toBe(true);
+        });
 
-        it('should call updateIsFavorite when button is clicked', fakeAsync(() => {
+        it('should call updateIsFavorite when button is clicked', async () => {
+            vi.useFakeTimers();
             const button = fixture.debugElement.nativeElement.querySelector('.favorite');
             button.click();
-            tick(501);
+            await vi.advanceTimersByTimeAsync(501);
             expect(updateIsFavoriteSpy).toHaveBeenCalledOnce();
             expect(updateIsFavoriteSpy).toHaveBeenCalledWith(course.id, component.conversation.id, true);
-        }));
+        });
 
-        it('should call updateIsHidden when button is clicked', fakeAsync(() => {
+        it('should call updateIsHidden when button is clicked', async () => {
+            vi.useFakeTimers();
             const button = fixture.debugElement.nativeElement.querySelector('.hide');
             button.click();
-            tick(501);
+            await vi.advanceTimersByTimeAsync(501);
             expect(updateIsHiddenSpy).toHaveBeenCalledOnce();
             expect(updateIsHiddenSpy).toHaveBeenCalledWith(course.id, component.conversation.id, true);
-        }));
+        });
 
-        it('should call updateIsMuted when button is clicked', fakeAsync(() => {
+        it('should call updateIsMuted when button is clicked', async () => {
+            vi.useFakeTimers();
             const button = fixture.debugElement.nativeElement.querySelector('.mute');
             button.click();
-            tick(501);
+            await vi.advanceTimersByTimeAsync(501);
             expect(updateIsMutedSpy).toHaveBeenCalledOnce();
             expect(updateIsMutedSpy).toHaveBeenCalledWith(course.id, component.conversation.id, true);
-        }));
+        });
 
-        it('should open channel overview dialog when button is pressed', fakeAsync(() => {
+        it('should open channel overview dialog when button is pressed', async () => {
             if (isOneToOneChatDTO(component.conversation)) {
                 // directMessages do not have a channel overview dialog
                 return;
             }
+            vi.useFakeTimers();
             fixture.detectChanges();
-            tick(301);
+            await vi.advanceTimersByTimeAsync(301);
             const dialogService = TestBed.inject(DialogService);
-            const openDialogSpy = jest.spyOn(dialogService, 'open').mockReturnValue({ onClose: of(undefined) } as any);
+            const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose: of(undefined) } as any);
             fixture.detectChanges();
 
             const dialogOpenButton = fixture.debugElement.nativeElement.querySelector('.setting');
             dialogOpenButton.click();
-            tick(301);
-            fixture.whenStable().then(() => {
-                expect(openDialogSpy).toHaveBeenCalledOnce();
-            });
-        }));
+            await vi.advanceTimersByTimeAsync(301);
+            await fixture.whenStable();
+            expect(openDialogSpy).toHaveBeenCalledOnce();
+        });
     });
 });

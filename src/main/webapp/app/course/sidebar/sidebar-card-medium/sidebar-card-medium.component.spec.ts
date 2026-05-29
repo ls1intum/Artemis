@@ -1,4 +1,6 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { SidebarCardMediumComponent } from 'app/course/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardItemComponent } from 'app/course/sidebar/sidebar-card-item/sidebar-card-item.component';
 import { MockModule } from 'ng-mocks';
@@ -9,6 +11,7 @@ import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 
 describe('SidebarCardMediumComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: SidebarCardMediumComponent;
     let fixture: ComponentFixture<SidebarCardMediumComponent>;
     let router: MockRouter;
@@ -16,8 +19,7 @@ describe('SidebarCardMediumComponent', () => {
     beforeEach(() => {
         router = new MockRouter();
         TestBed.configureTestingModule({
-            imports: [MockModule(RouterModule)],
-            declarations: [SidebarCardMediumComponent, SidebarCardItemComponent, MockRouterLinkDirective],
+            imports: [MockModule(RouterModule), SidebarCardMediumComponent, SidebarCardItemComponent, MockRouterLinkDirective],
             providers: [
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
@@ -66,8 +68,8 @@ describe('SidebarCardMediumComponent', () => {
     });
 
     it('should store target subroute and refresh on click when previously an item was selected', async () => {
-        jest.spyOn(component, 'storeTargetComponentSubRoute');
-        jest.spyOn(component, 'refreshChildComponent');
+        vi.spyOn(component, 'storeTargetComponentSubRoute');
+        vi.spyOn(component, 'refreshChildComponent');
         component.itemSelected = true;
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
@@ -82,8 +84,8 @@ describe('SidebarCardMediumComponent', () => {
     });
 
     it('should store target subroute on click when previously no item was selected', async () => {
-        jest.spyOn(component, 'storeTargetComponentSubRoute');
-        jest.spyOn(component, 'refreshChildComponent');
+        vi.spyOn(component, 'storeTargetComponentSubRoute');
+        vi.spyOn(component, 'refreshChildComponent');
         component.itemSelected = false;
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();

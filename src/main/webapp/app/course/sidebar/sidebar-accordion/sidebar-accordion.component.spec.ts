@@ -1,4 +1,6 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { SidebarAccordionComponent } from 'app/course/sidebar/sidebar-accordion/sidebar-accordion.component';
 import { SidebarCardMediumComponent } from 'app/course/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardItemComponent } from 'app/course/sidebar/sidebar-card-item/sidebar-card-item.component';
@@ -17,22 +19,27 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('SidebarAccordionComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: SidebarAccordionComponent;
     let localStorageService: LocalStorageService;
     let fixture: ComponentFixture<SidebarAccordionComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule), MockModule(NgbCollapseModule), MockModule(RouterModule), FaIconComponent],
-            declarations: [
+            imports: [
+                MockModule(NgbTooltipModule),
+                MockModule(NgbCollapseModule),
+                MockModule(RouterModule),
+                FaIconComponent,
                 SidebarAccordionComponent,
                 SidebarCardMediumComponent,
                 SidebarCardItemComponent,
                 SidebarCardDirective,
                 SearchFilterPipe,
-                SearchFilterComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(SearchFilterComponent),
                 MockPipe(ArtemisDatePipe),
@@ -40,6 +47,7 @@ describe('SidebarAccordionComponent', () => {
             providers: [
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 
@@ -69,20 +77,20 @@ describe('SidebarAccordionComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should toggle collapse state for a group', () => {
-        const storeSpy = jest.spyOn(localStorageService, 'store');
+        const storeSpy = vi.spyOn(localStorageService, 'store');
         const storageKey = `sidebar.accordion.collapseState.${component.storageId}.byCourse.${component.courseId}`;
         const groupKey = 'noDate';
 
         component.toggleGroupCategoryCollapse(groupKey);
         expect(storeSpy).toHaveBeenCalledWith(storageKey, expect.objectContaining({ [groupKey]: false }));
-        expect(component.collapseState[groupKey]).toBeFalse();
+        expect(component.collapseState[groupKey]).toBe(false);
 
         component.toggleGroupCategoryCollapse(groupKey);
-        expect(component.collapseState[groupKey]).toBeTrue();
+        expect(component.collapseState[groupKey]).toBe(true);
         expect(storeSpy).toHaveBeenCalledWith(storageKey, expect.objectContaining({ [groupKey]: true }));
     });
 
@@ -103,7 +111,7 @@ describe('SidebarAccordionComponent', () => {
     });
 
     it('should call expandAll when searchValue changes to a non-empty string', () => {
-        jest.spyOn(component, 'expandAll');
+        vi.spyOn(component, 'expandAll');
 
         component.searchValue = 'test';
         component.ngOnChanges();
@@ -112,7 +120,7 @@ describe('SidebarAccordionComponent', () => {
     });
 
     it('should call expandAll when filter is active', () => {
-        jest.spyOn(component, 'expandAll');
+        vi.spyOn(component, 'expandAll');
 
         component.isFilterActive = true;
         component.ngOnChanges();
@@ -127,7 +135,7 @@ describe('SidebarAccordionComponent', () => {
         component.searchValue = 'initial value';
         fixture.changeDetectorRef.detectChanges();
 
-        jest.spyOn(component, 'setStoredCollapseState');
+        vi.spyOn(component, 'setStoredCollapseState');
 
         // Simulate clearing the search value
         component.searchValue = '';
@@ -149,7 +157,7 @@ describe('SidebarAccordionComponent', () => {
         const itemDisplayedDiv: HTMLElement = fixture.nativeElement.querySelector(elementIdDisplayedDiv);
 
         expect(itemDisplayedDiv).toBeTruthy();
-        expect(itemDisplayedDiv.classList.contains('d-none')).toBeFalse();
+        expect(itemDisplayedDiv.classList.contains('d-none')).toBe(false);
 
         const elementIdHiddenDiv = `#test-accordion-item-container-0`;
         const itemHiddenDiv: HTMLElement = fixture.nativeElement.querySelector(elementIdHiddenDiv);
@@ -159,7 +167,7 @@ describe('SidebarAccordionComponent', () => {
 
     it('should expand the group containing the selected item', () => {
         component.expandGroupWithSelectedItem();
-        expect(component.collapseState['future']).toBeFalse();
+        expect(component.collapseState['future']).toBe(false);
     });
 
     it('should calculate unread messages of each group correctly', () => {

@@ -1,4 +1,6 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { SidebarCardSmallComponent } from 'app/course/sidebar/sidebar-card-small/sidebar-card-small.component';
 import { SidebarCardItemComponent } from 'app/course/sidebar/sidebar-card-item/sidebar-card-item.component';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
@@ -12,6 +14,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { MockActivatedRoute } from '../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
 
 describe('SidebarCardSmallComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: SidebarCardSmallComponent;
     let fixture: ComponentFixture<SidebarCardSmallComponent>;
     let router: MockRouter;
@@ -19,11 +22,10 @@ describe('SidebarCardSmallComponent', () => {
     beforeEach(() => {
         router = new MockRouter();
         TestBed.configureTestingModule({
-            imports: [MockModule(RouterModule)],
-            declarations: [
+            imports: [
+                MockModule(RouterModule),
                 SidebarCardSmallComponent,
                 SidebarCardItemComponent,
-                ConversationOptionsComponent,
                 MockRouterLinkDirective,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(ConversationOptionsComponent),
@@ -36,7 +38,12 @@ describe('SidebarCardSmallComponent', () => {
 
         const metisService = new MockMetisService();
         TestBed.overrideComponent(SidebarCardSmallComponent, {
-            set: {
+            // Replace the real (heavyweight) ConversationOptionsComponent — which pulls in
+            // ConversationService → TranslateService and routerLinkActive → router.parseUrl —
+            // with a lightweight mock, keeping this a focused unit test of the card itself.
+            remove: { imports: [ConversationOptionsComponent] },
+            add: {
+                imports: [MockComponent(ConversationOptionsComponent)],
                 providers: [{ provide: MetisService, useValue: metisService }],
             },
         });
@@ -58,8 +65,8 @@ describe('SidebarCardSmallComponent', () => {
     });
 
     it('should store route on click', () => {
-        jest.spyOn(component, 'emitStoreAndRefresh');
-        jest.spyOn(component, 'refreshChildComponent');
+        vi.spyOn(component, 'emitStoreAndRefresh');
+        vi.spyOn(component, 'refreshChildComponent');
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-small');
         element.click();
         fixture.changeDetectorRef.detectChanges();
@@ -72,7 +79,7 @@ describe('SidebarCardSmallComponent', () => {
    */
 
     it('should navigate to the item URL on click', async () => {
-        jest.spyOn(component, 'emitStoreAndRefresh');
+        vi.spyOn(component, 'emitStoreAndRefresh');
         component.itemSelected = true;
         fixture.changeDetectorRef.detectChanges();
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-small');
@@ -85,7 +92,7 @@ describe('SidebarCardSmallComponent', () => {
     });
 
     it('should navigate to the when no item was selected before', async () => {
-        jest.spyOn(component, 'emitStoreAndRefresh');
+        vi.spyOn(component, 'emitStoreAndRefresh');
         component.itemSelected = false;
         fixture.changeDetectorRef.detectChanges();
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-small');
@@ -106,7 +113,7 @@ describe('SidebarCardSmallComponent', () => {
         };
         fixture.changeDetectorRef.detectChanges();
         const card = fixture.nativeElement.querySelector('#test-sidebar-card-small');
-        expect(card.classList.contains('border-primary')).toBeFalse();
+        expect(card.classList.contains('border-primary')).toBe(false);
     });
 
     it('should have border-primary for non-muted conversations with unread', () => {
@@ -118,6 +125,6 @@ describe('SidebarCardSmallComponent', () => {
         };
         fixture.changeDetectorRef.detectChanges();
         const card = fixture.nativeElement.querySelector('#test-sidebar-card-small');
-        expect(card.classList.contains('border-primary')).toBeTrue();
+        expect(card.classList.contains('border-primary')).toBe(true);
     });
 });

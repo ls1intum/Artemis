@@ -1,4 +1,6 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component, Type, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
@@ -10,7 +12,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
  * We avoid importing SidebarCardSmallComponent, SidebarCardMediumComponent, and SidebarCardLargeComponent directly because their heavy dependency chains might
  * cause out-of-memory errors when running all tests on CI and slow down test execution.
  */
-function getCreatedComponentName(spy: jest.SpyInstance): string {
+function getCreatedComponentName(spy: ReturnType<typeof vi.spyOn>): string {
     return (spy.mock.calls[0][0] as Type<unknown>).name;
 }
 
@@ -24,6 +26,7 @@ class TestHostComponent {
 }
 
 describe('SidebarCardDirective', () => {
+    setupTestBed({ zoneless: true });
     let component: TestHostComponent;
     let fixture: ComponentFixture<TestHostComponent>;
     const router = new MockRouter();
@@ -57,7 +60,7 @@ describe('SidebarCardDirective', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('directive and viewContainerRef should be defined', () => {
@@ -66,7 +69,7 @@ describe('SidebarCardDirective', () => {
     });
 
     it('should create SidebarCardSmallComponent when size is "S"', () => {
-        const createComponentSpy = jest.spyOn(component.directive.viewContainerRef, 'createComponent');
+        const createComponentSpy = vi.spyOn(component.directive.viewContainerRef, 'createComponent');
         component.size = 'S';
         component.directive.sidebarItem = { title: 'exercise-TestTitle', id: '1', size: 'S' };
         component.directive.groupKey = 'exerciseChannels';
@@ -79,7 +82,7 @@ describe('SidebarCardDirective', () => {
     });
 
     it('should create SidebarCardMediumComponent when size is "M"', () => {
-        const createComponentSpy = jest.spyOn(component.directive.viewContainerRef, 'createComponent');
+        const createComponentSpy = vi.spyOn(component.directive.viewContainerRef, 'createComponent');
         component.size = 'M';
         component.directive.sidebarItem = { title: 'exercise-TestTitle', id: '1', size: 'M' };
         component.directive.groupKey = 'exerciseChannels';
@@ -91,7 +94,7 @@ describe('SidebarCardDirective', () => {
     });
 
     it('should create SidebarCardLargeComponent when size is "L"', () => {
-        const createComponentSpy = jest.spyOn(component.directive.viewContainerRef, 'createComponent');
+        const createComponentSpy = vi.spyOn(component.directive.viewContainerRef, 'createComponent');
         component.size = 'L';
         component.directive.sidebarItem = { title: 'exercise-TestTitle', id: '1', size: 'L' };
         component.directive.groupKey = 'exerciseChannels';

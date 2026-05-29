@@ -177,11 +177,13 @@ export default tseslint.config(
                     ],
                     patterns: [
                         {
-                            group: ['app/ui/**'],
+                            // Block both absolute (app/ui/**) and relative (../ui, ../../ui, …) imports
+                            // so the layer cannot be bypassed with a relative path.
+                            group: ['app/ui/**', '../**/ui/**'],
                             message: 'app/foundation/ must not depend on app/ui/. foundation/ is the base infrastructure layer (no DOM/UI). If a UI primitive is needed here, the file probably belongs in app/ui/ instead.',
                         },
                         {
-                            group: ['app/editor/**'],
+                            group: ['app/editor/**', '../**/editor/**'],
                             message: 'app/foundation/ must not depend on app/editor/. foundation/ is the base infrastructure layer. Extract the editor-side dependency to a neutral constant or move the consuming file into app/editor/.',
                         },
                     ],
@@ -202,7 +204,8 @@ export default tseslint.config(
                     ],
                     patterns: [
                         {
-                            group: ['app/editor/**'],
+                            // Block both absolute (app/editor/**) and relative (../editor, …) imports.
+                            group: ['app/editor/**', '../**/editor/**'],
                             message: 'app/ui/ must not depend on app/editor/. ui/ holds generic UI primitives; the editor stack is specialised and sits above ui/.',
                         },
                     ],

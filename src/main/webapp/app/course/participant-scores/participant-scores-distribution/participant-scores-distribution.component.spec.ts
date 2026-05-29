@@ -1,4 +1,6 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ParticipantScoresDistributionComponent } from 'app/course/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { MockProvider } from 'ng-mocks';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
@@ -9,6 +11,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ParticipantScoresDistributionComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ParticipantScoresDistributionComponent>;
     let component: ParticipantScoresDistributionComponent;
 
@@ -89,7 +92,7 @@ describe('ParticipantScoresDistributionComponent', () => {
             });
     });
 
-    afterEach(() => jest.restoreAllMocks());
+    afterEach(() => vi.restoreAllMocks());
 
     it('should setup default configuration if no grading scale exists', () => {
         expectedColoring = [...Array(8).fill(GraphColors.YELLOW), ...Array(12).fill(GraphColors.GREY)];
@@ -123,7 +126,7 @@ describe('ParticipantScoresDistributionComponent', () => {
 
         component.ngOnChanges();
 
-        expect(component.gradingScaleExists).toBeTrue();
+        expect(component.gradingScaleExists).toBe(true);
         expect(component.xAxisLabel).toBe('artemisApp.examScores.xAxesartemisApp.examScores.xAxesSuffixNoBonus');
         expect(component.yAxisLabel).toBe('artemisApp.examScores.yAxes');
         expect(component.helpIconTooltip).toBe('artemisApp.instructorDashboard.courseScoreChart.gradingScaleExplanationNotBonus');
@@ -147,8 +150,8 @@ describe('ParticipantScoresDistributionComponent', () => {
 
         component.ngOnChanges();
 
-        expect(component.gradingScaleExists).toBeTrue();
-        expect(component.isBonus).toBeTrue();
+        expect(component.gradingScaleExists).toBe(true);
+        expect(component.isBonus).toBe(true);
         expect(component.xAxisLabel).toBe('artemisApp.examScores.xAxesartemisApp.examScores.xAxesSuffixBonus');
         expect(component.yAxisLabel).toBe('artemisApp.examScores.yAxes');
         expect(component.helpIconTooltip).toBe('artemisApp.examScores.gradingScaleExplanationBonus');
@@ -173,7 +176,7 @@ describe('ParticipantScoresDistributionComponent', () => {
 
         component.ngOnChanges();
 
-        expect(component.gradingScaleExists).toBeTrue();
+        expect(component.gradingScaleExists).toBe(true);
         expect(component.xAxisLabel).toBe('artemisApp.examScores.xAxesartemisApp.examScores.xAxesSuffixNoBonus');
         expect(component.yAxisLabel).toBe('artemisApp.examScores.yAxes');
         expect(component.helpIconTooltip).toBe('artemisApp.instructorDashboard.courseScoreChart.gradingScaleExplanationNotBonus');
@@ -189,18 +192,18 @@ describe('ParticipantScoresDistributionComponent', () => {
     });
 
     it('should listen to window resizing', () => {
-        const realignChartSpy = jest.spyOn(component, 'realignChart');
+        const realignChartSpy = vi.spyOn(component, 'realignChart');
 
         window['innerWidth'] = 700;
         window.dispatchEvent(new Event('resize'));
 
         expect(realignChartSpy).toHaveBeenCalledOnce();
-        expect(component.showYAxisLabel).toBeTrue();
+        expect(component.showYAxisLabel).toBe(true);
 
         window['innerWidth'] = 699;
         window.dispatchEvent(new Event('resize'));
 
         expect(realignChartSpy).toHaveBeenCalledTimes(2);
-        expect(component.showYAxisLabel).toBeFalse();
+        expect(component.showYAxisLabel).toBe(false);
     });
 });

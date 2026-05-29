@@ -1,4 +1,6 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { SidebarCardLargeComponent } from 'app/course/sidebar/sidebar-card-large/sidebar-card-large.component';
 import { SidebarCardItemComponent } from 'app/course/sidebar/sidebar-card-item/sidebar-card-item.component';
 import { MockModule } from 'ng-mocks';
@@ -8,6 +10,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 
 describe('SidebarCardLargeComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: SidebarCardLargeComponent;
     let fixture: ComponentFixture<SidebarCardLargeComponent>;
     let router: MockRouter;
@@ -15,8 +18,7 @@ describe('SidebarCardLargeComponent', () => {
     beforeEach(() => {
         router = new MockRouter();
         TestBed.configureTestingModule({
-            imports: [MockModule(RouterModule)],
-            declarations: [SidebarCardLargeComponent, SidebarCardItemComponent, MockRouterLinkDirective],
+            imports: [MockModule(RouterModule), SidebarCardLargeComponent, SidebarCardItemComponent, MockRouterLinkDirective],
             providers: [
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
@@ -41,8 +43,8 @@ describe('SidebarCardLargeComponent', () => {
     });
 
     it('should store route on click', () => {
-        jest.spyOn(component, 'emitStoreAndRefresh');
-        jest.spyOn(component, 'refreshChildComponent');
+        vi.spyOn(component, 'emitStoreAndRefresh');
+        vi.spyOn(component, 'refreshChildComponent');
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-large');
         element.click();
         fixture.changeDetectorRef.detectChanges();
@@ -51,7 +53,7 @@ describe('SidebarCardLargeComponent', () => {
     });
 
     it('should navigate to the item URL on click', async () => {
-        jest.spyOn(component, 'emitStoreAndRefresh');
+        vi.spyOn(component, 'emitStoreAndRefresh');
         component.itemSelected = true;
         fixture.changeDetectorRef.detectChanges();
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-large');
@@ -64,7 +66,7 @@ describe('SidebarCardLargeComponent', () => {
     });
 
     it('should navigate to the when no item was selected before', async () => {
-        jest.spyOn(component, 'emitStoreAndRefresh');
+        vi.spyOn(component, 'emitStoreAndRefresh');
         component.itemSelected = false;
         fixture.changeDetectorRef.detectChanges();
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-large');
