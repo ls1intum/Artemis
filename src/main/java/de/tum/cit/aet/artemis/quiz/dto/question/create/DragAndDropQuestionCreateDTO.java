@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.quiz.dto.question.create;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -61,7 +63,7 @@ public record DragAndDropQuestionCreateDTO(@NotEmpty String title, String text, 
             tempToDropLocation.put(dropLocations.get(i).tempID(), locations.get(i));
         }
 
-        List<DragAndDropMapping> mappings = correctMappings.stream().map(m -> {
+        Set<DragAndDropMapping> mappings = correctMappings.stream().map(m -> {
             DragItem dragItem = tempToDragItem.get(m.dragItemTempId());
             DropLocation dropLocation = tempToDropLocation.get(m.dropLocationTempId());
             if (dragItem == null || dropLocation == null) {
@@ -71,7 +73,7 @@ public record DragAndDropQuestionCreateDTO(@NotEmpty String title, String text, 
             mapping.setDragItem(dragItem);
             mapping.setDropLocation(dropLocation);
             return mapping;
-        }).toList();
+        }).collect(Collectors.toSet());
         question.setCorrectMappings(mappings);
         return question;
     }

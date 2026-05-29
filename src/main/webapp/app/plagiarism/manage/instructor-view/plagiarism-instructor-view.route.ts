@@ -1,4 +1,4 @@
-import { IS_AT_LEAST_INSTRUCTOR } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_INSTRUCTOR } from 'app/foundation/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Routes } from '@angular/router';
 

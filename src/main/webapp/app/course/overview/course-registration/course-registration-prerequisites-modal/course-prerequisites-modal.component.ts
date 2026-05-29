@@ -1,12 +1,12 @@
 import { Component, effect, inject, input, model, untracked } from '@angular/core';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { finalize } from 'rxjs/operators';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
 import { DialogModule } from 'primeng/dialog';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-prerequisites-modal',

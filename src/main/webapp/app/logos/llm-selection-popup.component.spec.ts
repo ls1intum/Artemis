@@ -5,7 +5,7 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { AccountService } from 'app/core/auth/account.service';
 import { signal } from '@angular/core';

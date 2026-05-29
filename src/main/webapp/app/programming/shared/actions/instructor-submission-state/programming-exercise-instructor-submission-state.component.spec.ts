@@ -2,8 +2,8 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { DebugElement } from '@angular/core';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { Subject, of } from 'rxjs';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
@@ -17,11 +17,11 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/programming/shared/actions/trigger-all-button/programming-exercise-trigger-all-button.component';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
-import { DurationPipe } from 'app/shared/pipes/duration.pipe';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { DurationPipe } from 'app/foundation/pipes/duration.pipe';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FeatureToggleLinkDirective } from 'app/foundation/feature-toggle/feature-toggle-link.directive';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';

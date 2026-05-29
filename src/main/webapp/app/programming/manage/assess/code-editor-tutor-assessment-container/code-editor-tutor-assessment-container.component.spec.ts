@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { BehaviorSubject, firstValueFrom, of, throwError } from 'rxjs';
 import { outputToObservable } from '@angular/core/rxjs-interop';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
@@ -40,7 +40,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockAthenaService } from 'test/helpers/mocks/service/mock-athena.service';
@@ -49,11 +49,12 @@ import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-obser
 import { EntityResponseType } from 'app/exercise/result/result.service';
 import { CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import dayjs from 'dayjs/esm';
-import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
-import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { MonacoEditorLineHighlight } from 'app/editor/monaco-editor/model/monaco-editor-line-highlight.model';
+import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
@@ -190,7 +191,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         lockAndGetProgrammingSubmissionParticipationStub = jest
             .spyOn(programmingSubmissionService, 'lockAndGetProgrammingSubmissionParticipation')
             .mockReturnValue(of(submission).pipe(delay(100)));
-        findBySubmissionIdStub = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as HttpResponse<Complaint>));
+        findBySubmissionIdStub = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as HttpResponse<ComplaintDTO>));
         getIdentityStub = jest.spyOn(accountService, 'identity').mockReturnValue(new Promise((promise) => promise(user)));
         getProgrammingSubmissionForExerciseWithoutAssessmentStub = jest
             .spyOn(programmingSubmissionService, 'getSubmissionWithoutAssessment')
@@ -646,6 +647,33 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             }
         }),
     );
+
+    it('should send the reassembled feedbacks (not a stale snapshot) when resolving a complaint', fakeAsync(() => {
+        comp.ngOnInit();
+        tick(100);
+
+        // The editor state holds the up-to-date feedbacks the tutor just edited...
+        comp.referencedFeedback = [{ detailText: 'REF', credits: 1, reference: 'file:1', type: FeedbackType.MANUAL } as Feedback];
+        comp.unreferencedFeedback = [{ detailText: 'UNREF', credits: 1, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback];
+        comp.automaticFeedback = [{ detailText: 'AUTO', credits: 0, type: FeedbackType.AUTOMATIC } as Feedback];
+        // ...while the manual result still carries a stale feedback list that must NOT be the one sent to the server.
+        comp.manualResult!.feedbacks = [{ detailText: 'STALE', credits: 99, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback];
+
+        jest.spyOn(comp, 'validateFeedback').mockImplementation(() => (comp.assessmentsAreValid = true));
+        const assessmentAfterComplaint: AssessmentAfterComplaint = {
+            complaintResponse: new ComplaintResponse(),
+            onSuccess: () => {},
+            onError: () => {},
+        };
+
+        comp.onUpdateAssessmentAfterComplaint(assessmentAfterComplaint);
+        flush();
+
+        expect(updateAfterComplaintStub).toHaveBeenCalledOnce();
+        const sentFeedbacks: Feedback[] = updateAfterComplaintStub.mock.calls[0][0];
+        expect(sentFeedbacks.map((feedback) => feedback.detailText)).toEqual(['REF', 'UNREF', 'AUTO']);
+        expect(sentFeedbacks.some((feedback) => feedback.detailText === 'STALE')).toBeFalse();
+    }));
 
     it('should validate assessments after submission is received during component init', async () => {
         // make assessment valid

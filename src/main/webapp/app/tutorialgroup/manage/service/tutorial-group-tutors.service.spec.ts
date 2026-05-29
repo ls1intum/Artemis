@@ -6,7 +6,7 @@ import { of, throwError } from 'rxjs';
 import { User } from 'app/account/user/user.model';
 import { CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupTutorsService } from './tutorial-group-tutors.service';
 
 describe('TutorialGroupTutorsService', () => {

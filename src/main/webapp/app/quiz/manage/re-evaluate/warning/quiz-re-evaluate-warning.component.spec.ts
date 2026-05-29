@@ -18,7 +18,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { QuizReEvaluateService } from 'app/quiz/manage/re-evaluate/services/quiz-re-evaluate.service';
 import { QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 
 describe('QuizExercise Re-evaluate Warning Component', () => {
     setupTestBed({ zoneless: true });

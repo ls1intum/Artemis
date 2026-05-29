@@ -16,8 +16,8 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { CourseStatisticsComponent, NgxExercise } from 'app/course/overview/course-statistics/course-statistics.component';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { ChartCategoryFilter } from 'app/exercise/chart/chart-category-filter';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

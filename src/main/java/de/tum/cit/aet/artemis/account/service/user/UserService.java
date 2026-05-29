@@ -47,9 +47,6 @@ import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
-import de.tum.cit.aet.artemis.communication.service.CourseNotificationSettingService;
-import de.tum.cit.aet.artemis.communication.service.GlobalNotificationSettingService;
-import de.tum.cit.aet.artemis.communication.service.UserCourseNotificationStatusService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
@@ -67,9 +64,12 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
+import de.tum.cit.aet.artemis.localvc.service.sshuserkeys.UserSshPublicKeyService;
+import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingService;
+import de.tum.cit.aet.artemis.notification.service.GlobalNotificationSettingService;
+import de.tum.cit.aet.artemis.notification.service.UserCourseNotificationStatusService;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
-import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
-import de.tum.cit.aet.artemis.programming.service.sshuserkeys.UserSshPublicKeyService;
 
 /**
  * Service class for managing users.

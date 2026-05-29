@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
@@ -10,7 +10,7 @@ import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectur
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
 import { isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
 
 @Component({

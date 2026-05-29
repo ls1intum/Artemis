@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.course.config.CourseLegacyRestPaths;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseUpdateDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -50,7 +51,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementAp
 @Profile(PROFILE_CORE)
 @Lazy
 @RestController
-@RequestMapping("api/core/")
+@SuppressWarnings("deprecation")
+@RequestMapping({ "api/course/", CourseLegacyRestPaths.CORE_PREFIX })
 public class CourseUpdateResource {
 
     private static final Logger log = LoggerFactory.getLogger(CourseUpdateResource.class);

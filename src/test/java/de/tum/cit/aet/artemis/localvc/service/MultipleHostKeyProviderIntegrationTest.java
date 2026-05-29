@@ -1,0 +1,28 @@
+package de.tum.cit.aet.artemis.localvc.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.nio.file.Path;
+
+import org.junit.jupiter.api.Test;
+
+import de.tum.cit.aet.artemis.localvc.service.ssh.MultipleHostKeyProvider;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
+
+class MultipleHostKeyProviderIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
+
+    private static final String TEST_PREFIX = "multiplehostkeyprovider";
+
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
+
+    @Test
+    void testMultipleHostKeyProvider() {
+        MultipleHostKeyProvider multipleHostKeyProvider = new MultipleHostKeyProvider(Path.of("./"));
+
+        multipleHostKeyProvider.loadKeys(null);
+        assertThat(multipleHostKeyProvider.getKeySize()).isEqualTo(0);
+    }
+}

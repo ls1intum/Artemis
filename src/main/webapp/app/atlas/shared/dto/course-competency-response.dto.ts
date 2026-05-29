@@ -28,7 +28,7 @@ import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/at
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
-import { convertDateFromClient, convertDateStringFromServer } from 'app/shared/util/date.utils';
+import { convertDateFromClient, convertDateStringFromServer } from 'app/foundation/util/date.utils';
 
 export interface CourseCompetencyRequestDTO {
     id?: number;

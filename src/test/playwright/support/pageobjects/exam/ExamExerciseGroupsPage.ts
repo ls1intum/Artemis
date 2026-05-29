@@ -77,8 +77,20 @@ export class ExamExerciseGroupsPage {
     }
 
     async visitPageViaUrl(courseId: number, examId: number) {
-        await this.page.goto(`/course-management/${courseId}/exams/${examId}/exercise-groups`);
-        await this.page.locator('#number-groups').waitFor({ state: 'visible', timeout: 30000 });
+        // Reload once if the exercise-groups lazy chunk fails to render `#number-groups`
+        // within 30s under multi-node CI load (same pattern as other navigateToXxxPage
+        // helpers in this codebase).
+        const url = `/course-management/${courseId}/exams/${examId}/exercise-groups`;
+        const marker = this.page.locator('#number-groups');
+        await this.page.goto(url);
+        const visible = await marker
+            .waitFor({ state: 'visible', timeout: 30000 })
+            .then(() => true)
+            .catch(() => false);
+        if (!visible) {
+            await this.page.goto(url);
+            await marker.waitFor({ state: 'visible', timeout: 30000 });
+        }
     }
 
     async shouldContainExerciseWithTitle(groupID: number, exerciseTitle: string) {

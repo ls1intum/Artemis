@@ -1,10 +1,10 @@
-import { IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 export const repositorySubRoutes = [
     {
         path: '',
-        loadComponent: () => import('app/programming/shared/repository-view/repository-view.component').then((m) => m.RepositoryViewComponent),
+        loadComponent: () => import('app/localvc/repository-view/repository-view.component').then((m) => m.RepositoryViewComponent),
         data: {
             authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.repository.title',
@@ -13,7 +13,7 @@ export const repositorySubRoutes = [
     },
     {
         path: 'commit-history',
-        loadComponent: () => import('app/programming/shared/commit-history/commit-history.component').then((m) => m.CommitHistoryComponent),
+        loadComponent: () => import('app/localvc/commit-history/commit-history.component').then((m) => m.CommitHistoryComponent),
         data: {
             authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.repository.title',

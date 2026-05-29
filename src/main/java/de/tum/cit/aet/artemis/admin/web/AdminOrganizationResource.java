@@ -29,6 +29,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
 import de.tum.cit.aet.artemis.admin.dto.OrganizationCountDTO;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.dto.OrganizationCourseDTO;
@@ -50,7 +51,8 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 @EnforceAdmin
 @Lazy
 @RestController
-@RequestMapping("api/core/admin/")
+@SuppressWarnings("deprecation")
+@RequestMapping({ "api/admin/", LegacyAdminRestPaths.CORE_ADMIN_PREFIX })
 public class AdminOrganizationResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminOrganizationResource.class);

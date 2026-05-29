@@ -19,9 +19,6 @@ import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
-import de.tum.cit.aet.artemis.communication.repository.CourseNotificationRepository;
-import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingPresetRepository;
-import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingSpecificationRepository;
 import de.tum.cit.aet.artemis.communication.service.ConversationDataCleanupService;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
@@ -37,6 +34,9 @@ import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
+import de.tum.cit.aet.artemis.notification.repository.CourseNotificationRepository;
+import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationSettingPresetRepository;
+import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationSettingSpecificationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
 
 /**

@@ -101,8 +101,7 @@ public class ExerciseMetricsService {
 
         if (activeUserIds.isEmpty()) {
             // No active users, return zero counts for each exercise type
-            return typeGroups.stream().map(ExerciseTypeCourseDTO::exerciseType).distinct().map(type -> new ExerciseTypeMetricsEntry(type.getExerciseClass(), 0L))
-                    .collect(Collectors.toSet());
+            return typeGroups.stream().map(ExerciseTypeCourseDTO::exerciseType).distinct().map(type -> new ExerciseTypeMetricsEntry(type, 0L)).collect(Collectors.toSet());
         }
 
         // Step 3: Count active students per course via UserCourseRole, filtering to active user IDs
@@ -120,7 +119,6 @@ public class ExerciseMetricsService {
             typeToCount.merge(dto.exerciseType(), count, Long::sum);
         }
 
-        // Convert to result set — ExerciseTypeMetricsEntry takes the exercise Class, not the enum
-        return typeToCount.entrySet().stream().map(entry -> new ExerciseTypeMetricsEntry(entry.getKey().getExerciseClass(), entry.getValue())).collect(Collectors.toSet());
+        return typeToCount.entrySet().stream().map(entry -> new ExerciseTypeMetricsEntry(entry.getKey(), entry.getValue())).collect(Collectors.toSet());
     }
 }

@@ -1,6 +1,6 @@
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { convertDateFromClient } from 'app/shared/util/date.utils';
+import { convertDateFromClient } from 'app/foundation/util/date.utils';
 import { DifficultyLevel, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
