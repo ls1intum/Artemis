@@ -1536,7 +1536,7 @@ public class ProgrammingExerciseTestService {
     public void exportInstructorAuxiliaryRepository_forbidden() throws Exception {
         generateProgrammingExerciseForExport();
         var auxRepo = addAuxiliaryRepositoryToProgrammingExercise(exercise);
-        var url = "/api/programming/programming-exercises/" + exercise.getId() + "/export-instructor-auxiliary-repository/" + auxRepo.getId();
+        var url = "/api/programming/programming-exercises/" + exercise.getId() + "/export-instructor-auxiliary-repository?repositoryId=" + auxRepo.getId();
         request.get(url, HttpStatus.FORBIDDEN, String.class);
     }
 
@@ -1580,7 +1580,7 @@ public class ProgrammingExerciseTestService {
         HttpStatus expectedStatus = authorized ? HttpStatus.OK : HttpStatus.FORBIDDEN;
         generateProgrammingExerciseForExport();
         var participation = createStudentParticipationWithSubmission(INDIVIDUAL);
-        var url = "/api/programming/programming-exercises/" + exercise.getId() + "/export-student-repository/" + participation.getId();
+        var url = "/api/programming/programming-exercises/" + exercise.getId() + "/export-student-repository?participationId=" + participation.getId();
         String zip = request.get(url, expectedStatus, String.class);
         if (expectedStatus.is2xxSuccessful()) {
             assertThat(zip).isNotNull();

@@ -2108,7 +2108,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     private String defaultExportInstructorAuxiliaryRepository(Long exerciseId, Long repositoryId) {
-        return "/api/programming/programming-exercises/" + exerciseId + "/export-instructor-auxiliary-repository/" + repositoryId;
+        return "/api/programming/programming-exercises/" + exerciseId + "/export-instructor-auxiliary-repository?repositoryId=" + repositoryId;
     }
 
     private void testAuxRepo(AuxiliaryRepositoryBuilder body, HttpStatus expectedStatus) throws Exception {
@@ -2286,7 +2286,7 @@ public class ProgrammingExerciseIntegrationTestService {
         // @formatter:on
 
         Map<String, String> actualFiles = request.get(
-                "/api/programming/programming-exercise-participations/" + studentParticipation.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.OK,
+                "/api/programming/programming-exercise-participations/" + studentParticipation.getId() + "/files-content?commitId=" + submission.getCommitHash(), HttpStatus.OK,
                 new TypeReference<>() {
                 });
         assertThat(actualFiles).isEqualTo(expectedFiles);
@@ -2309,8 +2309,8 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, studentLogin);
 
         // Expect forbidden for current user
-        request.get("/api/programming/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.FORBIDDEN,
-                Map.class);
+        request.get("/api/programming/programming-exercise-participations/" + participation1.getId() + "/files-content?commitId=" + submission.getCommitHash(),
+                HttpStatus.FORBIDDEN, Map.class);
     }
 
     private long getMaxProgrammingExerciseId() {
@@ -2355,7 +2355,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
         localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, auxRepoName);
 
-        var url = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-auxiliary-repository/" + auxRepo.getId();
+        var url = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-auxiliary-repository?repositoryId=" + auxRepo.getId();
         request.get(url, HttpStatus.OK, String.class);
     }
 

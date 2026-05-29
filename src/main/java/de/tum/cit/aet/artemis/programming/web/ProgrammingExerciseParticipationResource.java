@@ -491,9 +491,11 @@ public class ProgrammingExerciseParticipationResource {
      * @param commitId        the id of the commit for which to retrieve the files content
      * @return The files of repository along with their content
      */
-    @GetMapping("programming-exercise-participations/{participationId}/files-content/{commitId}")
+    @GetMapping({ "programming-exercise-participations/{participationId}/files-content", "programming-exercise-participations/{participationId}/files-content/{commitId}" })
     @EnforceAtLeastInstructor
-    public ResponseEntity<Map<String, String>> getParticipationRepositoryFiles(@PathVariable long participationId, @PathVariable String commitId) {
+    public ResponseEntity<Map<String, String>> getParticipationRepositoryFiles(@PathVariable long participationId,
+            @RequestParam(name = "commitId", required = false) String commitIdQuery, @PathVariable(name = "commitId", required = false) String commitIdPath) {
+        String commitId = commitIdQuery != null ? commitIdQuery : commitIdPath;
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
@@ -517,10 +519,13 @@ public class ProgrammingExerciseParticipationResource {
      * @param repositoryType  the type of the repository for which to retrieve the files content
      * @return The files of the repository along with their content
      */
-    @GetMapping({ "programming-exercises/{exerciseId}/files-content-commit-details/{commitId}", "programming-exercise/{exerciseId}/files-content-commit-details/{commitId}" })
+    @GetMapping({ "programming-exercises/{exerciseId}/files-content-commit-details", "programming-exercises/{exerciseId}/files-content-commit-details/{commitId}",
+            "programming-exercise/{exerciseId}/files-content-commit-details/{commitId}" })
     @EnforceAtLeastStudent
-    public ResponseEntity<Map<String, String>> getParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long exerciseId, @PathVariable String commitId,
+    public ResponseEntity<Map<String, String>> getParticipationRepositoryFilesForCommitsDetailsView(@PathVariable long exerciseId,
+            @RequestParam(name = "commitId", required = false) String commitIdQuery, @PathVariable(name = "commitId", required = false) String commitIdPath,
             @RequestParam(required = false) Long participationId, @RequestParam(required = false) RepositoryType repositoryType) {
+        String commitId = commitIdQuery != null ? commitIdQuery : commitIdPath;
         try {
             if (participationId != null) {
                 Participation participation = participationRepository.findByIdElseThrow(participationId);

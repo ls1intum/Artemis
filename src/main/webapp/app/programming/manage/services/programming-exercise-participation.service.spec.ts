@@ -149,7 +149,7 @@ describe('ProgrammingExerciseParticipation Service', () => {
             files.set('file1', 'content1');
             files.set('file2', 'content2');
             service.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(exerciseId, participationId, commitId, repositoryType).subscribe();
-            const expectedURL = `${resourceUrl}${exerciseId}/files-content-commit-details/${commitId}?repositoryType=${repositoryType}&participationId=${participationId}`;
+            const expectedURL = `${resourceUrl}${exerciseId}/files-content-commit-details?commitId=${commitId}&repositoryType=${repositoryType}&participationId=${participationId}`;
             const req = httpMock.expectOne({ method: 'GET', url: expectedURL });
             req.flush(files);
             tick();
@@ -163,7 +163,7 @@ describe('ProgrammingExerciseParticipation Service', () => {
         files.set('file1', 'content1');
         files.set('file2', 'content2');
         service.getParticipationRepositoryFilesWithContentAtCommit(participationId, commitId).subscribe();
-        const expectedURL = `${resourceUrlParticipations}${participationId}/files-content/${commitId}`;
+        const expectedURL = `${resourceUrlParticipations}${participationId}/files-content?commitId=${commitId}`;
         const req = httpMock.expectOne({ method: 'GET', url: expectedURL });
         req.flush(files);
         tick();
@@ -210,7 +210,7 @@ describe('ProgrammingExerciseParticipation Service', () => {
 
         service.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(exerciseId, participationId, commitId).subscribe();
 
-        const expectedURL = `${resourceUrl}${exerciseId}/files-content-commit-details/${commitId}?participationId=${participationId}`;
+        const expectedURL = `${resourceUrl}${exerciseId}/files-content-commit-details?commitId=${commitId}&participationId=${participationId}`;
         const req = httpMock.expectOne({ method: 'GET', url: expectedURL });
         req.flush(files);
         tick();
@@ -225,7 +225,7 @@ describe('ProgrammingExerciseParticipation Service', () => {
 
         service.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(exerciseId, undefined, commitId, repositoryType).subscribe();
 
-        const expectedURL = `${resourceUrl}${exerciseId}/files-content-commit-details/${commitId}?repositoryType=${repositoryType}`;
+        const expectedURL = `${resourceUrl}${exerciseId}/files-content-commit-details?commitId=${commitId}&repositoryType=${repositoryType}`;
         const req = httpMock.expectOne({ method: 'GET', url: expectedURL });
         req.flush(files);
         tick();
@@ -334,7 +334,7 @@ describe('ProgrammingExerciseParticipation Service', () => {
                 expect(resp).toBeNull();
             });
 
-            const expectedURL = `${resourceUrlParticipations}${participationId}/files-content/${commitId}`;
+            const expectedURL = `${resourceUrlParticipations}${participationId}/files-content?commitId=${commitId}`;
             const req = httpMock.expectOne({ method: 'GET', url: expectedURL });
             req.flush(null);
             tick();

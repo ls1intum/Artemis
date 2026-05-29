@@ -71,12 +71,8 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
             // modeling
             "api/modeling/modeling-submissions/{exampleSubmissionId}/example-assessment",
             // programming
-            "api/programming/sharing/export/{exerciseId}", "api/programming/programming-exercise-participations/{participationId}/files-content/{commitId}",
-            "api/programming/programming-exercises/{exerciseId}/files-content-commit-details/{commitId}",
-            "api/programming/programming-exercises/{exerciseId}/export-instructor-auxiliary-repository/{repositoryId}",
-            "api/programming/programming-exercises/{exerciseId}/export-student-repository/{participationId}",
-            "api/programming/programming-submissions/{participationId}/trigger-build", "api/programming/programming-submissions/{participationId}/trigger-failed-build",
-            "api/programming/repository-files-content/{commitId}",
+            "api/programming/sharing/export/{exerciseId}", "api/programming/programming-submissions/{participationId}/trigger-build",
+            "api/programming/programming-submissions/{participationId}/trigger-failed-build",
             // text
             "api/text/admin/event-insights/text-assessment/events/{courseId}",
             // tutorialgroup (collection "tutorial-free-periods" mismatches its id {tutorialGroupFreePeriodId}: rename the

@@ -118,10 +118,14 @@ public class ProgrammingExerciseRepositoryExportResource {
      * @return ResponseEntity with status
      * @throws IOException if something during the zip process went wrong
      */
-    @GetMapping("programming-exercises/{exerciseId}/export-instructor-auxiliary-repository/{repositoryId}")
+    @GetMapping({ "programming-exercises/{exerciseId}/export-instructor-auxiliary-repository",
+            "programming-exercises/{exerciseId}/export-instructor-auxiliary-repository/{repositoryId}" })
     @EnforceAtLeastTutorInExercise(resourceIdFieldName = "exerciseId")
     @FeatureToggle(Feature.Exports)
-    public ResponseEntity<Resource> exportInstructorAuxiliaryRepository(@PathVariable long exerciseId, @PathVariable long repositoryId) throws IOException {
+    public ResponseEntity<Resource> exportInstructorAuxiliaryRepository(@PathVariable long exerciseId,
+            @RequestParam(name = "repositoryId", required = false) Long repositoryIdQuery, @PathVariable(name = "repositoryId", required = false) Long repositoryIdPath)
+            throws IOException {
+        long repositoryId = repositoryIdQuery != null ? repositoryIdQuery : (repositoryIdPath != null ? repositoryIdPath : -1L);
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
 
@@ -204,10 +208,12 @@ public class ProgrammingExerciseRepositoryExportResource {
      * @return A ResponseEntity containing the zipped repository.
      * @throws IOException If the repository could not be zipped.
      */
-    @GetMapping("programming-exercises/{exerciseId}/export-student-repository/{participationId}")
+    @GetMapping({ "programming-exercises/{exerciseId}/export-student-repository", "programming-exercises/{exerciseId}/export-student-repository/{participationId}" })
     @EnforceAtLeastStudentInExercise(resourceIdFieldName = "exerciseId")
     @FeatureToggle(Feature.Exports)
-    public ResponseEntity<Resource> exportStudentRepository(@PathVariable long exerciseId, @PathVariable long participationId) throws IOException {
+    public ResponseEntity<Resource> exportStudentRepository(@PathVariable long exerciseId, @RequestParam(name = "participationId", required = false) Long participationIdQuery,
+            @PathVariable(name = "participationId", required = false) Long participationIdPath) throws IOException {
+        long participationId = participationIdQuery != null ? participationIdQuery : (participationIdPath != null ? participationIdPath : -1L);
         var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
         var studentParticipation = programmingExercise.getStudentParticipations().stream().filter(p -> p.getId().equals(participationId))
                 .map(p -> (ProgrammingExerciseStudentParticipation) p).findFirst()

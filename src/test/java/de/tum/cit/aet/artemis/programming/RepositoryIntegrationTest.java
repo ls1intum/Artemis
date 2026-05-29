@@ -89,7 +89,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
     private final String participationsBaseUrl = "/api/programming/participations/";
 
-    private final String filesContentBaseUrl = "/api/programming/repository-files-content/";
+    private final String filesContentBaseUrl = "/api/programming/repository-files-content?commitId=";
 
     private ProgrammingExercise programmingExercise;
 
@@ -296,7 +296,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         prepareRepository();
         String commitHash = getCommitHash(studentRepository.workingCopyGitRepo);
         courseUtilService.updateCourseGroups("abc", course, "");
-        request.getMap(filesContentBaseUrl + commitHash + "?participationId=" + participation.getId(), HttpStatus.FORBIDDEN, String.class, String.class);
+        request.getMap(filesContentBaseUrl + commitHash + "&participationId=" + participation.getId(), HttpStatus.FORBIDDEN, String.class, String.class);
         courseUtilService.updateCourseGroups(TEST_PREFIX, course, "");
     }
 
@@ -306,7 +306,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         prepareRepository();
         String commitHash = getCommitHash(studentRepository.workingCopyGitRepo);
         courseUtilService.updateCourseGroups("abc", course, "");
-        request.getMap(filesContentBaseUrl + commitHash + "?participationId=" + participation.getId(), HttpStatus.FORBIDDEN, String.class, String.class);
+        request.getMap(filesContentBaseUrl + commitHash + "&participationId=" + participation.getId(), HttpStatus.FORBIDDEN, String.class, String.class);
         courseUtilService.updateCourseGroups(TEST_PREFIX, course, "");
     }
 
@@ -316,7 +316,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         prepareRepository();
         String commitHash = getCommitHash(studentRepository.workingCopyGitRepo);
         courseUtilService.updateCourseGroups("abc", course, "");
-        request.getMap(filesContentBaseUrl + commitHash + "?participationId=" + participation.getId(), HttpStatus.FORBIDDEN, String.class, String.class);
+        request.getMap(filesContentBaseUrl + commitHash + "&participationId=" + participation.getId(), HttpStatus.FORBIDDEN, String.class, String.class);
         courseUtilService.updateCourseGroups(TEST_PREFIX, course, "");
     }
 
@@ -326,7 +326,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testGetFilesWithContentAtCommit() throws Exception {
         prepareRepository();
         String commitHash = getCommitHash(studentRepository.workingCopyGitRepo);
-        var files = request.getMap(filesContentBaseUrl + commitHash + "?participationId=" + participation.getId(), HttpStatus.OK, String.class, String.class);
+        var files = request.getMap(filesContentBaseUrl + commitHash + "&participationId=" + participation.getId(), HttpStatus.OK, String.class, String.class);
         assertThat(files).isNotEmpty();
 
         // Check if all files exist
@@ -339,7 +339,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFilesWithContentAtCommitParticipationNotFound() throws Exception {
-        request.getMap(filesContentBaseUrl + "abc?participationId=" + UUID.randomUUID().getLeastSignificantBits(), HttpStatus.NOT_FOUND, String.class, String.class);
+        request.getMap(filesContentBaseUrl + "abc&participationId=" + UUID.randomUUID().getLeastSignificantBits(), HttpStatus.NOT_FOUND, String.class, String.class);
     }
 
     private void prepareRepository() throws GitAPIException, IOException {

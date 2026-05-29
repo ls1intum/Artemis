@@ -96,7 +96,7 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
      * @param commitId of the commit to get the files for
      */
     getParticipationRepositoryFilesWithContentAtCommit(participationId: number, commitId: string): Observable<Map<string, string> | undefined> {
-        return this.http.get(`${this.resourceUrlParticipations}${participationId}/files-content/${commitId}`).pipe(
+        return this.http.get(`${this.resourceUrlParticipations}${participationId}/files-content?commitId=${commitId}`).pipe(
             map((res: HttpResponse<any>) => {
                 // this mapping is required because otherwise the HttpResponse object would be parsed
                 // to an arbitrary object (and not a map)
@@ -127,7 +127,7 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
         if (participationId) {
             params['participationId'] = participationId;
         }
-        return this.http.get(`${this.resourceUrl}${exerciseId}/files-content-commit-details/${commitId}`, { params: params }).pipe(
+        return this.http.get(`${this.resourceUrl}${exerciseId}/files-content-commit-details?commitId=${commitId}`, { params: params }).pipe(
             map((res: HttpResponse<any>) => {
                 // this mapping is required because otherwise the HttpResponse object would be parsed
                 // to an arbitrary object (and not a map)
