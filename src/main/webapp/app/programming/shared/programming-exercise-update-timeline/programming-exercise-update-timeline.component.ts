@@ -122,7 +122,9 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
         effect(() => {
             if (this.allowFeedbackRequests()) {
                 this.assessmentDueDate.set(undefined);
-                this.buildAndTestStudentSubmissionsAfterDueDate.set(undefined);
+                if (!this.isLocalCIEnabled) {
+                    this.buildAndTestStudentSubmissionsAfterDueDate.set(undefined);
+                }
             }
         });
         effect(() => {
@@ -181,6 +183,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.dateForRunningTestsAfterDueDate',
                 date: this.buildAndTestStudentSubmissionsAfterDueDate,
+                clearable: !this.isLocalCIEnabled,
             });
         }
         if (this.isDatePickerForSemiAutomaticAssessmentDueDateVisible()) {

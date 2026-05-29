@@ -286,8 +286,25 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
 
         expect(component.buildAndTestStudentSubmissionsAfterDueDate()?.toISOString()).toBe(afterDueDate.toISOString());
         expect(component.isDatePickerForRunningTestsAfterDueDateVisible()).toBe(true);
-        expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.dateForRunningTestsAfterDueDate')).toBe(true);
+        expect(component.timelineItems().find((item) => item.labelStringKey === 'artemisApp.exercise.dateForRunningTestsAfterDueDate')?.clearable).toBe(false);
         expect(fixture.debugElement.nativeElement.querySelector('#defineDateForRunningTestsAfterDueDate')).toBeNull();
+    });
+
+    it('should keep the automatically managed run tests after due date in LocalCI mode when feedback requests are enabled', () => {
+        vi.spyOn(profileService, 'isProfileActive').mockImplementation((profile) => profile === PROFILE_LOCALCI);
+        exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+        exercise.allowFeedbackRequests = false;
+        createTestComponent();
+
+        const req = httpTestingController.expectOne('api/programming/programming-exercises/timeline/automatic-after-due-date-preview');
+        req.flush(afterDueDate.toISOString());
+        fixture.detectChanges();
+
+        component.allowFeedbackRequests.set(true);
+        fixture.detectChanges();
+
+        expect(component.assessmentDueDate()).toBeUndefined();
+        expect(component.buildAndTestStudentSubmissionsAfterDueDate()?.toISOString()).toBe(afterDueDate.toISOString());
     });
 
     it('should not preview a LocalCI import when the imported build plan has no after due date phase', () => {

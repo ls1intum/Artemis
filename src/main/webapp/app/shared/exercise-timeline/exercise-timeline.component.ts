@@ -7,9 +7,12 @@ import dayjs, { Dayjs } from 'dayjs/esm';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
 
-export type TimelineItem =
-    | { kind: 'required'; labelStringKey: string; date: WritableSignal<Dayjs | undefined> }
-    | { kind: 'optional'; labelStringKey: string; date: WritableSignal<Dayjs | undefined> };
+export type TimelineItem = {
+    kind: 'required' | 'optional';
+    labelStringKey: string;
+    date: WritableSignal<Dayjs | undefined>;
+    clearable?: boolean;
+};
 
 export type ExerciseTimelineStatus = {
     valid: boolean;
@@ -50,6 +53,10 @@ export class ExerciseTimelineComponent {
     }
 
     updateDate(item: TimelineItem, newInternalDate: Date | string | null): void {
+        if (item.clearable === false && newInternalDate === null) {
+            return;
+        }
+
         const currentDate = item.date();
         const newDate = newInternalDate instanceof Date ? dayjs(newInternalDate) : undefined;
         const oldAndNewDateUndefined = currentDate === undefined && newDate === undefined;
@@ -61,7 +68,9 @@ export class ExerciseTimelineComponent {
     handleManualInput(item: TimelineItem, event: Event): void {
         const value = (event.target as HTMLInputElement).value;
         if (value.trim() === '') {
-            this.updateDate(item, null);
+            if (item.clearable !== false) {
+                this.updateDate(item, null);
+            }
             return;
         }
 
@@ -73,6 +82,21 @@ export class ExerciseTimelineComponent {
         if (parsedDate.isValid()) {
             this.setDateIfChanged(item, parsedDate);
         }
+    }
+
+    restoreNonClearableDateIfInvalid(item: TimelineItem, event: Event): void {
+        if (item.clearable !== false) {
+            return;
+        }
+
+        const input = event.target as HTMLInputElement;
+        const value = input.value.trim();
+        const parsedDate = this.fullDateTimePattern.test(value) ? dayjs(value, this.dateTimeFormat, true) : undefined;
+        if (parsedDate?.isValid()) {
+            return;
+        }
+
+        input.value = item.date()?.format(this.dateTimeFormat) ?? '';
     }
 
     private setDateIfChanged(item: TimelineItem, newDate: Dayjs): void {
@@ -103,6 +127,7 @@ export class ExerciseTimelineComponent {
                 kind: item.kind,
                 labelStringKey: item.labelStringKey,
                 date: item.date,
+                clearable: item.clearable,
                 internalDate: date?.toDate(),
                 isInputRequiredButUndefined,
                 isBeforePreviousDate,
