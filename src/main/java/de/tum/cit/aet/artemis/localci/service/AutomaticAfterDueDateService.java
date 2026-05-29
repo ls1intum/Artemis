@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.localci;
+package de.tum.cit.aet.artemis.localci.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 

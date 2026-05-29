@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.localci;
+package de.tum.cit.aet.artemis.localci.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyList;
