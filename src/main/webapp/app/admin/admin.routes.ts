@@ -6,7 +6,7 @@ import { organizationMgmtRoute } from 'app/admin/organization-management/organiz
 import { adminDataExportsRoute } from 'app/admin/admin-data-exports/admin-data-exports.route';
 import { adminSbomRoute } from 'app/admin/admin-sbom/admin-sbom.route';
 
-import { LocalCIGuard } from 'app/buildagent/shared/localci-guard.service';
+import { LocalCIGuard } from 'app/localci/shared/localci-guard.service';
 import { ltiConfigurationRoute } from 'app/admin/lti-configuration/lti-configuration.route';
 
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
@@ -79,7 +79,7 @@ const childRoutes: Routes = [
     },
     {
         path: 'build-overview',
-        loadComponent: () => import('app/buildagent/build-queue/build-overview.component').then((m) => m.BuildOverviewComponent),
+        loadComponent: () => import('app/localci/build-queue/build-overview.component').then((m) => m.BuildOverviewComponent),
         data: {
             pageTitle: 'artemisApp.buildQueue.title',
         },
@@ -87,7 +87,7 @@ const childRoutes: Routes = [
     },
     {
         path: 'build-overview/:jobId/job-details',
-        loadComponent: () => import('app/buildagent/build-queue/build-job-detail/build-job-detail.component').then((m) => m.BuildJobDetailComponent),
+        loadComponent: () => import('app/localci/build-queue/build-job-detail/build-job-detail.component').then((m) => m.BuildJobDetailComponent),
         data: {
             pageTitle: 'artemisApp.buildQueue.detail.title',
         },
@@ -95,7 +95,7 @@ const childRoutes: Routes = [
     },
     {
         path: 'build-agents',
-        loadComponent: () => import('app/buildagent/build-agent-summary/build-agent-summary.component').then((m) => m.BuildAgentSummaryComponent),
+        loadComponent: () => import('app/localci/build-agent-summary/build-agent-summary.component').then((m) => m.BuildAgentSummaryComponent),
         data: {
             pageTitle: 'artemisApp.buildAgents.title',
         },
@@ -103,7 +103,7 @@ const childRoutes: Routes = [
     },
     {
         path: 'build-agents/details',
-        loadComponent: () => import('app/buildagent/build-agent-details/build-agent-details.component').then((m) => m.BuildAgentDetailsComponent),
+        loadComponent: () => import('app/localci/build-agent-details/build-agent-details.component').then((m) => m.BuildAgentDetailsComponent),
         data: {
             pageTitle: 'artemisApp.buildAgents.title',
         },

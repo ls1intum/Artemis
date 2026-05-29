@@ -339,7 +339,7 @@ export class ParticipationSubmissionComponent implements OnInit {
     }
 
     viewBuildLogs(buildJobId: string): void {
-        const url = `/api/programming/build-log/${buildJobId}`;
+        const url = `/api/localci/build-log/${buildJobId}`;
         window.open(url, '_blank');
     }
 

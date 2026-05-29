@@ -233,7 +233,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     }
 
     public fetchQueueReleaseDateEstimationByParticipationId(participationId: number): Observable<dayjs.Dayjs | undefined> {
-        return this.http.get<dayjs.Dayjs>('api/programming/queued-jobs/queue-duration-estimation', { params: { participationId } }).pipe(catchError(() => of(undefined)));
+        return this.http.get<dayjs.Dayjs>('api/localci/queued-jobs/queue-duration-estimation', { params: { participationId } }).pipe(catchError(() => of(undefined)));
     }
 
     /**
