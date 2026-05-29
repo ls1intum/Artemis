@@ -70,18 +70,21 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         final String targetRepoSlug = targetProjectKeyLowerCase + "-" + targetRepositoryName;
         final var sourceRepoUri = getCloneRepositoryUri(sourceProjectKey, sourceRepositoryName);
         final var targetRepoUri = getCloneRepositoryUri(targetProjectKey, targetRepoSlug);
+        final boolean targetRepositoryExistedBeforeCopy = repositoryExists(targetRepoUri);
         try (Repository targetRepo = withHistory ? gitService.copyBareRepositoryWithHistory(sourceRepoUri, targetRepoUri, sourceBranch)
                 : gitService.copyBareRepositoryWithoutHistory(sourceRepoUri, targetRepoUri, sourceBranch)) {
             return targetRepo.getRemoteRepositoryUri(); // should be the same as targetRepoUri
         }
         catch (IOException | LargeObjectException ex) {
-            // clean up in case of an error
-            try {
-                deleteRepository(targetRepoUri);
-            }
-            catch (RuntimeException cleanupException) {
-                // ignore
-                log.error("Could not delete directory of the failed copied repository: {}", targetRepoUri, cleanupException);
+            // Clean up only repositories created during this copy attempt. If a repository already existed before, it must not be removed.
+            if (!targetRepositoryExistedBeforeCopy) {
+                try {
+                    deleteRepository(targetRepoUri);
+                }
+                catch (RuntimeException cleanupException) {
+                    // ignore
+                    log.error("Could not delete directory of the failed copied repository: {}", targetRepoUri, cleanupException);
+                }
             }
             if (ex instanceof LargeObjectException) {
                 throw new VersionControlException(
@@ -91,6 +94,14 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             throw new VersionControlException("Could not copy repository " + sourceRepositoryName + " to the target repository " + targetRepositoryName, ex);
         }
     }
+
+    /**
+     * Checks if a repository already exists before a copy operation starts.
+     *
+     * @param repositoryUri the repository URI to check
+     * @return true if the repository exists, false otherwise
+     */
+    protected abstract boolean repositoryExists(LocalVCRepositoryUri repositoryUri);
 
     /**
      * checks for a specific exception that we would like to ignore
