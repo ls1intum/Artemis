@@ -1,6 +1,7 @@
 <p-dialog
     [attr.aria-label]="'global.search.placeholder' | artemisTranslate"
     [visible]="overlay.isOpen()"
+    [style.max-width]="dialogMaxWidth()"
     (visibleChange)="$event ? overlay.open() : overlay.close()"
     (onHide)="overlay.close()"
     (onShow)="focusInput()"
@@ -26,18 +27,20 @@
     <div class="results-container">
         @switch (currentView()) {
             @case (SearchView.Navigation) {
-                <jhi-global-search-navigation-view
-                    [searchQuery]="searchQuery()"
-                    [selectedIndex]="selectedIndex()"
-                    [results]="results()"
-                    [hasSearched]="hasSearched()"
-                    [showResults]="showResults()"
-                    [isLoading]="isLoading()"
-                    [searchError]="searchError()"
-                    [activeFilters]="activeFilters()"
-                    (viewSelected)="navigateTo($event)"
-                    (entityClick)="onEntityClick($event)"
-                />
+                @if (overlay.isOpen()) {
+                    <jhi-global-search-navigation-view
+                        [searchQuery]="searchQuery()"
+                        [selectedIndex]="selectedIndex()"
+                        [results]="results()"
+                        [hasSearched]="hasSearched()"
+                        [showResults]="showResults()"
+                        [isLoading]="isLoading()"
+                        [searchError]="searchError()"
+                        [activeFilters]="activeFilters()"
+                        (viewSelected)="navigateTo($event)"
+                        (entityClick)="onEntityClick($event)"
+                    />
+                }
             }
             @case (SearchView.Lecture) {
                 <jhi-global-search-lecture-results (back)="navigateTo(SearchView.Navigation)" [searchQuery]="searchQuery()" [selectedIndex]="selectedIndex()" />

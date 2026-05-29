@@ -58,6 +58,11 @@ export class GlobalSearchModalComponent implements OnDestroy {
     // Computed properties
     protected hasResults = computed(() => this.results().length > 0);
     protected showResults = computed(() => this.isLoading() || this.hasSearched());
+    // See documentation/angular-onpush-switch-signal-bug.md — this [style] binding on
+    // p-dialog is required for the dialog content to render on toolbar-button click (OnPush + PrimeNG).
+    // A [style.x] root-level binding reading a signal is the only mechanism that keeps the modal
+    // dirty when PrimeNG's deferred renderDialog signal fires. Always returns '700px'.
+    protected readonly dialogMaxWidth = computed(() => (this.currentView() ? '700px' : '700px'));
 
     ngOnDestroy(): void {
         if (this.overlay.isOpen()) {

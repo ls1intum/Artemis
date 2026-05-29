@@ -59,7 +59,7 @@ export class GlobalSearchIrisAnswerComponent {
     protected readonly faChevronUp = faChevronUp;
     protected readonly faFile = faFile;
 
-    protected readonly SOURCE_ICONS: Record<string, IconDefinition> = {
+    protected readonly SOURCE_ICONS: Partial<Record<string, IconDefinition>> = {
         lecture_unit_slide: faFilePdf,
         lecture_unit_slide_video: faFileVideo,
         lecture_unit_video: faVideo,
