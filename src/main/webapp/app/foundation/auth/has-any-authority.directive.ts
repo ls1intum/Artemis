@@ -1,4 +1,5 @@
-import { Directive, Input, TemplateRef, ViewContainerRef, inject } from '@angular/core';
+import { Directive, TemplateRef, ViewContainerRef, effect, inject, input } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/foundation/constants/authority.constants';
 
@@ -19,18 +20,26 @@ export class HasAnyAuthorityDirective {
     private templateRef = inject<TemplateRef<any>>(TemplateRef);
     private viewContainerRef = inject(ViewContainerRef);
 
-    private authorities: readonly Authority[];
+    /** Required authorities; a single authority string is normalized to an array. */
+    readonly jhiHasAnyAuthority = input.required<readonly Authority[], string | string[] | readonly Authority[]>({
+        transform: (value) => (typeof value === 'string' ? [value as Authority] : (value as readonly Authority[])),
+    });
 
-    @Input()
-    set jhiHasAnyAuthority(value: string | string[] | readonly Authority[]) {
-        this.authorities = typeof value === 'string' ? [value as Authority] : (value as readonly Authority[]);
-        this.updateView();
-        // Get notified each time authentication state changes.
-        this.accountService.getAuthenticationState().subscribe(() => this.updateView());
+    constructor() {
+        // Re-evaluate the view whenever the required authorities change.
+        effect(() => {
+            this.jhiHasAnyAuthority();
+            this.updateView();
+        });
+        // Get notified each time authentication state changes (subscribed once, not per input change).
+        this.accountService
+            .getAuthenticationState()
+            .pipe(takeUntilDestroyed())
+            .subscribe(() => this.updateView());
     }
 
     private updateView(): void {
-        this.accountService.hasAnyAuthority(this.authorities).then((result) => {
+        this.accountService.hasAnyAuthority(this.jhiHasAnyAuthority()).then((result) => {
             this.viewContainerRef.clear();
             if (result) {
                 this.viewContainerRef.createEmbeddedView(this.templateRef);

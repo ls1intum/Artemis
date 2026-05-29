@@ -1,9 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
 
 describe('ItemCountComponent test', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: ItemCountComponent;
     let fixture: ComponentFixture<ItemCountComponent>;
 
@@ -20,47 +24,47 @@ describe('ItemCountComponent test', () => {
 
     describe('UI logic tests', () => {
         it('should initialize with zero', () => {
-            expect(comp.itemRangeBegin).toBe(0);
-            expect(comp.itemRangeEnd).toBe(0);
-            expect(comp.itemTotal).toBe(0);
+            expect(comp.itemRangeBegin()).toBe(0);
+            expect(comp.itemRangeEnd()).toBe(0);
+            expect(comp.itemTotal()).toBe(0);
         });
 
         it('should set range from 0 to 0, total 0 if there are no elements', () => {
             // GIVEN
-            comp.params = { page: 1, totalItems: 0, itemsPerPage: 10 };
+            fixture.componentRef.setInput('params', { page: 1, totalItems: 0, itemsPerPage: 10 });
 
             // THEN
-            expect(comp.itemRangeBegin).toBe(0);
-            expect(comp.itemRangeEnd).toBe(0);
-            expect(comp.itemTotal).toBe(0);
+            expect(comp.itemRangeBegin()).toBe(0);
+            expect(comp.itemRangeEnd()).toBe(0);
+            expect(comp.itemTotal()).toBe(0);
         });
 
         it('should change the content on page change', () => {
             // GIVEN
-            comp.params = { page: 1, totalItems: 100, itemsPerPage: 10 };
+            fixture.componentRef.setInput('params', { page: 1, totalItems: 100, itemsPerPage: 10 });
 
             // THEN
-            expect(comp.itemRangeBegin).toBe(1);
-            expect(comp.itemRangeEnd).toBe(10);
-            expect(comp.itemTotal).toBe(100);
+            expect(comp.itemRangeBegin()).toBe(1);
+            expect(comp.itemRangeEnd()).toBe(10);
+            expect(comp.itemTotal()).toBe(100);
 
             // GIVEN
-            comp.params = { page: 2, totalItems: 100, itemsPerPage: 10 };
+            fixture.componentRef.setInput('params', { page: 2, totalItems: 100, itemsPerPage: 10 });
 
             // THEN
-            expect(comp.itemRangeBegin).toBe(11);
-            expect(comp.itemRangeEnd).toBe(20);
-            expect(comp.itemTotal).toBe(100);
+            expect(comp.itemRangeBegin()).toBe(11);
+            expect(comp.itemRangeEnd()).toBe(20);
+            expect(comp.itemTotal()).toBe(100);
         });
 
         it('should set the second number to totalItems if this is the last page which contains less than itemsPerPage items', () => {
             // GIVEN
-            comp.params = { page: 2, totalItems: 16, itemsPerPage: 10 };
+            fixture.componentRef.setInput('params', { page: 2, totalItems: 16, itemsPerPage: 10 });
 
             // THEN
-            expect(comp.itemRangeBegin).toBe(11);
-            expect(comp.itemRangeEnd).toBe(16);
-            expect(comp.itemTotal).toBe(16);
+            expect(comp.itemRangeBegin()).toBe(11);
+            expect(comp.itemRangeEnd()).toBe(16);
+            expect(comp.itemTotal()).toBe(16);
         });
     });
 });
