@@ -111,6 +111,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/atlas/**', // atlas module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared-ui/table-view/**', // table view module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared-ui/components/buttons/**', // buttons module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/shared-ui/components/resizable-panels/**', // resizable panels use Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/manage/students/**', // exam manage students module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/overview/summary/exam-request-ai-feedback-button/**', // exam request AI feedback button uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/manage/student-exams/**', // exam manage student-exams module uses Vitest (see vitest.config.ts)
@@ -175,6 +176,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/tutorialgroup/', // tutorialgroup module uses Vitest
         '<rootDir>/src/main/webapp/app/atlas/', // atlas module uses Vitest
         '<rootDir>/src/main/webapp/app/shared-ui/components/buttons/', // buttons module uses Vitest
+        '<rootDir>/src/main/webapp/app/shared-ui/components/resizable-panels/', // resizable panels use Vitest
         '<rootDir>/src/main/webapp/app/exam/manage/students/', // exam manage students module uses Vitest
         '<rootDir>/src/main/webapp/app/exam/overview/summary/exam-request-ai-feedback-button/', // exam request AI feedback button uses Vitest
         '<rootDir>/src/main/webapp/app/exam/manage/student-exams/', // exam manage student-exams module uses Vitest
@@ -290,6 +292,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exam/shared/', // exam shared module (vitest)
         '<rootDir>/src/main/webapp/app/exam/overview/', // exam overview module (vitest)
         '<rootDir>/src/main/webapp/app/shared-ui/components/buttons/', // shared/buttons components
+        '<rootDir>/src/main/webapp/app/shared-ui/components/resizable-panels/', // shared/resizable-panels components
         '<rootDir>/src/main/webapp/app/shared-ui/table-view/', // shared/table-view component
         '<rootDir>/src/main/webapp/app/foundation/feature-toggle/', // feature-toggle service (vitest)
         '<rootDir>/src/main/webapp/app/foundation/sort/', // sort directives
