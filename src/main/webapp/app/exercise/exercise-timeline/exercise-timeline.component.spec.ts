@@ -100,43 +100,6 @@ describe('ExerciseTimeline', () => {
         expect(item.date()).toBeUndefined();
     });
 
-    it('should not clear non-clearable timeline item dates', () => {
-        const initialDate = dayjs('2026-01-01T10:00:00Z');
-        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(initialDate), clearable: false };
-
-        component.updateDate(item, null);
-        expect(item.date()).toBe(initialDate);
-
-        component.handleManualInput(item, { target: { value: '' } } as unknown as Event);
-        expect(item.date()).toBe(initialDate);
-    });
-
-    it('should restore non-clearable timeline item input to the last valid date on blur', () => {
-        const initialDate = dayjs('2026-01-01T10:00:00');
-        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(initialDate), clearable: false };
-        const input = { value: '' } as HTMLInputElement;
-
-        component.restoreNonClearableDateIfInvalid(item, { target: input } as unknown as Event);
-        expect(input.value).toBe('01.01.2026 10:00');
-
-        const nextValidDate = dayjs('2026-01-02T12:30:00');
-        component.handleManualInput(item, { target: { value: '02.01.2026 12:30' } } as unknown as Event);
-        expect(item.date()?.isSame(nextValidDate)).toBeTrue();
-
-        input.value = 'invalid';
-        component.restoreNonClearableDateIfInvalid(item, { target: input } as unknown as Event);
-        expect(input.value).toBe('02.01.2026 12:30');
-    });
-
-    it('should keep valid non-clearable timeline item input on blur', () => {
-        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(dayjs('2026-01-01T10:00:00')), clearable: false };
-        const input = { value: '02.01.2026 12:30' } as HTMLInputElement;
-
-        component.restoreNonClearableDateIfInvalid(item, { target: input } as unknown as Event);
-
-        expect(input.value).toBe('02.01.2026 12:30');
-    });
-
     it('should not update timeline item date for partial manual input', () => {
         const initialDate = dayjs('2026-01-01T11:11:00');
         const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(initialDate) };

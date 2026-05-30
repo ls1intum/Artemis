@@ -11,7 +11,6 @@ export type TimelineItem = {
     kind: 'required' | 'optional';
     labelStringKey: string;
     date: WritableSignal<Dayjs | undefined>;
-    clearable?: boolean;
 };
 
 export type ExerciseTimelineStatus = {
@@ -53,10 +52,6 @@ export class ExerciseTimelineComponent {
     }
 
     updateDate(item: TimelineItem, newInternalDate: Date | string | null): void {
-        if (item.clearable === false && newInternalDate === null) {
-            return;
-        }
-
         const currentDate = item.date();
         const newDate = newInternalDate instanceof Date ? dayjs(newInternalDate) : undefined;
         const oldAndNewDateUndefined = currentDate === undefined && newDate === undefined;
@@ -68,9 +63,7 @@ export class ExerciseTimelineComponent {
     handleManualInput(item: TimelineItem, event: Event): void {
         const value = (event.target as HTMLInputElement).value;
         if (value.trim() === '') {
-            if (item.clearable !== false) {
-                this.updateDate(item, null);
-            }
+            this.updateDate(item, null);
             return;
         }
 
@@ -82,21 +75,6 @@ export class ExerciseTimelineComponent {
         if (parsedDate.isValid()) {
             this.setDateIfChanged(item, parsedDate);
         }
-    }
-
-    restoreNonClearableDateIfInvalid(item: TimelineItem, event: Event): void {
-        if (item.clearable !== false) {
-            return;
-        }
-
-        const input = event.target as HTMLInputElement;
-        const value = input.value.trim();
-        const parsedDate = this.fullDateTimePattern.test(value) ? dayjs(value, this.dateTimeFormat, true) : undefined;
-        if (parsedDate?.isValid()) {
-            return;
-        }
-
-        input.value = item.date()?.format(this.dateTimeFormat) ?? '';
     }
 
     private setDateIfChanged(item: TimelineItem, newDate: Dayjs): void {
@@ -127,7 +105,6 @@ export class ExerciseTimelineComponent {
                 kind: item.kind,
                 labelStringKey: item.labelStringKey,
                 date: item.date,
-                clearable: item.clearable,
                 internalDate: date?.toDate(),
                 isInputRequiredButUndefined,
                 isBeforePreviousDate,
