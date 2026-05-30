@@ -11,9 +11,9 @@ import {
     Feedback,
 } from 'app/assessment/shared/entities/feedback.model';
 import { AssessmentNamesForModelId } from 'app/modeling/manage/assess/modeling-assessment.util';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
 
 export type FeedbackType = 'correct' | 'needs_revision' | 'not_attempted' | 'non_compliant';
 

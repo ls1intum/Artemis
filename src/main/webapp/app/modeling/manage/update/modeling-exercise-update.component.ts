@@ -41,6 +41,7 @@ import { cloneDeep, isEmpty } from 'lodash-es';
 import { Subscription } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
+import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -64,6 +65,7 @@ import { ModelingExerciseService } from '../services/modeling-exercise.service';
         GradingInstructionsDetailsComponent,
         FormFooterComponent,
         ArtemisTranslatePipe,
+        ExerciseFeedbackSuggestionOptionsComponent,
     ],
 })
 export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {

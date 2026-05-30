@@ -222,7 +222,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                             // Instructor changed the content or score — preserve original title in text, update detailText
                             const originalTitle = this.stripSuggestionPrefix(feedback.text ?? '');
                             feedback.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + originalTitle;
-                            if (textChanged) {
+                            if (textChanged && assessment.feedback !== undefined) {
                                 feedback.detailText = assessment.feedback;
                                 this.shownInApollon.set(assessment.modelElementId, assessment.feedback);
                             }
