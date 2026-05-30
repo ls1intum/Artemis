@@ -66,7 +66,19 @@ describe('QuizExercisePopupService', () => {
         const result = await service.open(MockModalComponent, quizExercise, files);
 
         expect(result).toBe(ref);
-        expect(openSpy).toHaveBeenCalledWith(MockModalComponent, expect.objectContaining({ data: { quizExercise, files } }));
+        // Assert the full dialog-option contract (preserving the original NgbModal { size: 'lg', backdrop: 'static' } fidelity):
+        // width 50rem == 'lg', dismissableMask: false == backdrop: 'static', plus the modal/closeOnEscape/draggable/resizable/showHeader pins.
+        expect(openSpy).toHaveBeenCalledWith(MockModalComponent, {
+            width: '50rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            draggable: false,
+            resizable: false,
+            showHeader: false,
+            data: { quizExercise, files },
+        });
 
         // re-evaluate result navigates to the quiz exercises overview
         onClose.next('re-evaluate');
