@@ -148,7 +148,12 @@ export class FinishedBuildsFilterModalComponent implements OnInit {
     ngOnInit() {
         const data = this.dialogConfig?.data;
         if (data?.finishedBuildJobFilter) {
-            this.finishedBuildJobFilter = data.finishedBuildJobFilter;
+            // Clone the incoming filter so that edits made in the dialog are isolated from the parent until the user confirms.
+            // On cancel the parent keeps its original filter; on confirm the cloned (edited) filter is returned via dialogRef.close().
+            const source: FinishedBuildJobFilter = data.finishedBuildJobFilter;
+            this.finishedBuildJobFilter = Object.assign(new FinishedBuildJobFilter(source.buildAgentAddress), source, { appliedFilters: new Map(source.appliedFilters) });
+        } else {
+            this.finishedBuildJobFilter = new FinishedBuildJobFilter();
         }
         if (data?.buildAgentFilterable !== undefined) {
             this.buildAgentFilterable = data.buildAgentFilterable;

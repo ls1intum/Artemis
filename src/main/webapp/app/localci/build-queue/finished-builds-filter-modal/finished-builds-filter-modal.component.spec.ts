@@ -125,6 +125,40 @@ describe('FinishedBuildsFilterModalComponent', () => {
         expect(component.finishedBuildJobFilter.appliedFilters.size).toBe(0);
     });
 
+    it('should clone the incoming filter so edits stay isolated until confirmed', async () => {
+        const source = new FinishedBuildJobFilter('agent5');
+        source.status = 'SUCCESSFUL';
+        source.appliedFilters.set('someKey', true);
+        source.numberOfAppliedFilters = 1;
+
+        TestBed.resetTestingModule();
+        await TestBed.configureTestingModule({
+            imports: [OwlNativeDateTimeModule, FinishedBuildsFilterModalComponent],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(DynamicDialogRef),
+                { provide: DynamicDialogConfig, useValue: { data: { finishedBuildJobFilter: source } } },
+            ],
+        }).compileComponents();
+
+        const localFixture = TestBed.createComponent(FinishedBuildsFilterModalComponent);
+        const localComponent = localFixture.componentInstance;
+        localFixture.detectChanges();
+
+        // The component must work on a clone, not the parent's instance
+        expect(localComponent.finishedBuildJobFilter).not.toBe(source);
+        expect(localComponent.finishedBuildJobFilter.appliedFilters).not.toBe(source.appliedFilters);
+        expect(localComponent.finishedBuildJobFilter.buildAgentAddress).toBe('agent5');
+        expect(localComponent.finishedBuildJobFilter.status).toBe('SUCCESSFUL');
+        expect(localComponent.finishedBuildJobFilter.appliedFilters.get('someKey')).toBeTruthy();
+
+        // Editing the clone (e.g. before a cancel) must not leak back into the parent's filter
+        localComponent.finishedBuildJobFilter.status = 'FAILED';
+        localComponent.finishedBuildJobFilter.appliedFilters.set('anotherKey', true);
+        expect(source.status).toBe('SUCCESSFUL');
+        expect(source.appliedFilters.has('anotherKey')).toBeFalsy();
+    });
+
     it('should validate correctly', () => {
         component.finishedBuildJobFilter = new FinishedBuildJobFilter();
         component.finishedBuildJobFilter.buildDurationFilterLowerBound = 1;

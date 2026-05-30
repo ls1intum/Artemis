@@ -168,15 +168,13 @@
             <span jhiTranslate="artemisApp.buildQueue.logs.title"></span>
             <span>&nbsp;{{ displayedBuildJobId }}</span>
         </ng-template>
-        <table class="table table-borderless">
-            <tbody>
-                @if (rawBuildLogsString) {
-                    <pre>{{ rawBuildLogsString }}</pre>
-                } @else {
-                    <span jhiTranslate="artemisApp.buildQueue.logs.noLogs"></span>
-                }
-            </tbody>
-        </table>
+        <div class="overflow-auto">
+            @if (rawBuildLogsString) {
+                <pre class="mb-0">{{ rawBuildLogsString }}</pre>
+            } @else {
+                <span jhiTranslate="artemisApp.buildQueue.logs.noLogs"></span>
+            }
+        </div>
         <ng-template pTemplate="footer">
             <button type="button" class="btn btn-secondary" (click)="buildLogsModalVisible.set(false)">
                 <span jhiTranslate="artemisApp.buildQueue.filter.close"></span>
