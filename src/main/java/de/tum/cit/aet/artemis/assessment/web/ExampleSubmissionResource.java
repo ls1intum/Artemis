@@ -203,8 +203,11 @@ public class ExampleSubmissionResource {
     public ResponseEntity<ExampleSubmission> importExampleSubmission(@PathVariable Long exerciseId,
             @RequestParam(name = "sourceSubmissionId", required = false) Long sourceSubmissionIdQuery,
             @PathVariable(name = "sourceSubmissionId", required = false) Long sourceSubmissionIdPath) {
-        Long sourceSubmissionId = sourceSubmissionIdQuery != null ? sourceSubmissionIdQuery : sourceSubmissionIdPath;
+        long sourceSubmissionId = sourceSubmissionIdQuery != null ? sourceSubmissionIdQuery : (sourceSubmissionIdPath != null ? sourceSubmissionIdPath : -1L);
         log.debug("REST request to import Student Submission as ExampleSubmission : {}", sourceSubmissionId);
+        if (sourceSubmissionId <= 0) {
+            throw new BadRequestAlertException("A valid sourceSubmissionId must be provided to import an example submission", ENTITY_NAME, "sourceSubmissionIdMissing");
+        }
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         ExampleSubmission exampleSubmission = exampleSubmissionService.importStudentSubmissionAsExampleSubmission(sourceSubmissionId, exercise);

@@ -117,6 +117,19 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testGetPasskeysViaLegacyPath_Success() throws Exception {
+            // The pre-9.3 prefix "api/core/passkey/" must keep working for deployed clients; it is retained as a legacy alias
+            // (AccountLegacyRestPaths.CORE_PASSKEY_PREFIX) alongside the canonical "api/account/passkeys/".
+            User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+            PasskeyCredential credential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+
+            List<PasskeyDTO> passkeys = request.getList("/api/core/passkey/user", HttpStatus.OK, PasskeyDTO.class);
+
+            assertThat(passkeys).extracting(PasskeyDTO::credentialId).containsExactly(credential.getCredentialId());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testGetPasskeys_EmptyList() throws Exception {
             List<PasskeyDTO> passkeys = request.getList("/api/account/passkeys/user", HttpStatus.OK, PasskeyDTO.class);
 

@@ -38,7 +38,15 @@ public record OneToOneChatCreationDTO(@Nullable Long userId, @Nullable String lo
                 }
                 return new OneToOneChatCreationDTO(null, node.get(0).asText());
             }
-            Long userId = node.hasNonNull("userId") ? node.get("userId").asLong() : null;
+            Long userId = null;
+            if (node.hasNonNull("userId")) {
+                JsonNode userIdNode = node.get("userId");
+                if (!userIdNode.canConvertToLong()) {
+                    // Reject non-numeric / fractional userId as an input mismatch so Spring maps it to 400 Bad Request (asLong() would otherwise coerce "abc" to 0L).
+                    return context.reportInputMismatch(OneToOneChatCreationDTO.class, "userId must be an integer id, but got: %s", userIdNode.asText());
+                }
+                userId = userIdNode.asLong();
+            }
             String login = node.hasNonNull("login") ? node.get("login").asText() : null;
             return new OneToOneChatCreationDTO(userId, login);
         }
