@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
@@ -10,7 +12,7 @@ import { By } from '@angular/platform-browser';
 const expectedEntityName = 'TestEntityName';
 
 @Component({
-    template: '<jhi-confirm-entity-name [entityName]="expectedEntityName" />',
+    template: '<jhi-confirm-entity-name [entityName]="expectedEntityName" confirmationText="artemisApp.confirm" />',
     imports: [ConfirmEntityNameComponent],
 })
 class ConfirmEntityNameHostComponent {
@@ -20,7 +22,13 @@ class ConfirmEntityNameHostComponent {
 }
 
 describe('ConfirmEntityNameComponent', () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     describe('NgModel', () => {
+        setupTestBed({ zoneless: true });
+
         let component: ConfirmEntityNameHostComponent;
         let fixture: ComponentFixture<ConfirmEntityNameHostComponent>;
         let confirmEntityNameComponent: ConfirmEntityNameComponent;
@@ -39,39 +47,47 @@ describe('ConfirmEntityNameComponent', () => {
         });
 
         it('control should be valid with valid input', async () => {
-            confirmEntityNameComponent.entityName = expectedEntityName;
-            fixture.changeDetectorRef.detectChanges();
+            fixture.detectChanges();
+            await fixture.whenStable();
             confirmEntityNameComponent.control.setValue(expectedEntityName);
-            fixture.changeDetectorRef.detectChanges();
-            expect(confirmEntityNameComponent.control.valid).toBeTrue();
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(confirmEntityNameComponent.control.valid).toBe(true);
         });
 
         it('control should be invalid with invalid input', async () => {
-            confirmEntityNameComponent.entityName = expectedEntityName;
-            fixture.changeDetectorRef.detectChanges();
+            fixture.detectChanges();
+            await fixture.whenStable();
             confirmEntityNameComponent.control.setValue('');
-            fixture.changeDetectorRef.detectChanges();
-            expect(confirmEntityNameComponent.control.invalid).toBeTrue();
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(confirmEntityNameComponent.control.invalid).toBe(true);
         });
 
         it('control should be valid for dynamic entity name', async () => {
             component.expectedEntityName = 'OtherTestEntityName';
-            fixture.changeDetectorRef.detectChanges();
+            fixture.detectChanges();
+            await fixture.whenStable();
             confirmEntityNameComponent.control.setValue('OtherTestEntityName');
-            fixture.changeDetectorRef.detectChanges();
-            expect(confirmEntityNameComponent.control.valid).toBeTrue();
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(confirmEntityNameComponent.control.valid).toBe(true);
         });
 
         it('control should be invalid for dynamic entity name with previous entity name', async () => {
             component.expectedEntityName = 'OtherTestEntityName';
-            fixture.changeDetectorRef.detectChanges();
+            fixture.detectChanges();
+            await fixture.whenStable();
             confirmEntityNameComponent.control.setValue('TestEntityName');
-            fixture.changeDetectorRef.detectChanges();
-            expect(confirmEntityNameComponent.control.invalid).toBeTrue();
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(confirmEntityNameComponent.control.invalid).toBe(true);
         });
     });
 
     describe('Component', () => {
+        setupTestBed({ zoneless: true });
+
         let component: ConfirmEntityNameComponent;
         let fixture: ComponentFixture<ConfirmEntityNameComponent>;
 
@@ -89,14 +105,15 @@ describe('ConfirmEntityNameComponent', () => {
         });
 
         it('should change warning text color', () => {
-            component.warningTextColor = 'text-danger';
-            fixture.changeDetectorRef.detectChanges();
+            fixture.componentRef.setInput('confirmationText', 'artemisApp.confirm');
+            fixture.componentRef.setInput('warningTextColor', 'text-danger');
+            fixture.detectChanges();
             expect(fixture.nativeElement.querySelector('label[for="confirm-entity-name"]').classList.contains('text-danger')).toBeTruthy();
         });
 
         it('should display confirmation text', () => {
-            component.confirmationText = 'foobar';
-            fixture.changeDetectorRef.detectChanges();
+            fixture.componentRef.setInput('confirmationText', 'foobar');
+            fixture.detectChanges();
             expect(fixture.nativeElement.querySelector('label[for="confirm-entity-name"]').textContent).toBe('foobar');
         });
     });

@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, input, signal, untracked } from '@angular/core';
 import {
     ControlValueAccessor,
     FormBuilder,
@@ -37,29 +37,30 @@ import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons
 export class ConfirmEntityNameComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
     private fb = inject(FormBuilder);
 
-    @Input() warningTextColor: string;
-    @Input() confirmationText: string;
-
-    @Input()
-    set entityName(entityName: string) {
-        this.currentEntityName = entityName;
-        this.entityNameSignal.set(entityName);
-        this.onValidatorChange?.();
-    }
+    readonly warningTextColor = input<string>();
+    readonly confirmationText = input.required<string>();
+    readonly entityName = input<string>('');
 
     entityNameSignal = signal<string>('');
-
-    get entityName(): string {
-        return this.currentEntityName;
-    }
 
     control: FormControl<string>;
 
     onTouched = () => {};
 
-    private currentEntityName: string;
     private onChangeSubs: Subscription[] = [];
     private onValidatorChange?: () => void;
+
+    constructor() {
+        // Mirror the entityName input into the display signal and notify the validator whenever it changes,
+        // reproducing the original @Input setter side effects.
+        effect(() => {
+            const entityName = this.entityName();
+            untracked(() => {
+                this.entityNameSignal.set(entityName);
+                this.onValidatorChange?.();
+            });
+        });
+    }
 
     ngOnInit() {
         this.control = this.fb.control('', {
@@ -109,7 +110,7 @@ export class ConfirmEntityNameComponent implements OnInit, OnDestroy, ControlVal
     }
 
     private compareWithEntityName(control: FormControl): ValidationErrors | null {
-        if (control.value !== this.entityName) {
+        if (control.value !== this.entityName()) {
             return { invalidName: true };
         }
         return null;
