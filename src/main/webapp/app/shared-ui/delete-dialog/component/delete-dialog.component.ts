@@ -1,4 +1,4 @@
-import { Component, DestroyRef, EventEmitter, OnInit, ViewChild, inject, signal } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, OnInit, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { mapValues } from 'lodash-es';
@@ -53,9 +53,8 @@ export class DeleteDialogComponent implements OnInit {
     confirmEntityName = '';
     additionalChecksValues: { [key: string]: boolean } = {};
 
-    // Note: Using @ViewChild here because the template has #deleteForm="ngForm" which creates a template
-    // reference variable that shadows any component property. The viewChild signal cannot be used in this case.
-    @ViewChild('deleteForm', { static: true }) deleteForm: NgForm;
+    // The template has #deleteForm="ngForm"; viewChild resolves the exported NgForm directive instance.
+    readonly deleteForm = viewChild.required<NgForm>('deleteForm');
 
     deleteQuestion: string;
     entitySummaryTitle?: string;

@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -11,13 +13,15 @@ import { ButtonType } from 'app/shared-ui/components/buttons/button/button.compo
 import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('Delete Dialog Service', () => {
+    setupTestBed({ zoneless: true });
+
     let service: DeleteDialogService;
     let dialogService: DialogService;
     let alertService: AlertService;
 
     const mockDialogRef = {
         onClose: new Subject<void>(),
-        close: jest.fn(),
+        close: vi.fn(),
     } as unknown as DynamicDialogRef;
 
     beforeEach(() => {
@@ -28,14 +32,14 @@ describe('Delete Dialog Service', () => {
                 {
                     provide: DialogService,
                     useValue: {
-                        open: jest.fn().mockReturnValue(mockDialogRef),
+                        open: vi.fn().mockReturnValue(mockDialogRef),
                     },
                 },
                 {
                     provide: AlertService,
                     useValue: {
-                        closeAll: jest.fn(),
-                        error: jest.fn(),
+                        closeAll: vi.fn(),
+                        error: vi.fn(),
                     },
                 },
             ],
@@ -46,7 +50,7 @@ describe('Delete Dialog Service', () => {
     });
 
     afterEach(() => {
-        jest.resetAllMocks();
+        vi.resetAllMocks();
     });
 
     it('should open delete dialog', () => {
@@ -62,7 +66,7 @@ describe('Delete Dialog Service', () => {
             delete: new EventEmitter<any>(),
             requireConfirmationOnlyForAdditionalChecks: false,
         };
-        const openDialogSpy = jest.spyOn(dialogService, 'open');
+        const openDialogSpy = vi.spyOn(dialogService, 'open');
         service.openDeleteDialog(data);
         expect(openDialogSpy).toHaveBeenCalledOnce();
         expect(openDialogSpy).toHaveBeenCalledWith(

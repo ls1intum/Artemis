@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Component, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -19,20 +21,22 @@ class TestComponent {
 }
 
 describe('DeleteDialogDirective', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: TestComponent;
     let fixture: ComponentFixture<TestComponent>;
     let debugElement: DebugElement;
     let deleteDialogService: DeleteDialogService;
     let translateService: TranslateService;
-    let translateSpy: jest.SpyInstance;
+    let translateSpy: ReturnType<typeof vi.spyOn>;
 
     const mockDialogRef = {
         onClose: new Subject<void>(),
-        close: jest.fn(),
+        close: vi.fn(),
     } as unknown as DynamicDialogRef;
 
     const mockDialogService = {
-        open: jest.fn().mockReturnValue(mockDialogRef),
+        open: vi.fn().mockReturnValue(mockDialogRef),
     };
 
     beforeEach(() =>
@@ -50,12 +54,12 @@ describe('DeleteDialogDirective', () => {
                 debugElement = fixture.debugElement;
                 deleteDialogService = TestBed.inject(DeleteDialogService);
                 translateService = TestBed.inject(TranslateService);
-                translateSpy = jest.spyOn(translateService, 'instant');
+                translateSpy = vi.spyOn(translateService, 'instant');
             }),
     );
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('directive should be correctly initialized', () => {
@@ -82,17 +86,18 @@ describe('DeleteDialogDirective', () => {
         expect(directiveInstance.deleteConfirmationText()).toBe('text');
     });
 
-    it('on click should call delete dialog service', fakeAsync(() => {
+    it('on click should call delete dialog service', async () => {
         // Ignore console errors
-        console.error = jest.fn();
+        console.error = vi.fn();
         fixture.detectChanges();
-        const deleteDialogSpy = jest.spyOn(deleteDialogService, 'openDeleteDialog');
+        await fixture.whenStable();
+        const deleteDialogSpy = vi.spyOn(deleteDialogService, 'openDeleteDialog');
         const directiveEl = debugElement.query(By.directive(DeleteButtonDirective));
         directiveEl.nativeElement.click();
         fixture.detectChanges();
+        await fixture.whenStable();
         expect(deleteDialogSpy).toHaveBeenCalledOnce();
-        discardPeriodicTasks();
-    }));
+    });
 
     it('action type cleanup should change button title', () => {
         comp.actionType = ActionType.Cleanup;

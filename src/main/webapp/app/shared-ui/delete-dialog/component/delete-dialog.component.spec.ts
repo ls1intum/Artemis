@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { EventEmitter } from '@angular/core';
 import { DeleteDialogComponent } from 'app/shared-ui/delete-dialog/component/delete-dialog.component';
@@ -14,6 +16,8 @@ import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 
 describe('DeleteDialogComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: DeleteDialogComponent;
     let fixture: ComponentFixture<DeleteDialogComponent>;
     let dialogRef: DynamicDialogRef;
@@ -43,77 +47,84 @@ describe('DeleteDialogComponent', () => {
 
     beforeEach(async () => {
         const mockDialogRef = {
-            close: jest.fn(),
+            close: vi.fn(),
         };
 
         await TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ReactiveFormsModule, FormsModule, DeleteDialogComponent],
-            declarations: [MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [
                 JhiLanguageHelper,
                 AlertService,
                 { provide: DynamicDialogRef, useValue: mockDialogRef },
                 { provide: DynamicDialogConfig, useValue: createMockDialogConfig() },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(DeleteDialogComponent, {
+                remove: { imports: [ArtemisTranslatePipe, TranslateDirective] },
+                add: { imports: [MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)] },
+            })
+            .compileComponents();
         fixture = TestBed.createComponent(DeleteDialogComponent);
         comp = fixture.componentInstance;
         dialogRef = TestBed.inject(DynamicDialogRef);
     });
 
-    it('Dialog is correctly initialized', fakeAsync(() => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('Dialog is correctly initialized', async () => {
         fixture.detectChanges();
-        const closeSpy = jest.spyOn(dialogRef, 'close');
+        await fixture.whenStable();
+        const closeSpy = vi.spyOn(dialogRef, 'close');
 
         expect(comp.entityTitle()).toBe('title');
         expect(comp.deleteQuestion).toBe('artemisApp.exercise.delete.question');
         expect(comp.warningTextColor).toBe('text-danger');
-        expect(comp.useFaCheckIcon).toBeFalse();
+        expect(comp.useFaCheckIcon).toBe(false);
 
         // Check that clear method calls dialogRef.close
         comp.clear();
         expect(closeSpy).toHaveBeenCalledOnce();
-
-        flush();
-    }));
+    });
 
     it('Form properly checked before submission', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
         // Initially the form should be invalid (empty value doesn't match 'title')
-        expect(comp.deleteForm.invalid).toBeTrue();
+        expect(comp.deleteForm().invalid).toBe(true);
 
         // User entered some title (wrong title)
         comp.confirmEntityName = 'some title';
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(comp.deleteForm.invalid).toBeTrue();
+        expect(comp.deleteForm().invalid).toBe(true);
 
         // User entered correct title
         comp.confirmEntityName = 'title';
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(comp.deleteForm.invalid).toBeFalse();
+        expect(comp.deleteForm().invalid).toBe(false);
     });
 
-    it('Dialog closes immediately when confirmDelete is called', fakeAsync(() => {
+    it('Dialog closes immediately when confirmDelete is called', async () => {
         fixture.detectChanges();
-        const closeSpy = jest.spyOn(dialogRef, 'close');
+        await fixture.whenStable();
+        const closeSpy = vi.spyOn(dialogRef, 'close');
 
         // external component delete method was executed
         comp.confirmDelete();
 
         // submit should be disabled and dialog should close immediately
-        expect(comp.submitDisabled()).toBeTrue();
+        expect(comp.submitDisabled()).toBe(true);
         expect(closeSpy).toHaveBeenCalledOnce();
 
         // Note: Error handling is now done in DeleteDialogService, not in the component.
         // The dialog closes immediately so the progress bar can be shown during deletion.
 
         fixture.destroy();
-        flush();
-    }));
+    });
 
     it('getItemPairs should correctly group items', () => {
         fixture.detectChanges();
