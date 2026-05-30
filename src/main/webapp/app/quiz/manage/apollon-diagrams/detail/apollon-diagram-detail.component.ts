@@ -189,6 +189,9 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      */
     confirmExitDetailView(closeModal: boolean) {
         if (!this.isSaved) {
+            // NgbModal is intentionally kept here: ConfirmAutofocusModalComponent is a shared-ui dialog deferred from the PrimeNG
+            // migration (it is opened via the NgbModal componentInstance write contract by 7 callers, including the programming carve-out).
+            // Migrating this opener would require breaching that carve-out, so it stays on NgbModal until the shared dialog is migrated.
             const modalRef: NgbModalRef = this.modalService.open(ConfirmAutofocusModalComponent, {
                 size: 'lg',
                 backdrop: 'static',
