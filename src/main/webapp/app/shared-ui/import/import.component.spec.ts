@@ -115,12 +115,12 @@ describe('ImportComponent', () => {
     };
 
     it('should set content to paging result on sort', () => {
-        expect(comp.listSorting).toBeFalse();
+        expect(comp.listSorting).toBe(false);
         setStateAndCallOnInit(() => {
             comp.listSorting = true;
             vi.advanceTimersByTime(10);
             expect(searchStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING }, undefined);
-            expect(comp.listSorting).toBeTrue();
+            expect(comp.listSorting).toBe(true);
         });
     });
 

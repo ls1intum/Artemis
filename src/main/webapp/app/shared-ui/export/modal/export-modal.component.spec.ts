@@ -43,7 +43,7 @@ describe('ExportModalComponent', () => {
         component.ngOnInit();
         expect(component.options.fieldSeparator).toBe(CsvFieldSeparator.COMMA);
         expect(component.options.quoteCharacter).toBe(CsvQuoteStrings.QUOTES_DOUBLE);
-        expect(component.options.quoteStrings).toBeTrue();
+        expect(component.options.quoteStrings).toBe(true);
         expect(component.options.decimalSeparator).toBe(CsvDecimalSeparator.PERIOD);
     });
 
@@ -52,7 +52,7 @@ describe('ExportModalComponent', () => {
         component.ngOnInit();
         expect(component.options.fieldSeparator).toBe(CsvFieldSeparator.SEMICOLON);
         expect(component.options.quoteCharacter).toBe(CsvQuoteStrings.QUOTES_DOUBLE);
-        expect(component.options.quoteStrings).toBeTrue();
+        expect(component.options.quoteStrings).toBe(true);
         expect(component.options.decimalSeparator).toBe(CsvDecimalSeparator.COMMA);
     });
 
@@ -62,7 +62,7 @@ describe('ExportModalComponent', () => {
         component.setCsvDecimalSeparator(CsvDecimalSeparator.PERIOD);
         expect(component.options.fieldSeparator).toBe(CsvFieldSeparator.SPACE);
         expect(component.options.quoteCharacter).toBe(CsvQuoteStrings.NONE);
-        expect(component.options.quoteStrings).toBeFalse();
+        expect(component.options.quoteStrings).toBe(false);
         expect(component.options.decimalSeparator).toBe(CsvDecimalSeparator.PERIOD);
     });
 
