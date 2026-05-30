@@ -35,6 +35,53 @@
     }
 }
 
+.right-panel-collapse-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    width: 2.5rem;
+    padding: 0;
+    color: var(--bs-body-color);
+    background: transparent;
+    border: 0;
+    border-left: var(--bs-border-width) solid var(--bs-border-color);
+    border-bottom: var(--bs-border-width) solid var(--bs-border-color);
+
+    &:hover,
+    &:focus-visible {
+        color: var(--bs-primary);
+        background: var(--bs-tertiary-bg);
+    }
+}
+
+.collapsed-right-panel {
+    width: 3rem;
+    min-width: 3rem;
+    margin-left: 12px;
+    border: var(--bs-border-width) solid var(--bs-border-color);
+}
+
+.collapsed-right-panel-tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.5rem;
+    color: var(--bs-body-color);
+    background: transparent;
+    border: 0;
+    border-bottom: var(--bs-border-width) solid var(--bs-border-color);
+
+    &:hover,
+    &:focus-visible,
+    &.active {
+        color: var(--bs-primary);
+        background: var(--bs-tertiary-bg);
+    }
+}
+
 :host ::ng-deep {
     .p-tablist-tab-list {
         border-width: 0 0 var(--bs-border-width) 0;

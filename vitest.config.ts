@@ -61,6 +61,7 @@ export default defineConfig({
             'src/main/webapp/app/exam/shared/**/*.spec.ts', // include exam shared tests
             'src/main/webapp/app/exam/overview/**/*.spec.ts', // include exam overview tests
             'src/main/webapp/app/shared/components/buttons/**/*.spec.ts', // include shared buttons
+            'src/main/webapp/app/shared/components/resizable-panels/**/*.spec.ts', // include shared resizable panels
             'src/main/webapp/app/shared/table-view/**/*.spec.ts', // include shared table view
             'src/main/webapp/app/shared/feature-toggle/**/*.spec.ts', // include feature-toggle service tests
             'src/main/webapp/app/shared/sort/**/*.directive.spec.ts', // include sort directives
@@ -125,6 +126,7 @@ export default defineConfig({
                 'src/main/webapp/app/exam/overview/**/*.ts', // include exam overview for code coverage
                 'src/main/webapp/app/exam/shared/**/*.ts', // include exam shared for code coverage
                 'src/main/webapp/app/shared/components/buttons/**/*.ts', // include shared buttons for code coverage
+                'src/main/webapp/app/shared/components/resizable-panels/**/*.ts', // include shared resizable panels for code coverage
                 'src/main/webapp/app/shared/feature-toggle/**/*.ts', // include feature-toggle service for code coverage
                 'src/main/webapp/app/shared/user-import/util/**/*.ts', // include user import utils for code coverage
                 'src/main/webapp/app/shared/table-view/**/*.ts', // include shared table view for code coverage

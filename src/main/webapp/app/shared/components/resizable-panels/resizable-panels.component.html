@@ -2,7 +2,7 @@
     <!-- ── Wide mode: resizable split ─────────────────────────────────── -->
     <div class="d-flex w-100 h-100 overflow-hidden">
         @if (leftPanel()) {
-            <div class="d-flex flex-column overflow-hidden rounded-3 module-bg" jhiSplitPane>
+            <div class="d-flex flex-column overflow-hidden rounded-3 module-bg" [class.flex-grow-1]="isRightPanelCollapsed()" jhiSplitPane>
                 <p-tabs [value]="0" class="flex-shrink-0">
                     <p-tablist>
                         <p-tab [value]="0">
@@ -22,27 +22,57 @@
         }
 
         @if (rightPanels().length > 0) {
-            <div class="d-flex flex-column overflow-hidden rounded-3 module-bg" jhiSplitPane>
-                <p-tabs [value]="activeRightIndex()" (valueChange)="setActiveRight($event)" class="flex-shrink-0">
-                    <p-tablist>
-                        @for (panel of rightPanels(); track panel; let i = $index) {
-                            <p-tab [value]="i">
-                                @if (panel.iconTemplate()) {
-                                    <ng-container [ngTemplateOutlet]="panel.iconTemplate()!" />
-                                } @else if (panel.icon()) {
-                                    <fa-icon [icon]="panel.icon()!" />
-                                }
-                                <span [jhiTranslate]="panel.label()"></span>
-                            </p-tab>
-                        }
-                    </p-tablist>
-                </p-tabs>
-                <div class="flex-grow-1 overflow-y-auto p-2">
-                    @if (rightPanels()[activeRightIndex()]) {
-                        <ng-container [ngTemplateOutlet]="rightPanels()[activeRightIndex()].templateRef" />
+            @if (isRightPanelCollapsed()) {
+                <div class="collapsed-right-panel d-flex flex-column align-items-center overflow-hidden rounded-3 module-bg">
+                    @for (panel of rightPanels(); track panel; let i = $index) {
+                        <button
+                            type="button"
+                            class="collapsed-right-panel-tab"
+                            [class.active]="activeRightIndex() === i"
+                            (click)="expandRightPanel(i)"
+                            [attr.aria-label]="panel.label() | artemisTranslate"
+                        >
+                            @if (panel.iconTemplate()) {
+                                <ng-container [ngTemplateOutlet]="panel.iconTemplate()!" />
+                            } @else if (panel.icon()) {
+                                <fa-icon [icon]="panel.icon()!" />
+                            }
+                        </button>
                     }
                 </div>
-            </div>
+            } @else {
+                <div class="d-flex flex-column overflow-hidden rounded-3 module-bg" jhiSplitPane>
+                    <div class="right-panel-header d-flex align-items-center">
+                        <p-tabs [value]="activeRightIndex()" (valueChange)="setActiveRight($event)" class="flex-grow-1 min-width-0">
+                            <p-tablist>
+                                @for (panel of rightPanels(); track panel; let i = $index) {
+                                    <p-tab [value]="i">
+                                        @if (panel.iconTemplate()) {
+                                            <ng-container [ngTemplateOutlet]="panel.iconTemplate()!" />
+                                        } @else if (panel.icon()) {
+                                            <fa-icon [icon]="panel.icon()!" />
+                                        }
+                                        <span [jhiTranslate]="panel.label()"></span>
+                                    </p-tab>
+                                }
+                            </p-tablist>
+                        </p-tabs>
+                        <button
+                            type="button"
+                            class="right-panel-collapse-button"
+                            (click)="collapseRightPanel()"
+                            [attr.aria-label]="'artemisApp.courseOverview.exerciseDetails.collapsePanel' | artemisTranslate"
+                        >
+                            <fa-icon [icon]="faChevronRight" />
+                        </button>
+                    </div>
+                    <div class="flex-grow-1 overflow-y-auto p-2">
+                        @if (rightPanels()[activeRightIndex()]) {
+                            <ng-container [ngTemplateOutlet]="rightPanels()[activeRightIndex()].templateRef" />
+                        }
+                    </div>
+                </div>
+            }
         }
     </div>
 } @else {
