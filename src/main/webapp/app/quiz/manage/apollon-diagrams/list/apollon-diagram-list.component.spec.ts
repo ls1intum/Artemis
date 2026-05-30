@@ -6,9 +6,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { of } from 'rxjs';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { Subject, of } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { SortService } from 'app/foundation/service/sort.service';
 import { ApollonDiagramListComponent } from 'app/quiz/manage/apollon-diagrams/list/apollon-diagram-list.component';
@@ -29,7 +28,7 @@ describe('ApollonDiagramList Component', () => {
 
     let apollonDiagramService: ApollonDiagramService;
     let courseService: CourseManagementService;
-    let modalService: NgbModal;
+    let dialogService: DialogService;
     let fixture: ComponentFixture<ApollonDiagramListComponent>;
 
     const course: Course = { id: 123 } as Course;
@@ -46,7 +45,7 @@ describe('ApollonDiagramList Component', () => {
                 AlertService,
                 ApollonDiagramService,
                 MockProvider(SortService),
-                { provide: NgbModal, useClass: MockNgbModalService },
+                MockProvider(DialogService),
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -60,7 +59,7 @@ describe('ApollonDiagramList Component', () => {
                 fixture = TestBed.createComponent(ApollonDiagramListComponent);
                 apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
                 courseService = fixture.debugElement.injector.get(CourseManagementService);
-                modalService = fixture.debugElement.injector.get(NgbModal);
+                dialogService = fixture.debugElement.injector.get(DialogService);
             });
     });
 
@@ -99,9 +98,23 @@ describe('ApollonDiagramList Component', () => {
     });
 
     it('openCreateDiagramDialog', () => {
-        const openModalSpy = vi.spyOn(modalService, 'open');
+        const onClose = new Subject<ApollonDiagram | undefined>();
+        const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as DynamicDialogRef);
+        const handleOpenSpy = vi.spyOn(fixture.componentInstance, 'handleOpenDialogClick');
+
         fixture.componentInstance.openCreateDiagramDialog(course.id!);
-        expect(openModalSpy).toHaveBeenCalledOnce();
+
+        expect(openDialogSpy).toHaveBeenCalledOnce();
+
+        // dismiss (undefined) must not open a diagram
+        onClose.next(undefined);
+        expect(handleOpenSpy).not.toHaveBeenCalled();
+
+        // a created diagram opens the diagram view
+        const createdDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!);
+        createdDiagram.id = 42;
+        onClose.next(createdDiagram);
+        expect(handleOpenSpy).toHaveBeenCalledWith(42);
     });
 
     it('getTitleForApollonDiagram', () => {
