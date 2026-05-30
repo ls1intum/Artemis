@@ -19,6 +19,7 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { provideHttpClient } from '@angular/common/http';
 import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 describe('ProgrammingExercise Service', () => {
     let service: ProgrammingExerciseService;
@@ -216,6 +217,21 @@ describe('ProgrammingExercise Service', () => {
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'PUT' });
             req.flush(returnedFromService);
+            tick();
+        }));
+
+        it('should include assessmentType when updating', fakeAsync(() => {
+            const exercise = new ProgrammingExercise(new Course(), undefined);
+            exercise.id = 1;
+            exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+
+            service.update(exercise).subscribe();
+
+            const req = httpMock.expectOne({ method: 'PUT' });
+            // Check that dto assessmentType field has correct value
+            expect(req.request.body.assessmentType).toBe(AssessmentType.SEMI_AUTOMATIC);
+
+            req.flush(exercise);
             tick();
         }));
 
