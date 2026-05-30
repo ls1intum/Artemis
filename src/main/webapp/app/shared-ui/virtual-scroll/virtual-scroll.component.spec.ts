@@ -86,11 +86,10 @@ describe('VirtualScrollComponent', () => {
     });
 
     it('should initialize DOM tree with items', () => {
-        fixture.detectChanges();
         fixture.componentRef.setInput('forceReload', true);
-        comp.originalItems = metisCoursePosts;
-
-        comp.handleOriginalItemsChange();
+        // bind the items input so the effect processes them once on the first change detection
+        fixture.componentRef.setInput('items', metisCoursePosts);
+        fixture.detectChanges();
 
         vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
@@ -98,6 +97,32 @@ describe('VirtualScrollComponent', () => {
         expect(comp.previousItemsHeight).toHaveLength(metisCoursePosts.length);
         expect(prepareDataItemsSpy).toHaveBeenCalledOnce();
         expect(onEndOfOriginalItemsReachedSpy).not.toHaveBeenCalled();
+    });
+
+    // Regression test for the initial-render bug introduced during the signal migration:
+    // the migrated `items` effect originally skipped its first run (a "skip-first" guard), so the
+    // FIRST bound value was never processed and the component rendered nothing until a later change
+    // or scroll. The original `ngOnChanges` had no isFirstChange() guard and DID process the first
+    // bound value. This test drives the EFFECT path (binding the input + change detection) rather than
+    // calling handleOriginalItemsChange() directly, so it would fail on the buggy skip-first code and
+    // passes once the guard is removed.
+    it('should render items on the first bound value via the items effect', () => {
+        // bind the public `items` input so the effect fires on first change detection
+        fixture.componentRef.setInput('items', metisCoursePosts);
+        fixture.componentRef.setInput('forceReload', true);
+
+        // run change detection so the effect executes its first run and processes the bound items
+        fixture.detectChanges();
+
+        // flush the setTimeout the handler defers its work into
+        vi.advanceTimersByTime(0);
+        fixture.changeDetectorRef.detectChanges();
+
+        // the effect must have processed the first bound value (skip-first guard would have prevented this)
+        expect(prepareDataItemsSpy).toHaveBeenCalledOnce();
+        expect(comp.originalItems).toBe(metisCoursePosts);
+        expect(comp.previousItemsHeight).toHaveLength(metisCoursePosts.length);
+        expect(comp.domTreeItems.length).toBeGreaterThan(0);
     });
 
     it('should set forceReloadChange flag to true when user navigates to specific post', () => {
@@ -180,15 +205,13 @@ describe('VirtualScrollComponent', () => {
     });
 
     function prepareComponent() {
-        // run change detection first so the required viewChild (itemsContainer) is resolved and ngOnInit listeners are registered
-        fixture.detectChanges();
-
         fixture.componentRef.setInput('scrollPaddingTop', SCROLL_PADDING_TOP);
         fixture.componentRef.setInput('minItemHeight', MIN_ITEM_HEIGHT);
         fixture.componentRef.setInput('endOfListReachedItemThreshold', END_OF_LIST_THRESHOLD);
-        comp.originalItems = metisCoursePosts;
-
-        comp.handleOriginalItemsChange();
+        // bind the items input so the effect processes them once; the first change detection also
+        // resolves the required viewChild (itemsContainer) and registers the ngOnInit listeners
+        fixture.componentRef.setInput('items', metisCoursePosts);
+        fixture.detectChanges();
 
         vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();

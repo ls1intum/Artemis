@@ -81,10 +81,6 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
     // writable mirror of the `items` input; the component mutates this internally while keeping the input read-only
     public originalItems: T[] | undefined = [];
 
-    // guards the items effect so it only reacts to actual changes of the bound input, mirroring the former
-    // ngOnChanges behavior which did not fire for the initial (unbound) default value
-    private itemsInitialized = false;
-
     public prevOriginalItems: T[] = [];
     public domTreeItems: T[] = [];
     previousItemsHeight: number[] = [];
@@ -109,12 +105,6 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
         effect(() => {
             const incomingItems = this.items();
             untracked(() => {
-                if (!this.itemsInitialized) {
-                    // skip the initial run; ngOnChanges did not fire for the unbound default value
-                    this.itemsInitialized = true;
-                    this.originalItems = incomingItems;
-                    return;
-                }
                 this.originalItems = incomingItems;
                 this.handleOriginalItemsChange();
             });
