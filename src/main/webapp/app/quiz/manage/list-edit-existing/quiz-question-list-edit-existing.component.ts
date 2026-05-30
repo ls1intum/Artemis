@@ -295,7 +295,7 @@ export class QuizQuestionListEditExistingComponent {
                     }),
                 },
             });
-            ref.onClose.subscribe(async (confirmed: boolean | undefined) => {
+            ref?.onClose.subscribe(async (confirmed: boolean | undefined) => {
                 if (confirmed) {
                     const newQuizQuestions = validQuizQuestions.concat(invalidQuizQuestions);
                     return this.handleConversionOfExistingQuestions(newQuizQuestions, images);

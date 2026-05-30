@@ -1,4 +1,4 @@
-import { Component, Injectable, inject } from '@angular/core';
+import { Injectable, Type, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -20,8 +20,8 @@ export class QuizExercisePopupService {
      * @param quizExercise the quiz exercise for which the dialog should be shown
      * @param files required for the form data upload
      */
-    open(component: Component, quizExercise: QuizExercise, files: Map<string, File>): Promise<DynamicDialogRef> {
-        return new Promise<DynamicDialogRef>((resolve) => {
+    open(component: Type<unknown>, quizExercise: QuizExercise, files: Map<string, File>): Promise<DynamicDialogRef | null> {
+        return new Promise<DynamicDialogRef | null>((resolve) => {
             if (this.dialogRef == undefined) {
                 this.dialogRef = this.quizExerciseDialogRef(component, quizExercise, files);
             }
@@ -35,7 +35,7 @@ export class QuizExercisePopupService {
      * @param quizExercise the quiz exercise for which the dialog should be shown
      * @param files required for the form data upload
      */
-    quizExerciseDialogRef(component: Component, quizExercise: QuizExercise, files: Map<string, File>): DynamicDialogRef {
+    quizExerciseDialogRef(component: Type<unknown>, quizExercise: QuizExercise, files: Map<string, File>): DynamicDialogRef | null {
         const ref = this.dialogService.open(component, {
             width: '50rem',
             modal: true,
@@ -47,7 +47,7 @@ export class QuizExercisePopupService {
             showHeader: false,
             data: { quizExercise, files },
         });
-        ref.onClose.subscribe((result) => {
+        ref?.onClose.subscribe((result) => {
             if (result === 're-evaluate') {
                 this.router.navigate(['/course-management/' + quizExercise.course!.id + '/quiz-exercises']);
             } else {

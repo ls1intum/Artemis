@@ -63,7 +63,7 @@ describe('QuizExercisePopupService', () => {
         const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(ref);
         const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
-        const result = await service.open(MockModalComponent as unknown as Component, quizExercise, files);
+        const result = await service.open(MockModalComponent, quizExercise, files);
 
         expect(result).toBe(ref);
         expect(openSpy).toHaveBeenCalledWith(MockModalComponent, expect.objectContaining({ data: { quizExercise, files } }));
@@ -79,7 +79,7 @@ describe('QuizExercisePopupService', () => {
         vi.spyOn(dialogService, 'open').mockReturnValue(ref);
         const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
-        await service.open(MockModalComponent as unknown as Component, quizExercise, files);
+        await service.open(MockModalComponent, quizExercise, files);
 
         onClose.next('re-evaluate');
         expect(navigateSpy).toHaveBeenCalledWith(['/course-management/123/quiz-exercises']);
@@ -91,7 +91,7 @@ describe('QuizExercisePopupService', () => {
         vi.spyOn(dialogService, 'open').mockReturnValue(ref);
         const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
-        await service.open(MockModalComponent as unknown as Component, quizExercise, files);
+        await service.open(MockModalComponent, quizExercise, files);
 
         onClose.next('other');
         expect(navigateSpy).toHaveBeenCalledWith([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
@@ -103,7 +103,7 @@ describe('QuizExercisePopupService', () => {
         vi.spyOn(dialogService, 'open').mockReturnValue(ref);
         const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
-        await service.open(MockModalComponent as unknown as Component, quizExercise, files);
+        await service.open(MockModalComponent, quizExercise, files);
 
         onClose.next(undefined);
         expect(navigateSpy).toHaveBeenCalledWith([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
@@ -115,8 +115,8 @@ describe('QuizExercisePopupService', () => {
 
         const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(ref);
 
-        const firstResult = await service.open(MockModalComponent as unknown as Component, quizExercise, files);
-        const secondResult = await service.open(MockModalComponent as unknown as Component, quizExercise, files);
+        const firstResult = await service.open(MockModalComponent, quizExercise, files);
+        const secondResult = await service.open(MockModalComponent, quizExercise, files);
 
         expect(firstResult).toBe(secondResult);
         expect(openSpy).toHaveBeenCalledOnce();

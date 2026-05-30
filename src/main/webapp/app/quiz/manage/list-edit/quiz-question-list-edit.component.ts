@@ -268,6 +268,9 @@ export class QuizQuestionListEditComponent {
             showHeader: false,
             data: { courseId: this.courseId() },
         });
+        if (!ref) {
+            return;
+        }
 
         const question = await firstValueFrom(ref.onClose, { defaultValue: undefined });
         if (question) {

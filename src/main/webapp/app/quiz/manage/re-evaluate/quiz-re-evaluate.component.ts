@@ -128,8 +128,8 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
                 files.set(filename, value.file);
             });
         }
-        this.popupService.open(QuizReEvaluateWarningComponent as Component, this.quizExercise, files).then((res) => {
-            res.onClose.subscribe((confirmed) => {
+        this.popupService.open(QuizReEvaluateWarningComponent, this.quizExercise, files).then((res) => {
+            res?.onClose.subscribe((confirmed) => {
                 if (confirmed) {
                     this.savedEntity = cloneDeep(this.quizExercise);
                 }
