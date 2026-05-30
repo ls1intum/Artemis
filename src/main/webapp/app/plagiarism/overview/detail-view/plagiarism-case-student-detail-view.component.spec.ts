@@ -25,7 +25,7 @@ describe('Plagiarism Cases Student View Component', () => {
     let component: PlagiarismCaseStudentDetailViewComponent;
     let fixture: ComponentFixture<PlagiarismCaseStudentDetailViewComponent>;
     let plagiarismCasesService: PlagiarismCasesService;
-    let plagiarismCasesServiceSpy: ReturnType<typeof vi.spyOn<PlagiarismCasesService, 'getPlagiarismCaseDetailForStudent'>>;
+    let plagiarismCasesServiceSpy: ReturnType<typeof vi.spyOn>;
 
     const ancestorRouteParamsSubject = new BehaviorSubject<Params>({ courseId: 1 });
     const routeParamsSubject = new BehaviorSubject<Params>({ plagiarismCaseId: 1 });
@@ -67,7 +67,7 @@ describe('Plagiarism Cases Student View Component', () => {
         plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
         plagiarismCasesServiceSpy = vi.spyOn(plagiarismCasesService, 'getPlagiarismCaseDetailForStudent');
         plagiarismCasesServiceSpy.mockImplementation(
-            (courseId, plagiarismCaseId) =>
+            (courseId: number, plagiarismCaseId: number) =>
                 of({
                     body: {
                         ...plagiarismCase,
