@@ -13,6 +13,9 @@ export interface LectureUnitInfo {
     name: string;
     link: string;
     pageNumber: number;
+    sourceType: string;
+    queryParams: Record<string, string | number>;
+    displayMeta?: string;
 }
 
 export interface LectureSearchResult {

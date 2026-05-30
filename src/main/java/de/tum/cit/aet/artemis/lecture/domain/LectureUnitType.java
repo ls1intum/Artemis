@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.domain;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
@@ -25,6 +26,22 @@ public enum LectureUnitType {
     @JsonValue
     public String getValue() {
         return value;
+    }
+
+    /**
+     * Resolves a lecture unit type enum from its API value.
+     *
+     * @param value serialized lecture unit type value
+     * @return matching lecture unit type enum
+     */
+    @JsonCreator
+    public static LectureUnitType fromValue(String value) {
+        for (LectureUnitType type : values()) {
+            if (type.value.equals(value)) {
+                return type;
+            }
+        }
+        throw new IllegalArgumentException("Unknown lecture unit type: " + value);
     }
 
     /**
