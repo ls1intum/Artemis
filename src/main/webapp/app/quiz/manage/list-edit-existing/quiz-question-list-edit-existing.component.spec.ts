@@ -11,7 +11,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { CommonModule } from '@angular/common';
 import { QuizQuestionListEditExistingComponent, State } from 'app/quiz/manage/list-edit-existing/quiz-question-list-edit-existing.component';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -29,9 +29,9 @@ import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solut
 import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
 import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
-import { ChangeDetectorRef, EventEmitter } from '@angular/core';
+import { ChangeDetectorRef } from '@angular/core';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import JSZip from 'jszip';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -112,7 +112,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
     let quizExerciseService: QuizExerciseService;
     let fileService: FileService;
     let changeDetector: ChangeDetectorRef;
-    let modalService: NgbModal;
+    let dialogService: DialogService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -127,7 +127,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                MockProvider(NgbModal),
+                MockProvider(DialogService),
                 MockProvider(ChangeDetectorRef),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
@@ -141,7 +141,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
         quizExerciseService = TestBed.inject(QuizExerciseService);
         fileService = TestBed.inject(FileService);
         changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
-        modalService = fixture.debugElement.injector.get(NgbModal);
+        dialogService = fixture.debugElement.injector.get(DialogService);
         component = fixture.componentInstance;
     });
 
@@ -437,13 +437,12 @@ describe('QuizQuestionListEditExistingComponent', () => {
             const invalidMap = checkForInvalidFlaggedQuestions(questions);
             expect(invalidMap).toEqual({ 2: [] }); // question1 with id=2 should be in the map
 
-            const shouldImportEmitter = new EventEmitter<void>();
-            const componentInstance = { invalidFlaggedQuestions: [], shouldImport: shouldImportEmitter };
-            const modalServiceSpy = vi.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance });
+            const onClose = new Subject<boolean | undefined>();
+            const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as DynamicDialogRef);
 
             await component.addQuestions(questions);
 
-            expect(modalServiceSpy).toHaveBeenCalledOnce();
+            expect(openDialogSpy).toHaveBeenCalledOnce();
         });
 
         it('should emit onQuestionsAdded when all questions are valid', async () => {

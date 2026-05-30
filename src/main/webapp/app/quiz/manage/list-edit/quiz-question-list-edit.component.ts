@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, ViewEncapsulation, inject, input, output, signal, viewChildren } from '@angular/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
+import { firstValueFrom } from 'rxjs';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
@@ -33,7 +34,7 @@ import { QuizAiQuestionRefinementPanelComponent } from 'app/quiz/manage/quiz-ai-
     ],
 })
 export class QuizQuestionListEditComponent {
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
 
     courseId = input.required<number>();
     quizQuestions = input<QuizQuestion[]>([]);
@@ -256,14 +257,19 @@ export class QuizQuestionListEditComponent {
     }
 
     async importApollonDragAndDropQuestion() {
-        const modalRef: NgbModalRef = this.modalService.open(ApollonDiagramImportDialogComponent as Component, { size: 'xl', backdrop: 'static' });
+        const ref = this.dialogService.open(ApollonDiagramImportDialogComponent, {
+            width: '80rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            draggable: false,
+            resizable: false,
+            showHeader: false,
+            data: { courseId: this.courseId() },
+        });
 
-        const courseIdValue = this.courseId();
-
-        const instance = modalRef.componentInstance;
-        instance.courseId = signal(courseIdValue);
-
-        const question = await modalRef.result;
+        const question = await firstValueFrom(ref.onClose, { defaultValue: undefined });
         if (question) {
             this.addQuestion(question);
         }

@@ -4,7 +4,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
 import { CommonModule } from '@angular/common';
@@ -38,7 +39,7 @@ describe('QuizQuestionListEditComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockDirective(TranslateDirective),
             ],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(DialogService), provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()
             .then(() => {
