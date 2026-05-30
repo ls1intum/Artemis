@@ -96,6 +96,18 @@ export default defineConfig({
             'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.spec.ts', // include build plan phases model tests
             'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.spec.ts', // include legacy build plan converter service tests
             'src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**/*.spec.ts', // include programming exercise update timeline tests
+            'src/main/webapp/app/shared-ui/card-wrapper/**/*.spec.ts', // include card-wrapper tests
+            'src/main/webapp/app/shared-ui/color-selector/**/*.spec.ts', // include color-selector tests
+            'src/main/webapp/app/shared-ui/connection-warning/**/*.spec.ts', // include connection-warning tests
+            'src/main/webapp/app/shared-ui/detail-overview-navigation-bar/**/*.spec.ts', // include detail-overview-navigation-bar tests
+            'src/main/webapp/app/shared-ui/feature-activation/**/*.spec.ts', // include feature-activation tests
+            'src/main/webapp/app/shared-ui/image/**/*.spec.ts', // include image tests
+            'src/main/webapp/app/shared-ui/information-box/**/*.spec.ts', // include information-box tests
+            'src/main/webapp/app/shared-ui/profile-picture/**/*.spec.ts', // include profile-picture tests
+            'src/main/webapp/app/shared-ui/resizeable-container/**/*.spec.ts', // include resizeable-container tests
+            'src/main/webapp/app/shared-ui/segmented-toggle/**/*.spec.ts', // include segmented-toggle tests
+            'src/main/webapp/app/shared-ui/sticky-popover/**/*.spec.ts', // include sticky-popover tests
+            'src/main/webapp/app/shared-ui/virtual-scroll/**/*.spec.ts', // include virtual-scroll tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -171,6 +183,18 @@ export default defineConfig({
                 'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts', // include legacy build plan converter service for code coverage
                 'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // include build plan phases model for code coverage
                 'src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**/*.ts', // include programming exercise update timeline for code coverage
+                'src/main/webapp/app/shared-ui/card-wrapper/**/*.ts', // include card-wrapper for code coverage
+                'src/main/webapp/app/shared-ui/color-selector/**/*.ts', // include color-selector for code coverage
+                'src/main/webapp/app/shared-ui/connection-warning/**/*.ts', // include connection-warning for code coverage
+                'src/main/webapp/app/shared-ui/detail-overview-navigation-bar/**/*.ts', // include detail-overview-navigation-bar for code coverage
+                'src/main/webapp/app/shared-ui/feature-activation/**/*.ts', // include feature-activation for code coverage
+                'src/main/webapp/app/shared-ui/image/**/*.ts', // include image for code coverage
+                'src/main/webapp/app/shared-ui/information-box/**/*.ts', // include information-box for code coverage
+                'src/main/webapp/app/shared-ui/profile-picture/**/*.ts', // include profile-picture for code coverage
+                'src/main/webapp/app/shared-ui/resizeable-container/**/*.ts', // include resizeable-container for code coverage
+                'src/main/webapp/app/shared-ui/segmented-toggle/**/*.ts', // include segmented-toggle for code coverage
+                'src/main/webapp/app/shared-ui/sticky-popover/**/*.ts', // include sticky-popover for code coverage
+                'src/main/webapp/app/shared-ui/virtual-scroll/**/*.ts', // include virtual-scroll for code coverage
             ],
             exclude: [
                 '**/node_modules/**', // exclude node_modules with third-party code
