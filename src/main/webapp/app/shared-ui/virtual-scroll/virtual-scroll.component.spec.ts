@@ -1,5 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { SimpleChange, SimpleChanges } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { VirtualScrollComponent } from 'app/shared-ui/virtual-scroll/virtual-scroll.component';
 import { metisCoursePosts, metisGeneralCourseWidePosts } from 'test/helpers/sample/metis-sample-data';
 import { ReplaySubject } from 'rxjs';
@@ -14,20 +15,22 @@ class MockRouter {
 }
 
 describe('VirtualScrollComponent', () => {
+    setupTestBed({ zoneless: true });
     let comp: VirtualScrollComponent<Post>;
     let fixture: ComponentFixture<VirtualScrollComponent<Post>>;
 
     let originalWindow: any;
-    let windowScrollToSpy: jest.SpyInstance;
-    let prepareDataItemsSpy: jest.SpyInstance;
-    let forceReloadChangeSpy: jest.SpyInstance;
-    let onEndOfOriginalItemsReachedSpy: jest.SpyInstance;
+    let windowScrollToSpy: ReturnType<typeof vi.spyOn>;
+    let prepareDataItemsSpy: ReturnType<typeof vi.spyOn>;
+    let forceReloadChangeSpy: ReturnType<typeof vi.spyOn>;
+    let onEndOfOriginalItemsReachedSpy: ReturnType<typeof vi.spyOn>;
 
     const SCROLL_PADDING_TOP = 325;
     const MIN_ITEM_HEIGHT = 126.7;
     const END_OF_LIST_THRESHOLD = 2;
 
     beforeEach(() => {
+        vi.useFakeTimers();
         return TestBed.configureTestingModule({
             providers: [{ provide: Router, useClass: MockRouter }],
         })
@@ -36,11 +39,18 @@ describe('VirtualScrollComponent', () => {
                 fixture = TestBed.createComponent(VirtualScrollComponent);
                 comp = fixture.componentInstance;
 
-                windowScrollToSpy = jest.spyOn(window, 'scrollTo');
-                prepareDataItemsSpy = jest.spyOn(comp, 'prepareDataItems');
-                forceReloadChangeSpy = jest.spyOn(comp.forceReloadChange, 'emit');
-                onEndOfOriginalItemsReachedSpy = jest.spyOn(comp.onEndOfOriginalItemsReached, 'emit');
-                jest.spyOn(comp, 'numberItemsCanRender').mockReturnValue(2);
+                // provide all required inputs up front so they can be read by the component logic
+                fixture.componentRef.setInput('scrollPaddingTop', SCROLL_PADDING_TOP);
+                fixture.componentRef.setInput('minItemHeight', MIN_ITEM_HEIGHT);
+                fixture.componentRef.setInput('endOfListReachedItemThreshold', END_OF_LIST_THRESHOLD);
+                fixture.componentRef.setInput('collapsableHtmlClassNames', []);
+                fixture.componentRef.setInput('forceReload', false);
+
+                windowScrollToSpy = vi.spyOn(window, 'scrollTo');
+                prepareDataItemsSpy = vi.spyOn(comp, 'prepareDataItems');
+                forceReloadChangeSpy = vi.spyOn(comp.forceReloadChange, 'emit');
+                onEndOfOriginalItemsReachedSpy = vi.spyOn(comp.onEndOfOriginalItemsReached, 'emit');
+                vi.spyOn(comp, 'numberItemsCanRender').mockReturnValue(2);
 
                 // make a copy of type any to assign readonly variable scrollY and prevent circular dependency problem
                 originalWindow = window;
@@ -50,91 +60,85 @@ describe('VirtualScrollComponent', () => {
     afterEach(() => {
         originalWindow.scrollY = 0;
 
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
+        vi.useRealTimers();
     });
 
-    it('should initialize correctly', fakeAsync(() => {
+    it('should initialize correctly', () => {
         fixture.detectChanges();
 
-        expect(comp.prevOriginalItems).toBeEmpty();
-        expect(comp.minItemHeight).not.toBeNull();
+        expect(comp.prevOriginalItems).toHaveLength(0);
+        expect(comp.minItemHeight()).not.toBeNull();
         expect(comp.focusInUnListener).not.toBeNull();
         expect(comp.scrollUnListener).not.toBeNull();
-    }));
+    });
 
-    it('should set originalItems to empty array if undefined value is passed into the component', fakeAsync(() => {
+    it('should set originalItems to empty array if undefined value is passed into the component', () => {
         fixture.detectChanges();
 
-        const changes = {} as SimpleChanges;
-        changes.originalItems = new SimpleChange([], undefined, true);
         comp.originalItems = undefined;
-        comp.ngOnChanges(changes);
-        tick();
+        comp.handleOriginalItemsChange();
+        vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
 
         expect(comp.originalItems).toBeDefined();
-        expect(comp.originalItems).toBeEmpty();
-    }));
+        expect(comp.originalItems).toHaveLength(0);
+    });
 
-    it('should initialize DOM tree with items', fakeAsync(() => {
+    it('should initialize DOM tree with items', () => {
         fixture.detectChanges();
-        comp.forceReload = true;
+        fixture.componentRef.setInput('forceReload', true);
         comp.originalItems = metisCoursePosts;
 
-        const changes = {} as SimpleChanges;
-        changes.originalItems = new SimpleChange([], metisCoursePosts, true);
-        comp.ngOnChanges(changes);
+        comp.handleOriginalItemsChange();
 
-        tick();
+        vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
 
         expect(comp.previousItemsHeight).toHaveLength(metisCoursePosts.length);
         expect(prepareDataItemsSpy).toHaveBeenCalledOnce();
         expect(onEndOfOriginalItemsReachedSpy).not.toHaveBeenCalled();
-    }));
+    });
 
-    it('should set forceReloadChange flag to true when user navigates to specific post', fakeAsync(() => {
+    it('should set forceReloadChange flag to true when user navigates to specific post', () => {
         fixture.detectChanges();
 
         routerEventSubject.next(new NavigationStart(0, 'courses/1/discussion?searchText=%231'));
 
         expect(forceReloadChangeSpy).toHaveBeenCalledOnce();
         expect(forceReloadChangeSpy).toHaveBeenCalledWith(true);
-    }));
+    });
 
-    it('should update rendered DOM tree items correctly', fakeAsync(() => {
+    it('should update rendered DOM tree items correctly', () => {
         prepareComponent();
 
         // conditions to append new items to the end of originalItems
-        comp.forceReload = false;
-        comp.currentScroll = comp.minItemHeight * 2;
+        fixture.componentRef.setInput('forceReload', false);
+        comp.currentScroll = comp.minItemHeight()! * 2;
 
         const updatedTitle = 'Updated title';
         comp.prevOriginalItems[0].title = updatedTitle;
 
-        const changes = {} as SimpleChanges;
-        changes.originalItems = new SimpleChange(comp.prevOriginalItems, comp.originalItems, false);
-        comp.ngOnChanges(changes);
+        comp.handleOriginalItemsChange();
 
-        tick();
+        vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
 
         expect(comp.domTreeItems).toHaveLength(3);
         expect(comp.domTreeItems[0].title).toBe(updatedTitle);
         expect(onEndOfOriginalItemsReachedSpy).not.toHaveBeenCalled();
-    }));
+    });
 
-    it('should not unintentionally scroll on clicking the text area of posting markdown editor component', fakeAsync(() => {
+    it('should not unintentionally scroll on clicking the text area of posting markdown editor component', () => {
+        fixture.detectChanges();
         comp.originalItems = metisGeneralCourseWidePosts;
 
-        const changes = {} as SimpleChanges;
-        changes.originalItems = new SimpleChange([], metisGeneralCourseWidePosts, true);
-        comp.ngOnChanges(changes);
+        comp.handleOriginalItemsChange();
 
         originalWindow.scrollY = 1500;
         global.window.dispatchEvent(new Event('scroll'));
 
-        tick();
+        vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
 
         // simulate unintended scrolling that occurs on focus
@@ -143,9 +147,9 @@ describe('VirtualScrollComponent', () => {
 
         expect(windowScrollToSpy).toHaveBeenCalledOnce();
         expect(windowScrollToSpy).toHaveBeenCalledWith(0, comp.windowScrollTop);
-    }));
+    });
 
-    it('should perform virtual scroll on scroll event and update the DOM tree', fakeAsync(() => {
+    it('should perform virtual scroll on scroll event and update the DOM tree', () => {
         prepareComponent();
 
         expect(window.scrollY).toBe(0);
@@ -153,39 +157,40 @@ describe('VirtualScrollComponent', () => {
         expect(comp.domTreeItems[1].id).toBe(2);
         expect(comp.domTreeItems[2].id).toBe(3);
 
-        originalWindow.scrollY = comp.minItemHeight * 7;
+        originalWindow.scrollY = comp.minItemHeight()! * 7;
         global.window.dispatchEvent(new Event('scroll'));
 
-        tick();
+        vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(comp.windowScrollTop).toBe(comp.minItemHeight * 7);
+        expect(comp.windowScrollTop).toBe(comp.minItemHeight()! * 7);
         expect(prepareDataItemsSpy).toHaveBeenCalledTimes(2);
         expect(onEndOfOriginalItemsReachedSpy).not.toHaveBeenCalled();
         expect(comp.domTreeItems[0].id).toBe(2);
         expect(comp.domTreeItems[1].id).toBe(3);
         expect(comp.domTreeItems[2].id).toBe(5);
 
-        originalWindow.scrollY = comp.minItemHeight * 10;
+        originalWindow.scrollY = comp.minItemHeight()! * 10;
         global.window.dispatchEvent(new Event('scroll'));
 
-        tick();
+        vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
 
         expect(onEndOfOriginalItemsReachedSpy).toHaveBeenCalledOnce();
-    }));
+    });
 
     function prepareComponent() {
-        comp.scrollPaddingTop = SCROLL_PADDING_TOP;
-        comp.minItemHeight = MIN_ITEM_HEIGHT;
-        comp.endOfListReachedItemThreshold = END_OF_LIST_THRESHOLD;
+        // run change detection first so the required viewChild (itemsContainer) is resolved and ngOnInit listeners are registered
+        fixture.detectChanges();
+
+        fixture.componentRef.setInput('scrollPaddingTop', SCROLL_PADDING_TOP);
+        fixture.componentRef.setInput('minItemHeight', MIN_ITEM_HEIGHT);
+        fixture.componentRef.setInput('endOfListReachedItemThreshold', END_OF_LIST_THRESHOLD);
         comp.originalItems = metisCoursePosts;
 
-        const changes = {} as SimpleChanges;
-        changes.originalItems = new SimpleChange([], metisCoursePosts, true);
-        comp.ngOnChanges(changes);
+        comp.handleOriginalItemsChange();
 
-        tick();
+        vi.advanceTimersByTime(0);
         fixture.changeDetectorRef.detectChanges();
     }
 });

@@ -1,10 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { InformationBoxComponent } from './information-box.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('InformationBoxComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: InformationBoxComponent;
     let fixture: ComponentFixture<InformationBoxComponent>;
 
@@ -15,6 +18,10 @@ describe('InformationBoxComponent', () => {
         fixture = TestBed.createComponent(InformationBoxComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {

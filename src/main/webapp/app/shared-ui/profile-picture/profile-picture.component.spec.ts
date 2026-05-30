@@ -1,8 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 
 describe('ProfilePictureComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: ProfilePictureComponent;
     let fixture: ComponentFixture<ProfilePictureComponent>;
 
@@ -14,6 +17,10 @@ describe('ProfilePictureComponent', () => {
         fixture = TestBed.createComponent(ProfilePictureComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {

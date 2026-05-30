@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { By } from '@angular/platform-browser';
 import { CardWrapperComponent } from './card-wrapper.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -7,6 +9,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CardWrapperComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<CardWrapperComponent>;
 
     beforeEach(async () => {
@@ -27,6 +30,10 @@ describe('CardWrapperComponent', () => {
         fixture = TestBed.createComponent(CardWrapperComponent);
         fixture.componentRef.setInput('title', 'test.title');
         fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should display the title using jhiTranslate directive', () => {
