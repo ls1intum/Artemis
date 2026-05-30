@@ -4,7 +4,7 @@
  *
  */
 
-import { Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, OnInit, Output, Renderer2, SimpleChanges, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, Renderer2, effect, inject, input, output, untracked, viewChild } from '@angular/core';
 import { NavigationStart, Router } from '@angular/router';
 import { VirtualScrollRenderEvent } from 'app/shared-ui/virtual-scroll/virtual-scroll-render-event.class';
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
@@ -37,47 +37,53 @@ import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
  *     </jhi-posting-thread>
  * </jhi-virtual-scroll>
  */
-export class VirtualScrollComponent<T extends { id?: number }> implements OnInit, OnChanges, OnDestroy {
+export class VirtualScrollComponent<T extends { id?: number }> implements OnInit, OnDestroy {
     private renderer = inject(Renderer2);
     private router = inject(Router);
 
-    @ViewChild('itemsContainer', { static: true }) private itemsContainerElRef: ElementRef<HTMLElement>;
+    private readonly itemsContainerElRef = viewChild.required<ElementRef<HTMLElement>>('itemsContainer');
 
     /**
      * padding from the top in pixels for which we defer the virtual scrolling process
      * this approach is needed to prevent items near the top of the window from being
      * removed out of the DOM tree when scrolling down
      */
-    @Input() scrollPaddingTop: number;
+    readonly scrollPaddingTop = input.required<number>();
 
     // all items being listed
-    // eslint-disable-next-line @angular-eslint/no-input-rename
-    @Input('items') public originalItems: T[] | undefined = [];
+    readonly items = input<T[] | undefined>([]);
 
     /**
      * Names of HTML classes which needs toggling to be displayed
      * Subcomponents of items removed from the DOM tree are automatically collapsed, hence the difference in height
      * must be calculated to rerender these items smoothly when needed
      */
-    @Input() collapsableHtmlClassNames: string[];
+    readonly collapsableHtmlClassNames = input.required<string[]>();
 
     // the minimum height an item can occupy, needed when the item's height is not cached before
-    @Input() minItemHeight: number;
+    readonly minItemHeight = input.required<number>();
 
     // number of items from the bottom which should be rendered so that the endOfListReached event is emitted to the parent component
-    @Input() endOfListReachedItemThreshold: number;
+    readonly endOfListReachedItemThreshold = input.required<number>();
 
     // whether an automatic scroll should be made to the top of the item list or not after items are updated
-    @Input() forceReload: boolean;
+    readonly forceReload = input.required<boolean>();
 
     // emits the status of forceReload flag to parent components when it is changed
-    @Output() forceReloadChange = new EventEmitter<boolean>();
+    readonly forceReloadChange = output<boolean>();
 
     // emits information about items currently rendered on the DOM tree
-    @Output() onItemsRender = new EventEmitter<VirtualScrollRenderEvent<T>>();
+    readonly onItemsRender = output<VirtualScrollRenderEvent<T>>();
 
     // emits when user scrolls to the end of the item list
-    @Output() onEndOfOriginalItemsReached = new EventEmitter();
+    readonly onEndOfOriginalItemsReached = output<void>();
+
+    // writable mirror of the `items` input; the component mutates this internally while keeping the input read-only
+    public originalItems: T[] | undefined = [];
+
+    // guards the items effect so it only reacts to actual changes of the bound input, mirroring the former
+    // ngOnChanges behavior which did not fire for the initial (unbound) default value
+    private itemsInitialized = false;
 
     public prevOriginalItems: T[] = [];
     public domTreeItems: T[] = [];
@@ -99,6 +105,20 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
 
     constructor() {
         this.getScreenSize();
+        // react to changes of the `items` input, reproducing the former ngOnChanges('originalItems') behavior
+        effect(() => {
+            const incomingItems = this.items();
+            untracked(() => {
+                if (!this.itemsInitialized) {
+                    // skip the initial run; ngOnChanges did not fire for the unbound default value
+                    this.itemsInitialized = true;
+                    this.originalItems = incomingItems;
+                    return;
+                }
+                this.originalItems = incomingItems;
+                this.handleOriginalItemsChange();
+            });
+        });
     }
 
     /**
@@ -126,45 +146,46 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
         });
     }
 
-    ngOnChanges(changes: SimpleChanges) {
+    /**
+     * reacts to a change of the listed items (formerly the body of ngOnChanges)
+     */
+    handleOriginalItemsChange() {
         setTimeout(() => {
-            if ('originalItems' in changes) {
-                // on item change
-                if (!this.originalItems) {
-                    this.originalItems = [];
-                }
+            // on item change
+            if (!this.originalItems) {
+                this.originalItems = [];
+            }
 
-                if (this.forceReload || this.currentScroll < this.minItemHeight) {
-                    // invalidate previously calculated item heights
-                    this.previousItemsHeight = new Array(this.originalItems.length).fill(null);
+            if (this.forceReload() || this.currentScroll < this.minItemHeight()) {
+                // invalidate previously calculated item heights
+                this.previousItemsHeight = new Array(this.originalItems.length).fill(null);
 
+                this.prepareDataItems();
+            } else {
+                if (this.originalItems.length > this.prevOriginalItems.length && this.prevOriginalItems.length % ITEMS_PER_PAGE === 0) {
+                    // previousItemsHeight array is extended for next page of arriving items
+                    this.previousItemsHeight = this.previousItemsHeight.concat(new Array(this.originalItems.length - this.prevOriginalItems.length).fill(null));
                     this.prepareDataItems();
                 } else {
-                    if (this.originalItems.length > this.prevOriginalItems.length && this.prevOriginalItems.length % ITEMS_PER_PAGE === 0) {
-                        // previousItemsHeight array is extended for next page of arriving items
-                        this.previousItemsHeight = this.previousItemsHeight.concat(new Array(this.originalItems.length - this.prevOriginalItems.length).fill(null));
-                        this.prepareDataItems();
-                    } else {
-                        // changes in the displayed items are reflected to the user
+                    // changes in the displayed items are reflected to the user
 
-                        let indexOfFirstDisplayedItem = 0;
-                        // find the index of the first domTreeItem in the updated list of items
-                        this.domTreeItems.every((domTreeItem) => {
-                            indexOfFirstDisplayedItem = this.originalItems!.findIndex((originalItem) => originalItem.id === domTreeItem.id);
-                            // if the first domTreeItem no longer exists in the updated list of items (index not found therefore is -1), proceed to the next domTreeItem available
-                            // by returning the every method with true
-                            return indexOfFirstDisplayedItem === -1;
-                        });
+                    let indexOfFirstDisplayedItem = 0;
+                    // find the index of the first domTreeItem in the updated list of items
+                    this.domTreeItems.every((domTreeItem) => {
+                        indexOfFirstDisplayedItem = this.originalItems!.findIndex((originalItem) => originalItem.id === domTreeItem.id);
+                        // if the first domTreeItem no longer exists in the updated list of items (index not found therefore is -1), proceed to the next domTreeItem available
+                        // by returning the every method with true
+                        return indexOfFirstDisplayedItem === -1;
+                    });
 
-                        // update items on the domTree
-                        for (let k = 0; k < this.domTreeItems.length; k++) {
-                            this.domTreeItems[k] = this.originalItems[indexOfFirstDisplayedItem + k];
-                        }
+                    // update items on the domTree
+                    for (let k = 0; k < this.domTreeItems.length; k++) {
+                        this.domTreeItems[k] = this.originalItems[indexOfFirstDisplayedItem + k];
                     }
                 }
-                this.prevOriginalItems = this.originalItems;
-                this.forceReloadChange.emit(false);
             }
+            this.prevOriginalItems = this.originalItems;
+            this.forceReloadChange.emit(false);
         });
     }
 
@@ -182,7 +203,7 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
     onScroll() {
         this.windowScrollTop = window.scrollY;
         // delays virtualScrolling due to page elements above items such as page title, menu, filter elements, etc.
-        this.currentScroll = Math.max(window.scrollY - this.scrollPaddingTop * 2, 0);
+        this.currentScroll = Math.max(window.scrollY - this.scrollPaddingTop() * 2, 0);
         this.prepareDataItems();
     }
 
@@ -200,7 +221,7 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
      * @param itemsThatAreGone  real index of element which is to be removed from the DOM Tree
      */
     registerCurrentItemsHeight(itemsThatAreGone?: number) {
-        const children = this.itemsContainerElRef.nativeElement.children;
+        const children = this.itemsContainerElRef().nativeElement.children;
         for (let i = 0; i < children.length; i++) {
             const child = children[i];
             const realIndex = this.startIndex + i;
@@ -209,8 +230,8 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
             /* calculates collapsible nested components of item being removed from the DOM tree and updates the items height where nested items would be closed
                this operation is necessary to have a smooth scrolling experience when redisplaying an element previously removed from the DOM tree due to being above the screen's
                upper border */
-            if (this.collapsableHtmlClassNames && itemsThatAreGone !== undefined && i === itemsThatAreGone) {
-                this.collapsableHtmlClassNames.forEach((collapsableHtmlClassName) => {
+            if (this.collapsableHtmlClassNames() && itemsThatAreGone !== undefined && i === itemsThatAreGone) {
+                this.collapsableHtmlClassNames().forEach((collapsableHtmlClassName) => {
                     child.querySelectorAll(collapsableHtmlClassName).forEach((subElement) => {
                         collapsableHeight += subElement.getBoundingClientRect().height;
                     });
@@ -242,16 +263,16 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
 
         dimensions.contentHeight = this.originalItems!.reduce((prev, _curr, i) => {
             const height = this.previousItemsHeight[i];
-            return prev + (height ? height : this.minItemHeight);
+            return prev + (height ? height : this.minItemHeight());
         }, 0);
 
-        if (this.currentScroll >= this.minItemHeight) {
+        if (this.currentScroll >= this.minItemHeight()) {
             let newPaddingTop = 0;
             let itemsThatAreGone = 0;
             let initialScroll = this.currentScroll;
 
             for (const h of this.previousItemsHeight) {
-                const height = h ? h : this.minItemHeight;
+                const height = h ? h : this.minItemHeight();
                 if (initialScroll >= height) {
                     newPaddingTop += height;
                     initialScroll -= height;
@@ -275,7 +296,7 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
     prepareDataVirtualScroll() {
         const dimensions = this.getDimensions();
 
-        this.contentHeight = this.originalItems!.length !== 0 ? Math.max(dimensions.contentHeight, this.screenHeight - this.scrollPaddingTop) : this.screenHeight / 2;
+        this.contentHeight = this.originalItems!.length !== 0 ? Math.max(dimensions.contentHeight, this.screenHeight - this.scrollPaddingTop()) : this.screenHeight / 2;
         this.paddingTop = dimensions.paddingTop;
 
         if (dimensions.itemsThatAreGone > this.startIndex) {
@@ -300,7 +321,7 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
         );
 
         // emit event when the user scrolls near the end of available items
-        if (this.endIndex + 1 > this.originalItems!.length - this.endOfListReachedItemThreshold) {
+        if (this.endIndex + 1 > this.originalItems!.length - this.endOfListReachedItemThreshold()) {
             this.onEndOfOriginalItemsReached.emit();
         }
     }
@@ -309,7 +330,7 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
      *  @return total number of items that are to be rendered on the DOM tree
      */
     numberItemsCanRender() {
-        return Math.floor(this.screenHeight / this.minItemHeight) + 5;
+        return Math.floor(this.screenHeight / this.minItemHeight()) + 5;
     }
 
     /**

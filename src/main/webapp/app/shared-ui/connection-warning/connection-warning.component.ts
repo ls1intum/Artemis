@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, viewChild } from '@angular/core';
 import { faExclamationCircle, faWifi } from '@fortawesome/free-solid-svg-icons';
 import { Subscription, filter } from 'rxjs';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -19,7 +19,7 @@ export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
     private websocketService = inject(WebsocketService);
     private router = inject(Router);
 
-    @ViewChild('popover') popover: NgbPopover;
+    readonly popover = viewChild<NgbPopover>('popover');
 
     disconnected = false;
     isOnExamParticipationPage = false;
@@ -44,10 +44,10 @@ export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
             this.disconnected = !status.connected && status.wasEverConnectedBefore;
 
             if (this.disconnected) {
-                this.openTimeout = setTimeout(() => this.popover?.open(), 300);
+                this.openTimeout = setTimeout(() => this.popover()?.open(), 300);
             } else {
                 clearTimeout(this.openTimeout);
-                this.popover?.close();
+                this.popover()?.close();
             }
         });
     }

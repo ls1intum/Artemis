@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
@@ -11,11 +11,9 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 export class TextareaCounterComponent {
     private stringCountService = inject(StringCountService);
 
-    @Input() maxLength: number;
-    @Input() content?: string;
-    @Input() visible?: boolean;
+    readonly maxLength = input.required<number>();
+    readonly content = input<string>();
+    readonly visible = input<boolean>();
 
-    get characterCount(): number {
-        return this.stringCountService.countCharacters(this.content);
-    }
+    readonly characterCount = computed(() => this.stringCountService.countCharacters(this.content()));
 }

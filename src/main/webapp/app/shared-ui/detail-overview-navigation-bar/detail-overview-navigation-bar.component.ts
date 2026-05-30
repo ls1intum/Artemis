@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, HostListener, Input } from '@angular/core';
+import { AfterViewInit, Component, HostListener, input } from '@angular/core';
 import { updateHeaderHeight } from 'app/foundation/util/navbar.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
@@ -9,8 +9,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     imports: [ArtemisTranslatePipe],
 })
 export class DetailOverviewNavigationBarComponent implements AfterViewInit {
-    @Input()
-    sectionHeadlines: { id: string; translationKey: string }[];
+    readonly sectionHeadlines = input.required<{ id: string; translationKey: string }[]>();
 
     @HostListener('window:resize')
     onResizeAddDistanceFromStatusBarToNavbar() {
