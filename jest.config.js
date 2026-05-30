@@ -234,7 +234,7 @@ module.exports = {
         global: {
             statements: 83,
             branches: 72.9,
-            functions: 71.2, // re-baselined (was 72.5, then 72.2 via #12817): editor markdown/monaco + monaco-editor/model specs moved to Vitest; collateral Jest function coverage dropped to 71.25% (per-file coverage unchanged under Vitest)
+            functions: 70.9, // re-baselined (was 72.5, then 72.2 via #12817): editor markdown/monaco + monaco-editor/model specs moved to Vitest; CI-measured collateral Jest function coverage 70.96% (per-file coverage unchanged under Vitest)
             lines: 84,
         },
     },
