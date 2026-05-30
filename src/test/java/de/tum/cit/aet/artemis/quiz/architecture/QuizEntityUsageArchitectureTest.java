@@ -18,8 +18,7 @@ class QuizEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitect
     // TODO: Reduce this to 0 by returning DTOs instead of entities
     @Override
     protected int getExpectedEntityReturnViolations() {
-        // remaining: QuizExerciseRetrievalResource#getAllExercisesOnPage returns SearchResultPageDTO<QuizExercise> (outside this slice)
-        return 1;
+        return 0;
     }
 
     // TODO: Reduce this to 0 by accepting DTOs instead of entities in @RequestBody/@RequestPart
@@ -31,7 +30,6 @@ class QuizEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitect
     // TODO: Reduce this to 0 by removing entity references from DTOs
     @Override
     protected int getExpectedDtoEntityFieldViolations() {
-        // remaining: QuizExerciseFromEditorDTO.quizBatches and .quizQuestions expose entity fields (2, outside this slice)
-        return 2;
+        return 0;
     }
 }

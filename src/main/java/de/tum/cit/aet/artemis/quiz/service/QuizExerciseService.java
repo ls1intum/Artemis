@@ -85,6 +85,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForSearchDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithSolutionDTO;
@@ -679,8 +680,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param user           The user for whom to fetch all available exercises
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
-    public SearchResultPageDTO<QuizExercise> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final Boolean isCourseFilter, final Boolean isExamFilter,
-            final User user) {
+    public SearchResultPageDTO<QuizExerciseForSearchDTO> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final Boolean isCourseFilter,
+            final Boolean isExamFilter, final User user) {
         if (!isCourseFilter && !isExamFilter) {
             return new SearchResultPageDTO<>(Collections.emptyList(), 0);
         }
@@ -688,7 +689,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         final var searchTerm = search.getSearchTerm();
         Specification<QuizExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
         Page<QuizExercise> exercisePage = quizExerciseRepository.findAll(specification, pageable);
-        return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
+        return new SearchResultPageDTO<>(exercisePage.getContent().stream().map(QuizExerciseForSearchDTO::of).toList(), exercisePage.getTotalPages());
     }
 
     /**
@@ -1098,7 +1099,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     /**
-     * Merges the properties of the QuizExerciseFromEditorDTO into the QuizExercise domain object.
+     * Merges the properties of the UpdateQuizExerciseDTO into the QuizExercise domain object.
      * This method converts DTOs to new entity objects to avoid Hibernate detached entity issues.
      *
      * @param quizExercise          The QuizExercise domain object to be updated

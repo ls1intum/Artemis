@@ -100,6 +100,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseDatesDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForCourseDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForSearchDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithoutQuestionsDTO;
@@ -794,10 +795,10 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         long exerciseId = quizExercise.getId();
 
         var searchTerm = pageableSearchUtilService.configureSearch(String.valueOf(exerciseId));
-        SearchResultPageDTO<QuizExercise> searchResult = request.getSearchResult("/api/quiz/quiz-exercises", OK, QuizExercise.class,
+        SearchResultPageDTO<QuizExerciseForSearchDTO> searchResult = request.getSearchResult("/api/quiz/quiz-exercises", OK, QuizExerciseForSearchDTO.class,
                 pageableSearchUtilService.searchMapping(searchTerm));
 
-        assertThat(searchResult.getResultsOnPage()).filteredOn(quiz -> quiz.getId() == exerciseId).hasSize(1);
+        assertThat(searchResult.getResultsOnPage()).filteredOn(quiz -> quiz.id() == exerciseId).hasSize(1);
     }
 
     @Test
