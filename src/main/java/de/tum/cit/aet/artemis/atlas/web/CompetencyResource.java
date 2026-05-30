@@ -25,6 +25,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasMLNotPresentException;
@@ -46,11 +48,7 @@ import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyValidationService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyWithTailRelation;
 import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
@@ -58,6 +56,8 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 
 @Conditional(AtlasEnabled.class)
 @Lazy
@@ -158,7 +158,7 @@ public class CompetencyResource {
     public ResponseEntity<CourseCompetencyResponseDTO> createCompetency(@PathVariable long courseId, @Valid @RequestBody CourseCompetencyRequestDTO competencyRequest)
             throws URISyntaxException {
         log.debug("REST request to create Competency : {}", competencyRequest);
-        Competency competency = toCompetency(competencyRequest);
+        Competency competency = CourseCompetencyRequestDTO.toEntity(competencyRequest, Competency::new);
         competencyValidator.checkForCreation(competency);
 
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
@@ -185,7 +185,7 @@ public class CompetencyResource {
     public ResponseEntity<List<CourseCompetencyResponseDTO>> createCompetencies(@PathVariable Long courseId, @Valid @RequestBody List<CourseCompetencyRequestDTO> competencies)
             throws URISyntaxException {
         log.debug("REST request to create Competencies : {}", competencies);
-        var competencyEntities = competencies.stream().map(this::toCompetency).toList();
+        var competencyEntities = competencies.stream().map(request -> CourseCompetencyRequestDTO.toEntity(request, Competency::new)).toList();
         for (Competency competency : competencyEntities) {
             competencyValidator.checkForCreation(competency);
         }
@@ -333,7 +333,7 @@ public class CompetencyResource {
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<CourseCompetencyResponseDTO> updateCompetency(@PathVariable long courseId, @Valid @RequestBody CourseCompetencyRequestDTO competencyRequest) {
         log.debug("REST request to update Competency : {}", competencyRequest);
-        Competency competency = toCompetency(competencyRequest);
+        Competency competency = CourseCompetencyRequestDTO.toEntity(competencyRequest, Competency::new);
         competencyValidator.checkForUpdate(competency);
 
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -416,10 +416,6 @@ public class CompetencyResource {
             log.error("Error while suggesting competency relations", e);
             throw new BadRequestAlertException("Error suggesting competency relations: " + e.getMessage(), ENTITY_NAME, "suggestionError");
         }
-    }
-
-    private Competency toCompetency(CourseCompetencyRequestDTO competencyRequest) {
-        return CourseCompetencyRequestDTO.toEntity(competencyRequest, Competency::new);
     }
 
     /**

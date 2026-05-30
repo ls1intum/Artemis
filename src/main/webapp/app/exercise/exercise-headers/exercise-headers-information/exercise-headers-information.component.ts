@@ -1,29 +1,30 @@
 import { Component, Input, OnChanges, OnInit, inject, output, viewChild } from '@angular/core';
-import { SortService } from 'app/shared/service/sort.service';
+import { SortService } from 'app/foundation/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { countSubmissions, getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { InformationBox, InformationBoxComponent } from 'app/shared/information-box/information-box.component';
+import { InformationBox, InformationBoxComponent } from 'app/shared-ui/information-box/information-box.component';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
-import { isDateLessThanAWeekInTheFuture } from 'app/shared/util/date.utils';
-import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { isDateLessThanAWeekInTheFuture } from 'app/foundation/util/date.utils';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CommonModule } from '@angular/common';
-import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status/submission-result-status.component';
+import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
 import { DifficultyLevelComponent } from 'app/exercise/difficulty-level/difficulty-level.component';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ResultHistoryDropdownComponent } from './result-history-dropdown/result-history-dropdown.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 
 @Component({
     selector: 'jhi-exercise-headers-information',
@@ -63,7 +64,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     @Input() sortedHistoryResults: Result[] = [];
     @Input() isPractice: boolean = false;
     @Input() athenaEnabled: boolean = false;
-    @Input() feedbackRequestLimit: number = 10;
+    @Input() feedbackRequestLimit: number = DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT;
 
     dueDate?: dayjs.Dayjs;
     programmingExercise?: ProgrammingExercise;

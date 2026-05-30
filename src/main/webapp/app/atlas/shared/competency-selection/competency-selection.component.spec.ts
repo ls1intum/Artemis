@@ -5,7 +5,7 @@ import { Competency, CompetencyLearningObjectLink } from 'app/atlas/shared/entit
 import { of, throwError } from 'rxjs';
 import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ChangeDetectorRef } from '@angular/core';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';

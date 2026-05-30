@@ -1,18 +1,18 @@
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { of } from 'rxjs';
 import { Competency, CompetencyLectureUnitLink, CompetencyProgress, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { ActivatedRoute } from '@angular/router';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseCompetenciesComponent } from 'app/atlas/overview/course-competencies/course-competencies.component';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { User } from 'app/core/user/user.model';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { User } from 'app/account/user/user.model';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CompetencyCardStubComponent } from 'test/helpers/stubs/atlas/competency-card-stub.component';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
@@ -21,7 +21,7 @@ import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ScienceService } from 'app/shared/science/science.service';
+import { ScienceService } from 'app/foundation/science/science.service';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 class MockActivatedRoute {

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
-import { Range } from 'app/shared/util/utils';
+import { Range } from 'app/foundation/util/utils';
 
 @Injectable({ providedIn: 'root' })
 export class PlagiarismInspectorService {
