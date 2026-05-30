@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.programming.web.open;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
-import static de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils.hashSha256;
+import static de.tum.cit.aet.artemis.localvc.service.ssh.HashUtils.hashSha256;
 
 import java.security.MessageDigest;
 import java.util.Optional;
@@ -27,13 +27,13 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 
 /**
  * REST controller for receiving build results for external CI systems. At the moment, only Jenkins is supported.

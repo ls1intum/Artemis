@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockPipe, MockProvider } from 'ng-mocks';
-import { SettingId } from 'app/shared/constants/user-settings.constants';
-import { AlertService } from 'app/shared/service/alert.service';
+import { SettingId } from 'app/foundation/constants/user-settings.constants';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { UrlSerializer } from '@angular/router';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
