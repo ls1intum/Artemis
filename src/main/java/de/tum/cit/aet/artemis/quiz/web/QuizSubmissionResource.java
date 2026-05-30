@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.result.ResultAfterEvaluationWithSubmissionDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionBeforeEvaluationDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromLiveClientDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromStudentDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
@@ -107,13 +108,13 @@ public class QuizSubmissionResource {
      */
     @PostMapping("exercises/{exerciseId}/submissions/live")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<QuizSubmission> saveOrSubmitForLiveMode(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmissionFromLiveClientDTO submissionDTO,
-            @RequestParam(name = "submit", defaultValue = "false") boolean submit) {
+    public ResponseEntity<QuizSubmissionBeforeEvaluationDTO> saveOrSubmitForLiveMode(@PathVariable Long exerciseId,
+            @Valid @RequestBody QuizSubmissionFromLiveClientDTO submissionDTO, @RequestParam(name = "submit", defaultValue = "false") boolean submit) {
         log.debug("REST request to save or submit QuizSubmission for live mode for exercise {}", exerciseId);
         String userLogin = SecurityUtils.getCurrentUserLogin().orElseThrow();
         try {
             QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForLiveMode(exerciseId, submissionDTO, userLogin, submit);
-            return ResponseEntity.ok(updatedQuizSubmission);
+            return ResponseEntity.ok(QuizSubmissionBeforeEvaluationDTO.of(updatedQuizSubmission));
         }
         catch (QuizSubmissionException e) {
             log.warn("QuizSubmissionException: {} for user {} in quiz {}", e.getMessage(), userLogin, exerciseId);
@@ -228,7 +229,7 @@ public class QuizSubmissionResource {
      */
     @PutMapping("exercises/{exerciseId}/submissions/exam")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<QuizSubmission> submitQuizForExam(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmissionFromLiveClientDTO submissionDTO) {
+    public ResponseEntity<QuizSubmissionBeforeEvaluationDTO> submitQuizForExam(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmissionFromLiveClientDTO submissionDTO) {
         long start = System.currentTimeMillis();
         log.debug("REST request to submit QuizSubmission for exam for exercise {}", exerciseId);
 
@@ -258,6 +259,6 @@ public class QuizSubmissionResource {
         QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, user);
         long end = System.currentTimeMillis();
         log.info("submitQuizForExam took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
-        return ResponseEntity.ok(updatedQuizSubmission);
+        return ResponseEntity.ok(QuizSubmissionBeforeEvaluationDTO.of(updatedQuizSubmission));
     }
 }
