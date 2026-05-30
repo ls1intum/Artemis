@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -43,10 +45,11 @@ public class Exam extends DomainObject {
     private String title;
 
     /**
-     * This boolean indicates whether it is a real exam (false) or test exam (true)
+     * Defines whether this is a real exam or one of the test exam variants.
      */
-    @Column(name = "test_exam")
-    private boolean testExam;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "exam_type", nullable = false)
+    private ExamType examType = ExamType.REAL;
 
     /**
      * This boolean indicates whether attendance is checked during exam
@@ -86,6 +89,12 @@ public class Exam extends DomainObject {
      */
     @Column(name = "grace_period", columnDefinition = "integer default 180")
     private Integer gracePeriod = 180;
+
+    /**
+     * The buffer in minutes between the simulation phase and the repeatable practice phase of a combined test exam.
+     */
+    @Column(name = "test_exam_practice_start_delay", columnDefinition = "integer default 0")
+    private int testExamPracticeStartDelay = 0;
 
     /**
      * The default working time for an exam in seconds.
@@ -181,12 +190,27 @@ public class Exam extends DomainObject {
         this.title = title.strip();
     }
 
+    @JsonIgnore
     public boolean isTestExam() {
-        return testExam;
+        return getExamType() != ExamType.REAL;
     }
 
-    public void setTestExam(boolean testExam) {
-        this.testExam = testExam;
+    public ExamType getExamType() {
+        return examType != null ? examType : ExamType.REAL;
+    }
+
+    public void setExamType(ExamType examType) {
+        this.examType = examType != null ? examType : ExamType.REAL;
+    }
+
+    @JsonIgnore
+    public ZonedDateTime getTestExamSimulationEndDate() {
+        return getStartDate().plusSeconds(getWorkingTime());
+    }
+
+    @JsonIgnore
+    public ZonedDateTime getTestExamPracticeStartDate() {
+        return getTestExamSimulationEndDate().plusMinutes(getTestExamPracticeStartDelay());
     }
 
     public boolean isExamWithAttendanceCheck() {
@@ -262,6 +286,14 @@ public class Exam extends DomainObject {
 
     public void setGracePeriod(int gracePeriod) {
         this.gracePeriod = gracePeriod;
+    }
+
+    public int getTestExamPracticeStartDelay() {
+        return testExamPracticeStartDelay;
+    }
+
+    public void setTestExamPracticeStartDelay(Integer testExamPracticeStartDelay) {
+        this.testExamPracticeStartDelay = testExamPracticeStartDelay != null ? testExamPracticeStartDelay : 0;
     }
 
     public int getWorkingTime() {

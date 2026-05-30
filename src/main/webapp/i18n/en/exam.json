@@ -540,6 +540,20 @@
                 "testExam": "Test Exam",
                 "examMode": "Mode",
                 "examModeTooltip": "Students can start working on a Test Exam once within the working window, the selected working time will be available during the conduction. Students receive automated feedback after submitting. NOTE: This cannot be changed later on!",
+                "modeLabel": "Test exam type",
+                "modes": {
+                    "simulation": "Simulation",
+                    "practice": "Practice",
+                    "simulationAndPractice": "Simulation and Practice"
+                },
+                "modeExplanation": {
+                    "simulation": "Students can start one live attempt during the configured working window. No repeat attempts are available afterwards.",
+                    "practice": "Students can start repeatable practice attempts during the configured working window.",
+                    "simulationAndPractice": "Students can start one live attempt first. Repeatable practice attempts open after the live working time and the configured practice start delay have passed."
+                },
+                "practiceStartDelay": "Practice start delay (minutes)",
+                "practiceStartDelayTooltip": "The buffer after the simulation phase ends before repeatable practice attempts become available.",
+                "practiceStartDelayInvalid": "The practice start delay must be 0 or greater.",
                 "startDate": "Start of working window",
                 "endDate": "End of working window",
                 "workingTimeTooltip": "The working time allowed to the students per run"

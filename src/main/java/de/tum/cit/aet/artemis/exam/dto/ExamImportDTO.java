@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamType;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 
 /**
@@ -21,12 +22,13 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record ExamImportDTO(@NotNull String title, boolean testExam, boolean examWithAttendanceCheck, @NotNull ZonedDateTime visibleDate, @NotNull ZonedDateTime startDate,
-        @NotNull ZonedDateTime endDate, @Nullable ZonedDateTime publishResultsDate, @Nullable ZonedDateTime examStudentReviewStart, @Nullable ZonedDateTime examStudentReviewEnd,
-        @Nullable Integer gracePeriod, int workingTime, @Nullable String startText, @Nullable String endText, @Nullable String confirmationStartText,
-        @Nullable String confirmationEndText, @Nullable Integer examMaxPoints, @Nullable Boolean randomizeExerciseOrder, @Nullable Integer numberOfExercisesInExam,
-        @Nullable Integer numberOfCorrectionRoundsInExam, @Nullable String examiner, @Nullable String moduleNumber, @Nullable String courseName,
-        @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable String channelName, @NotNull Long courseId, @Nullable List<ExerciseGroupImportDTO> exerciseGroups) {
+public record ExamImportDTO(@NotNull String title, @Nullable ExamType examType, boolean examWithAttendanceCheck, @NotNull ZonedDateTime visibleDate,
+        @NotNull ZonedDateTime startDate, @NotNull ZonedDateTime endDate, @Nullable ZonedDateTime publishResultsDate, @Nullable ZonedDateTime examStudentReviewStart,
+        @Nullable ZonedDateTime examStudentReviewEnd, @Nullable Integer gracePeriod, @Nullable Integer testExamPracticeStartDelay, int workingTime, @Nullable String startText,
+        @Nullable String endText, @Nullable String confirmationStartText, @Nullable String confirmationEndText, @Nullable Integer examMaxPoints,
+        @Nullable Boolean randomizeExerciseOrder, @Nullable Integer numberOfExercisesInExam, @Nullable Integer numberOfCorrectionRoundsInExam, @Nullable String examiner,
+        @Nullable String moduleNumber, @Nullable String courseName, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable String channelName, @NotNull Long courseId,
+        @Nullable List<ExerciseGroupImportDTO> exerciseGroups) {
 
     /**
      * Creates an ExamImportDTO from an existing Exam entity.
@@ -42,11 +44,11 @@ public record ExamImportDTO(@NotNull String title, boolean testExam, boolean exa
             exerciseGroupDTOs = exam.getExerciseGroups().stream().map(ExerciseGroupImportDTO::of).toList();
         }
 
-        return new ExamImportDTO(exam.getTitle(), exam.isTestExam(), exam.isExamWithAttendanceCheck(), exam.getVisibleDate(), exam.getStartDate(), exam.getEndDate(),
-                exam.getPublishResultsDate(), exam.getExamStudentReviewStart(), exam.getExamStudentReviewEnd(), exam.getGracePeriod(), exam.getWorkingTime(), exam.getStartText(),
-                exam.getEndText(), exam.getConfirmationStartText(), exam.getConfirmationEndText(), exam.getExamMaxPoints(), exam.getRandomizeExerciseOrder(),
-                exam.getNumberOfExercisesInExam(), exam.getNumberOfCorrectionRoundsInExam(), exam.getExaminer(), exam.getModuleNumber(), exam.getCourseName(),
-                exam.getExampleSolutionPublicationDate(), exam.getChannelName(), courseId, exerciseGroupDTOs);
+        return new ExamImportDTO(exam.getTitle(), exam.getExamType(), exam.isExamWithAttendanceCheck(), exam.getVisibleDate(), exam.getStartDate(), exam.getEndDate(),
+                exam.getPublishResultsDate(), exam.getExamStudentReviewStart(), exam.getExamStudentReviewEnd(), exam.getGracePeriod(), exam.getTestExamPracticeStartDelay(),
+                exam.getWorkingTime(), exam.getStartText(), exam.getEndText(), exam.getConfirmationStartText(), exam.getConfirmationEndText(), exam.getExamMaxPoints(),
+                exam.getRandomizeExerciseOrder(), exam.getNumberOfExercisesInExam(), exam.getNumberOfCorrectionRoundsInExam(), exam.getExaminer(), exam.getModuleNumber(),
+                exam.getCourseName(), exam.getExampleSolutionPublicationDate(), exam.getChannelName(), courseId, exerciseGroupDTOs);
     }
 
     /**
@@ -58,7 +60,7 @@ public record ExamImportDTO(@NotNull String title, boolean testExam, boolean exa
     public Exam toEntity(Course course) {
         Exam exam = new Exam();
         exam.setTitle(title);
-        exam.setTestExam(testExam);
+        exam.setExamType(examType);
         exam.setExamWithAttendanceCheck(examWithAttendanceCheck);
         exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
@@ -69,6 +71,7 @@ public record ExamImportDTO(@NotNull String title, boolean testExam, boolean exa
         if (gracePeriod != null) {
             exam.setGracePeriod(gracePeriod);
         }
+        exam.setTestExamPracticeStartDelay(testExamPracticeStartDelay);
         exam.setWorkingTime(workingTime);
         exam.setStartText(startText);
         exam.setEndText(endText);

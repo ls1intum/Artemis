@@ -30,8 +30,59 @@
                     <label class="form-check-label" jhiTranslate="artemisApp.examManagement.testExam.examMode"></label>
                     <jhi-help-icon text="artemisApp.examManagement.testExam.examModeTooltip" />
                 </div>
-                <jhi-exam-mode-picker [exam]="exam" [disableInput]="exam.id !== undefined" (examModeChanged)="onExamModeChange()" />
+                <jhi-exam-mode-picker [exam]="exam" [disableInput]="isExamTypeReadonly" (examModeChanged)="onExamModeChange()" />
             </div>
+            @if (exam.testExam) {
+                <div class="form-group mb-3">
+                    <div>
+                        <label class="form-check-label" for="examType" jhiTranslate="artemisApp.examManagement.testExam.modeLabel"></label>
+                    </div>
+                    <p-select-button
+                        id="examType"
+                        name="examType"
+                        [options]="testExamTypeOptions"
+                        [(ngModel)]="exam.examType"
+                        [allowEmpty]="false"
+                        [disabled]="isExamTypeReadonly"
+                        optionLabel="label"
+                        optionValue="value"
+                        size="small"
+                        (onChange)="onTestExamTypeChange()"
+                    />
+                    <p-message severity="info" size="small" class="mt-1" [closable]="false">
+                        @switch (exam.examType) {
+                            @case (ExamType.SIMULATION) {
+                                <span jhiTranslate="artemisApp.examManagement.testExam.modeExplanation.simulation"></span>
+                            }
+                            @case (ExamType.SIMULATION_AND_PRACTICE) {
+                                <span jhiTranslate="artemisApp.examManagement.testExam.modeExplanation.simulationAndPractice"></span>
+                            }
+                            @default {
+                                <span jhiTranslate="artemisApp.examManagement.testExam.modeExplanation.practice"></span>
+                            }
+                        }
+                    </p-message>
+                    @if (exam.examType === ExamType.SIMULATION_AND_PRACTICE) {
+                        <div class="mt-3">
+                            <label class="form-check-label" for="testExamPracticeStartDelay" jhiTranslate="artemisApp.examManagement.testExam.practiceStartDelay"></label>
+                            <jhi-help-icon text="artemisApp.examManagement.testExam.practiceStartDelayTooltip" />
+                            <input
+                                id="testExamPracticeStartDelay"
+                                name="testExamPracticeStartDelay"
+                                class="form-control"
+                                type="number"
+                                min="0"
+                                required
+                                [(ngModel)]="exam.testExamPracticeStartDelay"
+                                #testExamPracticeStartDelayInput="ngModel"
+                            />
+                            @if (testExamPracticeStartDelayInput.errors?.['min'] || !isValidTestExamPracticeStartDelay) {
+                                <div class="alert alert-danger" jhiTranslate="artemisApp.examManagement.testExam.practiceStartDelayInvalid"></div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
             @if (!exam.testExam) {
                 <div class="form-check mb-3">
                     <input class="form-check-input" type="checkbox" id="examWithAttendanceCheck" name="examWithAttendanceCheck" [(ngModel)]="exam.examWithAttendanceCheck" />
@@ -150,14 +201,14 @@
             <div class="row mb-3">
                 <div class="col-sm-6">
                     <label class="form-check-label" for="workingTimeInMinutes" jhiTranslate="artemisApp.examManagement.workingTime"></label>
-                    <jhi-help-icon [text]="'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.workingTimeTooltip'" />
-                    @if (!exam.testExam) {
+                    <jhi-help-icon [text]="'artemisApp.examManagement' + (usesExamWindowWorkingTime ? '' : '.testExam') + '.workingTimeTooltip'" />
+                    @if (usesExamWindowWorkingTime) {
                         <input readonly disabled type="text" class="form-control" [value]="workingTimeInMinutesRounded" />
                         @if (isWorkingTimeTooHigh) {
                             <div class="alert alert-danger" jhiTranslate="error.examWorkingTimeTooHigh"></div>
                         }
                     }
-                    @if (exam.testExam) {
+                    @if (!usesExamWindowWorkingTime) {
                         <input
                             id="workingTimeInMinutes"
                             name="workingTimeInMinutes"

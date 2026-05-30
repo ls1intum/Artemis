@@ -7,8 +7,10 @@ import { AfterViewInit, Component, OnDestroy, OnInit, computed, inject, signal, 
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Dialog } from 'primeng/dialog';
+import { MessageModule } from 'primeng/message';
+import { SelectButtonModule } from 'primeng/selectbutton';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -31,6 +33,7 @@ import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -52,6 +55,8 @@ import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confi
         ButtonComponent,
         ConfirmEntityNameComponent,
         Dialog,
+        MessageModule,
+        SelectButtonModule,
     ],
 })
 export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -61,6 +66,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private calendarService = inject(CalendarService);
     private router = inject(Router);
+    private translateService = inject(TranslateService);
 
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
@@ -68,6 +74,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     protected readonly documentationType: DocumentationType = 'Exams';
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
+    protected readonly ExamType = ExamType;
+    protected testExamTypeOptions = this.buildTestExamTypeOptions();
 
     exam: Exam;
     course: Course;
@@ -97,6 +105,10 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     private viewInitialized = false;
 
     ngOnInit(): void {
+        this.translateService.onLangChange.pipe(takeWhile(() => this.componentActive)).subscribe(() => {
+            this.testExamTypeOptions = this.buildTestExamTypeOptions();
+        });
+
         combineLatest([this.route.url, this.route.data])
             .pipe(takeWhile(() => this.componentActive))
             .subscribe(([segments, data]) => {
@@ -107,9 +119,13 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
                     exam.gracePeriod = 180;
                 }
 
+                exam.examType = exam.examType ?? (exam.testExam ? ExamType.PRACTICE : ExamType.REAL);
+                exam.testExam = exam.examType !== ExamType.REAL;
+
                 // test exam only feature automatic assessment
                 if (exam.testExam) {
                     exam.numberOfCorrectionRoundsInExam = 0;
+                    exam.testExamPracticeStartDelay = exam.testExamPracticeStartDelay ?? 0;
                 } else if (!exam.numberOfCorrectionRoundsInExam) {
                     exam.numberOfCorrectionRoundsInExam = 1;
                 }
@@ -134,6 +150,14 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
                 this.hideChannelNameInput = (!!exam.id && !exam.channelName) || !isCommunicationEnabled(this.course);
                 this.refreshDatePickerValidation();
             });
+    }
+
+    private buildTestExamTypeOptions() {
+        return [
+            { label: this.translateService.instant('artemisApp.examManagement.testExam.modes.simulation'), value: ExamType.SIMULATION },
+            { label: this.translateService.instant('artemisApp.examManagement.testExam.modes.practice'), value: ExamType.PRACTICE },
+            { label: this.translateService.instant('artemisApp.examManagement.testExam.modes.simulationAndPractice'), value: ExamType.SIMULATION_AND_PRACTICE },
+        ];
     }
 
     ngAfterViewInit() {
@@ -194,10 +218,10 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     /**
-     * Updates the working time for real exams based on the start and end dates.
+     * Updates the working time based on the start and end dates for real exams and simulation-only test exams.
      */
     updateExamWorkingTime() {
-        if (this.exam.testExam) return;
+        if (!this.usesExamWindowWorkingTime) return;
 
         this.exam.workingTime = examWorkingTime(this.exam) ?? 0;
     }
@@ -206,11 +230,36 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
         if (this.exam.testExam) {
             // Preserve the rounded value
             this.exam.examWithAttendanceCheck = false;
-            this.roundWorkingTime();
+            if (this.exam.examType === ExamType.REAL) {
+                this.exam.examType = ExamType.PRACTICE;
+            }
+            this.exam.testExamPracticeStartDelay = this.exam.testExamPracticeStartDelay ?? 0;
+            if (this.usesExamWindowWorkingTime) {
+                this.updateExamWorkingTime();
+            } else {
+                this.roundWorkingTime();
+            }
         } else {
+            this.exam.examType = ExamType.REAL;
             // Otherwise, the working time should depend on the dates as usual
             this.updateExamWorkingTime();
         }
+    }
+
+    onTestExamTypeChange() {
+        if (this.usesExamWindowWorkingTime) {
+            this.updateExamWorkingTime();
+        } else {
+            this.roundWorkingTime();
+        }
+    }
+
+    get usesExamWindowWorkingTime(): boolean {
+        return !this.exam.testExam || this.exam.examType === ExamType.SIMULATION;
+    }
+
+    get isExamTypeReadonly(): boolean {
+        return this.exam?.id !== undefined;
     }
 
     /**
@@ -386,6 +435,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
         const examValidExampleSolutionPublicationDate = this.isValidExampleSolutionPublicationDate;
         const examValidNumberOfExercises = this.isValidNumberOfExercises;
         const examValidGracePeriod = this.isValidGracePeriod;
+        const examValidTestExamPracticeStartDelay = this.isValidTestExamPracticeStartDelay;
         return (
             examConductionDatesValid &&
             examReviewDatesValid &&
@@ -394,7 +444,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
             examValidWorkingTime &&
             examValidExampleSolutionPublicationDate &&
             examValidNumberOfExercises &&
-            examValidGracePeriod
+            examValidGracePeriod &&
+            examValidTestExamPracticeStartDelay
         );
     }
 
@@ -453,6 +504,13 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
             return true;
         }
         return this.exam.gracePeriod >= 0 && this.exam.gracePeriod <= 3600;
+    }
+
+    get isValidTestExamPracticeStartDelay(): boolean {
+        if (!this.exam.testExam || this.exam.examType !== ExamType.SIMULATION_AND_PRACTICE) {
+            return true;
+        }
+        return this.exam.testExamPracticeStartDelay !== undefined && this.exam.testExamPracticeStartDelay !== null && this.exam.testExamPracticeStartDelay >= 0;
     }
 
     /**
@@ -524,13 +582,13 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
 
     /**
      * Validates the WorkingTime.
-     * For test exams, the WorkingTime should be at least 1 and smaller / equal to the working window,
+     * For practice test exams and combined simulation/practice test exams, the WorkingTime should be at least 1 and smaller / equal to the working window,
      * and must not exceed 30 days (2592000 seconds).
-     * For real exams, the WorkingTime is calculated based on the startDate and EndDate and should match the time difference,
+     * For real exams and simulation-only test exams, the WorkingTime is calculated based on the startDate and EndDate and should match the time difference,
      * and must not exceed 30 days (2592000 seconds).
      */
     get validateWorkingTime(): boolean {
-        if (this.exam.testExam) {
+        if (!this.usesExamWindowWorkingTime) {
             if (this.exam.workingTime === undefined || this.exam.workingTime < 1) {
                 return false;
             }

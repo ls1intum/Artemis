@@ -5,10 +5,18 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 
+export enum ExamType {
+    REAL = 'REAL',
+    SIMULATION = 'SIMULATION',
+    PRACTICE = 'PRACTICE',
+    SIMULATION_AND_PRACTICE = 'SIMULATION_AND_PRACTICE',
+}
+
 export class Exam implements BaseEntity {
     public id?: number;
     public title?: string;
     public testExam?: boolean;
+    public examType?: ExamType;
     public examWithAttendanceCheck?: boolean;
     public visibleDate?: dayjs.Dayjs;
     public startDate?: dayjs.Dayjs;
@@ -21,6 +29,8 @@ export class Exam implements BaseEntity {
     public exampleSolutionPublicationDate?: dayjs.Dayjs;
     // grace period in seconds - time in which students can still submit even though working time is over
     public gracePeriod?: number;
+    // buffer in seconds between simulation and repeatable practice phases of a test exam
+    public testExamPracticeStartDelay?: number;
     public examiner?: string;
     public moduleNumber?: string;
     public courseName?: string;
@@ -55,6 +65,8 @@ export class Exam implements BaseEntity {
         this.examMaxPoints = 1; // default value
         this.workingTime = 0; // will be updated during creation
         this.testExam = false; // default value
+        this.examType = ExamType.REAL; // default value
+        this.testExamPracticeStartDelay = 0; // default value
         this.examWithAttendanceCheck = false; // default value
 
         // helper attributes (calculated by the server at the time of the last request)

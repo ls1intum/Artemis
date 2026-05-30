@@ -278,7 +278,8 @@ public class ExamResource {
         ZonedDateTime originalEndDate = originalExam.getEndDate();
 
         // The Exam Mode cannot be changed after creation -> Compare request with version in the database
-        if (examUpdateDTO.testExam() != originalExam.isTestExam()) {
+        var requestedExamType = examUpdateDTO.examType() != null ? examUpdateDTO.examType() : originalExam.getExamType();
+        if (requestedExamType != originalExam.getExamType()) {
             throw new ConflictException("The Exam Mode cannot be changed after creation", ENTITY_NAME, "examModeMismatch");
         }
 
@@ -565,6 +566,9 @@ public class ExamResource {
     private void checkExamAttendanceCheckSettings(Exam exam) {
         if (exam.isTestExam() && exam.isExamWithAttendanceCheck()) {
             throw new BadRequestAlertException("A test exam cannot have attendance check turned on", ENTITY_NAME, "attendanceCheckViolation");
+        }
+        if (exam.isTestExam() && exam.getTestExamPracticeStartDelay() < 0) {
+            throw new BadRequestAlertException("A test exam practice start delay cannot be negative", ENTITY_NAME, "testExamPracticeStartDelayNegative");
         }
     }
 

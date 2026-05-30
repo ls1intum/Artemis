@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamType;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -125,12 +126,16 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         exam1 = examUtilService.addExamWithExerciseGroup(course1, true);
         exam2 = examUtilService.addExamWithExerciseGroup(course2, true);
         testExam1 = examUtilService.addTestExamWithExerciseGroup(course1, true);
+        var testExamExerciseGroup = testExam1.getExerciseGroups().getFirst();
         testExam1 = examRepository.save(testExam1);
         ExamUser examUser = new ExamUser();
         examUser.setExam(testExam1);
         examUser.setUser(student1);
         examUser = examUserRepository.save(examUser);
         testExam1.setExamUsers(Set.of(examUser));
+        QuizExercise testExamQuiz = QuizExerciseFactory.generateQuizExerciseForExam(testExamExerciseGroup);
+        testExamExerciseGroup.addExercise(testExamQuiz);
+        exerciseRepository.save(testExamQuiz);
         testExam2 = examUtilService.addTestExamWithExerciseGroup(course2, true);
         testExam2 = examRepository.save(testExam2);
         ExamUser examUser1 = new ExamUser();
@@ -456,6 +461,53 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         StudentExam studentExam2 = examAccessService.getOrCreateStudentExamElseThrow(course2.getId(), testExam2.getId());
         assertThat(studentExam2.equals(studentExamForTestExam2)).isEqualTo(true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetOrCreateStudentExamElseThrow_simulationTestExamAllowsOnlyOneAttempt() {
+        configureExamType(testExam1, ExamType.SIMULATION, ZonedDateTime.now().minusMinutes(10), 3600, 180, 0, ZonedDateTime.now().plusHours(2));
+        markStudentExamSubmitted(studentExamForTestExam1);
+
+        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetOrCreateStudentExamElseThrow_simulationAndPracticeBlocksDuringPracticeStartDelay() {
+        configureExamType(testExam1, ExamType.SIMULATION_AND_PRACTICE, ZonedDateTime.now().minusHours(1), 1800, 180, 60, ZonedDateTime.now().plusHours(2));
+        markStudentExamSubmitted(studentExamForTestExam1);
+
+        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetOrCreateStudentExamElseThrow_simulationAndPracticeCreatesNewAttemptAfterPracticeStart() {
+        configureExamType(testExam1, ExamType.SIMULATION_AND_PRACTICE, ZonedDateTime.now().minusHours(2), 1800, 180, 30, ZonedDateTime.now().plusHours(2));
+        markStudentExamSubmitted(studentExamForTestExam1);
+
+        StudentExam studentExam = examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId());
+
+        assertThat(studentExam.getId()).isNotEqualTo(studentExamForTestExam1.getId());
+    }
+
+    private void configureExamType(Exam exam, ExamType examType, ZonedDateTime startDate, int workingTime, int gracePeriod, int testExamPracticeStartDelay, ZonedDateTime endDate) {
+        exam.setVisibleDate(startDate.minusMinutes(10));
+        exam.setStartDate(startDate);
+        exam.setWorkingTime(workingTime);
+        exam.setGracePeriod(gracePeriod);
+        exam.setTestExamPracticeStartDelay(testExamPracticeStartDelay);
+        exam.setEndDate(endDate);
+        exam.setExamType(examType);
+        examRepository.save(exam);
+    }
+
+    private void markStudentExamSubmitted(StudentExam studentExam) {
+        studentExam.setStartedAndStartDate(ZonedDateTime.now().minusMinutes(20));
+        studentExam.setSubmitted(true);
+        studentExam.setSubmissionDate(ZonedDateTime.now().minusMinutes(10));
+        studentExamRepository.save(studentExam);
     }
 
     @Test

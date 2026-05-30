@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamType;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
@@ -193,16 +194,16 @@ public class ExamAccessService {
 
     private StudentExam getOrCreateTestExam(Exam exam, Course course, User currentUser) {
         StudentExam studentExam;
+        ZonedDateTime now = ZonedDateTime.now();
 
-        if (exam.getEndDate().isBefore(ZonedDateTime.now())) {
+        if (exam.getEndDate().isBefore(now)) {
             throw new BadRequestAlertException("Test exam has already ended", ENTITY_NAME, "examHasAlreadyEnded", true);
         }
 
-        List<StudentExam> unfinishedStudentExams = studentExamRepository.findStudentExamsForTestExamsByUserIdAndExamId(currentUser.getId(), exam.getId()).stream()
-                .filter(attempt -> !attempt.isFinished()).toList();
+        List<StudentExam> studentExams = studentExamRepository.findStudentExamsForTestExamsByUserIdAndExamId(currentUser.getId(), exam.getId());
+        List<StudentExam> unfinishedStudentExams = studentExams.stream().filter(attempt -> !attempt.isFinished()).toList();
 
         if (unfinishedStudentExams.isEmpty()) {
-            ZonedDateTime now = ZonedDateTime.now();
             ZonedDateTime unlockDate = ExamDateService.getExamProgrammingExerciseUnlockDate(exam);
 
             // An exam can be started 5 minutes before the start time, which is when programming exercises are unlocked
@@ -210,6 +211,7 @@ public class ExamAccessService {
             if (!canExamBeStarted) {
                 throw new AccessForbiddenException("The exam cannot be started yet. Cannot generate student exam.");
             }
+            checkCanCreateNewTestExamAttemptElseThrow(exam, !studentExams.isEmpty(), now);
 
             studentExam = studentExamService.generateIndividualStudentExam(exam, currentUser);
             // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
@@ -217,6 +219,7 @@ public class ExamAccessService {
         }
         else if (unfinishedStudentExams.size() == 1) {
             studentExam = unfinishedStudentExams.getFirst();
+            checkCanAccessTestExamAttemptElseThrow(exam, studentExam.isStarted(), now);
         }
         else {
             throw new IllegalStateException(
@@ -225,6 +228,61 @@ public class ExamAccessService {
         // Check that the current user is registered for the test exam. Otherwise, the student can self-register
         examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course, exam.getId(), currentUser);
         return studentExam;
+    }
+
+    private void checkCanCreateNewTestExamAttemptElseThrow(Exam exam, boolean userHasAttempt, ZonedDateTime now) {
+        checkIsInPhaseTimeConstraints(exam, now);
+
+        ExamType examType = exam.getExamType();
+        if (examType == ExamType.PRACTICE) {
+            return;
+        }
+
+        if (examType == ExamType.SIMULATION) {
+            if (userHasAttempt) {
+                throw new AccessForbiddenException("Only one simulation test exam attempt is allowed.");
+            }
+            return;
+        }
+
+        if (examType == ExamType.SIMULATION_AND_PRACTICE) {
+            final boolean simulationPhaseActive = now.isBefore(exam.getTestExamSimulationEndDate());
+            if (simulationPhaseActive && userHasAttempt) {
+                throw new AccessForbiddenException("Only one simulation test exam attempt is allowed before the practice phase starts.");
+            }
+        }
+    }
+
+    /**
+     * Validates whether the test exam can be accessed by the user.
+     *
+     * @param exam           the test exam
+     * @param userHasStarted whether the existing test exam attempt has already been started
+     * @param now            the current time
+     */
+    public void checkCanAccessTestExamAttemptElseThrow(Exam exam, Boolean userHasStarted, ZonedDateTime now) {
+        if (Boolean.TRUE.equals(userHasStarted)) {
+            return;
+        }
+
+        checkIsInPhaseTimeConstraints(exam, now);
+    }
+
+    private void checkIsInPhaseTimeConstraints(Exam exam, ZonedDateTime now) {
+        ExamType examType = exam.getExamType();
+        if (examType == ExamType.PRACTICE) {
+            return;
+        }
+
+        final boolean simulationPhaseOver = !now.isBefore(exam.getTestExamSimulationEndDate());
+        if (examType == ExamType.SIMULATION && simulationPhaseOver) {
+            throw new AccessForbiddenException("The simulation test exam phase has ended.");
+        }
+
+        final boolean bufferPhaseActive = now.isBefore(exam.getTestExamPracticeStartDate());
+        if (examType == ExamType.SIMULATION_AND_PRACTICE && simulationPhaseOver && bufferPhaseActive) {
+            throw new AccessForbiddenException("The practice phase of the test exam has not started yet.");
+        }
     }
 
     /**

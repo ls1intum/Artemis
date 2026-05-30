@@ -910,7 +910,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH r.assessor
             WHERE p.testRun = FALSE
                 AND se.id IN :studentExamId
-                AND e.testExam = TRUE
+                AND e.examType <> de.tum.cit.aet.artemis.exam.domain.ExamType.REAL
                 AND (s.id = (SELECT MAX(s2.id) FROM p.submissions s2) OR s.id IS NULL)
             """)
     List<StudentParticipation> findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultAndAssessorIgnoreTestRuns(
@@ -925,7 +925,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     LEFT JOIN FETCH s.results r
                 WHERE p.testRun = FALSE
                     AND se.id IN :studentExamId
-                    AND e.testExam = TRUE
+                    AND e.examType <> de.tum.cit.aet.artemis.exam.domain.ExamType.REAL
                     AND (s.id = (SELECT MAX(s2.id) FROM p.submissions s2) OR s.id IS NULL)
             """)
     List<StudentParticipation> findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(@Param("studentExamId") long studentExamId);

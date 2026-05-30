@@ -12,7 +12,7 @@ import { MockDirective, MockProvider } from 'ng-mocks';
 
 import { ExamUpdateComponent, prepareExamForImport } from 'app/exam/manage/exams/update/exam-update.component';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -150,6 +150,17 @@ describe('ExamUpdateComponent', () => {
             expect(component.exam.workingTime).toBe(0);
         });
 
+        it('should make the exam type readonly after creation', () => {
+            examWithoutExercises.id = 1;
+            fixture.detectChanges();
+
+            expect(component.isExamTypeReadonly).toBe(true);
+
+            examWithoutExercises.id = undefined;
+
+            expect(component.isExamTypeReadonly).toBe(false);
+        });
+
         it('should validate the dates correctly', () => {
             examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
             examWithoutExercises.startDate = dayjs().add(2, 'hours');
@@ -271,9 +282,10 @@ describe('ExamUpdateComponent', () => {
             expect(component.workingTimeInMinutes).toBe(0);
         });
 
-        it('should not calculate the working time for test exams', () => {
+        it('should not calculate the working time for practice test exams', () => {
             fixture.detectChanges();
             examWithoutExercises.testExam = true;
+            examWithoutExercises.examType = ExamType.PRACTICE;
             examWithoutExercises.workingTime = 3600;
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
             examWithoutExercises.endDate = dayjs().add(12, 'hours');
@@ -282,8 +294,37 @@ describe('ExamUpdateComponent', () => {
             expect(component.workingTimeInMinutes).toBe(60);
         });
 
+        it('should calculate the working time for simulation test exams correctly', () => {
+            fixture.detectChanges();
+            examWithoutExercises.testExam = true;
+            examWithoutExercises.examType = ExamType.SIMULATION;
+            examWithoutExercises.workingTime = 3600;
+            examWithoutExercises.startDate = dayjs().add(0, 'hours');
+            examWithoutExercises.endDate = dayjs().add(2, 'hours');
+
+            component.updateExamWorkingTime();
+
+            expect(examWithoutExercises.workingTime).toBe(7200);
+            expect(component.workingTimeInMinutes).toBe(120);
+        });
+
+        it('should not calculate the working time for simulation and practice test exams', () => {
+            fixture.detectChanges();
+            examWithoutExercises.testExam = true;
+            examWithoutExercises.examType = ExamType.SIMULATION_AND_PRACTICE;
+            examWithoutExercises.workingTime = 3600;
+            examWithoutExercises.startDate = dayjs().add(0, 'hours');
+            examWithoutExercises.endDate = dayjs().add(2, 'hours');
+
+            component.updateExamWorkingTime();
+
+            expect(examWithoutExercises.workingTime).toBe(3600);
+            expect(component.workingTimeInMinutes).toBe(60);
+        });
+
         it('validates the working time for test exams correctly', () => {
             examWithoutExercises.testExam = true;
+            examWithoutExercises.examType = ExamType.PRACTICE;
             examWithoutExercises.workingTime = undefined;
             fixture.changeDetectorRef.detectChanges();
             expect(component.validateWorkingTime).toBe(false);
@@ -304,6 +345,28 @@ describe('ExamUpdateComponent', () => {
             expect(component.validateWorkingTime).toBe(true);
 
             examWithoutExercises.workingTime = 10800;
+            expect(component.validateWorkingTime).toBe(false);
+        });
+
+        it('validates the working time for simulation test exams like real exams', () => {
+            examWithoutExercises.testExam = true;
+            examWithoutExercises.examType = ExamType.SIMULATION;
+            examWithoutExercises.workingTime = undefined;
+            examWithoutExercises.startDate = undefined;
+            examWithoutExercises.endDate = undefined;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.validateWorkingTime).toBe(false);
+
+            examWithoutExercises.workingTime = 3600;
+            expect(component.validateWorkingTime).toBe(false);
+
+            examWithoutExercises.startDate = dayjs().add(0, 'hours');
+            expect(component.validateWorkingTime).toBe(false);
+
+            examWithoutExercises.endDate = dayjs().add(1, 'hours');
+            expect(component.validateWorkingTime).toBe(true);
+
+            examWithoutExercises.workingTime = 1800;
             expect(component.validateWorkingTime).toBe(false);
         });
 
@@ -516,6 +579,7 @@ describe('ExamUpdateComponent', () => {
 
         it('should correctly validate the number of correction rounds in a test Exams', () => {
             examWithoutExercises.testExam = true;
+            examWithoutExercises.examType = ExamType.PRACTICE;
             examWithoutExercises.numberOfCorrectionRoundsInExam = 1;
             fixture.changeDetectorRef.detectChanges();
 

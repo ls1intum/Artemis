@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20260527120000-1" author="artemis">
+        <addColumn tableName="exam">
+            <column name="exam_type" type="varchar(32)" defaultValue="REAL">
+                <constraints nullable="false"/>
+            </column>
+            <column name="test_exam_practice_start_delay" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <update tableName="exam">
+            <column name="exam_type" value="PRACTICE"/>
+            <where>test_exam = true</where>
+        </update>
+        <dropColumn tableName="exam" columnName="test_exam"/>
+    </changeSet>
+</databaseChangeLog>

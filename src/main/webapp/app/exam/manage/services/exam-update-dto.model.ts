@@ -1,4 +1,4 @@
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
 import { convertDateFromClient } from 'app/shared/util/date.utils';
 
 /**
@@ -9,7 +9,7 @@ import { convertDateFromClient } from 'app/shared/util/date.utils';
 export interface ExamUpdateDTO {
     id?: number;
     title: string;
-    testExam: boolean;
+    examType?: ExamType;
     examWithAttendanceCheck: boolean;
     visibleDate?: string;
     startDate?: string;
@@ -18,6 +18,7 @@ export interface ExamUpdateDTO {
     examStudentReviewStart?: string;
     examStudentReviewEnd?: string;
     gracePeriod?: number;
+    testExamPracticeStartDelay?: number;
     workingTime: number;
     startText?: string;
     endText?: string;
@@ -46,7 +47,7 @@ export function toExamUpdateDTO(exam: Exam): ExamUpdateDTO {
     return {
         id: exam.id,
         title: exam.title!,
-        testExam: exam.testExam ?? false,
+        examType: exam.examType ?? (exam.testExam ? ExamType.PRACTICE : ExamType.REAL),
         examWithAttendanceCheck: exam.examWithAttendanceCheck ?? false,
         visibleDate: convertDateFromClient(exam.visibleDate),
         startDate: convertDateFromClient(exam.startDate),
@@ -55,6 +56,7 @@ export function toExamUpdateDTO(exam: Exam): ExamUpdateDTO {
         examStudentReviewStart: convertDateFromClient(exam.examStudentReviewStart),
         examStudentReviewEnd: convertDateFromClient(exam.examStudentReviewEnd),
         gracePeriod: exam.gracePeriod,
+        testExamPracticeStartDelay: exam.testExamPracticeStartDelay ?? 0,
         workingTime: exam.workingTime ?? 0,
         startText: exam.startText,
         endText: exam.endText,

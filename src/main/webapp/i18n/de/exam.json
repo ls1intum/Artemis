@@ -540,6 +540,20 @@
                 "testExam": "Testklausur",
                 "examMode": "Modus",
                 "examModeTooltip": "Testklausuren können von Studierenden an einem frei wählbaren Zeitpunkt innerhalb des Bearbeitungsfensters begonnen werden, zur Durchführung steht die gewählte Arbeitszeit zur Verfügung. Nach dem Durchlauf erhalten die Studierenden automatisiertes Feedback. HINWEIS: Der Modus kann nach der Erstellung nicht mehr geändert werden!",
+                "modeLabel": "Art der Testklausur",
+                "modes": {
+                    "simulation": "Simulation",
+                    "practice": "Übung",
+                    "simulationAndPractice": "Simulation und Übung"
+                },
+                "modeExplanation": {
+                    "simulation": "Studierende können während des konfigurierten Bearbeitungsfensters einen Live-Versuch starten. Danach sind keine weiteren Versuche verfügbar.",
+                    "practice": "Studierende können während des konfigurierten Bearbeitungsfensters wiederholt üben.",
+                    "simulationAndPractice": "Studierende können zuerst einen Live-Versuch starten. Wiederholbare Übungsversuche werden nach Bearbeitungszeit und der konfigurierten Verzögerung freigeschaltet."
+                },
+                "practiceStartDelay": "Verzögerung bis zur Übungsphase (Minuten)",
+                "practiceStartDelayTooltip": "Der Puffer nach Ende der Simulationsphase, bevor wiederholbare Übungsversuche verfügbar werden.",
+                "practiceStartDelayInvalid": "Die Verzögerung bis zur Übungsphase muss mindestens 0 sein.",
                 "startDate": "Beginn Bearbeitungsfenster",
                 "endDate": "Ende Bearbeitungsfenster",
                 "workingTimeTooltip": "Die erlaubte Bearbeitungszeit je Durchlauf"
