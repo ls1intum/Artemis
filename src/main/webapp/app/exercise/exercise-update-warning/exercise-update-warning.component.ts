@@ -1,10 +1,11 @@
-import { Component, EventEmitter, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { faBan, faCheck, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-exercise-update-warning',
@@ -22,9 +23,9 @@ export class ExerciseUpdateWarningComponent {
     usageCountChanged = false;
     immediateReleaseWarning = '';
 
-    confirmed = new EventEmitter<void>();
-    reEvaluated = new EventEmitter<void>();
-    canceled = new EventEmitter<void>();
+    confirmed = new Subject<void>();
+    reEvaluated = new Subject<void>();
+    canceled = new Subject<void>();
 
     // Icons
     faBan = faBan;
@@ -35,7 +36,7 @@ export class ExerciseUpdateWarningComponent {
      * Closes the modal
      */
     clear(): void {
-        this.canceled.emit();
+        this.canceled.next();
         this.closeDialog();
     }
 
@@ -43,7 +44,7 @@ export class ExerciseUpdateWarningComponent {
      * Save changes without re-evaluation
      */
     saveExerciseWithoutReevaluation(): void {
-        this.confirmed.emit();
+        this.confirmed.next();
         this.closeDialog();
     }
 
@@ -51,7 +52,7 @@ export class ExerciseUpdateWarningComponent {
      * Re-evaluate the exercise
      */
     reEvaluateExercise(): void {
-        this.reEvaluated.emit();
+        this.reEvaluated.next();
         this.closeDialog();
     }
 

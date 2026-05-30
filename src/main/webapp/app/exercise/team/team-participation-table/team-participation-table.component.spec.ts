@@ -218,7 +218,7 @@ describe('TeamParticipationTableComponent', () => {
 
         await comp.openAssessmentEditor(exercise2, participation, 'new');
 
-        expect(router.navigate).toHaveBeenCalledOnce();
+        expect(router.navigate).toHaveBeenCalledTimes(1);
         expect(router.navigate).toHaveBeenCalledWith([
             '/course-management',
             course.id!.toString(),
@@ -232,17 +232,17 @@ describe('TeamParticipationTableComponent', () => {
 
     it('Check enabled assessment button for exercises without due date', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(exercise2, submission2);
-        expect(expectedAssessmentActionButtonDisabled).toBeFalse();
+        expect(expectedAssessmentActionButtonDisabled).toBe(false);
     });
 
     it('Check enabled assessment button for exercises with submission and passed due date', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(exercise3, submission3);
-        expect(expectedAssessmentActionButtonDisabled).toBeFalse();
+        expect(expectedAssessmentActionButtonDisabled).toBe(false);
     });
 
     it('Check disabled assessment button for exercises without submission', () => {
         const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(exercise1, undefined);
-        expect(expectedAssessmentActionButtonDisabled).toBeTrue();
+        expect(expectedAssessmentActionButtonDisabled).toBe(true);
     });
 
     it('Check disabled assessment button for exercises before due date as tutor', () => {
@@ -253,7 +253,7 @@ describe('TeamParticipationTableComponent', () => {
             },
             submission4,
         );
-        expect(expectedAssessmentActionButtonDisabled).toBeTrue();
+        expect(expectedAssessmentActionButtonDisabled).toBe(true);
     });
 
     it('Check disabled assessment button for programming exercises before due date as instructor', () => {
@@ -264,7 +264,7 @@ describe('TeamParticipationTableComponent', () => {
             },
             submission4,
         );
-        expect(expectedAssessmentActionButtonDisabled).toBeTrue();
+        expect(expectedAssessmentActionButtonDisabled).toBe(true);
     });
 
     it('Check enabled assessment button for exercises before due date as instructor', () => {
@@ -275,6 +275,6 @@ describe('TeamParticipationTableComponent', () => {
             },
             submission5,
         );
-        expect(expectedAssessmentActionButtonDisabled).toBeFalse();
+        expect(expectedAssessmentActionButtonDisabled).toBe(false);
     });
 });

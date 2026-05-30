@@ -51,8 +51,8 @@ describe('ExerciseCreateButtonComponent', () => {
 
         component.linkToExerciseCreation();
 
-        expect(beforeNavigateSpy).toHaveBeenCalledOnce();
-        expect(modalService.dismissAll).toHaveBeenCalledOnce();
+        expect(beforeNavigateSpy).toHaveBeenCalledTimes(1);
+        expect(modalService.dismissAll).toHaveBeenCalledTimes(1);
         expect(router.navigate).toHaveBeenCalledWith(['/course-management', 123, `${exerciseType}-exercises`, 'new']);
     });
 });

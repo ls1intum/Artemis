@@ -1,4 +1,4 @@
-import { Component, Injector, Input, OnChanges, OnInit, SimpleChanges, inject, input } from '@angular/core';
+import { Component, Injector, OnChanges, OnInit, SimpleChanges, inject, input } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -76,35 +76,93 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
     private showTestDetails = false;
 
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() exercise?: Exercise;
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() result: Result;
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() participation: Participation;
+    readonly exerciseInput = input<Exercise | undefined>(undefined, { alias: 'exercise' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly resultInput = input<Result>(undefined!, { alias: 'result' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly participationInput = input<Participation>(undefined!, { alias: 'participation' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly feedbackFilterInput = input<number[]>(undefined!, { alias: 'feedbackFilter' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly showScoreChartInput = input(false, { alias: 'showScoreChart' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly exerciseTypeInput = input<ExerciseType>(undefined!, { alias: 'exerciseType' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly messageKeyInput = input<string | undefined>(undefined, { alias: 'messageKey' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly showMissingAutomaticFeedbackInformationInput = input(false, { alias: 'showMissingAutomaticFeedbackInformation' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly latestDueDateInput = input<dayjs.Dayjs | undefined>(undefined, { alias: 'latestDueDate' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly taskNameInput = input<string | undefined>(undefined, { alias: 'taskName' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly numberOfNotExecutedTestsInput = input<number | undefined>(undefined, { alias: 'numberOfNotExecutedTests' }); // eslint-disable-line @angular-eslint/no-input-rename
+
+    private exerciseValue?: Exercise;
+    private resultValue?: Result;
+    private participationValue?: Participation;
+    private feedbackFilterValue?: number[];
+    private showScoreChartValue?: boolean;
+    private exerciseTypeValue?: ExerciseType;
+    private messageKeyValue?: string;
+    private showMissingAutomaticFeedbackInformationValue?: boolean;
+    private latestDueDateValue?: dayjs.Dayjs;
+    private taskNameValue?: string;
+    private numberOfNotExecutedTestsValue?: number;
+
+    get exercise(): Exercise | undefined {
+        return this.exerciseValue ?? this.exerciseInput();
+    }
+
+    set exercise(exercise: Exercise | undefined) {
+        this.exerciseValue = exercise;
+    }
+
+    get result(): Result {
+        return this.resultValue ?? this.resultInput();
+    }
+
+    set result(result: Result) {
+        this.resultValue = result;
+    }
+
+    get participation(): Participation {
+        return this.participationValue ?? this.participationInput();
+    }
+
+    set participation(participation: Participation) {
+        this.participationValue = participation;
+    }
 
     /**
      * Specify the feedback.testCase.id values that should be shown, all other values will not be visible.
      * Used to show only feedback related to a specific task.
      */
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() feedbackFilter: number[];
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() showScoreChart = false;
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() exerciseType: ExerciseType;
+    get feedbackFilter(): number[] {
+        return this.feedbackFilterValue ?? this.feedbackFilterInput();
+    }
+
+    set feedbackFilter(feedbackFilter: number[] | undefined) {
+        this.feedbackFilterValue = feedbackFilter;
+    }
+
+    get showScoreChart(): boolean {
+        return this.showScoreChartValue ?? this.showScoreChartInput();
+    }
+
+    set showScoreChart(showScoreChart: boolean) {
+        this.showScoreChartValue = showScoreChart;
+    }
+
+    get exerciseType(): ExerciseType {
+        return this.exerciseTypeValue ?? this.exerciseTypeInput();
+    }
+
+    set exerciseType(exerciseType: ExerciseType) {
+        this.exerciseTypeValue = exerciseType;
+    }
+
     /**
      * Translate key for an HTML message that is displayed at the top of the result details, if defined.
      */
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() messageKey?: string = undefined;
+    get messageKey(): string | undefined {
+        return this.messageKeyValue ?? this.messageKeyInput();
+    }
+
+    set messageKey(messageKey: string | undefined) {
+        this.messageKeyValue = messageKey;
+    }
+
     /**
      * For programming exercises with individual due dates automatic feedbacks
      * for tests marked as AFTER_DUE_DATE are hidden until the last student can
@@ -112,18 +170,38 @@ export class FeedbackComponent implements OnInit, OnChanges {
      * Students should be informed why some feedbacks seem to be missing from
      * the result.
      */
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() showMissingAutomaticFeedbackInformation = false;
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() latestDueDate?: dayjs.Dayjs;
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() taskName?: string;
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() numberOfNotExecutedTests?: number;
+    get showMissingAutomaticFeedbackInformation(): boolean {
+        return this.showMissingAutomaticFeedbackInformationValue ?? this.showMissingAutomaticFeedbackInformationInput();
+    }
+
+    set showMissingAutomaticFeedbackInformation(showMissingAutomaticFeedbackInformation: boolean) {
+        this.showMissingAutomaticFeedbackInformationValue = showMissingAutomaticFeedbackInformation;
+    }
+
+    get latestDueDate(): dayjs.Dayjs | undefined {
+        return this.latestDueDateValue ?? this.latestDueDateInput();
+    }
+
+    set latestDueDate(latestDueDate: dayjs.Dayjs | undefined) {
+        this.latestDueDateValue = latestDueDate;
+    }
+
+    get taskName(): string | undefined {
+        return this.taskNameValue ?? this.taskNameInput();
+    }
+
+    set taskName(taskName: string | undefined) {
+        this.taskNameValue = taskName;
+    }
+
+    get numberOfNotExecutedTests(): number | undefined {
+        return this.numberOfNotExecutedTestsValue ?? this.numberOfNotExecutedTestsInput();
+    }
+
+    set numberOfNotExecutedTests(numberOfNotExecutedTests: number | undefined) {
+        this.numberOfNotExecutedTestsValue = numberOfNotExecutedTests;
+    }
+
     readonly isExamReviewPage = input(false);
     readonly isPrinting = input(false);
 

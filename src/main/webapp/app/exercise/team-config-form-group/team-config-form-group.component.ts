@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, EventEmitter, OnDestroy, OnInit, input, viewChild } from '@angular/core';
+import { AfterViewChecked, Component, OnDestroy, OnInit, input, viewChild } from '@angular/core';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { cloneDeep } from 'lodash-es';
 import { Exercise, ExerciseMode } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -57,10 +57,10 @@ export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy
     ngAfterViewChecked() {
         const minTeamSizeField = this.minTeamSizeField();
         const maxTeamsizeField = this.maxTeamsizeField();
-        if (!(minTeamSizeField?.valueChanges as EventEmitter<number>)?.observed) {
+        if (!(minTeamSizeField?.valueChanges as { observed?: boolean } | undefined)?.observed) {
             this.inputFieldSubscriptions.push(minTeamSizeField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         }
-        if (!(maxTeamsizeField?.valueChanges as EventEmitter<number>)?.observed) {
+        if (!(maxTeamsizeField?.valueChanges as { observed?: boolean } | undefined)?.observed) {
             this.inputFieldSubscriptions.push(maxTeamsizeField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         }
     }

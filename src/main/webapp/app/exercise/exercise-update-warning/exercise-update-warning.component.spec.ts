@@ -27,7 +27,7 @@ describe('Exercise Update Warning Component Tests', () => {
     });
 
     it('should trigger saveExerciseWithoutReevaluation once', () => {
-        const emitSpy = vi.spyOn(comp.confirmed, 'emit');
+        const emitSpy = vi.spyOn(comp.confirmed, 'next');
         const saveExerciseWithoutReevaluationSpy = vi.spyOn(comp, 'saveExerciseWithoutReevaluation');
 
         comp.creditChanged = true;
@@ -38,12 +38,12 @@ describe('Exercise Update Warning Component Tests', () => {
 
         fixture.detectChanges();
 
-        expect(saveExerciseWithoutReevaluationSpy).toHaveBeenCalledOnce();
-        expect(emitSpy).toHaveBeenCalledOnce();
+        expect(saveExerciseWithoutReevaluationSpy).toHaveBeenCalledTimes(1);
+        expect(emitSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should trigger reEvaluateExercise once', () => {
-        const emitSpy = vi.spyOn(comp.reEvaluated, 'emit');
+        const emitSpy = vi.spyOn(comp.reEvaluated, 'next');
         const reEvaluateExerciseSpy = vi.spyOn(comp, 'reEvaluateExercise');
 
         comp.creditChanged = true;
@@ -54,13 +54,13 @@ describe('Exercise Update Warning Component Tests', () => {
 
         fixture.detectChanges();
 
-        expect(reEvaluateExerciseSpy).toHaveBeenCalledOnce();
-        expect(emitSpy).toHaveBeenCalledOnce();
+        expect(reEvaluateExerciseSpy).toHaveBeenCalledTimes(1);
+        expect(emitSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should trigger clear once', () => {
         const clearSpy = vi.spyOn(comp, 'clear');
-        const cancelledEmitSpy = vi.spyOn(comp.canceled, 'emit');
+        const cancelledEmitSpy = vi.spyOn(comp.canceled, 'next');
 
         fixture.detectChanges();
         const button = fixture.debugElement.nativeElement.querySelector('#cancel-button');
@@ -68,8 +68,8 @@ describe('Exercise Update Warning Component Tests', () => {
 
         fixture.detectChanges();
 
-        expect(clearSpy).toHaveBeenCalledOnce();
-        expect(cancelledEmitSpy).toHaveBeenCalledOnce();
+        expect(clearSpy).toHaveBeenCalledTimes(1);
+        expect(cancelledEmitSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should toggle deleteFeedback', () => {

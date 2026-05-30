@@ -3,7 +3,7 @@ import { roundValueSpecifiedByCourseSettings, scrollToTopOfPage } from 'app/foun
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Component, Input, OnInit, inject, input } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { ResultService } from 'app/exercise/result/result.service';
 import { getTestCaseNamesFromResults, getTestCaseResults } from 'app/exercise/result/result.utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -22,23 +22,19 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     templateUrl: './exercise-scores-export-button.component.html',
     imports: [NgbDropdown, NgbDropdownToggle, FaIconComponent, TranslateDirective, NgbDropdownMenu, NgbDropdownButtonItem, NgbDropdownItem, NgbTooltip, ArtemisTranslatePipe],
 })
-export class ExerciseScoresExportButtonComponent implements OnInit {
+export class ExerciseScoresExportButtonComponent {
     private resultService = inject(ResultService);
     private alertService = inject(AlertService);
 
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() exercises: Exercise[] = []; // Used to export multiple scores together
-    readonly exercise = input<Exercise | ProgrammingExercise>(undefined!);
+    readonly exercises = input<Exercise[]>([]); // Used to export multiple scores together
+    readonly exercise = input<Exercise | ProgrammingExercise>();
 
-    isProgrammingExerciseResults = false;
+    get isProgrammingExerciseResults(): boolean {
+        return [...this.exercises(), this.exercise()].every((exercise) => exercise?.type === ExerciseType.PROGRAMMING);
+    }
 
     // Icons
     faDownload = faDownload;
-
-    ngOnInit(): void {
-        this.isProgrammingExerciseResults = this.exercises.concat(this.exercise()).every((exercise) => exercise?.type === ExerciseType.PROGRAMMING);
-    }
 
     /**
      * Exports the exercise results as a CSV file.
@@ -46,12 +42,10 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
      * @param withFeedback parameter including the feedback's full text in case of failed test case
      */
     exportResults(withTestCases: boolean, withFeedback: boolean) {
-        const exerciseValue = this.exercise();
-        if (this.exercises.length === 0 && exerciseValue !== undefined) {
-            this.exercises = this.exercises.concat(exerciseValue);
-        }
+        const exercisesInput = this.exercises();
+        const exercises = exercisesInput.length === 0 && this.exercise() !== undefined ? [this.exercise()!] : exercisesInput;
 
-        this.exercises.forEach((exercise) => this.constructCSV(exercise, withTestCases, withFeedback));
+        exercises.forEach((exercise) => this.constructCSV(exercise, withTestCases, withFeedback));
     }
 
     /**

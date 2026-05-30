@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnInit, inject, input, output } from '@angular/core';
 import { faBan, faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -30,10 +30,7 @@ export class ManageAssessmentButtonsComponent implements OnInit {
 
     readonly exercise = input<Exercise>(undefined!);
     readonly course = input<Course>(undefined!);
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input() participation: Participation;
+    readonly participation = input.required<Participation>();
     readonly isLoading = input<boolean>(undefined!);
 
     readonly refresh = output<void>();
@@ -56,7 +53,7 @@ export class ManageAssessmentButtonsComponent implements OnInit {
     ngOnInit(): void {
         this.newManualResultAllowed = areManualResultsAllowed(this.exercise());
         this.examMode = !!this.exercise().exerciseGroup;
-        if (isPracticeMode(this.participation) && !this.examMode) {
+        if (isPracticeMode(this.participation()) && !this.examMode) {
             // don't allow manual results for practice mode participations
             this.newManualResultAllowed = false;
         }
@@ -67,7 +64,9 @@ export class ManageAssessmentButtonsComponent implements OnInit {
     getAssessmentLink(correctionRound = 0) {
         const exercise = this.exercise();
         const course = this.course();
-        if (!exercise.type || !exercise.id || !course.id || !this.participation.submissions?.[0]?.id) {
+        const participation = this.participation();
+        const submission = participation.submissions?.[0];
+        if (!exercise.type || !exercise.id || !course.id || !submission?.id) {
             return;
         }
         correctionRound = this.getCorrectionRoundForAssessmentLink(correctionRound);
@@ -76,22 +75,23 @@ export class ManageAssessmentButtonsComponent implements OnInit {
             exercise.type,
             course.id,
             exercise.id,
-            this.participation.id,
-            this.participation.submissions?.[0]?.id,
+            participation.id,
+            submission.id,
             exercise.exerciseGroup?.exam?.id,
             exercise.exerciseGroup?.id,
             // TODO do we need to handle this differently for programming exercises?
-            this.participation.submissions[0].results?.[correctionRound]?.id,
+            submission.results?.[correctionRound]?.id,
         );
     }
 
     getCorrectionRoundForAssessmentLink(correctionRound = 0): number {
         // TODO do we need to handle this differently for programming exercises?
-        const result = this.participation.submissions![0].results?.[correctionRound];
+        const submission = this.participation().submissions![0];
+        const result = submission.results?.[correctionRound];
         if (!result) {
             return correctionRound;
         }
-        if (result.hasComplaint && !!this.participation.submissions![0].results?.[correctionRound + 1]) {
+        if (result.hasComplaint && !!submission.results?.[correctionRound + 1]) {
             // If there is a complaint and the complaint got accepted (additional result)
             // open this next result.
             return correctionRound + 1;

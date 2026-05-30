@@ -92,19 +92,19 @@ describe('Team Submission Sync Component', () => {
         submissionSyncPayload.sender = otherUser;
         const submissionSyncObservable = of(submissionSyncPayload);
 
-        const receiveSubmissionEventEmitter = vi.spyOn(component.receiveSubmission, 'emit');
+        const receiveSubmissionEmitSpy = vi.spyOn(component.receiveSubmission, 'emit');
         const websocketSubscribeSpy = vi.spyOn(websocketService, 'subscribe').mockReturnValue(submissionSyncObservable);
         const websocketSendSpy = vi.spyOn(websocketService, 'send');
 
         component.ngOnInit();
 
         expect(component.websocketTopic).toBe(expectedWebsocketTopic);
-        expect(websocketSubscribeSpy).toHaveBeenCalledOnce();
+        expect(websocketSubscribeSpy).toHaveBeenCalledTimes(1);
         expect(websocketSubscribeSpy).toHaveBeenCalledWith(expectedWebsocketTopic);
 
         // checks for setupReceiver
-        expect(receiveSubmissionEventEmitter).toHaveBeenCalledOnce();
-        expect(receiveSubmissionEventEmitter).toHaveBeenCalledWith(submissionSyncPayload?.submission);
+        expect(receiveSubmissionEmitSpy).toHaveBeenCalledTimes(1);
+        expect(receiveSubmissionEmitSpy).toHaveBeenCalledWith(submissionSyncPayload?.submission);
 
         // checks for setupSender
         expect(textSubmissionWithParticipation).toBeDefined();
@@ -162,16 +162,16 @@ describe('Team Submission Sync Component', () => {
         component.ngOnInit();
 
         // BehaviorSubject in MockWebsocketService starts as connected=true → exactly one initial sync + one reconnect emission
-        expect(sendSpy).toHaveBeenCalledOnce();
+        expect(sendSpy).toHaveBeenCalledTimes(1);
         expect(sendSpy.mock.calls[0][0]).toBe(expectedTopic);
         expect(sendSpy.mock.calls[0][1]).toBeInstanceOf(SubmissionPatch);
         expect((sendSpy.mock.calls[0][1] as SubmissionPatch).patch).toBe('initial-sync-stub');
-        expect(reconnectedSpy).toHaveBeenCalledOnce();
+        expect(reconnectedSpy).toHaveBeenCalledTimes(1);
 
         // Disconnect — no fresh sync, no fresh reconnect signal
         mock.setConnectionState(new ConnectionState(false, true));
-        expect(sendSpy).toHaveBeenCalledOnce();
-        expect(reconnectedSpy).toHaveBeenCalledOnce();
+        expect(sendSpy).toHaveBeenCalledTimes(1);
+        expect(reconnectedSpy).toHaveBeenCalledTimes(1);
 
         // Reconnect — initial sync and reconnect signal fire again
         mock.setConnectionState(new ConnectionState(true, true));
@@ -196,11 +196,11 @@ describe('Team Submission Sync Component', () => {
         vi.spyOn(websocketService, 'subscribe').mockReturnValue(of());
 
         component.ngOnInit();
-        expect(reconnectedSpy).toHaveBeenCalledOnce();
+        expect(reconnectedSpy).toHaveBeenCalledTimes(1);
 
         component.ngOnDestroy();
         mock.setConnectionState(new ConnectionState(false, true));
         mock.setConnectionState(new ConnectionState(true, true));
-        expect(reconnectedSpy).toHaveBeenCalledOnce();
+        expect(reconnectedSpy).toHaveBeenCalledTimes(1);
     });
 });
