@@ -17,6 +17,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.OneToOneChatCreationDTO;
 import de.tum.cit.aet.artemis.communication.dto.OneToOneChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
@@ -54,8 +55,8 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldCreateMultipleOneToOneChatsWhenDifferentLoginsAreProvided() throws Exception {
         // when
-        var chat1 = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student2"), OneToOneChatDTO.class,
-                HttpStatus.CREATED);
+        var chat1 = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", new OneToOneChatCreationDTO(null, testPrefix + "student2"),
+                OneToOneChatDTO.class, HttpStatus.CREATED);
 
         var chat2 = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "student3"), OneToOneChatDTO.class,
                 HttpStatus.CREATED);

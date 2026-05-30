@@ -45,15 +45,13 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
     private static final Pattern ENTITY_ID_VARIABLE = Pattern.compile("\\{([a-zA-Z]+Id)(?::.*)?}");
 
     /**
-     * Canonical REST paths that currently violate {@link #restPathVariablesMustBePairedWithTheirCollection()}.
-     * This is a shrinking baseline: NEW violations are forbidden, and every entry here should be removed as
-     * the path is migrated to {@code api/<module>/<plural-collection>/{<collection-singular>Id}} (keeping the
-     * old path as a deprecated alias). Do NOT add entries without a follow-up plan.
-     * TODO: drive this set to empty.
+     * REST paths exempted from {@link #restPathVariablesMustBePairedWithTheirCollection()}.
+     * <p>
+     * This set is now empty: every REST path follows {@code api/<module>/<plural-collection>/{<collection-singular>Id}} (or uses a query parameter where the id is only a filter).
+     * The rule still enforces the convention for all controllers, so any NEW violation fails the build. Only add an entry here together with a documented follow-up plan to migrate
+     * it, keeping the old path as a deprecated alias.
      */
-    private static final Set<String> PATH_VARIABLE_COLLECTION_BASELINE = Set.of(
-            // communication
-            "api/communication/courses/{courseId}/one-to-one-chats/{userId}");
+    private static final Set<String> PATH_VARIABLE_COLLECTION_BASELINE = Set.of();
 
     @Test
     void shouldBeNamedResource() {
