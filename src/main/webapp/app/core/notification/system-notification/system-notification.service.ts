@@ -1,8 +1,8 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { SystemNotification } from 'app/core/shared/entities/system-notification.model';
-import { createRequestOption } from 'app/shared/util/request.util';
-import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
+import { SystemNotification } from 'app/admin/system-notification-management/system-notification.model';
+import { createRequestOption } from 'app/foundation/util/request.util';
+import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -13,8 +13,8 @@ type EntityArrayResponseType = HttpResponse<SystemNotification[]>;
 export class SystemNotificationService {
     private http = inject(HttpClient);
 
-    public resourceUrl = 'api/communication/system-notifications';
-    public publicResourceUrl = 'api/core/public/system-notifications';
+    public resourceUrl = 'api/notification/system-notifications';
+    public publicResourceUrl = 'api/notification/public/system-notifications';
 
     /**
      * Find a notification on the server using a GET request.

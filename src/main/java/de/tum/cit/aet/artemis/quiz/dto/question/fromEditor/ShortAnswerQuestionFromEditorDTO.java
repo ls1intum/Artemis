@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -93,7 +95,7 @@ public record ShortAnswerQuestionFromEditorDTO(Long id, @NotEmpty String title, 
             effectiveIdToSolution.put(solutions.get(i).effectiveId(), solutionEntities.get(i));
         }
 
-        List<ShortAnswerMapping> mappings = new ArrayList<>(correctMappings.stream().map(m -> {
+        Set<ShortAnswerMapping> mappings = correctMappings.stream().map(m -> {
             ShortAnswerSpot spot = effectiveIdToSpot.get(m.spotTempId());
             ShortAnswerSolution solution = effectiveIdToSolution.get(m.solutionTempId());
             if (spot == null || solution == null) {
@@ -103,7 +105,7 @@ public record ShortAnswerQuestionFromEditorDTO(Long id, @NotEmpty String title, 
             mapping.setSpot(spot);
             mapping.setSolution(solution);
             return mapping;
-        }).toList());
+        }).collect(Collectors.toSet());
         question.setCorrectMappings(mappings);
         return question;
     }

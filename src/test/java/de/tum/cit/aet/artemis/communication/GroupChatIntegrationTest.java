@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.communication;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -19,14 +18,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
+import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
-import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository;
-import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
-import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
-import de.tum.cit.aet.artemis.core.user.util.UserFactory;
+import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
+import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTestRepository;
 
 class GroupChatIntegrationTest extends AbstractConversationTest {
 
@@ -123,15 +122,15 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         GroupChatDTO chat = createGroupChatWithStudent1To3();
         // when
         var post = this.postInConversation(chat.getId(), "student1");
-        post.setIsSaved(false);
         // then
-        verify(websocketMessagingService, timeout(2000).times(3)).sendMessage(anyString(),
-                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(post)));
+        // The broadcast wraps the entity in a cycle-free PostBroadcastDTO (see PostingService.broadcastForPost).
+        verify(websocketMessagingService, timeout(2000).times(3)).sendMessage(argThat((String topic) -> topic != null && !topic.startsWith("/topic/metis/")),
+                (Object) argThat(argument -> argument instanceof PostBroadcastDTO broadcast && post.id().equals(broadcast.post().id())));
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.NEW_MESSAGE);
 
         // cleanup
         var conversation = groupChatRepository.findById(chat.getId()).orElseThrow();
-        conversationMessageRepository.deleteById(post.getId());
+        conversationMessageRepository.deleteById(post.id());
         conversationRepository.delete(conversation);
     }
 

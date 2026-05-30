@@ -1,7 +1,7 @@
 import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExerciseTitleChannelNamePrimengComponent } from 'app/exercise/exercise-title-channel-name-primeng/exercise-title-channel-name-primeng.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';

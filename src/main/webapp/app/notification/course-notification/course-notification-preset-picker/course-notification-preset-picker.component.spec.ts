@@ -1,0 +1,117 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { CourseNotificationPresetPickerComponent } from 'app/notification/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
+import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
+import { By } from '@angular/platform-browser';
+import { MockDirective } from 'ng-mocks';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
+import { CourseNotificationChannel } from 'app/notification/shared/entities/course-notification/course-notification-channel';
+import { CourseNotificationSettingsMap } from 'app/notification/shared/entities/course-notification/course-notification-settings-map';
+import { TranslateService } from '@ngx-translate/core';
+
+describe('CourseNotificationPresetPickerComponent', () => {
+    setupTestBed({ zoneless: true });
+
+    let component: CourseNotificationPresetPickerComponent;
+    let fixture: ComponentFixture<CourseNotificationPresetPickerComponent>;
+
+    const mockPresets: CourseNotificationSettingPreset[] = [
+        new CourseNotificationSettingPreset('preset1', 1, createMockSettingsMap(true, false, true)),
+        new CourseNotificationSettingPreset('preset2', 2, createMockSettingsMap(false, true, true)),
+    ];
+
+    function createMockSettingsMap(push: boolean, email: boolean, webapp: boolean): CourseNotificationSettingsMap {
+        return {
+            notificationType: {
+                [CourseNotificationChannel.PUSH]: push,
+                [CourseNotificationChannel.EMAIL]: email,
+                [CourseNotificationChannel.WEBAPP]: webapp,
+            },
+        };
+    }
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
+                CourseNotificationPresetPickerComponent,
+                MockDirective(TranslateDirective),
+                FaIconComponent,
+                MockDirective(NgbDropdown),
+                MockDirective(NgbDropdownToggle),
+                MockDirective(NgbDropdownMenu),
+                MockDirective(NgbDropdownItem),
+            ],
+            providers: [{ provide: TranslateService, useValue: { instant: vi.fn((key: string) => key), get: vi.fn() } }],
+        });
+
+        TestBed.overrideComponent(CourseNotificationPresetPickerComponent, {
+            remove: { imports: [TranslateDirective] },
+            add: { imports: [MockDirective(TranslateDirective)] },
+        });
+        fixture = TestBed.createComponent(CourseNotificationPresetPickerComponent);
+        component = fixture.componentInstance;
+
+        fixture.componentRef.setInput('availableCourseSettingPresets', mockPresets);
+        fixture.componentRef.setInput('selectedCourseSettingPreset', mockPresets[0]);
+
+        fixture.detectChanges();
+    });
+
+    it('should create', () => {
+        expect(component).toBeTruthy();
+    });
+
+    it('should set selectedPresetLangKey based on selectedCourseSettingPreset', () => {
+        expect(component['selectedPresetLangKey']).toBe('artemisApp.courseNotification.preset.preset1.title');
+
+        fixture.componentRef.setInput('selectedCourseSettingPreset', mockPresets[1]);
+        fixture.detectChanges();
+
+        expect(component['selectedPresetLangKey']).toBe('artemisApp.courseNotification.preset.preset2.title');
+    });
+
+    it('should use customUserCourseNotificationSettingPreset key when selected preset is null', () => {
+        fixture.componentRef.setInput('selectedCourseSettingPreset', null);
+
+        fixture.detectChanges();
+
+        expect(component['selectedPresetLangKey']).toBe('artemisApp.courseNotification.preset.customUserCourseNotificationSettingPreset.title');
+    });
+
+    it('should emit onPresetSelected event with the correct preset ID when a preset is selected', () => {
+        const emitSpy = vi.spyOn(component.onPresetSelected, 'emit');
+
+        component['presetSelected'](2);
+
+        expect(emitSpy).toHaveBeenCalledWith(2);
+    });
+
+    it('should emit 0 when the custom preset is selected', () => {
+        const emitSpy = vi.spyOn(component.onPresetSelected, 'emit');
+
+        component['presetSelected'](0);
+
+        expect(emitSpy).toHaveBeenCalledWith(0);
+    });
+
+    it('should show checkmark icon for the selected preset', () => {
+        fixture.componentRef.setInput('selectedCourseSettingPreset', mockPresets[0]);
+        fixture.detectChanges();
+
+        const iconComponents = fixture.debugElement.queryAll(By.directive(FaIconComponent));
+
+        expect(iconComponents.length).toBeGreaterThan(0);
+
+        expect(component.selectedCourseSettingPreset()).toBe(mockPresets[0]);
+
+        expect(component.selectedCourseSettingPreset()?.identifier).toBe('preset1');
+        expect(component.selectedCourseSettingPreset() !== null).toBe(true);
+    });
+});

@@ -6,8 +6,8 @@ import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { TranslateService } from '@ngx-translate/core';
 
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';

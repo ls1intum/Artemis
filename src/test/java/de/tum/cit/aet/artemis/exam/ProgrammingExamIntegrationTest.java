@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -23,12 +25,14 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
@@ -149,6 +153,47 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         request.put("/api/exam/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
 
         verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingEx.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExamWithSingleProgrammingExercise_successful() throws Exception {
+        programmingExerciseTestService.setup(this, versionControlService);
+
+        Course sourceCourse = courseUtilService.addEmptyCourse();
+        Exam sourceExam = examUtilService.addExamWithExerciseGroup(sourceCourse, true);
+        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToExam(sourceExam, 0);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+
+        programmingExerciseTestService.setupRepositoryMocks(sourceExercise, programmingExerciseTestService.sourceExerciseRepo, programmingExerciseTestService.sourceSolutionRepo,
+                programmingExerciseTestService.sourceTestRepo, programmingExerciseTestService.sourceAuxRepo);
+        exerciseRepository.save(sourceExercise);
+
+        doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
+        doNothing().when(continuousIntegrationService).createProjectForExercise(any());
+        doReturn("build-plan").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
+        doNothing().when(continuousIntegrationService).enablePlan(any(), any());
+        doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any(), any());
+        doNothing().when(continuousIntegrationTriggerService).triggerBuild(any());
+
+        ExamImportDTO importDTO = ExamImportDTO.of(sourceExam, course1.getId());
+
+        final Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, Exam.class, HttpStatus.CREATED);
+
+        assertThat(received.getExerciseGroups()).hasSize(1);
+        Exercise importedExercise = received.getExerciseGroups().getFirst().getExercises().stream().findFirst().orElseThrow();
+        assertThat(importedExercise).isInstanceOf(ProgrammingExercise.class);
+        ProgrammingExercise importedProgrammingExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences((ProgrammingExercise) importedExercise);
+
+        assertThat(importedProgrammingExercise.getId()).isNotEqualTo(sourceExercise.getId());
+        assertThat(importedProgrammingExercise.getTitle()).isEqualTo(sourceExercise.getTitle());
+        assertThat(importedProgrammingExercise.getShortName()).isEqualTo(sourceExercise.getShortName());
+        assertThat(importedProgrammingExercise.getProgrammingLanguage()).isEqualTo(sourceExercise.getProgrammingLanguage());
+        assertThat(importedProgrammingExercise.getProjectType()).isEqualTo(sourceExercise.getProjectType());
+        assertThat(importedProgrammingExercise.getPackageName()).isEqualTo(sourceExercise.getPackageName());
+        assertThat(importedProgrammingExercise.isExamExercise()).isTrue();
+        assertThat(importedProgrammingExercise.getExerciseGroup().getExam().getCourse()).isEqualTo(course1);
     }
 
     @Test
