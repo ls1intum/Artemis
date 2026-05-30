@@ -96,6 +96,9 @@ export default defineConfig({
             'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.spec.ts', // include build plan phases model tests
             'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.spec.ts', // include legacy build plan converter service tests
             'src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**/*.spec.ts', // include programming exercise update timeline tests
+            'src/main/webapp/app/logos/**/*.spec.ts', // include logos tests
+            'src/main/webapp/app/sharing/**/*.spec.ts', // include sharing tests
+            'src/main/webapp/app/app.component.spec.ts', // include app-shell (app.component) tests
             'src/main/webapp/app/editor/markdown-editor/monaco/**/*.spec.ts', // include markdown-editor-monaco tests (narrow: excludes real-Monaco integration specs)
             'src/main/webapp/app/editor/monaco-editor/model/**/*.spec.ts', // include monaco-editor model action/theme tests (narrow: excludes real-Monaco integration specs)
         ],
@@ -173,6 +176,9 @@ export default defineConfig({
                 'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts', // include legacy build plan converter service for code coverage
                 'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // include build plan phases model for code coverage
                 'src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**/*.ts', // include programming exercise update timeline for code coverage
+                'src/main/webapp/app/logos/**/*.ts', // include logos for code coverage
+                'src/main/webapp/app/sharing/**/*.ts', // include sharing for code coverage
+                'src/main/webapp/app/app.component.ts', // include app-shell (app.component) for code coverage
                 'src/main/webapp/app/editor/markdown-editor/monaco/**/*.ts', // include markdown-editor-monaco for code coverage (narrow: excludes real-Monaco integration specs)
                 'src/main/webapp/app/editor/monaco-editor/model/**/*.ts', // include monaco-editor model action/theme files for code coverage (narrow: excludes real-Monaco integration specs)
             ],

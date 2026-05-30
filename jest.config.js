@@ -150,6 +150,9 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts', // legacy converter uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // build-plan-phases model uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**', // programming exercise update timeline uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/logos/**', // logos module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/sharing/**', // sharing module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/app.component.ts', // app-shell (app.component) uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/editor/markdown-editor/monaco/**', // markdown-editor-monaco uses Vitest (see vitest.config.ts); real-Monaco integration specs stay on Jest
         '!<rootDir>/src/main/webapp/app/editor/monaco-editor/model/**', // monaco-editor model actions/themes use Vitest (see vitest.config.ts); real-Monaco integration specs stay on Jest
         '<rootDir>/src/main/webapp/**/*.ts',
@@ -216,6 +219,9 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts',
         '<rootDir>/src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts',
         '<rootDir>/src/main/webapp/app/programming/shared/programming-exercise-update-timeline/',
+        '<rootDir>/src/main/webapp/app/logos/', // logos module uses Vitest
+        '<rootDir>/src/main/webapp/app/sharing/', // sharing module uses Vitest
+        '<rootDir>/src/main/webapp/app/app.component.ts', // app-shell (app.component) uses Vitest
         '<rootDir>/src/main/webapp/app/editor/markdown-editor/monaco/', // markdown-editor-monaco uses Vitest
         '<rootDir>/src/main/webapp/app/editor/monaco-editor/model/', // monaco-editor model actions/themes use Vitest
     ],
@@ -228,7 +234,7 @@ module.exports = {
         global: {
             statements: 83,
             branches: 72.9,
-            functions: 71.2, // re-baselined (was 72.5): editor markdown/monaco + monaco-editor/model specs moved to Vitest; collateral Jest function coverage dropped to 71.25% (per-file coverage unchanged under Vitest)
+            functions: 71.2, // re-baselined (was 72.5, then 72.2 via #12817): editor markdown/monaco + monaco-editor/model specs moved to Vitest; collateral Jest function coverage dropped to 71.25% (per-file coverage unchanged under Vitest)
             lines: 84,
         },
     },
@@ -321,6 +327,9 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/programming/shared/services/build-phases-template.service.spec.ts', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/programming/shared/entities/build-plan-phases.model.spec.ts', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/programming/shared/programming-exercise-update-timeline/', // migrated to Vitest
+        '<rootDir>/src/main/webapp/app/logos/', // logos module (Vitest)
+        '<rootDir>/src/main/webapp/app/sharing/', // sharing module (Vitest)
+        '<rootDir>/src/main/webapp/app/app.component.spec.ts', // app-shell (app.component) (Vitest)
         '<rootDir>/src/main/webapp/app/editor/markdown-editor/monaco/', // markdown-editor-monaco migrated to Vitest (real-Monaco integration specs stay on Jest)
         '<rootDir>/src/main/webapp/app/editor/monaco-editor/model/', // monaco-editor model actions/themes migrated to Vitest (real-Monaco integration specs stay on Jest)
     ],
