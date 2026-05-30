@@ -1,6 +1,6 @@
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import dayjs from 'dayjs/esm';
-import { describe, expect, it, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('deepClone', () => {

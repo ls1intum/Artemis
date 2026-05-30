@@ -7,7 +7,7 @@ import 'dayjs/esm/locale/en';
 import 'dayjs/esm/locale/de';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { beforeEach, describe, expect, it, test } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 const GERMAN_SHORT_DATE_FORMAT = 'DD. MMM. YYYY';

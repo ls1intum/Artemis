@@ -1,5 +1,5 @@
 import { matchesRegexFully } from 'app/foundation/util/regex.util';
-import { describe, expect, it, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('matchesRegexFully', () => {

@@ -3,7 +3,7 @@ import { Router, UrlTree } from '@angular/router';
 import { Location } from '@angular/common';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('Navigation Util Service', () => {
@@ -73,7 +73,7 @@ describe('Navigation Util Service', () => {
         creationMock.mockReturnValue(urlTreeMock);
         const serializationMock = vi.spyOn(router, 'serializeUrl');
         serializationMock.mockReturnValue('serializationMockTestValue');
-        const windowStub = vi.spyOn(window, 'open').mockImplementation();
+        const windowStub = vi.spyOn(window, 'open').mockImplementation(() => null);
 
         service.routeInNewTab(['course-management', 17], queryParam);
 

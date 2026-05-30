@@ -1,5 +1,5 @@
 import { sha1Hex } from 'app/foundation/util/crypto.utils';
-import { describe, expect, it, test } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CryptoUtils', () => {

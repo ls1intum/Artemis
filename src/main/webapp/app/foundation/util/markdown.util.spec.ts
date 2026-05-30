@@ -1,6 +1,6 @@
 import { generateExerciseHintExplanation, parseExerciseHintExplanation, sanitizeStringForMarkdownEditor } from './markdown.util';
 import { ExerciseHintExplanationInterface } from 'app/quiz/shared/entities/quiz-question.model';
-import { beforeEach, describe, expect, it, test } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('markdown.util', () => {

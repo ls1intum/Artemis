@@ -1,7 +1,7 @@
 import { MarkdownitTagClass, htmlForMarkdown, markdownForHtml } from './markdown.conversion.util';
 import type { PluginSimple } from 'markdown-it';
 import MarkdownIt from 'markdown-it';
-import { beforeEach, describe, expect, it, test } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('markdown.conversion.util', () => {

@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MAX_FILE_SIZE, MAX_FILE_SIZE_COMMUNICATION } from '../constants/input.constants';
 import { FileUploaderService } from 'app/foundation/service/file-uploader.service';
-import { beforeEach, describe, expect, it, test } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('FileUploaderService', () => {
