@@ -162,7 +162,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
             modal: true,
             closable: true,
             closeOnEscape: true,
-            dismissableMask: false,
+            dismissableMask: true,
         });
         dialogRef?.onClose.subscribe((confirmed: boolean | undefined) => {
             if (confirmed) {
@@ -182,7 +182,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
             modal: true,
             closable: true,
             closeOnEscape: true,
-            dismissableMask: false,
+            dismissableMask: true,
         });
         dialogRef?.onClose.subscribe((confirmed: boolean | undefined) => {
             if (confirmed) {

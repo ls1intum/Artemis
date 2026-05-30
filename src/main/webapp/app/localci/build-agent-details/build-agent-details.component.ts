@@ -461,7 +461,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
             modal: true,
             closable: true,
             closeOnEscape: true,
-            dismissableMask: false,
+            dismissableMask: true,
             data: {
                 finishedBuildJobFilter: this.finishedBuildJobFilter,
                 finishedBuildJobs: this.finishedBuildJobs(),
