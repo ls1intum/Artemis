@@ -1,9 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,11 +9,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.pdfbox.Loader;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.text.PDFTextStripper;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -25,14 +20,14 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
-import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Resolves selected competencies for a course and builds enriched context for LLM quiz question generation.
@@ -43,19 +38,34 @@ public class HyperionCompetencyContextService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionCompetencyContextService.class);
 
-    private static final int MAX_TOTAL_CHARS = 50_000;
+    private static final int LECTURE_SEARCH_LIMIT = 20;
+
+    private static final String PROMPT_EXTRACT_EXERCISE_INSIGHTS_SYSTEM = "/prompts/hyperion/extract_exercise_insights_system.st";
+
+    private static final String PROMPT_EXTRACT_EXERCISE_INSIGHTS_USER = "/prompts/hyperion/extract_exercise_insights_user.st";
 
     private final Optional<CourseCompetencyApi> courseCompetencyApi;
 
     private final Optional<CompetencyRelationApi> competencyRelationApi;
 
+    private final Optional<PyrisConnectorService> pyrisConnectorService;
+
     private final Optional<LectureUnitApi> lectureUnitApi;
 
+    private final Optional<HyperionPromptTemplateService> templateService;
+
+    @Nullable
+    private final ChatClient chatClient;
+
     public HyperionCompetencyContextService(Optional<CourseCompetencyApi> courseCompetencyApi, Optional<CompetencyRelationApi> competencyRelationApi,
-            Optional<LectureUnitApi> lectureUnitApi) {
+            Optional<PyrisConnectorService> pyrisConnectorService, Optional<LectureUnitApi> lectureUnitApi, Optional<HyperionPromptTemplateService> templateService,
+            @Nullable ChatClient chatClient) {
         this.courseCompetencyApi = courseCompetencyApi;
         this.competencyRelationApi = competencyRelationApi;
+        this.pyrisConnectorService = pyrisConnectorService;
         this.lectureUnitApi = lectureUnitApi;
+        this.templateService = templateService;
+        this.chatClient = chatClient;
     }
 
     /**
@@ -70,7 +80,7 @@ public class HyperionCompetencyContextService {
      *
      * @param competencies    the competencies in the selected set
      * @param relations       relations involving the selected competencies (ASSUMES / EXTENDS / MATCHES)
-     * @param lectureSnippets relevant lecture content snippets extracted from linked units (may be empty)
+     * @param lectureSnippets relevant lecture content snippets extracted from linked units
      */
     public record CompetencyContext(List<CourseCompetency> competencies, Set<CompetencyRelation> relations, List<String> lectureSnippets) {
     }
@@ -99,78 +109,100 @@ public class HyperionCompetencyContextService {
         Set<Long> selectedIds = selected.stream().map(CourseCompetency::getId).filter(Objects::nonNull).collect(Collectors.toSet());
         Set<CompetencyRelation> relations = competencyRelationApi.map(relApi -> relApi.findRelationsInvolvingCompetencies(courseId, selectedIds)).orElse(Set.of());
 
-        List<String> lectureSnippets = fetchLectureSnippets(selectedIds);
+        List<String> contextSnippets = gatherContextSnippets(courseId, selected);
 
-        return new CompetencyContext(selected, relations, lectureSnippets);
+        return new CompetencyContext(selected, relations, contextSnippets);
     }
 
-    private List<String> fetchLectureSnippets(Set<Long> selectedIds) {
-        if (competencyRelationApi.isEmpty() || lectureUnitApi.isEmpty() || selectedIds.isEmpty()) {
+    // Collects context snippets from three sources: Pyris semantic search, text units directly
+    // linked to competencies, and LLM-summarized exercises linked to competencies.
+    private List<String> gatherContextSnippets(long courseId, List<CourseCompetency> selected) {
+        if (selected.isEmpty()) {
             return List.of();
         }
-
-        Set<Long> linkedLectureUnitIds = competencyRelationApi.get().findLectureUnitIdsByCompetencyIds(selectedIds);
-        if (linkedLectureUnitIds.isEmpty()) {
-            return List.of();
-        }
-
-        List<LectureUnit> lectureUnits = lectureUnitApi.get().findAllByIds(linkedLectureUnitIds);
-
-        // Extract all texts upfront so we can redistribute unused budget from short units to long ones.
-        record UnitText(LectureUnit unit, String text) {
-        }
-        List<UnitText> extracted = new ArrayList<>();
-        for (LectureUnit unit : lectureUnits) {
-            String text = extractUnitText(unit);
-            if (text != null && !text.isBlank()) {
-                extracted.add(new UnitText(unit, text));
-            }
-        }
-        if (extracted.isEmpty()) {
-            return List.of();
-        }
-
-        // Two-pass fair allocation: equal share first, then redistribute leftover from short units.
-        int equalShare = MAX_TOTAL_CHARS / extracted.size();
-        int leftover = 0;
-        for (UnitText ut : extracted) {
-            leftover += Math.max(0, equalShare - ut.text().length());
-        }
-        int oversizeCount = (int) extracted.stream().filter(ut -> ut.text().length() > equalShare).count();
-        int bonus = oversizeCount > 0 ? leftover / oversizeCount : 0;
 
         List<String> snippets = new ArrayList<>();
-        for (UnitText ut : extracted) {
-            int budget = ut.text().length() <= equalShare ? equalShare : equalShare + bonus;
-            String truncated = ut.text().length() > budget ? ut.text().substring(0, budget) + "…[truncated]" : ut.text();
-            snippets.add("[" + ut.unit().getLecture().getTitle() + " – " + ut.unit().getName() + "]\n" + truncated);
+
+        // Semantic search via Pyris: retrieves pre-indexed lecture content most relevant to the
+        // selected competency titles, scoped to this course via the courseIds filter.
+        if (pyrisConnectorService.isPresent()) {
+            String query = selected.stream().map(CourseCompetency::getTitle).filter(Objects::nonNull).collect(Collectors.joining(", "));
+            if (!query.isBlank()) {
+                pyrisConnectorService.get().searchLectures(query, LECTURE_SEARCH_LIMIT, List.of(courseId)).stream()
+                        .map(r -> formatSnippet(r.lecture().name(), r.lectureUnit().name(), r.snippet())).forEach(snippets::add);
+            }
+        }
+
+        Set<Long> selectedIds = selected.stream().map(CourseCompetency::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+        if (competencyRelationApi.isPresent() && !selectedIds.isEmpty()) {
+            // Text units are fetched directly
+            if (lectureUnitApi.isPresent()) {
+                Set<Long> linkedUnitIds = competencyRelationApi.get().findLectureUnitIdsByCompetencyIds(selectedIds);
+                if (!linkedUnitIds.isEmpty()) {
+                    lectureUnitApi.get().findAllByIds(linkedUnitIds).stream().filter(unit -> unit instanceof TextUnit).map(unit -> (TextUnit) unit)
+                            .filter(tu -> tu.getContent() != null && !tu.getContent().isBlank()).map(tu -> formatSnippet(tu.getLecture().getTitle(), tu.getName(), tu.getContent()))
+                            .forEach(snippets::add);
+                }
+            }
+
+            // Exercises are passed through an intermediate LLM call that extracts core challenges
+            // and learning objectives, avoiding raw problem statement text in the final prompt.
+            competencyRelationApi.get().findExercisesByCompetencyIds(selectedIds).stream().filter(ex -> ex.getProblemStatement() != null && !ex.getProblemStatement().isBlank())
+                    .map(this::summarizeExercise).filter(Objects::nonNull).forEach(snippets::add);
         }
 
         return snippets.stream().distinct().toList();
     }
 
-    private String extractUnitText(LectureUnit unit) {
-        if (unit instanceof TextUnit textUnit) {
-            return textUnit.getContent();
-        }
-        if (unit instanceof AttachmentVideoUnit avu && avu.getAttachment() != null && avu.getAttachment().getAttachmentType() == AttachmentType.FILE
-                && avu.getAttachment().getLink() != null && avu.getAttachment().getLink().endsWith(".pdf")) {
-            return extractPdfText(avu.getAttachment().getLink());
-        }
-        return null;
-    }
-
-    private String extractPdfText(String attachmentLink) {
-        try {
-            Path path = FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentLink), FilePathType.ATTACHMENT_UNIT);
-            byte[] fileBytes = Files.readAllBytes(path);
-            try (PDDocument doc = Loader.loadPDF(fileBytes)) {
-                return new PDFTextStripper().getText(doc);
-            }
-        }
-        catch (IOException e) {
-            log.warn("Could not extract text from PDF attachment [{}]: {}", attachmentLink, e.getMessage());
+    @Nullable
+    private String summarizeExercise(Exercise exercise) {
+        if (chatClient == null || templateService.isEmpty()) {
+            log.debug("Skipping exercise [{}] in context: LLM client or template service not available", exercise.getId());
             return null;
         }
+
+        String solutionSection = "";
+        String solution = extractSolution(exercise);
+        if (solution != null && !solution.isBlank()) {
+            solutionSection = "\n### Solution\n" + solution + "\n";
+        }
+
+        String systemPrompt = templateService.get().render(PROMPT_EXTRACT_EXERCISE_INSIGHTS_SYSTEM, Map.of());
+        String userPrompt = templateService.get().render(PROMPT_EXTRACT_EXERCISE_INSIGHTS_USER, Map.of("exerciseTitle", exercise.getTitle() != null ? exercise.getTitle() : "",
+                "problemStatement", exercise.getProblemStatement(), "solutionSection", solutionSection));
+
+        try {
+            String insights = chatClient.prompt().system(systemPrompt).user(userPrompt).call().content();
+            if (insights == null || insights.isBlank()) {
+                log.warn("Empty insights response for exercise [{}], omitting from context", exercise.getId());
+                return null;
+            }
+            return formatSnippet("Exercise: " + exercise.getTitle(), insights);
+        }
+        catch (Exception e) {
+            log.warn("Failed to extract exercise insights for exercise [{}], omitting from context: {}", exercise.getId(), e.getMessage());
+            return null;
+        }
+    }
+
+    private static String formatSnippet(String header, String content) {
+        return "[" + header + "]\n" + content;
+    }
+
+    private static String formatSnippet(String headerPart1, String headerPart2, String content) {
+        return formatSnippet(headerPart1 + " – " + headerPart2, content);
+    }
+
+    private String extractSolution(Exercise exercise) {
+        if (exercise instanceof TextExercise te) {
+            return te.getExampleSolution();
+        }
+        if (exercise instanceof FileUploadExercise fu) {
+            return fu.getExampleSolution();
+        }
+        if (exercise instanceof ModelingExercise me) {
+            return me.getExampleSolutionExplanation();
+        }
+        return null;
     }
 }

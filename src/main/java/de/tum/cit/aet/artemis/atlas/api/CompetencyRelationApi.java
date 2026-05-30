@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Controller
 @Conditional(AtlasEnabled.class)
@@ -59,6 +60,16 @@ public class CompetencyRelationApi extends AbstractAtlasApi {
     public Set<CompetencyRelation> findRelationsInvolvingCompetencies(long courseId, Set<Long> competencyIds) {
         return competencyRelationRepository.findAllWithHeadAndTailByCourseId(courseId).stream()
                 .filter(r -> competencyIds.contains(r.getHeadCompetency().getId()) || competencyIds.contains(r.getTailCompetency().getId())).collect(Collectors.toSet());
+    }
+
+    /**
+     * Returns all exercises linked to any of the given competencies.
+     *
+     * @param competencyIds the set of selected competency IDs
+     * @return exercises linked to at least one of the given competencies
+     */
+    public Set<Exercise> findExercisesByCompetencyIds(Set<Long> competencyIds) {
+        return competencyExerciseLinkRepository.findExercisesByCompetencyIds(competencyIds);
     }
 
     public void deleteAllByCourseId(Long courseId) {

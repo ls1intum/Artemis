@@ -33,4 +33,11 @@ public interface CompetencyExerciseLinkRepository extends ArtemisJpaRepository<C
             """)
     Set<CompetencyExerciseLink> findByExerciseIdInWithCompetency(@Param("exerciseIds") Set<Long> exerciseIds);
 
+    @Query("""
+            SELECT cel.exercise
+            FROM CompetencyExerciseLink cel
+            WHERE cel.competency.id IN :competencyIds
+            """)
+    Set<de.tum.cit.aet.artemis.exercise.domain.Exercise> findExercisesByCompetencyIds(@Param("competencyIds") Set<Long> competencyIds);
+
 }
