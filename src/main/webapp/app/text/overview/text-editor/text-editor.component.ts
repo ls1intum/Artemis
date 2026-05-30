@@ -1,49 +1,49 @@
 import { Component, HostListener, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
 import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { TextEditorService } from 'app/text/overview/service/text-editor.service';
 import dayjs from 'dayjs/esm';
 import { Subject, Subscription, merge } from 'rxjs';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { debounceTime, distinctUntilChanged, map, skip } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { getFirstResultWithComplaint, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { getUnreferencedFeedback, isAthenaAIResult } from 'app/exercise/result/result.utils';
-import { onError } from 'app/shared/util/global.utils';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { onError } from 'app/foundation/util/global.utils';
+import { Course } from 'app/course/shared/entities/course.model';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faChevronDown, faCircleNotch, faEye, faTimeline } from '@fortawesome/free-solid-svg-icons';
-import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
+import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/foundation/constants/input.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { TextResultComponent } from '../text-result/text-result.component';
 import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { UpperCasePipe } from '@angular/common';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { onTextEditorTab } from 'app/shared/util/text.utils';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { onTextEditorTab } from 'app/foundation/util/text.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseSubmitButtonComponent } from 'app/exercise/shared/exercise-submit-button/exercise-submit-button.component';
 
@@ -156,39 +156,39 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.textService.get(participationId!, this.resultId).subscribe({
                     next: (data: StudentParticipation) => {
                         this.updateParticipation(data, this.submissionId, this.resultId);
+                        this.participationWebsocketService.addParticipation(this.participation, this.textExercise);
                     },
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
                 this.isReadOnlyWithShowResult = !!this.submissionId;
-                return;
-            }
-
-            this.route.params?.subscribe((params) => {
-                const newSubmissionId = Number(this.route.snapshot.paramMap.get('submissionId')) || undefined;
-                const newResultId = Number(this.route.snapshot.paramMap.get('resultId')) || undefined;
-                const newParticipationId = Number(params['participationId']);
-                const participationChanged = !Number.isNaN(newParticipationId) && newParticipationId !== this.participation?.id;
-                const submissionOrResultChanged = newSubmissionId !== this.submissionId || newResultId !== this.resultId;
-                this.submissionId = newSubmissionId;
-                this.resultId = newResultId;
-                this.isReadOnlyWithShowResult = !!newSubmissionId;
-                if (participationChanged || submissionOrResultChanged) {
-                    const participationIdToFetch = !Number.isNaN(newParticipationId) ? newParticipationId : this.participation?.id;
-                    if (participationIdToFetch === undefined) {
-                        return;
+            } else {
+                this.route.params?.subscribe((params) => {
+                    const newSubmissionId = Number(this.route.snapshot.paramMap.get('submissionId')) || undefined;
+                    const newResultId = Number(this.route.snapshot.paramMap.get('resultId')) || undefined;
+                    const newParticipationId = Number(params['participationId']);
+                    const participationChanged = !Number.isNaN(newParticipationId) && newParticipationId !== this.participation?.id;
+                    const submissionOrResultChanged = newSubmissionId !== this.submissionId || newResultId !== this.resultId;
+                    this.submissionId = newSubmissionId;
+                    this.resultId = newResultId;
+                    this.isReadOnlyWithShowResult = !!newSubmissionId;
+                    if (participationChanged || submissionOrResultChanged) {
+                        const participationIdToFetch = !Number.isNaN(newParticipationId) ? newParticipationId : this.participation?.id;
+                        if (participationIdToFetch === undefined) {
+                            return;
+                        }
+                        this.textService.get(participationIdToFetch, this.resultId).subscribe({
+                            next: (data: StudentParticipation) => {
+                                this.updateParticipation(data, this.submissionId, this.resultId);
+                            },
+                            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                        });
+                    } else {
+                        this.updateParticipation(this.participation, this.submissionId, this.resultId);
                     }
-                    this.textService.get(participationIdToFetch, this.resultId).subscribe({
-                        next: (data: StudentParticipation) => {
-                            this.updateParticipation(data, this.submissionId, this.resultId);
-                        },
-                        error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                    });
-                } else {
-                    this.updateParticipation(this.participation, this.submissionId, this.resultId);
-                }
-            });
+                });
 
-            this.isReadOnlyWithShowResult = !!this.submissionId;
+                this.isReadOnlyWithShowResult = !!this.submissionId;
+            }
         }
         this.participationUpdateListener?.unsubscribe();
         // Triggers on new result received
@@ -198,18 +198,26 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             .subscribe((changedParticipation: StudentParticipation) => {
                 const results = changedParticipation.submissions?.flatMap((submission) => submission.results ?? []) || [];
                 const oldResults = this.participation.submissions?.flatMap((submission) => submission.results ?? []) || [];
-                if (
-                    results &&
-                    ((results?.length || 0) > (oldResults.length || 0) || results?.last()?.completionDate === undefined) &&
-                    results?.last()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
-                    results.last()?.successful !== undefined
-                ) {
+                const lastResult = results?.last();
+                const isNewAthenaResult =
+                    !!results &&
+                    ((results?.length || 0) > (oldResults.length || 0) || lastResult?.completionDate === undefined) &&
+                    lastResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
+                    lastResult?.successful !== undefined;
+                if (isNewAthenaResult) {
                     this.isGeneratingFeedback = false;
-                    if (results.last()?.successful === false) {
+                    if (lastResult?.successful === false) {
                         this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                     } else {
-                        this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
+                        this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.textExercise?.title ?? '' });
                         this.hasAthenaResultForLatestSubmission = true;
+                        if (this.isExamSummary() && this.participation?.id !== undefined) {
+                            this.textService.get(this.participation.id, lastResult?.id).subscribe({
+                                next: (data) => this.updateParticipation(data, this.submissionId, lastResult?.id),
+                                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                            });
+                            return;
+                        }
                     }
                 }
                 this.updateParticipation(changedParticipation, this.submissionId, this.resultId);
@@ -241,6 +249,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
         if (this.submission?.text) {
             this.answer = this.submission.text;
+        }
+
+        if (this.participation && this.textExercise) {
+            this.participationWebsocketService.addParticipation(this.participation, this.textExercise);
         }
     }
 

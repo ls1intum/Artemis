@@ -896,7 +896,42 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/GlobalSearchResult'}
-  /api/core/calendar/subscription-token:
+  /api/core/calendar/courses/{courseId}/calendar-events-ics:
+    get:
+      tags: [legacy-calendar]
+      operationId: getLegacyCalendarEventSubscriptionFile
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: token
+        in: query
+        required: true
+        schema: {type: string}
+      - name: filterOptions
+        in: query
+        required: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum: [LECTURES, TUTORIALS, EXAMS, EXERCISES]
+          uniqueItems: true
+      - name: language
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [ENGLISH, GERMAN]
+      responses:
+        '200':
+          description: OK
+          content:
+            text/calendar:
+              schema: {type: string}
+      deprecated: true
+  /api/calendar/subscription-token:
     get:
       tags: [calendar]
       operationId: getCalendarEventSubscriptionToken
@@ -904,9 +939,9 @@ paths:
         '200':
           description: OK
           content:
-            application/json:
+            text/plain:
               schema: {type: string}
-  /api/core/calendar/courses/{courseId}/calendar-events:
+  /api/calendar/courses/{courseId}/calendar-events:
     get:
       tags: [calendar]
       summary: Get calendar events grouped by month
@@ -942,7 +977,7 @@ paths:
                 additionalProperties:
                   type: array
                   items: {$ref: '#/components/schemas/CalendarEvent'}
-  /api/core/calendar/courses/{courseId}/calendar-events-ics:
+  /api/calendar/courses/{courseId}/calendar-events-ics:
     get:
       tags: [calendar]
       operationId: getCalendarEventSubscriptionFile
@@ -1434,6 +1469,9 @@ components:
           enum: [exercise, solution, tests, auxiliary, user]
         checkOnly: {type: boolean}
         initialAutoGeneration: {type: boolean}
+        selectedFeedbackThreadIds:
+          type: array
+          items: {type: integer, format: int64}
     QuizQuestionRefinementResponse:
       description: Discriminated response for a single quiz question refinement, either
         a success with the refined question or a failure with an error message

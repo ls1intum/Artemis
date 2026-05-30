@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.modeling.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
+import static de.tum.cit.aet.artemis.core.config.Constants.MODULE_FEATURE_ATHENA;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -13,6 +13,8 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
@@ -22,12 +24,11 @@ import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
@@ -66,6 +67,47 @@ public class ModelingExerciseFeedbackService {
         this.resultWebsocketService = resultWebsocketService;
         this.participationService = participationService;
         this.userRepository = userRepository;
+    }
+
+    /**
+     * Asynchronously triggers non-graded Athena feedback for a modeling submission in a test exam.
+     *
+     * @param participation    the student participation associated with the exercise
+     * @param modelingExercise the modeling exercise
+     */
+    public void generateAutomaticFeedbackForTestExamAsync(StudentParticipation participation, ModelingExercise modelingExercise) {
+        if (this.athenaFeedbackApi.isEmpty()) {
+            return;
+        }
+        Optional<Submission> submissionOptional;
+        try {
+            submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId()).findLatestSubmission();
+        }
+        catch (EntityNotFoundException e) {
+            log.warn("Skipping Athena feedback for modeling participation {}: {}", participation.getId(), e.getMessage());
+            return;
+        }
+        if (submissionOptional.isEmpty()) {
+            return;
+        }
+        if (!(submissionOptional.get() instanceof ModelingSubmission modelingSubmission)) {
+            log.warn("Skipping Athena feedback for participation {} on modeling exercise {}: latest submission {} is not a ModelingSubmission", participation.getId(),
+                    modelingExercise.getId(), submissionOptional.get().getId());
+            return;
+        }
+        if (modelingSubmission.isEmpty()) {
+            return;
+        }
+        try {
+            athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, MODULE_FEATURE_ATHENA))
+                    .checkLatestSubmissionHasNoAthenaResultOrThrow(modelingSubmission);
+        }
+        catch (BadRequestAlertException ignored) {
+            return;
+        }
+        // Capture the user on the calling (request) thread — SecurityContext is not propagated into the async executor.
+        User requestingUser = userRepository.getUser();
+        CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(modelingSubmission, participation, modelingExercise, requestingUser));
     }
 
     /**
@@ -173,7 +215,7 @@ public class ModelingExerciseFeedbackService {
      * @throws NetworkingException if there's a problem communicating with Athena
      */
     private List<Feedback> getAthenaFeedback(ModelingExercise modelingExercise, ModelingSubmission submission, User requestingUser) throws NetworkingException {
-        AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA));
+        AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, MODULE_FEATURE_ATHENA));
         return api.getModelingFeedbackSuggestions(modelingExercise, submission, false, requestingUser).stream().filter(feedbackItem -> feedbackItem.description() != null)
                 .map(this::convertToFeedback).toList();
     }

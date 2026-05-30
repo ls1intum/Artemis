@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.localci.dto.BuildJobInterface;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 
 @JsonIgnoreProperties(ignoreUnknown = true)

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LlmSelectionInfoComponent } from './llm-selection-info.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockDirective } from 'ng-mocks';
 
 describe('LlmSelectionInfoComponent', () => {

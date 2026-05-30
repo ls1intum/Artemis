@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockProvider } from 'ng-mocks';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockHttpService } from 'test/helpers/mocks/service/mock-http.service';
@@ -16,12 +16,12 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { Observable, Subject, of } from 'rxjs';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { SubmissionSyncPayload } from 'app/exercise/shared/entities/submission/submission-sync-payload.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { SubmissionPatchPayload } from 'app/exercise/shared/entities/submission/submission-patch-payload.model';
 import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
-import { ConnectionState } from 'app/shared/service/websocket.service';
+import { ConnectionState } from 'app/foundation/service/websocket.service';
 import { ApollonEditor } from '@tumaet/apollon';
 
 describe('Team Submission Sync Component', () => {

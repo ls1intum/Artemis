@@ -261,3 +261,8 @@ deferredEagerBeanInstantiationViolations.dot
 /venv/
 /src/test/playwright/test-exercise-repos
 /docker/playwright-multinode-arch-override.yml
+
+######################
+# Local planning notes
+######################
+/docs/superpowers/plans/

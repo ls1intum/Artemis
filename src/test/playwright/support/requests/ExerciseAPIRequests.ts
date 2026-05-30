@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import { Page } from 'playwright-core';
 
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -602,6 +602,17 @@ export class ExerciseAPIRequests {
      */
     async startQuizNow(quizId: number) {
         await this.page.request.put(`${QUIZ_EXERCISE_BASE}/${quizId}/start-now`);
+    }
+
+    /**
+     * Ends a running quiz exercise immediately via API. Equivalent to the lifecycle
+     * `endQuiz` UI action but skips the course-management navigation chain so tests can
+     * advance to the result-check step without a 3rd instructor login.
+     *
+     * @param quizId - The ID of the quiz exercise to end.
+     */
+    async endQuizNow(quizId: number) {
+        await this.page.request.put(`${QUIZ_EXERCISE_BASE}/${quizId}/end-now`);
     }
 
     /**
