@@ -216,7 +216,9 @@ module.exports = {
         global: {
             statements: 83,
             branches: 72.9,
-            functions: 72.5,
+            // Lowered (72.5 -> 71.5) after moving the well-covered shared-ui module out of Jest (now under Vitest),
+            // which removed those functions from the Jest denominator and dropped the global functions average to ~71.93.
+            functions: 71.5,
             lines: 84,
         },
     },
