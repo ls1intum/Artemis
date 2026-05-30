@@ -21,9 +21,16 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnitType;
 public record LectureUnitInformationDTO(long id, long lectureId, String lectureTitle, String name, ZonedDateTime releaseDate, LectureUnitType type) {
 
     /**
-     * Constructor used by the JPA {@code new ...DTO(...)} query expression: the JPQL {@code TYPE(lectureUnit)}
-     * function yields the entity class, which is mapped here to the stable {@link LectureUnitType} discriminator so
-     * the wire format never exposes the internal Java class name.
+     * Constructor used by JPA projections that emit the stable lecture unit discriminator.
+     *
+     * @param type the stable serialized lecture unit type
+     */
+    public LectureUnitInformationDTO(long id, long lectureId, String lectureTitle, String name, ZonedDateTime releaseDate, String type) {
+        this(id, lectureId, lectureTitle, name, releaseDate, LectureUnitType.fromValue(type));
+    }
+
+    /**
+     * Constructor used by JPA projections that still emit the concrete entity class.
      *
      * @param type the concrete lecture unit entity class (from {@code TYPE(lectureUnit)})
      */
@@ -37,8 +44,8 @@ public record LectureUnitInformationDTO(long id, long lectureId, String lectureT
      * @param lectureUnit the LectureUnit to create the DTO from
      * @return the created DTO
      */
-    public static <L extends LectureUnit> LectureUnitInformationDTO of(L lectureUnit) {
+    public static LectureUnitInformationDTO of(LectureUnit lectureUnit) {
         return new LectureUnitInformationDTO(lectureUnit.getId(), lectureUnit.getLecture().getId(), lectureUnit.getLecture().getTitle(), lectureUnit.getName(),
-                lectureUnit.getReleaseDate(), LectureUnitType.fromEntityClass(lectureUnit.getClass()));
+                lectureUnit.getReleaseDate(), lectureUnit.getType());
     }
 }
