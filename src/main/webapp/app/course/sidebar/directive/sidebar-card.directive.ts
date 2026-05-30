@@ -1,4 +1,4 @@
-import { ComponentRef, Directive, OnDestroy, OnInit, Type, ViewContainerRef, effect, inject, input, output } from '@angular/core';
+import { ComponentRef, Directive, OnDestroy, OnInit, OutputRefSubscription, Type, ViewContainerRef, effect, inject, input, output } from '@angular/core';
 import { SidebarCardSmallComponent } from 'app/course/sidebar/sidebar-card-small/sidebar-card-small.component';
 import { SidebarCardMediumComponent } from 'app/course/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardLargeComponent } from 'app/course/sidebar/sidebar-card-large/sidebar-card-large.component';
@@ -19,6 +19,7 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
     readonly onUpdateSidebar = output<void>();
 
     private componentRef: ComponentRef<SidebarCardSmallComponent | SidebarCardMediumComponent | SidebarCardLargeComponent>;
+    private updateSubscription?: OutputRefSubscription;
 
     constructor() {
         // Re-apply inputs whenever any bound signal input changes (replaces ngOnChanges).
@@ -45,13 +46,14 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
         if (cardType) {
             this.componentRef = this.viewContainerRef.createComponent(cardType);
             if (this.size() === 'S') {
-                (this.componentRef.instance as SidebarCardSmallComponent).onUpdateSidebar.subscribe(() => this.onUpdateSidebar.emit());
+                this.updateSubscription = (this.componentRef.instance as SidebarCardSmallComponent).onUpdateSidebar.subscribe(() => this.onUpdateSidebar.emit());
             }
             this.assignAttributes();
         }
     }
 
     ngOnDestroy() {
+        this.updateSubscription?.unsubscribe();
         if (this.componentRef) {
             this.componentRef.destroy();
         }
@@ -67,8 +69,8 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
             this.componentRef.setInput('sidebarType', this.sidebarType());
             const sidebarItem = this.sidebarItem();
             if (sidebarItem) {
-                sidebarItem.title = this.removeChannelPrefix(sidebarItem.title);
-                this.componentRef.setInput('sidebarItem', sidebarItem);
+                // Do not mutate the signal input value; pass a shallow copy with the cleaned-up title instead.
+                this.componentRef.setInput('sidebarItem', { ...sidebarItem, title: this.removeChannelPrefix(sidebarItem.title) });
             }
         }
     }
