@@ -370,6 +370,22 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
+    void saveAccountViaLegacyPath() throws Exception {
+        // The pre-9.3 bare URL "PUT api/core/account" must keep working for deployed clients (iOS, Android, older web);
+        // it is served by AccountLegacyResource and delegates to the canonical api/account/basic-information endpoint.
+        String updatedFirstName = "UpdatedFirstNameLegacy";
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        user.setFirstName(updatedFirstName);
+
+        request.put("/api/core/account", new UserDTO(user), HttpStatus.OK);
+
+        Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
+        assertThat(updatedUser).isPresent();
+        assertThat(updatedUser.get().getFirstName()).isEqualTo(updatedFirstName);
+    }
+
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
     void saveAccountRegistrationDisabledExternalUser() throws Throwable {
         testWithRegistrationDisabled(() -> {
             // Create an external user (non-internal users should be forbidden)
