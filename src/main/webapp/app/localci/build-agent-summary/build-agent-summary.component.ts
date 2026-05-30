@@ -6,7 +6,8 @@ import { faPause, faPlay, faTimes, faTrash } from '@fortawesome/free-solid-svg-i
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import { Router, RouterModule } from '@angular/router';
 import { BuildAgent } from 'app/localci/shared/entities/build-agent.model';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { BuildAgentPauseAllModalComponent } from 'app/localci/build-agent-summary/build-agent-pause-all-modal/build-agent-pause-all-modal.component';
 import { BuildAgentClearDistributedDataComponent } from 'app/localci/build-agent-summary/build-agent-clear-distributed-data/build-agent-clear-distributed-data.component';
@@ -36,7 +37,8 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     private readonly buildAgentsService = inject(BuildAgentsService);
     private readonly buildQueueService = inject(BuildOverviewService);
     private readonly router = inject(Router);
-    private readonly modalService = inject(NgbModal);
+    private readonly dialogService = inject(DialogService);
+    private readonly translateService = inject(TranslateService);
     private readonly alertService = inject(AlertService);
 
     /** Signal containing the list of all build agents with their current status */
@@ -154,8 +156,15 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
      * If confirmed, triggers the pause operation.
      */
     displayPauseBuildAgentModal(): void {
-        const modalRef: NgbModalRef = this.modalService.open(BuildAgentPauseAllModalComponent as Component);
-        modalRef.result.then((confirmed) => {
+        const dialogRef = this.dialogService.open(BuildAgentPauseAllModalComponent, {
+            header: this.translateService.instant('artemisApp.buildAgents.pauseAll'),
+            width: '32rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: true,
+        });
+        dialogRef?.onClose.subscribe((confirmed: boolean | undefined) => {
             if (confirmed) {
                 this.pauseAllBuildAgents();
             }
@@ -167,8 +176,15 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
      * If confirmed, triggers the clear operation.
      */
     displayClearDistributedDataModal(): void {
-        const modalRef: NgbModalRef = this.modalService.open(BuildAgentClearDistributedDataComponent as Component, { size: 'lg' });
-        modalRef.result.then((confirmed) => {
+        const dialogRef = this.dialogService.open(BuildAgentClearDistributedDataComponent, {
+            header: this.translateService.instant('artemisApp.buildAgents.clearDistributedData.title'),
+            width: '50rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: true,
+        });
+        dialogRef?.onClose.subscribe((confirmed: boolean | undefined) => {
             if (confirmed) {
                 this.clearDistributedData();
             }
