@@ -227,7 +227,7 @@
         }
         <div class="chat-body" [class.empty-state]="isEmptyState()" #chatBody>
             @if (messages()?.length) {
-                <div class="messages" #messagesElement (scroll)="checkChatScroll()">
+                <div class="messages" #messagesElement (scroll)="checkChatScroll()" (wheel)="onMessagesUserScroll($event)" (touchmove)="onMessagesUserScroll($event)">
                     <div class="messages-inner">
                         @for (message of messages(); track message.id ?? $index; let i = $index) {
                             <div
