@@ -287,4 +287,24 @@ describe('CompetencyManagementComponent', () => {
             }),
         );
     });
+
+    it('should wire onCompetencyChanged callback to reload competencies', async () => {
+        localStorageService.store<boolean>('alreadyVisitedCompetencyManagement', true);
+        let capturedData: Record<string, unknown> | undefined;
+        vi.spyOn(dialogService, 'open').mockImplementation((_component, config) => {
+            capturedData = config?.['data'] as Record<string, unknown>;
+            return undefined;
+        });
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        component['openAgentChatModal']();
+
+        expect(capturedData).toBeDefined();
+        expect(typeof capturedData!['onCompetencyChanged']).toBe('function');
+
+        const loadSpy = vi.spyOn(component as any, 'loadCourseCompetencies').mockResolvedValue(undefined);
+        (capturedData!['onCompetencyChanged'] as () => void)();
+        expect(loadSpy).toHaveBeenCalledOnce();
+    });
 });
