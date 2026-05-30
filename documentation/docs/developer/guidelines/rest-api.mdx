@@ -517,7 +517,7 @@ Mobile apps (iOS, Android) and the VS Code extension consume these paths and can
 The first entry is the canonical successor; every later entry is a deprecated alias. For class-level dual prefixes, `LegacyApiPathDeprecationInterceptor` automatically tags responses served under a legacy prefix with `Deprecation`, `Sunset`, and `Link: <successor>; rel="successor-version"` headers. Record the deprecated prefix in the module's `*LegacyRestPaths` class (annotated `@Deprecated(forRemoval = true)`) so the eventual cleanup is mechanical.
 
 <Callout variant={CalloutVariant.info}>
-  Existing deviations are tracked in <code>AbstractModuleResourceArchitectureTest#PATH_VARIABLE_COLLECTION_BASELINE</code>. This is a <strong>shrinking baseline</strong>: new violations fail the build, and each entry must be removed as the path is migrated to the canonical shape. Do not add entries without a follow-up plan.
+  The exemption set <code>AbstractModuleResourceArchitectureTest#PATH_VARIABLE_COLLECTION_BASELINE</code> is now <strong>empty</strong>: every REST controller path conforms, so the convention is fully enforced and any new violation fails the build. Only add an entry there together with a documented follow-up plan to migrate it (keeping the old path as a deprecated alias).
 </Callout>
 
 #### Further reading
