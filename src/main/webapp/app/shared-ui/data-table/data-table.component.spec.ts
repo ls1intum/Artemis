@@ -175,7 +175,7 @@ describe('DataTableComponent', () => {
             expect(context.settings.headerHeight).toBe(50);
             expect(context.settings.footerHeight).toBe(50);
             expect(context.settings.rowHeight).toBe('auto');
-            expect(context.settings.scrollbarH).toBeTruthy();
+            expect(context.settings.scrollbarH).toBeTrue();
 
             expect(context.controls).toBeDefined();
             expect(context.controls.onSort).toBeDefined();
@@ -194,21 +194,21 @@ describe('DataTableComponent', () => {
             setInput('isLoading', true);
             component.isRendering = false;
 
-            expect(component.isPreparing).toBeTruthy();
+            expect(component.isPreparing).toBeTrue();
         });
 
         it('should return true when isRendering is true', () => {
             setInput('isLoading', false);
             component.isRendering = true;
 
-            expect(component.isPreparing).toBeTruthy();
+            expect(component.isPreparing).toBeTrue();
         });
 
         it('should return false when neither isLoading nor isRendering is true', () => {
             setInput('isLoading', false);
             component.isRendering = false;
 
-            expect(component.isPreparing).toBeFalsy();
+            expect(component.isPreparing).toBeFalse();
         });
     });
 
@@ -246,7 +246,7 @@ describe('DataTableComponent', () => {
         it('should set isRendering to true initially', () => {
             component.setEntitiesPerPage(100);
 
-            expect(component.isRendering).toBeTruthy();
+            expect(component.isRendering).toBeTrue();
         });
 
         it('should update pagingValue after timeout', () => {
@@ -255,7 +255,7 @@ describe('DataTableComponent', () => {
             vi.advanceTimersByTime(500);
 
             expect(component.pagingValue).toBe(100);
-            expect(component.isRendering).toBeFalsy();
+            expect(component.isRendering).toBeFalse();
         });
 
         it('should store value in local storage', () => {
@@ -517,7 +517,7 @@ describe('DataTableComponent', () => {
             text$.next('Al');
             vi.advanceTimersByTime(250);
 
-            expect(component.searchQueryTooShort).toBeTruthy();
+            expect(component.searchQueryTooShort).toBeTrue();
         });
 
         it('should not set searchQueryTooShort when query meets MIN_SEARCH_QUERY_LENGTH', () => {
@@ -530,7 +530,7 @@ describe('DataTableComponent', () => {
             text$.next('Ali');
             vi.advanceTimersByTime(250);
 
-            expect(component.searchQueryTooShort).toBeFalsy();
+            expect(component.searchQueryTooShort).toBeFalse();
         });
 
         it('should debounce search input', () => {
@@ -858,7 +858,7 @@ describe('DataTableComponent', () => {
 
             component.onSearchInputBlur();
 
-            expect(component.searchQueryTooShort).toBeFalsy();
+            expect(component.searchQueryTooShort).toBeFalse();
         });
     });
 

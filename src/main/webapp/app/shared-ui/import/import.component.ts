@@ -66,7 +66,13 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     // eslint-disable-next-line @angular-eslint/prefer-inject
     protected constructor(protected pagingService?: PagingService<T>) {
         effect(() => {
-            this.disabledIds = this.disabledIdsInput();
+            // When opened via PrimeNG DialogService the `disabledIds` input is never bound (data arrives through
+            // DynamicDialogConfig and is applied imperatively in subclasses' ngOnInit). Only sync from the input on
+            // the template-binding path, otherwise this effect would run after ngOnInit and clobber the
+            // dialog-provided value back to the default [] (defeating e.g. same-course import exclusion).
+            if (!this.isOpenedAsDialog) {
+                this.disabledIds = this.disabledIdsInput();
+            }
         });
     }
 

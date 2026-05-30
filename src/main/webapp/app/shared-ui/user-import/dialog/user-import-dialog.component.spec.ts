@@ -81,13 +81,13 @@ describe('UsersImportDialogComponent', () => {
     });
 
     it('should open and close dialog', () => {
-        expect(component.dialogVisible()).toBeFalsy();
+        expect(component.dialogVisible()).toBeFalse();
 
         component.open();
-        expect(component.dialogVisible()).toBeTruthy();
+        expect(component.dialogVisible()).toBeTrue();
 
         component.close();
-        expect(component.dialogVisible()).toBeFalsy();
+        expect(component.dialogVisible()).toBeFalse();
     });
 
     it('should emit importCompleted on finish', () => {
@@ -96,7 +96,7 @@ describe('UsersImportDialogComponent', () => {
         component.onFinish();
 
         expect(emitSpy).toHaveBeenCalledOnce();
-        expect(component.dialogVisible()).toBeFalsy();
+        expect(component.dialogVisible()).toBeFalse();
     });
 
     it('should reset dialog when selecting csv file', async () => {
@@ -117,7 +117,7 @@ describe('UsersImportDialogComponent', () => {
 
         expect(component.usersToImport).toHaveLength(0);
         expect(component.notFoundUsers).toHaveLength(0);
-        expect(component.noUsersFoundError).toBeTruthy();
+        expect(component.noUsersFoundError).toBeTrue();
     });
 
     it('should read students from csv file', async () => {
@@ -149,7 +149,7 @@ describe('UsersImportDialogComponent', () => {
         await component.onCSVFileSelect(event);
 
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.importUsers.genericErrorMessage');
-        expect(component.isParsing).toBeFalsy();
+        expect(component.isParsing).toBeFalse();
         expect(event.target.value).toBe('');
     });
 
@@ -168,8 +168,8 @@ describe('UsersImportDialogComponent', () => {
         component.importUsers();
 
         expect(examManagementService.addStudentsToExam).toHaveBeenCalledOnce();
-        expect(component.isImporting).toBeFalsy();
-        expect(component.hasImported).toBeTruthy();
+        expect(component.isImporting).toBeFalse();
+        expect(component.hasImported).toBeTrue();
         expect(component.notFoundUsers).toHaveLength(studentsNotFound.length);
     });
 
@@ -304,8 +304,8 @@ describe('UsersImportDialogComponent', () => {
         component.usersToImport = importedStudents.concat(notImportedStudents);
         component.importUsers();
 
-        importedStudents.forEach((student) => expect(component.wasImported(student)).toBeTruthy());
-        notImportedStudents.forEach((student) => expect(component.wasImported(student)).toBeFalsy());
+        importedStudents.forEach((student) => expect(component.wasImported(student)).toBeTrue());
+        notImportedStudents.forEach((student) => expect(component.wasImported(student)).toBeFalse());
         expect(component.numberOfUsersImported).toBe(importedStudents.length);
         expect(component.numberOfUsersNotImported).toBe(notImportedStudents.length);
     });
@@ -327,8 +327,8 @@ describe('UsersImportDialogComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.hasImported).toBeFalsy();
-        expect(component.isSubmitDisabled).toBeFalsy();
+        expect(component.hasImported).toBeFalse();
+        expect(component.isSubmitDisabled).toBeFalse();
         const importButton = fixture.debugElement.query(By.css('#import'));
 
         expect(importButton).not.toBeNull();
@@ -336,8 +336,8 @@ describe('UsersImportDialogComponent', () => {
         importButton.nativeElement.click();
 
         expect(examManagementService.addStudentsToExam).toHaveBeenCalledOnce();
-        expect(component.isImporting).toBeFalsy();
-        expect(component.hasImported).toBeTruthy();
+        expect(component.isImporting).toBeFalse();
+        expect(component.hasImported).toBeTrue();
         expect(component.notFoundUsers).toHaveLength(studentsNotFound.length);
 
         vi.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
@@ -365,7 +365,7 @@ describe('UsersImportDialogComponent', () => {
         expect(component.validationError).toBe('2, 4');
         expect(component.noUsersFoundError).toBeUndefined();
         expect(component.examUsersToImport).toHaveLength(0);
-        expect(component.isParsing).toBeFalsy();
+        expect(component.isParsing).toBeFalse();
         expect(event.target.value).toBe('');
     });
 
@@ -379,10 +379,10 @@ describe('UsersImportDialogComponent', () => {
 
         await component.onCSVFileSelect(event);
 
-        expect(component.noUsersFoundError).toBeTruthy();
+        expect(component.noUsersFoundError).toBeTrue();
         expect(component.validationError).toBeUndefined();
         expect(component.examUsersToImport).toHaveLength(0);
-        expect(component.isParsing).toBeFalsy();
+        expect(component.isParsing).toBeFalse();
         expect(event.target.value).toBe('');
     });
 
@@ -394,7 +394,7 @@ describe('UsersImportDialogComponent', () => {
         component.onSaveError();
 
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.importUsers.genericErrorMessage');
-        expect(component.isImporting).toBeFalsy();
+        expect(component.isImporting).toBeFalse();
     });
 
     it('should import tutorial group students and convert generated student dto response', () => {
@@ -418,8 +418,8 @@ describe('UsersImportDialogComponent', () => {
         component.importUsers();
 
         expect(tutorialGroupApiService.importRegistrations).toHaveBeenCalledWith(course.id, 5, studentsToImport, 'response');
-        expect(component.isImporting).toBeFalsy();
-        expect(component.hasImported).toBeTruthy();
+        expect(component.isImporting).toBeFalse();
+        expect(component.hasImported).toBeTrue();
         expect(component.notFoundUsers).toEqual([
             {
                 registrationNumber: '2',
@@ -457,8 +457,8 @@ describe('UsersImportDialogComponent', () => {
             { registrationNumber: '1', firstName: 'Max', lastName: 'Mustermann', login: 'login1', email: 'test@mail', visibleRegistrationNumber: '1' },
             { registrationNumber: '2', firstName: 'Ada', lastName: 'Lovelace', login: 'ada', email: 'ada@example.com', visibleRegistrationNumber: '2' },
         ]);
-        expect(component.isImporting).toBeFalsy();
-        expect(component.hasImported).toBeTruthy();
+        expect(component.isImporting).toBeFalse();
+        expect(component.hasImported).toBeTrue();
         expect(component.notFoundUsers).toMatchObject([
             { registrationNumber: '3', firstName: 'Alan', lastName: 'Turing', login: 'alan', email: 'alan@example.com', visibleRegistrationNumber: '3' },
             { registrationNumber: '4', firstName: 'Grace', lastName: 'Hopper', login: 'grace', email: 'grace@example.com', visibleRegistrationNumber: '4' },
@@ -476,7 +476,7 @@ describe('UsersImportDialogComponent', () => {
         component.importUsers();
 
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.importUsers.genericErrorMessage');
-        expect(component.isImporting).toBeFalsy();
-        expect(component.hasImported).toBeFalsy();
+        expect(component.isImporting).toBeFalse();
+        expect(component.hasImported).toBeFalse();
     });
 });

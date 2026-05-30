@@ -70,7 +70,7 @@ describe('DeleteDialogComponent', () => {
         expect(comp.entityTitle()).toBe('title');
         expect(comp.deleteQuestion).toBe('artemisApp.exercise.delete.question');
         expect(comp.warningTextColor).toBe('text-danger');
-        expect(comp.useFaCheckIcon).toBeFalsy();
+        expect(comp.useFaCheckIcon).toBeFalse();
 
         // Check that clear method calls dialogRef.close
         comp.clear();
@@ -82,19 +82,19 @@ describe('DeleteDialogComponent', () => {
         await fixture.whenStable();
 
         // Initially the form should be invalid (empty value doesn't match 'title')
-        expect(comp.deleteForm.invalid).toBeTruthy();
+        expect(comp.deleteForm.invalid).toBeTrue();
 
         // User entered some title (wrong title)
         comp.confirmEntityName = 'some title';
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(comp.deleteForm.invalid).toBeTruthy();
+        expect(comp.deleteForm.invalid).toBeTrue();
 
         // User entered correct title
         comp.confirmEntityName = 'title';
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(comp.deleteForm.invalid).toBeFalsy();
+        expect(comp.deleteForm.invalid).toBeFalse();
     });
 
     it('Dialog closes immediately when confirmDelete is called', () => {
@@ -105,7 +105,7 @@ describe('DeleteDialogComponent', () => {
         comp.confirmDelete();
 
         // submit should be disabled and dialog should close immediately
-        expect(comp.submitDisabled()).toBeTruthy();
+        expect(comp.submitDisabled()).toBeTrue();
         expect(closeSpy).toHaveBeenCalledOnce();
 
         // Note: Error handling is now done in DeleteDialogService, not in the component.

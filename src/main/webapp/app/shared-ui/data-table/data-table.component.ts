@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, TemplateRef, ViewEncapsulation, contentChild, effect, inject, input, output, viewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, TemplateRef, ViewEncapsulation, contentChild, effect, inject, input, output, untracked, viewChild } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
@@ -171,9 +171,12 @@ export class DataTableComponent implements OnInit {
             sortProp: { field: 'id', order: SortOrder.ASC },
         };
         effect(() => {
+            // Re-filter only when allEntities or customFilterKey change (the original ngOnChanges trigger set).
+            // updateEntities() also reads searchFields/customFilter/searchEntityFilterEnabled; run it untracked so
+            // those reads don't become effect dependencies and cause extra re-sorts/emits.
             this.allEntities();
             this.customFilterKey();
-            this.updateEntities();
+            untracked(() => this.updateEntities());
         });
     }
 

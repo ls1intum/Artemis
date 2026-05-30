@@ -103,10 +103,12 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
     constructor() {
         this.getScreenSize();
         effect(() => {
+            // Track only items() (and itemsContainerElRef() for the initial-render guard), matching the original
+            // ngOnChanges which reacted solely to `items` changes. forceReload()/minItemHeight() are read at flush
+            // time inside handleOriginalItemsChange's setTimeout (untracked), so they must NOT be tracked here —
+            // doing so made the list re-process on forceReload/minItemHeight changes the old code intentionally ignored.
             const itemsContainer = this.itemsContainerElRef();
             const originalItems = this.items();
-            this.forceReload();
-            this.minItemHeight();
 
             if (!itemsContainer) {
                 return;

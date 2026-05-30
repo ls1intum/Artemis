@@ -92,6 +92,19 @@ describe('VirtualScrollComponent', () => {
         expect(onEndOfOriginalItemsReachedSpy).not.toHaveBeenCalled();
     });
 
+    it('should not re-process items when only forceReload changes', () => {
+        setInput('items', metisCoursePosts);
+        vi.advanceTimersByTime(0);
+        fixture.changeDetectorRef.detectChanges();
+        prepareDataItemsSpy.mockClear();
+
+        setInput('forceReload', true);
+        vi.advanceTimersByTime(0);
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(prepareDataItemsSpy).not.toHaveBeenCalled();
+    });
+
     it('should set forceReloadChange flag to true when user navigates to specific post', () => {
         fixture.detectChanges();
 
