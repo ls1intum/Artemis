@@ -53,15 +53,7 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
      */
     private static final Set<String> PATH_VARIABLE_COLLECTION_BASELINE = Set.of(
             // communication
-            "api/communication/courses/{courseId}/one-to-one-chats/{userId}",
-            // core (file serving — the collection segment doubles as a key in FilePathConverter's external-URI <-> filesystem
-            // mapping, in StaticResourcesConfiguration resource handlers, and in stored attachment links / embedded markdown.
-            // Pluralizing the route alone would desync it from server-generated and persisted URIs; needs a coordinated data migration.)
-            "api/core/files/attachments/attachment-unit/{attachmentVideoUnitId}/*", "api/core/files/attachments/attachment-unit/{attachmentVideoUnitId}/slide/{slideNumber}",
-            "api/core/files/attachments/attachment-unit/{attachmentVideoUnitId}/student/*", "api/core/files/attachments/lecture/{lectureId}/merge-pdf",
-            "api/core/files/attachments/lecture/{lectureId}/{attachmentName}", "api/core/files/course/icons/{courseId}/*",
-            "api/core/files/courses/{courseId}/attachment-units/{attachmentVideoUnitId}", "api/core/files/drag-and-drop/backgrounds/{questionId}/*",
-            "api/core/files/exam-user/signatures/{examUserId}/*", "api/core/files/exam-user/{examUserId}/*", "api/core/files/user/profile-pictures/{userId}/*");
+            "api/communication/courses/{courseId}/one-to-one-chats/{userId}");
 
     @Test
     void shouldBeNamedResource() {
