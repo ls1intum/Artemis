@@ -96,6 +96,10 @@ export default defineConfig({
             'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.spec.ts', // include build plan phases model tests
             'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.spec.ts', // include legacy build plan converter service tests
             'src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**/*.spec.ts', // include programming exercise update timeline tests
+            'src/main/webapp/app/shared-ui/delete-dialog/**/*.spec.ts', // include delete-dialog tests
+            'src/main/webapp/app/shared-ui/confirm-entity-name/**/*.spec.ts', // include confirm-entity-name tests
+            'src/main/webapp/app/shared-ui/user-import/button/**/*.spec.ts', // include user import button tests
+            'src/main/webapp/app/shared-ui/user-import/dialog/**/*.spec.ts', // include user import dialog tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -171,6 +175,10 @@ export default defineConfig({
                 'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts', // include legacy build plan converter service for code coverage
                 'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // include build plan phases model for code coverage
                 'src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**/*.ts', // include programming exercise update timeline for code coverage
+                'src/main/webapp/app/shared-ui/delete-dialog/**/*.ts', // include delete-dialog for code coverage
+                'src/main/webapp/app/shared-ui/confirm-entity-name/**/*.ts', // include confirm-entity-name for code coverage
+                'src/main/webapp/app/shared-ui/user-import/button/**/*.ts', // include user import button for code coverage
+                'src/main/webapp/app/shared-ui/user-import/dialog/**/*.ts', // include user import dialog for code coverage
             ],
             exclude: [
                 '**/node_modules/**', // exclude node_modules with third-party code
