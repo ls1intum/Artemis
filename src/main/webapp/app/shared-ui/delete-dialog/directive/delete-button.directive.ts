@@ -29,8 +29,9 @@ export class DeleteButtonDirective implements OnInit {
     renderButtonText = input<boolean>(true);
     requireConfirmationOnlyForAdditionalChecks = input<boolean>(false);
     dialogError = input<Observable<string>>();
-    // Note: Using @Output here because the EventEmitter is passed through the service to DeleteDialogComponent
-    // which calls .emit() on it. Signal outputs (OutputEmitterRef) don't support this pattern.
+    // Kept as @Output()/EventEmitter (not migrated to output()): the EventEmitter instance is passed by
+    // reference through DeleteDialogData into DeleteDialogService and DeleteDialogComponent, which call
+    // .emit() on it externally. OutputEmitterRef from output() cannot be handed to another component to emit.
     @Output() delete = new EventEmitter<{ [key: string]: boolean }>();
     animation = input<boolean>(true);
 
