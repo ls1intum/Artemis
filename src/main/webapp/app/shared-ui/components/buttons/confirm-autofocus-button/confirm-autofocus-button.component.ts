@@ -3,9 +3,9 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { DialogService } from 'primeng/dynamicdialog';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 import {
-    ConfirmAutofocusModalComponent,
     ConfirmAutofocusModalData,
     ConfirmAutofocusModalResult,
+    openConfirmAutofocusDialog,
 } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 
@@ -49,14 +49,7 @@ export class ConfirmAutofocusButtonComponent {
             confirmDisabled: false,
         };
 
-        const dialogRef = this.dialogService.open(ConfirmAutofocusModalComponent, {
-            width: '50rem',
-            modal: true,
-            closable: false,
-            closeOnEscape: false,
-            dismissableMask: false,
-            data,
-        });
+        const dialogRef = openConfirmAutofocusDialog(this.dialogService, data);
 
         dialogRef?.onClose.subscribe((result: ConfirmAutofocusModalResult | undefined) => {
             if (result?.confirmed) {
