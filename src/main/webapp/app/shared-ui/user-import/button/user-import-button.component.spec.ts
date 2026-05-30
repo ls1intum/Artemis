@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -8,6 +10,8 @@ import { UsersImportButtonComponent } from 'app/shared-ui/user-import/button/use
 import { UsersImportDialogComponent } from 'app/shared-ui/user-import/dialog/users-import-dialog.component';
 
 describe('UsersImportButtonComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<UsersImportButtonComponent>;
     let comp: UsersImportButtonComponent;
 
@@ -29,7 +33,7 @@ describe('UsersImportButtonComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -40,8 +44,8 @@ describe('UsersImportButtonComponent', () => {
 
     it('should call open on dialog when openUsersImportDialog is called', () => {
         fixture.detectChanges();
-        const mockDialog = { open: jest.fn() };
-        jest.spyOn(comp, 'importDialog').mockReturnValue(mockDialog as any);
+        const mockDialog = { open: vi.fn() };
+        vi.spyOn(comp, 'importDialog').mockReturnValue(mockDialog as any);
 
         comp.openUsersImportDialog(new MouseEvent('click'));
 
@@ -49,7 +53,7 @@ describe('UsersImportButtonComponent', () => {
     });
 
     it('should emit importDone when onImportCompleted is called', () => {
-        const emitSpy = jest.spyOn(comp.importDone, 'emit');
+        const emitSpy = vi.spyOn(comp.importDone, 'emit');
 
         comp.onImportCompleted();
 

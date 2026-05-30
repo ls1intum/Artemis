@@ -1,4 +1,4 @@
-import { Component, OnDestroy, ViewChild, ViewEncapsulation, inject, input, output, signal } from '@angular/core';
+import { Component, OnDestroy, ViewEncapsulation, inject, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { DialogModule } from 'primeng/dialog';
@@ -40,7 +40,7 @@ export class UsersImportDialogComponent implements OnDestroy {
     readonly dialogVisible = signal<boolean>(false);
     readonly importCompleted = output<void>();
 
-    @ViewChild('importForm', { static: false }) importForm: NgForm;
+    readonly importForm = viewChild<NgForm>('importForm');
 
     courseId = input<number>();
     courseGroup = input<string>();
