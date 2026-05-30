@@ -422,7 +422,7 @@ describe('BuildAgentDetailsComponent', () => {
         const windowSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
         component.viewBuildLogs('1');
         expect(windowSpy).toHaveBeenCalledOnce();
-        expect(windowSpy).toHaveBeenCalledWith('/api/localci/build-log/1', '_blank');
+        expect(windowSpy).toHaveBeenCalledWith('/api/localci/build-jobs/1/build-log', '_blank');
     });
 
     it('should navigate to job detail page', () => {
