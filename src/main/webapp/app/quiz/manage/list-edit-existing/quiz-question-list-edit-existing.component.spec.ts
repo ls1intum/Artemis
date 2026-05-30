@@ -438,7 +438,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
             expect(invalidMap).toEqual({ 2: [] }); // question1 with id=2 should be in the map
 
             const onClose = new Subject<boolean | undefined>();
-            const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as DynamicDialogRef);
+            const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as DynamicDialogRef);
 
             await component.addQuestions(questions);
 

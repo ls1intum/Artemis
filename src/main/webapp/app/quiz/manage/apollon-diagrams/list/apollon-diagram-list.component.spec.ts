@@ -99,7 +99,7 @@ describe('ApollonDiagramList Component', () => {
 
     it('openCreateDiagramDialog', () => {
         const onClose = new Subject<ApollonDiagram | undefined>();
-        const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as DynamicDialogRef);
+        const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as DynamicDialogRef);
         const handleOpenSpy = vi.spyOn(fixture.componentInstance, 'handleOpenDialogClick');
 
         fixture.componentInstance.openCreateDiagramDialog(course.id!);

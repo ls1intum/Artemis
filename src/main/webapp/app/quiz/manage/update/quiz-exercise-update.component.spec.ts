@@ -1886,7 +1886,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 vi.spyOn(comp, 'checkItemCountDragAndDrop').mockReturnValue(true);
 
                 const onClose = new Subject<boolean | undefined>();
-                dialogOpenSpy.mockReturnValue({ onClose } as DynamicDialogRef);
+                dialogOpenSpy.mockReturnValue({ onClose } as unknown as DynamicDialogRef);
 
                 comp.validateItemLimit();
 
@@ -1904,7 +1904,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 vi.spyOn(comp, 'checkItemCountShortAnswer').mockReturnValue(true);
 
                 const onClose = new Subject<boolean | undefined>();
-                dialogOpenSpy.mockReturnValue({ onClose } as DynamicDialogRef);
+                dialogOpenSpy.mockReturnValue({ onClose } as unknown as DynamicDialogRef);
 
                 comp.validateItemLimit();
 

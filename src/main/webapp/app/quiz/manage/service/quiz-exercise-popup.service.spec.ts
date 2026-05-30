@@ -33,7 +33,7 @@ describe('QuizExercisePopupService', () => {
     /** Creates a dialog-ref mock backed by a controllable onClose subject. */
     const createDialogRefMock = () => {
         const onClose = new Subject<unknown>();
-        return { ref: { onClose } as DynamicDialogRef, onClose };
+        return { ref: { onClose } as unknown as DynamicDialogRef, onClose };
     };
 
     beforeEach(() => {
