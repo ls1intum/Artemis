@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnInit, inject, input, output } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
 import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -41,16 +41,10 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     private eventManager = inject(EventManager);
     private profileService = inject(ProfileService);
 
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input() course: Course;
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input() exercise: Exercise;
-    readonly exam = input<Exam>(undefined!);
-    readonly exerciseGroupId = input<number>(undefined!);
+    readonly course = input.required<Course>();
+    readonly exercise = input.required<Exercise>();
+    readonly exam = input.required<Exam>();
+    readonly exerciseGroupId = input.required<number>();
     readonly latestIndividualEndDate = input<dayjs.Dayjs>();
     readonly onDeleteExercise = output<void>();
     private dialogErrorSource = new Subject<string>();
@@ -97,7 +91,7 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
      * Deletes an exercise. ExerciseType is used to choose the right service for deletion.
      */
     deleteExercise() {
-        switch (this.exercise.type) {
+        switch (this.exercise().type) {
             case ExerciseType.TEXT:
                 this.deleteTextExercise();
                 break;
@@ -114,7 +108,7 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     }
 
     private deleteTextExercise() {
-        this.textExerciseService.delete(this.exercise.id!).subscribe({
+        this.textExerciseService.delete(this.exercise().id!).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'textExerciseListModification',
@@ -129,7 +123,7 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     }
 
     private deleteModelingExercise() {
-        this.modelingExerciseService.delete(this.exercise.id!).subscribe({
+        this.modelingExerciseService.delete(this.exercise().id!).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'modelingExerciseListModification',
@@ -144,7 +138,7 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     }
 
     private deleteFileUploadExercise() {
-        this.fileUploadExerciseService.delete(this.exercise.id!).subscribe({
+        this.fileUploadExerciseService.delete(this.exercise().id!).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'fileUploadExerciseListModification',
@@ -159,7 +153,7 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     }
 
     private deleteQuizExercise() {
-        this.quizExerciseService.delete(this.exercise.id!).subscribe({
+        this.quizExerciseService.delete(this.exercise().id!).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'quizExerciseListModification',
@@ -174,7 +168,7 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     }
 
     public deleteProgrammingExercise(event: { [key: string]: boolean }) {
-        this.programmingExerciseService.delete(this.exercise.id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
+        this.programmingExerciseService.delete(this.exercise().id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'programmingExerciseListModification',
@@ -189,7 +183,7 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     }
 
     fetchExerciseDeletionSummary(): Observable<EntitySummary> {
-        return this.exerciseService.getDeletionSummary(this.exercise);
+        return this.exerciseService.getDeletionSummary(this.exercise());
     }
 
     /**
@@ -197,7 +191,7 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
      * @param exportAll If true exports all questions, else exports only those whose export flag is true
      */
     exportQuizById(exportAll: boolean) {
-        this.quizExerciseService.find(this.exercise.id!).subscribe((res: HttpResponse<QuizExercise>) => {
+        this.quizExerciseService.find(this.exercise().id!).subscribe((res: HttpResponse<QuizExercise>) => {
             const exercise = res.body!;
             this.quizExerciseService.exportQuiz(exercise.quizQuestions, exportAll, exercise.title);
         });

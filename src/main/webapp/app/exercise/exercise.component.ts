@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, input, output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, Subject, Subscription, merge } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -22,9 +22,9 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
 
     private eventSubscriber: Subscription;
     readonly embedded = input(false);
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() course: Course;
+    readonly course = input<Course | undefined>(undefined);
+    readonly exerciseFilter = input<ExerciseFilter | undefined>(undefined);
+    courseContext: Course;
     filter: ExerciseFilter;
     readonly exerciseCount = output<number>();
     readonly filteredExerciseCount = output<number>();
@@ -36,6 +36,22 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     selectedExercises: Exercise[] = [];
     allChecked = false;
 
+    constructor() {
+        effect(() => {
+            const course = this.course();
+            if (course) {
+                this.courseContext = course;
+            }
+        });
+        effect(() => {
+            const exerciseFilter = this.exerciseFilter();
+            if (exerciseFilter) {
+                this.filter = exerciseFilter;
+                this.applyFilter();
+            }
+        });
+    }
+
     // These two variables are used to emit errors to the delete dialog
     protected dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -46,8 +62,12 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
      * Fetches an exercise from the server (and if needed the course as well)
      */
     ngOnInit(): void {
+        const course = this.course();
+        if (course) {
+            this.courseContext = course;
+        }
         this.showHeading = this.embedded();
-        this.filter = new ExerciseFilter();
+        this.filter = this.exerciseFilter() ?? new ExerciseFilter();
         this.load();
         this.registerChangeInExercises();
     }
@@ -60,27 +80,19 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
         this.dialogErrorSource.unsubscribe();
     }
 
-    // TODO: Skipped for migration because:
-    //  Accessor inputs cannot be migrated as they are too complex.
-    @Input()
-    set exerciseFilter(value: ExerciseFilter) {
-        this.filter = value;
-        this.applyFilter();
-    }
-
     protected load(): void {
-        if (!this.course?.id) {
+        if (!this.courseContext?.id) {
             this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
             this.loadCourse();
         } else {
-            this.courseId = this.course.id;
+            this.courseId = this.courseContext.id;
             this.loadExercises();
         }
     }
 
     private loadCourse(): void {
         this.courseService.find(this.courseId).subscribe((courseResponse) => {
-            this.course = courseResponse.body!;
+            this.courseContext = courseResponse.body!;
             this.loadExercises();
         });
     }

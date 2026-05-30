@@ -69,7 +69,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                 // reconnect exercise with course
                 quizExercises.forEach((exercise) => {
                     exercise.type = ExerciseType.QUIZ;
-                    exercise.course = this.course;
+                    exercise.course = this.courseContext;
                     exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
                     exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(exercise.course);
                     exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);

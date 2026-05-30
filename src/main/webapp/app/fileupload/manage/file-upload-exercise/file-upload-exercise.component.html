@@ -3,7 +3,7 @@
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                    @if (course.isAtLeastInstructor) {
+                    @if (courseContext.isAtLeastInstructor) {
                         <th class="d-md-table-cell">
                             <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(fileUploadExercises())" [ngModel]="allChecked" />
                         </th>
@@ -11,7 +11,7 @@
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dates"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                    @if (course.presentationScore) {
+                    @if (courseContext.presentationScore) {
                         <th jhiSortBy="presentationScoreEnabled">
                             <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title"></span>&nbsp;<fa-icon [icon]="faSort" />
                         </th>
@@ -24,7 +24,7 @@
             <tbody class="markdown-preview">
                 @for (fileUploadExercise of filteredFileUploadExercises(); track trackId($index, fileUploadExercise)) {
                     <tr id="exercise-card-{{ fileUploadExercise.id }}">
-                        @if (course.isAtLeastInstructor) {
+                        @if (courseContext.isAtLeastInstructor) {
                             <td class="d-md-table-cell">
                                 <input class="form-check-input" type="checkbox" (change)="toggleExercise(fileUploadExercise)" [ngModel]="isExerciseSelected(fileUploadExercise)" />
                             </td>
@@ -81,7 +81,7 @@
                                 }
                             </div>
                         </td>
-                        @if (course.presentationScore) {
+                        @if (courseContext.presentationScore) {
                             <td>{{ fileUploadExercise.presentationScoreEnabled }}</td>
                         }
                         <td>{{ fileUploadExercise.filePattern }}</td>
@@ -125,8 +125,8 @@
                                         entitySummaryTitle="artemisApp.exercise.delete.summary.title"
                                         [fetchEntitySummary]="fetchExerciseDeletionSummary(fileUploadExercise)"
                                         [translateValues]="{
-                                            courseTitle: course.title,
-                                            courseType: course.testCourse
+                                            courseTitle: courseContext.title,
+                                            courseType: courseContext.testCourse
                                                 ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
                                                 : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
                                         }"
@@ -144,14 +144,14 @@
         </table>
         @if (selectedExercises.length > 0) {
             <div>
-                @if (course.isAtLeastInstructor) {
+                @if (courseContext.isAtLeastInstructor) {
                     <button
                         jhiDeleteButton
                         [entityTitle]="'Delete All File Upload Exercises'"
                         deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
                         [translateValues]="{
-                            courseTitle: course.title,
-                            courseType: course.testCourse
+                            courseTitle: courseContext.title,
+                            courseType: courseContext.testCourse
                                 ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
                                 : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
                         }"
