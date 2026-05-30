@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import type { TextDetail } from 'app/shared-ui/detail-overview-list/detail.model';
 import { NoDataComponent } from 'app/shared-ui/components/no-data/no-data-component';
 
@@ -8,5 +8,5 @@ import { NoDataComponent } from 'app/shared-ui/components/no-data/no-data-compon
     imports: [NoDataComponent],
 })
 export class TextDetailComponent {
-    @Input() detail: TextDetail;
+    detail = input.required<TextDetail>();
 }

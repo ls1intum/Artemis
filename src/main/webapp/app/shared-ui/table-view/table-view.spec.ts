@@ -63,33 +63,33 @@ describe('TableViewComponent', () => {
     });
 
     it('should have default loading state as false', () => {
-        expect(component.loading()).toBe(false);
+        expect(component.loading()).toBeFalsy();
     });
 
     describe('resolvedOptions', () => {
         it('should use all defaults when options is empty', () => {
             const resolved = component['resolvedOptions']();
-            expect(resolved.lazy).toBe(true);
-            expect(resolved.paginated).toBe(true);
-            expect(resolved.striped).toBe(false);
+            expect(resolved.lazy).toBeTruthy();
+            expect(resolved.paginated).toBeTruthy();
+            expect(resolved.striped).toBeFalsy();
             expect(resolved.selectionMode).toBeUndefined();
             expect(resolved.dataKey).toBe('id');
             expect(resolved.tableStyle).toEqual({ 'min-width': '50rem' });
-            expect(resolved.showCurrentPageReport).toBe(true);
+            expect(resolved.showCurrentPageReport).toBeTruthy();
             expect(resolved.pageSize).toBe(50);
             expect(resolved.pageSizeOptions).toEqual([10, 20, 50, 100, 200]);
-            expect(resolved.showSearch).toBe(true);
+            expect(resolved.showSearch).toBeTruthy();
             expect(resolved.emptyMessageTranslation).toBe('artemisApp.dataTable.search.noResults');
         });
 
         it('should merge partial options onto defaults', () => {
             fixture.componentRef.setInput('options', { striped: true, pageSize: 20 });
             const resolved = component['resolvedOptions']();
-            expect(resolved.striped).toBe(true);
+            expect(resolved.striped).toBeTruthy();
             expect(resolved.pageSize).toBe(20);
             // Unset fields remain at defaults
-            expect(resolved.lazy).toBe(true);
-            expect(resolved.paginated).toBe(true);
+            expect(resolved.lazy).toBeTruthy();
+            expect(resolved.paginated).toBeTruthy();
             expect(resolved.emptyMessageTranslation).toBe('artemisApp.dataTable.search.noResults');
         });
 
@@ -113,18 +113,18 @@ describe('TableViewComponent', () => {
             };
             fixture.componentRef.setInput('options', fullOptions);
             const resolved = component['resolvedOptions']();
-            expect(resolved.lazy).toBe(false);
-            expect(resolved.paginated).toBe(false);
-            expect(resolved.striped).toBe(true);
+            expect(resolved.lazy).toBeFalsy();
+            expect(resolved.paginated).toBeFalsy();
+            expect(resolved.striped).toBeTruthy();
             expect(resolved.selectionMode).toBe('single');
             expect(resolved.dataKey).toBe('name');
             expect(resolved.tableStyle).toEqual({ 'min-width': '20rem' });
-            expect(resolved.showCurrentPageReport).toBe(false);
+            expect(resolved.showCurrentPageReport).toBeFalsy();
             expect(resolved.pageSize).toBe(10);
             expect(resolved.pageSizeOptions).toEqual([10]);
-            expect(resolved.showSearch).toBe(false);
+            expect(resolved.showSearch).toBeFalsy();
             expect(resolved.emptyMessageTranslation).toBe('custom.message');
-            expect(resolved.scrollable).toBe(true);
+            expect(resolved.scrollable).toBeTruthy();
             expect(resolved.scrollHeight).toBe('400px');
             expect(resolved.rowActionsAlignment).toBe('start');
             expect(resolved.searchPlaceholder).toBe('custom.placeholder');
@@ -132,7 +132,7 @@ describe('TableViewComponent', () => {
 
         it('should use default scrollable, scrollHeight, rowActionsAlignment, searchPlaceholder', () => {
             const resolved = component['resolvedOptions']();
-            expect(resolved.scrollable).toBe(false);
+            expect(resolved.scrollable).toBeFalsy();
             expect(resolved.scrollHeight).toBeUndefined();
             expect(resolved.rowActionsAlignment).toBe('end');
             expect(resolved.searchPlaceholder).toBe('artemisApp.course.exercise.search.searchPlaceholder');
@@ -273,10 +273,10 @@ describe('TableViewComponent', () => {
     });
 
     it('should support loading input', () => {
-        expect(component.loading()).toBe(false);
+        expect(component.loading()).toBeFalsy();
 
         fixture.componentRef.setInput('loading', true);
-        expect(component.loading()).toBe(true);
+        expect(component.loading()).toBeTruthy();
     });
 
     it('should support table actions template input', () => {

@@ -1,54 +1,58 @@
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgbActiveModal, NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings, ExportModalComponent } from 'app/shared-ui/export/modal/export-modal.component';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { By } from '@angular/platform-browser';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { vi } from 'vitest';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ExportModalComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: ExportModalComponent;
     let fixture: ComponentFixture<ExportModalComponent>;
-    let ngbActiveModal: NgbActiveModal;
+    let dialogRef: DynamicDialogRef;
     let translateService: TranslateService;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
-            imports: [NgbNavModule, FaIconComponent],
-            declarations: [ExportModalComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
-            providers: [MockProvider(NgbActiveModal), MockProvider(TranslateService)],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExportModalComponent);
-                component = fixture.componentInstance;
-                ngbActiveModal = TestBed.inject(NgbActiveModal);
-                translateService = TestBed.inject(TranslateService);
-                fixture.detectChanges();
-            });
+    beforeEach(async () => {
+        const mockDialogRef = {
+            close: vi.fn(),
+        };
+
+        await TestBed.configureTestingModule({
+            imports: [ExportModalComponent],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DynamicDialogRef, useValue: mockDialogRef },
+            ],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(ExportModalComponent);
+        component = fixture.componentInstance;
+        dialogRef = TestBed.inject(DynamicDialogRef);
+        translateService = TestBed.inject(TranslateService);
+        fixture.detectChanges();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should init with default options', () => {
-        jest.spyOn(translateService, 'getCurrentLang').mockReturnValue('en');
+        vi.spyOn(translateService, 'getCurrentLang').mockReturnValue('en');
         component.ngOnInit();
         expect(component.options.fieldSeparator).toBe(CsvFieldSeparator.COMMA);
         expect(component.options.quoteCharacter).toBe(CsvQuoteStrings.QUOTES_DOUBLE);
-        expect(component.options.quoteStrings).toBeTrue();
+        expect(component.options.quoteStrings).toBeTruthy();
         expect(component.options.decimalSeparator).toBe(CsvDecimalSeparator.PERIOD);
     });
 
     it('should init with german default options', () => {
-        jest.spyOn(translateService, 'getCurrentLang').mockReturnValue('de');
+        vi.spyOn(translateService, 'getCurrentLang').mockReturnValue('de');
         component.ngOnInit();
         expect(component.options.fieldSeparator).toBe(CsvFieldSeparator.SEMICOLON);
         expect(component.options.quoteCharacter).toBe(CsvQuoteStrings.QUOTES_DOUBLE);
-        expect(component.options.quoteStrings).toBeTrue();
+        expect(component.options.quoteStrings).toBeTruthy();
         expect(component.options.decimalSeparator).toBe(CsvDecimalSeparator.COMMA);
     });
 
@@ -58,28 +62,30 @@ describe('ExportModalComponent', () => {
         component.setCsvDecimalSeparator(CsvDecimalSeparator.PERIOD);
         expect(component.options.fieldSeparator).toBe(CsvFieldSeparator.SPACE);
         expect(component.options.quoteCharacter).toBe(CsvQuoteStrings.NONE);
-        expect(component.options.quoteStrings).toBeFalse();
+        expect(component.options.quoteStrings).toBeFalsy();
         expect(component.options.decimalSeparator).toBe(CsvDecimalSeparator.PERIOD);
     });
 
     it('should dismiss modal if close or cancel button are clicked', () => {
-        const dismissSpy = jest.spyOn(ngbActiveModal, 'dismiss');
+        const closeSpy = vi.spyOn(dialogRef, 'close');
         const closeButton = fixture.debugElement.query(By.css('button.btn-close'));
         expect(closeButton).not.toBeNull();
         closeButton.nativeElement.click();
-        expect(dismissSpy).toHaveBeenCalledOnce();
+        expect(closeSpy).toHaveBeenCalledOnce();
+        expect(closeSpy).toHaveBeenCalledWith({ cancelled: true });
 
         const cancelButton = fixture.debugElement.query(By.css('button.cancel'));
         expect(cancelButton).not.toBeNull();
         cancelButton.nativeElement.click();
-        expect(dismissSpy).toHaveBeenCalledTimes(2);
+        expect(closeSpy).toHaveBeenCalledTimes(2);
+        expect(closeSpy).toHaveBeenLastCalledWith({ cancelled: true });
     });
 
     it('should return empty on finish when excel export is active', () => {
         component.activeTab = 1;
-        const activeModalStub = jest.spyOn(ngbActiveModal, 'close');
+        const closeSpy = vi.spyOn(dialogRef, 'close');
         component.onFinish();
-        expect(activeModalStub).toHaveBeenCalledWith();
+        expect(closeSpy).toHaveBeenCalledWith();
     });
 
     it('should return the csv export options on finish when csv export is active', () => {
@@ -91,8 +97,8 @@ describe('ExportModalComponent', () => {
         };
         component.options = testOptions;
         component.activeTab = 2;
-        const activeModalStub = jest.spyOn(ngbActiveModal, 'close');
+        const closeSpy = vi.spyOn(dialogRef, 'close');
         component.onFinish();
-        expect(activeModalStub).toHaveBeenCalledWith(testOptions);
+        expect(closeSpy).toHaveBeenCalledWith(testOptions);
     });
 });

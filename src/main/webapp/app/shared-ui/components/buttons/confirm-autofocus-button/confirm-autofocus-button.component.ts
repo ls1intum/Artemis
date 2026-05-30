@@ -1,8 +1,12 @@
 import { Component, TemplateRef, inject, input, output, viewChild } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
-import { ConfirmAutofocusModalComponent } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
+import {
+    ConfirmAutofocusModalComponent,
+    ConfirmAutofocusModalData,
+    ConfirmAutofocusModalResult,
+} from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 
 @Component({
@@ -11,7 +15,7 @@ import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/bu
     imports: [ButtonComponent],
 })
 export class ConfirmAutofocusButtonComponent {
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
 
     icon = input<IconProp | undefined>(undefined);
     title = input<string>('');
@@ -34,24 +38,32 @@ export class ConfirmAutofocusButtonComponent {
      * open confirmation modal with text and title
      */
     onOpenConfirmationModal() {
-        const modalRef: NgbModalRef = this.modalService.open(ConfirmAutofocusModalComponent, {
-            size: 'lg',
-            backdrop: 'static',
-        });
         const isMarkdown = this.textIsMarkdown();
-        modalRef.componentInstance.text = isMarkdown ? htmlForMarkdown(this.confirmationText()) : this.confirmationText();
-        modalRef.componentInstance.textIsMarkdown = isMarkdown;
-        modalRef.componentInstance.title = this.confirmationTitle();
-        modalRef.componentInstance.titleTranslationParams = this.confirmationTitleTranslationParams();
-        modalRef.componentInstance.translateText = this.translateText();
-        modalRef.componentInstance.contentRef = this.content();
-        modalRef.result.then(
-            () => {
+        const data: ConfirmAutofocusModalData = {
+            text: isMarkdown ? htmlForMarkdown(this.confirmationText()) : this.confirmationText(),
+            textIsMarkdown: isMarkdown,
+            title: this.confirmationTitle(),
+            titleTranslationParams: this.confirmationTitleTranslationParams(),
+            translateText: this.translateText(),
+            contentRef: this.content(),
+            confirmDisabled: false,
+        };
+
+        const dialogRef = this.dialogService.open(ConfirmAutofocusModalComponent, {
+            width: '50rem',
+            modal: true,
+            closable: false,
+            closeOnEscape: false,
+            dismissableMask: false,
+            data,
+        });
+
+        dialogRef?.onClose.subscribe((result: ConfirmAutofocusModalResult | undefined) => {
+            if (result?.confirmed) {
                 this.onConfirm.emit();
-            },
-            () => {
+            } else {
                 this.onCancel.emit();
-            },
-        );
+            }
+        });
     }
 }

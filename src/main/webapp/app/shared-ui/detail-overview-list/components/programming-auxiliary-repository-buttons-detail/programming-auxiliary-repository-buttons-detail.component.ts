@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { ProgrammingAuxiliaryRepositoryButtonsDetail } from 'app/shared-ui/detail-overview-list/detail.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
@@ -15,7 +15,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     imports: [RouterModule, NgbTooltipModule, FontAwesomeModule, CodeButtonComponent, ProgrammingExerciseInstructorRepoDownloadComponent, TranslateDirective],
 })
 export class ProgrammingAuxiliaryRepositoryButtonsDetailComponent {
-    @Input() detail: ProgrammingAuxiliaryRepositoryButtonsDetail;
+    detail = input.required<ProgrammingAuxiliaryRepositoryButtonsDetail>();
 
     readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly RepositoryType = RepositoryType;
