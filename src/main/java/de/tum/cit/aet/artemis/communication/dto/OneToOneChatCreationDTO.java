@@ -43,8 +43,9 @@ public record OneToOneChatCreationDTO(@Nullable Long userId, @Nullable String lo
             Long userId = null;
             if (node.hasNonNull("userId")) {
                 JsonNode userIdNode = node.get("userId");
-                if (!userIdNode.canConvertToLong()) {
-                    // Reject non-numeric / fractional userId as an input mismatch so Spring maps it to 400 Bad Request (asLong() would otherwise coerce "abc" to 0L).
+                // Require an integral JSON number in long range. isIntegralNumber() rejects fractional nodes (e.g. 1.9) that canConvertToLong() would accept and asLong()
+                // would silently truncate to a different id; reported as an input mismatch so Spring maps it to 400 Bad Request (asLong() would otherwise coerce "abc" to 0L).
+                if (!userIdNode.isIntegralNumber() || !userIdNode.canConvertToLong()) {
                     return context.reportInputMismatch(OneToOneChatCreationDTO.class, "userId must be an integer id, but got: %s", userIdNode.asText());
                 }
                 userId = userIdNode.asLong();

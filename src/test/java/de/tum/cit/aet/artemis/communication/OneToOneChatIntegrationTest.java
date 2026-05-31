@@ -6,6 +6,7 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -193,6 +194,26 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnNotFoundWhenUnknownUserIdIsPassed() throws Exception {
         request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats/99999", null, OneToOneChatDTO.class, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldCreateOneToOneChatWhenRequestedWithUserIdInBody() throws Exception {
+        Long student2Id = userRepository.findOneByLogin(testPrefix + "student2").orElseThrow().getId();
+
+        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", Map.of("userId", student2Id), OneToOneChatDTO.class,
+                HttpStatus.CREATED);
+
+        assertThat(chat).isNotNull();
+        assertParticipants(chat.getId(), 2, "student1", "student2");
+        verifyNoParticipantTopicWebsocketSent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnBadRequestWhenUserIdInBodyIsFractional() throws Exception {
+        // A fractional userId must be rejected, not silently truncated (e.g. 1.9 -> 1), which could otherwise start a chat with a different user than the body names.
+        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", Map.of("userId", 1.9), OneToOneChatDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @ParameterizedTest
