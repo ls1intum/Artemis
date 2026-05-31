@@ -153,6 +153,9 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/shared-ui/components/slice-navigator/**', // slice-navigator uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared-ui/components/feature-overlay/**', // feature-overlay uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared-ui/export/**', // export module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/logos/**', // logos module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/sharing/**', // sharing module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/app.component.ts', // app-shell (app.component) uses Vitest (see vitest.config.ts)
         '<rootDir>/src/main/webapp/**/*.ts',
     ],
     // Each entry below excludes a module that has been migrated to Vitest.
@@ -220,6 +223,9 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/shared-ui/components/slice-navigator/', // slice-navigator uses Vitest
         '<rootDir>/src/main/webapp/app/shared-ui/components/feature-overlay/', // feature-overlay uses Vitest
         '<rootDir>/src/main/webapp/app/shared-ui/export/', // export module uses Vitest
+        '<rootDir>/src/main/webapp/app/logos/', // logos module uses Vitest
+        '<rootDir>/src/main/webapp/app/sharing/', // sharing module uses Vitest
+        '<rootDir>/src/main/webapp/app/app.component.ts', // app-shell (app.component) uses Vitest
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
@@ -230,10 +236,7 @@ module.exports = {
         global: {
             statements: 83,
             branches: 72.9,
-            // Lowered 72.5 -> 72.3 after moving shared-ui/export + slice-navigator + feature-overlay
-            // specs to Vitest (actual Jest function coverage dropped to 72.36%). Minimal reduction,
-            // small headroom below actual. Re-tune when migration completes.
-            functions: 72.3,
+            functions: 72.2,
             lines: 84,
         },
     },
@@ -329,6 +332,9 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/shared-ui/components/slice-navigator/', // slice-navigator (Vitest)
         '<rootDir>/src/main/webapp/app/shared-ui/components/feature-overlay/', // feature-overlay (Vitest)
         '<rootDir>/src/main/webapp/app/shared-ui/export/', // export module (Vitest)
+        '<rootDir>/src/main/webapp/app/logos/', // logos module (Vitest)
+        '<rootDir>/src/main/webapp/app/sharing/', // sharing module (Vitest)
+        '<rootDir>/src/main/webapp/app/app.component.spec.ts', // app-shell (app.component) (Vitest)
     ],
     testTimeout: 3000,
     testMatch: ['<rootDir>/src/main/webapp/app/**/*.spec.ts', '<rootDir>/src/test/javascript/spec/**/*.integration.spec.ts'],

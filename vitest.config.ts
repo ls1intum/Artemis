@@ -99,6 +99,9 @@ export default defineConfig({
             'src/main/webapp/app/shared-ui/components/slice-navigator/**/*.spec.ts', // include slice-navigator tests
             'src/main/webapp/app/shared-ui/components/feature-overlay/**/*.spec.ts', // include feature-overlay tests
             'src/main/webapp/app/shared-ui/export/**/*.spec.ts', // include export (button/modal/row-builder) tests
+            'src/main/webapp/app/logos/**/*.spec.ts', // include logos tests
+            'src/main/webapp/app/sharing/**/*.spec.ts', // include sharing tests
+            'src/main/webapp/app/app.component.spec.ts', // include app-shell (app.component) tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -177,6 +180,9 @@ export default defineConfig({
                 'src/main/webapp/app/shared-ui/components/slice-navigator/**/*.ts', // include slice-navigator for code coverage
                 'src/main/webapp/app/shared-ui/components/feature-overlay/**/*.ts', // include feature-overlay for code coverage
                 'src/main/webapp/app/shared-ui/export/**/*.ts', // include export (button/modal/row-builder) for code coverage
+                'src/main/webapp/app/logos/**/*.ts', // include logos for code coverage
+                'src/main/webapp/app/sharing/**/*.ts', // include sharing for code coverage
+                'src/main/webapp/app/app.component.ts', // include app-shell (app.component) for code coverage
             ],
             exclude: [
                 '**/node_modules/**', // exclude node_modules with third-party code
