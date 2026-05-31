@@ -1,7 +1,7 @@
 <div>
-    @if (showPageSizeDropdown || showSearchField) {
+    @if (showPageSizeDropdown() || showSearchField()) {
         <div class="d-flex mb-2 gap-1 flex-column flex-md-row">
-            @if (showPageSizeDropdown) {
+            @if (showPageSizeDropdown()) {
                 <div ngbDropdown class="d-inline-block me-2">
                     <button class="btn btn-outline-primary w-100" id="dropdownBasic1" ngbDropdownToggle>
                         {{ perPageTranslation(pagingValue) | artemisTranslate: { number: pagingValue } }}
@@ -15,7 +15,7 @@
                     </div>
                 </div>
             }
-            @if (searchEnabled) {
+            @if (searchEnabled()) {
                 <div class="search-container">
                     <input
                         #ngbTypeahead
@@ -24,9 +24,9 @@
                         type="text"
                         class="form-control"
                         (selectItem)="onAutocompleteSelect($event.item)"
-                        [placeholder]="searchPlaceholderTranslation | artemisTranslate"
+                        [placeholder]="searchPlaceholderTranslation() | artemisTranslate"
                         [ngbTypeahead]="onSearch"
-                        [resultFormatter]="searchResultFormatter"
+                        [resultFormatter]="searchResultFormatter()"
                         [inputFormatter]="searchInputFormatter"
                         (blur)="onSearchInputBlur()"
                         autocomplete="nope"
@@ -36,17 +36,17 @@
                         data-lpignore="true"
                         data-form-type="other"
                     />
-                    <div class="search-info" [class.active]="isSearching">
+                    <div class="search-info" [class.active]="isSearching()">
                         <fa-icon size="lg" [icon]="faCircleNotch" animation="spin" />
                     </div>
-                    <div class="search-info" [class.active]="searchFailed">
+                    <div class="search-info" [class.active]="searchFailed()">
                         <span class="badge bg-danger" jhiTranslate="artemisApp.dataTable.search.failed"></span>
                     </div>
-                    <div class="search-info" [class.active]="searchNoResults">
-                        <span class="badge bg-warning" [jhiTranslate]="searchNoResultsTranslation"> No results </span>
+                    <div class="search-info" [class.active]="searchNoResults()">
+                        <span class="badge bg-warning" [jhiTranslate]="searchNoResultsTranslation()"> No results </span>
                     </div>
                     <div class="search-info" [class.active]="searchQueryTooShort">
-                        <span class="badge bg-info" [jhiTranslate]="minQueryLengthHintTranslation" [translateValues]="{ length: MIN_SEARCH_QUERY_LENGTH }">
+                        <span class="badge bg-info" [jhiTranslate]="minQueryLengthHintTranslation()" [translateValues]="{ length: MIN_SEARCH_QUERY_LENGTH }">
                             Please enter at least {{ MIN_SEARCH_QUERY_LENGTH }} characters
                         </span>
                     </div>
@@ -56,8 +56,8 @@
     }
     @if (entities && !isPreparing) {
         <div class="table-responsive data-table-container">
-            <ng-container *ngTemplateOutlet="templateRef; context: context" />
-            <div class="transitioning-container" [class.active]="isTransitioning">
+            <ng-container *ngTemplateOutlet="templateRef(); context: context" />
+            <div class="transitioning-container" [class.active]="isTransitioning()">
                 <fa-icon size="lg" [icon]="faCircleNotch" animation="spin" />
             </div>
         </div>

@@ -344,7 +344,8 @@ public class ProgrammingExerciseRetrievalResource {
         var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
 
         // TODO: We want to get rid of ModelAndView and use ResponseEntity instead. Define an appropriate service method and then call it here and in the referenced endpoint.
-        return new ModelAndView("forward:/api/programming/repository/" + participation.getId() + "/files-content" + (omitBinaries ? "?omitBinaries=" + omitBinaries : ""));
+        return new ModelAndView(
+                "forward:/api/programming/participations/" + participation.getId() + "/repository/files-content" + (omitBinaries ? "?omitBinaries=" + omitBinaries : ""));
     }
 
     /**
@@ -370,7 +371,8 @@ public class ProgrammingExerciseRetrievalResource {
         var participation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
 
         // TODO: We want to get rid of ModelAndView and use ResponseEntity instead. Define an appropriate service method and then call it here and in the referenced endpoint.
-        return new ModelAndView("forward:/api/programming/repository/" + participation.getId() + "/files-content" + (omitBinaries ? "?omitBinaries=" + omitBinaries : ""));
+        return new ModelAndView(
+                "forward:/api/programming/participations/" + participation.getId() + "/repository/files-content" + (omitBinaries ? "?omitBinaries=" + omitBinaries : ""));
     }
 
     /**

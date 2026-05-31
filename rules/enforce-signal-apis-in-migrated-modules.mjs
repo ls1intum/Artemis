@@ -1,6 +1,6 @@
-import { ESLintUtils } from "@typescript-eslint/utils";
+import { ESLintUtils } from '@typescript-eslint/utils';
 
-const createRule = ESLintUtils.RuleCreator(() => "");
+const createRule = ESLintUtils.RuleCreator(() => '');
 
 /**
  * Modules that have been fully migrated to Angular signal-based APIs.
@@ -9,40 +9,42 @@ const createRule = ESLintUtils.RuleCreator(() => "");
  */
 // TODO: Add other modules here once they have been fully migrated to Angular signal-based APIs.
 const MIGRATED_MODULES = [
-    "assessment",
-    "atlas",
-    "buildagent",
-    "communication",
-    "core",
-    "fileupload",
-    "iris",
-    "lecture",
-    "lti",
-    "modeling",
-    "plagiarism",
-    "quiz",
-    "text",
-    "tutorialgroup",
+    'assessment',
+    'atlas',
+    'buildagent',
+    'communication',
+    'core',
+    'fileupload',
+    'foundation',
+    'iris',
+    'lecture',
+    'lti',
+    'modeling',
+    'plagiarism',
+    'quiz',
+    'shared-ui',
+    'text',
+    'tutorialgroup',
 ];
 
-const FORBIDDEN_DECORATORS = new Set(["Input", "Output", "ViewChild", "ViewChildren", "ContentChild", "ContentChildren"]);
+const FORBIDDEN_DECORATORS = new Set(['Input', 'Output', 'ViewChild', 'ViewChildren', 'ContentChild', 'ContentChildren']);
 
 const SIGNAL_REPLACEMENTS = {
-    Input: "input() / input.required()",
-    Output: "output()",
-    ViewChild: "viewChild() / viewChild.required()",
-    ViewChildren: "viewChildren()",
-    ContentChild: "contentChild() / contentChild.required()",
-    ContentChildren: "contentChildren()",
+    Input: 'input() / input.required()',
+    Output: 'output()',
+    ViewChild: 'viewChild() / viewChild.required()',
+    ViewChildren: 'viewChildren()',
+    ContentChild: 'contentChild() / contentChild.required()',
+    ContentChildren: 'contentChildren()',
 };
 
 export default createRule({
-    name: "enforce-signal-apis-in-migrated-modules",
+    name: 'enforce-signal-apis-in-migrated-modules',
     meta: {
-        type: "problem",
+        type: 'problem',
         docs: {
             description:
-                "Forbid legacy Angular decorators (@Input, @Output, @ViewChild, @ViewChildren, @ContentChild, @ContentChildren) in modules that have been fully migrated to Angular signal-based APIs.",
+                'Forbid legacy Angular decorators (@Input, @Output, @ViewChild, @ViewChildren, @ContentChild, @ContentChildren) in modules that have been fully migrated to Angular signal-based APIs.',
         },
         messages: {
             forbiddenDecorator:
@@ -56,7 +58,7 @@ export default createRule({
 
         // Only apply to source files in migrated modules, not to test/spec files
         const migratedModule = MIGRATED_MODULES.find((mod) => filename.includes(`/app/${mod}/`));
-        if (!migratedModule || filename.endsWith(".spec.ts")) {
+        if (!migratedModule || filename.endsWith('.spec.ts')) {
             return {};
         }
 
@@ -65,16 +67,16 @@ export default createRule({
                 let decoratorName;
                 const expr = node.expression;
 
-                if (expr.type === "CallExpression" && expr.callee.type === "Identifier") {
+                if (expr.type === 'CallExpression' && expr.callee.type === 'Identifier') {
                     decoratorName = expr.callee.name;
-                } else if (expr.type === "Identifier") {
+                } else if (expr.type === 'Identifier') {
                     decoratorName = expr.name;
                 }
 
                 if (decoratorName && FORBIDDEN_DECORATORS.has(decoratorName)) {
                     context.report({
                         node,
-                        messageId: "forbiddenDecorator",
+                        messageId: 'forbiddenDecorator',
                         data: {
                             decoratorName,
                             moduleName: migratedModule,
