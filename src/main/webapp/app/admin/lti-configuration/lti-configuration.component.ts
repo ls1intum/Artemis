@@ -12,7 +12,8 @@ import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { combineLatest } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavLinkBase, NgbNavOutlet, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { TabsModule } from 'primeng/tabs';
+import { PaginatorModule } from 'primeng/paginator';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -32,11 +33,7 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
     imports: [
         FormsModule,
         TranslateDirective,
-        NgbNav,
-        NgbNavItem,
-        NgbNavLink,
-        NgbNavLinkBase,
-        NgbNavContent,
+        TabsModule,
         HelpIconComponent,
         CopyToClipboardButtonComponent,
         RouterLink,
@@ -45,8 +42,7 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
         SortByDirective,
         DeleteButtonDirective,
         ItemCountComponent,
-        NgbPagination,
-        NgbNavOutlet,
+        PaginatorModule,
         AdminTitleBarTitleDirective,
     ],
 })
@@ -115,6 +111,11 @@ export class LtiConfigurationComponent implements OnInit {
                 sort: this.predicate() + ',' + (this.ascending() ? 'asc' : 'desc'),
             },
         });
+    }
+
+    /** Sets the active tab, coercing the PrimeNG tabs model value (string | number | undefined) to a number. */
+    setActiveTab(value: string | number | undefined): void {
+        this.activeTab.set(Number(value));
     }
 
     /**
