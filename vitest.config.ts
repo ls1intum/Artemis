@@ -101,6 +101,9 @@ export default defineConfig({
             'src/main/webapp/app/shared-ui/data-table/**/*.spec.ts', // include shared-ui data-table tests
             'src/main/webapp/app/shared-ui/date-time-picker/**/*.spec.ts', // include shared-ui date-time-picker tests
             'src/main/webapp/app/shared-ui/import/**/*.spec.ts', // include shared-ui import tests
+            'src/main/webapp/app/logos/**/*.spec.ts', // include logos tests
+            'src/main/webapp/app/sharing/**/*.spec.ts', // include sharing tests
+            'src/main/webapp/app/app.component.spec.ts', // include app-shell (app.component) tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -181,6 +184,9 @@ export default defineConfig({
                 'src/main/webapp/app/shared-ui/data-table/**/*.ts', // include shared-ui data-table for code coverage
                 'src/main/webapp/app/shared-ui/date-time-picker/**/*.ts', // include shared-ui date-time-picker for code coverage
                 'src/main/webapp/app/shared-ui/import/**/*.ts', // include shared-ui import for code coverage
+                'src/main/webapp/app/logos/**/*.ts', // include logos for code coverage
+                'src/main/webapp/app/sharing/**/*.ts', // include sharing for code coverage
+                'src/main/webapp/app/app.component.ts', // include app-shell (app.component) for code coverage
             ],
             exclude: [
                 '**/node_modules/**', // exclude node_modules with third-party code

@@ -59,6 +59,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     private resizeHandler: (() => void) | undefined;
     private resizeObserver: ResizeObserver | undefined;
     private lastInitialTimestamp: number | undefined;
+    protected readonly isResizing = signal<boolean>(false);
 
     constructor() {
         // Resync the active segment when transcript segments arrive asynchronously
@@ -106,6 +107,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         this.interactInstance?.unset();
         if (this.resizeHandler) window.removeEventListener('resize', this.resizeHandler);
         this.resizeObserver?.disconnect();
+        this.isResizing.set(false);
     }
 
     private initializeResizer(): void {
@@ -117,6 +119,9 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         }
         this.interactInstance = interact(resizerEl).draggable({
             listeners: {
+                start: () => {
+                    this.isResizing.set(true);
+                },
                 move: (event) => {
                     const wrapperRect = wrapperEl.getBoundingClientRect();
                     const minWidth = 300;
@@ -136,6 +141,9 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
                     const flexBasisPercent = Math.min((clampedWidth / wrapperWidth) * 100, 100);
                     videoColumnEl.style.flex = `0 0 ${flexBasisPercent}%`;
                     videoColumnEl.style.width = '';
+                },
+                end: () => {
+                    this.isResizing.set(false);
                 },
             },
             cursorChecker: () => 'col-resize',

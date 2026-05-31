@@ -15,8 +15,7 @@ import { BuildConfig } from 'app/localci/shared/entities/build-config.model';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { BuildAgentsService } from 'app/localci/build-agents.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -117,7 +116,7 @@ describe('BuildAgentSummaryComponent', () => {
     let websocketSubject: Subject<BuildAgentInformation[]>;
     let alertService: AlertService;
     let alertServiceAddAlertStub: ReturnType<typeof vi.spyOn>;
-    let modalService: NgbModal;
+    let dialogService: DialogService;
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
@@ -126,7 +125,7 @@ describe('BuildAgentSummaryComponent', () => {
                 { provide: WebsocketService, useValue: mockWebsocketService },
                 { provide: BuildAgentsService, useValue: mockBuildAgentsService },
                 { provide: DataTableComponent, useClass: DataTableComponent },
-                { provide: NgbModal, useClass: MockNgbModalService },
+                MockProvider(DialogService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
                 provideHttpClient(),
@@ -140,7 +139,7 @@ describe('BuildAgentSummaryComponent', () => {
         fixture = TestBed.createComponent(BuildAgentSummaryComponent);
         component = fixture.componentInstance;
         alertService = TestBed.inject(AlertService);
-        modalService = TestBed.inject(NgbModal);
+        dialogService = TestBed.inject(DialogService);
         alertServiceAddAlertStub = vi.spyOn(alertService, 'addAlert');
 
         websocketSubject = new Subject<BuildAgentInformation[]>();
@@ -256,10 +255,8 @@ describe('BuildAgentSummaryComponent', () => {
     });
 
     it('should correctly open modals', () => {
-        const modalRef = {
-            result: Promise.resolve('close'),
-        } as NgbModalRef;
-        const openSpy = vi.spyOn(modalService, 'open').mockReturnValue(modalRef);
+        const dialogRef = { onClose: new Subject<boolean>() } as unknown as DynamicDialogRef;
+        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(dialogRef);
 
         component.displayPauseBuildAgentModal();
         expect(openSpy).toHaveBeenCalledOnce();
@@ -298,66 +295,54 @@ describe('BuildAgentSummaryComponent', () => {
         expect(component.buildAgents()).toEqual(mockBuildAgents);
     });
 
-    it('should call pauseAllBuildAgents when modal is confirmed', async () => {
+    it('should call pauseAllBuildAgents when modal is confirmed', () => {
         mockBuildAgentsService.getBuildAgentSummary.mockReturnValue(of(mockBuildAgents));
         mockBuildAgentsService.pauseAllBuildAgents.mockReturnValue(of({}));
 
-        const modalRef = {
-            result: Promise.resolve(true),
-        } as NgbModalRef;
-        vi.spyOn(modalService, 'open').mockReturnValue(modalRef);
+        const onClose = new Subject<boolean>();
+        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as DynamicDialogRef);
 
         component.ngOnInit();
         component.displayPauseBuildAgentModal();
-
-        await modalRef.result;
+        onClose.next(true);
 
         expect(mockBuildAgentsService.pauseAllBuildAgents).toHaveBeenCalled();
     });
 
-    it('should call clearDistributedData when modal is confirmed', async () => {
+    it('should call clearDistributedData when modal is confirmed', () => {
         mockBuildAgentsService.getBuildAgentSummary.mockReturnValue(of(mockBuildAgents));
         mockBuildAgentsService.clearDistributedData.mockReturnValue(of({}));
 
-        const modalRef = {
-            result: Promise.resolve(true),
-        } as NgbModalRef;
-        vi.spyOn(modalService, 'open').mockReturnValue(modalRef);
+        const onClose = new Subject<boolean>();
+        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as DynamicDialogRef);
 
         component.ngOnInit();
         component.displayClearDistributedDataModal();
-
-        await modalRef.result;
+        onClose.next(true);
 
         expect(mockBuildAgentsService.clearDistributedData).toHaveBeenCalled();
     });
 
-    it('should not call pauseAllBuildAgents when modal is cancelled', async () => {
+    it('should not call pauseAllBuildAgents when modal is cancelled', () => {
         mockBuildAgentsService.pauseAllBuildAgents.mockClear();
 
-        const modalRef = {
-            result: Promise.resolve(false),
-        } as NgbModalRef;
-        vi.spyOn(modalService, 'open').mockReturnValue(modalRef);
+        const onClose = new Subject<boolean | undefined>();
+        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as DynamicDialogRef);
 
         component.displayPauseBuildAgentModal();
-
-        await modalRef.result;
+        onClose.next(undefined);
 
         expect(mockBuildAgentsService.pauseAllBuildAgents).not.toHaveBeenCalled();
     });
 
-    it('should not call clearDistributedData when modal is cancelled', async () => {
+    it('should not call clearDistributedData when modal is cancelled', () => {
         mockBuildAgentsService.clearDistributedData.mockClear();
 
-        const modalRef = {
-            result: Promise.resolve(false),
-        } as NgbModalRef;
-        vi.spyOn(modalService, 'open').mockReturnValue(modalRef);
+        const onClose = new Subject<boolean | undefined>();
+        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as DynamicDialogRef);
 
         component.displayClearDistributedDataModal();
-
-        await modalRef.result;
+        onClose.next(undefined);
 
         expect(mockBuildAgentsService.clearDistributedData).not.toHaveBeenCalled();
     });

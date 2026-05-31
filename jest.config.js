@@ -155,6 +155,9 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/shared-ui/data-table/**', // shared-ui data-table uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared-ui/date-time-picker/**', // shared-ui date-time-picker uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared-ui/import/**', // shared-ui import uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/logos/**', // logos module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/sharing/**', // sharing module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/app.component.ts', // app-shell (app.component) uses Vitest (see vitest.config.ts)
         '<rootDir>/src/main/webapp/**/*.ts',
     ],
     // Each entry below excludes a module that has been migrated to Vitest.
@@ -224,6 +227,9 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/shared-ui/data-table/', // shared-ui data-table uses Vitest
         '<rootDir>/src/main/webapp/app/shared-ui/date-time-picker/', // shared-ui date-time-picker uses Vitest
         '<rootDir>/src/main/webapp/app/shared-ui/import/', // shared-ui import uses Vitest
+        '<rootDir>/src/main/webapp/app/logos/', // logos module uses Vitest
+        '<rootDir>/src/main/webapp/app/sharing/', // sharing module uses Vitest
+        '<rootDir>/src/main/webapp/app/app.component.ts', // app-shell (app.component) uses Vitest
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
@@ -335,6 +341,9 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/shared-ui/data-table/', // shared-ui data-table (Vitest)
         '<rootDir>/src/main/webapp/app/shared-ui/date-time-picker/', // shared-ui date-time-picker (Vitest)
         '<rootDir>/src/main/webapp/app/shared-ui/import/', // shared-ui import (Vitest)
+        '<rootDir>/src/main/webapp/app/logos/', // logos module (Vitest)
+        '<rootDir>/src/main/webapp/app/sharing/', // sharing module (Vitest)
+        '<rootDir>/src/main/webapp/app/app.component.spec.ts', // app-shell (app.component) (Vitest)
     ],
     testTimeout: 3000,
     testMatch: ['<rootDir>/src/main/webapp/app/**/*.spec.ts', '<rootDir>/src/test/javascript/spec/**/*.integration.spec.ts'],
