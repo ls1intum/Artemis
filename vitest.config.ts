@@ -79,6 +79,7 @@ export default defineConfig({
             'src/main/webapp/app/editor/monaco-editor/inline-refinement-button/*.spec.ts', // include inline refinement button tests
             'src/main/webapp/app/exercise/exercise-headers/**/*.spec.ts', // include exercise headers tests
             'src/main/webapp/app/shared/components/unified-feedback/**/*.spec.ts', // include unified-feedback
+            'src/main/webapp/app/exercise/feedback-suggestion/**/*.spec.ts', // include feedback-suggestion tests
             'src/main/webapp/app/exercise/synchronization/**/*.spec.ts', // include exercise synchronization tests
             'src/main/webapp/app/exercise/version-history/**/*.spec.ts', // include exercise version history tests
             'src/main/webapp/app/exercise/review/**/*.spec.ts', // include review module tests
@@ -155,6 +156,7 @@ export default defineConfig({
                 'src/main/webapp/app/editor/monaco-editor/inline-refinement-button/*.ts', // include inline refinement button for code coverage
                 'src/main/webapp/app/exercise/exercise-headers/**/*.ts', // include exercise headers for code coverage
                 'src/main/webapp/app/shared/components/unified-feedback/**/*.ts', // include unified-feedback for code coverage
+                'src/main/webapp/app/exercise/feedback-suggestion/**/*.ts', // include feedback-suggestion for code coverage
                 'src/main/webapp/app/exercise/synchronization/**/*.ts', // include exercise synchronization for code coverage
                 'src/main/webapp/app/exercise/version-history/**/*.ts', // include exercise version history for code coverage
                 'src/main/webapp/app/exercise/review/**/*.ts', // include review module for code coverage
