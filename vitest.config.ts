@@ -108,6 +108,9 @@ export default defineConfig({
             'src/main/webapp/app/shared-ui/segmented-toggle/**/*.spec.ts', // include segmented-toggle tests
             'src/main/webapp/app/shared-ui/sticky-popover/**/*.spec.ts', // include sticky-popover tests
             'src/main/webapp/app/shared-ui/virtual-scroll/**/*.spec.ts', // include virtual-scroll tests
+            'src/main/webapp/app/logos/**/*.spec.ts', // include logos tests
+            'src/main/webapp/app/sharing/**/*.spec.ts', // include sharing tests
+            'src/main/webapp/app/app.component.spec.ts', // include app-shell (app.component) tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -195,6 +198,9 @@ export default defineConfig({
                 'src/main/webapp/app/shared-ui/segmented-toggle/**/*.ts', // include segmented-toggle for code coverage
                 'src/main/webapp/app/shared-ui/sticky-popover/**/*.ts', // include sticky-popover for code coverage
                 'src/main/webapp/app/shared-ui/virtual-scroll/**/*.ts', // include virtual-scroll for code coverage
+                'src/main/webapp/app/logos/**/*.ts', // include logos for code coverage
+                'src/main/webapp/app/sharing/**/*.ts', // include sharing for code coverage
+                'src/main/webapp/app/app.component.ts', // include app-shell (app.component) for code coverage
             ],
             exclude: [
                 '**/node_modules/**', // exclude node_modules with third-party code
