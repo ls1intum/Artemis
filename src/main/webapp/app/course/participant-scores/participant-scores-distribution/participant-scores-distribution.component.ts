@@ -86,14 +86,12 @@ export class ParticipantScoresDistributionComponent implements OnInit {
 
     updateChart() {
         const gradingScale = this.gradingScale();
-        if (gradingScale) {
-            this.gradingScaleExists = true;
-            this.isBonus = gradingScale.gradeType === GradeType.BONUS;
-        }
-        if (!this.isCourseScore()) {
-            // This is the old height for the exam statistics. We would like to keep it, but for course scores we increased it by 100px
-            this.height = 400;
-        }
+        // Recompute derived state from scratch on every run so that clearing the grading scale or toggling
+        // isCourseScore cannot leave stale flags/height behind (the effect re-runs on any input change).
+        this.gradingScaleExists = !!gradingScale;
+        this.isBonus = gradingScale?.gradeType === GradeType.BONUS;
+        // For course scores we keep the larger height (500px); the exam statistics use the old 400px height.
+        this.height = this.isCourseScore() ? 500 : 400;
         this.createChart();
         this.yScaleMax = this.calculateTickMax();
         this.helpIconTooltip = this.determineHelpIconTooltip();
