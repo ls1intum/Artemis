@@ -123,8 +123,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/exam/manage/exams/**', // exam manage exams (detail/import/update/checklist/mode-picker) uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/shared/**', // exam shared module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/overview/**', // exam overview module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/foundation/feature-toggle/**', // feature-toggle service uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/foundation/sort/**', // sort directives use vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/foundation/**', // foundation module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/dashboards/**', // dashboards uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/exercise-headers/**', // exercise headers module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/synchronization/**', // exercise synchronization module uses Vitest (see vitest.config.ts)
@@ -187,7 +186,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exam/manage/exams/', // exam manage exams uses Vitest
         '<rootDir>/src/main/webapp/app/exam/shared/', // exam shared module uses Vitest
         '<rootDir>/src/main/webapp/app/exam/overview/', // exam overview module uses Vitest
-        '<rootDir>/src/main/webapp/app/foundation/sort/', // sort directives use Vitest
+        '<rootDir>/src/main/webapp/app/foundation/', // foundation module uses Vitest
         '<rootDir>/src/main/webapp/app/exercise/dashboards/', // dashboards uses Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.ts',
         '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts',
@@ -224,9 +223,10 @@ module.exports = {
             // and merging develop, which dropped the global statements average to ~82.95.
             statements: 82.5,
             branches: 72.9,
-            // Lowered (72.2 -> 71.5) after moving the well-covered shared-ui module fully out of Jest (now under Vitest),
-            // which removed those functions from the Jest denominator and dropped the global functions average to ~71.93.
-            functions: 71.5,
+            // Lowered (->71) after moving BOTH the well-covered foundation and shared-ui modules fully out of
+            // Jest (now under Vitest), which removed those functions from the Jest denominator. Measured global
+            // functions ~71.43 with both modules excluded, so the floor is set just below that.
+            functions: 71,
             lines: 84,
         },
     },
@@ -292,8 +292,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exam/shared/', // exam shared module (vitest)
         '<rootDir>/src/main/webapp/app/exam/overview/', // exam overview module (vitest)
         '<rootDir>/src/main/webapp/app/shared-ui/', // shared-ui module (Vitest)
-        '<rootDir>/src/main/webapp/app/foundation/feature-toggle/', // feature-toggle service (vitest)
-        '<rootDir>/src/main/webapp/app/foundation/sort/', // sort directives
+        '<rootDir>/src/main/webapp/app/foundation/', // foundation module uses Vitest
         '<rootDir>/src/main/webapp/app/exercise/dashboards/', // dashboards (vitest)
         '<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts', // migrated to Vitest

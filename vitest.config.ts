@@ -67,8 +67,7 @@ export default defineConfig({
             'src/main/webapp/app/exam/shared/**/*.spec.ts', // include exam shared tests
             'src/main/webapp/app/exam/overview/**/*.spec.ts', // include exam overview tests
             'src/main/webapp/app/shared-ui/**/*.spec.ts', // include shared-ui module tests
-            'src/main/webapp/app/foundation/feature-toggle/**/*.spec.ts', // include feature-toggle service tests
-            'src/main/webapp/app/foundation/sort/**/*.directive.spec.ts', // include sort directives
+            'src/main/webapp/app/foundation/**/*.spec.ts', // include all foundation tests (migrated to Vitest)
             'src/main/webapp/app/exercise/dashboards/**/*.spec.ts', // include dashboards tests
             'src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts', // include problem statement service tests
             'src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts', // include problem statement utils tests
@@ -141,8 +140,7 @@ export default defineConfig({
                 'src/main/webapp/app/exam/overview/**/*.ts', // include exam overview for code coverage
                 'src/main/webapp/app/exam/shared/**/*.ts', // include exam shared for code coverage
                 'src/main/webapp/app/shared-ui/**/*.ts', // include shared-ui module for code coverage
-                'src/main/webapp/app/foundation/feature-toggle/**/*.ts', // include feature-toggle service for code coverage
-                'src/main/webapp/app/foundation/sort/**/*.directive.ts', // include sort directives for code coverage
+                'src/main/webapp/app/foundation/**/*.ts', // include all foundation for code coverage
                 'src/main/webapp/app/exercise/dashboards/**/*.ts', // include dashboards for code coverage
                 'src/main/webapp/app/programming/manage/services/problem-statement.service.ts', // include problem statement service for code coverage
                 'src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts', // include problem statement utils for code coverage

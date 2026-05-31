@@ -15,6 +15,7 @@ const MIGRATED_MODULES = [
     'communication',
     'core',
     'fileupload',
+    'foundation',
     'iris',
     'lecture',
     'lti',
