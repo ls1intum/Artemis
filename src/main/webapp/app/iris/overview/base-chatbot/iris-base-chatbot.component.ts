@@ -602,6 +602,16 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
         });
 
+        // Release the pin (and stop the RAF loop) if the send fails before the stream ever
+        // starts. Without a stage going active, pinSawStreaming stays false, so the settle
+        // effect above can never release — the loop would otherwise spin forever. This path
+        // only fires on a genuine error signal, never during the normal pre-stream gap.
+        effect(() => {
+            if (this.error() && this.forcePinToBottom && !this.pinSawStreaming) {
+                this.releasePinToBottom();
+            }
+        });
+
         // Scroll when thinking bubble appears, if the user is at the bottom or just sent a message
         effect(() => {
             if (this.activeChatMessage() && (this.forcePinToBottom || this.isScrolledToBottom())) {
@@ -798,8 +808,20 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             this.chatService
                 .sendMessage(content)
                 .pipe(takeUntilDestroyed(this.destroyRef))
-                .subscribe(() => {
-                    this.isLoading.set(false);
+                .subscribe({
+                    next: () => {
+                        this.isLoading.set(false);
+                    },
+                    error: () => {
+                        // Send failed before any stage started: release the bottom pin and stop
+                        // the RAF loop here, since no stream will arrive to settle it (the
+                        // pinSawStreaming release path never runs). Done only on the send error,
+                        // not during the normal pre-stream gap.
+                        this.isLoading.set(false);
+                        if (!this.pinSawStreaming) {
+                            this.releasePinToBottom();
+                        }
+                    },
                 });
             this.newMessageTextContent.set('');
             // User explicitly sent a message: follow it to the bottom and keep the view

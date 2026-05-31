@@ -35,6 +35,7 @@ import {
 import { By } from '@angular/platform-browser';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { IrisAssistantMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
+import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
 import { IrisJsonMessageContent, IrisMessageContentType, IrisTextMessageContent, getMcqData, isMcqContent } from 'app/iris/shared/entities/iris-content-type.model';
 import dayjs from 'dayjs/esm';
@@ -415,23 +416,60 @@ describe('IrisBaseChatbotComponent', () => {
         Object.defineProperty(messagesElement, 'scrollHeight', { value: 1000, configurable: true });
         messagesElement.scrollTop = 0;
 
-        // drive requestAnimationFrame synchronously for a bounded number of frames
-        let frames = 0;
+        // Queue rAF callbacks instead of running them synchronously. Invoking the callback inside
+        // requestAnimationFrame re-enters the component (which schedules from within an Angular
+        // effect) and trips the zoneless scheduler on teardown. We flush the queued frames
+        // explicitly, outside the current effect execution.
+        const rafQueue: FrameRequestCallback[] = [];
         const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
-            if (frames++ < 3) {
-                cb(0);
-            }
-            return frames;
+            rafQueue.push(cb);
+            return rafQueue.length;
         });
         vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
 
         // when
         component.onSend();
 
+        // flush a bounded number of frames outside Angular's effect execution
+        for (let i = 0; i < 3 && rafQueue.length > 0; i++) {
+            rafQueue.shift()!(0);
+        }
+
         // then – the pin loop pushed scrollTop to the bottom (scrollHeight)
         expect(messagesElement.scrollTop).toBe(1000);
 
         rafSpy.mockRestore();
+    });
+
+    it('should release the bottom pin if an error arrives before the stream starts', async () => {
+        // given – the chat service surfaces an error before any stage goes active
+        const errorSubject = new Subject<IrisErrorMessageKey | undefined>();
+        vi.spyOn(chatService, 'currentError').mockReturnValue(errorSubject as any);
+
+        fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+        component = fixture.componentInstance;
+        fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+        fixture.detectChanges();
+
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: mockUserMessageWithContent('Hello') } as HttpResponse<IrisMessageResponseDTO>));
+        vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+
+        component.newMessageTextContent.set('Hello');
+        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        await fixture.whenStable();
+
+        // when – send pins to the bottom, then an error arrives without any stage starting
+        component.onSend();
+        expect(component['forcePinToBottom']).toBe(true);
+        errorSubject.next(IrisErrorMessageKey.SESSION_LOAD_FAILED);
+        fixture.detectChanges();
+
+        // then – the pin is released and the RAF loop is stopped
+        expect(component['forcePinToBottom']).toBe(false);
+        expect(component['pinScrollRafId']).toBeUndefined();
     });
 
     it('should set the appropriate message styles based on the sender', async () => {
@@ -502,13 +540,13 @@ describe('IrisBaseChatbotComponent', () => {
 
         fixture.detectChanges();
 
-        // run the initial-load settle loop synchronously so we can assert it pins to the bottom
-        let frames = 0;
+        // Queue the initial-load settle loop's rAF callbacks rather than running them
+        // synchronously: the settle loop runs from inside an Angular effect, and re-entering it
+        // synchronously from requestAnimationFrame trips the zoneless scheduler on teardown.
+        const rafQueue: FrameRequestCallback[] = [];
         const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
-            if (frames++ < 2) {
-                cb(0);
-            }
-            return frames;
+            rafQueue.push(cb);
+            return rafQueue.length;
         });
 
         chatService.switchTo(ChatServiceMode.COURSE, 123);
@@ -516,6 +554,11 @@ describe('IrisBaseChatbotComponent', () => {
         // when
         component.ngAfterViewInit();
         await fixture.whenStable();
+
+        // flush a bounded number of settle frames outside Angular's effect execution
+        for (let i = 0; i < 2 && rafQueue.length > 0; i++) {
+            rafQueue.shift()!(0);
+        }
 
         // then – the initial batch settles the view at the bottom
         expect(component.numNewMessages()).toBe(1);
@@ -552,13 +595,13 @@ describe('IrisBaseChatbotComponent', () => {
                 configurable: true,
             });
         }
-        let frames = 0;
+        // Queue the settle loop's rAF callbacks rather than running them synchronously (the loop
+        // runs from inside an Angular effect; re-entering it synchronously trips the zoneless
+        // scheduler on teardown). We flush them below, emulating late layout growth per frame.
+        const rafQueue: FrameRequestCallback[] = [];
         const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
-            if (frames++ < 25) {
-                scrollHeight += 100; // late layout growth between frames
-                cb(0);
-            }
-            return frames;
+            rafQueue.push(cb);
+            return rafQueue.length;
         });
 
         // when – initial messages load
@@ -566,6 +609,13 @@ describe('IrisBaseChatbotComponent', () => {
         chatService.switchTo(ChatServiceMode.COURSE, 123);
         component.ngAfterViewInit();
         await fixture.whenStable();
+
+        // flush the settle frames outside Angular's effect execution, growing scrollHeight each
+        // frame to emulate content (markdown / code / KaTeX) laying out across several frames
+        for (let i = 0; i < 25 && rafQueue.length > 0; i++) {
+            scrollHeight += 100; // late layout growth between frames
+            rafQueue.shift()!(0);
+        }
 
         // then – the settle loop kept correcting, landing exactly at the final bottom
         if (messagesElement) {
