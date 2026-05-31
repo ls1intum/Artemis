@@ -7,8 +7,8 @@ import { BuildPhaseEditorComponent } from './build-phase-editor.component';
 import { BUILD_PHASE_CONDITION, BuildPhase } from 'app/programming/shared/entities/build-plan-phases.model';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { MonacoEditorFitTextComponent } from '../monaco-editor-auto-size/monaco-editor-fit-text.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('BuildPhaseEditorComponent', () => {

@@ -3,9 +3,9 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { createRequestOption } from 'app/shared/util/request.util';
+import { createRequestOption } from 'app/foundation/util/request.util';
 import { ExerciseServicable, ExerciseService } from 'app/exercise/services/exercise.service';
-import { downloadStream } from 'app/shared/util/download.util';
+import { downloadStream } from 'app/foundation/util/download.util';
 import { toUpdateModelingExerciseDTO } from 'app/modeling/shared/entities/modeling-exercise-update-dto.model';
 
 export type EntityResponseType = HttpResponse<ModelingExercise>;

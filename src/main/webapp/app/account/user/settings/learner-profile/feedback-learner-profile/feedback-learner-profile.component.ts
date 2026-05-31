@@ -2,12 +2,12 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { LearnerProfileApiService } from 'app/account/user/settings/learner-profile/learner-profile-api.service';
-import { AlertService, AlertType } from 'app/shared/service/alert.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgClass } from '@angular/common';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { LearnerProfileDTO } from 'app/account/user/settings/learner-profile/dto/learner-profile-dto.model';
-import { SegmentedToggleComponent } from 'app/shared/segmented-toggle/segmented-toggle.component';
+import { SegmentedToggleComponent } from 'app/shared-ui/segmented-toggle/segmented-toggle.component';
 import { FeedbackOnboardingModalComponent } from 'app/account/user/settings/learner-profile/feedback-learner-profile/onboarding-modal/feedback-onboarding-modal.component';
 
 @Component({

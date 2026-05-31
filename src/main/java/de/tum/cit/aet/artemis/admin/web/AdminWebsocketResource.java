@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.hazelcast.core.HazelcastInstance;
 
+import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
 import de.tum.cit.aet.artemis.admin.dto.WebsocketNodeDTO;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
@@ -26,7 +27,8 @@ import de.tum.cit.aet.artemis.core.service.messaging.WebsocketBrokerReconnection
 @EnforceAdmin
 @Lazy
 @RestController
-@RequestMapping("api/core/admin/websocket/")
+@SuppressWarnings("deprecation")
+@RequestMapping({ "api/admin/websocket/", LegacyAdminRestPaths.CORE_ADMIN_WEBSOCKET_PREFIX })
 public class AdminWebsocketResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminWebsocketResource.class);

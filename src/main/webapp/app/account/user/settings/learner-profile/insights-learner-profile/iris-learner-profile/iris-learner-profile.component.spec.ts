@@ -10,6 +10,7 @@ import { MockProvider } from 'ng-mocks';
 import { User } from 'app/account/user/user.model';
 import { IrisMemoriesHttpService } from 'app/iris/overview/services/iris-memories-http.service';
 import { provideHttpClient } from '@angular/common/http';
+import { DialogService } from 'primeng/dynamicdialog';
 import { of } from 'rxjs';
 
 describe('IrisLearnerProfileComponent', () => {
@@ -50,6 +51,8 @@ describe('IrisLearnerProfileComponent', () => {
                     deleteUserMemory: vi.fn(),
                 }),
                 { provide: AccountService, useClass: MockAccountService },
+                // Provide DialogService for the nested MemirisMemoriesListComponent (PrimeNG dialog migration)
+                MockProvider(DialogService),
             ],
         }).compileComponents();
 

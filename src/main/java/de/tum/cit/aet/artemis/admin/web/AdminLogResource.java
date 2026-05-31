@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
+import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
 import de.tum.cit.aet.artemis.core.dto.vm.LoggerVM;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 
@@ -27,7 +28,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 @EnforceAdmin
 @Lazy
 @RestController
-@RequestMapping("api/core/admin/")
+@SuppressWarnings("deprecation")
+@RequestMapping({ "api/admin/", LegacyAdminRestPaths.CORE_ADMIN_PREFIX })
 public class AdminLogResource {
 
     /**

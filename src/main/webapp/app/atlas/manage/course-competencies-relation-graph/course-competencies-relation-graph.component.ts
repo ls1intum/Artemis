@@ -8,7 +8,7 @@ import { Edge, NgxGraphModule, Node } from '@swimlane/ngx-graph';
 import { Subject } from 'rxjs';
 import { SizeUpdate } from 'app/atlas/manage/competency-node/competency-node.component';
 import { CourseCompetencyRelationNodeComponent } from 'app/atlas/manage/course-competency-relation-node/course-competency-relation-node.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-competencies-relation-graph',

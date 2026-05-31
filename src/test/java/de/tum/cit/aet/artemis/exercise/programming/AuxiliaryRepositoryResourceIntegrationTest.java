@@ -26,6 +26,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
@@ -34,8 +36,6 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
-import de.tum.cit.aet.artemis.programming.service.GitService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
@@ -87,7 +87,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
 
         // commit and push changes so the remote bare repo has the content
         localAuxiliaryRepo.workingCopyGitRepo.add().addFilepattern(".").call();
-        de.tum.cit.aet.artemis.programming.service.GitService.commit(localAuxiliaryRepo.workingCopyGitRepo).setMessage("seed aux content").call();
+        de.tum.cit.aet.artemis.localvc.service.GitService.commit(localAuxiliaryRepo.workingCopyGitRepo).setMessage("seed aux content").call();
         localAuxiliaryRepo.workingCopyGitRepo.push().setRemote("origin").call();
 
         // add the auxiliary repository
