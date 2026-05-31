@@ -37,6 +37,14 @@ describe('StickyPopoverDirective', () => {
     });
 
     afterEach(() => {
+        // Tear the component (and its real NgbPopover/Popper instance) down deterministically while
+        // fake timers are still active and the host element is still attached, then flush any pending
+        // close timer. Doing the teardown here — instead of leaving it to Angular's destroyAfterEach
+        // after real timers are restored — avoids an environment-dependent
+        // `scrollParent.removeEventListener is not a function` unhandled error from Popper's listener
+        // cleanup that otherwise makes the shared-ui Vitest run exit non-zero (assertions still pass).
+        fixture?.destroy();
+        vi.runOnlyPendingTimers();
         vi.restoreAllMocks();
         vi.useRealTimers();
     });
