@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -18,6 +19,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
  *
  * @param memberLogins the logins of the starting members of the group chat (excluding the requesting user)
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonDeserialize(using = GroupChatCreationDTO.GroupChatCreationDeserializer.class)
 public record GroupChatCreationDTO(List<String> memberLogins) {
 

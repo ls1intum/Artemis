@@ -81,9 +81,10 @@ public class TextExerciseExportImportResource {
      * This will import the whole exercise except for the participations and dates. Referenced
      * entities will get cloned and assigned a new id.
      *
-     * @param sourceExerciseId The ID of the original exercise which should get imported
-     * @param importedExercise The new exercise containing values that should get overwritten in the
-     *                             imported exercise, s.a. the title or difficulty
+     * @param sourceExerciseIdQuery The ID of the original exercise which should get imported (provided as a query parameter; preferred)
+     * @param sourceExerciseIdPath  The ID of the original exercise which should get imported (provided as a legacy path variable; deprecated)
+     * @param importedExercise      The new exercise containing values that should get overwritten in the
+     *                                  imported exercise, s.a. the title or difficulty
      * @return The imported exercise (200), a not found error (404) if the template does not exist,
      *         or a forbidden error (403) if the user is not at least an instructor in the target course.
      * @throws URISyntaxException When the URI of the response entity is invalid

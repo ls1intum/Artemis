@@ -194,8 +194,9 @@ public class ExampleSubmissionResource {
     /**
      * POST exercises/:exerciseId/example-submissions/import/:sourceSubmissionId : Imports an existing student submission as an example submission.
      *
-     * @param exerciseId         the id of the corresponding exercise
-     * @param sourceSubmissionId the submission id to be imported as an example submission
+     * @param exerciseId              the id of the corresponding exercise
+     * @param sourceSubmissionIdQuery the submission id to be imported as an example submission (provided as a query parameter; preferred)
+     * @param sourceSubmissionIdPath  the submission id to be imported as an example submission (provided as a legacy path variable; deprecated)
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping({ "exercises/{exerciseId}/example-submissions/import", "exercises/{exerciseId}/example-submissions/import/{sourceSubmissionId}" })

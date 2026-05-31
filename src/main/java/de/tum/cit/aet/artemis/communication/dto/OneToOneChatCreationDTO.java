@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -19,6 +20,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
  * @param userId the id of the other participant (mutually exclusive with {@code login})
  * @param login  the login of the other participant (mutually exclusive with {@code userId})
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonDeserialize(using = OneToOneChatCreationDTO.OneToOneChatCreationDeserializer.class)
 public record OneToOneChatCreationDTO(@Nullable Long userId, @Nullable String login) {
 

@@ -231,7 +231,8 @@ public class FileUploadExerciseResource {
      * Referenced entities will get cloned and assigned a new id.
      * Uses {@link FileUploadExerciseImportService}.
      *
-     * @param sourceId                   The ID of the original exercise which
+     * @param sourceIdQuery              The ID of the original exercise which (provided as a query parameter; preferred)
+     * @param sourceIdPath               The ID of the original exercise which (provided as a legacy path variable; deprecated)
      *                                       should get imported
      * @param importedFileUploadExercise The new exercise containing values that
      *                                       should get overwritten in the imported

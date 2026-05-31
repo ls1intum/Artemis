@@ -212,7 +212,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * This enforces at least instructor access rights.
      *
      * @param participationId the participationId of the repository we want to get the files from
-     * @param commitId        the commitId of the repository we want to get the files from
+     * @param commitIdQuery   the commitId of the repository we want to get the files from (provided as a query parameter; preferred)
+     * @param commitIdPath    the commitId of the repository we want to get the files from (provided as a legacy path variable; deprecated)
      * @param repositoryType  the type of the repository (template, solution, tests)
      * @return a map with the file path as key and the file content as value
      */

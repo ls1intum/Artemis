@@ -113,8 +113,9 @@ public class ProgrammingExerciseRepositoryExportResource {
     /**
      * GET /programming-exercises/:exerciseId/export-instructor-auxiliary-repository/:repositoryType : sends an auxiliary repository as a zip file
      *
-     * @param exerciseId   The id of the programming exercise
-     * @param repositoryId The id of the auxiliary repository
+     * @param exerciseId        The id of the programming exercise
+     * @param repositoryIdQuery The id of the auxiliary repository (provided as a query parameter; preferred)
+     * @param repositoryIdPath  The id of the auxiliary repository (provided as a legacy path variable; deprecated)
      * @return ResponseEntity with status
      * @throws IOException if something during the zip process went wrong
      */
@@ -203,8 +204,9 @@ public class ProgrammingExerciseRepositoryExportResource {
     /**
      * GET /programming-exercises/:exerciseId/export-student-repository/:participationId : Exports the repository belonging to a participation as a zip file.
      *
-     * @param exerciseId      The id of the programming exercise
-     * @param participationId The id of the student participation for which to export the repository.
+     * @param exerciseId           The id of the programming exercise
+     * @param participationIdQuery The id of the student participation for which to export the repository. (provided as a query parameter; preferred)
+     * @param participationIdPath  The id of the student participation for which to export the repository. (provided as a legacy path variable; deprecated)
      * @return A ResponseEntity containing the zipped repository.
      * @throws IOException If the repository could not be zipped.
      */

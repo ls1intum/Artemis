@@ -189,8 +189,9 @@ public class ExerciseSharingResource {
      * can follow. The method appends a {@code callBack} parameter (the UI-return URL) to the generated link.
      * </p>
      *
-     * @param callBackUrl URL the Sharing Platform should redirect to after export completes
-     * @param exerciseId  Artemis exercise identifier to export
+     * @param callBackUrl     URL the Sharing Platform should redirect to after export completes
+     * @param exerciseIdQuery Artemis exercise identifier to export (provided as a query parameter; preferred)
+     * @param exerciseIdPath  Artemis exercise identifier to export (provided as a legacy path variable; deprecated)
      * @return {@code 200 OK} with a JSON-quoted URL string pointing to the Sharing Platform;
      *         {@code 500 Internal Server Error} if export fails
      */

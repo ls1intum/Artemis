@@ -488,7 +488,8 @@ public class ProgrammingExerciseParticipationResource {
      * GET /programming-exercise-participations/{participationId}/files-content : Get the content of the files of a programming exercise participation.
      *
      * @param participationId the id of the participation for which to retrieve the files content
-     * @param commitId        the id of the commit for which to retrieve the files content
+     * @param commitIdQuery   the id of the commit for which to retrieve the files content (provided as a query parameter; preferred)
+     * @param commitIdPath    the id of the commit for which to retrieve the files content (provided as a legacy path variable; deprecated)
      * @return The files of repository along with their content
      */
     @GetMapping({ "programming-exercise-participations/{participationId}/files-content", "programming-exercise-participations/{participationId}/files-content/{commitId}" })
@@ -515,7 +516,8 @@ public class ProgrammingExerciseParticipationResource {
      *
      * @param exerciseId      the id of the exercise for which to retrieve the files content
      * @param participationId the id of the participation for which to retrieve the files content
-     * @param commitId        the id of the commit for which to retrieve the files content
+     * @param commitIdQuery   the id of the commit for which to retrieve the files content (provided as a query parameter; preferred)
+     * @param commitIdPath    the id of the commit for which to retrieve the files content (provided as a legacy path variable; deprecated)
      * @param repositoryType  the type of the repository for which to retrieve the files content
      * @return The files of the repository along with their content
      */

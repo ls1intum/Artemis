@@ -78,8 +78,8 @@ public class GroupChatResource extends ConversationManagementResource {
     /**
      * POST courses/:courseId/group-chats/: Starts a new group chat in a course
      *
-     * @param courseId                    the id of the course
-     * @param otherChatParticipantsLogins logins of the starting members of the group chat (excluding the requesting user)
+     * @param courseId             the id of the course
+     * @param groupChatCreationDTO the request body identifying the group chat members by login
      * @return ResponseEntity with status 201 (Created) and with body containing the created group chat
      */
     @PostMapping("{courseId}/group-chats")

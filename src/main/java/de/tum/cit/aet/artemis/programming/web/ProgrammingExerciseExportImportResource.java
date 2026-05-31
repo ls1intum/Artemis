@@ -186,7 +186,8 @@ public class ProgrammingExerciseExportImportResource {
      * a new id. For a concrete list of what gets copied and what not have a look
      * at {@link ProgrammingExerciseImportService#importProgrammingExercise(ProgrammingExercise, ProgrammingExercise, boolean, boolean, boolean)}
      *
-     * @param sourceExerciseId                    The ID of the original exercise which should get imported
+     * @param sourceExerciseIdQuery               The ID of the original exercise which should get imported (provided as a query parameter; preferred)
+     * @param sourceExerciseIdPath                The ID of the original exercise which should get imported (provided as a legacy path variable; deprecated)
      * @param newExercise                         The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
      * @param recreateBuildPlans                  Option determining whether the build plans should be copied or re-created from scratch
      * @param updateTemplate                      Option determining whether the template files should be updated with the most recent template version

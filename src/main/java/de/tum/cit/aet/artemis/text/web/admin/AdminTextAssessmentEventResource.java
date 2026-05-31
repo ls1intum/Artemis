@@ -35,7 +35,8 @@ public class AdminTextAssessmentEventResource {
     /**
      * Get admin/event-insights/text-assessment/events/{courseId} : Retrieve all the events from the 'text_assessment_event' table by course id
      *
-     * @param courseId the id of the course to filter by
+     * @param courseIdQuery the id of the course to filter by (provided as a query parameter; preferred)
+     * @param courseIdPath  the id of the course to filter by (provided as a legacy path variable; deprecated)
      * @return returns a List of TextAssessmentEvent's
      */
     @GetMapping({ "event-insights/text-assessment/events", "event-insights/text-assessment/events/{courseId}" })
