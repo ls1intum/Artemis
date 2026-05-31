@@ -177,8 +177,8 @@ describe('MarkdownEditorMonacoComponent', () => {
         const manager = (comp as any).getReviewCommentManager();
         const config = (manager as any).config;
 
-        expect(config.shouldShowHoverButton()).toBeTruthy();
-        expect(config.canSubmit()).toBeTruthy();
+        expect(config.shouldShowHoverButton()).toBe(true);
+        expect(config.canSubmit()).toBe(true);
         expect(config.getDraftFileName()).toBe('problem_statement.md');
         expect(config.getDraftContext({ lineNumber: 3, fileName: 'ignored.md' })).toEqual({
             targetType: CommentThreadLocationType.PROBLEM_STATEMENT,
@@ -188,8 +188,8 @@ describe('MarkdownEditorMonacoComponent', () => {
         (comp as any).exerciseReviewCommentService.threads.set([thread]);
 
         expect(config.getThreads()).toEqual([thread]);
-        expect(config.filterThread(thread)).toBeTruthy();
-        expect(config.filterThread({ ...thread, targetType: CommentThreadLocationType.TEMPLATE_REPO })).toBeFalsy();
+        expect(config.filterThread(thread)).toBe(true);
+        expect(config.filterThread({ ...thread, targetType: CommentThreadLocationType.TEMPLATE_REPO })).toBe(false);
         expect(config.getThreadLine(thread)).toBe(5);
 
         const onAddSpy = vi.spyOn(comp.onAddReviewComment, 'emit');
@@ -197,14 +197,14 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(onAddSpy).toHaveBeenCalledOnce();
         expect(onAddSpy).toHaveBeenCalledWith({ lineNumber: 7, fileName: 'problem_statement.md' });
 
-        expect(config.showLocationWarning()).toBeFalsy();
+        expect(config.showLocationWarning()).toBe(false);
         fixture.componentRef.setInput('showLocationWarning', true);
         fixture.changeDetectorRef.detectChanges();
-        expect(config.showLocationWarning()).toBeTruthy();
-        expect(config.canSubmit()).toBeFalsy();
+        expect(config.showLocationWarning()).toBe(true);
+        expect(config.canSubmit()).toBe(false);
 
         comp.inEditMode.set(false);
-        expect(config.shouldShowHoverButton()).toBeFalsy();
+        expect(config.shouldShowHoverButton()).toBe(false);
     });
 
     it('should still update review comment button when a manager already exists', () => {
@@ -276,8 +276,10 @@ describe('MarkdownEditorMonacoComponent', () => {
         const uploadMarkdownFileStub = vi.spyOn(fileUploaderService, 'uploadMarkdownFile').mockRejectedValue(new Error('Test error'));
         fixture.detectChanges();
         comp.embedFiles(files);
-        await vi.waitFor(() => expect(alertSpy).toHaveBeenCalledOnce());
-        expect(uploadMarkdownFileStub).toHaveBeenCalledOnce();
+        await vi.waitFor(() => {
+            expect(alertSpy).toHaveBeenCalledOnce();
+            expect(uploadMarkdownFileStub).toHaveBeenCalledOnce();
+        });
     });
 
     it('should set the upload callback on the attachment actions', () => {
@@ -313,8 +315,13 @@ describe('MarkdownEditorMonacoComponent', () => {
         });
         fixture.detectChanges();
         comp.embedFiles(files);
-        await vi.waitFor(() => expect(uploadMarkdownFileStub).toHaveBeenCalledTimes(2));
-        await vi.waitFor(() => expect(attachmentStub).toHaveBeenCalledOnce());
+        // Wait for both uploads to settle and for both files to be embedded (the .png via the attachment action and
+        // the .pdf via the url action) before asserting the exact arguments, so neither embed call is checked early.
+        await vi.waitFor(() => {
+            expect(uploadMarkdownFileStub).toHaveBeenCalledTimes(2);
+            expect(attachmentStub).toHaveBeenCalledOnce();
+            expect(urlStub).toHaveBeenCalledOnce();
+        });
         // Each file should be uploaded.
         expect(uploadMarkdownFileStub).toHaveBeenNthCalledWith(1, files[0]);
         expect(uploadMarkdownFileStub).toHaveBeenNthCalledWith(2, files[1]);
@@ -323,7 +330,6 @@ describe('MarkdownEditorMonacoComponent', () => {
             url: fileInformation[0].url,
             text: fileInformation[0].file.name,
         });
-        expect(urlStub).toHaveBeenCalledOnce();
         expect(urlStub).toHaveBeenCalledWith({
             url: fileInformation[1].url,
             text: fileInformation[1].file.name,
@@ -537,16 +543,16 @@ describe('MarkdownEditorMonacoComponent', () => {
         fixture.componentRef.setInput('isInCommunication', false);
         fixture.detectChanges();
 
-        expect(comp.showTextStyleActions()).toBeTruthy();
-        expect(comp.showNonTextStyleActions()).toBeTruthy();
+        expect(comp.showTextStyleActions()).toBe(true);
+        expect(comp.showNonTextStyleActions()).toBe(true);
     });
 
     it('should hide text style actions in communication mode by default', () => {
         fixture.componentRef.setInput('isInCommunication', true);
         fixture.detectChanges();
 
-        expect(comp.showTextStyleActions()).toBeFalsy();
-        expect(comp.showNonTextStyleActions()).toBeTruthy();
+        expect(comp.showTextStyleActions()).toBe(false);
+        expect(comp.showNonTextStyleActions()).toBe(true);
     });
 
     it('should show text style actions in communication mode when text is selected', () => {
@@ -555,8 +561,8 @@ describe('MarkdownEditorMonacoComponent', () => {
 
         comp.updateEditorActionsVisibility({ startLineNumber: 1, endLineNumber: 1, startColumn: 10, endColumn: 20 });
 
-        expect(comp.showTextStyleActions()).toBeTruthy();
-        expect(comp.showNonTextStyleActions()).toBeFalsy();
+        expect(comp.showTextStyleActions()).toBe(true);
+        expect(comp.showNonTextStyleActions()).toBe(false);
     });
 
     it('should emit closeEditor on close button click', () => {
