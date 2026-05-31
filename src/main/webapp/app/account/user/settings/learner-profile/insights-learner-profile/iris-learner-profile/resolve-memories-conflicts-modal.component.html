@@ -1,7 +1,3 @@
-<div class="modal-header">
-    <h4 class="modal-title" jhiTranslate="artemisApp.iris.memories.conflict.modalTitle"></h4>
-    <button type="button" class="btn-close" aria-label="Close" (click)="close()"></button>
-</div>
 <div class="modal-body">
     @if (groups()?.length) {
         <div class="d-flex justify-content-between align-items-center mb-2">
@@ -31,10 +27,10 @@
                     <div class="card h-100">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="fw-semibold">{{ details[gid]?.title || gid }}</span>
+                                <span class="fw-semibold">{{ details()[gid]?.title || gid }}</span>
                             </div>
                             <div class="small text-muted mb-2"><span jhiTranslate="artemisApp.iris.memories.conflict.memoryId"></span>: {{ gid }}</div>
-                            <div class="text-break mb-2">{{ details[gid]?.content }}</div>
+                            <div class="text-break mb-2">{{ details()[gid]?.content }}</div>
                             <button class="btn btn-sm btn-success" [disabled]="busy()" (click)="keep(currentIndex(), gid)">
                                 <span jhiTranslate="artemisApp.iris.memories.conflict.keepThis"></span>
                             </button>
