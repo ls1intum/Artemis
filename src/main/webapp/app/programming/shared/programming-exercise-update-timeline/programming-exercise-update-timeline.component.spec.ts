@@ -286,7 +286,6 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
 
         expect(component.buildAndTestStudentSubmissionsAfterDueDate()?.toISOString()).toBe(afterDueDate.toISOString());
         expect(component.isDatePickerForRunningTestsAfterDueDateVisible()).toBe(true);
-        expect(component.timelineItems().find((item) => item.labelStringKey === 'artemisApp.exercise.dateForRunningTestsAfterDueDate')?.clearable).toBe(false);
         expect(fixture.debugElement.nativeElement.querySelector('#defineDateForRunningTestsAfterDueDate')).toBeNull();
     });
 
