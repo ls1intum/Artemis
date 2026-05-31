@@ -142,7 +142,7 @@
                 [(ascending)]="ascending"
                 (sortChange)="loadFinishedBuildJobs()"
                 (jobClick)="navigateToJobDetail($event)"
-                (viewLogs)="viewBuildLogs(buildLogsModal, $event)"
+                (viewLogs)="viewBuildLogs($event)"
             />
             @if (finishedBuildJobs()) {
                 <div>
@@ -155,32 +155,33 @@
     </div>
 
     <!-- Modal -->
-    <ng-template #buildLogsModal let-modal>
-        <div class="modal-header">
-            <h5 class="modal-title">
-                <span jhiTranslate="artemisApp.buildQueue.logs.title"></span>
-                <span> {{ this.displayedBuildJobId }}</span>
-            </h5>
-            <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+    <p-dialog
+        [modal]="true"
+        [visible]="buildLogsModalVisible()"
+        (visibleChange)="buildLogsModalVisible.set($event)"
+        [style]="{ width: '90dvw', height: '90dvh' }"
+        [contentStyle]="{ overflow: 'auto' }"
+        [draggable]="false"
+        [dismissableMask]="true"
+    >
+        <ng-template pTemplate="header">
+            <span jhiTranslate="artemisApp.buildQueue.logs.title"></span>
+            <span>&nbsp;{{ displayedBuildJobId }}</span>
+        </ng-template>
+        <div class="overflow-auto">
+            @if (rawBuildLogsString) {
+                <pre class="mb-0">{{ rawBuildLogsString }}</pre>
+            } @else {
+                <span jhiTranslate="artemisApp.buildQueue.logs.noLogs"></span>
+            }
         </div>
-        <div class="modal-body">
-            <table class="table table-borderless">
-                <tbody>
-                    @if (rawBuildLogsString) {
-                        <pre>{{ rawBuildLogsString }}</pre>
-                    } @else {
-                        <span jhiTranslate="artemisApp.buildQueue.logs.noLogs"></span>
-                    }
-                </tbody>
-            </table>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" (click)="modal.close()">
+        <ng-template pTemplate="footer">
+            <button type="button" class="btn btn-secondary" (click)="buildLogsModalVisible.set(false)">
                 <span jhiTranslate="artemisApp.buildQueue.filter.close"></span>
             </button>
             <button class="btn btn-primary" (click)="downloadBuildLogs()">
                 <span jhiTranslate="artemisApp.buildQueue.logs.download"></span>
             </button>
-        </div>
-    </ng-template>
+        </ng-template>
+    </p-dialog>
 </div>
