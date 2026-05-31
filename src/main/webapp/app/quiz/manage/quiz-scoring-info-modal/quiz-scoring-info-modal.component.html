@@ -31,5 +31,12 @@
     </ng-template>
 </p-dialog>
 <div>
-    <button class="btn" (click)="open()"><fa-icon [icon]="farQuestionCircle" /></button>
+    <button
+        class="btn"
+        (click)="open()"
+        [attr.aria-label]="'artemisApp.quizExercise.scoringTypeExplanation.title' | artemisTranslate"
+        [attr.title]="'artemisApp.quizExercise.scoringTypeExplanation.title' | artemisTranslate"
+    >
+        <fa-icon [icon]="farQuestionCircle" />
+    </button>
 </div>

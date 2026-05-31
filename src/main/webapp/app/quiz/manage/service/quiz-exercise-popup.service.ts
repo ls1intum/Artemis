@@ -8,11 +8,7 @@ export class QuizExercisePopupService {
     private dialogService = inject(DialogService);
     private router = inject(Router);
 
-    private dialogRef: DynamicDialogRef | null;
-
-    constructor() {
-        this.dialogRef = null;
-    }
+    private dialogRef: DynamicDialogRef | undefined;
 
     /**
      * Open the dialog with the given content for the given exercise.
@@ -20,9 +16,9 @@ export class QuizExercisePopupService {
      * @param quizExercise the quiz exercise for which the dialog should be shown
      * @param files required for the form data upload
      */
-    open(component: Type<unknown>, quizExercise: QuizExercise, files: Map<string, File>): Promise<DynamicDialogRef | null> {
-        return new Promise<DynamicDialogRef | null>((resolve) => {
-            if (this.dialogRef == undefined) {
+    open(component: Type<unknown>, quizExercise: QuizExercise, files: Map<string, File>): Promise<DynamicDialogRef | undefined> {
+        return new Promise<DynamicDialogRef | undefined>((resolve) => {
+            if (!this.dialogRef) {
                 this.dialogRef = this.quizExerciseDialogRef(component, quizExercise, files);
             }
             resolve(this.dialogRef);
@@ -35,7 +31,7 @@ export class QuizExercisePopupService {
      * @param quizExercise the quiz exercise for which the dialog should be shown
      * @param files required for the form data upload
      */
-    quizExerciseDialogRef(component: Type<unknown>, quizExercise: QuizExercise, files: Map<string, File>): DynamicDialogRef | null {
+    quizExerciseDialogRef(component: Type<unknown>, quizExercise: QuizExercise, files: Map<string, File>): DynamicDialogRef | undefined {
         const ref = this.dialogService.open(component, {
             width: '50rem',
             modal: true,
@@ -48,13 +44,13 @@ export class QuizExercisePopupService {
             data: { quizExercise, files },
         });
         ref?.onClose.subscribe((result) => {
+            this.dialogRef = undefined;
             if (result === 're-evaluate') {
                 this.router.navigate(['/course-management/' + quizExercise.course!.id + '/quiz-exercises']);
             } else {
                 this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
-                this.dialogRef = null;
             }
         });
-        return ref;
+        return ref ?? undefined;
     }
 }

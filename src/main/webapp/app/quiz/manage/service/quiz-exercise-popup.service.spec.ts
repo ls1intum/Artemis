@@ -133,4 +133,25 @@ describe('QuizExercisePopupService', () => {
         expect(firstResult).toBe(secondResult);
         expect(openSpy).toHaveBeenCalledOnce();
     });
+
+    it('should clear the cached dialog ref on re-evaluate close so a subsequent open creates a new dialog', async () => {
+        const files = new Map<string, File>();
+        const first = createDialogRefMock();
+        const second = createDialogRefMock();
+
+        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValueOnce(first.ref).mockReturnValueOnce(second.ref);
+        vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+        const firstResult = await service.open(MockModalComponent, quizExercise, files);
+        expect(firstResult).toBe(first.ref);
+        expect(openSpy).toHaveBeenCalledOnce();
+
+        // Closing via the 're-evaluate' path must clear the cached singleton ref.
+        first.onClose.next('re-evaluate');
+
+        const secondResult = await service.open(MockModalComponent, quizExercise, files);
+        expect(secondResult).toBe(second.ref);
+        expect(secondResult).not.toBe(firstResult);
+        expect(openSpy).toHaveBeenCalledTimes(2);
+    });
 });
