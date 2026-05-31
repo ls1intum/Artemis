@@ -1,7 +1,9 @@
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 
 describe('ResizeableContainerComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: ResizeableContainerComponent;
     let fixture: ComponentFixture<ResizeableContainerComponent>;
 

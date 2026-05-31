@@ -22,6 +22,7 @@ const MIGRATED_MODULES = [
     'modeling',
     'plagiarism',
     'quiz',
+    'shared-ui',
     'text',
     'tutorialgroup',
 ];
