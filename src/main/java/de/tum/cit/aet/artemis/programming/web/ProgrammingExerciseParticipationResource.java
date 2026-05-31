@@ -497,6 +497,9 @@ public class ProgrammingExerciseParticipationResource {
     public ResponseEntity<Map<String, String>> getParticipationRepositoryFiles(@PathVariable long participationId,
             @RequestParam(name = "commitId", required = false) String commitIdQuery, @PathVariable(name = "commitId", required = false) String commitIdPath) {
         String commitId = commitIdQuery != null ? commitIdQuery : commitIdPath;
+        if (commitId == null) {
+            throw new BadRequestAlertException("A commitId must be provided", ENTITY_NAME, "commitIdMissing");
+        }
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         ProgrammingExercise exercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
@@ -528,6 +531,9 @@ public class ProgrammingExerciseParticipationResource {
             @RequestParam(name = "commitId", required = false) String commitIdQuery, @PathVariable(name = "commitId", required = false) String commitIdPath,
             @RequestParam(required = false) Long participationId, @RequestParam(required = false) RepositoryType repositoryType) {
         String commitId = commitIdQuery != null ? commitIdQuery : commitIdPath;
+        if (commitId == null && (participationId != null || repositoryType != null)) {
+            throw new BadRequestAlertException("A commitId must be provided", ENTITY_NAME, "commitIdMissing");
+        }
         try {
             if (participationId != null) {
                 Participation participation = participationRepository.findByIdElseThrow(participationId);

@@ -116,7 +116,7 @@ public class TutorialGroupsConfigurationResource {
             tutorialGroupChannelManagementService.createTutorialGroupsChannelsForAllTutorialGroupsOfCourse(course);
         }
 
-        return ResponseEntity.created(new URI("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups-configuration/" + persistedConfiguration.getId()))
+        return ResponseEntity.created(new URI("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups-configurations/" + persistedConfiguration.getId()))
                 .body(TutorialGroupConfigurationDTO.of(persistedConfiguration));
     }
 

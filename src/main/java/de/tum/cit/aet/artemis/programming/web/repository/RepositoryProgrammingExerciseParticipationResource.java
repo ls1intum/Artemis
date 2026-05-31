@@ -30,6 +30,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
@@ -223,6 +224,9 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             @PathVariable(name = "commitId", required = false) String commitIdPath, @RequestParam(required = false) Long participationId,
             @RequestParam(required = false) RepositoryType repositoryType) {
         String commitId = commitIdQuery != null ? commitIdQuery : commitIdPath;
+        if (commitId == null) {
+            throw new BadRequestAlertException("A commitId must be provided", "repository", "commitIdMissing");
+        }
         log.debug("REST request to files for domainId {} at commitId {}", participationId, commitId);
         var participation = getProgrammingExerciseParticipation(participationId);
         var programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);

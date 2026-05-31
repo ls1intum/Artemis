@@ -177,7 +177,7 @@ public class TutorialGroupFreePeriodResource {
 
         tutorialGroupFreePeriodService.cancelOverlappingSessions(tutorialGroupsConfiguration.getCourse(), persistedTutorialGroupFreePeriod);
 
-        return ResponseEntity.created(new URI("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups-configuration/" + tutorialGroupsConfigurationId
+        return ResponseEntity.created(new URI("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups-configurations/" + tutorialGroupsConfigurationId
                 + "/tutorial-free-periods/" + persistedTutorialGroupFreePeriod.getId())).body(TutorialGroupFreePeriodDTO.from(persistedTutorialGroupFreePeriod));
     }
 
