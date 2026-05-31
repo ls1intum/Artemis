@@ -16,10 +16,12 @@ import multipleChoiceSubmissionTemplate from '../../fixtures/exercise/quiz/multi
 import shortAnswerSubmissionTemplate from '../../fixtures/exercise/quiz/short_answer/submission.json';
 import quizTemplate from '../../fixtures/exercise/quiz/template.json';
 import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
+import proofExerciseTemplate from '../../fixtures/exercise/proof/template.json';
 import {
     ExerciseMode,
     MODELING_EXERCISE_BASE,
     PROGRAMMING_EXERCISE_BASE,
+    PROOF_EXERCISE_BASE,
     ProgrammingExerciseAssessmentType,
     ProgrammingLanguage,
     QUIZ_EXERCISE_BASE,
@@ -269,6 +271,36 @@ export class ExerciseAPIRequests {
      */
     async deleteTextExercise(exerciseId: number) {
         await this.page.request.delete(`${TEXT_EXERCISE_BASE}/${exerciseId}`);
+    }
+
+    /**
+     * Creates a proof exercise on the given course.
+     *
+     * Proof exercises are course-only — they cannot be added to exam exercise groups.
+     *
+     * @param body - An object containing the course the exercise will be added to.
+     * @param title - The title for the proof exercise (optional, default: auto-generated).
+     * @param exerciseTemplate - The DTO payload skeleton (optional, default: proof template fixture).
+     */
+    async createProofExercise(body: { course: Course }, title = 'Proof ' + generateUUID(), exerciseTemplate: any = proofExerciseTemplate): Promise<any> {
+        const shortName = ('proof' + generateUUID()).replace(/-/g, '').slice(0, 20);
+        const payload = {
+            ...exerciseTemplate,
+            title,
+            shortName,
+            courseId: body.course.id,
+        };
+        const response = await this.page.request.post(PROOF_EXERCISE_BASE, { data: payload });
+        return response.json();
+    }
+
+    /**
+     * Deletes a proof exercise with the specified exercise ID.
+     *
+     * @param exerciseId - The ID of the proof exercise to be deleted.
+     */
+    async deleteProofExercise(exerciseId: number) {
+        await this.page.request.delete(`${PROOF_EXERCISE_BASE}/${exerciseId}`);
     }
 
     /**

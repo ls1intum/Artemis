@@ -86,6 +86,13 @@ public record ProofSubmissionDTO(Long id, Boolean submitted, ZonedDateTime submi
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ProofParticipationDTO(Long id, ProofExerciseDTO exercise, String studentLogin, String studentName) {
 
+        /**
+         * Projects a {@link StudentParticipation} into a participation DTO, including the exercise stub when its
+         * proof-exercise association is initialized.
+         *
+         * @param participation the entity to project
+         * @return the DTO carrying the user-facing participation fields
+         */
         public static ProofParticipationDTO of(StudentParticipation participation) {
             ProofExerciseDTO exerciseDTO = null;
             if (Hibernate.isInitialized(participation.getExercise()) && participation.getExercise() instanceof ProofExercise pe && Hibernate.isInitialized(pe.getCategories())) {
@@ -97,6 +104,12 @@ public record ProofSubmissionDTO(Long id, Boolean submitted, ZonedDateTime submi
         }
     }
 
+    /**
+     * Projects a {@link ProofSubmission} into a DTO suitable for serialization back to the client.
+     *
+     * @param submission the entity to project
+     * @return the DTO carrying the user-facing submission fields (results, participation, steps)
+     */
     public static ProofSubmissionDTO of(ProofSubmission submission) {
         List<ProofResultDTO> resultDTOs = null;
         List<Result> results = submission.getResults();
@@ -118,6 +131,11 @@ public record ProofSubmissionDTO(Long id, Boolean submitted, ZonedDateTime submi
         return new ProofSubmissionDTO(submission.getId(), submission.isSubmitted(), submission.getSubmissionDate(), resultDTOs, participationDTO, stepDTOs);
     }
 
+    /**
+     * Builds a fresh {@link ProofSubmission} entity from this DTO.
+     *
+     * @return a new entity populated with the DTO's submission fields (id, submitted flag, steps if present)
+     */
     public ProofSubmission toEntity() {
         ProofSubmission submission = new ProofSubmission();
         if (id != null) {

@@ -35,7 +35,12 @@ public final class ReductionStrategy {
         this.applier = applier;
     }
 
-    /** Reduces {@code start} to a fixpoint with the default step bound. */
+    /**
+     * Reduces {@code start} to a fixpoint with the default step bound.
+     *
+     * @param start the tree to reduce
+     * @return the reduced tree plus the sequence of applied steps in order
+     */
     public ReductionResult reduceToFixpoint(MathNode start) {
         return reduceToFixpoint(start, DEFAULT_MAX_STEPS);
     }

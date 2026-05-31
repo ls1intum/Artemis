@@ -3,11 +3,14 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ProofSubmissionComponent } from 'app/proof/participate/proof-submission/proof-submission.component';
 import { ProofSubmissionService } from 'app/proof/participate/service/proof-submission.service';
+import { ProofBlockRegistryService } from 'app/proof/manage/service/proof-block-registry.service';
 import { ProofExercise } from 'app/proof/shared/entities/proof-exercise.model';
 import { ProofSubmission } from 'app/proof/shared/entities/proof-submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -50,8 +53,18 @@ describe('ProofSubmissionComponent', () => {
         TestBed.configureTestingModule({
             imports: [ProofSubmissionComponent],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 MockProvider(AlertService),
                 MockProvider(ProofSubmissionService),
+                MockProvider(ProofBlockRegistryService, { getBlockRegistry: () => of([]) as any }),
+                MockProvider(TranslateService, {
+                    instant: (key: string) => key,
+                    get: (key: string) => of(key) as any,
+                    onLangChange: of() as any,
+                    onTranslationChange: of() as any,
+                    onDefaultLangChange: of() as any,
+                }),
                 {
                     provide: ActivatedRoute,
                     useValue: {

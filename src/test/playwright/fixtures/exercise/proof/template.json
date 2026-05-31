@@ -1,0 +1,31 @@
+{
+    "type": "proof",
+    "title": "Proof Exercise 1",
+    "shortName": "proof1",
+    "maxPoints": 10,
+    "bonusPoints": 0,
+    "includedInOverallScore": "INCLUDED_COMPLETELY",
+    "problemStatement": "Prove that 0 + x = x.",
+    "description": "Apply the add_zero_left rule to reach the goal.",
+    "exampleSolution": "Apply add_zero_left at the root.",
+    "presentationScoreEnabled": false,
+    "secondCorrectionEnabled": false,
+    "allowFeedbackRequests": false,
+    "allowComplaintsForAutomaticAssessments": false,
+    "graderType": "REWRITE_CHAIN",
+    "goalMode": "TRANSFORMATION",
+    "manualDerivation": false,
+    "allowVerification": true,
+    "onlyShowApplicableRules": false,
+    "partialCreditEnabled": false,
+    "acNormalization": false,
+    "sourceExpression": {
+        "type": "add",
+        "slots": {
+            "lhs": [{ "type": "num", "value": "0" }],
+            "rhs": [{ "type": "var", "value": "x" }]
+        }
+    },
+    "targetExpression": { "type": "var", "value": "x" },
+    "exampleDerivations": []
+}

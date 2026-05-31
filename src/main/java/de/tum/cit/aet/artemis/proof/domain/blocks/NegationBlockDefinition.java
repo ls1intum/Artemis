@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.proof.domain.blocks;
 import java.util.List;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.proof.config.ProofEnabled;
@@ -18,6 +19,7 @@ import de.tum.cit.aet.artemis.proof.domain.RuleDirection;
  * Bridges with the {@code sub} block via {@code sub_as_add_neg} so subtraction-side and addition-side
  * rules can cooperate.
  */
+@Lazy
 @Conditional(ProofEnabled.class)
 @Component
 public class NegationBlockDefinition implements BlockDefinition {

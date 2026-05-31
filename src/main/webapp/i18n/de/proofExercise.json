@@ -7,9 +7,42 @@
                 "createOrEditLabel": "Beweis-Aufgabe erstellen oder bearbeiten"
             },
             "detail": {
-                "title": "Details der Beweis-Aufgabe"
+                "title": "Details der Beweis-Aufgabe",
+                "submittedProofs": "Abgegebene Beweise",
+                "tableStudent": "Studierende:r",
+                "tableSubmitted": "Abgegeben",
+                "tableSteps": "Schritte",
+                "tableScore": "Punkte",
+                "assess": "Bewerten"
+            },
+            "assessment": {
+                "student": "Studierende:r",
+                "submitted": "Abgegeben",
+                "steps": "Schritte",
+                "autoScore": "Automatische Bewertung",
+                "manualScore": "Manuelle Bewertung"
+            },
+            "reachability": {
+                "saveFirst": "Speichere die Aufgabe zuerst, um die Erreichbarkeitsprüfung auszuführen.",
+                "notSupported": "Die Erreichbarkeitsprüfung wird für diese Aufgabe nicht unterstützt.",
+                "failed": "Erreichbarkeitsprüfung fehlgeschlagen."
+            },
+            "devTools": {
+                "dropToImport": "Zum Importieren loslassen",
+                "dropHintBefore": "Lege eine",
+                "dropHintAfter": "Datei hier ab"
+            },
+            "statePanel": {
+                "start": "Start",
+                "now": "Aktuell",
+                "goal": "Ziel",
+                "step": "Schritt",
+                "steps": "Schritte",
+                "goalReached": "Ziel erreicht",
+                "prove": "beweisen"
             },
             "submission": "Beweis-Abgabe",
+            "submittedTitle": "Abgegeben",
             "description": "Beschreibung",
             "saveSuccessful": "Beweis erfolgreich gespeichert",
             "saveFailed": "Beweis konnte nicht gespeichert werden",
@@ -19,6 +52,32 @@
             "score": "Punkte",
             "assessedSubmission": "Ihr Beweis wurde bewertet.",
             "assessedSubmissionInstructor": "Dieser Beweis wurde bewertet.",
+            "sourceExpression": "Start-Ausdruck",
+            "targetExpression": "Ziel-Ausdruck",
+            "derivation": "Herleitung",
+            "rulesPanel": "Regeln",
+            "selectNode": "Wähle einen Knoten oder ziehe eine Regel darauf",
+            "selectRule": "Regel",
+            "applyRule": "Anwenden",
+            "undo": "Rückgängig",
+            "verifyProof": "Beweis prüfen",
+            "proofComplete": "Beweis abgeschlossen!",
+            "proofCompleteHint": "Deine Herleitung erreicht den Ziel-Ausdruck.",
+            "allStepsValid": "Alle Schritte verifiziert",
+            "autoSaving": "Speichere…",
+            "unsavedChanges": "Ungespeicherte Änderungen",
+            "lastSaved": "Zuletzt gespeichert um",
+            "by": "von",
+            "searchRules": "Regeln suchen…",
+            "noRulesFound": "Keine Regeln gefunden",
+            "derivationModeManual": "Manueller Herleitungsmodus",
+            "derivationModeHint": "Studierende schreiben den Ergebnisausdruck; im Inferenzmodus wendet das System die Regel automatisch an.",
+            "allowVerification": "Verifikation erlauben",
+            "allowVerificationHint": "Zeigt den „Beweis prüfen“-Button, damit Studierende ihre Schritte überprüfen können.",
+            "onlyShowApplicableRules": "Nur anwendbare Regeln zeigen",
+            "onlyShowApplicableRulesHint": "Verbirgt Regeln, die am aktuell ausgewählten Knoten nicht anwendbar sind.",
+            "partialCreditEnabled": "Teilpunkte",
+            "partialCreditEnabledHint": "Vergibt anteilige Punkte für gültige Schritte bei unvollständigem Beweis. Erfordert mindestens eine Beispielherleitung zur Bestimmung der erwarteten Schrittanzahl.",
             "graderType": "Bewertungs-Backend",
             "graderTypeHint": "Schritt-für-Schritt ist derzeit das einzige verfügbare Backend. Lean / Isabelle / egg e-graph folgen in Meilenstein 3.",
             "direction": {
@@ -44,7 +103,27 @@
             "verifyReachabilityRunning": "Prüfe…",
             "verifyReachabilityHint": "Lässt den automatischen Reduzierer vom Start-/Ziel-Ausdruck laufen — nützlich, um zu prüfen, ob die Aufgabe lösbar ist.",
             "reachabilityReachable": "Erreichbar",
-            "reachabilityPartial": "Nicht vollständig erreichbar"
+            "reachabilityPartial": "Nicht vollständig erreichbar",
+            "manualStepClaimedRule": "Behauptete Regel:",
+            "manualStepBuildResult": "Baue den Ergebnis-Ausdruck:",
+            "manualStepConfirm": "Schritt bestätigen",
+            "manualHintSelectBoth": "← Wähle eine Regel und einen Knoten, dann schreibe das Ergebnis",
+            "cancel": "Abbrechen",
+            "blocksPanel": "Blöcke",
+            "expressionsTitle": "Beweis-Ausdrücke",
+            "expressions": "Ausdrücke",
+            "expressionsRequired": "Sowohl ein Start- als auch ein Ziel-Ausdruck sind erforderlich, damit der Herleitungs-Arbeitsbereich für Studierende erscheint.",
+            "exampleSolutions": "Beispiellösungen",
+            "addExampleSolution": "Beispiellösung hinzufügen",
+            "noExampleSolutions": "Noch keine Beispiellösungen. Klicke „Beispiellösung hinzufügen“, um eine anzulegen.",
+            "builder": {
+                "palette": "Blöcke",
+                "blockType": "Blocktyp",
+                "value": "Wert",
+                "insert": "Einfügen",
+                "clear": "Leeren",
+                "empty": "Noch kein Ausdruck. Ziehe einen Block hierher oder wähle einen Typ und klicke „Einfügen“."
+            }
         }
     }
 }

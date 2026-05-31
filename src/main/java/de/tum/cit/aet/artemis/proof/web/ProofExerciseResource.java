@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +44,7 @@ import de.tum.cit.aet.artemis.proof.repository.ProofExerciseRepository;
 import de.tum.cit.aet.artemis.proof.service.ProofExerciseImportService;
 import de.tum.cit.aet.artemis.proof.service.ProofGradingService;
 
+@Lazy
 @Conditional(ProofEnabled.class)
 @RestController
 @RequestMapping("api/proof/")

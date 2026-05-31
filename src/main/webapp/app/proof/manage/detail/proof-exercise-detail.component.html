@@ -22,17 +22,17 @@
                         <p-card>
                             <ng-template pTemplate="header">
                                 <div class="d-flex align-items-center justify-content-between px-3 pt-3">
-                                    <h4 class="mb-0">Submitted Proofs</h4>
+                                    <h4 class="mb-0" jhiTranslate="artemisApp.proofExercise.detail.submittedProofs">Submitted Proofs</h4>
                                     <p-tag severity="secondary" [value]="submissions.length.toString()" />
                                 </div>
                             </ng-template>
                             <p-table [value]="submissions" styleClass="p-datatable-sm p-datatable-hover">
                                 <ng-template pTemplate="header">
                                     <tr>
-                                        <th>Student</th>
-                                        <th>Submitted</th>
-                                        <th>Steps</th>
-                                        <th>Score</th>
+                                        <th jhiTranslate="artemisApp.proofExercise.detail.tableStudent">Student</th>
+                                        <th jhiTranslate="artemisApp.proofExercise.detail.tableSubmitted">Submitted</th>
+                                        <th jhiTranslate="artemisApp.proofExercise.detail.tableSteps">Steps</th>
+                                        <th jhiTranslate="artemisApp.proofExercise.detail.tableScore">Score</th>
                                         <th></th>
                                     </tr>
                                 </ng-template>
@@ -56,7 +56,7 @@
                                                 [outlined]="true"
                                                 [routerLink]="['/course-management', course!.id, 'proof-exercises', proofExercise.id, 'submissions', sub.id, 'assessment']"
                                             >
-                                                Assess
+                                                <span jhiTranslate="artemisApp.proofExercise.detail.assess">Assess</span>
                                             </a>
                                         </td>
                                     </tr>

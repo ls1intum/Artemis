@@ -7,7 +7,39 @@
                 "createOrEditLabel": "Create or edit a Proof Exercise"
             },
             "detail": {
-                "title": "Proof Exercise Detail"
+                "title": "Proof Exercise Detail",
+                "submittedProofs": "Submitted Proofs",
+                "tableStudent": "Student",
+                "tableSubmitted": "Submitted",
+                "tableSteps": "Steps",
+                "tableScore": "Score",
+                "assess": "Assess"
+            },
+            "assessment": {
+                "student": "Student",
+                "submitted": "Submitted",
+                "steps": "Steps",
+                "autoScore": "Auto score",
+                "manualScore": "Manual score"
+            },
+            "reachability": {
+                "saveFirst": "Save the exercise first to run the reachability check.",
+                "notSupported": "Reachability check is not supported for this exercise.",
+                "failed": "Reachability check failed."
+            },
+            "devTools": {
+                "dropToImport": "Drop to import",
+                "dropHintBefore": "Drop a",
+                "dropHintAfter": "file here"
+            },
+            "statePanel": {
+                "start": "Start",
+                "now": "Now",
+                "goal": "Goal",
+                "step": "step",
+                "steps": "steps",
+                "goalReached": "goal reached",
+                "prove": "prove"
             },
             "submission": "Proof Submission",
             "submittedTitle": "Submitted",

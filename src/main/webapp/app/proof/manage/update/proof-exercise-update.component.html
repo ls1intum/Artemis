@@ -234,7 +234,7 @@
                             }
                         }
                         @if (reachabilityError(); as err) {
-                            <small class="text-danger">{{ err }}</small>
+                            <small class="text-danger" [jhiTranslate]="err"></small>
                         }
                     </div>
                 </div>
@@ -345,7 +345,7 @@
                 </p-card>
             }
 
-            <!-- FIXME: dev-only — remove or gate behind a proper feature flag before merging to main -->
+            <!-- Dev-only JSON import/export tools, gated by the isDev getter (profileService.isDevelopment()). -->
             @if (isDev) {
                 <p-card styleClass="mb-3 border-warning">
                     <div class="d-flex align-items-center gap-2 mb-2">
@@ -366,8 +366,8 @@
                                 border-color 0.15s;
                             cursor: default;
                         "
-                        [style.border-color]="isDragOver() ? '#f0ad4e' : '#adb5bd'"
-                        [style.background]="isDragOver() ? 'rgba(255, 193, 7, 0.08)' : 'transparent'"
+                        [style.border-color]="isDragOver() ? 'var(--bs-warning)' : 'var(--bs-gray-500)'"
+                        [style.background]="isDragOver() ? 'rgba(var(--bs-warning-rgb), 0.08)' : 'transparent'"
                         (dragover)="$event.preventDefault(); isDragOver.set(true)"
                         (dragenter)="$event.preventDefault(); isDragOver.set(true)"
                         (dragleave)="isDragOver.set(false)"
@@ -375,9 +375,13 @@
                     >
                         <div class="text-muted small">
                             @if (isDragOver()) {
-                                <span class="fw-semibold" style="color: #f0ad4e">Drop to import</span>
+                                <span class="fw-semibold" style="color: var(--bs-warning)" jhiTranslate="artemisApp.proofExercise.devTools.dropToImport">Drop to import</span>
                             } @else {
-                                <span>Drop a <code>.json</code> file here</span>
+                                <span>
+                                    <span jhiTranslate="artemisApp.proofExercise.devTools.dropHintBefore">Drop a</span>
+                                    <code>.json</code>
+                                    <span jhiTranslate="artemisApp.proofExercise.devTools.dropHintAfter">file here</span>
+                                </span>
                             }
                         </div>
                     </div>

@@ -5,6 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,6 +16,7 @@ import de.tum.cit.aet.artemis.proof.config.ProofEnabled;
 import de.tum.cit.aet.artemis.proof.dto.BlockDefinitionDTO;
 import de.tum.cit.aet.artemis.proof.service.BlockRegistry;
 
+@Lazy
 @Conditional(ProofEnabled.class)
 @RestController
 @RequestMapping("api/proof/")

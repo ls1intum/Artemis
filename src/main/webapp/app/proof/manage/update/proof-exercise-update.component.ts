@@ -60,7 +60,6 @@ export class ProofExerciseUpdateComponent implements OnInit {
     private proofExerciseService = inject(ProofExerciseService);
     private exerciseService = inject(ExerciseService);
     private router = inject(Router);
-    // FIXME: dev-only — remove or gate behind a proper feature flag before merging to main
     private profileService = inject(ProfileService);
 
     proofExercise: ProofExercise;
@@ -132,7 +131,7 @@ export class ProofExerciseUpdateComponent implements OnInit {
 
     checkReachability(): void {
         if (!this.proofExercise.id) {
-            this.reachabilityError.set('Save the exercise first to run the reachability check.');
+            this.reachabilityError.set('artemisApp.proofExercise.reachability.saveFirst');
             return;
         }
         this.reachabilityError.set(undefined);
@@ -141,13 +140,13 @@ export class ProofExerciseUpdateComponent implements OnInit {
             next: (report) => {
                 this.reachability.set(report);
                 if (!report) {
-                    this.reachabilityError.set('Reachability check is not supported for this exercise.');
+                    this.reachabilityError.set('artemisApp.proofExercise.reachability.notSupported');
                 }
                 this.reachabilityChecking.set(false);
             },
             error: () => {
                 this.reachability.set(undefined);
-                this.reachabilityError.set('Reachability check failed.');
+                this.reachabilityError.set('artemisApp.proofExercise.reachability.failed');
                 this.reachabilityChecking.set(false);
             },
         });
@@ -169,7 +168,7 @@ export class ProofExerciseUpdateComponent implements OnInit {
         this.proofExercise.exampleDerivations = updated;
     }
 
-    // FIXME: dev-only helpers — remove or gate behind a proper feature flag before merging to main
+    // Dev-only JSON import/export tools — gated by the isDev getter (profileService.isDevelopment()).
     get isDev(): boolean {
         return this.profileService.isDevelopment();
     }

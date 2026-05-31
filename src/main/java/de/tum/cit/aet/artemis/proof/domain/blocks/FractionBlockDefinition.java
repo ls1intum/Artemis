@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.proof.domain.blocks;
 import java.util.List;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.proof.config.ProofEnabled;
@@ -14,6 +15,7 @@ import de.tum.cit.aet.artemis.proof.domain.NotEqualToConstant;
 import de.tum.cit.aet.artemis.proof.domain.RewriteRule;
 import de.tum.cit.aet.artemis.proof.domain.RuleDirection;
 
+@Lazy
 @Conditional(ProofEnabled.class)
 @Component
 public class FractionBlockDefinition implements BlockDefinition {

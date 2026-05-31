@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.proof.util;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseFactory;
 import de.tum.cit.aet.artemis.proof.domain.DerivationStep;
@@ -62,7 +62,7 @@ public class ProofExerciseFactory {
 
     public static ProofExerciseDTO generateProofExerciseDTO(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
         return new ProofExerciseDTO(null, "Proof Exercise", null, "Prove that 0 + x = x.", "Prove that 0 + x = x", "Apply add_zero_left.", null, null, 10.0, 0.0,
-                IncludedInOverallScore.INCLUDED_COMPLETELY, false, false, false, false, null, null, releaseDate, null, dueDate, assessmentDueDate, null, course.getId(), null,
+                IncludedInOverallScore.INCLUDED_COMPLETELY, false, false, false, false, null, null, releaseDate, null, dueDate, assessmentDueDate, null, course.getId(),
                 sampleSource(), sampleTarget(), false, true, false, false, null, null, null, false, null);
     }
 
