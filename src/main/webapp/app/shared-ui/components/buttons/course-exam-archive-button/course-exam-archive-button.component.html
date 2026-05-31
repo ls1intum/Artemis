@@ -24,13 +24,13 @@
             <p [jhiTranslate]="'artemisApp.courseExamArchive.archiveSuccessWithWarnings'">The archival process has completed with the following warnings:</p>
             <br />
             <ul style="height: 200px; overflow: auto">
-                @for (item of archiveWarnings(); track item) {
+                @for (item of archiveWarnings(); track $index) {
                     <li>{{ item }}</li>
                 }
             </ul>
         </ng-container>
         <ng-template #footer>
-            <button type="button" class="btn btn-warning" (click)="archiveCompleteWithWarningsModalVisible.set(false)">Close</button>
+            <button type="button" class="btn btn-warning" (click)="archiveCompleteWithWarningsModalVisible.set(false)" jhiTranslate="entity.action.close">Close</button>
         </ng-template>
     </p-dialog>
     <p-dialog
