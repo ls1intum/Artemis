@@ -297,14 +297,14 @@ module.exports = {
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
-    // Lowered ~0.5pp below current actuals to absorb further Jest→Vitest migration drift.
+    // Thresholds track the current Jest-owned baseline while migrated files are covered by Vitest.
     // Per-file coverage is unchanged — migrated specs still cover the same files under Vitest.
     // Re-tune when migration completes.
     coverageThreshold: {
         global: {
             statements: 83,
             branches: 72.9,
-            functions: 72.2,
+            functions: 71.6,
             lines: 84,
         },
     },
