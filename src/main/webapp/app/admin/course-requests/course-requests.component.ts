@@ -1,6 +1,6 @@
 import { NgClass } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { PaginatorModule } from 'primeng/paginator';
 import { DialogModule } from 'primeng/dialog';
 import { faCheck, faEdit, faExternalLinkAlt, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -42,7 +42,7 @@ import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-
         FaIconComponent,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
-        NgbPagination,
+        PaginatorModule,
         CourseRequestFormComponent,
         DialogModule,
     ],
@@ -69,7 +69,7 @@ export class CourseRequestsComponent implements OnInit {
     readonly decidedRequests = signal<CourseRequest[]>([]);
     /** Total count of decided requests for pagination */
     readonly totalDecidedCount = signal(0);
-    /** Current page for decided requests (NgbPagination uses 1-indexed pages) */
+    /** Current page for decided requests (1-indexed; the PrimeNG paginator emits 0-indexed pages) */
     readonly decidedPage = signal(1);
     /** Page size for decided requests */
     readonly decidedPageSize = 20;
@@ -108,7 +108,7 @@ export class CourseRequestsComponent implements OnInit {
 
     load() {
         this.loading.set(true);
-        // NgbPagination is 1-indexed, but API is 0-indexed
+        // decidedPage is 1-indexed, but the API is 0-indexed
         this.courseRequestService.findAdminOverview(this.decidedPage() - 1, this.decidedPageSize).subscribe({
             next: (overview) => {
                 this.pendingRequests.set(overview.pendingRequests);

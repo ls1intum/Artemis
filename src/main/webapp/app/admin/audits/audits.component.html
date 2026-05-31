@@ -68,15 +68,11 @@
                 <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
             </div>
             <div class="row justify-content-center">
-                <ngb-pagination
-                    [collectionSize]="totalItems()"
-                    [page]="page()"
-                    [pageSize]="itemsPerPage"
-                    [maxSize]="5"
-                    [rotate]="true"
-                    [boundaryLinks]="true"
-                    (pageChange)="updatePage($event); transition()"
-                    [disabled]="!canLoad()"
+                <p-paginator
+                    [first]="(page() - 1) * itemsPerPage"
+                    [rows]="itemsPerPage"
+                    [totalRecords]="totalItems()"
+                    (onPageChange)="updatePage($event.page! + 1); transition()"
                 />
             </div>
         </div>

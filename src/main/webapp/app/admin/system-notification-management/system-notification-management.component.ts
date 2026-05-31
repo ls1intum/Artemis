@@ -19,7 +19,7 @@ import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
-import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { PaginatorModule } from 'primeng/paginator';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
@@ -50,7 +50,7 @@ enum NotificationState {
         SortByDirective,
         DeleteButtonDirective,
         ItemCountComponent,
-        NgbPagination,
+        PaginatorModule,
         ArtemisDatePipe,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
