@@ -39,14 +39,14 @@ describe('ExerciseImportComponent', () => {
     let state: SearchTermPageableSearch;
     let quizExercise: QuizExercise;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         dialogRefCloseSpy = vi.fn();
         dialogRef = {
             close: dialogRefCloseSpy,
             onClose: new Subject<Exercise | undefined>(),
         } as unknown as DynamicDialogRef;
 
-        TestBed.configureTestingModule({
+        await TestBed.configureTestingModule({
             providers: [{ provide: DynamicDialogRef, useValue: dialogRef }, { provide: Router, useValue: { navigate: vi.fn() } }, provideHttpClient(), provideHttpClientTesting()],
         })
             .overrideTemplate(ExerciseImportComponent, '')
@@ -157,15 +157,18 @@ describe('ExerciseImportComponent', () => {
         expect(searchStub).toHaveBeenCalledOnce();
     });
 
+    const flushNextDebouncedSearch = async () => {
+        await vi.advanceTimersToNextTimerAsync();
+        await vi.advanceTimersByTimeAsync(0);
+    };
+
     const expectSearchResultAfterAction = async (action: () => void, expectedState: SearchTermPageableSearch) => {
         comp.state = { ...state };
         comp.ngOnInit();
-        await vi.advanceTimersByTimeAsync(0);
         searchStub.mockClear();
 
         action();
-        await vi.advanceTimersByTimeAsync(10);
-        await vi.advanceTimersByTimeAsync(0);
+        await flushNextDebouncedSearch();
 
         expect(searchStub).toHaveBeenCalledWith(expectedState, { isCourseFilter: true, isExamFilter: true, programmingLanguage: undefined });
         expect(comp.content).toEqual(searchResult);
@@ -206,17 +209,16 @@ describe('ExerciseImportComponent', () => {
         expect(comp.searchTerm).toBe('');
         comp.state = { ...state };
         comp.ngOnInit();
-        await vi.advanceTimersByTimeAsync(0);
         searchStub.mockClear();
 
         const givenSearchTerm = 'givenSearchTerm';
         comp.searchTerm = givenSearchTerm;
-        await vi.advanceTimersByTimeAsync(10);
+        await vi.advanceTimersByTimeAsync(299);
         expect(searchStub).not.toHaveBeenCalled();
-        await vi.advanceTimersByTimeAsync(290);
-        await vi.advanceTimersByTimeAsync(0);
+        await flushNextDebouncedSearch();
 
         expect(searchStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, { isCourseFilter: true, isExamFilter: true, programmingLanguage: undefined });
+
         expect(comp.searchTerm).toEqual(givenSearchTerm);
         expect(comp.content).toEqual(searchResult);
         comp.sortRows();
@@ -283,7 +285,7 @@ describe('ExerciseImportComponent', () => {
         fixture.componentRef.setInput('exerciseType', exerciseType);
 
         comp.ngOnInit();
-        await vi.advanceTimersByTimeAsync(300);
+        await flushNextDebouncedSearch();
 
         expect(getSpy).toHaveBeenCalledWith(expectedPagingService, {});
         expect(pagingServiceMock.search).toHaveBeenCalled();
@@ -299,7 +301,7 @@ describe('ExerciseImportComponent', () => {
         fixture.componentRef.setInput('programmingLanguage', ProgrammingLanguage.JAVA);
 
         comp.ngOnInit();
-        await vi.advanceTimersByTimeAsync(300);
+        await flushNextDebouncedSearch();
 
         expect(comp.titleKey).toContain('configureGrading');
         expect(getSpy).toHaveBeenCalledWith(CodeAnalysisPagingService, {});
