@@ -7,8 +7,8 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { SafeHtmlPipe } from 'app/foundation/pipes/safe-html.pipe';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 
 @Component({

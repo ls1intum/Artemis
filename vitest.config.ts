@@ -42,7 +42,8 @@ export default defineConfig({
             'src/main/webapp/app/core/**/*.spec.ts', // include all core tests
             'src/main/webapp/app/course/**/*.spec.ts', // include all course tests
             'src/main/webapp/app/calendar/**/*.spec.ts', // include all calendar tests
-            'src/main/webapp/app/buildagent/**/*.spec.ts', // include build agent tests
+            'src/main/webapp/app/localci/**/*.spec.ts', // include localci tests (absorbed the buildagent UI)
+            'src/main/webapp/app/localvc/**/*.spec.ts', // include localvc tests
             'src/main/webapp/app/text/**/*.spec.ts', // include text module tests
             'src/main/webapp/app/assessment/**/*.spec.ts', // include assessment tests
             'src/main/webapp/app/tutorialgroup/**/*.spec.ts', // include tutorial group tests
@@ -65,17 +66,16 @@ export default defineConfig({
             'src/main/webapp/app/exam/manage/exams/**/*.spec.ts', // include exams (detail/import/update/checklist/mode-picker) tests
             'src/main/webapp/app/exam/shared/**/*.spec.ts', // include exam shared tests
             'src/main/webapp/app/exam/overview/**/*.spec.ts', // include exam overview tests
-            'src/main/webapp/app/shared/components/buttons/**/*.spec.ts', // include shared buttons
-            'src/main/webapp/app/shared/table-view/**/*.spec.ts', // include shared table view
-            'src/main/webapp/app/shared/feature-toggle/**/*.spec.ts', // include feature-toggle service tests
-            'src/main/webapp/app/shared/sort/**/*.directive.spec.ts', // include sort directives
-            'src/main/webapp/app/shared/user-import/util/**/*.spec.ts', // include user import util tests
-            'src/main/webapp/app/shared/range-slider/**/*.spec.ts', // include range slider tests
-            'src/main/webapp/app/shared/dashboards/**/*.spec.ts', // include dashboards tests
-            'src/main/webapp/app/shared/image-cropper/**/*.spec.ts', // include image cropper tests
+            'src/main/webapp/app/shared-ui/components/buttons/**/*.spec.ts', // include shared buttons
+            'src/main/webapp/app/shared-ui/table-view/**/*.spec.ts', // include shared table view
+            'src/main/webapp/app/foundation/**/*.spec.ts', // include all foundation tests (migrated to Vitest)
+            'src/main/webapp/app/shared-ui/user-import/util/**/*.spec.ts', // include user import util tests
+            'src/main/webapp/app/shared-ui/range-slider/**/*.spec.ts', // include range slider tests
+            'src/main/webapp/app/exercise/dashboards/**/*.spec.ts', // include dashboards tests
+            'src/main/webapp/app/shared-ui/image-cropper/**/*.spec.ts', // include image cropper tests
             'src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts', // include problem statement service tests
             'src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts', // include problem statement utils tests
-            'src/main/webapp/app/shared/monaco-editor/inline-refinement-button/*.spec.ts', // include inline refinement button tests
+            'src/main/webapp/app/editor/monaco-editor/inline-refinement-button/*.spec.ts', // include inline refinement button tests
             'src/main/webapp/app/exercise/exercise-headers/**/*.spec.ts', // include exercise headers tests
             'src/main/webapp/app/exercise/synchronization/**/*.spec.ts', // include exercise synchronization tests
             'src/main/webapp/app/exercise/version-history/**/*.spec.ts', // include exercise version history tests
@@ -91,11 +91,14 @@ export default defineConfig({
             'src/main/webapp/app/exercise/exercise-scores/**/*.spec.ts', // include exercise-scores tests
             'src/main/webapp/app/exercise/result/**/*.spec.ts', // include exercise result tests
             'src/main/webapp/app/exercise/shared/filter-dropdown/**/*.spec.ts', // include filter-dropdown component tests
-            'src/main/webapp/app/shared/search-filter/**/*.spec.ts', // include search-filter component tests
+            'src/main/webapp/app/shared-ui/search-filter/**/*.spec.ts', // include search-filter component tests
             'src/main/webapp/app/programming/shared/services/build-phases-template.service.spec.ts', // include build phases template service tests
             'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.spec.ts', // include build plan phases model tests
             'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.spec.ts', // include legacy build plan converter service tests
             'src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**/*.spec.ts', // include programming exercise update timeline tests
+            'src/main/webapp/app/logos/**/*.spec.ts', // include logos tests
+            'src/main/webapp/app/sharing/**/*.spec.ts', // include sharing tests
+            'src/main/webapp/app/app.component.spec.ts', // include app-shell (app.component) tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -114,7 +117,8 @@ export default defineConfig({
                 'src/main/webapp/app/account/**/*.ts', // include all account for code coverage
                 'src/main/webapp/app/admin/**/*.ts', // include all admin for code coverage
                 'src/main/webapp/app/assessment/**/*.ts', // include assessment for code coverage
-                'src/main/webapp/app/buildagent/**/*.ts', // include buildagent for code coverage
+                'src/main/webapp/app/localci/**/*.ts', // include localci for code coverage
+                'src/main/webapp/app/localvc/**/*.ts', // include localvc for code coverage
                 'src/main/webapp/app/core/**/*.ts', // include all core for code coverage
                 'src/main/webapp/app/course/**/*.ts', // include all course for code coverage
                 'src/main/webapp/app/calendar/**/*.ts', // include all calendar for code coverage
@@ -140,17 +144,16 @@ export default defineConfig({
                 'src/main/webapp/app/exam/manage/exams/**/*.ts', // include exams (detail/import/update/checklist/mode-picker) for code coverage
                 'src/main/webapp/app/exam/overview/**/*.ts', // include exam overview for code coverage
                 'src/main/webapp/app/exam/shared/**/*.ts', // include exam shared for code coverage
-                'src/main/webapp/app/shared/components/buttons/**/*.ts', // include shared buttons for code coverage
-                'src/main/webapp/app/shared/feature-toggle/**/*.ts', // include feature-toggle service for code coverage
-                'src/main/webapp/app/shared/user-import/util/**/*.ts', // include user import utils for code coverage
-                'src/main/webapp/app/shared/table-view/**/*.ts', // include shared table view for code coverage
-                'src/main/webapp/app/shared/sort/**/*.directive.ts', // include sort directives for code coverage
-                'src/main/webapp/app/shared/range-slider/**/*.ts', // include range slider for code coverage
-                'src/main/webapp/app/shared/dashboards/**/*.ts', // include dashboards for code coverage
-                'src/main/webapp/app/shared/image-cropper/**/*.ts', // include image cropper for code coverage
+                'src/main/webapp/app/shared-ui/components/buttons/**/*.ts', // include shared buttons for code coverage
+                'src/main/webapp/app/foundation/**/*.ts', // include all foundation for code coverage
+                'src/main/webapp/app/shared-ui/user-import/util/**/*.ts', // include user import utils for code coverage
+                'src/main/webapp/app/shared-ui/table-view/**/*.ts', // include shared table view for code coverage
+                'src/main/webapp/app/shared-ui/range-slider/**/*.ts', // include range slider for code coverage
+                'src/main/webapp/app/exercise/dashboards/**/*.ts', // include dashboards for code coverage
+                'src/main/webapp/app/shared-ui/image-cropper/**/*.ts', // include image cropper for code coverage
                 'src/main/webapp/app/programming/manage/services/problem-statement.service.ts', // include problem statement service for code coverage
                 'src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts', // include problem statement utils for code coverage
-                'src/main/webapp/app/shared/monaco-editor/inline-refinement-button/*.ts', // include inline refinement button for code coverage
+                'src/main/webapp/app/editor/monaco-editor/inline-refinement-button/*.ts', // include inline refinement button for code coverage
                 'src/main/webapp/app/exercise/exercise-headers/**/*.ts', // include exercise headers for code coverage
                 'src/main/webapp/app/exercise/synchronization/**/*.ts', // include exercise synchronization for code coverage
                 'src/main/webapp/app/exercise/version-history/**/*.ts', // include exercise version history for code coverage
@@ -166,11 +169,14 @@ export default defineConfig({
                 'src/main/webapp/app/exercise/exercise-scores/**/*.ts', // include exercise-scores for code coverage
                 'src/main/webapp/app/exercise/result/**/*.ts', // include exercise result for code coverage
                 'src/main/webapp/app/exercise/shared/filter-dropdown/**/*.ts', // include filter-dropdown component for code coverage
-                'src/main/webapp/app/shared/search-filter/**/*.ts', // include search-filter component for code coverage
+                'src/main/webapp/app/shared-ui/search-filter/**/*.ts', // include search-filter component for code coverage
                 'src/main/webapp/app/programming/shared/services/build-phases-template.service.ts', // include build phases template service for code coverage
                 'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts', // include legacy build plan converter service for code coverage
                 'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // include build plan phases model for code coverage
                 'src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**/*.ts', // include programming exercise update timeline for code coverage
+                'src/main/webapp/app/logos/**/*.ts', // include logos for code coverage
+                'src/main/webapp/app/sharing/**/*.ts', // include sharing for code coverage
+                'src/main/webapp/app/app.component.ts', // include app-shell (app.component) for code coverage
             ],
             exclude: [
                 '**/node_modules/**', // exclude node_modules with third-party code

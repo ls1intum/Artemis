@@ -6,7 +6,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { DebugElement, VERSION } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import dayjs from 'dayjs/esm';
 import { Subscription, of, throwError } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
@@ -39,7 +39,7 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockModule } from 'ng-mocks';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
-import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
+import { SafeHtmlPipe } from 'app/foundation/pipes/safe-html.pipe';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 

@@ -15,8 +15,8 @@ import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submis
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { take } from 'rxjs/operators';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -50,7 +50,7 @@ describe('Course Management Service', () => {
     let convertDatesForLecturesFromServerSpy: ReturnType<typeof vi.spyOn>;
     let syncGroupsSpy: ReturnType<typeof vi.spyOn>;
 
-    const resourceUrl = 'api/core/courses';
+    const resourceUrl = 'api/course/courses';
 
     let course: Course;
     let courseForDashboard: CourseForDashboardDTO;
@@ -590,7 +590,7 @@ describe('CourseManagementService - authentication state changes', () => {
 
     it('should ignore in-flight findAllForDashboard responses after logout', () => {
         const subscription = scoped.findAllForDashboard().subscribe();
-        const inFlight = scopedHttpMock.expectOne(`api/core/courses/for-dashboard`);
+        const inFlight = scopedHttpMock.expectOne(`api/course/courses/for-dashboard`);
 
         authState.next(undefined);
 
@@ -605,7 +605,7 @@ describe('CourseManagementService - authentication state changes', () => {
 
     it('should ignore in-flight findAllForNotifications responses after logout', () => {
         const subscription = scoped.findAllForNotifications().subscribe();
-        const inFlight = scopedHttpMock.expectOne(`api/core/courses/for-notifications`);
+        const inFlight = scopedHttpMock.expectOne(`api/course/courses/for-notifications`);
 
         authState.next(undefined);
 
@@ -617,7 +617,7 @@ describe('CourseManagementService - authentication state changes', () => {
 
     it('should ignore in-flight getAllCoursesWithQuizExercises responses after logout', () => {
         const subscription = scoped.getAllCoursesWithQuizExercises().subscribe();
-        const inFlight = scopedHttpMock.expectOne(`api/core/courses/courses-with-quiz`);
+        const inFlight = scopedHttpMock.expectOne(`api/course/courses/courses-with-quiz`);
 
         authState.next(undefined);
 
@@ -629,7 +629,7 @@ describe('CourseManagementService - authentication state changes', () => {
 
     it('should ignore in-flight getWithUserStats responses after logout', () => {
         const subscription = scoped.getWithUserStats().subscribe();
-        const inFlight = scopedHttpMock.expectOne((req) => req.url === `api/core/courses/with-user-stats`);
+        const inFlight = scopedHttpMock.expectOne((req) => req.url === `api/course/courses/with-user-stats`);
 
         authState.next(undefined);
 

@@ -141,7 +141,7 @@ public class PrerequisiteResource {
     public ResponseEntity<CourseCompetencyResponseDTO> createPrerequisite(@PathVariable long courseId, @Valid @RequestBody CourseCompetencyRequestDTO prerequisiteRequest)
             throws URISyntaxException {
         log.debug("REST request to create Prerequisite : {}", prerequisiteRequest);
-        Prerequisite prerequisite = toPrerequisite(prerequisiteRequest);
+        Prerequisite prerequisite = CourseCompetencyRequestDTO.toEntity(prerequisiteRequest, Prerequisite::new);
         checkPrerequisitesAttributesForCreation(prerequisite);
 
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
@@ -165,7 +165,7 @@ public class PrerequisiteResource {
     public ResponseEntity<List<CourseCompetencyResponseDTO>> createPrerequisite(@PathVariable Long courseId, @Valid @RequestBody List<CourseCompetencyRequestDTO> prerequisites)
             throws URISyntaxException {
         log.debug("REST request to create Prerequisites : {}", prerequisites);
-        var prerequisiteEntities = prerequisites.stream().map(this::toPrerequisite).toList();
+        var prerequisiteEntities = prerequisites.stream().map(request -> CourseCompetencyRequestDTO.toEntity(request, Prerequisite::new)).toList();
         for (Prerequisite prerequisite : prerequisiteEntities) {
             checkPrerequisitesAttributesForCreation(prerequisite);
         }
@@ -310,7 +310,7 @@ public class PrerequisiteResource {
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<CourseCompetencyResponseDTO> updatePrerequisite(@PathVariable long courseId, @Valid @RequestBody CourseCompetencyRequestDTO prerequisiteRequest) {
         log.debug("REST request to update Prerequisite : {}", prerequisiteRequest);
-        Prerequisite prerequisite = toPrerequisite(prerequisiteRequest);
+        Prerequisite prerequisite = CourseCompetencyRequestDTO.toEntity(prerequisiteRequest, Prerequisite::new);
         checkPrerequisitesAttributesForUpdate(prerequisite);
 
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -361,10 +361,6 @@ public class PrerequisiteResource {
         if (prerequisite.getTitle() == null || prerequisite.getTitle().trim().isEmpty() || prerequisite.getMasteryThreshold() < 1 || prerequisite.getMasteryThreshold() > 100) {
             throw new BadRequestAlertException("The attributes of the competency are invalid!", ENTITY_NAME, "invalidPrerequisiteAttributes");
         }
-    }
-
-    private Prerequisite toPrerequisite(CourseCompetencyRequestDTO prerequisiteRequest) {
-        return CourseCompetencyRequestDTO.toEntity(prerequisiteRequest, Prerequisite::new);
     }
 
     /**

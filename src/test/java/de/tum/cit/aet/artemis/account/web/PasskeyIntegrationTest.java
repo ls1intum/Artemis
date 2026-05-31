@@ -32,14 +32,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.account.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.PasskeyAdminDTO;
+import de.tum.cit.aet.artemis.account.dto.PasskeyDTO;
 import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.account.util.PasskeyCredentialUtilService;
 import de.tum.cit.aet.artemis.account.util.WebAuthnClientSimulator;
 import de.tum.cit.aet.artemis.account.util.WebAuthnClientSimulator.AuthenticationResponse;
 import de.tum.cit.aet.artemis.account.util.WebAuthnClientSimulator.RegistrationResponse;
 import de.tum.cit.aet.artemis.account.util.WebAuthnClientSimulator.VirtualAuthenticator;
-import de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO;
-import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
@@ -109,7 +109,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             PasskeyCredential credential1 = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
             PasskeyCredential credential2 = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
 
-            List<PasskeyDTO> passkeys = request.getList("/api/core/passkey/user", HttpStatus.OK, PasskeyDTO.class);
+            List<PasskeyDTO> passkeys = request.getList("/api/account/passkeys/user", HttpStatus.OK, PasskeyDTO.class);
 
             assertThat(passkeys).hasSize(2);
             assertThat(passkeys).extracting(PasskeyDTO::credentialId).containsExactlyInAnyOrder(credential1.getCredentialId(), credential2.getCredentialId());
@@ -117,8 +117,21 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testGetPasskeys_EmptyList() throws Exception {
+        void testGetPasskeysViaLegacyPath_Success() throws Exception {
+            // The pre-9.3 prefix "api/core/passkey/" must keep working for deployed clients; it is retained as a legacy alias
+            // (AccountLegacyRestPaths.CORE_PASSKEY_PREFIX) alongside the canonical "api/account/passkeys/".
+            User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+            PasskeyCredential credential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+
             List<PasskeyDTO> passkeys = request.getList("/api/core/passkey/user", HttpStatus.OK, PasskeyDTO.class);
+
+            assertThat(passkeys).extracting(PasskeyDTO::credentialId).containsExactly(credential.getCredentialId());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testGetPasskeys_EmptyList() throws Exception {
+            List<PasskeyDTO> passkeys = request.getList("/api/account/passkeys/user", HttpStatus.OK, PasskeyDTO.class);
 
             assertThat(passkeys).isEmpty();
         }
@@ -132,7 +145,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             PasskeyCredential student1Credential = passkeyCredentialUtilService.createAndSavePasskeyCredential(student1);
             passkeyCredentialUtilService.createAndSavePasskeyCredential(student2);
 
-            List<PasskeyDTO> passkeys = request.getList("/api/core/passkey/user", HttpStatus.OK, PasskeyDTO.class);
+            List<PasskeyDTO> passkeys = request.getList("/api/account/passkeys/user", HttpStatus.OK, PasskeyDTO.class);
 
             assertThat(passkeys).hasSize(1);
             assertThat(passkeys.getFirst().credentialId()).isEqualTo(student1Credential.getCredentialId());
@@ -141,7 +154,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithAnonymousUser
         void testGetPasskeys_AccessDeniedForAnonymous() throws Exception {
-            request.getList("/api/core/passkey/user", HttpStatus.UNAUTHORIZED, PasskeyDTO.class);
+            request.getList("/api/account/passkeys/user", HttpStatus.UNAUTHORIZED, PasskeyDTO.class);
         }
     }
 
@@ -156,7 +169,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), "newLabel", existingCredential.getCreatedDate(), existingCredential.getLastUsed(),
                     false);
 
-            request.put("/api/core/passkey/" + modifiedCredential.credentialId(), modifiedCredential, HttpStatus.OK);
+            request.put("/api/account/passkeys/" + modifiedCredential.credentialId(), modifiedCredential, HttpStatus.OK);
 
             PasskeyCredential modifiedCredentialInDatabase = passkeyCredentialsRepository.findByCredentialId(modifiedCredential.credentialId())
                     .orElseThrow(() -> new IllegalStateException("Credential not found"));
@@ -174,7 +187,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), "newLabel", existingCredential.getCreatedDate(), existingCredential.getLastUsed(),
                     false);
 
-            request.put("/api/core/passkey/" + modifiedCredential.credentialId(), modifiedCredential, HttpStatus.UNAUTHORIZED);
+            request.put("/api/account/passkeys/" + modifiedCredential.credentialId(), modifiedCredential, HttpStatus.UNAUTHORIZED);
         }
 
         @Test
@@ -185,7 +198,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), "newLabel", existingCredential.getCreatedDate(), existingCredential.getLastUsed(),
                     false);
 
-            request.put("/api/core/passkey/" + modifiedCredential.credentialId(), modifiedCredential, HttpStatus.NOT_FOUND);
+            request.put("/api/account/passkeys/" + modifiedCredential.credentialId(), modifiedCredential, HttpStatus.NOT_FOUND);
         }
 
         @Test
@@ -196,7 +209,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), "newLabel", existingCredential.getCreatedDate(), existingCredential.getLastUsed(),
                     false);
 
-            request.put("/api/core/passkey/" + modifiedCredential.credentialId() + "idDoesNotExist", modifiedCredential, HttpStatus.NOT_FOUND);
+            request.put("/api/account/passkeys/" + modifiedCredential.credentialId() + "idDoesNotExist", modifiedCredential, HttpStatus.NOT_FOUND);
         }
     }
 
@@ -211,7 +224,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             assertThat(passkeyCredentialsRepository.findByCredentialId(credential.getCredentialId())).isPresent();
 
-            request.delete("/api/core/passkey/" + credential.getCredentialId(), HttpStatus.NO_CONTENT);
+            request.delete("/api/account/passkeys/" + credential.getCredentialId(), HttpStatus.NO_CONTENT);
 
             assertThat(passkeyCredentialsRepository.findByCredentialId(credential.getCredentialId())).isEmpty();
         }
@@ -222,7 +235,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
             PasskeyCredential credential = passkeyCredentialUtilService.createAndSavePasskeyCredential(student2);
 
-            request.delete("/api/core/passkey/" + credential.getCredentialId(), HttpStatus.NOT_FOUND);
+            request.delete("/api/account/passkeys/" + credential.getCredentialId(), HttpStatus.NOT_FOUND);
 
             // Verify credential still exists
             assertThat(passkeyCredentialsRepository.findByCredentialId(credential.getCredentialId())).isPresent();
@@ -231,7 +244,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testDeletePasskey_NotFoundForNonExistentCredential() throws Exception {
-            request.delete("/api/core/passkey/nonExistentCredentialId", HttpStatus.NOT_FOUND);
+            request.delete("/api/account/passkeys/nonExistentCredentialId", HttpStatus.NOT_FOUND);
         }
 
         @Test
@@ -240,7 +253,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
             PasskeyCredential credential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
 
-            request.delete("/api/core/passkey/" + credential.getCredentialId(), HttpStatus.UNAUTHORIZED);
+            request.delete("/api/account/passkeys/" + credential.getCredentialId(), HttpStatus.UNAUTHORIZED);
         }
 
         @Test
@@ -250,7 +263,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             PasskeyCredential credential1 = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
             PasskeyCredential credential2 = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
 
-            request.delete("/api/core/passkey/" + credential1.getCredentialId(), HttpStatus.NO_CONTENT);
+            request.delete("/api/account/passkeys/" + credential1.getCredentialId(), HttpStatus.NO_CONTENT);
 
             assertThat(passkeyCredentialsRepository.findByCredentialId(credential1.getCredentialId())).isEmpty();
             assertThat(passkeyCredentialsRepository.findByCredentialId(credential2.getCredentialId())).isPresent();
@@ -271,7 +284,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
             assertThat(existingCredential.isSuperAdminApproved()).isFalse();
 
-            request.put("/api/core/passkey/" + existingCredential.getCredentialId() + "/approval", true, HttpStatus.OK);
+            request.put("/api/account/passkeys/" + existingCredential.getCredentialId() + "/approval", true, HttpStatus.OK);
 
             PasskeyCredential modifiedCredentialInDatabase = passkeyCredentialsRepository.findByCredentialId(existingCredential.getCredentialId())
                     .orElseThrow(() -> new IllegalStateException("Credential not found"));
@@ -287,7 +300,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             User user = userUtilService.createAndSaveUser(TEST_PREFIX + "adminapproval");
             PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
 
-            request.put("/api/core/passkey/" + existingCredential.getCredentialId() + "/approval", true, HttpStatus.FORBIDDEN);
+            request.put("/api/account/passkeys/" + existingCredential.getCredentialId() + "/approval", true, HttpStatus.FORBIDDEN);
         }
 
         @Test
@@ -295,7 +308,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         void testUpdatePasskeyApproval_NotFound() throws Exception {
             when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
 
-            request.put("/api/core/passkey/idDoesNotExist/approval", true, HttpStatus.NOT_FOUND);
+            request.put("/api/account/passkeys/idDoesNotExist/approval", true, HttpStatus.NOT_FOUND);
         }
 
         @Test
@@ -312,7 +325,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             assertThat(existingCredential.isSuperAdminApproved()).isTrue();
 
             // Revoke approval
-            request.put("/api/core/passkey/" + existingCredential.getCredentialId() + "/approval", false, HttpStatus.OK);
+            request.put("/api/account/passkeys/" + existingCredential.getCredentialId() + "/approval", false, HttpStatus.OK);
 
             // Verify the approval was revoked
             PasskeyCredential credentialInDatabase = passkeyCredentialsRepository.findByCredentialId(existingCredential.getCredentialId())
@@ -341,7 +354,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 passkeyCredentialsRepository.save(existingCredential);
 
                 // Try to revoke approval - should fail with specific error
-                request.putAndExpectError("/api/core/passkey/" + existingCredential.getCredentialId() + "/approval", false, HttpStatus.BAD_REQUEST,
+                request.putAndExpectError("/api/account/passkeys/" + existingCredential.getCredentialId() + "/approval", false, HttpStatus.BAD_REQUEST,
                         "passkeyAuth.cannotRevokeInternalAdminPasskeyApproval");
 
                 // Verify the approval was not revoked
@@ -377,7 +390,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             credential2.setSuperAdminApproved(true);
             passkeyCredentialsRepository.save(credential2);
 
-            List<PasskeyAdminDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, PasskeyAdminDTO.class);
+            List<PasskeyAdminDTO> passkeys = request.getList("/api/account/passkeys/admin", HttpStatus.OK, PasskeyAdminDTO.class);
 
             // Only assert on the credentials we created, since other admin users may have passkeys from other tests
             assertThat(passkeys).extracting(PasskeyAdminDTO::credentialId).contains(credential1.getCredentialId(), credential2.getCredentialId());
@@ -400,13 +413,13 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = "admin", roles = "ADMIN")
         void testGetAllPasskeysForAdmin_AccessDeniedBecauseNotSuperAdmin() throws Exception {
-            request.get("/api/core/passkey/admin", HttpStatus.FORBIDDEN, List.class);
+            request.get("/api/account/passkeys/admin", HttpStatus.FORBIDDEN, List.class);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testGetAllPasskeysForAdmin_AccessDeniedBecauseStudent() throws Exception {
-            request.get("/api/core/passkey/admin", HttpStatus.FORBIDDEN, List.class);
+            request.get("/api/account/passkeys/admin", HttpStatus.FORBIDDEN, List.class);
         }
 
         @Test
@@ -419,7 +432,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             adminWithoutPasskeys.setAuthorities(Set.of(de.tum.cit.aet.artemis.account.domain.Authority.ADMIN_AUTHORITY));
             userTestRepository.save(adminWithoutPasskeys);
 
-            List<PasskeyAdminDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, PasskeyAdminDTO.class);
+            List<PasskeyAdminDTO> passkeys = request.getList("/api/account/passkeys/admin", HttpStatus.OK, PasskeyAdminDTO.class);
 
             // Verify the admin user we created has no passkeys in the response (tests empty case for this user)
             assertThat(passkeys.stream().filter(p -> p.userLogin().equals(adminWithoutPasskeys.getLogin())).toList()).isEmpty();
@@ -447,7 +460,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             PasskeyCredential instructorCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(instructor);
 
             // Fetch all admin passkeys
-            List<PasskeyAdminDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, PasskeyAdminDTO.class);
+            List<PasskeyAdminDTO> passkeys = request.getList("/api/account/passkeys/admin", HttpStatus.OK, PasskeyAdminDTO.class);
 
             // Verify only admin passkey is returned
             assertThat(passkeys).isNotEmpty();

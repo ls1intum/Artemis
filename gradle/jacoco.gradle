@@ -14,6 +14,8 @@ ext {
         "atlas"         :          ["INSTRUCTION": 0.875, "CLASS":  7],
         // Lowered to accommodate PostgreSQL/MySQL testcontainer configuration classes
         "buildagent"    :          ["INSTRUCTION": 0.750, "CLASS":  3],
+        "localci"       :          ["INSTRUCTION": 0.750, "CLASS": 15],
+        "localvc"       :          ["INSTRUCTION": 0.750, "CLASS":  5],
         // Lowered after notification extraction (~9k LOC moved out, including well-tested course
         // notification services). Remaining communication module covers messaging/conversations
         // only. TODO: ratchet back up as messaging side gets more focused test coverage.
@@ -29,6 +31,9 @@ ext {
         "fileupload"    :          ["INSTRUCTION": 0.924, "CLASS":  1],
         "hyperion"      :          ["INSTRUCTION": 0.646, "CLASS":  9],
         "iris"          :          ["INSTRUCTION": 0.811, "CLASS": 21],
+        // New module extracted from programming in this PR. Conservative initial baseline; ratchet up
+        // once CI measures the actual coverage of the extracted Jenkins connector code.
+        "jenkins"       :          ["INSTRUCTION": 0.750, "CLASS":  5],
         "lecture"       :          ["INSTRUCTION": 0.891, "CLASS":  1],
         "lti"           :          ["INSTRUCTION": 0.860, "CLASS":  2],
         "modeling"      :          ["INSTRUCTION": 0.907, "CLASS":  1],

@@ -8,7 +8,7 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
 import { PlagiarismMatch, SimpleMatch } from 'app/plagiarism/shared/entities/PlagiarismMatch';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { TextSubmissionViewerComponent } from 'app/plagiarism/manage/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';

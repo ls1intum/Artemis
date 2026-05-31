@@ -111,7 +111,10 @@ Organized by feature module:
 - `core/` - Configuration, security base, utilities, base entities
 - `account/` - User, authority, passkey, account REST, authentication, LDAP
 - `exercise/` - Base exercise functionality
-- `programming/` - Programming exercises with CI/CD
+- `programming/` - Programming exercises (lifecycle, grading, repositories)
+- `jenkins/` - Jenkins CI backend connector
+- `localvc/` - Embedded git server (HTTP + SSH), repo URI handling, VCS access tokens
+- `localci/` - Local CI orchestration: build job queue, dispatch, result processing
 - `quiz/` - Quiz exercises
 - `modeling/` - UML diagram exercises
 - `text/` - Text exercises

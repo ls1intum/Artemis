@@ -17,7 +17,7 @@ import { ComplaintService } from 'app/assessment/shared/services/complaint.servi
 import { LockRepositoryPolicy, SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { SubmissionType, getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { DateContent, InformationBox, StringNumberContent } from 'app/shared/information-box/information-box.component';
+import { DateContent, InformationBox, StringNumberContent } from 'app/shared-ui/information-box/information-box.component';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';

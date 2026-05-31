@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { concatMap, filter, take, tap } from 'rxjs/operators';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { BrowserFingerprintService } from 'app/account/fingerprint/browser-fingerprint.service';
 import { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { Comment } from 'app/exercise/shared/entities/review/comment.model';

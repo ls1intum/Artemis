@@ -11,7 +11,7 @@ import { CourseMaterialImportOptionsDTO, CourseMaterialImportResultDTO } from '.
 @Injectable({ providedIn: 'root' })
 export class CourseMaterialImportService {
     private readonly http = inject(HttpClient);
-    private readonly resourceUrl = 'api/core/courses';
+    private readonly resourceUrl = 'api/course/courses';
 
     /**
      * Get a summary of what can be imported from the source course.
@@ -21,7 +21,7 @@ export class CourseMaterialImportService {
      * @returns Observable with the course summary
      */
     getImportSummary(targetCourseId: number, sourceCourseId: number): Observable<CourseSummaryDTO> {
-        return this.http.get<CourseSummaryDTO>(`${this.resourceUrl}/${targetCourseId}/import-summary/${sourceCourseId}`);
+        return this.http.get<CourseSummaryDTO>(`${this.resourceUrl}/${targetCourseId}/import-summary?sourceCourseId=${sourceCourseId}`);
     }
 
     /**

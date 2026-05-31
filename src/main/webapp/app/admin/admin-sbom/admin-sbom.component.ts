@@ -20,13 +20,13 @@ import {
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass } from '@angular/common';
 
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
-import { AlertService } from 'app/shared/service/alert.service';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
 import { AdminSbomService } from './admin-sbom.service';
 import { ArtemisVersion, CombinedSbom, ComponentVulnerabilities, SbomComponent, Vulnerability } from './admin-sbom.model';
