@@ -37,7 +37,7 @@ describe('ExportButtonComponent', () => {
 
     it('should initialize and open the export dialog', () => {
         const onClose = new Subject<ExportModalResult | undefined>();
-        const dialogServiceOpenStub = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as DynamicDialogRef);
+        const dialogServiceOpenStub = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as DynamicDialogRef);
 
         comp.openExportModal(new MouseEvent('click'));
 
@@ -59,7 +59,7 @@ describe('ExportButtonComponent', () => {
 
     it('should emit chosen csv options when the dialog returns a csv result', () => {
         const onClose = new Subject<ExportModalResult | undefined>();
-        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as DynamicDialogRef);
+        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as DynamicDialogRef);
         const emitSpy = vi.spyOn(comp.onExport, 'emit');
         const options: CsvExportOptions = {
             fieldSeparator: CsvFieldSeparator.COMMA,
@@ -76,7 +76,7 @@ describe('ExportButtonComponent', () => {
 
     it('should emit undefined when the dialog returns an excel result', () => {
         const onClose = new Subject<ExportModalResult | undefined>();
-        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as DynamicDialogRef);
+        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as DynamicDialogRef);
         const emitSpy = vi.spyOn(comp.onExport, 'emit');
 
         comp.openExportModal(new MouseEvent('click'));
@@ -87,7 +87,7 @@ describe('ExportButtonComponent', () => {
 
     it('should not emit when the dialog is dismissed', () => {
         const onClose = new Subject<ExportModalResult | undefined>();
-        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as DynamicDialogRef);
+        vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as DynamicDialogRef);
         const emitSpy = vi.spyOn(comp.onExport, 'emit');
 
         comp.openExportModal(new MouseEvent('click'));
