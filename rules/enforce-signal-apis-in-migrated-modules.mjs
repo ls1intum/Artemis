@@ -14,6 +14,7 @@ const MIGRATED_MODULES = [
     'buildagent',
     'communication',
     'core',
+    'exercise/result',
     'fileupload',
     'foundation',
     'iris',

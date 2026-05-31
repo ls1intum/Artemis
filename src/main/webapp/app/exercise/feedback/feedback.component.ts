@@ -17,7 +17,7 @@ import { isProgrammingExerciseParticipation } from 'app/programming/shared/utils
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { BarChartModule, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
-import { faCircleNotch, faExclamationTriangle, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { axisTickFormattingWithPercentageSign } from 'app/exercise/statistics-graph/util/statistics-graph.utils';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -108,7 +108,6 @@ export class FeedbackComponent implements OnInit, OnChanges {
     @Input() isPrinting = false;
 
     // Icons
-    faXmark = faXmark;
     faCircleNotch = faCircleNotch;
     faExclamationTriangle = faExclamationTriangle;
     isLoading = false;
