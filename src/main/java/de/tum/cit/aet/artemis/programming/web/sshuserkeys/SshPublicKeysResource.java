@@ -66,7 +66,7 @@ public class SshPublicKeysResource {
      * @return the ResponseEntity containing the requested public SSH key of a user with status 200 (OK), or with status 403 (Access Forbidden) if the key does not exist or is not
      *         owned by the requesting user
      */
-    @GetMapping("public-key/{keyId}")
+    @GetMapping({ "public-keys/{keyId}", "public-key/{keyId}" })
     @EnforceAtLeastStudent
     public ResponseEntity<UserSshPublicKeyDTO> getSshPublicKey(@PathVariable Long keyId) {
         User user = userRepository.getUser();
@@ -82,7 +82,7 @@ public class SshPublicKeysResource {
      * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) when the SSH key is malformed, the label is too long, or when a key with the same hash
      *         already exists
      */
-    @PostMapping("public-key")
+    @PostMapping({ "public-keys", "public-key" })
     @EnforceAtLeastStudent
     public ResponseEntity<Void> addSshPublicKey(@RequestBody UserSshPublicKeyDTO sshPublicKey) throws GeneralSecurityException, IOException {
         User user = userRepository.getUser();
@@ -105,7 +105,7 @@ public class SshPublicKeysResource {
      *
      * @return the ResponseEntity with status 200 (OK) when the deletion succeeded, or with status 403 (Access Forbidden) if the key does not belong to the user, or does not exist
      */
-    @DeleteMapping("public-key/{keyId}")
+    @DeleteMapping({ "public-keys/{keyId}", "public-key/{keyId}" })
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteSshPublicKey(@PathVariable Long keyId) {
         User user = userRepository.getUser();

@@ -1403,7 +1403,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             studentExamRepository.save(instructorTestRunExam);
 
             // Start the test run via conduction endpoint - this creates the participation and repository
-            request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/test-run/" + instructorTestRunExam.getId() + "/conduction", HttpStatus.OK,
+            request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/test-runs/" + instructorTestRunExam.getId() + "/conduction", HttpStatus.OK,
                     StudentExam.class);
 
             // Wait for participation to be created

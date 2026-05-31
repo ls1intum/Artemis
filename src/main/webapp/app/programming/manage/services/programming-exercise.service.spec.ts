@@ -357,7 +357,7 @@ describe('ProgrammingExercise Service', () => {
         const exerciseId = 1;
         const participationId = 5;
         service.exportStudentRepository(exerciseId, participationId).subscribe();
-        const url = `${resourceUrl}/${exerciseId}/export-student-repository/${participationId}`;
+        const url = `${resourceUrl}/${exerciseId}/export-student-repository?participationId=${participationId}`;
         const req = httpMock.expectOne({ method: 'GET', url });
         req.flush(new Blob());
         tick();

@@ -53,10 +53,10 @@ describe('CopyToClipboardButtonComponent', () => {
         const copyButton = fixture.debugElement.nativeElement.querySelector('#copyButton');
         copyButton.click();
 
-        expect(component.wasCopied()).toBe(true);
+        expect(component.wasCopied()).toBeTruthy();
         vi.advanceTimersByTime(3000);
         fixture.detectChanges();
-        expect(component.wasCopied()).toBe(false);
+        expect(component.wasCopied()).toBeFalsy();
         vi.useRealTimers();
     });
 });

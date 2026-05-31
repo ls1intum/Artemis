@@ -59,7 +59,7 @@ describe('AdminPasskeyManagementService', () => {
         it('should retrieve all passkeys with user information', async () => {
             const promise = service.getAllPasskeys();
 
-            const req = httpMock.expectOne('api/account/passkey/admin');
+            const req = httpMock.expectOne('api/account/passkeys/admin');
             expect(req.request.method).toBe('GET');
             req.flush(mockPasskeys);
 
@@ -73,7 +73,7 @@ describe('AdminPasskeyManagementService', () => {
         it('should handle empty passkey list', async () => {
             const promise = service.getAllPasskeys();
 
-            const req = httpMock.expectOne('api/account/passkey/admin');
+            const req = httpMock.expectOne('api/account/passkeys/admin');
             expect(req.request.method).toBe('GET');
             req.flush([]);
 
@@ -86,7 +86,7 @@ describe('AdminPasskeyManagementService', () => {
             const errorMessage = 'Failed to load passkeys';
             const promise = service.getAllPasskeys();
 
-            const req = httpMock.expectOne('api/account/passkey/admin');
+            const req = httpMock.expectOne('api/account/passkeys/admin');
             expect(req.request.method).toBe('GET');
             req.flush(errorMessage, { status: 500, statusText: 'Internal Server Error' });
 
@@ -95,7 +95,7 @@ describe('AdminPasskeyManagementService', () => {
                 // noinspection ExceptionCaughtLocallyJS - intended to be caught locally (just for easier understanding of the test results if it fails)
                 throw new Error('should have failed with 500 error');
             } catch (error: any) {
-                expect(error.message).toBe('Http failure response for api/account/passkey/admin: 500 Internal Server Error');
+                expect(error.message).toBe('Http failure response for api/account/passkeys/admin: 500 Internal Server Error');
             }
         });
     });
@@ -114,7 +114,7 @@ describe('AdminPasskeyManagementService', () => {
 
             const promise = service.updatePasskeyApproval(credentialId, isSuperAdminApproved);
 
-            const req = httpMock.expectOne(`api/account/passkey/${credentialId}/approval`);
+            const req = httpMock.expectOne(`api/account/passkeys/${credentialId}/approval`);
             expect(req.request.method).toBe('PUT');
             expect(req.request.body).toBe(true);
             req.flush(mockResponse);
@@ -137,7 +137,7 @@ describe('AdminPasskeyManagementService', () => {
 
             const promise = service.updatePasskeyApproval(credentialId, isSuperAdminApproved);
 
-            const req = httpMock.expectOne(`api/account/passkey/${credentialId}/approval`);
+            const req = httpMock.expectOne(`api/account/passkeys/${credentialId}/approval`);
             expect(req.request.method).toBe('PUT');
             expect(req.request.body).toBe(false);
             req.flush(mockResponse);
@@ -152,7 +152,7 @@ describe('AdminPasskeyManagementService', () => {
             const errorMessage = 'Failed to update approval status';
             const promise = service.updatePasskeyApproval(credentialId, true);
 
-            const req = httpMock.expectOne(`api/account/passkey/${credentialId}/approval`);
+            const req = httpMock.expectOne(`api/account/passkeys/${credentialId}/approval`);
             expect(req.request.method).toBe('PUT');
             req.flush(errorMessage, { status: 500, statusText: 'Internal Server Error' });
 
@@ -171,7 +171,7 @@ describe('AdminPasskeyManagementService', () => {
             const errorMessage = 'Passkey not found';
             const promise = service.updatePasskeyApproval(credentialId, true);
 
-            const req = httpMock.expectOne(`api/account/passkey/${credentialId}/approval`);
+            const req = httpMock.expectOne(`api/account/passkeys/${credentialId}/approval`);
             expect(req.request.method).toBe('PUT');
             req.flush(errorMessage, { status: 404, statusText: 'Not Found' });
 

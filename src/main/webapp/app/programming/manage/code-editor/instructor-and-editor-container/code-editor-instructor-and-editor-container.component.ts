@@ -40,13 +40,14 @@ import { CodeGenerationRequest } from 'app/openapi/model/codeGenerationRequest';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ConfirmAutofocusModalComponent } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
+import { ConfirmAutofocusModalResult, openConfirmAutofocusDialog } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { HyperionCompletionStatus, HyperionEvent, HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { Observable, Subscription, catchError, of, take, tap } from 'rxjs';
 import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { DialogService } from 'primeng/dynamicdialog';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
@@ -282,6 +283,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private codeGenAlertService = inject(AlertService);
     private sessionStorageService = inject(SessionStorageService);
     private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private hyperionWs = inject(HyperionWebsocketService);
     private repoService = inject(CodeEditorRepositoryService);
     private hyperionCodeGenerationApi = inject(HyperionCodeGenerationApiService);
@@ -404,11 +406,20 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             this.codeGenAlertService.addAlert({ type: AlertType.WARNING, translationKey: 'artemisApp.programmingExercise.codeGeneration.noRepositorySelected' });
             return;
         }
-        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'md' });
-        modalRef.componentInstance.title = 'artemisApp.programmingExercise.codeGeneration.confirmTitle';
-        modalRef.componentInstance.text = 'artemisApp.programmingExercise.codeGeneration.confirmText';
-        modalRef.componentInstance.translateText = true;
-        modalRef.result.then(() => this.startCodeGeneration(repositories)).catch(() => {});
+        const dialogRef = openConfirmAutofocusDialog(
+            this.dialogService,
+            {
+                title: 'artemisApp.programmingExercise.codeGeneration.confirmTitle',
+                text: 'artemisApp.programmingExercise.codeGeneration.confirmText',
+                translateText: true,
+            },
+            { width: '30rem' },
+        );
+        dialogRef?.onClose.subscribe((result: ConfirmAutofocusModalResult | undefined) => {
+            if (result?.confirmed) {
+                this.startCodeGeneration(repositories);
+            }
+        });
     }
 
     /**

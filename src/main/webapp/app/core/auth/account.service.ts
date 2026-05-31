@@ -86,7 +86,7 @@ export class AccountService implements IAccountService {
     }
 
     save(user: User): Observable<HttpResponse<User>> {
-        return this.http.put<User>('api/account/account', user, { observe: 'response' });
+        return this.http.put<User>('api/account/basic-information', user, { observe: 'response' });
     }
 
     authenticate(identity?: User) {
@@ -356,7 +356,7 @@ export class AccountService implements IAccountService {
      * Sends a request to the server to delete the user's current vcsAccessToken
      */
     deleteUserVcsAccessToken(): Observable<void> {
-        return this.http.delete<void>('api/account/account/user-vcs-access-token');
+        return this.http.delete<void>('api/account/user-vcs-access-token');
     }
 
     /**
@@ -366,7 +366,7 @@ export class AccountService implements IAccountService {
      */
     addNewVcsAccessToken(expiryDate: string): Observable<EntityResponseType> {
         const params = new HttpParams().set('expiryDate', expiryDate);
-        return this.http.put<User>('api/account/account/user-vcs-access-token', null, { observe: 'response', params });
+        return this.http.put<User>('api/account/user-vcs-access-token', null, { observe: 'response', params });
     }
 
     /**
@@ -377,7 +377,7 @@ export class AccountService implements IAccountService {
      */
     getVcsAccessToken(participationId: number): Observable<HttpResponse<string>> {
         const params = new HttpParams().set('participationId', participationId);
-        return this.http.get<string>('api/account/account/participation-vcs-access-token', {
+        return this.http.get<string>('api/account/participation-vcs-access-token', {
             observe: 'response',
             params,
             responseType: 'text' as 'json',
@@ -392,7 +392,7 @@ export class AccountService implements IAccountService {
      */
     createVcsAccessToken(participationId: number): Observable<HttpResponse<string>> {
         const params = new HttpParams().set('participationId', participationId);
-        return this.http.put<string>('api/account/account/participation-vcs-access-token', null, {
+        return this.http.put<string>('api/account/participation-vcs-access-token', null, {
             observe: 'response',
             params,
             responseType: 'text' as 'json',
@@ -414,7 +414,7 @@ export class AccountService implements IAccountService {
     }
 
     setUserEnabledMemiris(memirisEnabled: boolean): void {
-        this.http.put('api/account/account/enable-memiris', memirisEnabled).subscribe({
+        this.http.put('api/account/enable-memiris', memirisEnabled).subscribe({
             next: () => {
                 this.userIdentity.update((currentUserIdentity) => {
                     if (!currentUserIdentity) {

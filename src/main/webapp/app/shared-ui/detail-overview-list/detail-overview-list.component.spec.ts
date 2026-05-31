@@ -1,3 +1,5 @@
+import { vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
@@ -29,6 +31,7 @@ const sections: DetailOverviewSection[] = [
 ];
 
 describe('DetailOverviewList', () => {
+    setupTestBed({ zoneless: true });
     let component: DetailOverviewListComponent;
     let fixture: ComponentFixture<DetailOverviewListComponent>;
     let modelingService: ModelingExerciseService;
@@ -40,7 +43,7 @@ describe('DetailOverviewList', () => {
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
-                { provide: ModelingExerciseService, useValue: { convertToPdf: jest.fn() } },
+                { provide: ModelingExerciseService, useValue: { convertToPdf: vi.fn() } },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
@@ -90,14 +93,14 @@ describe('DetailOverviewList', () => {
     });
 
     it('should download apollon Diagram', () => {
-        const downloadSpy = jest.spyOn(modelingService, 'convertToPdf').mockReturnValue(of(new HttpResponse({ body: new Blob() })));
+        const downloadSpy = vi.spyOn(modelingService, 'convertToPdf').mockReturnValue(of(new HttpResponse({ body: new Blob() })));
         component.downloadApollonDiagramAsPDf({} as UMLModel, 'title');
         expect(downloadSpy).toHaveBeenCalledOnce();
     });
 
     it('should error on download apollon Diagram fail', () => {
-        jest.spyOn(modelingService, 'convertToPdf').mockReturnValue(throwError(() => new HttpResponse({ body: new Blob() })));
-        const errorSpy = jest.spyOn(alertService, 'error');
+        vi.spyOn(modelingService, 'convertToPdf').mockReturnValue(throwError(() => new HttpResponse({ body: new Blob() })));
+        const errorSpy = vi.spyOn(alertService, 'error');
         component.downloadApollonDiagramAsPDf({} as UMLModel, 'title');
         expect(errorSpy).toHaveBeenCalledOnce();
     });
