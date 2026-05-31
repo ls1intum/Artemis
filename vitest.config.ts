@@ -77,6 +77,7 @@ export default defineConfig({
             'src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts', // include problem statement service tests
             'src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts', // include problem statement utils tests
             'src/main/webapp/app/editor/monaco-editor/inline-refinement-button/*.spec.ts', // include inline refinement button tests
+            'src/main/webapp/app/programming/manage/exercise/programming-exercise.component.spec.ts', // include programming exercise component tests
             'src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/**/*.spec.ts', // include checklist-panel tests
             'src/main/webapp/app/hyperion/**/*.spec.ts', // include hyperion module tests
             'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**/*.spec.ts', // include build phases editor tests
@@ -191,6 +192,7 @@ export default defineConfig({
                 'src/main/webapp/app/programming/manage/services/problem-statement.service.ts', // include problem statement service for code coverage
                 'src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts', // include problem statement utils for code coverage
                 'src/main/webapp/app/editor/monaco-editor/inline-refinement-button/*.ts', // include inline refinement button for code coverage
+                'src/main/webapp/app/programming/manage/exercise/programming-exercise.component.ts', // include programming exercise component for code coverage
                 'src/main/webapp/app/exercise/additional-feedback/**/*.ts', // include additional feedback for code coverage
                 'src/main/webapp/app/exercise/assessment-progress-label/**/*.ts', // include assessment progress label for code coverage
                 'src/main/webapp/app/exercise/course-exercises/**/*.ts', // include course exercise service for code coverage
