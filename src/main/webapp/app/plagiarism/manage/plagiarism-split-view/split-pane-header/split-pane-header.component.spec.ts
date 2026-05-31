@@ -99,11 +99,12 @@ describe('SplitPaneHeaderComponent', () => {
     });
 
     it('does not toggle "show files"', () => {
+        fixture2.componentRef.setInput('files', []);
         comp2.showFiles = false;
 
         comp2.toggleShowFiles(false);
 
-        expect(comp1.showFiles).toBe(false);
+        expect(comp2.showFiles).toBe(false);
     });
 
     it('should emit selected file through fileSelectedSubject', () => {
