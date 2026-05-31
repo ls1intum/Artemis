@@ -8,7 +8,7 @@ import { ImportAllCompetenciesComponent } from 'app/atlas/manage/competency-mana
 import { Course } from 'app/course/shared/entities/course.model';
 
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
@@ -22,12 +22,14 @@ describe('ImportAllCompetenciesComponent', () => {
     let fixture: ComponentFixture<ImportAllCompetenciesComponent>;
     let component: ImportAllCompetenciesComponent;
     let dialogRef: DynamicDialogRef;
+    let dialogConfig: DynamicDialogConfig;
 
     beforeEach(async () => {
         dialogRef = {
             close: vi.fn(),
             onClose: new Subject<any>(),
         } as unknown as DynamicDialogRef;
+        dialogConfig = { data: {} } as DynamicDialogConfig;
 
         await TestBed.configureTestingModule({
             imports: [
@@ -42,6 +44,7 @@ describe('ImportAllCompetenciesComponent', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: DynamicDialogRef, useValue: dialogRef },
+                { provide: DynamicDialogConfig, useValue: dialogConfig },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -58,6 +61,15 @@ describe('ImportAllCompetenciesComponent', () => {
     it('should initialize', () => {
         fixture.detectChanges();
         expect(component).toBeDefined();
+    });
+
+    it('keeps disabledIds provided via dialog data (base effect must not clobber it)', () => {
+        // Regression guard: when opened via DialogService, disabledIds arrives through DynamicDialogConfig.data and
+        // is applied in ngOnInit. The base ImportComponent effect must NOT reset it to the input default [] —
+        // otherwise the same-course import-exclusion guard silently breaks.
+        dialogConfig.data = { disabledIds: [42] };
+        fixture.detectChanges();
+        expect(component.disabledIds).toContain(42);
     });
 
     it('should extract competency properties', () => {

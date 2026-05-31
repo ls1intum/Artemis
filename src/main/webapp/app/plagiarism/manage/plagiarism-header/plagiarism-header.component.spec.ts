@@ -6,28 +6,29 @@ import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatu
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PlagiarismHeaderComponent } from 'app/plagiarism/manage/plagiarism-header/plagiarism-header.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
+import { DialogService } from 'primeng/dynamicdialog';
 
 describe('Plagiarism Header Component', () => {
     let comp: PlagiarismHeaderComponent;
     let fixture: ComponentFixture<PlagiarismHeaderComponent>;
     let plagiarismCasesService: PlagiarismCasesService;
     const alertServiceMock = { error: jest.fn(), addAlert: jest.fn() };
+    let dialogClose: Subject<any>;
 
     beforeEach(() => {
+        dialogClose = new Subject<any>();
         TestBed.configureTestingModule({
             declarations: [PlagiarismHeaderComponent, MockDirective(TranslateDirective)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useValue: alertServiceMock },
-                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: DialogService, useValue: { open: jest.fn(() => ({ onClose: dialogClose.asObservable() })) } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -82,14 +83,14 @@ describe('Plagiarism Header Component', () => {
 
     it('should open a confirmation popup to deny a plagiarism if it is changing from confirmed to denied', () => {
         jest.spyOn(comp, 'updatePlagiarismStatus');
-        const modalSpy = jest.spyOn(TestBed.inject(NgbModal), 'open');
+        const dialogSpy = jest.spyOn(TestBed.inject(DialogService), 'open');
 
         fixture.componentRef.setInput('comparison', { ...comp.comparison(), status: PlagiarismStatus.CONFIRMED });
 
         comp.denyPlagiarism();
 
         expect(comp.updatePlagiarismStatus).not.toHaveBeenCalled();
-        expect(modalSpy).toHaveBeenCalledOnce();
+        expect(dialogSpy).toHaveBeenCalledOnce();
         expect(comp.isLoading).toBeTrue();
     });
 
