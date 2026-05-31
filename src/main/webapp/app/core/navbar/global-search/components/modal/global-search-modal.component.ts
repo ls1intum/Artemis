@@ -17,7 +17,7 @@ import { GlobalSearchApiService } from 'app/openapi/api/globalSearchApi.service'
 import { SearchInputComponent } from './search-input/search-input.component';
 import { SearchEntityType, SearchableEntity } from '../../models/searchable-entity.model';
 import { GlobalSearchLectureResultsComponent } from 'app/core/navbar/global-search/components/views/lecture-results/global-search-lecture-results.component';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { TranslateService } from '@ngx-translate/core';
 
 interface SearchState {
@@ -241,7 +241,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     }
 
     protected onSearchKeyDown(event: KeyboardEvent) {
-        this.onInputKeydown(event);
+        this.handleKeyboardEvent(event);
     }
 
     /**
