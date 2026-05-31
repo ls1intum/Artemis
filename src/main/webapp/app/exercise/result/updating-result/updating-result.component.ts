@@ -89,7 +89,6 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
             }
 
             if (this.result) {
-                // TODO: The 'emit' function requires a mandatory void argument
                 this.showResult.emit();
             }
         }
@@ -136,10 +135,8 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
                     } else {
                         this.result = getLatestResultOfStudentParticipation(this.participation(), showUngradedResults, false);
                     }
-                    // TODO: The 'emit' function requires a mandatory void argument
                     this.onParticipationChange.emit();
                     if (result) {
-                        // TODO: The 'emit' function requires a mandatory void argument
                         this.showResult.emit();
                     }
                 }),

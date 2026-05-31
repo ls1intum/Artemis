@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService } from 'primeng/dynamicdialog';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { DebugElement, VERSION } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
@@ -57,7 +57,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     let openModalStub: jest.SpyInstance;
     let getLatestResultWithFeedbacks: jest.SpyInstance;
 
-    const dialogRef = {} as any;
+    const dialogRef = {} as unknown as DynamicDialogRef;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
