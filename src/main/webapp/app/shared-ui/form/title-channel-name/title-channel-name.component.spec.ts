@@ -19,6 +19,10 @@ describe('TitleChannelNameComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
+            // Dedicated spec for the deprecated TitleChannelNameComponent, which is still shipped until the
+            // PrimeNG migration completes. As a standalone component it must be registered via `imports`, so
+            // referencing the deprecated symbol here is intentional and unavoidable.
+            // eslint-disable-next-line @typescript-eslint/no-deprecated
             imports: [FormsModule, TitleChannelNameComponent, MockDirective(CustomNotIncludedInValidatorDirective)],
             providers: [NgForm, { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
