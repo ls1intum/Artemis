@@ -239,8 +239,9 @@ public class ProgrammingExerciseCreationUpdateService {
         savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
         if (automaticAfterDueDateService.isPresent()) {
             final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(savedProgrammingExercise);
-            if (!Objects.equals(programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate)) {
-                savedProgrammingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
+            final boolean buildAndTestDateChanged = !Objects.equals(savedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate);
+            final boolean feedbackRequestsChanged = setBuildAndTestDateAndEnforceFeedbackRequestInvariant(savedProgrammingExercise, computedBuildAndTestDate);
+            if (buildAndTestDateChanged || feedbackRequestsChanged) {
                 savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
             }
         }
@@ -337,7 +338,7 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExerciseBuildPlanService.updateBuildPlanForExercise(originalBuildPlanConfiguration, updatedProgrammingExercise);
         if (automaticAfterDueDateService.isPresent()) {
             final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(updatedProgrammingExercise, buildAndTestOffset);
-            updatedProgrammingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
+            setBuildAndTestDateAndEnforceFeedbackRequestInvariant(updatedProgrammingExercise, computedBuildAndTestDate);
         }
 
         channelService.updateExerciseChannel(updatedProgrammingExercise, updatedProgrammingExercise);
@@ -411,7 +412,7 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExercise.validateDates();
         if (automaticAfterDueDateService.isPresent()) {
             final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, originalBuildAndTestOffset);
-            programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
+            setBuildAndTestDateAndEnforceFeedbackRequestInvariant(programmingExercise, computedBuildAndTestDate);
         }
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -528,5 +529,23 @@ public class ProgrammingExerciseCreationUpdateService {
             throw new BadRequestAlertException("The problem statement must not exceed " + MAX_PROBLEM_STATEMENT_LENGTH + " characters", "ProgrammingExercise",
                     "problemStatementTooLong");
         }
+    }
+
+    /**
+     * Sets computed build and test date and adjusts the feedback request to false if necessary
+     *
+     * @param programmingExercise      the exercise to potentially adjust
+     * @param computedBuildAndTestDate the newly computed build and test date for the exercise
+     *
+     * @return true if the allow feedback requests changed else false
+     */
+    private boolean setBuildAndTestDateAndEnforceFeedbackRequestInvariant(ProgrammingExercise programmingExercise, @Nullable ZonedDateTime computedBuildAndTestDate) {
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
+        if (computedBuildAndTestDate == null || !programmingExercise.getAllowFeedbackRequests()) {
+            return false;
+        }
+
+        programmingExercise.setAllowFeedbackRequests(false);
+        return true;
     }
 }

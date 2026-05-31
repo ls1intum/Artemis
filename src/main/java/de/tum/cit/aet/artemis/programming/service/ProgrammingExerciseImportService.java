@@ -176,8 +176,9 @@ public class ProgrammingExerciseImportService {
         newProgrammingExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(originalProgrammingExercise, newProgrammingExercise);
         if (automaticAfterDueDateService.isPresent()) {
             final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(newProgrammingExercise);
-            if (!Objects.equals(newProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate)) {
-                newProgrammingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
+            final boolean buildAndTestDateChanged = !Objects.equals(newProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate);
+            final boolean feedbackRequestsChanged = setBuildAndTestDateAndEnforceFeedbackRequestInvariant(newProgrammingExercise, computedBuildAndTestDate);
+            if (buildAndTestDateChanged || feedbackRequestsChanged) {
                 programmingExerciseRepository.save(newProgrammingExercise);
             }
         }
@@ -213,6 +214,16 @@ public class ProgrammingExerciseImportService {
 
         programmingExerciseTaskService.replaceTestIdsWithNames(newProgrammingExercise);
         return newProgrammingExercise;
+    }
+
+    private boolean setBuildAndTestDateAndEnforceFeedbackRequestInvariant(ProgrammingExercise programmingExercise, ZonedDateTime computedBuildAndTestDate) {
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
+        if (computedBuildAndTestDate == null || !programmingExercise.getAllowFeedbackRequests()) {
+            return false;
+        }
+
+        programmingExercise.setAllowFeedbackRequests(false);
+        return true;
     }
 
 }
