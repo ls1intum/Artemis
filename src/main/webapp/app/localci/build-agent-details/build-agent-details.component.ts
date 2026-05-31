@@ -15,7 +15,8 @@ import { BuildJob, BuildJobStatistics, FinishedBuildJob } from 'app/localci/shar
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
@@ -65,7 +66,8 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     private readonly router = inject(Router);
     private readonly buildQueueService = inject(BuildOverviewService);
     private readonly alertService = inject(AlertService);
-    private readonly modalService = inject(NgbModal);
+    private readonly dialogService = inject(DialogService);
+    private readonly translateService = inject(TranslateService);
 
     /** Current build agent information including status and configuration */
     buildAgent = signal<BuildAgentInformation | undefined>(undefined);
@@ -453,16 +455,24 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
      * When the modal closes with a result, applies the new filter and reloads data.
      */
     openFilterModal() {
-        const modalRef = this.modalService.open(FinishedBuildsFilterModalComponent as Component);
-        modalRef.componentInstance.finishedBuildJobFilter = this.finishedBuildJobFilter;
-        modalRef.componentInstance.buildAgentAddress = this.buildAgent()?.buildAgent?.memberAddress;
-        modalRef.componentInstance.finishedBuildJobs = this.finishedBuildJobs();
-        modalRef.result
-            .then((result: FinishedBuildJobFilter) => {
+        const dialogRef = this.dialogService.open(FinishedBuildsFilterModalComponent, {
+            header: this.translateService.instant('artemisApp.buildQueue.filter.title'),
+            width: '60rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: true,
+            data: {
+                finishedBuildJobFilter: this.finishedBuildJobFilter,
+                finishedBuildJobs: this.finishedBuildJobs(),
+            },
+        });
+        dialogRef?.onClose.subscribe((result: FinishedBuildJobFilter | undefined) => {
+            if (result) {
                 this.finishedBuildJobFilter = result;
                 this.loadFinishedBuildJobs();
-            })
-            .catch(() => {});
+            }
+        });
     }
 
     /**
