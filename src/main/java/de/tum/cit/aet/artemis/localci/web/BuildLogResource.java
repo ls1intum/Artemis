@@ -41,7 +41,7 @@ public class BuildLogResource {
      * @param buildJobId the id of the build job for which to retrieve the build log
      * @return the ResponseEntity with status 200 (OK) and the build log in the body, or with status 404 (Not Found) if the build log could not be found
      */
-    @GetMapping("build-log/{buildJobId}")
+    @GetMapping({ "build-jobs/{buildJobId}/build-log", "build-log/{buildJobId}" })
     @EnforceAtLeastEditor
     public ResponseEntity<Resource> getBuildLogForBuildJob(@PathVariable String buildJobId) {
         log.debug("REST request to get the build log for build job {}", buildJobId);

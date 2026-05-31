@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 /**
@@ -6,23 +6,34 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
  */
 @Component({
     selector: 'jhi-item-count',
-    template: ` <div jhiTranslate="global.item-count" [translateValues]="{ first: itemRangeBegin, second: itemRangeEnd, total: itemTotal }"></div> `,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: ` <div jhiTranslate="global.item-count" [translateValues]="{ first: itemRangeBegin(), second: itemRangeEnd(), total: itemTotal() }"></div> `,
     imports: [TranslateDirective],
 })
 export class ItemCountComponent {
     /**
-     * @param params  Contains parameters for component:
-     *                    page          Current page number
-     *                    totalItems    Total number of items
-     *                    itemsPerPage  Number of items per page
+     * Pagination parameters:
+     *   page          Current page number
+     *   totalItems    Total number of items
+     *   itemsPerPage  Number of items per page
      */
-    @Input() set params(params: { page: number; totalItems: number; itemsPerPage: number }) {
-        this.itemRangeBegin = params.totalItems === 0 ? 0 : (params.page - 1) * params.itemsPerPage + 1;
-        this.itemRangeEnd = Math.min(params.page * params.itemsPerPage, params.totalItems);
-        this.itemTotal = params.totalItems;
-    }
+    readonly params = input<{ page: number; totalItems: number; itemsPerPage: number }>();
 
-    itemRangeBegin = 0;
-    itemRangeEnd = 0;
-    itemTotal = 0;
+    readonly itemRangeBegin = computed(() => {
+        const params = this.params();
+        if (!params || params.totalItems === 0) {
+            return 0;
+        }
+        return (params.page - 1) * params.itemsPerPage + 1;
+    });
+
+    readonly itemRangeEnd = computed(() => {
+        const params = this.params();
+        if (!params) {
+            return 0;
+        }
+        return Math.min(params.page * params.itemsPerPage, params.totalItems);
+    });
+
+    readonly itemTotal = computed(() => this.params()?.totalItems ?? 0);
 }

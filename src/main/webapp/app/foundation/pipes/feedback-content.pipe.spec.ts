@@ -1,14 +1,18 @@
 import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { FeedbackContentPipe } from 'app/foundation/pipes/feedback-content.pipe';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 
 describe('FeedbackContentPipe', () => {
+    setupTestBed({ zoneless: true });
+
     let pipe: FeedbackContentPipe;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [FeedbackContentPipe],
+            imports: [FeedbackContentPipe],
         })
             .compileComponents()
             .then(() => {
