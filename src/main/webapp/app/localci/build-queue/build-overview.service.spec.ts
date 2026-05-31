@@ -168,7 +168,7 @@ describe('BuildOverviewService', () => {
             expect(true).toBeTruthy();
         });
 
-        const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/cancel-job/${buildJobId}`);
+        const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/build-jobs/${buildJobId}/cancel`);
         expect(req.request.method).toBe('DELETE');
         req.flush({}); // Flush an empty response to indicate success
     });
@@ -181,7 +181,7 @@ describe('BuildOverviewService', () => {
             expect(true).toBeTruthy();
         });
 
-        const req = httpMock.expectOne(`${service.adminResourceUrl}/cancel-job/${buildJobId}`);
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/build-jobs/${buildJobId}/cancel`);
         expect(req.request.method).toBe('DELETE');
         req.flush({}); // Flush an empty response to indicate success
     });
@@ -260,15 +260,16 @@ describe('BuildOverviewService', () => {
                         buildJobId +
                         '\nHttp failure response for ' +
                         service.adminResourceUrl +
-                        '/cancel-job/' +
+                        '/build-jobs/' +
                         buildJobId +
+                        '/cancel' +
                         ': 500 Internal Server Error',
                 );
                 errorOccurred = true;
             },
         });
 
-        const req = httpMock.expectOne(`${service.adminResourceUrl}/cancel-job/${buildJobId}`);
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/build-jobs/${buildJobId}/cancel`);
         expect(req.request.method).toBe('DELETE');
 
         // Simulate an error response from the server
@@ -296,15 +297,16 @@ describe('BuildOverviewService', () => {
                         service.resourceUrl +
                         '/courses/' +
                         courseId +
-                        '/cancel-job/' +
+                        '/build-jobs/' +
                         buildJobId +
+                        '/cancel' +
                         ': 500 Internal Server Error',
                 );
                 errorOccurred = true;
             },
         });
 
-        const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/cancel-job/${buildJobId}`);
+        const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/build-jobs/${buildJobId}/cancel`);
         expect(req.request.method).toBe('DELETE');
 
         // Simulate an error response from the server
@@ -596,7 +598,7 @@ describe('BuildOverviewService', () => {
 
         const resultPromise = firstValueFrom(service.getBuildJobLogs(buildJobId));
 
-        const req = httpMock.expectOne(`${service.resourceUrl}/build-log/${buildJobId}`);
+        const req = httpMock.expectOne(`${service.resourceUrl}/build-jobs/${buildJobId}/build-log`);
         expect(req.request.method).toBe('GET');
         req.flush(expectedResponseText);
 
@@ -616,7 +618,7 @@ describe('BuildOverviewService', () => {
             },
         });
 
-        const req = httpMock.expectOne(`${service.resourceUrl}/build-log/${buildJobId}`);
+        const req = httpMock.expectOne(`${service.resourceUrl}/build-jobs/${buildJobId}/build-log`);
         expect(req.request.method).toBe('GET');
 
         req.flush(null, { status: 500, statusText: 'Internal Server Error' });
@@ -630,7 +632,7 @@ describe('BuildOverviewService', () => {
 
         const resultPromise = firstValueFrom(service.getBuildJobById(buildJobId));
 
-        const req = httpMock.expectOne(`${service.adminResourceUrl}/build-job/${buildJobId}`);
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/build-jobs/${buildJobId}`);
         expect(req.request.method).toBe('GET');
         req.flush(expectedResponse);
 
@@ -645,7 +647,7 @@ describe('BuildOverviewService', () => {
 
         const resultPromise = firstValueFrom(service.getBuildJobByIdForCourse(courseId, buildJobId));
 
-        const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/build-job/${buildJobId}`);
+        const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/build-jobs/${buildJobId}`);
         expect(req.request.method).toBe('GET');
         req.flush(expectedResponse);
 

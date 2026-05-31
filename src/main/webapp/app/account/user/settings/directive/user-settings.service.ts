@@ -11,7 +11,7 @@ export class UserSettingsService {
     private http = inject(HttpClient);
 
     public scienceSettingsResourceUrl = 'api/atlas/science-settings';
-    public profilePictureResourceUrl = 'api/account/account/profile-picture';
+    public profilePictureResourceUrl = 'api/account/profile-picture';
     private applyNewChangesSource = new Subject<string>();
     userSettingsChangeEvent = this.applyNewChangesSource.asObservable();
 

@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import {
     average,
     getAsMutableObject,
@@ -123,14 +124,14 @@ describe('isExamExercise', () => {
         const examExercise = { course: undefined } as Exercise;
 
         const isExamExerciseResult = isExamExercise(examExercise);
-        expect(isExamExerciseResult).toBeTrue();
+        expect(isExamExerciseResult).toBe(true);
     });
 
     it('should return false if course is set', () => {
         const courseExercise = { course: new Course() } as Exercise;
 
         const isExamExerciseResult = isExamExercise(courseExercise);
-        expect(isExamExerciseResult).toBeFalse();
+        expect(isExamExerciseResult).toBe(false);
     });
 });
 
