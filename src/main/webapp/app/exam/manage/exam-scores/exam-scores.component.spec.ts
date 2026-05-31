@@ -11,6 +11,7 @@ import {
     StudentResult,
 } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { MockProvider } from 'ng-mocks';
+import { DialogService } from 'primeng/dynamicdialog';
 import { ExamScoresComponent, MedianType } from 'app/exam/manage/exam-scores/exam-scores.component';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ParticipantScoresService, ScoresDTO } from 'app/course/participant-scores/participant-scores.service';
@@ -296,6 +297,7 @@ describe('ExamScoresComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(DialogService),
                 provideNoopAnimationsForTests(),
             ],
         }).compileComponents();
