@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
@@ -445,7 +446,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             channel.setIsPublic(true);
             channel.setIsCourseWide(true);
             channel.setIsAnnouncementChannel(false);
-
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+            courseRepository.save(course);
             Channel createdChannel = channelService.createChannel(course, channel, Optional.of(instructor));
 
             // Wait for channel to be indexed — capture security context for awaitility thread
