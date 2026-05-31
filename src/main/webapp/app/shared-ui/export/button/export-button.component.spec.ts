@@ -28,6 +28,7 @@ describe('ExportButtonComponent', () => {
                 fixture = TestBed.createComponent(ExportButtonComponent);
                 comp = fixture.componentInstance;
                 dialogService = TestBed.inject(DialogService);
+                fixture.detectChanges();
             });
     });
 
