@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { CompetencyExerciseLink, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 import { Exercise, getExerciseCompetencies } from './exercise.model';
 

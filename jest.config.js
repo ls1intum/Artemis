@@ -130,10 +130,6 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/shared-ui/range-slider/**', // range slider uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/dashboards/**', // dashboards uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared-ui/image-cropper/**', // image cropper uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/exercise/exercise-headers/**', // exercise headers module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/exercise/synchronization/**', // exercise synchronization module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/exercise/version-history/**', // exercise version history module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/exercise/review/**', // review comment module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/**', // checklist-panel uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.ts', // problem-statement service uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts', // problem-statement utils uses Vitest (see vitest.config.ts)
@@ -141,15 +137,55 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/hyperion/**', // hyperion module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**', // build phases editor uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/version-history/**', // programming version history module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/exercise/participation/**', // participation module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/exercise/participation-submission/**', // participation-submission module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/exercise/exercise-scores/**', // exercise-scores module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/exercise/shared/filter-dropdown/**', // filter-dropdown component uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared-ui/search-filter/**', // search-filter component uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/shared/services/build-phases-template.service.ts', // build-phases-template uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts', // legacy converter uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // build-plan-phases model uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**', // programming exercise update timeline uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/additional-feedback/**', // additional feedback uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/assessment-progress-label/**', // assessment progress label uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/course-exercises/**', // course exercise service uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/difficulty-level/**', // difficulty level uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/difficulty-picker/**', // difficulty picker uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/exam-exercise-row-buttons/**', // exam exercise row buttons uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/example-solution/**', // example solution uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/example-submission/**', // example submission uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/exercise-categories/**', // exercise categories uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/exercise-create-buttons/**', // exercise create buttons uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/exercise-detail-common-actions/**', // exercise detail common actions uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/exercise-headers/**', // exercise headers uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/exercise-info/**', // exercise info uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/exercise-scores/**', // exercise scores uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/exercise-title-channel-name/**', // exercise title channel name uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/exercise-title-channel-name-primeng/**', // exercise title channel name PrimeNG uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/exercise-update-notification/**', // exercise update notification uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/exercise-update-warning/**', // exercise update warning uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/external-submission/**', // external submission uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/feedback/**', // feedback uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/feedback-suggestion/**', // feedback suggestion uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/import/**', // exercise import uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/mode-picker/**', // mode picker uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/participation/**', // participation uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/participation-submission/**', // participation-submission uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/presentation-score/**', // presentation score uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/rating/**', // rating uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/result-history/**', // result history uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/review/**', // review uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/services/**', // exercise services uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/shared/**', // exercise shared uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/statistics/**', // exercise statistics uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/structured-grading-criterion/**', // structured grading criterion uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/submission/**', // submission uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/submission-export/**', // submission export uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/submission-policy/**', // submission policy uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/submission-version/**', // submission version uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/synchronization/**', // exercise synchronization uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/team/**', // team uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/team-config-form-group/**', // team config form group uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/team-submission-sync/**', // team submission sync uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/unreferenced-feedback/**', // unreferenced feedback uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/util/**', // exercise util uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/version-history/**', // exercise version history uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/logos/**', // logos module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/sharing/**', // sharing module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/app.component.ts', // app-shell (app.component) uses Vitest (see vitest.config.ts)
@@ -200,18 +236,54 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.ts',
         '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts',
         '<rootDir>/src/main/webapp/app/editor/monaco-editor/inline-refinement-button/',
-        '<rootDir>/src/main/webapp/app/exercise/exercise-headers/', // exercise headers module uses Vitest
-        '<rootDir>/src/main/webapp/app/exercise/synchronization/', // exercise synchronization module uses Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/', // build phases editor uses Vitest
-        '<rootDir>/src/main/webapp/app/exercise/version-history/', // exercise version history module uses Vitest
-        '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module uses Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/', // checklist-panel uses Vitest
         '<rootDir>/src/main/webapp/app/hyperion/', // hyperion module uses Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/version-history/', // programming version history module uses Vitest
-        '<rootDir>/src/main/webapp/app/exercise/participation/', // participation module uses Vitest
-        '<rootDir>/src/main/webapp/app/exercise/participation-submission/', // participation-submission module uses Vitest
-        '<rootDir>/src/main/webapp/app/exercise/exercise-scores/', // exercise-scores module uses Vitest
-        '<rootDir>/src/main/webapp/app/exercise/shared/filter-dropdown/', // filter-dropdown component uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/additional-feedback/**', // additional feedback uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/assessment-progress-label/**', // assessment progress label uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/course-exercises/**', // course exercise service uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/difficulty-level/**', // difficulty level uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/difficulty-picker/**', // difficulty picker uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/exam-exercise-row-buttons/**', // exam exercise row buttons uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/example-solution/**', // example solution uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/example-submission/**', // example submission uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/exercise-categories/**', // exercise categories uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/exercise-create-buttons/**', // exercise create buttons uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/exercise-detail-common-actions/**', // exercise detail common actions uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/exercise-headers/**', // exercise headers uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/exercise-info/**', // exercise info uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/exercise-scores/**', // exercise scores uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/exercise-title-channel-name/**', // exercise title channel name uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/exercise-title-channel-name-primeng/**', // exercise title channel name PrimeNG uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/exercise-update-notification/**', // exercise update notification uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/exercise-update-warning/**', // exercise update warning uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/external-submission/**', // external submission uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/feedback/**', // feedback uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/feedback-suggestion/**', // feedback suggestion uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/import/**', // exercise import uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/mode-picker/**', // mode picker uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/participation/**', // participation uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/participation-submission/**', // participation-submission uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/presentation-score/**', // presentation score uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/rating/**', // rating uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/result-history/**', // result history uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/review/**', // review uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/services/**', // exercise services uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/shared/**', // exercise shared uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/statistics/**', // exercise statistics uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/structured-grading-criterion/**', // structured grading criterion uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/submission/**', // submission uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/submission-export/**', // submission export uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/submission-policy/**', // submission policy uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/submission-version/**', // submission version uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/synchronization/**', // exercise synchronization uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/team/**', // team uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/team-config-form-group/**', // team config form group uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/team-submission-sync/**', // team submission sync uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/unreferenced-feedback/**', // unreferenced feedback uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/util/**', // exercise util uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/version-history/**', // exercise version history uses Vitest
         '<rootDir>/src/main/webapp/app/shared-ui/search-filter/', // search-filter uses Vitest
         '<rootDir>/src/main/webapp/app/programming/shared/services/build-phases-template.service.ts',
         '<rootDir>/src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts',
@@ -306,18 +378,54 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/editor/monaco-editor/inline-refinement-button/', // migrated to Vitest
-        '<rootDir>/src/main/webapp/app/exercise/exercise-headers/', // exercise headers module
-        '<rootDir>/src/main/webapp/app/exercise/synchronization/', // exercise synchronization module
-        '<rootDir>/src/main/webapp/app/exercise/version-history/', // exercise version history module
-        '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module
-        '<rootDir>/src/main/webapp/app/hyperion/', // hyperion module
+        '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/', // migrated to Vitest
+        '<rootDir>/src/main/webapp/app/hyperion/', // hyperion module uses Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/', // migrated to Vitest
-        '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/', // checklist-panel (vitest)
-        '<rootDir>/src/main/webapp/app/programming/manage/version-history/', // programming version history module
-        '<rootDir>/src/main/webapp/app/exercise/participation/', // participation module (Vitest)
-        '<rootDir>/src/main/webapp/app/exercise/participation-submission/', // participation-submission module (Vitest)
-        '<rootDir>/src/main/webapp/app/exercise/exercise-scores/', // exercise-scores module (Vitest)
-        '<rootDir>/src/main/webapp/app/exercise/shared/filter-dropdown/', // filter-dropdown component (Vitest)
+        '<rootDir>/src/main/webapp/app/programming/manage/version-history/', // programming version history uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/additional-feedback/**', // additional feedback uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/assessment-progress-label/**', // assessment progress label uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/course-exercises/**', // course exercise service uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/difficulty-level/**', // difficulty level uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/difficulty-picker/**', // difficulty picker uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/exam-exercise-row-buttons/**', // exam exercise row buttons uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/example-solution/**', // example solution uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/example-submission/**', // example submission uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/exercise-categories/**', // exercise categories uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/exercise-create-buttons/**', // exercise create buttons uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/exercise-detail-common-actions/**', // exercise detail common actions uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/exercise-headers/**', // exercise headers uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/exercise-info/**', // exercise info uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/exercise-scores/**', // exercise scores uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/exercise-title-channel-name/**', // exercise title channel name uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/exercise-title-channel-name-primeng/**', // exercise title channel name PrimeNG uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/exercise-update-notification/**', // exercise update notification uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/exercise-update-warning/**', // exercise update warning uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/external-submission/**', // external submission uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/feedback/**', // feedback uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/feedback-suggestion/**', // feedback suggestion uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/import/**', // exercise import uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/mode-picker/**', // mode picker uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/participation/**', // participation uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/participation-submission/**', // participation-submission uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/presentation-score/**', // presentation score uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/rating/**', // rating uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/result-history/**', // result history uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/review/**', // review uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/services/**', // exercise services uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/shared/**', // exercise shared uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/statistics/**', // exercise statistics uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/structured-grading-criterion/**', // structured grading criterion uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/submission/**', // submission uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/submission-export/**', // submission export uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/submission-policy/**', // submission policy uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/submission-version/**', // submission version uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/synchronization/**', // exercise synchronization uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/team/**', // team uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/team-config-form-group/**', // team config form group uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/team-submission-sync/**', // team submission sync uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/unreferenced-feedback/**', // unreferenced feedback uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/util/**', // exercise util uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/version-history/**', // exercise version history uses Vitest
         '<rootDir>/src/main/webapp/app/shared-ui/search-filter/', // search-filter (Vitest)
         '<rootDir>/src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.spec.ts', // implemented with Vitest
         '<rootDir>/src/main/webapp/app/programming/shared/services/build-phases-template.service.spec.ts', // migrated to Vitest

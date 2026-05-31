@@ -11,6 +11,10 @@ import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { ResultService } from 'app/exercise/result/result.service';
+import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('StandaloneFeedbackComponent', () => {
     setupTestBed({ zoneless: true });
@@ -37,7 +41,13 @@ describe('StandaloneFeedbackComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [StandaloneFeedbackComponent, MockComponent(FeedbackComponent)],
-            providers: [{ provide: ActivatedRoute, useValue: activatedRouteStub }, MockProvider(ExerciseService), MockProvider(ExerciseCacheService)],
+            providers: [
+                { provide: ActivatedRoute, useValue: activatedRouteStub },
+                MockProvider(ExerciseService),
+                MockProvider(ExerciseCacheService),
+                { provide: ResultService, useClass: MockResultService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(StandaloneFeedbackComponent);

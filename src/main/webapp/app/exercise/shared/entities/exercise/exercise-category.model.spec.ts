@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 
 describe('ExerciseCategory', () => {
@@ -6,14 +7,14 @@ describe('ExerciseCategory', () => {
             const exerciseCategory1 = new ExerciseCategory('Category 1', 'red');
             const exerciseCategory2 = new ExerciseCategory('Category 1', 'red');
 
-            expect(exerciseCategory1.equals(exerciseCategory2)).toBeTruthy();
+            expect(exerciseCategory1.equals(exerciseCategory2)).toBe(true);
         });
 
         it('should return false if the two exercise categories are not equal', () => {
             const exerciseCategory1 = new ExerciseCategory('Category 1', 'red');
             const exerciseCategory2 = new ExerciseCategory('Category 2', 'blue');
 
-            expect(exerciseCategory1.equals(exerciseCategory2)).toBeFalsy();
+            expect(exerciseCategory1.equals(exerciseCategory2)).toBe(false);
         });
     });
 

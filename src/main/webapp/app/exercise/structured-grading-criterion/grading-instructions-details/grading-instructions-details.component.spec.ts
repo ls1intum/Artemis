@@ -149,7 +149,7 @@ describe('GradingInstructionsDetailsComponent', () => {
         exercise.gradingCriteria = [gradingCriterion];
         component.deleteInstruction(gradingInstruction, gradingCriterion);
 
-        expect(component.exercise().gradingCriteria[0].structuredGradingInstructions).toHaveLength(0);
+        expect(component.exercise().gradingCriteria![0].structuredGradingInstructions).toHaveLength(0);
     });
 
     it('should set grading instruction text for exercise', () => {
