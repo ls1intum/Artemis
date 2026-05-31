@@ -95,7 +95,7 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
             const exercise = await exerciseAPIRequests.createModelingExercise({ course });
             await lectureManagement.openUnitsPage(lecture.id!);
             await lectureManagement.addExerciseUnit(exercise.id!);
-            await expect(page.locator('.exercise-title', { hasText: new RegExp(`^${exercise.title!}$`) })).toBeVisible();
+            await expect(page.locator('.exercise-title:visible', { hasText: new RegExp(`^${exercise.title!}$`) })).toBeVisible();
         });
 
         test('Can open page to add attachment unit to the lecture', async ({ lectureManagement, page }) => {
