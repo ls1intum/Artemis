@@ -51,7 +51,7 @@ describe('FormDateTimePickerComponent', () => {
         it('should return null if dayjs is invalid', () => {
             const unconvertedDate = dayjs('2022-31-02T00:00+00:00');
 
-            expect(unconvertedDate.isValid()).toBeFalsy();
+            expect(unconvertedDate.isValid()).toBe(false);
 
             convertedDate = component.convertToDate(unconvertedDate);
 

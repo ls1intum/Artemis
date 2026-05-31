@@ -52,6 +52,6 @@ describe('TableEditableFieldComponent', () => {
         expect(tableInput.nativeElement.value).toEqual(value);
 
         tableInput.nativeElement.dispatchEvent(new Event('blur'));
-        expect(fakeUpdateValue.mock.calls).toHaveLength(1);
+        expect(fakeUpdateValue).toHaveBeenCalledOnce();
     });
 });

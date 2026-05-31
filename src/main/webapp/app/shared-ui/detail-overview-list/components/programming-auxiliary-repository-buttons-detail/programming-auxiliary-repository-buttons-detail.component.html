@@ -1,6 +1,7 @@
+@let data = detail().data;
 <ul>
-    @for (auxiliaryRepository of detail().data.auxiliaryRepositories; track auxiliaryRepository.id) {
-        @if (auxiliaryRepository.id && auxiliaryRepository.repositoryUri && detail().data.exerciseId) {
+    @for (auxiliaryRepository of data.auxiliaryRepositories; track auxiliaryRepository.id) {
+        @if (auxiliaryRepository.id && auxiliaryRepository.repositoryUri && data.exerciseId) {
             <li class="mt-2">
                 <span>Repository: {{ auxiliaryRepository.name }}</span>
                 <jhi-code-button
@@ -11,7 +12,7 @@
                 />
                 <jhi-programming-exercise-instructor-repo-download
                     class="ms-2"
-                    [exerciseId]="detail().data.exerciseId"
+                    [exerciseId]="data.exerciseId"
                     [repositoryType]="RepositoryType.AUXILIARY"
                     [auxiliaryRepositoryId]="auxiliaryRepository.id"
                 />

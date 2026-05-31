@@ -40,7 +40,9 @@ abstract class CourseExamArchiveDialogBase {
         </div>
         <div class="modal-body">
             @if (data.archiveMode === 'Course') {
-                <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.course.question'" [translateValues]="{ title: data.courseTitle }">Are you sure you want to archive??</p>
+                <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.course.question'" [translateValues]="{ title: data.courseTitle || '' }">
+                    Are you sure you want to archive??
+                </p>
                 <p [jhiTranslate]="'artemisApp.courseExamArchive.popup.course.statement1'">
                     The process will compress all student code repositories, file upload exercises, modeling exercises, and text exercises for exercises and exams.
                 </p>

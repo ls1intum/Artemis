@@ -220,7 +220,9 @@ module.exports = {
     // Re-tune when migration completes.
     coverageThreshold: {
         global: {
-            statements: 83,
+            // Lowered (83 -> 82.5) after moving the well-covered shared-ui module fully out of Jest (now under Vitest)
+            // and merging develop, which dropped the global statements average to ~82.95.
+            statements: 82.5,
             branches: 72.9,
             // Lowered (72.2 -> 71.5) after moving the well-covered shared-ui module fully out of Jest (now under Vitest),
             // which removed those functions from the Jest denominator and dropped the global functions average to ~71.93.
