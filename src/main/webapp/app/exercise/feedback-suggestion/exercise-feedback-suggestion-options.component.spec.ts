@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -61,21 +61,19 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should load available modules and set isAthenaEnabled on ngOnInit', fakeAsync(() => {
+    it('should load available modules and set isAthenaEnabled on ngOnInit', () => {
         component.ngOnInit();
-        tick();
         expect(athenaService.getAvailableModules).toHaveBeenCalledWith(42, expect.objectContaining({ type: ExerciseType.TEXT }));
         expect(component.availableAthenaModules()).toEqual(['moduleA', 'moduleB']);
         expect(component.modulesAvailable()).toBe(true);
         expect(component.isAthenaEnabled()).toBe(true);
-    }));
+    });
 
-    it('should mark modulesAvailable false when no modules returned', fakeAsync(() => {
+    it('should mark modulesAvailable false when no modules returned', () => {
         athenaService.getAvailableModules.mockReturnValue(of([]));
         component.ngOnInit();
-        tick();
         expect(component.modulesAvailable()).toBe(false);
-    }));
+    });
 
     it('inputControlsDisabled returns false for text exercise with future due date', () => {
         expect(component.inputControlsDisabled()).toBe(false);
