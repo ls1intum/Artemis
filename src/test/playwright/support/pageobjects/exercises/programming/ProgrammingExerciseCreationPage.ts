@@ -44,7 +44,7 @@ export class ProgrammingExerciseCreationPage extends AbstractExerciseCreationPag
     }
 
     async import() {
-        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(`${PROGRAMMING_EXERCISE_BASE}/import/`));
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(`${PROGRAMMING_EXERCISE_BASE}/import?sourceExerciseId=`));
         await this.page.locator('#save-entity').click();
         return await responsePromise;
     }

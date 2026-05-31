@@ -107,7 +107,7 @@ describe('SidebarComponent', () => {
         const noDataMessageElement = fixture.debugElement.query(By.css('.scrollable-item-content'));
         expect(noDataMessageElement).toBeTruthy();
         const directiveInstance = noDataMessageElement.injector.get(TranslateDirective);
-        expect(directiveInstance.jhiTranslate).toBe('artemisApp.courseOverview.general.noDataFound');
+        expect(directiveInstance.jhiTranslate()).toBe('artemisApp.courseOverview.general.noDataFound');
     });
 
     it('should give the correct size for exercises', () => {

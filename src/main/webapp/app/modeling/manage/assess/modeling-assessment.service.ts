@@ -24,7 +24,7 @@ export class ModelingAssessmentService {
             params = params.set('submit', 'true');
         }
         const body: ModelingAssessmentDTO = { feedbacks, assessmentNote };
-        const url = `${this.resourceUrl}/modeling-submissions/${submissionId}/result/${resultId}/assessment`;
+        const url = `${this.resourceUrl}/modeling-submissions/${submissionId}/results/${resultId}/assessment`;
         return this.http.put<Result>(url, body, { params }).pipe(map((res: Result) => this.convertResult(res)));
     }
 
@@ -55,7 +55,7 @@ export class ModelingAssessmentService {
     }
 
     getExampleAssessment(exerciseId: number, submissionId: number): Observable<Result> {
-        const url = `${this.resourceUrl}/exercise/${exerciseId}/modeling-submissions/${submissionId}/example-assessment`;
+        const url = `${this.resourceUrl}/exercises/${exerciseId}/modeling-submissions/${submissionId}/example-assessment`;
         return this.http.get<Result>(url).pipe(map((res) => this.convertResult(res)));
     }
 

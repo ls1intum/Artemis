@@ -5,7 +5,7 @@ import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service
 
 @Injectable({ providedIn: 'root' })
 export class AdminPasskeyManagementService extends BaseApiHttpService {
-    private resourceUrl = 'account/passkey';
+    private resourceUrl = 'account/passkeys';
 
     /**
      * Get all passkeys with user information for super admin management

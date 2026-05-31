@@ -82,7 +82,7 @@ export class ExampleSubmissionService {
     import(submissionId: number, exerciseId: number): Observable<EntityResponseType> {
         return this.http
             .post<ExampleSubmission>(
-                `${this.resourceUrl}/exercises/${exerciseId}/example-submissions/import/${submissionId}`,
+                `${this.resourceUrl}/exercises/${exerciseId}/example-submissions/import?sourceSubmissionId=${submissionId}`,
                 {},
                 {
                     observe: 'response',

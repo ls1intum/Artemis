@@ -1,8 +1,10 @@
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 
 describe('ProfilePictureComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: ProfilePictureComponent;
     let fixture: ComponentFixture<ProfilePictureComponent>;
 
