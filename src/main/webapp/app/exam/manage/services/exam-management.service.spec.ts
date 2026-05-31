@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ExamStudentDTO, ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
-import { UserForRegistration } from 'app/shared/user-registration-modal/user-for-registration.model';
+import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';
