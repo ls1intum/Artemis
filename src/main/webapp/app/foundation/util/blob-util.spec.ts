@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import {
     arrayBufferToBinaryString,
     base64StringToBlob,
@@ -120,7 +121,7 @@ describe('BlobUtil', () => {
             const binary = '';
             const arrayBuffer = binaryStringToArrayBuffer(binary);
             const bytes = new Uint8Array(arrayBuffer);
-            expect(bytes).toBeEmpty();
+            expect(bytes).toHaveLength(0);
         });
 
         it('should return an array buffer with the correct contents', () => {

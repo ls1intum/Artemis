@@ -1,8 +1,10 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { By } from '@angular/platform-browser';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { CustomPatternValidatorDirective } from './custom-pattern-validator.directive';
 
 @Component({
@@ -15,6 +17,8 @@ class CustomPatternComponent {
 }
 
 describe('CustomPatternValidatorDirective', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CustomPatternComponent>;
     let component = new CustomPatternComponent();
 
@@ -26,31 +30,27 @@ describe('CustomPatternValidatorDirective', () => {
         component = fixture.componentInstance;
     });
 
-    it('should accept correct patterns', fakeAsync(() => {
+    it('should accept correct patterns', async () => {
         component.pattern = '^.*@example.com$';
 
         fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
 
-        fixture.whenStable().then(() => {
-            fixture.detectChanges();
+        const patternEl = fixture.debugElement.query(By.css('input[name=pattern]')).references['patternModel'];
 
-            const patternEl = fixture.debugElement.query(By.css('input[name=pattern]')).references['patternModel'];
+        expect(patternEl.errors).toBeNull();
+    });
 
-            expect(patternEl.errors).toBeNull();
-        });
-    }));
-
-    it('should set error on incorrect patterns', fakeAsync(() => {
+    it('should set error on incorrect patterns', async () => {
         component.pattern = '*@example.com$';
 
         fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
 
-        fixture.whenStable().then(() => {
-            fixture.detectChanges();
+        const patternEl = fixture.debugElement.query(By.css('input[name=pattern]')).references['patternModel'];
 
-            const patternEl = fixture.debugElement.query(By.css('input[name=pattern]')).references['patternModel'];
-
-            expect(patternEl.errors.validPattern).toBeTrue();
-        });
-    }));
+        expect(patternEl.errors.validPattern).toBe(true);
+    });
 });

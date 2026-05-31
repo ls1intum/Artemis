@@ -121,7 +121,7 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
-            .post<FileUploadExercise>(`${this.resourceUrl}/import/${adaptedSourceFileUploadExercise.id}`, copy, { observe: 'response' })
+            .post<FileUploadExercise>(`${this.resourceUrl}/import?sourceId=${adaptedSourceFileUploadExercise.id}`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 }

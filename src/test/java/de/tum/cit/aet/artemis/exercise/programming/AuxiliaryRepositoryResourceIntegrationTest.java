@@ -45,7 +45,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
 
     private static final String TEST_PREFIX = "auxiliaryrepositoryresourceint";
 
-    private final String testRepoBaseUrl = "/api/programming/auxiliary-repository/";
+    private final String testRepoBaseUrl = "/api/programming/auxiliary-repositories/";
 
     private ProgrammingExercise programmingExercise;
 
