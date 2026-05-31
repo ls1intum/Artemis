@@ -3,7 +3,7 @@ import { faBan, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-s
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { JsonPipe } from '@angular/common';
 

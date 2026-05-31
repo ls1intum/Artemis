@@ -5,10 +5,10 @@ import { OneToOneChatCreateDialogComponent } from 'app/communication/course-conv
 import { Course } from 'app/course/shared/entities/course.model';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { CourseUsersSelectorComponent } from 'app/communication/course-users-selector/course-users-selector.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { initializeDialog } from 'test/helpers/dialog-test-helpers';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';

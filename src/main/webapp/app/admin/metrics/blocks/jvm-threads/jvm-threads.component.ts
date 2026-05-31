@@ -3,7 +3,7 @@ import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 
 import { Thread, ThreadState } from 'app/admin/metrics/metrics.model';
 import { MetricsModalThreadsComponent } from '../metrics-modal-threads/metrics-modal-threads.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DecimalPipe } from '@angular/common';
 
 @Component({

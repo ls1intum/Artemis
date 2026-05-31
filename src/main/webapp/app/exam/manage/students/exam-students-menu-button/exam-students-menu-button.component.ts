@@ -2,8 +2,8 @@ import { Component, input, viewChild } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { ButtonDirective, ButtonSeverity } from 'primeng/button';
 import { Menu } from 'primeng/menu';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-exam-students-menu-button',

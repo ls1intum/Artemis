@@ -2,7 +2,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { PagingService } from 'app/exercise/services/paging.service';
-import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 

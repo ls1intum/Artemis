@@ -90,32 +90,38 @@ export class CourseDashboardService {
         );
     }
 
+    // Validating identity-narrower: the raw string from the network already matches the typed enum's value
+    // (server-side ExerciseType uses @JsonValue with these exact discriminators), so the switch is here
+    // purely to reject unknown values fail-fast at the network boundary rather than letting them propagate.
     private mapToExerciseType(type: string): ExerciseType {
+        // Discriminator values match the server-side ExerciseType enum (@JsonValue) and the entity's @JsonSubTypes names.
         switch (type) {
-            case 'de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise':
+            case 'programming':
                 return ExerciseType.PROGRAMMING;
-            case 'de.tum.cit.aet.artemis.modeling.domain.ModelingExercise':
+            case 'modeling':
                 return ExerciseType.MODELING;
-            case 'de.tum.cit.aet.artemis.quiz.domain.QuizExercise':
+            case 'quiz':
                 return ExerciseType.QUIZ;
-            case 'de.tum.cit.aet.artemis.text.domain.TextExercise':
+            case 'text':
                 return ExerciseType.TEXT;
-            case 'de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise':
+            case 'file-upload':
                 return ExerciseType.FILE_UPLOAD;
             default:
                 throw new Error(`Unknown exercise type: ${type}`);
         }
     }
 
+    // Validating identity-narrower: see mapToExerciseType for the rationale.
     private mapToLectureUnitType(type: string): LectureUnitType {
+        // Discriminator values match the server-side LectureUnitType enum (@JsonValue) and the entity's @JsonSubTypes names.
         switch (type) {
-            case 'de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit':
+            case LectureUnitType.ATTACHMENT_VIDEO:
                 return LectureUnitType.ATTACHMENT_VIDEO;
-            case 'de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit':
+            case LectureUnitType.EXERCISE:
                 return LectureUnitType.EXERCISE;
-            case 'de.tum.cit.aet.artemis.lecture.domain.TextUnit':
+            case LectureUnitType.TEXT:
                 return LectureUnitType.TEXT;
-            case 'de.tum.cit.aet.artemis.lecture.domain.OnlineUnit':
+            case LectureUnitType.ONLINE:
                 return LectureUnitType.ONLINE;
             default:
                 throw new Error(`Unknown lecture unit type: ${type}`);

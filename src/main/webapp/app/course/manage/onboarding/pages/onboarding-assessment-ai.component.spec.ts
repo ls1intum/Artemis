@@ -10,7 +10,7 @@ import { RouterModule } from '@angular/router';
 
 import { OnboardingAssessmentAiComponent } from './onboarding-assessment-ai.component';
 import { Course } from 'app/course/shared/entities/course.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('OnboardingAssessmentAiComponent', () => {
