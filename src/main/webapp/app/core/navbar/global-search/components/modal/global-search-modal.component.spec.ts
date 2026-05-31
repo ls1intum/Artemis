@@ -20,8 +20,8 @@ import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
 import { GlobalSearchApiService } from 'app/openapi/api/globalSearchApi.service';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Router } from '@angular/router';
 import { GlobalSearchNavigationViewComponent } from '../views/navigation-view/global-search-navigation-view.component';
 import { GlobalSearchActionItemComponent } from '../action-item/global-search-action-item.component';
@@ -898,6 +898,80 @@ describe('GlobalSearchModalComponent', () => {
 
             expect(component['activeCourseId']()).toBeUndefined();
             expect(component['activeCourseLabel']()).toBeUndefined();
+            expect(component['activeFilters']()).toEqual([]);
+        });
+
+        it('should apply course filter when modal opens on instructor course-management page', () => {
+            mockCourseStorageService.getCourse.mockReturnValue({ id: 6, title: 'Software Engineering' });
+            Object.defineProperty(router, 'url', { get: () => '/course-management/6', configurable: true });
+
+            mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+
+            expect(component['activeCourseId']()).toBe(6);
+            expect(component['activeCourseLabel']()).toBe('Software Engineering');
+            expect(component['activeFilters']()).toEqual([]);
+        });
+
+        it('should apply exercise filter when on instructor exercises tab', () => {
+            mockCourseStorageService.getCourse.mockReturnValue({ id: 6, title: 'SE' });
+            Object.defineProperty(router, 'url', { get: () => '/course-management/6/exercises', configurable: true });
+
+            mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+
+            expect(component['activeCourseId']()).toBe(6);
+            expect(component['activeFilters']()).toEqual(['exercise']);
+        });
+
+        it('should apply lecture filter when on instructor lectures tab', () => {
+            mockCourseStorageService.getCourse.mockReturnValue({ id: 6, title: 'SE' });
+            Object.defineProperty(router, 'url', { get: () => '/course-management/6/lectures', configurable: true });
+
+            mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+
+            expect(component['activeFilters']()).toEqual(['lecture']);
+        });
+
+        it('should apply exam filter when on instructor exams tab', () => {
+            mockCourseStorageService.getCourse.mockReturnValue({ id: 6, title: 'SE' });
+            Object.defineProperty(router, 'url', { get: () => '/course-management/6/exams', configurable: true });
+
+            mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+
+            expect(component['activeFilters']()).toEqual(['exam']);
+        });
+
+        it('should apply channel filter when on instructor communication tab', () => {
+            mockCourseStorageService.getCourse.mockReturnValue({ id: 6, title: 'SE' });
+            Object.defineProperty(router, 'url', { get: () => '/course-management/6/communication', configurable: true });
+
+            mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+
+            expect(component['activeFilters']()).toEqual(['channel']);
+        });
+
+        it('should apply faq filter when on instructor faqs tab', () => {
+            mockCourseStorageService.getCourse.mockReturnValue({ id: 6, title: 'SE' });
+            Object.defineProperty(router, 'url', { get: () => '/course-management/6/faqs', configurable: true });
+
+            mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+
+            expect(component['activeFilters']()).toEqual(['faq']);
+        });
+
+        it('should not apply filter for non-mapped instructor tabs', () => {
+            mockCourseStorageService.getCourse.mockReturnValue({ id: 6, title: 'SE' });
+            Object.defineProperty(router, 'url', { get: () => '/course-management/6/grading', configurable: true });
+
+            mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+
+            expect(component['activeCourseId']()).toBe(6);
             expect(component['activeFilters']()).toEqual([]);
         });
     });

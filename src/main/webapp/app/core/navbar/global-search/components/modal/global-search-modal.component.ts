@@ -179,6 +179,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
     /**
      * Maps route segments (e.g. 'exercises') to search filter tags (e.g. 'exercise').
+     * Includes both student view segments (e.g. 'faq') and instructor view segments (e.g. 'faqs').
      */
     private static readonly ROUTE_TO_FILTER_TAG: Record<string, SearchEntityType> = {
         exercises: 'exercise',
@@ -186,17 +187,19 @@ export class GlobalSearchModalComponent implements OnDestroy {
         exams: 'exam',
         communication: 'channel',
         faq: 'faq',
+        faqs: 'faq',
     };
 
     /**
      * Parses the current URL to detect course context and tab,
      * then pre-populates the course filter and type filter accordingly
      * and triggers a search so results are displayed immediately.
+     * Supports both student view (/courses/:id) and instructor view (/course-management/:id).
      */
     private applyContextFilters(): void {
         const url = this.router.url;
-        // Match /courses/:courseId and optionally /:tab
-        const match = url.match(/\/courses\/(\d+)(?:\/([^/?#]+))?/);
+        // Match /courses/:courseId or /course-management/:courseId and optionally /:tab
+        const match = url.match(/\/(?:courses|course-management)\/(\d+)(?:\/([^/?#]+))?/);
         if (!match) {
             return;
         }
