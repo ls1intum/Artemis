@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 
 @MappedSuperclass
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

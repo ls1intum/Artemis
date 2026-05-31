@@ -1,19 +1,16 @@
 import './polyfills';
-import 'app/shared/util/array.extension';
-import 'app/shared/util/map.extension';
-import 'app/shared/util/string.extension';
+import 'app/foundation/util/array.extension';
+import 'app/foundation/util/map.extension';
 import 'app/core/config/dayjs';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DatePipe } from '@angular/common';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ApplicationConfig, ErrorHandler, LOCALE_ID, importProvidersFrom, inject, provideAppInitializer, provideZoneChangeDetection } from '@angular/core';
-import { BrowserModule, Title } from '@angular/platform-browser';
-import { Router, provideRouter, withRouterConfig } from '@angular/router';
+import { Title } from '@angular/platform-browser';
+import { provideRouter, withRouterConfig } from '@angular/router';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { NgbDateAdapter } from '@ng-bootstrap/ng-bootstrap';
 import { MissingTranslationHandler, provideTranslateService } from '@ngx-translate/core';
-import * as Sentry from '@sentry/angular';
-import { TraceService } from '@sentry/angular';
 import routes from 'app/app.routes';
 import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
 import { missingTranslationHandler, translateHttpLoaderProviders } from 'app/core/config/translation.config';
@@ -27,13 +24,13 @@ import { AccountService } from 'app/core/auth/account.service';
 import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { lastValueFrom } from 'rxjs';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LoadingNotificationInterceptor } from 'app/core/loading-notification/loading-notification.interceptor';
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { Configuration } from 'app/openapi/configuration';
 import { providePrimeNG } from 'primeng/config';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -43,12 +40,10 @@ export const appConfig: ApplicationConfig = {
     providers: [
         ArtemisTranslatePipe,
         DialogService,
-        importProvidersFrom(
-            // TODO: we should exclude modules here in the future
-            BrowserModule,
-            ScrollingModule,
-            OwlNativeDateTimeModule,
-        ),
+        // NB: `BrowserModule` is intentionally NOT listed here. Standalone Angular apps bootstrap
+        // via `bootstrapApplication` and don't need `BrowserModule`; its providers (notably
+        // DOM/debug helpers) otherwise pull the `_debug_node` chunk (~160 KB) into production.
+        importProvidersFrom(ScrollingModule, OwlNativeDateTimeModule),
         provideTranslateService({
             loader: translateHttpLoaderProviders,
             missingTranslationHandler: {
@@ -69,7 +64,10 @@ export const appConfig: ApplicationConfig = {
         Title,
         { provide: LOCALE_ID, useValue: 'en' },
         { provide: NgbDateAdapter, useClass: NgbDateDayjsAdapter },
-        { provide: Sentry.TraceService, deps: [Router] },
+        // Sentry's TraceService / BrowserTracing is no longer eagerly wired up from here. The
+        // tracing integration is attached by `SentryErrorHandler.initSentry()` once the profile
+        // is known, so production traffic keeps full Sentry performance coverage while the
+        // initial JS bundle avoids the router-instrumentation overhead.
         { provide: ErrorHandler, useClass: SentryErrorHandler },
         { provide: WINDOW_INJECTOR_TOKEN, useValue: window },
         DatePipe,
@@ -80,7 +78,6 @@ export const appConfig: ApplicationConfig = {
             const translateService = inject(TranslateService);
             const sessionStorageService = inject(SessionStorageService);
             const languageHelper = inject(JhiLanguageHelper);
-            inject(TraceService);
             // Ensure the service is initialized before any routing happens
             inject(ArtemisNavigationUtilService);
             // If the IdP just redirected the user back to Artemis, complete the SAML2 second-step

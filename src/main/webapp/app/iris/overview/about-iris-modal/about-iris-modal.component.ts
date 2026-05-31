@@ -4,13 +4,13 @@ import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import type { IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { faBook, faBrain, faCompass, faLightbulb, faShieldHalved, faThumbsUp, faUser, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { ButtonDirective } from 'primeng/button';
 import { AccountService } from 'app/core/auth/account.service';
-import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
 interface FeatureCard {
     titleKey: string;

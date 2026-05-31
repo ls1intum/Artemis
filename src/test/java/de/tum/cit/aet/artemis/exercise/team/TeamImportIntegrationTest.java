@@ -17,8 +17,8 @@ import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -56,15 +56,15 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
     private static final String REGISTRATION_NUMBER_PREFIX = "tii";
 
     private String fromExerciseEndpointUrl() {
-        return "/api/exercise/exercises/" + destinationExercise.getId() + "/teams/import-from-exercise/";
+        return "/api/exercise/exercises/" + destinationExercise.getId() + "/teams/import-from-exercise?sourceExerciseId=";
     }
 
     private String importFromExerciseUrl(Exercise exercise, TeamImportStrategyType importStrategyType) {
-        return fromExerciseEndpointUrl() + exercise.getId() + "?importStrategyType=" + importStrategyType;
+        return fromExerciseEndpointUrl() + exercise.getId() + "&importStrategyType=" + importStrategyType;
     }
 
     private String importFromExerciseUrl(Exercise exercise) {
-        return fromExerciseEndpointUrl() + exercise.getId() + "?importStrategyType=" + TeamImportStrategyType.CREATE_ONLY;
+        return fromExerciseEndpointUrl() + exercise.getId() + "&importStrategyType=" + TeamImportStrategyType.CREATE_ONLY;
     }
 
     private String importFromSourceExerciseUrl(TeamImportStrategyType importStrategyType) {

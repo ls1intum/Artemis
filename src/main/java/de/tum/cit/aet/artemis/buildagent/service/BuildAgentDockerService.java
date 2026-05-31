@@ -42,9 +42,9 @@ import com.github.dockerjava.api.model.PullResponseItem;
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
-import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
-import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
+import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
+import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 
 /**
  * Service for Docker-related operations in the local CI build agent.

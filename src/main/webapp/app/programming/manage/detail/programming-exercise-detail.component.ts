@@ -43,24 +43,24 @@ import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
 import { RepositoryDiffInformation, processRepositoryDiff } from 'app/programming/shared/utils/diff.utils';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
-import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
-import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
-import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
-import { Detail, ProgrammingDiffReportDetail } from 'app/shared/detail-overview-list/detail.model';
-import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
-import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AlertService, AlertType } from 'app/shared/service/alert.service';
-import { onError } from 'app/shared/util/global.utils';
-import { EventManager } from 'app/shared/service/event-manager.service';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
-import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
+import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
+import { Detail, ProgrammingDiffReportDetail } from 'app/shared-ui/detail-overview-list/detail.model';
+import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
+import { FeatureToggleLinkDirective } from 'app/foundation/feature-toggle/feature-toggle-link.directive';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import dayjs from 'dayjs/esm';
 import { Observable, Subject, Subscription, forkJoin, from, of } from 'rxjs';
 import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
@@ -713,7 +713,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.showTestNamesToStudents', data: { boolean: exercise.showTestNamesToStudents } },
                 {
                     type: DetailType.Boolean,
-                    title: 'artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolution',
+                    title: 'artemisApp.programmingExercise.timeline.includeTestsIntoExampleSolution',
                     data: { boolean: exercise.releaseTestsWithExampleSolution },
                 },
                 { type: DetailType.Boolean, title: 'artemisApp.exercise.feedbackSuggestionsEnabled', data: { boolean: !!exercise.feedbackSuggestionModule } },

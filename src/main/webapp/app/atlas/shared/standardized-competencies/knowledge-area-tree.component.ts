@@ -4,7 +4,7 @@ import { KnowledgeAreaForTree, StandardizedCompetencyForTree } from 'app/atlas/s
 import { MatTree, MatTreeModule, MatTreeNestedDataSource } from '@angular/material/tree';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CommonModule } from '@angular/common';
 
 @Component({

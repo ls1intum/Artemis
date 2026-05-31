@@ -7,7 +7,7 @@ import { OsDetectorService } from '../../services/os-detector.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowDown, faArrowUp } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DialogModule } from 'primeng/dialog';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { GlobalSearchNavigationViewComponent } from 'app/core/navbar/global-search/components/views/navigation-view/global-search-navigation-view.component';
@@ -15,30 +15,21 @@ import { SEARCH_DEBOUNCE_MS, SearchResultView } from 'app/core/navbar/global-sea
 import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
 import { GlobalSearchApiService } from 'app/openapi/api/globalSearchApi.service';
 import { SearchInputComponent } from './search-input/search-input.component';
-import { SearchableEntity } from '../../models/searchable-entity.model';
+import { SearchEntityType, SearchableEntity } from '../../models/searchable-entity.model';
 import { GlobalSearchLectureResultsComponent } from 'app/core/navbar/global-search/components/views/lecture-results/global-search-lecture-results.component';
-import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/components/views/iris-answer/global-search-iris-answer.component';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { TranslateService } from '@ngx-translate/core';
 
 interface SearchState {
     query: string;
-    filters: string[];
+    filters: SearchEntityType[];
 }
 
 @Component({
     selector: 'jhi-global-search-modal',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [
-        DialogModule,
-        FaIconComponent,
-        ArtemisTranslatePipe,
-        GlobalSearchNavigationViewComponent,
-        GlobalSearchLectureResultsComponent,
-        SearchInputComponent,
-        GlobalSearchIrisAnswerComponent,
-    ],
+    imports: [DialogModule, FaIconComponent, ArtemisTranslatePipe, GlobalSearchNavigationViewComponent, GlobalSearchLectureResultsComponent, SearchInputComponent],
     templateUrl: './global-search-modal.component.html',
     styleUrls: ['./global-search-modal.component.scss'],
 })
@@ -54,11 +45,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly faArrowDown = faArrowDown;
     protected readonly searchInputComponent = viewChild<SearchInputComponent>(SearchInputComponent);
     protected readonly currentView = signal(SearchView.Navigation);
-    protected readonly irisSourceView = signal(SearchView.Navigation);
-    protected readonly activeSplitPanel = signal<'left' | 'right'>('left');
     protected readonly SearchView = SearchView;
     protected readonly searchQuery = signal('');
-    protected readonly activeFilters = signal<string[]>([]);
+    protected readonly activeFilters = signal<SearchEntityType[]>([]);
     protected readonly activeCourseId = signal<number | undefined>(undefined);
     protected readonly activeCourseLabel = signal<string | undefined>(undefined);
     protected readonly results = signal<GlobalSearchResult[]>([]);
@@ -67,12 +56,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly searchError = signal<string | undefined>(undefined);
     protected readonly selectedIndex = signal(-1);
     private readonly allViews = viewChildren(SearchResultView);
-    private readonly maxIndex = computed(() => {
-        if (this.currentView() === SearchView.Iris && this.activeSplitPanel() === 'right') {
-            return (this.allViews()[1]?.itemCount() ?? 0) - 1;
-        }
-        return (this.allViews()[0]?.itemCount() ?? 0) - 1;
-    });
+    private readonly maxIndex = computed(() => (this.allViews()[0]?.itemCount() ?? 0) - 1);
     private readonly searchSubject = new Subject<SearchState | null>();
     // Cache for placeholder results (empty-query + filter) so re-adding a filter serves from cache
     private readonly placeholderCache = new Map<string, GlobalSearchResult[]>();
@@ -124,7 +108,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     }
 
                     this.searchError.set(undefined);
-                    const typeFilter = hasFilter ? filters[0] : undefined;
+                    const typeFilter = hasFilter ? filters.join(',') : undefined;
                     const searchQuery = hasValidQuery ? trimmedQuery : '';
                     const courseId = this.activeCourseId();
                     const cacheKey = `${typeFilter ?? ''}_${courseId ?? ''}`;
@@ -196,7 +180,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     /**
      * Maps route segments (e.g. 'exercises') to search filter tags (e.g. 'exercise').
      */
-    private static readonly ROUTE_TO_FILTER_TAG: Record<string, string> = {
+    private static readonly ROUTE_TO_FILTER_TAG: Record<string, SearchEntityType> = {
         exercises: 'exercise',
         lectures: 'lecture',
         exams: 'exam',
@@ -227,7 +211,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.activeCourseLabel.set(courseLabel);
 
         // Set type filter based on the active tab
-        const newFilters: string[] = [];
+        const newFilters: SearchEntityType[] = [];
         if (tabSegment) {
             const filterTag = GlobalSearchModalComponent.ROUTE_TO_FILTER_TAG[tabSegment];
             if (filterTag) {
@@ -273,26 +257,26 @@ export class GlobalSearchModalComponent implements OnDestroy {
         }
     }
 
-    protected addFilter(filterType: string) {
-        // For now, only one type filter at a time (can be extended later)
-        if (!this.activeFilters().includes(filterType)) {
-            const newFilters = [filterType];
-            this.activeFilters.set(newFilters);
+    protected addFilter(filterTypes: SearchEntityType[]) {
+        // For now, only one filter group at a time (can be extended later)
+        const current = this.activeFilters();
+        if (filterTypes.length !== current.length || filterTypes.some((t) => !current.includes(t))) {
+            this.activeFilters.set(filterTypes);
 
             // Only show loading if we don't have cached placeholder results
             const query = this.searchQuery()?.trim() || '';
-            const cacheKey = `${filterType}_${this.activeCourseId() ?? ''}`;
+            const cacheKey = `${filterTypes.join(',')}_${this.activeCourseId() ?? ''}`;
             const hasCached = !query && this.placeholderCache.has(cacheKey);
             if (!hasCached) {
                 this.isLoading.set(true);
             }
 
             // Re-trigger search with new filter
-            this.searchSubject.next({ query: this.searchQuery(), filters: newFilters });
+            this.searchSubject.next({ query: this.searchQuery(), filters: filterTypes });
         }
     }
 
-    protected removeFilter(filterType: string) {
+    protected removeFilter(filterType: SearchEntityType) {
         const newFilters = this.activeFilters().filter((f) => f !== filterType);
         this.activeFilters.set(newFilters);
         this.searchSubject.next({ query: this.searchQuery(), filters: newFilters });
@@ -311,8 +295,8 @@ export class GlobalSearchModalComponent implements OnDestroy {
         }
 
         // Add the filter — this pushes through the main debounced pipeline
-        if (entity.filterTag) {
-            this.addFilter(entity.filterTag);
+        if (entity.filterTags?.length) {
+            this.addFilter(entity.filterTags);
         }
 
         // Keep search input focused so user can start typing immediately
@@ -332,18 +316,6 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.searchError.set(undefined);
         this.currentView.set(SearchView.Navigation);
         this.placeholderCache.clear();
-    }
-
-    protected onInputKeydown(event: KeyboardEvent): void {
-        if (this.currentView() !== SearchView.Iris) return;
-        // When no item is selected (selectedIndex < 0) the user is back in the input:
-        // let ArrowLeft/Right move the cursor normally instead of switching panels.
-        if (this.selectedIndex() < 0) return;
-        if (event.key === 'ArrowRight' && this.activeSplitPanel() === 'left') {
-            event.preventDefault();
-        } else if (event.key === 'ArrowLeft' && this.activeSplitPanel() === 'right') {
-            event.preventDefault();
-        }
     }
 
     protected focusInput() {
@@ -379,20 +351,6 @@ export class GlobalSearchModalComponent implements OnDestroy {
                 event.preventDefault();
                 this.selectedIndex.update((i) => Math.max(i - 1, -1));
                 break;
-            case 'ArrowRight':
-                if (this.currentView() === SearchView.Iris && this.activeSplitPanel() === 'left' && this.selectedIndex() >= 0) {
-                    event.preventDefault();
-                    this.activeSplitPanel.set('right');
-                    this.selectedIndex.set(0);
-                }
-                break;
-            case 'ArrowLeft':
-                if (this.currentView() === SearchView.Iris && this.activeSplitPanel() === 'right' && this.selectedIndex() >= 0) {
-                    event.preventDefault();
-                    this.activeSplitPanel.set('left');
-                    this.selectedIndex.set(0);
-                }
-                break;
         }
     }
 
@@ -401,26 +359,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     }
 
     protected navigateTo(view: SearchView) {
-        if (view === SearchView.Iris) {
-            if (this.currentView() === SearchView.Iris) {
-                // Drawer is already open — do nothing to avoid collapsing it
-                return;
-            }
-            this.irisSourceView.set(this.currentView());
-            this.currentView.set(view);
-            this.activeSplitPanel.set('left');
-            this.selectedIndex.set(-1);
-            return;
-        }
         this.currentView.set(view);
-        this.activeSplitPanel.set('left');
-        this.selectedIndex.set(-1);
-    }
-
-    // Updates which view is shown on the left side of the Iris split layout
-    // without closing the drawer. Used when an action button is clicked inside the split.
-    protected updateIrisSource(view: SearchView) {
-        this.irisSourceView.set(view);
         this.selectedIndex.set(-1);
     }
 }

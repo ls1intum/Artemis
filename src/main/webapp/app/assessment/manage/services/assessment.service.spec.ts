@@ -4,7 +4,7 @@ import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complai
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 describe('Assessment Service', () => {

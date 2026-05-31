@@ -10,9 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.repository.TextAssessmentEventRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
@@ -130,7 +130,7 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
 
         request.post("/api/text/event-insights/text-assessment/events", event, HttpStatus.CREATED);
 
-        var foundEvents = request.getList("/api/text/admin/event-insights/text-assessment/events/" + course.getId(), HttpStatus.OK, TextAssessmentEvent.class);
+        var foundEvents = request.getList("/api/text/admin/event-insights/text-assessment/events?courseId=" + course.getId(), HttpStatus.OK, TextAssessmentEvent.class);
         assertThat(foundEvents).hasSize(1);
         TextAssessmentEvent foundEvent = foundEvents.getFirst();
         assertThat(foundEvent.getId()).isNotNull();

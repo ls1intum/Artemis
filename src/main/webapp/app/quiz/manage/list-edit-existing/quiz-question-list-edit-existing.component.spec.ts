@@ -4,18 +4,18 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { checkForInvalidFlaggedQuestions } from 'app/quiz/shared/service/quiz-manage-util.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CommonModule } from '@angular/common';
 import { QuizQuestionListEditExistingComponent, State } from 'app/quiz/manage/list-edit-existing/quiz-question-list-edit-existing.component';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { Course } from 'app/course/shared/entities/course.model';
 import { FormsModule } from '@angular/forms';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -38,7 +38,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { FileService } from 'app/shared/service/file.service';
+import { FileService } from 'app/foundation/service/file.service';
 
 const createValidMCQuestion = () => {
     const question = new MultipleChoiceQuestion();

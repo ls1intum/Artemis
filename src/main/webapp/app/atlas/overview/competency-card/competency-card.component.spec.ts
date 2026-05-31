@@ -7,12 +7,12 @@ import { Competency, CompetencyProgress } from 'app/atlas/shared/entities/compet
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyCardComponent', () => {

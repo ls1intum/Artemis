@@ -1,7 +1,7 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { take } from 'rxjs/operators';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -13,12 +13,13 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { provideHttpClient } from '@angular/common/http';
 import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 describe('ProgrammingExercise Service', () => {
     let service: ProgrammingExerciseService;
@@ -218,6 +219,21 @@ describe('ProgrammingExercise Service', () => {
             tick();
         }));
 
+        it('should include assessmentType when updating', fakeAsync(() => {
+            const exercise = new ProgrammingExercise(new Course(), undefined);
+            exercise.id = 1;
+            exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+
+            service.update(exercise).subscribe();
+
+            const req = httpMock.expectOne({ method: 'PUT' });
+            // Check that dto assessmentType field has correct value
+            expect(req.request.body.assessmentType).toBe(AssessmentType.SEMI_AUTOMATIC);
+
+            req.flush(exercise);
+            tick();
+        }));
+
         it('should update the Timeline of a ProgrammingExercise', fakeAsync(() => {
             const returnedFromService = {
                 ...defaultProgrammingExercise,
@@ -341,7 +357,7 @@ describe('ProgrammingExercise Service', () => {
         const exerciseId = 1;
         const participationId = 5;
         service.exportStudentRepository(exerciseId, participationId).subscribe();
-        const url = `${resourceUrl}/${exerciseId}/export-student-repository/${participationId}`;
+        const url = `${resourceUrl}/${exerciseId}/export-student-repository?participationId=${participationId}`;
         const req = httpMock.expectOne({ method: 'GET', url });
         req.flush(new Blob());
         tick();

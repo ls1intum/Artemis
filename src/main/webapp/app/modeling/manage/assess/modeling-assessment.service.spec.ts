@@ -3,8 +3,8 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { take } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -147,7 +147,7 @@ describe('ModelingAssessmentService', () => {
                     .pipe(take(1))
                     .subscribe((resp) => (expectedResult = resp));
                 const req = httpMock.expectOne({
-                    url: `api/modeling/modeling-submissions/${submissionId}/result/${1}/assessment`,
+                    url: `api/modeling/modeling-submissions/${submissionId}/results/${1}/assessment`,
                     method: 'PUT',
                 });
                 req.flush(returnedFromService);
@@ -224,7 +224,7 @@ describe('ModelingAssessmentService', () => {
                     .pipe(take(1))
                     .subscribe((resp) => (expectedResult = resp));
                 const req = httpMock.expectOne({
-                    url: `api/modeling/exercise/${exerciseId}/modeling-submissions/${submissionId}/example-assessment`,
+                    url: `api/modeling/exercises/${exerciseId}/modeling-submissions/${submissionId}/example-assessment`,
                     method: 'GET',
                 });
                 req.flush(returnedFromService);

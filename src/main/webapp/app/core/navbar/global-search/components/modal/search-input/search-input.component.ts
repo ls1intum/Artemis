@@ -1,8 +1,9 @@
 import { Component, ElementRef, computed, inject, input, output, viewChild } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
+import { SearchEntityType } from '../../../models/searchable-entity.model';
 
 @Component({
     selector: 'jhi-global-search-input',
@@ -28,13 +29,13 @@ export class SearchInputComponent {
     protected readonly faTimes = faTimes;
 
     searchQuery = input.required<string>();
-    activeFilters = input.required<string[]>();
+    activeFilters = input.required<SearchEntityType[]>();
     courseFilterLabel = input<string | undefined>(undefined);
     isLoading = input.required<boolean>();
 
     searchInput = output<string>();
     searchKeyDown = output<KeyboardEvent>();
-    filterRemoved = output<string>();
+    filterRemoved = output<SearchEntityType>();
     courseFilterRemoved = output<void>();
     /** Emitted when Backspace is pressed while the input is empty. */
     backspaceOnEmpty = output<void>();
@@ -63,7 +64,7 @@ export class SearchInputComponent {
         this.searchKeyDown.emit(event);
     }
 
-    protected onFilterRemove(filter: string) {
+    protected onFilterRemove(filter: SearchEntityType) {
         this.filterRemoved.emit(filter);
     }
 

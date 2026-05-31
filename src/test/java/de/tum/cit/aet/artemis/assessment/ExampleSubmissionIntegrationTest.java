@@ -28,9 +28,9 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
@@ -230,7 +230,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         request.putWithResponseBody("/api/modeling/modeling-submissions/" + exampleSubmission.getId() + "/example-assessment", feedbacks, Result.class, HttpStatus.OK);
 
         Result cleanResult = request.get(
-                "/api/modeling/exercise/" + modelingExercise.getId() + "/modeling-submissions/" + exampleSubmission.getSubmission().getId() + "/example-assessment", HttpStatus.OK,
+                "/api/modeling/exercises/" + modelingExercise.getId() + "/modeling-submissions/" + exampleSubmission.getSubmission().getId() + "/example-assessment", HttpStatus.OK,
                 Result.class);
         for (Feedback feedback : cleanResult.getFeedbacks()) {
             assertThat(feedback.getCredits()).isNull();
@@ -319,8 +319,8 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     private ExampleSubmission importExampleSubmission(Long exerciseId, Long submissionId, HttpStatus expectedStatus) throws Exception {
-        return request.postWithResponseBody("/api/assessment/exercises/" + exerciseId + "/example-submissions/import/" + submissionId, null, ExampleSubmission.class,
-                expectedStatus);
+        return request.postWithResponseBody("/api/assessment/exercises/" + exerciseId + "/example-submissions/import?sourceSubmissionId=" + submissionId, null,
+                ExampleSubmission.class, expectedStatus);
     }
 
     @Test

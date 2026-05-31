@@ -14,8 +14,8 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { Course } from 'app/course/shared/entities/course.model';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
 import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
@@ -35,17 +35,17 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { AlertService } from 'app/shared/service/alert.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
-import { onError } from 'app/shared/util/global.utils';
-import { stringifyIgnoringFields } from 'app/shared/util/utils';
+import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
+import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { stringifyIgnoringFields } from 'app/foundation/util/utils';
 import dayjs from 'dayjs/esm';
 import { omit } from 'lodash-es';
 import { Subject, Subscription, TeardownLogic, of } from 'rxjs';
@@ -520,10 +520,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private handleAthenaAssessment(result: Result): void {
         if (result.completionDate) {
             this.assessmentResult = this.modelingAssessmentService.convertResult(result);
+            this.result = this.assessmentResult;
             this.prepareAssessmentData();
 
             if (result.successful) {
-                this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
+                this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.modelingExercise?.title ?? '' });
             }
         } else if (result.successful === false) {
             this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');

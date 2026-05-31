@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { createRequestOption } from 'app/shared/util/request.util';
+import { createRequestOption } from 'app/foundation/util/request.util';
 import { ExerciseServicable, ExerciseService } from 'app/exercise/services/exercise.service';
 import { toUpdateFileUploadExerciseDTO } from 'app/fileupload/shared/entities/update-file-upload-exercise-dto';
 
@@ -121,7 +121,7 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
-            .post<FileUploadExercise>(`${this.resourceUrl}/import/${adaptedSourceFileUploadExercise.id}`, copy, { observe: 'response' })
+            .post<FileUploadExercise>(`${this.resourceUrl}/import?sourceId=${adaptedSourceFileUploadExercise.id}`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 }

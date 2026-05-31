@@ -5,11 +5,13 @@ import {
     faBook,
     faCalendarCheck,
     faCheckDouble,
+    faComment,
     faComments,
     faCube,
     faFileLines,
     faFileUpload,
     faFont,
+    faGraduationCap,
     faHashtag,
     faKeyboard,
     faProjectDiagram,
@@ -19,10 +21,11 @@ import {
 import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
 import { SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
-import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AccountService } from 'app/core/auth/account.service';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SearchableEntity } from 'app/core/navbar/global-search/models/searchable-entity.model';
 import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
 import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
@@ -30,23 +33,36 @@ import { SearchResultItemComponent } from 'app/core/navbar/global-search/compone
 import { Router } from '@angular/router';
 import { SearchOverlayService } from 'app/core/navbar/global-search/services/search-overlay.service';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/components/views/iris-answer/global-search-iris-answer.component';
 
 // Number of fixed action buttons rendered above the search results.
 // Arrow-key indices 0..NAV_ACTION_COUNT-1 map to these buttons in template order.
 // Increment this constant when adding a new action button.
-export const NAV_ACTION_COUNT = 2;
+export const NAV_ACTION_COUNT = 1;
+
+/** Keyboard-navigation index of the lecture-search action button. */
+export const LECTURE_SEARCH_ACTION_INDEX = 0;
 
 @Component({
     selector: 'jhi-global-search-navigation-view',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [GlobalSearchActionItemComponent, FaIconComponent, SearchableEntityItemComponent, SearchResultItemComponent, SkeletonModule, ArtemisTranslatePipe, IrisLogoComponent],
+    imports: [
+        GlobalSearchActionItemComponent,
+        GlobalSearchIrisAnswerComponent,
+        FaIconComponent,
+        SearchableEntityItemComponent,
+        SearchResultItemComponent,
+        SkeletonModule,
+        ArtemisTranslatePipe,
+    ],
     templateUrl: './global-search-navigation-view.component.html',
     styleUrls: ['./global-search-navigation-view.component.scss'],
     providers: [{ provide: SearchResultView, useExisting: forwardRef(() => GlobalSearchNavigationViewComponent) }],
 })
 export class GlobalSearchNavigationViewComponent extends SearchResultView {
     private readonly profileService = inject(ProfileService);
+    private readonly accountService = inject(AccountService);
 
     readonly searchQuery = input.required<string>();
     readonly selectedIndex = input<number>(-1);
@@ -56,7 +72,6 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     readonly isLoading = input<boolean>(false);
     readonly searchError = input<string | undefined>(undefined);
     readonly activeFilters = input<string[]>([]);
-    readonly irisOpen = input<boolean>(false);
 
     // Skeleton placeholder array for loading animation
     protected readonly skeletonItems = Array(5);
@@ -69,22 +84,27 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     private readonly overlay = inject(SearchOverlayService);
 
     protected readonly NAV_ACTION_COUNT = NAV_ACTION_COUNT;
+    protected readonly LECTURE_SEARCH_ACTION_INDEX = LECTURE_SEARCH_ACTION_INDEX;
 
     // Query all selectable items for auto-scroll functionality
     private readonly selectableItems = viewChildren<ElementRef<HTMLElement>>('selectableItem');
 
-    // False when artemis.iris.enabled = false in the server config; both action buttons are hidden.
-    protected readonly irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
+    // False when artemis.iris.enabled = false in the server config.
+    private readonly irisModuleEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
+    // True only when the module is enabled AND the user has opted into AI usage (LOCAL_AI or CLOUD_AI).
+    protected readonly irisEnabled = computed(() => {
+        if (!this.irisModuleEnabled) return false;
+        const usage = this.accountService.userIdentity()?.selectedLLMUsage;
+        return usage === LLMSelectionDecision.LOCAL_AI || usage === LLMSelectionDecision.CLOUD_AI;
+    });
     // Lecture search button is only visible when no filter is active
     protected readonly showLectureButton = computed(() => this.activeFilters().length === 0);
-    // Number of action buttons currently visible (iris hidden when disabled or split view already open)
+    // Number of action buttons currently visible (only the lecture search button now)
     protected readonly actionButtonCount = computed(() => {
-        if (!this.irisEnabled) return 0;
-        if (this.irisOpen()) return this.showLectureButton() ? 1 : 0;
-        return this.showLectureButton() ? 2 : 1;
+        if (!this.irisEnabled()) return 0;
+        return this.showLectureButton() ? 1 : 0;
     });
-    protected readonly IrisLogoSize = IrisLogoSize;
-    // Auto-scroll selected item into view when selection changes
+
     constructor() {
         super();
         effect(() => {
@@ -115,13 +135,22 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     // Searchable entities for initial view
     protected searchableEntities: SearchableEntity[] = [
         {
+            id: 'courses',
+            title: 'global.search.entities.coursesTitle',
+            description: 'global.search.entities.coursesDescription',
+            icon: faGraduationCap,
+            type: 'filter',
+            enabled: true,
+            filterTags: ['course'],
+        },
+        {
             id: 'exercises',
             title: 'global.search.entities.exercisesTitle',
             description: 'global.search.entities.exercisesDescription',
             icon: faCube,
             type: 'filter',
             enabled: true,
-            filterTag: 'exercise',
+            filterTags: ['exercise'],
         },
         {
             id: 'lectures',
@@ -130,7 +159,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             icon: faBook,
             type: 'filter',
             enabled: true,
-            filterTag: 'lecture',
+            filterTags: ['lecture'],
         },
         {
             id: 'communication',
@@ -139,7 +168,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             icon: faComments,
             type: 'filter',
             enabled: true,
-            filterTag: 'channel',
+            filterTags: ['channel', 'post', 'answer_post'],
         },
         {
             id: 'faqs',
@@ -148,7 +177,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             icon: faQuestionCircle,
             type: 'filter',
             enabled: true,
-            filterTag: 'faq',
+            filterTags: ['faq'],
         },
         {
             id: 'exams',
@@ -157,7 +186,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             icon: faCalendarCheck,
             type: 'filter',
             enabled: true,
-            filterTag: 'exam',
+            filterTags: ['exam'],
         },
     ];
 
@@ -197,11 +226,17 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         if (type === 'channel') {
             return faHashtag;
         }
+        if (type === 'post' || type === 'answer_post') {
+            return faComment;
+        }
         if (type === 'faq') {
             return faQuestionCircle;
         }
         if (type === 'exam') {
             return this.faCalendarCheck;
+        }
+        if (type === 'course') {
+            return faGraduationCap;
         }
         return this.faQuestion;
     }
@@ -214,6 +249,9 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         }
 
         switch (result.type) {
+            case 'course':
+                this.router.navigate(['/courses', courseId]);
+                break;
             case 'exercise':
                 if (result.id) this.navigateToExercise(result, courseId);
                 break;
@@ -231,6 +269,12 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
                 break;
             case 'channel':
                 if (result.id) this.navigateToChannel(courseId, result.id);
+                break;
+            case 'post':
+                this.navigateToPost(result, courseId);
+                break;
+            case 'answer_post':
+                this.navigateToAnswerPost(result, courseId);
                 break;
         }
 
@@ -291,6 +335,21 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId } });
     }
 
+    private navigateToPost(result: GlobalSearchResult, courseId: string) {
+        const channelId = result.metadata?.['channelId'];
+        if (channelId) {
+            this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId, focusPostId: result.id } });
+        }
+    }
+
+    private navigateToAnswerPost(result: GlobalSearchResult, courseId: string) {
+        const channelId = result.metadata?.['channelId'];
+        const postId = result.metadata?.['postId'];
+        if (channelId && postId) {
+            this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: channelId, messageId: postId, focusReplyId: result.id } });
+        }
+    }
+
     @HostListener('window:keydown', ['$event'])
     handleKeydown(event: KeyboardEvent): void {
         if (event.key !== 'Enter') return;
@@ -298,14 +357,8 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         if (idx < 0) return;
         const buttonCount = this.actionButtonCount();
 
-        // Iris button at index 0 when enabled and split view not already open
-        if (this.irisEnabled && !this.irisOpen() && idx === 0) {
-            event.preventDefault();
-            this.viewSelected.emit(SearchView.Iris);
-            return;
-        }
-        // Lecture button: index 1 normally, shifts to index 0 when iris button is hidden (irisOpen)
-        if (this.showLectureButton() && this.irisEnabled && idx === (this.irisOpen() ? 0 : 1)) {
+        // Lecture search button at index 0 when iris is enabled and no filter active
+        if (this.showLectureButton() && this.irisEnabled() && idx === LECTURE_SEARCH_ACTION_INDEX) {
             event.preventDefault();
             this.viewSelected.emit(SearchView.Lecture);
             return;

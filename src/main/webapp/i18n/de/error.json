@@ -121,8 +121,8 @@
             "notSupportedForTeams": "Der Übungsmodus wird für Teamübungen nicht unterstützt.",
             "programmingExercisesDisabled": "Der Übungsmodus für Programmieraufgaben ist deaktiviert.",
             "programmingExercisesDisabled_detail": "Die Funktion für Programmieraufgaben ist deaktiviert.",
-            "athenaProfileRequired": "Der Übungsmodus für Text- und Modellierungsaufgaben ist nicht verfügbar.",
-            "athenaProfileRequired_detail": "Das Athena-Profil ist nicht aktiv.",
+            "athenaNotEnabled": "Der Übungsmodus für Text- und Modellierungsaufgaben ist nicht verfügbar.",
+            "athenaNotEnabled_detail": "Das Athena-Modul ist nicht aktiviert (artemis.athena.enabled=true setzen).",
             "feedbackRequestAfterDueDate": "Die Abgabefrist ist abgelaufen. Starte eine Übungsteilnahme, um nach der Frist Feedback anzufordern."
         },
         "feedbackRequest": {
@@ -130,8 +130,8 @@
             "unsupportedExerciseType": "Dieser Aufgabentyp unterstützt keine Feedback-Anfragen.",
             "programmingExercisesDisabled": "Feedback-Anfragen für Programmieraufgaben sind deaktiviert.",
             "programmingExercisesDisabled_detail": "Die Funktion für Programmieraufgaben ist deaktiviert.",
-            "athenaProfileRequired": "Feedback-Anfragen für Text- und Modellierungsaufgaben sind nicht verfügbar.",
-            "athenaProfileRequired_detail": "Das Athena-Profil ist nicht aktiv."
+            "athenaNotEnabled": "Feedback-Anfragen für Text- und Modellierungsaufgaben sind nicht verfügbar.",
+            "athenaNotEnabled_detail": "Das Athena-Modul ist nicht aktiviert (artemis.athena.enabled=true setzen)."
         },
         "teamExercise": {
             "cannotStart": "Teamübung kann nicht ohne zugewiesenes Team gestartet werden."

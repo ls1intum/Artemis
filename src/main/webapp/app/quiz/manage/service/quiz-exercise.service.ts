@@ -3,18 +3,18 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { QuizBatch, QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { createRequestOption } from 'app/shared/util/request.util';
+import { createRequestOption } from 'app/foundation/util/request.util';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
-import { downloadFile, downloadZipFromFilePromises } from 'app/shared/util/download.util';
-import { objectToJsonBlob } from 'app/shared/util/blob-util';
+import { downloadFile, downloadZipFromFilePromises } from 'app/foundation/util/download.util';
+import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import JSZip from 'jszip';
-import { FileService } from 'app/shared/service/file.service';
+import { FileService } from 'app/foundation/service/file.service';
 import { toQuizExerciseUpdateDTO } from 'app/quiz/shared/entities/quiz-exercise-update-dto.model';
 import { convertQuizExerciseToCreationDTO } from 'app/quiz/shared/entities/quiz-exercise-creation/quiz-exercise-creation-dto.model';
 import { QuizExerciseDates } from 'app/quiz/shared/entities/quiz-exercise-dates.model';
-import { convertDateFromServer } from 'app/shared/util/date.utils';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
 export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
@@ -197,7 +197,7 @@ export class QuizExerciseService {
      * @param quizBatchId the id of the quiz batch that should be started
      */
     startBatch(quizBatchId: number): Observable<HttpResponse<QuizBatch>> {
-        return this.http.put<QuizBatch>(`${this.resourceUrl}/${quizBatchId}/start-batch`, null, { observe: 'response' });
+        return this.http.put<QuizBatch>(`api/quiz/quiz-batches/${quizBatchId}/start-batch`, null, { observe: 'response' });
     }
 
     /**

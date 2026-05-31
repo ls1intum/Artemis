@@ -17,12 +17,15 @@ artemis:
     temp-path: ./local/server-integration-test/temp
     bcrypt-salt-rounds: 4  # We don't need secure passwords for testing. Lower rounds will speed up tests. 4 ist the lowest allowed round count.
     user-management:
-        use-external: true # enables ldap authentication
+        use-external: true # enables external user management (actual LDAP authentication requires artemis.user-management.ldap.enabled=true)
         ldap:
+            enabled: false # opt-in per test class via @TestPropertySource(properties = "artemis.user-management.ldap.enabled=true")
             url: https://ldap.fake.fake
             user-dn: fake-username-ldap
             password: fake-password
             base: ou=users,ou=data,ou=prod,ou=iauth,dc=tum,dc=de
+        saml2:
+            enabled: false # opt-in per test class via @TestPropertySource(properties = "artemis.user-management.saml2.enabled=true")
         internal-admin:
             username: artemis_admin
             password: artemis_admin
@@ -61,6 +64,7 @@ artemis:
         name: Artemis
         email: artemis@in.tum.de
     athena:
+        enabled: true
         url: http://localhost:5100
         secret: abcdef12345
         restricted-modules: module_text_test_restricted,module_programming_test_restricted
@@ -75,6 +79,7 @@ artemis:
             base-url: https://fake.fake
             auth-token: fake-token
     apollon:
+        enabled: true
         conversion-service-url: http://localhost:8080
     telemetry:
         enabled: false
