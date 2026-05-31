@@ -19,21 +19,18 @@ describe('FormDateTimePickerComponent', () => {
     const normalDate = dayjs('2022-01-02T22:15+00:00');
     const normalDateAsDateObject = new Date('2022-01-02T22:15+00:00');
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [OwlNativeDateTimeModule, MockPipe(ArtemisTranslatePipe), MockModule(NgbTooltipModule), FormDateTimePickerComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(FormDateTimePickerComponent);
-                component = fixture.componentInstance;
-                component.dateInput = { reset: vi.fn() } as any;
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(FormDateTimePickerComponent);
+        component = fixture.componentInstance;
+        component.dateInput = { reset: vi.fn() } as any;
     });
 
     it('should emit if a value is changed', () => {
-        const emitStub = vi.spyOn(component.valueChange, 'emit').mockImplementation(() => {});
+        const emitStub = vi.spyOn(component.valueChange, 'emit').mockImplementation(() => undefined);
 
         component.valueChanged();
 
@@ -92,7 +89,7 @@ describe('FormDateTimePickerComponent', () => {
     it('should update field', () => {
         const onChangeSpy = vi.fn();
         component.registerOnChange(onChangeSpy);
-        const valueChangedStub = vi.spyOn(component, 'valueChanged').mockImplementation(() => {});
+        const valueChangedStub = vi.spyOn(component, 'valueChanged').mockImplementation(() => undefined);
         const newDate = normalDate.add(2, 'days');
         fixture.componentRef.setInput('value', normalDate);
         fixture.changeDetectorRef.detectChanges();
@@ -122,8 +119,8 @@ describe('FormDateTimePickerComponent', () => {
     });
 
     it('should clear the datepicker value', () => {
-        const resetSpy = vi.spyOn(component.dateInput, 'reset').mockImplementation(() => {});
-        const updateSignalsSpy = vi.spyOn(component, 'updateSignals').mockImplementation(() => {});
+        const resetSpy = vi.spyOn(component.dateInput, 'reset').mockImplementation(() => undefined);
+        const updateSignalsSpy = vi.spyOn(component, 'updateSignals').mockImplementation(() => undefined);
 
         component.clearDate();
 
