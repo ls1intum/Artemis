@@ -6,9 +6,6 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import lombok.Getter;
-import lombok.Setter;
-
 /**
  * An AST node for mathematical expressions.
  * Stored as a JSON column via {@link MathNodeConverter}.
@@ -16,8 +13,6 @@ import lombok.Setter;
  * Terminal nodes ({@code number}, {@code variable}, {@code wildcard}) have no slots.
  * Non-terminal nodes ({@code add}, {@code sub}, {@code mul}, etc.) carry named slots, each holding an ordered list of children.
  */
-@Setter
-@Getter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class MathNode {
 
@@ -33,6 +28,30 @@ public class MathNode {
     public MathNode(String type, String value, Map<String, List<MathNode>> slots) {
         this.type = type;
         this.value = value;
+        this.slots = slots;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
+    }
+
+    public Map<String, List<MathNode>> getSlots() {
+        return slots;
+    }
+
+    public void setSlots(Map<String, List<MathNode>> slots) {
         this.slots = slots;
     }
 

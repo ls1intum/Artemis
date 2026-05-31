@@ -45,7 +45,7 @@ class GraderRegistryTest {
 
     @Test
     void getGrader_unregisteredType_throws() {
-        assertThatThrownBy(() -> registry.getGrader(GraderType.LEAN)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("No MathGrader");
+        assertThatThrownBy(() -> registry.getGrader(GraderType.EGG_EGRAPH)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("No MathGrader");
     }
 
     @Test

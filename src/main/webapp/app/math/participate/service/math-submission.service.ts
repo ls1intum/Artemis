@@ -64,7 +64,7 @@ export class MathSubmissionService {
 
     saveManualResult(submissionId: number, score: number): Observable<MathSubmission> {
         return this.http
-            .put<MathSubmission>(`api/math/math-submissions/${submissionId}/manual-result`, score, { observe: 'response' })
+            .put<MathSubmission>(`api/math/math-submissions/${submissionId}/manual-result`, { score }, { observe: 'response' })
             .pipe(map((res: HttpResponse<MathSubmission>) => res.body!));
     }
 

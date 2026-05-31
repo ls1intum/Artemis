@@ -39,7 +39,7 @@ import de.tum.cit.aet.artemis.math.domain.MathExercise;
 import de.tum.cit.aet.artemis.math.domain.MathNodes;
 import de.tum.cit.aet.artemis.math.dto.MathExerciseDTO;
 import de.tum.cit.aet.artemis.math.dto.MathSubmissionDTO.DerivationStepDTO;
-import de.tum.cit.aet.artemis.math.grader.ReachabilityReport;
+import de.tum.cit.aet.artemis.math.dto.ReachabilityReportDTO;
 import de.tum.cit.aet.artemis.math.repository.MathExerciseRepository;
 import de.tum.cit.aet.artemis.math.service.MathExerciseImportService;
 import de.tum.cit.aet.artemis.math.service.MathGradingService;
@@ -234,10 +234,10 @@ public class MathExerciseResource {
      */
     @GetMapping("math-exercises/{exerciseId}/verify-reachability")
     @EnforceAtLeastEditor
-    public ResponseEntity<ReachabilityReport> verifyReachability(@PathVariable Long exerciseId) {
+    public ResponseEntity<ReachabilityReportDTO> verifyReachability(@PathVariable Long exerciseId) {
         log.debug("REST request to verify reachability for MathExercise : {}", exerciseId);
         MathExercise exercise = mathExerciseRepository.findByIdWithCategoriesAndCourse(exerciseId).orElseThrow();
-        return mathGradingService.verifyReachability(exercise).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        return mathGradingService.verifyReachability(exercise).map(ReachabilityReportDTO::of).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     private void validateExpressionsWildcardFree(MathExerciseDTO dto) {

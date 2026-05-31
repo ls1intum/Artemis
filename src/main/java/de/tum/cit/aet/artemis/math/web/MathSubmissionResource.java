@@ -36,8 +36,9 @@ import de.tum.cit.aet.artemis.math.domain.MathExercise;
 import de.tum.cit.aet.artemis.math.domain.MathNodes;
 import de.tum.cit.aet.artemis.math.domain.MathSubmission;
 import de.tum.cit.aet.artemis.math.dto.HintRequestDTO;
+import de.tum.cit.aet.artemis.math.dto.HintSuggestionDTO;
+import de.tum.cit.aet.artemis.math.dto.ManualResultRequestDTO;
 import de.tum.cit.aet.artemis.math.dto.MathSubmissionDTO;
-import de.tum.cit.aet.artemis.math.grader.HintSuggestion;
 import de.tum.cit.aet.artemis.math.repository.MathExerciseRepository;
 import de.tum.cit.aet.artemis.math.repository.MathSubmissionRepository;
 import de.tum.cit.aet.artemis.math.service.MathGradingService;
@@ -212,11 +213,11 @@ public class MathSubmissionResource {
      *
      * @param exerciseId the exercise the student is working on
      * @param request    the hint request body carrying the current expression
-     * @return up to three {@link HintSuggestion}s ranked by progress toward the goal
+     * @return up to three {@link HintSuggestionDTO}s ranked by progress toward the goal
      */
     @PostMapping("exercises/{exerciseId}/hints")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<HintSuggestion>> suggestHints(@PathVariable Long exerciseId, @RequestBody HintRequestDTO request) {
+    public ResponseEntity<List<HintSuggestionDTO>> suggestHints(@PathVariable Long exerciseId, @RequestBody HintRequestDTO request) {
         log.debug("REST request to compute hints for math exercise : {}", exerciseId);
         MathExercise exercise = mathExerciseRepository.findByIdWithCategories(exerciseId).orElseThrow();
         if (!exercise.isAllowVerification()) {
@@ -228,7 +229,8 @@ public class MathSubmissionResource {
         catch (IllegalArgumentException e) {
             throw new BadRequestAlertException(e.getMessage(), "mathSubmission", "wildcardNotAllowed");
         }
-        return ResponseEntity.ok(mathGradingService.suggestHints(exercise, MathNodes.normalize(request.currentExpression())));
+        List<HintSuggestionDTO> hints = mathGradingService.suggestHints(exercise, MathNodes.normalize(request.currentExpression())).stream().map(HintSuggestionDTO::of).toList();
+        return ResponseEntity.ok(hints);
     }
 
     /**
@@ -236,12 +238,12 @@ public class MathSubmissionResource {
      * tutor-supplied manual score.
      *
      * @param submissionId the submission to assess
-     * @param score        the manual score in [0, 100]
+     * @param request      the manual score in [0, 100]
      * @return the submission with the new manual result attached
      */
     @PutMapping("math-submissions/{submissionId}/manual-result")
     @EnforceAtLeastTutor
-    public ResponseEntity<MathSubmissionDTO> saveManualResult(@PathVariable Long submissionId, @RequestBody double score) {
+    public ResponseEntity<MathSubmissionDTO> saveManualResult(@PathVariable Long submissionId, @RequestBody ManualResultRequestDTO request) {
         log.debug("REST request to save manual result for MathSubmission : {}", submissionId);
         MathSubmission submission = mathSubmissionRepository.findByIdWithStepsResultsAndParticipation(submissionId).orElseThrow();
         MathExercise exercise = (MathExercise) submission.getParticipation().getExercise();
@@ -255,7 +257,7 @@ public class MathSubmissionResource {
             result.setExerciseId(exercise.getId());
         }
         result.setCompletionDate(ZonedDateTime.now());
-        result.setScore(score, exercise.getCourseViaExerciseGroupOrCourseMember());
+        result.setScore(request.score(), exercise.getCourseViaExerciseGroupOrCourseMember());
         resultRepository.save(result);
         submission.addResult(result);
 

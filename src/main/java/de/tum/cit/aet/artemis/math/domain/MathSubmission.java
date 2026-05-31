@@ -14,12 +14,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
-import lombok.Getter;
 
 /**
  * A MathSubmission.
  */
-@Getter
 @Entity
 @DiscriminatorValue(value = "R")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -29,6 +27,10 @@ public class MathSubmission extends Submission {
     @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("stepIndex ASC")
     private List<DerivationStep> steps = new ArrayList<>();
+
+    public List<DerivationStep> getSteps() {
+        return steps;
+    }
 
     public void setSteps(List<DerivationStep> steps) {
         this.steps = steps != null ? steps : new ArrayList<>();
