@@ -4,7 +4,7 @@ import { faBook, faCalendarAlt, faGraduationCap, faHashtag, faLevelDownAlt, faRe
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import dayjs from 'dayjs/esm';
 
 /** Format for displaying dates in search results, e.g. "Apr 19, 14:30" */
