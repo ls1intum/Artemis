@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.atlas.dto.metrics.LectureUnitInformationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.StudentMetricsDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseInformationDTO;

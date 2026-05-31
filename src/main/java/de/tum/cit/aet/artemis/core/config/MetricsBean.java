@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.dto.ActiveCourseDTO.NO_SEMESTER_TAG;
+import static de.tum.cit.aet.artemis.course.dto.ActiveCourseDTO.NO_SEMESTER_TAG;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -40,23 +40,23 @@ import org.springframework.web.socket.messaging.SubProtocolWebSocketHandler;
 
 import com.zaxxer.hikari.HikariDataSource;
 
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.repository.StatisticsRepository;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
-import de.tum.cit.aet.artemis.core.dto.ActiveCourseDTO;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.StatisticsRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.course.dto.ActiveCourseDTO;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamMetricsApi;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentCountDTO;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseMetricsService;
-import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
-import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
+import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MultiGauge;
@@ -751,7 +751,7 @@ public class MetricsBean {
 
     private void extractExerciseTypeMetricsAndAddToMetricsResults(Set<ExerciseTypeMetricsEntry> resultFromDatabase, Set<MultiGauge.Row<?>> resultForMetrics, Tags existingTags) {
         for (var exerciseType : ExerciseType.values()) {
-            var resultForExerciseType = resultFromDatabase.stream().filter(entry -> entry.exerciseType() == exerciseType.getExerciseClass()).findAny();
+            var resultForExerciseType = resultFromDatabase.stream().filter(entry -> entry.exerciseType() == exerciseType).findAny();
             var value = 0L;
             if (resultForExerciseType.isPresent()) {
                 value = resultForExerciseType.get().value();

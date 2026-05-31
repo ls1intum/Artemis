@@ -1,6 +1,6 @@
 import dayjs from 'dayjs/esm';
 import { BehaviorSubject, Subject, distinctUntilChanged, lastValueFrom, of } from 'rxjs';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { range as _range } from 'lodash-es';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import {
@@ -10,7 +10,7 @@ import {
     ProgrammingSubmissionState,
     ProgrammingSubmissionStateObj,
 } from 'app/programming/shared/services/programming-submission.service';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
@@ -20,7 +20,7 @@ import { ProgrammingExerciseParticipationService } from 'app/programming/manage/
 import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';

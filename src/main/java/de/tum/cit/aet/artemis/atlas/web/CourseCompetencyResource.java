@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.atlas.web;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -25,14 +26,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyContributionDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyGenerationRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyProgressDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyProgressDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.UpdateCourseCompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
@@ -42,14 +47,9 @@ import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyRelationService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyWithTailRelation;
 import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.CourseCompetencyProgressDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.CompetencyPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -58,8 +58,10 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.api.IrisCompetencyApi;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionInputDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisCompetencyRecommendationDTO;
 
 @Conditional(AtlasEnabled.class)
 @Lazy
@@ -358,14 +360,20 @@ public class CourseCompetencyResource {
      */
     @PostMapping("courses/{courseId}/course-competencies/generate-from-description")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<Void> generateCompetenciesFromCourseDescription(@PathVariable Long courseId, @RequestBody PyrisCompetencyExtractionInputDTO input) {
+    public ResponseEntity<Void> generateCompetenciesFromCourseDescription(@PathVariable Long courseId, @Valid @RequestBody CompetencyGenerationRequestDTO input) {
         var api = irisCompetencyApi.orElseThrow();
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
+        var currentCompetencyDTOs = Optional.ofNullable(input.currentCompetencies()).orElse(List.of());
+        if (currentCompetencyDTOs.stream().anyMatch(Objects::isNull)) {
+            throw new BadRequestAlertException("currentCompetencies must not contain null elements", ENTITY_NAME, "nullCurrentCompetency");
+        }
+        var currentCompetencies = currentCompetencyDTOs.stream()
+                .map(competency -> new IrisCompetencyRecommendationDTO(competency.title(), competency.description(), competency.taxonomy())).toList();
 
         // Start the Iris competency generation pipeline for the given course.
         // The generated competencies will be sent async over the websocket on the topic /topic/iris/competencies/{courseId}
-        api.executeCompetencyExtractionPipeline(user, course, input.courseDescription(), input.currentCompetencies());
+        api.executeCompetencyExtractionPipeline(user, course, input.courseDescription(), currentCompetencies);
 
         return ResponseEntity.accepted().build();
     }

@@ -4,8 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCalendarAlt, faCircleXmark, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 export class CourseCompetencyImportSettings {

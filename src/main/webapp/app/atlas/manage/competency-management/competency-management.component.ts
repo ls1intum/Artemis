@@ -1,33 +1,33 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, PendingTasks, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType, getIcon } from 'app/atlas/shared/entities/competency.model';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { Subscription, firstValueFrom, map } from 'rxjs';
 import { faCircleQuestion, faEdit, faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
-import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import {
     ImportAllCourseCompetenciesModalComponent,
     ImportAllCourseCompetenciesResult,
 } from 'app/atlas/manage/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
 import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
 import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-management/competency-management-table.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 import { CourseCompetenciesRelationModalComponent } from 'app/atlas/manage/course-competencies-relation-modal/course-competencies-relation-modal.component';
 import { CourseCompetencyExplanationModalComponent } from 'app/atlas/manage/course-competency-explanation-modal/course-competency-explanation-modal.component';
 import { AgentChatModalComponent } from 'app/atlas/manage/agent-chat-modal/agent-chat-modal.component';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
-import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
-import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
-import { IS_AT_LEAST_INSTRUCTOR } from 'app/shared/constants/authority.constants';
+import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { IS_AT_LEAST_INSTRUCTOR } from 'app/foundation/constants/authority.constants';
 import { AccountService } from 'app/core/auth/account.service';
 
 @Component({

@@ -60,10 +60,10 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -408,7 +408,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.getQuizQuestions().stream().filter(q -> q instanceof DragAndDropQuestion).findFirst().ifPresent(q -> {
             DragAndDropQuestion dnd = (DragAndDropQuestion) q;
-            dnd.setCorrectMappings(List.of());
+            dnd.setCorrectMappings(Set.of());
         });
         createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
     }
@@ -441,7 +441,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.getQuizQuestions().stream().filter(q -> q instanceof ShortAnswerQuestion).findFirst().ifPresent(q -> {
             ShortAnswerQuestion sa = (ShortAnswerQuestion) q;
-            sa.setCorrectMappings(List.of());
+            sa.setCorrectMappings(Set.of());
         });
         createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
     }
@@ -1068,7 +1068,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
             newMapping.setSolution(newSolution);
             newMapping.setSpot(shortAnswerQuestion.getSpots().getFirst());
             newMapping.setShortAnswerSpotIndex(0);
-            shortAnswerQuestion.getCorrectMappings().add(newMapping);
+            shortAnswerQuestion.addCorrectMapping(newMapping);
             quizExercise.getQuizQuestions().remove(2);
             quizExercise.getQuizQuestions().add(shortAnswerQuestion);
         }
@@ -2465,14 +2465,17 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         mc.getAnswerOptions().add(new AnswerOption().text("D").hint("H4").explanation("E4").isCorrect(true));
 
         DragAndDropQuestion dnd = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
-        dnd.getDropLocations().removeFirst();
-        dnd.getCorrectMappings().removeFirst();
-        dnd.getDragItems().removeFirst();
+        DropLocation removedDropLocation = dnd.getDropLocations().removeFirst();
+        DragItem removedDragItem = dnd.getDragItems().removeFirst();
+        // Remove any mapping that references the removed drag item or drop location to keep the graph consistent.
+        // (correctMappings is a Set; iteration order is not guaranteed across loads, so we filter by reference equality
+        // instead of relying on positional removeFirst.)
+        dnd.getCorrectMappings().removeIf(m -> m.getDragItem() == removedDragItem || m.getDropLocation() == removedDropLocation);
 
         ShortAnswerQuestion sa = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
-        sa.getSpots().removeFirst();
-        sa.getSolutions().removeFirst();
-        sa.getCorrectMappings().removeFirst();
+        ShortAnswerSpot removedSpot = sa.getSpots().removeFirst();
+        ShortAnswerSolution removedSolution = sa.getSolutions().removeFirst();
+        sa.getCorrectMappings().removeIf(m -> m.getSpot() == removedSpot || m.getSolution() == removedSolution);
     }
 
     private QuizExercise createMultipleChoiceQuizExercise() {
@@ -2486,7 +2489,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         question.setExplanation("Explanation");
         question.copyQuestionId();
 
-        quizExercise.addQuestions(question);
+        quizExercise.addQuestion(question);
         quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
         quizExercise.setGradingInstructions(null);
 

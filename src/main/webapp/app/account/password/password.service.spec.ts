@@ -1,0 +1,44 @@
+/**
+ * Vitest tests for PasswordService.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { MockHttpService } from 'test/helpers/mocks/service/mock-http.service';
+import { PasswordService } from 'app/account/password/password.service';
+import { HttpClient } from '@angular/common/http';
+
+describe('PasswordService', () => {
+    setupTestBed({ zoneless: true });
+
+    let passwordService: PasswordService;
+    let httpService: HttpClient;
+    let postStub: ReturnType<typeof vi.spyOn>;
+
+    const postURL = 'api/account/account/change-password';
+
+    beforeEach(async () => {
+        TestBed.configureTestingModule({
+            providers: [{ provide: HttpClient, useClass: MockHttpService }],
+        });
+        await TestBed.compileComponents();
+
+        passwordService = TestBed.inject(PasswordService);
+        httpService = TestBed.inject(HttpClient);
+        postStub = vi.spyOn(httpService, 'post');
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should set a new password for the current user', () => {
+        const newPassword = 'newPassword';
+        const currentPassword = 'currentPassword';
+
+        passwordService.changePassword(newPassword, currentPassword).subscribe();
+
+        expect(postStub).toHaveBeenCalledOnce();
+        expect(postStub).toHaveBeenCalledWith(postURL, { currentPassword, newPassword });
+    });
+});

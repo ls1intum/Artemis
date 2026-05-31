@@ -24,6 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
@@ -38,8 +39,7 @@ import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ComplaintResponseTestRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
@@ -364,7 +364,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         checkAssessmentFinished(storedResult, assessor);
         assertThat(storedResult.getSubmission().getParticipation()).isNotNull();
 
-        Course course = request.get("/api/core/courses/" + this.course.getId() + "/for-assessment-dashboard", HttpStatus.OK, Course.class);
+        Course course = request.get("/api/course/courses/" + this.course.getId() + "/for-assessment-dashboard", HttpStatus.OK, Course.class);
         Exercise exercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()).hasSize(1);
         assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(1L);

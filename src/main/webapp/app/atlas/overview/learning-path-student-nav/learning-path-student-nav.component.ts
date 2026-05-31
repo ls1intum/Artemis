@@ -5,10 +5,10 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCheckCircle, faChevronDown, faChevronLeft, faChevronRight, faFlag, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LearningPathNavOverviewComponent } from 'app/atlas/overview/learning-path-nav-overview/learning-path-nav-overview.component';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ScienceEventType } from 'app/shared/science/science.model';
-import { ScienceService } from 'app/shared/science/science.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ScienceEventType } from 'app/foundation/science/science.model';
+import { ScienceService } from 'app/foundation/science/science.service';
 
 @Component({
     selector: 'jhi-learning-path-student-nav',

@@ -4,20 +4,20 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Lti13DeepLinkingComponent } from 'app/lti/manage/lti13-deep-linking/lti13-deep-linking.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient, HttpParams, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { SortService } from 'app/shared/service/sort.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SortService } from 'app/foundation/service/sort.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { Subject, of, throwError } from 'rxjs';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { User } from 'app/core/user/user.model';
+import { Course } from 'app/course/shared/entities/course.model';
+import { User } from 'app/account/user/user.model';
 import { TranslateService } from '@ngx-translate/core';
 import { DeepLinkingType } from 'app/lti/manage/lti13-deep-linking/lti.constants';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { IS_AT_LEAST_INSTRUCTOR } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_INSTRUCTOR } from 'app/foundation/constants/authority.constants';
 
 describe('Lti13DeepLinkingComponent', () => {
     setupTestBed({ zoneless: true });

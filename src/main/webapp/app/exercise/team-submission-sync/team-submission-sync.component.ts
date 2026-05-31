@@ -1,11 +1,11 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
-import { ConnectionState, WebsocketService } from 'app/shared/service/websocket.service';
+import { ConnectionState, WebsocketService } from 'app/foundation/service/websocket.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { distinctUntilChanged, filter, throttleTime } from 'rxjs/operators';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { SubmissionSyncPayload, isSubmissionSyncPayload } from 'app/exercise/shared/entities/submission/submission-sync-payload.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Observable, Subscription } from 'rxjs';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';

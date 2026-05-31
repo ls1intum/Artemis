@@ -5,7 +5,7 @@ import { CommonCourseCompetencyFormComponent } from 'app/atlas/manage/forms/comm
 import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-competency-form',

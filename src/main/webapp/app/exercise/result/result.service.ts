@@ -4,15 +4,15 @@ import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Result, isPracticeResult } from 'app/exercise/shared/entities/result/result.model';
 import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
-import { createRequestOption } from 'app/shared/util/request.util';
+import { createRequestOption } from 'app/foundation/util/request.util';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { map, tap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
+import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
 import { TranslateService } from '@ngx-translate/core';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { isResultPreliminary } from 'app/programming/shared/utils/programming-exercise.utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
@@ -28,7 +28,7 @@ import {
     isAthenaAIResult,
     isStudentParticipation,
 } from 'app/exercise/result/result.utils';
-import { CsvDownloadService } from 'app/shared/util/CsvDownloadService';
+import { CsvDownloadService } from 'app/foundation/util/CsvDownloadService';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;

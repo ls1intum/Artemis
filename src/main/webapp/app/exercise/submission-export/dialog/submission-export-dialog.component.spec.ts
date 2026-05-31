@@ -1,15 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionExportDialogComponent } from 'app/exercise/submission-export/dialog/submission-export-dialog.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
 import { SubmissionExportService } from 'app/exercise/submission-export/submission-export.service';
 import { HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/shared/service/alert.service';
-import * as DownloadUtil from 'app/shared/util/download.util';
+import { AlertService } from 'app/foundation/service/alert.service';
+import * as DownloadUtil from 'app/foundation/util/download.util';
 import { of } from 'rxjs';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
