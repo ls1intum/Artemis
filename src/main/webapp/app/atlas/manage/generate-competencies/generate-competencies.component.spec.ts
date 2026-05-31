@@ -10,8 +10,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ActivatedRoute, Router } from '@angular/router';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject, of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
@@ -30,15 +28,18 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { DialogService } from 'primeng/dynamicdialog';
 
 describe('GenerateCompetenciesComponent', () => {
     setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<GenerateCompetenciesComponent>;
     let comp: GenerateCompetenciesComponent;
     let mockWebSocketSubject: Subject<any>;
+    let dialogClose: Subject<any>;
 
     beforeEach(() => {
         mockWebSocketSubject = new Subject<any>();
+        dialogClose = new Subject<any>();
 
         TestBed.configureTestingModule({
             imports: [
@@ -68,9 +69,9 @@ describe('GenerateCompetenciesComponent', () => {
                 AlertService,
                 ArtemisTranslatePipe,
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: dialogClose.asObservable() })) } },
             ],
         })
-            .overrideProvider(NgbModal, { useValue: new MockNgbModalService() })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(GenerateCompetenciesComponent);
@@ -145,8 +146,8 @@ describe('GenerateCompetenciesComponent', () => {
     });
 
     it('should open modal to remove competency recommendations', () => {
-        const modalService = fixture.debugElement.injector.get<NgbModal>(NgbModal);
-        const openSpy = vi.spyOn(modalService, 'open');
+        const dialogService = fixture.debugElement.injector.get<DialogService>(DialogService);
+        const openSpy = vi.spyOn(dialogService, 'open');
         comp.competencies.push(createCompetencyFormGroup('Title', 'Description', CompetencyTaxonomy.ANALYZE, true));
         expect(openSpy).not.toHaveBeenCalled();
 
@@ -180,8 +181,8 @@ describe('GenerateCompetenciesComponent', () => {
 
     it('should not submit for unviewed recommendations', async () => {
         fixture.detectChanges();
-        const modalService = fixture.debugElement.injector.get<NgbModal>(NgbModal);
-        const openSpy = vi.spyOn(modalService, 'open');
+        const dialogService = fixture.debugElement.injector.get<DialogService>(DialogService);
+        const openSpy = vi.spyOn(dialogService, 'open');
         const saveSpy = vi.spyOn(comp, 'save');
 
         //create competency recomendations that are UNVIEWED
@@ -199,11 +200,11 @@ describe('GenerateCompetenciesComponent', () => {
     it('should submit', async () => {
         fixture.detectChanges();
         const router = TestBed.inject(Router);
-        const modalService = fixture.debugElement.injector.get<NgbModal>(NgbModal);
+        const dialogService = fixture.debugElement.injector.get<DialogService>(DialogService);
         const competencyService = TestBed.inject(CompetencyService);
 
         const navigateSpy = vi.spyOn(router, 'navigate');
-        const openSpy = vi.spyOn(modalService, 'open');
+        const openSpy = vi.spyOn(dialogService, 'open');
         const response: HttpResponse<Competency[]> = new HttpResponse({
             body: [],
             status: 200,

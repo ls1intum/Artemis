@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostBinding, HostListener, OnDestroy, effect, input, model, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, effect, input, model, viewChild } from '@angular/core';
 import { faChevronLeft, faChevronRight, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
@@ -21,9 +21,12 @@ import { NgTemplateOutlet } from '@angular/common';
     templateUrl: './resizeable-container.component.html',
     styleUrls: ['./resizeable-container.component.scss'],
     imports: [FaIconComponent, NgTemplateOutlet],
+    host: {
+        class: 'flex-grow-1',
+        '(window:resize)': 'onWindowResize($event)',
+    },
 })
 export class ResizeableContainerComponent implements OnDestroy {
-    @HostBinding('class.flex-grow-1') flexGrow1 = true;
     readonly collapsed = model<boolean>(false);
     readonly isExerciseParticipation = input<boolean>(false);
     readonly examTimeline = input<boolean>(false);
@@ -94,7 +97,6 @@ export class ResizeableContainerComponent implements OnDestroy {
     }
 
     // Make right side always expanded for smaller screens
-    @HostListener('window:resize', ['$event'])
     onWindowResize(event: any) {
         if (event.target.innerWidth <= 992) {
             this.collapsed.set(false);
