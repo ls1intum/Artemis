@@ -57,6 +57,7 @@ import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
 import { WritableSignal, signal } from '@angular/core';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { DialogService } from 'primeng/dynamicdialog';
 
 /**
  * Creates a typed mock ProgrammingExercise for testing.
@@ -92,6 +93,7 @@ function getBaseProviders(additionalProviders: Provider[] = []): Provider[] {
         { provide: ActivatedRoute, useValue: { params: of({}) } },
         { provide: HyperionCodeGenerationApiService, useValue: { generateCode: jest.fn() } },
         { provide: NgbModal, useValue: { open: jest.fn(() => ({ componentInstance: {}, result: Promise.resolve() })) } },
+        { provide: DialogService, useValue: { open: jest.fn(() => ({ onClose: of({ confirmed: true }) })) } },
         { provide: HyperionWebsocketService, useValue: { subscribeToJob: jest.fn(), unsubscribeFromJob: jest.fn() } },
         { provide: CodeEditorRepositoryService, useValue: { pull: jest.fn(() => of(void 0)) } },
         { provide: CodeEditorRepositoryFileService, useValue: { getRepositoryContent: jest.fn(() => of({})) } },
@@ -670,8 +672,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TEMPLATE, checkOnly: false });
             expect(comp.isGeneratingCode()).toBeFalse();
-            // One modal from generateCode() confirmation and one from the "already running" error handler.
-            expect(openSpy).toHaveBeenCalledTimes(2);
+            expect(openSpy).toHaveBeenCalledOnce();
             expect(addAlertSpy).not.toHaveBeenCalledWith(
                 expect.objectContaining({
                     type: AlertType.DANGER,

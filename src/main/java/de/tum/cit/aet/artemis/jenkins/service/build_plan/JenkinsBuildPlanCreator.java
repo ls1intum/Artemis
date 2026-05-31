@@ -20,8 +20,8 @@ import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
+import de.tum.cit.aet.artemis.jenkins.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.cit.aet.artemis.jenkins.service.JenkinsXmlConfigBuilder;
 import de.tum.cit.aet.artemis.jenkins.service.JenkinsXmlFileUtils;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
