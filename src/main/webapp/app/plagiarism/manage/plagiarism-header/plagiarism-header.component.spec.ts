@@ -14,6 +14,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PlagiarismHeaderComponent } from 'app/plagiarism/manage/plagiarism-header/plagiarism-header.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
+import { DialogService } from 'primeng/dynamicdialog';
 
 describe('Plagiarism Header Component', () => {
     setupTestBed({ zoneless: true });
@@ -22,13 +23,16 @@ describe('Plagiarism Header Component', () => {
     let fixture: ComponentFixture<PlagiarismHeaderComponent>;
     let plagiarismCasesService: PlagiarismCasesService;
     const alertServiceMock = { error: vi.fn(), addAlert: vi.fn() };
+    let dialogClose: Subject<any>;
 
     beforeEach(() => {
+        dialogClose = new Subject<any>();
         TestBed.configureTestingModule({
             imports: [PlagiarismHeaderComponent, MockDirective(TranslateDirective)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useValue: alertServiceMock },
+                { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: dialogClose.asObservable() })) } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -81,43 +85,38 @@ describe('Plagiarism Header Component', () => {
         expect(button.disabled).toBe(true);
     });
 
-    it('should open the confirmation dialog to deny a plagiarism if it is changing from confirmed to denied', () => {
+    it('should open a confirmation popup to deny a plagiarism if it is changing from confirmed to denied', () => {
         vi.spyOn(comp, 'updatePlagiarismStatus');
+        const dialogSpy = vi.spyOn(TestBed.inject(DialogService), 'open');
 
         fixture.componentRef.setInput('comparison', { ...comp.comparison(), status: PlagiarismStatus.CONFIRMED });
 
         comp.denyPlagiarism();
 
         expect(comp.updatePlagiarismStatus).not.toHaveBeenCalled();
-        expect(comp.denyAfterConfirmDialogVisible()).toBe(true);
+        expect(dialogSpy).toHaveBeenCalledOnce();
         expect(comp.isLoading).toBe(true);
     });
 
-    it('should update the plagiarism status to DENIED when confirming the deny-after-confirm dialog', () => {
-        const updateSpy = vi.spyOn(comp, 'updatePlagiarismStatus');
+    it('should deny the plagiarism when the confirmation dialog is confirmed', () => {
+        const updateSpy = vi.spyOn(comp, 'updatePlagiarismStatus').mockImplementation(() => {});
         fixture.componentRef.setInput('comparison', { ...comp.comparison(), status: PlagiarismStatus.CONFIRMED });
 
         comp.denyPlagiarism();
-        comp.confirmDenyAfterConfirm();
-        // simulate the dialog firing its onHide callback once it has closed
-        comp.onDenyAfterConfirmHide();
+        dialogClose.next({ confirmed: true });
 
-        expect(comp.denyAfterConfirmDialogVisible()).toBe(false);
         expect(updateSpy).toHaveBeenCalledWith(PlagiarismStatus.DENIED);
     });
 
-    it('should reset the loading state when cancelling the deny-after-confirm dialog', () => {
+    it('should reset the loading state when the confirmation dialog is dismissed', () => {
         const updateSpy = vi.spyOn(comp, 'updatePlagiarismStatus');
         fixture.componentRef.setInput('comparison', { ...comp.comparison(), status: PlagiarismStatus.CONFIRMED });
 
         comp.denyPlagiarism();
-        comp.cancelDenyAfterConfirm();
-        // simulate the dialog firing its onHide callback once it has closed
-        comp.onDenyAfterConfirmHide();
+        dialogClose.next(undefined);
 
-        expect(comp.denyAfterConfirmDialogVisible()).toBe(false);
-        expect(comp.isLoading).toBe(false);
         expect(updateSpy).not.toHaveBeenCalled();
+        expect(comp.isLoading).toBe(false);
     });
 
     it('should update the plagiarism status', async () => {

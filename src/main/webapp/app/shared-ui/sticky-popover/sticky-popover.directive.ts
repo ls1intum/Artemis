@@ -1,4 +1,4 @@
-import { Directive, ElementRef, Input, OnDestroy, OnInit, Renderer2, TemplateRef, inject } from '@angular/core';
+import { Directive, ElementRef, OnDestroy, OnInit, Renderer2, TemplateRef, inject, input } from '@angular/core';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 
 @Directive({ selector: '[jhiStickyPopover]' })
@@ -6,7 +6,7 @@ export class StickyPopoverDirective extends NgbPopover implements OnInit, OnDest
     private _elRef = inject(ElementRef);
     private _render = inject(Renderer2);
 
-    @Input() jhiStickyPopover: TemplateRef<any>;
+    jhiStickyPopover = input.required<TemplateRef<any>>();
 
     popoverTitle: string;
 
@@ -34,7 +34,7 @@ export class StickyPopoverDirective extends NgbPopover implements OnInit, OnDest
 
     ngOnInit(): void {
         super.ngOnInit();
-        this.ngbPopover = this.jhiStickyPopover;
+        this.ngbPopover = this.jhiStickyPopover();
 
         this._render.listen(this._elRef.nativeElement, 'pointerenter', () => {
             this.canClosePopover = true;
