@@ -100,6 +100,9 @@ export default defineConfig({
             'src/main/webapp/app/shared-ui/confirm-entity-name/**/*.spec.ts', // include confirm-entity-name tests
             'src/main/webapp/app/shared-ui/user-import/button/**/*.spec.ts', // include user import button tests
             'src/main/webapp/app/shared-ui/user-import/dialog/**/*.spec.ts', // include user import dialog tests
+            'src/main/webapp/app/logos/**/*.spec.ts', // include logos tests
+            'src/main/webapp/app/sharing/**/*.spec.ts', // include sharing tests
+            'src/main/webapp/app/app.component.spec.ts', // include app-shell (app.component) tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -179,6 +182,9 @@ export default defineConfig({
                 'src/main/webapp/app/shared-ui/confirm-entity-name/**/*.ts', // include confirm-entity-name for code coverage
                 'src/main/webapp/app/shared-ui/user-import/button/**/*.ts', // include user import button for code coverage
                 'src/main/webapp/app/shared-ui/user-import/dialog/**/*.ts', // include user import dialog for code coverage
+                'src/main/webapp/app/logos/**/*.ts', // include logos for code coverage
+                'src/main/webapp/app/sharing/**/*.ts', // include sharing for code coverage
+                'src/main/webapp/app/app.component.ts', // include app-shell (app.component) for code coverage
             ],
             exclude: [
                 '**/node_modules/**', // exclude node_modules with third-party code
