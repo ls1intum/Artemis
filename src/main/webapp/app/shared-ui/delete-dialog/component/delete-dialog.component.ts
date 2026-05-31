@@ -1,8 +1,15 @@
-import { Component, DestroyRef, EventEmitter, OnInit, ViewChild, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { mapValues } from 'lodash-es';
-import { ActionType, EntitySummary, EntitySummaryCategory, EntitySummaryItem } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import {
+    ActionType,
+    DeleteDialogDeleteHandler,
+    EntitySummary,
+    EntitySummaryCategory,
+    EntitySummaryItem,
+    triggerDeleteDialogDelete,
+} from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { Observable } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { faBan, faCheck, faSpinner, faTimes, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
@@ -38,8 +45,7 @@ export class DeleteDialogComponent implements OnInit {
     private destroyRef = inject(DestroyRef);
 
     readonly actionTypes = ActionType;
-    // Note: This EventEmitter is passed from the directive via the service, not used as a template output
-    private delete: EventEmitter<{ [key: string]: boolean }>;
+    private delete: DeleteDialogDeleteHandler;
 
     // Signals for reactive state
     submitDisabled = signal(false);
@@ -53,9 +59,11 @@ export class DeleteDialogComponent implements OnInit {
     confirmEntityName = '';
     additionalChecksValues: { [key: string]: boolean } = {};
 
-    // Note: Using @ViewChild here because the template has #deleteForm="ngForm" which creates a template
-    // reference variable that shadows any component property. The viewChild signal cannot be used in this case.
-    @ViewChild('deleteForm', { static: true }) deleteForm: NgForm;
+    private readonly deleteFormRef = viewChild.required<NgForm>('deleteForm');
+
+    get deleteForm(): NgForm {
+        return this.deleteFormRef();
+    }
 
     deleteQuestion: string;
     entitySummaryTitle?: string;
@@ -123,7 +131,7 @@ export class DeleteDialogComponent implements OnInit {
      */
     confirmDelete(): void {
         this.submitDisabled.set(true);
-        this.delete.emit(this.additionalChecksValues);
+        triggerDeleteDialogDelete(this.delete, this.additionalChecksValues);
         this.dialogRef.close();
     }
 

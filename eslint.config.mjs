@@ -241,6 +241,15 @@ export default tseslint.config(
             ...jestPlugin.configs.recommended.rules,
             ...jestPlugin.configs.style.rules,
             ...jestExtendedPlugin.configs.all.rules,
+            // jest-extended matchers are intentionally NOT registered in the Vitest setup (only Jest registers
+            // 'jest-extended/all'). These rules auto-fix native matchers to jest-extended forms (e.g. toBe(true) ->
+            // toBeTrue(), toEqual([]) -> toBeArray()) which throw "Invalid Chai property" under Vitest. Disable the
+            // matcher-conversion auto-fixes so specs keep native matchers that work under both runners.
+            // (prefer-to-have-been-called-once stays enabled: toHaveBeenCalledOnce is native to Vitest.)
+            'jest-extended/prefer-to-be-true': 'off',
+            'jest-extended/prefer-to-be-false': 'off',
+            'jest-extended/prefer-to-be-array': 'off',
+            'jest-extended/prefer-to-be-object': 'off',
             'jest/expect-expect': 'off',
             'jest/no-conditional-expect': 'off',
             '@typescript-eslint/no-deprecated': 'warn',

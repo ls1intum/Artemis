@@ -1,9 +1,9 @@
-import { Component, OnDestroy, OnInit, TemplateRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, Type, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { TranslateService } from '@ngx-translate/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { tap } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -19,6 +19,13 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from '../../../delete-dialog/directive/delete-button.directive';
+import {
+    CourseExamArchiveCompletedWithWarningsDialogComponent,
+    CourseExamArchiveDialogData,
+    CourseExamArchiveDialogResult,
+    CourseExamArchiveOverwriteDialogComponent,
+    CourseExamArchiveWarningDialogComponent,
+} from 'app/shared-ui/components/buttons/course-exam-archive-button/course-exam-archive-dialog.component';
 
 export type CourseExamArchiveState = {
     exportState: 'COMPLETED' | 'RUNNING' | 'COMPLETED_WITH_WARNINGS' | 'COMPLETED_WITH_ERRORS';
@@ -39,9 +46,10 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private websocketService = inject(WebsocketService);
     private translateService = inject(TranslateService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private accountService = inject(AccountService);
     private websocketRegistered = false;
+    private dialogRef?: DynamicDialogRef;
 
     ButtonSize = ButtonSize;
     ActionType = ActionType;
@@ -116,10 +124,6 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         // A course / exam can only be cleaned up if the course / exam has been archived.
         return this.accountService.isAtLeastInstructorInCourse(course) && hasBeenArchived;
     });
-
-    archiveCompleteWithWarningsModal = viewChild.required<TemplateRef<any>>('archiveCompleteWithWarningsModal');
-
-    archiveConfirmModal = viewChild.required<TemplateRef<any>>('archiveConfirmModal');
 
     // Subscriptions
     private dialogErrorSource = new Subject<string>();
@@ -197,6 +201,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         this.archiveSubscription?.unsubscribe();
         this.dialogErrorSource.complete();
         this.changeLangSubscription?.unsubscribe();
+        this.dialogRef?.close();
     }
 
     registerArchiveWebsocket(topic: string) {
@@ -216,7 +221,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
             this.alertService.success(this.getArchiveSuccessText());
             this.reloadCourseOrExam();
         } else if (exportState === 'COMPLETED_WITH_WARNINGS') {
-            this.openModal(this.archiveCompleteWithWarningsModal());
+            this.openCompletedWithWarningsDialog();
             this.reloadCourseOrExam();
         } else if (exportState === 'COMPLETED_WITH_ERRORS') {
             this.alertService.error(this.getArchiveErrorText(subMessage!));
@@ -265,18 +270,44 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         } else return null;
     }
 
-    openModal(modalRef: TemplateRef<any>) {
-        this.modalService.open(modalRef).result.then(
-            (result: string) => {
-                if (result === 'archive-confirm' && this.canDownloadArchive()) {
-                    this.openModal(this.archiveConfirmModal());
-                }
-                if (result === 'archive' || !this.canDownloadArchive()) {
-                    this.archive();
-                }
-            },
-            () => {},
-        );
+    openArchiveWarningDialog() {
+        const dialogRef = this.openArchiveDialog(CourseExamArchiveWarningDialogComponent);
+        dialogRef?.onClose.subscribe((result: CourseExamArchiveDialogResult) => this.handleArchiveDialogResult(result));
+    }
+
+    private openArchiveOverwriteDialog() {
+        const dialogRef = this.openArchiveDialog(CourseExamArchiveOverwriteDialogComponent);
+        dialogRef?.onClose.subscribe((result: CourseExamArchiveDialogResult) => this.handleArchiveDialogResult(result));
+    }
+
+    private openCompletedWithWarningsDialog() {
+        this.openArchiveDialog(CourseExamArchiveCompletedWithWarningsDialogComponent, { warnings: this.archiveWarnings() });
+    }
+
+    private handleArchiveDialogResult(result: CourseExamArchiveDialogResult) {
+        if (result === 'archive-confirm' && this.canDownloadArchive()) {
+            this.openArchiveOverwriteDialog();
+        } else if (result === 'archive' || (result === 'archive-confirm' && !this.canDownloadArchive())) {
+            this.archive();
+        }
+    }
+
+    private openArchiveDialog<T>(component: Type<T>, data: Partial<CourseExamArchiveDialogData> = {}) {
+        this.dialogRef =
+            this.dialogService.open(component, {
+                width: '50rem',
+                modal: true,
+                closable: false,
+                closeOnEscape: true,
+                dismissableMask: false,
+                data: {
+                    archiveMode: this.archiveMode(),
+                    courseTitle: this.currentCourse()?.title,
+                    examTitle: this.currentExam()?.title,
+                    ...data,
+                } satisfies CourseExamArchiveDialogData,
+            }) ?? undefined;
+        return this.dialogRef;
     }
 
     archive() {
