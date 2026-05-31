@@ -15,9 +15,9 @@
                 }
                 <div>Committed : {{ entry.value.committed / 1048576 | number: '1.0-0' }}M</div>
                 @if (entry.value.max !== -1) {
-                    <ngb-progressbar type="success" [value]="(100 * entry.value.used) / entry.value.max" [striped]="true" [animated]="false">
-                        <span>{{ (entry.value.used * 100) / entry.value.max | number: '1.0-0' }}%</span>
-                    </ngb-progressbar>
+                    <p-progressbar [value]="(100 * entry.value.used) / entry.value.max" [showValue]="false" color="var(--bs-success, #28a745)">
+                        <ng-template #content>{{ (entry.value.used * 100) / entry.value.max | number: '1.0-0' }}%</ng-template>
+                    </p-progressbar>
                 }
             </div>
         }

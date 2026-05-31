@@ -1,5 +1,5 @@
 import { Component, computed, input, signal } from '@angular/core';
-import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
+import { ProgressBarModule } from 'primeng/progressbar';
 
 import { Thread, ThreadState } from 'app/admin/metrics/metrics.model';
 import { MetricsModalThreadsComponent } from '../metrics-modal-threads/metrics-modal-threads.component';
@@ -9,7 +9,7 @@ import { DecimalPipe } from '@angular/common';
 @Component({
     selector: 'jhi-jvm-threads',
     templateUrl: './jvm-threads.component.html',
-    imports: [TranslateDirective, NgbProgressbar, DecimalPipe, MetricsModalThreadsComponent],
+    imports: [TranslateDirective, ProgressBarModule, DecimalPipe, MetricsModalThreadsComponent],
 })
 export class JvmThreadsComponent {
     /** Thread data from parent */

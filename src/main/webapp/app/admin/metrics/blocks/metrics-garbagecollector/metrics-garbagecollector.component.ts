@@ -1,13 +1,13 @@
 import { Component, input } from '@angular/core';
 import { GarbageCollector } from 'app/admin/metrics/metrics.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
+import { ProgressBarModule } from 'primeng/progressbar';
 import { DecimalPipe } from '@angular/common';
 
 @Component({
     selector: 'jhi-metrics-garbagecollector',
     templateUrl: './metrics-garbagecollector.component.html',
-    imports: [TranslateDirective, NgbProgressbar, DecimalPipe],
+    imports: [TranslateDirective, ProgressBarModule, DecimalPipe],
 })
 export class MetricsGarbageCollectorComponent {
     /**

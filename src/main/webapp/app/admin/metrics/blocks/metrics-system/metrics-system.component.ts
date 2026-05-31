@@ -1,12 +1,12 @@
 import { Component, input } from '@angular/core';
 import { ProcessMetrics } from 'app/admin/metrics/metrics.model';
-import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
+import { ProgressBarModule } from 'primeng/progressbar';
 import { DatePipe, DecimalPipe } from '@angular/common';
 
 @Component({
     selector: 'jhi-metrics-system',
     templateUrl: './metrics-system.component.html',
-    imports: [NgbProgressbar, DecimalPipe, DatePipe],
+    imports: [ProgressBarModule, DecimalPipe, DatePipe],
 })
 export class MetricsSystemComponent {
     /**

@@ -14,9 +14,9 @@
                 <tr>
                     <td>{{ entry.key }}</td>
                     <td>
-                        <ngb-progressbar [max]="requestMetrics()['all'].count" [value]="entry.value.count" [striped]="true" [animated]="false" type="success">
-                            <span>{{ entry.value.count }}</span>
-                        </ngb-progressbar>
+                        <p-progressbar [value]="(100 * entry.value.count) / requestMetrics()['all'].count" [showValue]="false" color="var(--bs-success, #28a745)">
+                            <ng-template #content>{{ entry.value.count }}</ng-template>
+                        </p-progressbar>
                     </td>
                     <td class="text-right">
                         {{ filterNaN(entry.value.mean) | number: '1.0-2' }}

@@ -1,14 +1,14 @@
 import { Component, input } from '@angular/core';
 import { HttpServerRequests } from 'app/admin/metrics/metrics.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
+import { ProgressBarModule } from 'primeng/progressbar';
 import { DecimalPipe, KeyValuePipe } from '@angular/common';
 import { filterNaN } from 'app/admin/metrics/filterNaN-util';
 
 @Component({
     selector: 'jhi-metrics-request',
     templateUrl: './metrics-request.component.html',
-    imports: [TranslateDirective, NgbProgressbar, DecimalPipe, KeyValuePipe],
+    imports: [TranslateDirective, ProgressBarModule, DecimalPipe, KeyValuePipe],
 })
 export class MetricsRequestComponent {
     /**
