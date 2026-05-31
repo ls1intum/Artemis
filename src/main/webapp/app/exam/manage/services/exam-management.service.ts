@@ -27,7 +27,7 @@ import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exa
 import { ExamStudentDTO } from 'app/exam/manage/students/exam-student-dto.model';
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
 import { ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
-import { UserForRegistration, UserSearchResult } from 'app/shared/user-registration-modal/user-for-registration.model';
+import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;

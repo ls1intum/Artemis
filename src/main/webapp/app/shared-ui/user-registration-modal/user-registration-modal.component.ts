@@ -14,7 +14,7 @@ import { CellRendererParams, ColumnDef, TableViewComponent, TableViewOptions } f
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { HighlightMatchPipe } from 'app/foundation/pipes/highlight-match.pipe';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
-import { UserForRegistration, UserSearchResult } from 'app/shared/user-registration-modal/user-for-registration.model';
+import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 
 @Component({
     selector: 'jhi-user-registration-modal',
