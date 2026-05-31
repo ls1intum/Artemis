@@ -88,7 +88,7 @@ describe('DeleteDialogDirective', () => {
 
     it('on click should call delete dialog service', async () => {
         // Ignore console errors
-        console.error = vi.fn();
+        vi.spyOn(console, 'error').mockImplementation(() => undefined);
         fixture.detectChanges();
         await fixture.whenStable();
         const deleteDialogSpy = vi.spyOn(deleteDialogService, 'openDeleteDialog');
