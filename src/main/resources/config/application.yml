@@ -132,7 +132,7 @@ artemis:
         recommended: "2.1.2"
       ios:
         min: "2.0.0"
-        recommended: "2.2.0"
+        recommended: "2.5.0"
 
     # Theia configuration for online IDE functionality
     theia:

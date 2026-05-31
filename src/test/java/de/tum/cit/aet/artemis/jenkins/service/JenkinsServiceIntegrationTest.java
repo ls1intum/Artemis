@@ -24,7 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.StreamUtils;
 
-import de.tum.cit.aet.artemis.core.exception.JenkinsException;
+import de.tum.cit.aet.artemis.jenkins.exception.JenkinsException;
 import de.tum.cit.aet.artemis.jenkins.service.build_plan.JenkinsBuildPlanUtils;
 import de.tum.cit.aet.artemis.jenkins.service.jobs.JenkinsJobService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsLocalVCTest;

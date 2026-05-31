@@ -16,9 +16,8 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
-import de.tum.cit.aet.artemis.core.exception.JenkinsException;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
+import de.tum.cit.aet.artemis.jenkins.exception.JenkinsException;
 import de.tum.cit.aet.artemis.jenkins.service.build_plan.JenkinsBuildPlanService;
 import de.tum.cit.aet.artemis.jenkins.service.jobs.JenkinsJobService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
@@ -28,6 +27,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
+import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 
 @Profile(PROFILE_JENKINS)

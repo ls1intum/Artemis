@@ -158,7 +158,8 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.getList("/api/lecture/courses/" + course1.getId() + "/lectures", HttpStatus.FORBIDDEN, Lecture.class);
         request.delete("/api/lecture/lectures/" + lecture1.getId(), HttpStatus.FORBIDDEN);
         request.getList("/api/lecture/courses/" + course1.getId() + "/tutorial-lectures", HttpStatus.FORBIDDEN, Lecture.class);
-        request.postWithResponseBody("/api/lecture/lectures/import/" + lecture1.getId() + "?courseId=" + course1.getId(), null, Lecture.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/lecture/lectures/import?sourceLectureId=" + lecture1.getId() + "&courseId=" + course1.getId(), null, Lecture.class,
+                HttpStatus.FORBIDDEN);
     }
 
     private void createChannelsForLectures(List<Lecture> lectures) {
@@ -565,7 +566,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Course course2 = courseUtilService.addEmptyCourse();
         courseUtilService.enableMessagingForCourse(course2);
 
-        var importedLectureDto = request.postWithResponseBody("/api/lecture/lectures/import/" + lecture1.getId() + "?courseId=" + course2.getId(), null,
+        var importedLectureDto = request.postWithResponseBody("/api/lecture/lectures/import?sourceLectureId=" + lecture1.getId() + "&courseId=" + course2.getId(), null,
                 LectureResource.SimpleLectureDTO.class, HttpStatus.CREATED);
 
         // load new lecture with its lecture units and attachments

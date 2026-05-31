@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { BuildAgentPauseAllModalComponent } from 'app/localci/build-agent-summary/build-agent-pause-all-modal/build-agent-pause-all-modal.component';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -12,17 +12,15 @@ describe('BuildAgentPauseAllModalComponent', () => {
 
     let component: BuildAgentPauseAllModalComponent;
     let fixture: ComponentFixture<BuildAgentPauseAllModalComponent>;
-    const activeModal: NgbActiveModal = {
-        dismiss: vi.fn(),
+    const dialogRef = {
         close: vi.fn(),
-        update: vi.fn(),
     };
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [BuildAgentPauseAllModalComponent],
             providers: [
-                { provide: NgbActiveModal, useValue: activeModal },
+                { provide: DynamicDialogRef, useValue: dialogRef },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
@@ -32,14 +30,14 @@ describe('BuildAgentPauseAllModalComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should dismiss on cancel', () => {
-        const dismissSpy = vi.spyOn(activeModal, 'dismiss');
+    it('should close without a result on cancel', () => {
+        const closeSpy = vi.spyOn(dialogRef, 'close');
         component.cancel();
-        expect(dismissSpy).toHaveBeenCalledWith('cancel');
+        expect(closeSpy).toHaveBeenCalledWith();
     });
 
-    it('should close on confirm', () => {
-        const closeSpy = vi.spyOn(activeModal, 'close');
+    it('should close with true on confirm', () => {
+        const closeSpy = vi.spyOn(dialogRef, 'close');
         component.confirm();
         expect(closeSpy).toHaveBeenCalledWith(true);
     });

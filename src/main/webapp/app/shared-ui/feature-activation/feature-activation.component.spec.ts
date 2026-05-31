@@ -1,3 +1,5 @@
+import { vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FeatureActivationComponent } from 'app/shared-ui/feature-activation/feature-activation.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -9,6 +11,7 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
 import { By } from '@angular/platform-browser';
 
 describe('FeatureActivationComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: FeatureActivationComponent;
     let fixture: ComponentFixture<FeatureActivationComponent>;
 
@@ -34,7 +37,7 @@ describe('FeatureActivationComponent', () => {
     });
 
     it('should emit enable event when button is clicked', () => {
-        const enableSpy = jest.spyOn(component.enable, 'emit');
+        const enableSpy = vi.spyOn(component.enable, 'emit');
         fixture.debugElement.query(By.css('button')).triggerEventHandler('click', null);
         expect(enableSpy).toHaveBeenCalledOnce();
     });
@@ -58,10 +61,10 @@ describe('FeatureActivationComponent', () => {
         fixture.componentRef.setInput('isLoading', true);
         fixture.detectChanges();
         const button = fixture.debugElement.query(By.directive(ButtonComponent));
-        expect(button.componentInstance.isLoading()).toBeTrue();
+        expect(button.componentInstance.isLoading()).toBeTruthy();
 
         fixture.componentRef.setInput('isLoading', false);
         fixture.detectChanges();
-        expect(button.componentInstance.isLoading()).toBeFalse();
+        expect(button.componentInstance.isLoading()).toBeFalsy();
     });
 });

@@ -70,7 +70,7 @@ describe('ProgrammingExercise Instructor Exercise Sharing', () => {
                 focus: () => {},
             } as WindowProxy;
             comp.exportExerciseToSharing();
-            const req = httpMock.expectOne((request) => request.method === 'POST' && request.url.includes('/programming/sharing/export/5'));
+            const req = httpMock.expectOne((request) => request.method === 'POST' && request.url.includes('/programming/sharing/export?exerciseId=5'));
             expect(req.request.body).toBe(window.location.href);
             req.flush('returnURL');
             tick();
@@ -81,7 +81,7 @@ describe('ProgrammingExercise Instructor Exercise Sharing', () => {
             const errorSpy = jest.spyOn(alertService, 'error');
 
             comp.exportExerciseToSharing();
-            const req = httpMock.expectOne((request) => request.method === 'POST' && request.url.includes('/programming/sharing/export/5'));
+            const req = httpMock.expectOne((request) => request.method === 'POST' && request.url.includes('/programming/sharing/export?exerciseId=5'));
             req.flush('Exercise not found', { status: 404, statusText: 'Not Found' });
 
             tick();

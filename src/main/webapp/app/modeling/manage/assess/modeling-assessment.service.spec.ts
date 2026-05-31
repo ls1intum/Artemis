@@ -147,7 +147,7 @@ describe('ModelingAssessmentService', () => {
                     .pipe(take(1))
                     .subscribe((resp) => (expectedResult = resp));
                 const req = httpMock.expectOne({
-                    url: `api/modeling/modeling-submissions/${submissionId}/result/${1}/assessment`,
+                    url: `api/modeling/modeling-submissions/${submissionId}/results/${1}/assessment`,
                     method: 'PUT',
                 });
                 req.flush(returnedFromService);
@@ -224,7 +224,7 @@ describe('ModelingAssessmentService', () => {
                     .pipe(take(1))
                     .subscribe((resp) => (expectedResult = resp));
                 const req = httpMock.expectOne({
-                    url: `api/modeling/exercise/${exerciseId}/modeling-submissions/${submissionId}/example-assessment`,
+                    url: `api/modeling/exercises/${exerciseId}/modeling-submissions/${submissionId}/example-assessment`,
                     method: 'GET',
                 });
                 req.flush(returnedFromService);

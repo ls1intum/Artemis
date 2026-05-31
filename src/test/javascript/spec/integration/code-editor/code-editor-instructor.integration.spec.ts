@@ -61,6 +61,7 @@ import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/programmi
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { mockCodeEditorMonacoViewChildren } from 'test/helpers/mocks/mock-instance.helper';
@@ -145,6 +146,8 @@ describe('CodeEditorInstructorIntegration', () => {
                 },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
+                // CodeEditorInstructorAndEditorContainerComponent now injects PrimeNG DialogService (not provided in root).
+                { provide: DialogService, useValue: { open: jest.fn(() => ({ onClose: of(undefined) })) } },
                 MockProvider(ProfileService, {
                     getProfileInfo: () => mockProfileInfo,
                 }),

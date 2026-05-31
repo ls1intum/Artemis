@@ -84,7 +84,7 @@ describe('ImageCropperComponent', () => {
             // Without a sourceImage view child, cropperPositionService.resetCropperPosition is not invoked.
             expect(resetCropperPositionSpy).not.toHaveBeenCalled();
             expect(componentCropSpy).not.toHaveBeenCalled();
-            expect(comp.imageVisible).toBe(true);
+            expect(comp.imageVisible).toBeTruthy();
             expect(cropper).toBe(comp.cropper);
             expect(settings).toBe(comp.settings);
             expect(sourceImage).toBeUndefined();
@@ -97,7 +97,7 @@ describe('ImageCropperComponent', () => {
 
             expect(resetCropperPositionSpy).not.toHaveBeenCalled();
             expect(componentCropSpy).toHaveBeenCalledOnce();
-            expect(comp.imageVisible).toBe(true);
+            expect(comp.imageVisible).toBeTruthy();
         });
     });
 
@@ -163,7 +163,7 @@ describe('ImageCropperComponent', () => {
             comp.imageVisible = true;
             fixture.componentRef.setInput('imageURL', 'http://example.com/image.png');
             fixture.detectChanges();
-            expect(comp.imageVisible).toBe(false);
+            expect(comp.imageVisible).toBeFalsy();
         });
 
         it('resets imageVisible when imageBase64 changes', () => {
@@ -171,7 +171,7 @@ describe('ImageCropperComponent', () => {
             comp.imageVisible = true;
             fixture.componentRef.setInput('imageBase64', 'data:image/png;base64,abc');
             fixture.detectChanges();
-            expect(comp.imageVisible).toBe(false);
+            expect(comp.imageVisible).toBeFalsy();
         });
 
         it('resets imageVisible when imageChangedEvent changes', () => {
@@ -180,7 +180,7 @@ describe('ImageCropperComponent', () => {
             const file = new File([], 'test');
             fixture.componentRef.setInput('imageChangedEvent', { currentTarget: { files: [file] } });
             fixture.detectChanges();
-            expect(comp.imageVisible).toBe(false);
+            expect(comp.imageVisible).toBeFalsy();
         });
 
         it('updates safeTransformStyle when transform changes', () => {
@@ -218,7 +218,7 @@ describe('ImageCropperComponent', () => {
         fixture.componentRef.setInput('imageFile', undefined);
         fixture.detectChanges();
 
-        expect(comp.imageVisible).toBe(false);
+        expect(comp.imageVisible).toBeFalsy();
         expect(comp.loadedImage).toBeUndefined();
         expect(comp.cropper).toEqual({ x1: -100, y1: -100, x2: 10000, y2: 10000 });
         expect(comp.maxSize).toEqual({ width: 0, height: 0 });
@@ -244,7 +244,7 @@ describe('ImageCropperComponent', () => {
         fixture.componentRef.setInput('autoCrop', false);
         fixture.detectChanges();
 
-        expect(comp.imageVisible).toBe(true);
+        expect(comp.imageVisible).toBeTruthy();
         expect(comp.loadedImage).toBe(loadedImage);
         expect(comp.cropper).toBe(cropper);
         expect(comp.maxSize).toBe(maxSize);
@@ -313,7 +313,7 @@ describe('ImageCropperComponent', () => {
 
             comp.startMove(event, MoveTypes.Move);
 
-            expect(comp.moveStart.active).toBe(true);
+            expect(comp.moveStart.active).toBeTruthy();
             expect(comp.moveStart.type).toBe(MoveTypes.Move);
         });
 
@@ -380,7 +380,7 @@ describe('ImageCropperComponent', () => {
 
             comp.moveStop();
 
-            expect(comp.moveStart.active).toBe(false);
+            expect(comp.moveStart.active).toBeFalsy();
             expect(componentCropSpy).toHaveBeenCalled();
         });
 
@@ -460,7 +460,7 @@ describe('ImageCropperComponent', () => {
         });
 
         it('defaults maintainAspectRatio to true', () => {
-            expect(comp.maintainAspectRatio()).toBe(true);
+            expect(comp.maintainAspectRatio()).toBeTruthy();
         });
 
         it('defaults aspectRatio to 1', () => {
@@ -468,7 +468,7 @@ describe('ImageCropperComponent', () => {
         });
 
         it('defaults disabled to false', () => {
-            expect(comp.disabled()).toBe(false);
+            expect(comp.disabled()).toBeFalsy();
         });
 
         it('defaults alignImage to center', () => {
