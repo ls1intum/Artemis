@@ -47,7 +47,7 @@ export class TextExerciseCreationPage extends AbstractExerciseCreationPage {
     }
 
     async import() {
-        const responsePromise = this.page.waitForResponse(`${TEXT_EXERCISE_BASE}/import/*`);
+        const responsePromise = this.page.waitForResponse((response) => response.url().includes(`${TEXT_EXERCISE_BASE}/import?sourceExerciseId=`));
         await this.page.locator('#save-entity').click();
         return await responsePromise;
     }

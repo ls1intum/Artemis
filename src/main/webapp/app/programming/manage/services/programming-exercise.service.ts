@@ -158,7 +158,7 @@ export class ProgrammingExerciseService {
 
         exercise.categories = ExerciseService.stringifyExerciseCategories(exercise);
         return this.http
-            .post<ProgrammingExercise>(`${this.resourceUrl}/import/${adaptedSourceProgrammingExercise.id}`, exercise, {
+            .post<ProgrammingExercise>(`${this.resourceUrl}/import?sourceExerciseId=${adaptedSourceProgrammingExercise.id}`, exercise, {
                 params: options,
                 observe: 'response',
             })
@@ -431,7 +431,7 @@ export class ProgrammingExerciseService {
      */
     exportInstructorRepository(exerciseId: number, repositoryType: RepositoryType, auxiliaryRepositoryId: number | undefined): Observable<HttpResponse<Blob>> {
         if (repositoryType === RepositoryType.AUXILIARY && auxiliaryRepositoryId !== undefined) {
-            return this.http.get(`${this.resourceUrl}/${exerciseId}/export-instructor-auxiliary-repository/${auxiliaryRepositoryId}`, {
+            return this.http.get(`${this.resourceUrl}/${exerciseId}/export-instructor-auxiliary-repository?repositoryId=${auxiliaryRepositoryId}`, {
                 observe: 'response',
                 responseType: 'blob',
             });
@@ -449,7 +449,7 @@ export class ProgrammingExerciseService {
      * @param participationId The ID of the (student) participation
      */
     exportStudentRepository(exerciseId: number, participationId: number): Observable<HttpResponse<Blob>> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-student-repository/${participationId}`, {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-student-repository?participationId=${participationId}`, {
             observe: 'response',
             responseType: 'blob',
         });

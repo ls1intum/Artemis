@@ -68,8 +68,7 @@ export default defineConfig({
             'src/main/webapp/app/exam/overview/**/*.spec.ts', // include exam overview tests
             'src/main/webapp/app/shared-ui/components/buttons/**/*.spec.ts', // include shared buttons
             'src/main/webapp/app/shared-ui/table-view/**/*.spec.ts', // include shared table view
-            'src/main/webapp/app/foundation/feature-toggle/**/*.spec.ts', // include feature-toggle service tests
-            'src/main/webapp/app/foundation/sort/**/*.directive.spec.ts', // include sort directives
+            'src/main/webapp/app/foundation/**/*.spec.ts', // include all foundation tests (migrated to Vitest)
             'src/main/webapp/app/shared-ui/user-import/util/**/*.spec.ts', // include user import util tests
             'src/main/webapp/app/shared-ui/range-slider/**/*.spec.ts', // include range slider tests
             'src/main/webapp/app/exercise/dashboards/**/*.spec.ts', // include dashboards tests
@@ -97,6 +96,9 @@ export default defineConfig({
             'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.spec.ts', // include build plan phases model tests
             'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.spec.ts', // include legacy build plan converter service tests
             'src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**/*.spec.ts', // include programming exercise update timeline tests
+            'src/main/webapp/app/logos/**/*.spec.ts', // include logos tests
+            'src/main/webapp/app/sharing/**/*.spec.ts', // include sharing tests
+            'src/main/webapp/app/app.component.spec.ts', // include app-shell (app.component) tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -143,10 +145,9 @@ export default defineConfig({
                 'src/main/webapp/app/exam/overview/**/*.ts', // include exam overview for code coverage
                 'src/main/webapp/app/exam/shared/**/*.ts', // include exam shared for code coverage
                 'src/main/webapp/app/shared-ui/components/buttons/**/*.ts', // include shared buttons for code coverage
-                'src/main/webapp/app/foundation/feature-toggle/**/*.ts', // include feature-toggle service for code coverage
+                'src/main/webapp/app/foundation/**/*.ts', // include all foundation for code coverage
                 'src/main/webapp/app/shared-ui/user-import/util/**/*.ts', // include user import utils for code coverage
                 'src/main/webapp/app/shared-ui/table-view/**/*.ts', // include shared table view for code coverage
-                'src/main/webapp/app/foundation/sort/**/*.directive.ts', // include sort directives for code coverage
                 'src/main/webapp/app/shared-ui/range-slider/**/*.ts', // include range slider for code coverage
                 'src/main/webapp/app/exercise/dashboards/**/*.ts', // include dashboards for code coverage
                 'src/main/webapp/app/shared-ui/image-cropper/**/*.ts', // include image cropper for code coverage
@@ -173,6 +174,9 @@ export default defineConfig({
                 'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts', // include legacy build plan converter service for code coverage
                 'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // include build plan phases model for code coverage
                 'src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**/*.ts', // include programming exercise update timeline for code coverage
+                'src/main/webapp/app/logos/**/*.ts', // include logos for code coverage
+                'src/main/webapp/app/sharing/**/*.ts', // include sharing for code coverage
+                'src/main/webapp/app/app.component.ts', // include app-shell (app.component) for code coverage
             ],
             exclude: [
                 '**/node_modules/**', // exclude node_modules with third-party code

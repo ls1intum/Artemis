@@ -77,7 +77,7 @@ describe('CourseMaterialImportService', () => {
                 expect(summary).toEqual(mockSummary);
             });
 
-            const req = httpMock.expectOne(`api/course/courses/${targetCourseId}/import-summary/${sourceCourseId}`);
+            const req = httpMock.expectOne(`api/course/courses/${targetCourseId}/import-summary?sourceCourseId=${sourceCourseId}`);
             expect(req.request.method).toBe('GET');
             req.flush(mockSummary);
         });
@@ -92,7 +92,7 @@ describe('CourseMaterialImportService', () => {
                 },
             });
 
-            const req = httpMock.expectOne(`api/course/courses/${targetCourseId}/import-summary/${sourceCourseId}`);
+            const req = httpMock.expectOne(`api/course/courses/${targetCourseId}/import-summary?sourceCourseId=${sourceCourseId}`);
             req.flush('Forbidden', { status: 403, statusText: 'Forbidden' });
         });
     });

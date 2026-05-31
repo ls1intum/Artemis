@@ -124,8 +124,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/exam/manage/exams/**', // exam manage exams (detail/import/update/checklist/mode-picker) uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/shared/**', // exam shared module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/overview/**', // exam overview module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/foundation/feature-toggle/**', // feature-toggle service uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/foundation/sort/**', // sort directives use vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/foundation/**', // foundation module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared-ui/user-import/util/**', // user import utils use Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared-ui/range-slider/**', // range slider uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/dashboards/**', // dashboards uses Vitest (see vitest.config.ts)
@@ -151,6 +150,9 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts', // legacy converter uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // build-plan-phases model uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**', // programming exercise update timeline uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/logos/**', // logos module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/sharing/**', // sharing module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/app.component.ts', // app-shell (app.component) uses Vitest (see vitest.config.ts)
         '<rootDir>/src/main/webapp/**/*.ts',
     ],
     // Each entry below excludes a module that has been migrated to Vitest.
@@ -189,7 +191,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exam/manage/exams/', // exam manage exams uses Vitest
         '<rootDir>/src/main/webapp/app/exam/shared/', // exam shared module uses Vitest
         '<rootDir>/src/main/webapp/app/exam/overview/', // exam overview module uses Vitest
-        '<rootDir>/src/main/webapp/app/foundation/sort/', // sort directives use Vitest
+        '<rootDir>/src/main/webapp/app/foundation/', // foundation module uses Vitest
         '<rootDir>/src/main/webapp/app/shared-ui/user-import/util/', // user import utils use Vitest
         '<rootDir>/src/main/webapp/app/shared-ui/table-view/', // table view module uses Vitest
         '<rootDir>/src/main/webapp/app/shared-ui/range-slider/', // range slider uses Vitest
@@ -216,6 +218,9 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts',
         '<rootDir>/src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts',
         '<rootDir>/src/main/webapp/app/programming/shared/programming-exercise-update-timeline/',
+        '<rootDir>/src/main/webapp/app/logos/', // logos module uses Vitest
+        '<rootDir>/src/main/webapp/app/sharing/', // sharing module uses Vitest
+        '<rootDir>/src/main/webapp/app/app.component.ts', // app-shell (app.component) uses Vitest
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
@@ -293,8 +298,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exam/overview/', // exam overview module (vitest)
         '<rootDir>/src/main/webapp/app/shared-ui/components/buttons/', // shared/buttons components
         '<rootDir>/src/main/webapp/app/shared-ui/table-view/', // shared/table-view component
-        '<rootDir>/src/main/webapp/app/foundation/feature-toggle/', // feature-toggle service (vitest)
-        '<rootDir>/src/main/webapp/app/foundation/sort/', // sort directives
+        '<rootDir>/src/main/webapp/app/foundation/', // foundation module uses Vitest
         '<rootDir>/src/main/webapp/app/shared-ui/user-import/util/', // user import utils
         '<rootDir>/src/main/webapp/app/shared-ui/range-slider/', // range slider (vitest)
         '<rootDir>/src/main/webapp/app/exercise/dashboards/', // dashboards (vitest)
@@ -320,6 +324,9 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/programming/shared/services/build-phases-template.service.spec.ts', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/programming/shared/entities/build-plan-phases.model.spec.ts', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/programming/shared/programming-exercise-update-timeline/', // migrated to Vitest
+        '<rootDir>/src/main/webapp/app/logos/', // logos module (Vitest)
+        '<rootDir>/src/main/webapp/app/sharing/', // sharing module (Vitest)
+        '<rootDir>/src/main/webapp/app/app.component.spec.ts', // app-shell (app.component) (Vitest)
     ],
     testTimeout: 3000,
     testMatch: ['<rootDir>/src/main/webapp/app/**/*.spec.ts', '<rootDir>/src/test/javascript/spec/**/*.integration.spec.ts'],

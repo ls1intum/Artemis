@@ -7,7 +7,7 @@ import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.core.exception.LocalCIException;
+import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
