@@ -102,12 +102,15 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
     ngOnInit(): void {
         const data = this.dialogConfig?.data as AgentChatModalData | undefined;
-        if (data) {
-            this.courseId.set(data.courseId);
-            if (data.onCompetencyChanged) {
-                const onCompetencyChanged = data.onCompetencyChanged;
-                this.competencyChanged.subscribe(() => onCompetencyChanged());
-            }
+        if (!data) {
+            // Fail closed: without a payload we have no course context, so do not load history or wire callbacks.
+            return;
+        }
+
+        this.courseId.set(data.courseId);
+        if (data.onCompetencyChanged) {
+            const onCompetencyChanged = data.onCompetencyChanged;
+            this.competencyChanged.subscribe(() => onCompetencyChanged());
         }
 
         this.agentChatService.getConversationHistory(this.courseId()).subscribe({

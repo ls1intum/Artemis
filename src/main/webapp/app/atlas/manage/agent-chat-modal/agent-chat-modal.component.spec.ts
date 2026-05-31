@@ -16,7 +16,7 @@ import { ElementRef, signal } from '@angular/core';
 import { of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('AgentChatModalComponent', () => {
@@ -81,6 +81,7 @@ describe('AgentChatModalComponent', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: DynamicDialogRef, useValue: { close: vi.fn() } },
+                { provide: DynamicDialogConfig, useValue: { data: { courseId: 123 } } },
                 { provide: AgentChatService, useValue: mockAgentChatService },
                 { provide: CompetencyService, useValue: mockCompetencyService },
             ],

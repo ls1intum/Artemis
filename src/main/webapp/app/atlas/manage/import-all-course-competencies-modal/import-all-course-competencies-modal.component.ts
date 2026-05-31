@@ -56,12 +56,19 @@ export class ImportAllCourseCompetenciesModalComponent {
     protected readonly closeIcon = faXmark;
 
     private readonly dialogRef = inject(DynamicDialogRef);
-    private readonly dialogConfig = inject(DynamicDialogConfig);
+    private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
 
-    readonly courseId = signal<number>((this.dialogConfig.data as ImportAllCourseCompetenciesModalData).courseId);
+    readonly courseId = signal<number>(0);
     readonly disabledIds = computed(() => [+this.courseId()]);
 
     importSettings = signal<CourseCompetencyImportSettings>(new CourseCompetencyImportSettings());
+
+    constructor() {
+        const data = this.dialogConfig?.data as ImportAllCourseCompetenciesModalData | undefined;
+        if (data) {
+            this.courseId.set(data.courseId);
+        }
+    }
 
     public selectCourse(course: Course): void {
         const courseCompetencyImportOptions = <CourseCompetencyImportOptionsDTO>{

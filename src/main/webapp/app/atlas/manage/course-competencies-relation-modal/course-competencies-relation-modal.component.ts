@@ -24,12 +24,12 @@ export class CourseCompetenciesRelationModalComponent {
     private readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
     private readonly alertService = inject(AlertService);
     private readonly dialogRef = inject(DynamicDialogRef);
-    private readonly dialogConfig = inject(DynamicDialogConfig);
+    private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
 
     private readonly courseCompetencyRelationFormComponent = viewChild.required(CourseCompetencyRelationFormComponent);
 
-    readonly courseId = signal<number>((this.dialogConfig.data as CourseCompetenciesRelationModalData).courseId);
-    readonly courseCompetencies = signal<CourseCompetency[]>((this.dialogConfig.data as CourseCompetenciesRelationModalData).courseCompetencies);
+    readonly courseId = signal<number>(0);
+    readonly courseCompetencies = signal<CourseCompetency[]>([]);
 
     readonly selectedRelationId = signal<number | undefined>(undefined);
 
@@ -37,6 +37,15 @@ export class CourseCompetenciesRelationModalComponent {
     readonly relations = signal<CompetencyRelationDTO[]>([]);
 
     constructor() {
+        const data = this.dialogConfig?.data as CourseCompetenciesRelationModalData | undefined;
+        if (!data) {
+            // Fail closed: without a payload we have no course context, so keep safe defaults and skip loading relations.
+            return;
+        }
+
+        this.courseId.set(data.courseId);
+        this.courseCompetencies.set(data.courseCompetencies ?? []);
+
         effect(() => this.loadRelations(this.courseId()));
     }
 
