@@ -17,8 +17,8 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.core.dto.export.CompetencyProgressExportDTO;
-import de.tum.cit.aet.artemis.core.dto.export.UserCompetencyProgressExportDTO;
+import de.tum.cit.aet.artemis.atlas.dto.export.CompetencyProgressExportDTO;
+import de.tum.cit.aet.artemis.atlas.dto.export.UserCompetencyProgressExportDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 @Conditional(AtlasEnabled.class)
@@ -117,7 +117,7 @@ public interface CompetencyProgressRepository extends ArtemisJpaRepository<Compe
      * @return list of competency progress export DTOs
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.export.CompetencyProgressExportDTO(
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.export.CompetencyProgressExportDTO(
                 cp.competency.id, cp.competency.title, cp.user.login, cp.progress, cp.confidence, cp.lastModifiedDate)
             FROM CompetencyProgress cp
             WHERE cp.competency.course.id = :courseId
@@ -144,7 +144,7 @@ public interface CompetencyProgressRepository extends ArtemisJpaRepository<Compe
      * @return list of user competency progress export DTOs with course information
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.export.UserCompetencyProgressExportDTO(
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.export.UserCompetencyProgressExportDTO(
                 cp.competency.course.id, cp.competency.course.title, cp.competency.id, cp.competency.title,
                 cp.progress, cp.confidence, cp.lastModifiedDate)
             FROM CompetencyProgress cp

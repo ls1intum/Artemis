@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import type { LinkDetail } from 'app/shared-ui/detail-overview-list/detail.model';
 import { NoDataComponent } from 'app/shared-ui/components/no-data/no-data-component';
 import { RouterModule } from '@angular/router';
@@ -9,5 +9,5 @@ import { RouterModule } from '@angular/router';
     imports: [NoDataComponent, RouterModule],
 })
 export class LinkDetailComponent {
-    @Input() detail: LinkDetail;
+    detail = input.required<LinkDetail>();
 }

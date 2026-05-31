@@ -1,6 +1,6 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewEncapsulation, effect, inject, input, output, signal } from '@angular/core';
 import { ApollonEditor, ApollonMode, SVG, UMLDiagramType, UMLModel } from '@tumaet/apollon';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogModule } from 'primeng/dialog';
 import { isFullScreen } from 'app/foundation/util/fullscreen.util';
 import { faCheck, faCircleNotch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
@@ -18,7 +18,7 @@ import { getModelNodes } from 'app/modeling/shared/apollon-model.util';
     templateUrl: './modeling-editor.component.html',
     styleUrls: ['./modeling-editor.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [TranslateDirective, FaIconComponent, ModelingExplanationEditorComponent, HtmlForMarkdownPipe],
+    imports: [TranslateDirective, FaIconComponent, ModelingExplanationEditorComponent, HtmlForMarkdownPipe, DialogModule],
 })
 export class ModelingEditorComponent extends ModelingComponent implements AfterViewInit, OnDestroy {
     protected readonly faCheck = faCheck;
@@ -26,9 +26,10 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly farQuestionCircle = faQuestionCircle;
 
-    private readonly modalService = inject(NgbModal);
     private readonly sanitizer = inject(DomSanitizer);
     private readonly elementRef = inject(ElementRef);
+
+    readonly helpVisible = signal(false);
 
     showHelpButton = input(true);
     withExplanation = input(false);
@@ -185,10 +186,10 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     }
 
     /**
-     * This function opens the modal for the help dialog.
+     * Opens the help dialog.
      */
-    open(content: any): void {
-        this.modalService.open(content, { size: 'lg' });
+    openHelp(): void {
+        this.helpVisible.set(true);
     }
 
     /**

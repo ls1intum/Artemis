@@ -2,9 +2,9 @@ package de.tum.cit.aet.artemis.localvc.service.vcs;
 
 import org.jspecify.annotations.Nullable;
 
-import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 
 public interface VersionControlService {
 

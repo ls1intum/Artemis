@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, computed, effect, input, model, output, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, computed, effect, input, model, output, signal, viewChild } from '@angular/core';
 import { ControlContainer, FormsModule, NgForm, NgModel } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
@@ -33,8 +33,16 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
 
     titleOnPageLoad = signal<string | undefined>(undefined);
 
-    @ViewChild('field_title') field_title: NgModel;
-    field_channel_name = viewChild<NgModel>('field_channel_name');
+    private readonly fieldTitle = viewChild<NgModel>('field_title');
+    private readonly fieldChannelName = viewChild<NgModel>('field_channel_name');
+
+    get field_title(): NgModel {
+        return this.fieldTitle()!;
+    }
+
+    get field_channel_name(): NgModel {
+        return this.fieldChannelName()!;
+    }
 
     titleChange = output<string>();
     channelNameChange = output<string>();
@@ -80,8 +88,10 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     }
 
     private registerChangeListeners() {
-        this.fieldTitleSubscription = this.field_title?.valueChanges?.subscribe(() => this.calculateFormValid());
-        this.fieldChannelNameSubscription = this.field_channel_name()?.valueChanges?.subscribe(() => this.calculateFormValid());
+        this.fieldTitleSubscription?.unsubscribe();
+        this.fieldChannelNameSubscription?.unsubscribe();
+        this.fieldTitleSubscription = this.fieldTitle()?.valueChanges?.subscribe(() => this.calculateFormValid());
+        this.fieldChannelNameSubscription = this.fieldChannelName()?.valueChanges?.subscribe(() => this.calculateFormValid());
     }
 
     ngOnDestroy() {
@@ -90,7 +100,7 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     }
 
     calculateFormValid(): void {
-        const updatedFormValidValue = Boolean(this.field_title.valid && (!this.isChannelFieldDisplayed() || this.field_channel_name()?.valid));
+        const updatedFormValidValue = Boolean(this.fieldTitle()?.valid && (!this.isChannelFieldDisplayed() || this.fieldChannelName()?.valid));
         this.isValid.set(updatedFormValidValue);
     }
 

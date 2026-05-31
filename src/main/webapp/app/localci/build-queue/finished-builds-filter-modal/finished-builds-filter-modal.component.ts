@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { HttpParams } from '@angular/common/http';
@@ -120,7 +121,8 @@ export enum FinishedBuildJobFilterKey {
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FinishedBuildsFilterModalComponent implements OnInit {
-    private activeModal = inject(NgbActiveModal);
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig);
 
     /** The filter configuration being edited in this modal */
     finishedBuildJobFilter: FinishedBuildJobFilter;
@@ -141,9 +143,24 @@ export class FinishedBuildsFilterModalComponent implements OnInit {
     buildAgentFilterable = false;
 
     /**
-     * Initializes the component
+     * Initializes the component, reading the inputs provided via the dialog configuration data.
      */
     ngOnInit() {
+        const data = this.dialogConfig?.data;
+        if (data?.finishedBuildJobFilter) {
+            // Clone the incoming filter so that edits made in the dialog are isolated from the parent until the user confirms.
+            // On cancel the parent keeps its original filter; on confirm the cloned (edited) filter is returned via dialogRef.close().
+            const source: FinishedBuildJobFilter = data.finishedBuildJobFilter;
+            this.finishedBuildJobFilter = Object.assign(new FinishedBuildJobFilter(source.buildAgentAddress), source, { appliedFilters: new Map(source.appliedFilters) });
+        } else {
+            this.finishedBuildJobFilter = new FinishedBuildJobFilter();
+        }
+        if (data?.buildAgentFilterable !== undefined) {
+            this.buildAgentFilterable = data.buildAgentFilterable;
+        }
+        if (data?.finishedBuildJobs) {
+            this.finishedBuildJobs = data.finishedBuildJobs;
+        }
         this.buildStatusFilterValues = Object.values(BuildJobStatusFilter);
     }
 
@@ -246,13 +263,13 @@ export class FinishedBuildsFilterModalComponent implements OnInit {
     }
 
     /**
-     * Closes the modal by dismissing it
+     * Closes the modal without applying any filter changes.
      */
     cancel() {
-        this.activeModal.dismiss('cancel');
+        this.dialogRef.close();
     }
 
     confirm() {
-        this.activeModal.close(this.finishedBuildJobFilter);
+        this.dialogRef.close(this.finishedBuildJobFilter);
     }
 }
