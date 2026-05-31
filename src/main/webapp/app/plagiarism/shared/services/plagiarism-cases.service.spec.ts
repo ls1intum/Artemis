@@ -156,9 +156,9 @@ describe('Plagiarism Cases Service', () => {
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush(returnedFromService);
     });
-    it.each([textExercise, examTextExercise])('should make GET request to retrieve number of plagiarism cases', () => {
+    it.each([textExercise, examTextExercise])('should make GET request to retrieve number of plagiarism cases', (exercise) => {
         const numberOfResultsExercise = 2;
-        service.getNumberOfPlagiarismCasesForExercise(textExercise).subscribe((resp) => expect(resp).toEqual(numberOfResultsExercise));
+        service.getNumberOfPlagiarismCasesForExercise(exercise).subscribe((resp) => expect(resp).toEqual(numberOfResultsExercise));
         const req = httpMock.expectOne({ method: 'GET', url: 'api/plagiarism/courses/1/exercises/1/plagiarism-cases-count' });
         req.flush(numberOfResultsExercise);
     });
