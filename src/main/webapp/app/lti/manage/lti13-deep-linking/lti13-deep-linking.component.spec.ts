@@ -33,6 +33,7 @@ describe('Lti13DeepLinkingComponent', () => {
         identity: ReturnType<typeof vi.fn>;
         getAuthenticationState: ReturnType<typeof vi.fn>;
         hasAnyAuthority: ReturnType<typeof vi.fn>;
+        hasAnyAuthorityDirect: ReturnType<typeof vi.fn>;
     };
     let sortServiceMock: { sortByProperty: ReturnType<typeof vi.fn> };
     let alertServiceMock: { error: ReturnType<typeof vi.fn>; addAlert: ReturnType<typeof vi.fn> };
@@ -52,6 +53,7 @@ describe('Lti13DeepLinkingComponent', () => {
             identity: vi.fn().mockResolvedValue(undefined),
             getAuthenticationState: vi.fn().mockReturnValue(of(null)),
             hasAnyAuthority: vi.fn().mockResolvedValue(true),
+            hasAnyAuthorityDirect: vi.fn().mockReturnValue(true),
         };
         sortServiceMock = { sortByProperty: vi.fn() };
         alertServiceMock = { error: vi.fn(), addAlert: vi.fn() };
@@ -434,7 +436,7 @@ describe('Lti13DeepLinkingComponent', () => {
 
     it('should invoke account service using jhiHasAnyAuthority directive', () => {
         fixture.changeDetectorRef.detectChanges();
-        expect(accountServiceMock.hasAnyAuthority).toHaveBeenCalledWith(IS_AT_LEAST_INSTRUCTOR);
+        expect(accountServiceMock.hasAnyAuthorityDirect).toHaveBeenCalledWith(IS_AT_LEAST_INSTRUCTOR);
     });
 
     it('should toggle exercise selection correctly', () => {
