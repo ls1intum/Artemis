@@ -23,7 +23,7 @@ export class HasAnyAuthorityDirective {
 
     readonly jhiHasAnyAuthority = input.required<string | string[] | readonly Authority[]>();
 
-    private authorities: readonly Authority[];
+    private authorities: readonly Authority[] = [];
 
     constructor() {
         // Re-derive the authorities and re-render whenever the input changes.
