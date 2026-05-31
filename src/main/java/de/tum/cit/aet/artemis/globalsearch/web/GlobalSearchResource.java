@@ -275,15 +275,12 @@ public class GlobalSearchResource {
      * </ul>
      */
     private FilterBuildResult buildSearchableItemFilter(User user, Long courseId, Set<String> requestedTypes) {
-        if (authCheckService.isAdmin(user) && courseId == null) {
-            if (!VALID_TYPES.equals(requestedTypes)) {
-                return new FilterBuildResult(buildTypeDiscriminatorFilter(requestedTypes), true, null, null);
-            }
-            return new FilterBuildResult(null, true, null, null);
-        }
-
         List<Course> accessibleCourses;
-        if (courseId != null) {
+
+        if (authCheckService.isAdmin(user) && courseId == null) {
+            accessibleCourses = courseRepository.findAll();
+        }
+        else if (courseId != null) {
             Course course = courseRepository.findByIdElseThrow(courseId);
             authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
             accessibleCourses = List.of(course);
@@ -294,8 +291,11 @@ public class GlobalSearchResource {
                 return new FilterBuildResult(null, false, null, null);
             }
         }
+        List<Course> accessibleCoursesEnabledCommunication = accessibleCourses.stream().filter(course -> course.getCourseInformationSharingConfiguration().isMessagingEnabled())
+                .toList();
 
         CourseRoleSets roleSets = groupCoursesByRole(user, accessibleCourses);
+        CourseRoleSets roleSetsEnabledCommunication = groupCoursesByRole(user, accessibleCoursesEnabledCommunication);
 
         Map<Long, Course> accessibleCoursesById = new HashMap<>();
         for (Course course : accessibleCourses) {
@@ -334,8 +334,9 @@ public class GlobalSearchResource {
                 disjuncts.add(disjunct);
             }
         }
+        // Only search within courses where communication configuration is active
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.CHANNEL)) {
-            Filter disjunct = buildChannelDisjunct(roleSets);
+            Filter disjunct = buildChannelDisjunct(roleSetsEnabledCommunication);
             if (disjunct != null) {
                 disjuncts.add(disjunct);
             }
@@ -347,13 +348,13 @@ public class GlobalSearchResource {
             }
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.POST)) {
-            Filter disjunct = buildPostDisjunct(roleSets);
+            Filter disjunct = buildPostDisjunct(roleSetsEnabledCommunication);
             if (disjunct != null) {
                 disjuncts.add(disjunct);
             }
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.ANSWER_POST)) {
-            Filter disjunct = buildAnswerPostDisjunct(roleSets);
+            Filter disjunct = buildAnswerPostDisjunct(roleSetsEnabledCommunication);
             if (disjunct != null) {
                 disjuncts.add(disjunct);
             }
