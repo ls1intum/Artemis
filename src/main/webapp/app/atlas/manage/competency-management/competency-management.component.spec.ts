@@ -270,7 +270,7 @@ describe('CompetencyManagementComponent', () => {
 
     it('should open agent chat modal and pass the courseId', () => {
         localStorageService.store<boolean>('alreadyVisitedCompetencyManagement', true);
-        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(undefined);
+        const openSpy = vi.spyOn(dialogService, 'open').mockReturnValue(null);
         fixture.detectChanges();
 
         component['openAgentChatModal']();
@@ -293,7 +293,7 @@ describe('CompetencyManagementComponent', () => {
         let capturedData: Record<string, unknown> | undefined;
         vi.spyOn(dialogService, 'open').mockImplementation((_component, config) => {
             capturedData = config?.['data'] as Record<string, unknown>;
-            return undefined;
+            return null;
         });
         fixture.detectChanges();
         await fixture.whenStable();
