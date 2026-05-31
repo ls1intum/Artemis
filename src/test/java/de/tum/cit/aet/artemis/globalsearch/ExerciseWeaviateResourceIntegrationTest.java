@@ -472,4 +472,59 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         }
     }
 
+    @Nested
+    class CommunicationFilteringTests {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testCommunicationChannelsFilteredByCourseConfig() throws Exception {
+            User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+
+            // 1. Course with enabled communication
+            Course tempCourse1 = new Course();
+            tempCourse1.setShortName("commOn");
+            tempCourse1.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+            final Course courseWithComm = courseRepository.save(tempCourse1);
+
+            // 2. Course with disabled communication
+            Course tempCourse2 = new Course();
+            tempCourse2.setShortName("commOff");
+            tempCourse2.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
+            final Course courseWithoutComm = courseRepository.save(tempCourse2);
+
+            // Create exercises
+            var ex1 = programmingExerciseUtilService.addProgrammingExerciseToCourse(courseWithComm, true);
+            ex1.setTitle(SEARCH_PREFIX + " CommEnabled Exercise");
+            exerciseRepository.save(ex1);
+
+            var ex2 = programmingExerciseUtilService.addProgrammingExerciseToCourse(courseWithoutComm, true);
+            ex2.setTitle(SEARCH_PREFIX + " CommDisabled Exercise");
+            exerciseRepository.save(ex2);
+
+            // Create channels
+            Channel channel1 = new Channel();
+            channel1.setName("search-comm-on");
+            channel1.setIsPublic(true);
+            channelService.createChannel(courseWithComm, channel1, Optional.of(instructor));
+
+            Channel channel2 = new Channel();
+            channel2.setName("search-comm-off");
+            channel2.setIsPublic(true);
+            channelService.createChannel(courseWithoutComm, channel2, Optional.of(instructor));
+
+            var securityContext = SecurityContextHolder.getContext();
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+                SecurityContextHolder.setContext(securityContext);
+                // Assert that both EXERCISE and CHANNEL badges are displayed
+                var results1 = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseId=" + courseWithComm.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+                var titles1 = getResultTitles(results1);
+                assertThat(titles1).contains(SEARCH_PREFIX + " CommEnabled Exercise", "search-comm-on");
+                // Assert that only EXERCISE is diplayed
+                var results2 = request.getList("/api/search?q=" + SEARCH_PREFIX + "&courseId=" + courseWithoutComm.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+                var titles2 = getResultTitles(results2);
+                assertThat(titles2).contains(SEARCH_PREFIX + " CommDisabled Exercise");
+                assertThat(titles2).doesNotContain("search-comm-off");
+            });
+        }
+    }
 }
