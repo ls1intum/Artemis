@@ -12,7 +12,7 @@ package de.tum.cit.aet.artemis.notification.config;
  * <p>
  * TODO: Remove this class together with all its references (REST controllers, interceptor map) once
  * external clients (mobile apps, cached webapp bundles) have migrated. Target sunset: 2026-09-30 —
- * keep in sync with {@link de.tum.cit.aet.artemis.core.config.LegacyApiPathDeprecationInterceptor#SUNSET_DATE}.
+ * keep in sync with {@code LegacyApiPathDeprecationInterceptor#SUNSET_DATE}.
  */
 public final class NotificationLegacyRestPaths {
 
