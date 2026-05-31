@@ -80,8 +80,10 @@ public class ExerciseUnitResource {
 
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
+        // addLectureUnit sets the lecture back-reference and the lecture unit order on the new unit.
         lecture.addLectureUnit(exerciseUnit);
-        lectureRepository.saveAndFlush(lecture);
+        // Persist the new unit directly. Saving via the lecture would trigger a JPA merge that returns a managed copy while
+        // leaving this transient reference id-less, so the subsequent save below would insert a second, duplicate unit.
         ExerciseUnit persistedUnit = exerciseUnitRepository.saveAndFlush(exerciseUnit);
 
         return ResponseEntity.created(new URI("/api/exercise-units/" + persistedUnit.getId())).body(ExerciseUnitDTO.of(persistedUnit));

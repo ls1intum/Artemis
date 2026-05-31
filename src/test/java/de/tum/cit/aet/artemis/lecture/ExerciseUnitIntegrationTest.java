@@ -141,7 +141,8 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentTe
         }
 
         List<ExerciseUnitDTO> exerciseUnitsOfLecture = request.getList("/api/lecture/lectures/" + lecture1.getId() + "/exercise-units", HttpStatus.OK, ExerciseUnitDTO.class);
-        assertThat(exerciseUnitsOfLecture).containsAll(persistedExerciseUnits);
+        // Each exercise must yield exactly one unit; a superset check (containsAll) would not catch duplicate persistence.
+        assertThat(exerciseUnitsOfLecture).containsExactlyInAnyOrderElementsOf(persistedExerciseUnits);
     }
 
     @Test
