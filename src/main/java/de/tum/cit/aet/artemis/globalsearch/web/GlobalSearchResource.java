@@ -327,6 +327,14 @@ public class GlobalSearchResource {
             if (disjunct != null) {
                 disjuncts.add(disjunct);
             }
+            // When the exam filter is active, also include exercises that belong to exams
+            // (skip if exercise type is already explicitly requested — it covers all exercises)
+            if (!requestedTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE)) {
+                Filter examExerciseDisjunct = buildExamExerciseDisjunct(roleSets);
+                if (examExerciseDisjunct != null) {
+                    disjuncts.add(examExerciseDisjunct);
+                }
+            }
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.FAQ)) {
             Filter disjunct = buildFaqDisjunct(roleSets);
@@ -464,6 +472,26 @@ public class GlobalSearchResource {
         return combined == null ? null : Filter.and(typeEquals(SearchableEntitySchema.TypeValues.LECTURE_UNIT), combined);
     }
 
+    // -- Exam exercise disjunct (exercises belonging to exams, included when exam filter is active) --
+
+    private Filter buildExamExerciseDisjunct(CourseRoleSets roleSets) {
+        List<Filter> subBranches = new ArrayList<>();
+        if (!roleSets.editorCourseIds().isEmpty()) {
+            subBranches.add(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.editorCourseIds()));
+        }
+        if (!roleSets.taCourseIds().isEmpty()) {
+            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.taCourseIds()), exerciseAccessFilter(Role.TEACHING_ASSISTANT)));
+        }
+        if (!roleSets.studentCourseIds().isEmpty()) {
+            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.studentCourseIds()), exerciseAccessFilter(Role.STUDENT)));
+        }
+        Filter combined = combineOr(subBranches);
+        if (combined == null) {
+            return null;
+        }
+        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.EXERCISE), Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true), combined);
+    }
+
     // -- Exam disjunct --
 
     private Filter buildExamDisjunct(CourseRoleSets roleSets) {
@@ -539,12 +567,16 @@ public class GlobalSearchResource {
     // -- Shared helpers --
 
     private static Filter buildTypeDiscriminatorFilter(Set<String> types) {
-        if (types.size() == 1) {
-            return typeEquals(types.iterator().next());
-        }
         List<Filter> typeFilters = new ArrayList<>(types.size());
         for (String type : types) {
             typeFilters.add(typeEquals(type));
+        }
+        // When exam is requested but exercise is not, also include exam exercises
+        if (types.contains(SearchableEntitySchema.TypeValues.EXAM) && !types.contains(SearchableEntitySchema.TypeValues.EXERCISE)) {
+            typeFilters.add(Filter.and(typeEquals(SearchableEntitySchema.TypeValues.EXERCISE), Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true)));
+        }
+        if (typeFilters.size() == 1) {
+            return typeFilters.getFirst();
         }
         return Filter.or(typeFilters.toArray(new Filter[0]));
     }
