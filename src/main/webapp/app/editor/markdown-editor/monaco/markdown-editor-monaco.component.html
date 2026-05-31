@@ -70,7 +70,9 @@
                         }
                         @if (displayedActions().color; as color) {
                             <div class="btn-group col-xs-6">
-                                <div class="color-preview btn btn-sm px-2 py-0" (click)="openColorSelector($event)" [jhiTranslate]="color.translationKey"></div>
+                                <button type="button" class="color-preview btn btn-sm px-2 py-0" (click)="openColorSelector($event)">
+                                    <span [jhiTranslate]="color.translationKey"></span>
+                                </button>
                                 <jhi-color-selector [tagColors]="colorSignal()" (selectedColor)="onSelectColor($event)" />
                             </div>
                         }
@@ -99,7 +101,7 @@
                         }
                         <!-- Special case: Lecture attachment reference (nested PrimeNG tiered menu). -->
                         @if (displayedActions().lecture; as lectureAction) {
-                            <button type="button" class="btn btn-sm py-0 m-0" (click)="lectureMenu.toggle($event)">
+                            <button type="button" class="btn btn-sm py-0 m-0" (click)="openLectureMenu(lectureMenu, $event, lectureAction)">
                                 <span [jhiTranslate]="lectureAction.translationKey"></span>
                                 <fa-icon [icon]="faAngleDown" class="ms-1" />
                             </button>

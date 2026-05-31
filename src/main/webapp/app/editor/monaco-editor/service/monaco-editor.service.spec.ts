@@ -10,6 +10,9 @@ import { MONACO_LIGHT_THEME_DEFINITION } from 'app/editor/monaco-editor/model/th
 import { MONACO_DARK_THEME_DEFINITION } from 'app/editor/monaco-editor/model/themes/monaco-dark.theme';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 
+// Capture the global ResizeObserver provided by the test setup so it can be restored after each test.
+const originalResizeObserver = globalThis.ResizeObserver;
+
 describe('MonacoEditorService', () => {
     setupTestBed({ zoneless: true });
 
@@ -33,6 +36,7 @@ describe('MonacoEditorService', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        globalThis.ResizeObserver = originalResizeObserver;
     });
 
     it('should register the custom markdown language', () => {

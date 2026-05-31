@@ -17,7 +17,8 @@ describe('UrlAction', () => {
     });
 
     afterEach(() => {
-        vi.clearAllMocks();
+        // restoreAllMocks (not clearAllMocks) reverts the vi.spyOn wrappers on the shared `editor` to their originals.
+        vi.restoreAllMocks();
     });
 
     it('should add a placeholder at cursor position if no text is selected', () => {

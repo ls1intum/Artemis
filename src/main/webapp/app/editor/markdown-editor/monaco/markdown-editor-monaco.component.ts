@@ -304,8 +304,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private cachedSelection?: CachedSelectionWithText;
     /** Window scroll handler reference, stored so it can be removed in ngOnDestroy. */
     private windowScrollHandler?: () => void;
-    /** Emits whenever the active language changes, used to re-evaluate translated menu labels. */
-    private readonly languageChange = toSignal(this.translateService.onLangChange);
     /** Reactive translated label for the "Your Original" diff-pane header (updates on language change). */
     protected readonly diffOriginalLabel = toSignal(this.translateService.stream('artemisApp.programmingExercise.problemStatement.diffView.originalLabel'), { initialValue: '' });
     /** Reactive translated label for the "AI Suggestion" diff-pane header (updates on language change). */
@@ -320,44 +318,28 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly minWrapperHeight = signal<number | undefined>(undefined);
     readonly isResizing = signal<boolean>(false);
     /**
-     * The actions to display in the editor, grouped by type and derived reactively from the action inputs.
+     * The actions to display in the editor, grouped by type. Snapshotted once in {@link ngAfterContentInit} from the
+     * action inputs, intentionally kept in lock-step with the one-time action registration in {@link ngAfterViewInit}:
+     * the toolbar only ever shows actions that are actually registered on the editor, so a button can never trigger
+     * an unregistered action.
      */
-    readonly displayedActions = computed<MarkdownActionsByGroup>(() => {
-        const domainActions = this.domainActions();
-        return {
-            style: this.filterDisplayedActions(this.defaultActions()).filter((action) => action instanceof TextStyleTextEditorAction) as TextStyleTextEditorAction[],
-            standard: this.filterDisplayedActions(this.defaultActions()).filter((action) => !(action instanceof TextStyleTextEditorAction)),
-            header: this.filterDisplayedActions(this.headerActions()?.actions ?? []),
-            color: this.filterDisplayedAction(this.colorAction()),
-            domain: {
-                withoutOptions: this.filterDisplayedActions(domainActions.filter((action) => !(action instanceof TextEditorDomainActionWithOptions))),
-                withOptions: this.filterDisplayedActions(
-                    domainActions.filter((action) => action instanceof TextEditorDomainActionWithOptions),
-                ) as TextEditorDomainActionWithOptions[],
-            },
-            lecture: this.filterDisplayedAction(this.lectureReferenceAction()),
-            artemisIntelligence: this.filterDisplayedActions(this.artemisIntelligenceActions() ?? []),
-            meta: this.filterDisplayedActions(this.metaActions()),
-        };
+    readonly displayedActions = signal<MarkdownActionsByGroup>({
+        style: [],
+        standard: [],
+        header: [],
+        color: undefined,
+        domain: { withoutOptions: [], withOptions: [] },
+        lecture: undefined,
+        artemisIntelligence: [],
+        meta: [],
     });
 
     /**
-     * The PrimeNG TieredMenu model for the lecture attachment reference picker, derived from the available lectures,
-     * their attachment/video units, and slides. Recomputed when the lecture action or the active language changes.
+     * The PrimeNG TieredMenu model for the lecture attachment reference picker. Built on demand in
+     * {@link openLectureMenu} (rather than as a computed) because the action's {@link LectureAttachmentReferenceAction.lecturesWithDetails}
+     * are loaded asynchronously and are not a signal — rebuilding on open guarantees the freshest lectures/units/slides.
      */
-    protected readonly lectureMenuModel = computed<MenuItem[]>(() => {
-        // Touch the language signal so translated labels (e.g. slide numbers) refresh on language change.
-        this.languageChange();
-        const lectureAction = this.displayedActions().lecture;
-        if (!lectureAction) {
-            return [];
-        }
-        const lectures = lectureAction.lecturesWithDetails ?? [];
-        if (!lectures.length) {
-            return [{ label: this.translateService.instant('global.generic.emptyList'), disabled: true }];
-        }
-        return lectures.map((lecture) => this.buildLectureMenuItem(lectureAction, lecture));
-    });
+    protected readonly lectureMenuModel = signal<MenuItem[]>([]);
 
     /**
      * Color mapping from hex codes to CSS class names.
@@ -472,6 +454,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         // Affects the template - done in this method to avoid ExpressionChangedAfterItHasBeenCheckedErrors.
         this.targetWrapperHeight.set(!this.externalHeight() ? this.initialEditorHeight().valueOf() : undefined);
         this.minWrapperHeight.set(this.resizableMinHeight().valueOf());
+        // Snapshot the displayed actions once, in lock-step with the registration performed in ngAfterViewInit.
+        this.displayedActions.set(this.buildDisplayedActions());
     }
 
     filterDisplayedActions<T extends TextEditorAction>(actions: T[]): T[] {
@@ -480,6 +464,53 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     filterDisplayedAction<T extends TextEditorAction>(action?: T): T | undefined {
         return action?.hideInEditor ? undefined : action;
+    }
+
+    /**
+     * Groups the action inputs (filtering out actions hidden in the editor) into the structure consumed by the
+     * toolbar template. Computed once at init so the displayed toolbar matches the registered action set.
+     */
+    private buildDisplayedActions(): MarkdownActionsByGroup {
+        const domainActions = this.domainActions();
+        return {
+            style: this.filterDisplayedActions(this.defaultActions()).filter((action) => action instanceof TextStyleTextEditorAction) as TextStyleTextEditorAction[],
+            standard: this.filterDisplayedActions(this.defaultActions()).filter((action) => !(action instanceof TextStyleTextEditorAction)),
+            header: this.filterDisplayedActions(this.headerActions()?.actions ?? []),
+            color: this.filterDisplayedAction(this.colorAction()),
+            domain: {
+                withoutOptions: this.filterDisplayedActions(domainActions.filter((action) => !(action instanceof TextEditorDomainActionWithOptions))),
+                withOptions: this.filterDisplayedActions(
+                    domainActions.filter((action) => action instanceof TextEditorDomainActionWithOptions),
+                ) as TextEditorDomainActionWithOptions[],
+            },
+            lecture: this.filterDisplayedAction(this.lectureReferenceAction()),
+            artemisIntelligence: this.filterDisplayedActions(this.artemisIntelligenceActions() ?? []),
+            meta: this.filterDisplayedActions(this.metaActions()),
+        };
+    }
+
+    /**
+     * Rebuilds the lecture tiered-menu model from the action's currently-loaded lectures and opens the popup. Building
+     * on open (instead of via a computed) ensures asynchronously-loaded lectures/units/slides are always reflected.
+     * @param menu The PrimeNG tiered menu to open.
+     * @param event The triggering mouse event.
+     * @param lectureAction The lecture reference action whose lectures should populate the menu.
+     */
+    openLectureMenu(menu: TieredMenu, event: MouseEvent, lectureAction: LectureAttachmentReferenceAction): void {
+        this.lectureMenuModel.set(this.buildLectureMenuModel(lectureAction));
+        menu.toggle(event);
+    }
+
+    /**
+     * Builds the full tiered-menu model for the lecture reference picker, or a single disabled "empty list" entry
+     * when no lectures are available.
+     */
+    private buildLectureMenuModel(lectureAction: LectureAttachmentReferenceAction): MenuItem[] {
+        const lectures = lectureAction.lecturesWithDetails ?? [];
+        if (!lectures.length) {
+            return [{ label: this.translateService.instant('global.generic.emptyList'), disabled: true }];
+        }
+        return lectures.map((lecture) => this.buildLectureMenuItem(lectureAction, lecture));
     }
 
     /**
@@ -564,7 +595,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     ngAfterViewInit(): void {
         this.adjustEditorDimensions();
         this.monacoEditor()!.setWordWrap(true);
-        this.monacoEditor()!.changeModel('markdown-content.custom-md', this.markdown() ?? '', 'custom-md');
+        // Use the live content (covers an imperative setMarkdown() made before the editor was ready) and fall back to the input.
+        this.monacoEditor()!.changeModel('markdown-content.custom-md', this.currentMarkdown() ?? this.markdown() ?? '', 'custom-md');
         this.resizeObserver = new ResizeObserver(() => {
             this.adjustEditorDimensions();
         });

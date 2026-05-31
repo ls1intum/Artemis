@@ -29,6 +29,9 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect-to-iris-button/redirect-to-iris-button.component';
 
+// Capture the global ResizeObserver provided by the test setup so it can be restored after each test.
+const originalResizeObserver = globalThis.ResizeObserver;
+
 describe('MarkdownEditorMonacoComponent', () => {
     setupTestBed({ zoneless: true });
 
@@ -78,6 +81,7 @@ describe('MarkdownEditorMonacoComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        globalThis.ResizeObserver = originalResizeObserver;
     });
 
     it('should limit the vertical drag position based on the input values', () => {

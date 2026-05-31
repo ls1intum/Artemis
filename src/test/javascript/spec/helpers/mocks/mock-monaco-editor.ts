@@ -53,9 +53,14 @@ type Listener<T> = (event: T) => void;
 
 class ListenerSet<T> {
     private readonly listeners = new Set<Listener<T>>();
-    add(listener: Listener<T>) {
+    add(listener: Listener<T>): { dispose: () => void } {
         this.listeners.add(listener);
-        return { dispose: () => this.listeners.delete(listener) };
+        // Wrap in a block so dispose() returns void (Set.delete returns boolean), matching monaco's IDisposable.
+        return {
+            dispose: () => {
+                this.listeners.delete(listener);
+            },
+        };
     }
     fire(event: T) {
         // Copy to a array first so listeners that dispose themselves don't mutate the set mid-iteration.
@@ -233,8 +238,8 @@ const createMockEditor = (options?: { value?: string }) => {
     const cursorPositionListeners = new ListenerSet<{ position: Position }>();
 
     const fireContentChanged = () => modelContentListeners.fire({ changes: [] });
-    // Re-emit a model's content change through the editor-level listeners.
-    let modelContentSubscription = model?.onDidChangeContent(fireContentChanged);
+    // Re-emit a model's content change through the editor-level listeners. Optional because setModel(null) clears it.
+    let modelContentSubscription: { dispose: () => void } | undefined = model?.onDidChangeContent(fireContentChanged);
 
     const isReadOnly = () => optionValues['readOnly'] === true;
 
@@ -342,8 +347,8 @@ const createMockEditor = (options?: { value?: string }) => {
         setScrollTop: () => {},
         setScrollPosition: () => {},
         getScrolledVisiblePosition: () => ({ top: 0, left: 0, height: 18 }),
-        getContainerDomNode: () => document.createElement('div'),
-        getDomNode: () => document.createElement('div'),
+        getContainerDomNode: (): HTMLElement => document.createElement('div'),
+        getDomNode: (): HTMLElement => document.createElement('div'),
         getContribution: () => null,
 
         // Decorations / widgets / view zones. The element models manipulate their own DOM nodes, so the editor only

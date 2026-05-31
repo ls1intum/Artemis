@@ -14,6 +14,9 @@ import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 import * as monaco from 'monaco-editor';
 
+// Capture the global ResizeObserver provided by the test setup so it can be restored after each test.
+const originalResizeObserver = globalThis.ResizeObserver;
+
 describe('MonacoEditorComponent', () => {
     setupTestBed({ zoneless: true });
 
@@ -42,6 +45,7 @@ describe('MonacoEditorComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        globalThis.ResizeObserver = originalResizeObserver;
     });
 
     const createMockDiffEditor = () => ({
