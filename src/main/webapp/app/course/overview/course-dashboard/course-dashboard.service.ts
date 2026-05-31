@@ -115,13 +115,13 @@ export class CourseDashboardService {
     private mapToLectureUnitType(type: string): LectureUnitType {
         // Discriminator values match the server-side LectureUnitType enum (@JsonValue) and the entity's @JsonSubTypes names.
         switch (type) {
-            case 'attachment':
+            case LectureUnitType.ATTACHMENT_VIDEO:
                 return LectureUnitType.ATTACHMENT_VIDEO;
-            case 'exercise':
+            case LectureUnitType.EXERCISE:
                 return LectureUnitType.EXERCISE;
-            case 'text':
+            case LectureUnitType.TEXT:
                 return LectureUnitType.TEXT;
-            case 'online':
+            case LectureUnitType.ONLINE:
                 return LectureUnitType.ONLINE;
             default:
                 throw new Error(`Unknown lecture unit type: ${type}`);

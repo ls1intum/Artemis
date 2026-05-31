@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, model } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
 
@@ -23,7 +23,7 @@ import { FormsModule } from '@angular/forms';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BuildAgentClearDistributedDataComponent {
-    private activeModal = inject(NgbActiveModal);
+    private readonly dialogRef = inject(DynamicDialogRef);
 
     /** Two-way bound model for the confirmation text input field */
     confirmationText = model<string>('');
@@ -42,16 +42,16 @@ export class BuildAgentClearDistributedDataComponent {
     buttonEnabled = computed(() => this.confirmationText() === this.expectedConfirmationText);
 
     /**
-     * Closes the modal by dismissing it
+     * Closes the modal without confirming the action.
      */
     cancel() {
-        this.activeModal.dismiss('cancel');
+        this.dialogRef.close();
     }
 
     /**
      * Confirms the clear data action and closes the modal with a positive result.
      */
     confirm() {
-        this.activeModal.close(true);
+        this.dialogRef.close(true);
     }
 }
