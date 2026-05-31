@@ -16,6 +16,9 @@ class CommunicationCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest
 
     @Override
     protected int dtoNameEndingThreshold() {
-        return 4;
+        // 4 legacy non-DTO-named classes (ConversationSummary, GeneralConversationInfo, MetisCrudAction, UserConversationInfo)
+        // + 2 nested Jackson deserializers (OneToOneChatCreationDeserializer, GroupChatCreationDeserializer) that back the
+        // tolerant chat-creation request bodies and cannot be named *DTO (cf. iris RawJsonDeserializer).
+        return 6;
     }
 }

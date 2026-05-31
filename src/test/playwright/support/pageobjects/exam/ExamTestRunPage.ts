@@ -15,7 +15,7 @@ export class ExamTestRunPage {
     }
 
     async confirmTestRun() {
-        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/test-run`);
+        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/test-runs`);
         // The create-test-run dialog was migrated from NgbModal (.modal-dialog) to PrimeNG (.p-dialog).
         await this.page.locator('.p-dialog, .modal-dialog').first().locator('#createTestRunButton').click();
         return await responsePromise;
@@ -106,7 +106,7 @@ export class ExamTestRunPage {
         const confirmInput = this.page.locator('#confirm-entity-name');
         await confirmInput.waitFor({ state: 'visible', timeout: 10000 });
         await confirmInput.fill('Test Run');
-        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/test-run/*`);
+        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/test-runs/*`);
         await this.page.getByTestId('delete-dialog-confirm-button').click();
         await responsePromise;
     }

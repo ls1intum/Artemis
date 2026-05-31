@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
-import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCAuthException;
+import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 import de.tum.cit.aet.artemis.localvc.service.vcs.AbstractVersionControlService;
 
 /**
