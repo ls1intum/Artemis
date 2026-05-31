@@ -436,7 +436,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/app.component.spec.ts', // app-shell (app.component) (Vitest)
     ],
     testTimeout: 3000,
-    testMatch: ['<rootDir>/src/main/webapp/app//*.spec.ts', '<rootDir>/src/test/javascript/spec//*.integration.spec.ts'],
+    testMatch: ['<rootDir>/src/main/webapp/app/**/*.spec.ts', '<rootDir>/src/test/javascript/spec/**/*.integration.spec.ts'],
     moduleNameMapper: {
         '^app/(.*)': '<rootDir>/src/main/webapp/app/$1',
         '^test/(.*)': '<rootDir>/src/test/javascript/spec/$1',
