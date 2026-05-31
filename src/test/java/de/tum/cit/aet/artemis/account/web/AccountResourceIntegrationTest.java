@@ -360,7 +360,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         user.setFirstName(updatedFirstName);
 
-        request.put("/api/core/account", new UserDTO(user), HttpStatus.OK);
+        request.put("/api/account/account", new UserDTO(user), HttpStatus.OK);
 
         // check if update successful
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
@@ -379,7 +379,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
             String updatedFirstName = "UpdatedFirstName";
             user.setFirstName(updatedFirstName);
 
-            request.put("/api/core/account", new UserDTO(user), HttpStatus.FORBIDDEN);
+            request.put("/api/account/account", new UserDTO(user), HttpStatus.FORBIDDEN);
         });
     }
 
@@ -392,7 +392,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
             String updatedFirstName = "UpdatedFirstName";
             user.setFirstName(updatedFirstName);
 
-            request.put("/api/core/account", new UserDTO(user), HttpStatus.OK);
+            request.put("/api/account/account", new UserDTO(user), HttpStatus.OK);
 
             Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
             assertThat(updatedUser).isPresent();
@@ -408,7 +408,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         // update Email to one already used
         user.setEmail(userSameEmail.getEmail());
 
-        request.put("/api/core/account", new UserDTO(user), HttpStatus.BAD_REQUEST);
+        request.put("/api/account/account", new UserDTO(user), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -418,7 +418,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         userUtilService.createAndSaveUser(AUTHENTICATEDUSER, passwordService.hashPassword(UserFactory.USER_PASSWORD));
 
         PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword);
-        request.postWithoutLocation("/api/core/account/change-password", pwChange, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/account/account/change-password", pwChange, HttpStatus.OK, null);
 
         // check if update successful
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
@@ -436,7 +436,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         String updatedPassword = "12345678";
         PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword);
 
-        request.postWithoutLocation("/api/core/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
+        request.postWithoutLocation("/api/account/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
     }
 
     @Test
@@ -446,7 +446,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         String updatedPassword = "";
         PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword);
 
-        request.postWithoutLocation("/api/core/account/change-password", pwChange, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/account/account/change-password", pwChange, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -455,7 +455,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, UserFactory.USER_PASSWORD);
 
-        request.postWithoutLocation("/api/core/account/change-password", pwChange, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/account/account/change-password", pwChange, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -591,7 +591,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         userTestRepository.save(user);
 
         SelectedLLMUsageDTO selectedLLMUsageDTO = new SelectedLLMUsageDTO(AiSelectionDecision.CLOUD_AI);
-        request.put("/api/core/users/select-llm-usage", selectedLLMUsageDTO, HttpStatus.OK);
+        request.put("/api/account/users/select-llm-usage", selectedLLMUsageDTO, HttpStatus.OK);
 
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(updatedUser).isPresent();
@@ -606,7 +606,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         userTestRepository.save(user);
 
         SelectedLLMUsageDTO selectedLLMUsageDTO = new SelectedLLMUsageDTO(AiSelectionDecision.NO_AI);
-        request.put("/api/core/users/select-llm-usage", selectedLLMUsageDTO, HttpStatus.OK);
+        request.put("/api/account/users/select-llm-usage", selectedLLMUsageDTO, HttpStatus.OK);
 
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(updatedUser).isPresent();
@@ -622,7 +622,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         user.setSelectedLLMUsageTimestamp(originalTimestamp);
         userTestRepository.save(user);
 
-        request.put("/api/core/users/select-llm-usage", null, HttpStatus.BAD_REQUEST);
+        request.put("/api/account/users/select-llm-usage", null, HttpStatus.BAD_REQUEST);
 
         // Verify timestamp wasn't changed
         Optional<User> unchangedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
@@ -648,7 +648,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
             user.setEmail("hacked@evil.com");
             user.setLangKey("de");
 
-            request.put("/api/core/account", new UserDTO(user), HttpStatus.OK);
+            request.put("/api/account/account", new UserDTO(user), HttpStatus.OK);
 
             Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
             assertThat(updatedUser).isPresent();
@@ -669,7 +669,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
             user.setLangKey("de");
 
             // The endpoint must still return 200 so the language preference can be saved
-            request.put("/api/core/account", new UserDTO(user), HttpStatus.OK);
+            request.put("/api/account/account", new UserDTO(user), HttpStatus.OK);
         });
     }
 }

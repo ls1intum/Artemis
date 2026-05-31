@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { CourseUsersSelectorComponent } from 'app/communication/course-users-selector/course-users-selector.component';
@@ -12,7 +12,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { By } from '@angular/platform-browser';
 import { UserPublicInfoDTO } from 'app/account/user/user.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import {

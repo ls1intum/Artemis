@@ -5,11 +5,11 @@ import { CourseLearnerProfileComponent } from 'app/account/user/settings/learner
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { LearnerProfileApiService } from 'app/account/user/settings/learner-profile/learner-profile-api.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { CourseLearnerProfileDTO } from 'app/account/user/settings/learner-profile/dto/course-learner-profile-dto.model';
-import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

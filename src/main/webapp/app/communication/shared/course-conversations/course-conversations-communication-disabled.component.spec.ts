@@ -3,10 +3,10 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FeatureActivationComponent } from 'app/shared/feature-activation/feature-activation.component';
+import { FeatureActivationComponent } from 'app/shared-ui/feature-activation/feature-activation.component';
 import { By } from '@angular/platform-browser';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockProvider } from 'ng-mocks';
@@ -27,9 +27,9 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { MetisService } from 'app/communication/service/metis.service';
 import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { EventManager } from 'app/shared/service/event-manager.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 describe('CourseConversationComponent with communication disabled', () => {

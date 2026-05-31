@@ -10,15 +10,15 @@ import { cloneDeep, isEmpty, omit } from 'lodash-es';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { debounceTime, switchMap } from 'rxjs/operators';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
+import { SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
 import { faBan, faExclamationTriangle, faSave, faSpinner, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TeamOwnerSearchComponent } from '../team-owner-search/team-owner-search.component';
 import { TeamStudentSearchComponent } from '../team-student-search/team-student-search.component';
 import { KeyValuePipe } from '@angular/common';
-import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
 
 export type StudentTeamConflict = { studentLogin: string; teamId: string };
 

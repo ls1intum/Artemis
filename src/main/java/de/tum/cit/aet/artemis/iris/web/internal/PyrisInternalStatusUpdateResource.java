@@ -25,10 +25,12 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateD
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.GlobalSearchAnswerJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
@@ -146,6 +148,37 @@ public class PyrisInternalStatusUpdateResource {
     public ResponseEntity<Void> setAutonomousTutorJobStatus(@PathVariable String runId, @RequestBody PyrisAutonomousTutorPipelineStatusUpdateDTO statusUpdateDTO,
             HttpServletRequest request) {
         var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, AutonomousTutorJob.class);
+        if (!Objects.equals(job.jobId(), runId)) {
+            throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
+        }
+
+        pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO);
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * {@code POST internal/pipelines/global-search/runs/{runId}/status} : Receive a Pyris status update for an async global search Iris answer job.
+     * <p>
+     * Pyris sends two callbacks per request:
+     * <ol>
+     * <li>Thinking – when the query is classified as a real question ({@code stages[0].state == IN_PROGRESS}).</li>
+     * <li>Result – when the LLM pipeline finishes ({@code answer} is non-null or null for nav queries).</li>
+     * </ol>
+     * Uses custom token-based authentication.
+     *
+     * @param runId           the job token from the URL path
+     * @param statusUpdateDTO the status update payload
+     * @param request         the HTTP request (used for token authentication)
+     * @return a {@link ResponseEntity} with status {@code 200 (OK)}
+     * @throws ConflictException        if the run ID in the URL does not match the token in the request header
+     * @throws AccessForbiddenException if the token is invalid
+     */
+    @PostMapping("pipelines/global-search/runs/{runId}/status")
+    @Internal
+    public ResponseEntity<Void> setStatusOfGlobalSearchAnswerJob(@PathVariable String runId, @RequestBody PyrisGlobalSearchAnswerStatusUpdateDTO statusUpdateDTO,
+            HttpServletRequest request) {
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, GlobalSearchAnswerJob.class);
         if (!Objects.equals(job.jobId(), runId)) {
             throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
         }

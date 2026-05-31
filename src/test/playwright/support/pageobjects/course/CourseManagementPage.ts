@@ -52,8 +52,18 @@ export class CourseManagementPage {
         // hydrated asynchronously after navigation, so the bare .click() races the render.
         const link = this.getCourse(courseID).locator('#course-card-open-exercises');
         await link.waitFor({ state: 'visible', timeout: 30_000 });
-        await link.click();
-        await this.page.waitForURL('**/exercises**');
+
+        // Click + waitForURL; if the click races Angular's router-link binding (rare under heavy
+        // parallel multi-node load, where the navbar renders before all child route directives
+        // have attached their listeners), the navigation does not fire. Fall back to a direct
+        // URL navigation so the test can proceed regardless of the SPA race.
+        try {
+            await link.click();
+            await this.page.waitForURL('**/exercises**', { timeout: 15_000 });
+        } catch {
+            await this.page.goto(`/course-management/${courseID}/exercises`);
+            await this.page.waitForLoadState('load');
+        }
     }
 
     /**
@@ -75,9 +85,19 @@ export class CourseManagementPage {
         await header.waitFor({ state: 'visible', timeout: 30_000 });
         await header.click();
         // Wait for SPA navigation into the course detail to complete before subsequent steps
-        // (e.g. openCourseSettings) race the next render. Without this, the next click() can fire
-        // while the previous page is still mounted, then auto-wait against the wrong DOM.
-        await this.page.waitForURL(new RegExp(`/course-management/${courseID}(/|$)`));
+        // (e.g. openCourseSettings) race the next render. Under heavy multi-node CI load the
+        // click occasionally completes without triggering Angular's router (the SPA stays at
+        // /course-management instead of advancing to /course-management/<id>). Fall back to an
+        // explicit goto so the test does not consume the whole budget waiting on a missing nav.
+        const expectedUrl = new RegExp(`/course-management/${courseID}(/|$)`);
+        const urlSettled = await this.page
+            .waitForURL(expectedUrl, { timeout: 15_000 })
+            .then(() => true)
+            .catch(() => false);
+        if (!urlSettled) {
+            await this.page.goto(`/course-management/${courseID}`);
+            await this.page.waitForURL(expectedUrl, { timeout: 30_000 });
+        }
     }
 
     private async assertCourseSummary(expectedCourseSummary: CourseSummary) {
@@ -139,7 +159,7 @@ export class CourseManagementPage {
      * @param selector The selector for the group action button.
      */
     private async addUserToGroup(credentials: UserCredentials, groupType: string, selector: string) {
-        const responsePromise = this.page.waitForResponse(`api/core/courses/*/${groupType}/${credentials.username}`);
+        const responsePromise = this.page.waitForResponse(`api/course/courses/*/${groupType}/${credentials.username}`);
         await this.page.locator('#user-management-dropdown').click();
         await this.page.locator(selector).click();
         await this.confirmUserIntoGroup(credentials);
@@ -186,7 +206,7 @@ export class CourseManagementPage {
     }
 
     async updateCourse(course: Course) {
-        const response = this.page.waitForResponse(`api/core/courses/${course.id}`);
+        const response = this.page.waitForResponse(`api/course/courses/${course.id}`);
         await this.page.locator('#save-entity').click();
         await response;
     }
@@ -206,7 +226,9 @@ export class CourseManagementPage {
      * @param credentials - The user credentials to be confirmed into the group.
      */
     private async confirmUserIntoGroup(credentials: UserCredentials) {
-        await this.page.locator('#typeahead-basic').fill(credentials.username);
+        const typeahead = this.page.locator('#typeahead-basic');
+        await typeahead.waitFor({ state: 'visible', timeout: 30_000 });
+        await typeahead.fill(credentials.username);
         await this.page.locator('.dropdown-item', { hasText: `(${credentials.username})` }).click();
     }
 

@@ -5,7 +5,7 @@ import { CourseStorageService } from 'app/course/manage/services/course-storage.
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
-import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { CourseOverviewRoutePath } from 'app/course/overview/courses.route';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';

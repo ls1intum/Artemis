@@ -8,7 +8,7 @@ import { PatternMatch, PostingContentPart, ReferenceType } from '../metis.util';
 import { User } from 'app/account/user/user.model';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { isCommunicationEnabled } from 'app/course/shared/entities/course.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgStyle } from '@angular/common';
 import { PostingContentPartComponent } from 'app/communication/posting-content/posting-content-part/posting-content-part.components';

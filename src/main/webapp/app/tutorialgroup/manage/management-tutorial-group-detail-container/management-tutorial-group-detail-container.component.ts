@@ -1,6 +1,6 @@
 import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { catchError, of } from 'rxjs';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ActivatedRoute } from '@angular/router';
 import { Router } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -14,12 +14,12 @@ import {
 } from 'app/tutorialgroup/shared/tutorial-group-detail/tutorial-group-detail.component';
 import { TutorialGroupSessionApiService } from 'app/openapi/api/tutorialGroupSessionApi.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
+import { LoadingIndicatorOverlayComponent } from 'app/shared-ui/loading-indicator-overlay/loading-indicator-overlay.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { getRouteData } from 'app/shared/route/getRouteData';
+import { getRouteData } from 'app/foundation/route/getRouteData';
 import { TutorialGroupCourseAndGroupService } from 'app/tutorialgroup/shared/service/tutorial-group-course-and-group.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariable';
+import { getNumericPathVariableSignal } from 'app/foundation/route/getPathVariable';
 import { isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorialGroupSession';

@@ -4,7 +4,7 @@ import { CodeEditorFileBrowserNodeComponent } from 'app/programming/manage/code-
 import { faChevronDown, faChevronRight, faEdit, faFile, faFolder, faFolderOpen, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeEditorFileBrowserBadgeComponent } from '../badge/code-editor-file-browser-badge.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FileBadge, FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 

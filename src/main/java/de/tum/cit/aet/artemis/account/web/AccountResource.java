@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.AccountService;
@@ -46,7 +47,7 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonalAccessTokenManagementService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCPersonalAccessTokenManagementService;
 
 /**
  * REST controller for managing the current user's account.
@@ -54,7 +55,8 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonalAccessT
 @Profile(PROFILE_CORE)
 @Lazy
 @RestController
-@RequestMapping("api/core/")
+@SuppressWarnings("deprecation")
+@RequestMapping({ "api/account/", AccountLegacyRestPaths.CORE_PREFIX })
 public class AccountResource {
 
     public static final String ENTITY_NAME = "user";

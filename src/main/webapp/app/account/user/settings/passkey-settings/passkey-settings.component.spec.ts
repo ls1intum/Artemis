@@ -5,7 +5,7 @@ import { PasskeySettingsComponent } from 'app/account/user/settings/passkey-sett
 import { PasskeySettingsApiService } from 'app/account/user/settings/passkey-settings/passkey-settings-api.service';
 import { WebauthnApiService } from 'app/account/user/settings/passkey-settings/webauthn-api.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { DisplayedPasskey } from 'app/account/user/settings/passkey-settings/passkey-settings.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -18,7 +18,7 @@ import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.servic
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { Authority } from 'app/foundation/constants/authority.constants';
 import { User } from 'app/account/user/user.model';
 
 describe('PasskeySettingsComponent', () => {

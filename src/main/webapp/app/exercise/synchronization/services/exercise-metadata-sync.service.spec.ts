@@ -21,7 +21,7 @@ import {
 import { ExerciseMetadataSyncContext, ExerciseMetadataSyncService, metadataValuesEqual } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
 import { ExerciseMetadataConflictModalResult } from 'app/exercise/synchronization/metadata/exercise-metadata-conflict-modal.component';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 /**
  * Creates a mock DynamicDialogRef whose onClose Subject can be resolved or completed externally.

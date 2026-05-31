@@ -23,10 +23,7 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.PrerequisitesApi;
-import de.tum.cit.aet.artemis.communication.repository.CourseNotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
-import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingPresetRepository;
-import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingSpecificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
 import de.tum.cit.aet.artemis.course.domain.CourseOperationType;
 import de.tum.cit.aet.artemis.course.dto.CourseSummaryDTO;
@@ -45,6 +42,9 @@ import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateServi
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureApi;
+import de.tum.cit.aet.artemis.notification.repository.CourseNotificationRepository;
+import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationSettingPresetRepository;
+import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationSettingSpecificationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
 

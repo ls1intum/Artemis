@@ -3,7 +3,8 @@ import { PROGRAMMING_EXERCISE_BASE, ProgrammingLanguage } from '../../../constan
 import { Dayjs } from 'dayjs';
 import { AbstractExerciseCreationPage } from '../AbstractExerciseCreationPage';
 
-const OWL_DATEPICKER_ARIA_LABEL_DATE_FORMAT = 'MMMM D, YYYY';
+// Date format expected by ExerciseTimelineComponent#handleManualInput (strict parse against /^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}$/).
+const TIMELINE_DATE_FORMAT = 'DD.MM.YYYY HH:mm';
 
 export class ProgrammingExerciseCreationPage extends AbstractExerciseCreationPage {
     async changeEditMode() {
@@ -49,24 +50,20 @@ export class ProgrammingExerciseCreationPage extends AbstractExerciseCreationPag
     }
 
     /**
-     * Sets the Due Date field by using the owl datepicker
-     * @param date
-     * */
+     * Sets the Due Date field on the unified exercise timeline (PrimeNG p-datepicker rendered inside
+     * <jhi-exercise-timeline>). The timeline assigns the inputId per visible item dynamically
+     * (e.g. datepicker-0, datepicker-1, ...), so we locate the input through its associated label
+     * and then fill it in the format expected by ExerciseTimelineComponent#handleManualInput.
+     *
+     * @param date the due date to set
+     */
     async setDueDate(date: Dayjs) {
-        await this.page.locator('#programming-exercise-due-date-picker').click();
-
-        // Makes sure that popup is visible before we choose a date
-        await this.page.locator('.owl-dt-popup').waitFor({ state: 'visible' });
-
-        const ariaLabelDate = date.format(OWL_DATEPICKER_ARIA_LABEL_DATE_FORMAT);
-        await this.page.locator(`td[aria-label="${ariaLabelDate}"]`).click();
-
-        // Ensure the date picker is closed after setting the date
-        while (await this.page.locator('.owl-dt-popup').isVisible()) {
-            await this.page.locator('.owl-dt-control-content.owl-dt-control-button-content', { hasText: 'Set' }).dispatchEvent('click');
-            await this.page.waitForTimeout(500);
-        }
-        await expect(this.page.locator('.owl-dt-popup')).not.toBeVisible();
+        const dueDateInput = this.page.getByLabel('Due Date', { exact: true });
+        await expect(dueDateInput).toBeEnabled();
+        await dueDateInput.fill(date.format(TIMELINE_DATE_FORMAT));
+        // Tab out so PrimeNG flushes the pending onInput event (which triggers handleManualInput
+        // and writes the parsed date back into the timeline's date model) before the form is submitted.
+        await dueDateInput.press('Tab');
     }
 
     /**
