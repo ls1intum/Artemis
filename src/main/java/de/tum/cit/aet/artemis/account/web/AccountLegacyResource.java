@@ -13,18 +13,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
+import de.tum.cit.aet.artemis.account.service.AccountService;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 
 /**
  * Legacy compatibility controller that keeps the pre-9.3 {@code PUT api/core/account} endpoint alive.
  * <p>
- * The canonical endpoint now lives in {@link AccountResource} as {@code PUT api/account/basic-information} (with the
- * legacy alias {@code api/core/account/basic-information}). Folding the former {@code account/} resource segment into
- * {@link AccountLegacyRestPaths#CORE_ACCOUNT_PREFIX} preserves every {@code api/core/account/<sub-resource>} path, but
- * it cannot reproduce the bare {@code api/core/account} URL, which carries no sub-resource segment. Deployed clients
- * (iOS, Android, older web) still call that bare URL to update the current user's basic information, so this shim maps
- * it explicitly through the {@code api/core/} legacy prefix and delegates to {@link AccountResource#saveAccount}.
+ * The canonical endpoint is now {@code PUT api/account/basic-information} (in {@code AccountResource}). Folding the former
+ * {@code account/} resource segment into {@link AccountLegacyRestPaths#CORE_ACCOUNT_PREFIX} preserves every
+ * {@code api/core/account/<sub-resource>} path, but it cannot reproduce the bare {@code api/core/account} URL, which carries
+ * no sub-resource segment. Deployed clients (iOS, Android, older web) still call that bare URL to update the current user's
+ * basic information, so this shim maps it explicitly through the {@code api/core/} legacy prefix and delegates to
+ * {@link AccountService#updateBasicInformationOfCurrentUser}.
  * <p>
  * TODO: Remove this controller once all clients have migrated to {@code api/account/basic-information}.
  */
@@ -35,10 +36,10 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 @RequestMapping(AccountLegacyRestPaths.CORE_PREFIX)
 public class AccountLegacyResource {
 
-    private final AccountResource accountResource;
+    private final AccountService accountService;
 
-    public AccountLegacyResource(AccountResource accountResource) {
-        this.accountResource = accountResource;
+    public AccountLegacyResource(AccountService accountService) {
+        this.accountService = accountService;
     }
 
     /**
@@ -52,6 +53,7 @@ public class AccountLegacyResource {
     @PutMapping("account")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> saveAccountLegacy(@Valid @RequestBody UserDTO userDTO) {
-        return accountResource.saveAccount(userDTO);
+        accountService.updateBasicInformationOfCurrentUser(userDTO);
+        return ResponseEntity.ok().build();
     }
 }

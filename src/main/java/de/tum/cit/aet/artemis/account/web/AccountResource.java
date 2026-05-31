@@ -6,7 +6,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.Optional;
 
 import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
@@ -31,7 +30,6 @@ import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.AccountService;
-import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.dto.PasswordChangeDTO;
@@ -44,7 +42,6 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCPersonalAccessTokenManagementService;
@@ -67,24 +64,17 @@ public class AccountResource {
 
     private final UserService userService;
 
-    private final UserCreationService userCreationService;
-
     private final AccountService accountService;
 
     private final FileService fileService;
 
-    private final ProfileService profileService;
-
     private static final float MAX_PROFILE_PICTURE_FILESIZE_IN_MEGABYTES = 0.1f;
 
-    public AccountResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, AccountService accountService, FileService fileService,
-            ProfileService profileService) {
+    public AccountResource(UserRepository userRepository, UserService userService, AccountService accountService, FileService fileService) {
         this.userRepository = userRepository;
         this.userService = userService;
-        this.userCreationService = userCreationService;
         this.accountService = accountService;
         this.fileService = fileService;
-        this.profileService = profileService;
     }
 
     /**
@@ -98,28 +88,7 @@ public class AccountResource {
     @PutMapping("basic-information")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> saveAccount(@Valid @RequestBody UserDTO userDTO) {
-        User currentUser = userRepository.getUser();
-
-        // Allow internal users to update their account even when registration is disabled
-        if (accountService.isRegistrationDisabled() && !currentUser.isInternal()) {
-            throw new AccessForbiddenException("Can't edit user information as user registration is disabled");
-        }
-
-        // When SAML2 is active, names and email are synced from the IdP — only langKey can be changed
-        if (profileService.isSaml2Active()) {
-            currentUser.setLangKey(userDTO.getLangKey());
-            userService.saveUser(currentUser);
-            return ResponseEntity.ok().build();
-        }
-
-        final String userLogin = currentUser.getLogin();
-        Optional<User> existingUser = userRepository.findOneByEmailIgnoreCase(userDTO.getEmail());
-        if (existingUser.isPresent() && (!existingUser.get().getLogin().equalsIgnoreCase(userLogin))) {
-            throw new EmailAlreadyUsedException();
-        }
-
-        userCreationService.updateBasicInformationOfCurrentUser(userDTO.getFirstName(), userDTO.getLastName(), userDTO.getEmail(), userDTO.getLangKey(), userDTO.getImageUrl());
-
+        accountService.updateBasicInformationOfCurrentUser(userDTO);
         return ResponseEntity.ok().build();
     }
 
