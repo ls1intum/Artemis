@@ -178,16 +178,17 @@ export class GlobalSearchModalComponent implements OnDestroy {
     }
 
     /**
-     * Maps route segments (e.g. 'exercises') to search filter tags (e.g. 'exercise').
+     * Maps route segments (e.g. 'exercises') to search filter tags (e.g. ['exercise']).
      * Includes both student view segments (e.g. 'faq') and instructor view segments (e.g. 'faqs').
+     * Exams include 'exercise' because exams contain exercises.
      */
-    private static readonly ROUTE_TO_FILTER_TAG: Record<string, SearchEntityType> = {
-        exercises: 'exercise',
-        lectures: 'lecture',
-        exams: 'exam',
-        communication: 'channel',
-        faq: 'faq',
-        faqs: 'faq',
+    private static readonly ROUTE_TO_FILTER_TAG: Record<string, SearchEntityType[]> = {
+        exercises: ['exercise'],
+        lectures: ['lecture'],
+        exams: ['exam', 'exercise'],
+        communication: ['channel'],
+        faq: ['faq'],
+        faqs: ['faq'],
     };
 
     /**
@@ -216,9 +217,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
         // Set type filter based on the active tab
         const newFilters: SearchEntityType[] = [];
         if (tabSegment) {
-            const filterTag = GlobalSearchModalComponent.ROUTE_TO_FILTER_TAG[tabSegment];
-            if (filterTag) {
-                newFilters.push(filterTag);
+            const filterTags = GlobalSearchModalComponent.ROUTE_TO_FILTER_TAG[tabSegment];
+            if (filterTags) {
+                newFilters.push(...filterTags);
             }
         }
         this.activeFilters.set(newFilters);

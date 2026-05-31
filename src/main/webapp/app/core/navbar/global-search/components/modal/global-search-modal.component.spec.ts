@@ -779,14 +779,14 @@ describe('GlobalSearchModalComponent', () => {
             expect(component['activeFilters']()).toEqual(['channel']);
         });
 
-        it('should apply exam filter when on exams tab', () => {
+        it('should apply exam and exercise filter when on exams tab', () => {
             mockCourseStorageService.getCourse.mockReturnValue({ id: 5, title: 'SE' });
             Object.defineProperty(router, 'url', { get: () => '/courses/5/exams', configurable: true });
 
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
 
-            expect(component['activeFilters']()).toEqual(['exam']);
+            expect(component['activeFilters']()).toEqual(['exam', 'exercise']);
         });
 
         it('should apply faq filter when on faq tab', () => {
@@ -934,14 +934,14 @@ describe('GlobalSearchModalComponent', () => {
             expect(component['activeFilters']()).toEqual(['lecture']);
         });
 
-        it('should apply exam filter when on instructor exams tab', () => {
+        it('should apply exam and exercise filter when on instructor exams tab', () => {
             mockCourseStorageService.getCourse.mockReturnValue({ id: 6, title: 'SE' });
             Object.defineProperty(router, 'url', { get: () => '/course-management/6/exams', configurable: true });
 
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
 
-            expect(component['activeFilters']()).toEqual(['exam']);
+            expect(component['activeFilters']()).toEqual(['exam', 'exercise']);
         });
 
         it('should apply channel filter when on instructor communication tab', () => {
