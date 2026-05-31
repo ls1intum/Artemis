@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
+import de.tum.cit.aet.artemis.localvc.exception.LocalVCInternalException;
 import de.tum.cit.aet.artemis.localvc.service.vcs.AbstractVersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;

@@ -185,7 +185,7 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         Lecture sourceLecture = lectureUtilService.createLecture(course);
         TextUnit textUnit = lectureUtilService.createTextUnit(sourceLecture);
 
-        var importedLectureDto = request.postWithResponseBody("/api/lecture/lectures/import/" + sourceLecture.getId() + "?courseId=" + course.getId(), null,
+        var importedLectureDto = request.postWithResponseBody("/api/lecture/lectures/import?sourceLectureId=" + sourceLecture.getId() + "&courseId=" + course.getId(), null,
                 LectureResource.SimpleLectureDTO.class, HttpStatus.CREATED);
 
         Lecture newlyImportedLecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(importedLectureDto.id());

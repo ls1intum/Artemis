@@ -124,8 +124,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/exam/manage/exams/**', // exam manage exams (detail/import/update/checklist/mode-picker) uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/shared/**', // exam shared module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/overview/**', // exam overview module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/foundation/feature-toggle/**', // feature-toggle service uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/foundation/sort/**', // sort directives use vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/foundation/**', // foundation module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared-ui/user-import/util/**', // user import utils use Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared-ui/range-slider/**', // range slider uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/dashboards/**', // dashboards uses Vitest (see vitest.config.ts)
@@ -191,7 +190,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exam/manage/exams/', // exam manage exams uses Vitest
         '<rootDir>/src/main/webapp/app/exam/shared/', // exam shared module uses Vitest
         '<rootDir>/src/main/webapp/app/exam/overview/', // exam overview module uses Vitest
-        '<rootDir>/src/main/webapp/app/foundation/sort/', // sort directives use Vitest
+        '<rootDir>/src/main/webapp/app/foundation/', // foundation module uses Vitest
         '<rootDir>/src/main/webapp/app/shared-ui/user-import/util/', // user import utils use Vitest
         '<rootDir>/src/main/webapp/app/shared-ui/table-view/', // table view module uses Vitest
         '<rootDir>/src/main/webapp/app/shared-ui/range-slider/', // range slider uses Vitest
@@ -230,7 +229,9 @@ module.exports = {
         global: {
             statements: 83,
             branches: 72.9,
-            functions: 72.2,
+            // Lowered (72.2 -> 72) after moving the well-covered foundation module fully out of Jest (now under Vitest),
+            // which removed those functions from the Jest denominator and nudged the global average down.
+            functions: 72,
             lines: 84,
         },
     },
@@ -297,8 +298,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exam/overview/', // exam overview module (vitest)
         '<rootDir>/src/main/webapp/app/shared-ui/components/buttons/', // shared/buttons components
         '<rootDir>/src/main/webapp/app/shared-ui/table-view/', // shared/table-view component
-        '<rootDir>/src/main/webapp/app/foundation/feature-toggle/', // feature-toggle service (vitest)
-        '<rootDir>/src/main/webapp/app/foundation/sort/', // sort directives
+        '<rootDir>/src/main/webapp/app/foundation/', // foundation module uses Vitest
         '<rootDir>/src/main/webapp/app/shared-ui/user-import/util/', // user import utils
         '<rootDir>/src/main/webapp/app/shared-ui/range-slider/', // range slider (vitest)
         '<rootDir>/src/main/webapp/app/exercise/dashboards/', // dashboards (vitest)

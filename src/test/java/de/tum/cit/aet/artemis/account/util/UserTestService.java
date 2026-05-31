@@ -626,7 +626,7 @@ public class UserTestService {
 
         MockMultipartFile mockImageFile = new MockMultipartFile("file", "test-image.jpeg", "image/jpeg", "test image".getBytes());
 
-        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/account/account/profile-picture").file(mockImageFile).with(request -> {
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/account/profile-picture").file(mockImageFile).with(request -> {
             request.setMethod("PUT");
             return request;
         })).andExpect(status().isOk());
@@ -642,14 +642,14 @@ public class UserTestService {
 
         MockMultipartFile mockImageFile = new MockMultipartFile("file", "test-image.jpeg", "image/jpeg", "test image".getBytes());
 
-        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/account/account/profile-picture").file(mockImageFile).with(request -> {
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/account/profile-picture").file(mockImageFile).with(request -> {
             request.setMethod("PUT");
             return request;
         })).andExpect(status().isOk());
         userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userInDB.getImageUrl()).isNotNull();
 
-        request.delete("/api/account/account/profile-picture", HttpStatus.OK);
+        request.delete("/api/account/profile-picture", HttpStatus.OK);
         userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userInDB.getImageUrl()).isNull();
     }
@@ -740,7 +740,7 @@ public class UserTestService {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         // try to get token for non existent participation
-        request.get("/api/account/account/participation-vcs-access-token?participationId=11", HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/account/participation-vcs-access-token?participationId=11", HttpStatus.NOT_FOUND, String.class);
 
         var course = courseUtilService.addEmptyCourse();
         var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
@@ -749,16 +749,16 @@ public class UserTestService {
         var submission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").type(SubmissionType.MANUAL).submitted(true);
         submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, user.getLogin());
         // request existing token
-        var token = request.get("/api/account/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.OK, String.class);
+        var token = request.get("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.OK, String.class);
         assertThat(token).isNotNull();
 
         // delete all tokens
         participationVCSAccessTokenRepository.deleteAll();
 
         // check that token was deleted
-        request.get("/api/account/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.NOT_FOUND, String.class);
-        var newToken = request.putWithResponseBody("/api/account/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), null,
-                String.class, HttpStatus.OK);
+        request.get("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.NOT_FOUND, String.class);
+        var newToken = request.putWithResponseBody("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), null, String.class,
+                HttpStatus.OK);
         assertThat(newToken).isNotEqualTo(token);
 
         submissionRepository.delete(submission);
@@ -781,13 +781,13 @@ public class UserTestService {
         submission = programmingExerciseUtilService.addProgrammingSubmissionToTeamExercise(exercise, submission, team);
 
         // request existing token
-        request.get("/api/account/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.NOT_FOUND, String.class);
+        request.get("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.NOT_FOUND, String.class);
 
-        var token = request.putWithResponseBody("/api/account/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), null, String.class,
+        var token = request.putWithResponseBody("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), null, String.class,
                 HttpStatus.OK);
         assertThat(token).isNotNull();
 
-        var token2 = request.get("/api/account/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.OK, String.class);
+        var token2 = request.get("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.OK, String.class);
         assertThat(token2).isEqualTo(token);
 
         submissionRepository.delete(submission);
@@ -803,18 +803,18 @@ public class UserTestService {
 
         // Set expiry date to already past date -> Bad Request
         ZonedDateTime expiryDate = ZonedDateTime.now().minusMonths(1);
-        var userDTO = request.putWithResponseBody("/api/account/account/user-vcs-access-token?expiryDate=" + expiryDate, null, UserDTO.class, HttpStatus.BAD_REQUEST);
+        var userDTO = request.putWithResponseBody("/api/account/user-vcs-access-token?expiryDate=" + expiryDate, null, UserDTO.class, HttpStatus.BAD_REQUEST);
         assertThat(userDTO).isNull();
 
         // Correct expiry date -> OK
         expiryDate = ZonedDateTime.now().plusMonths(1);
-        userDTO = request.putWithResponseBody("/api/account/account/user-vcs-access-token?expiryDate=" + expiryDate, null, UserDTO.class, HttpStatus.OK);
+        userDTO = request.putWithResponseBody("/api/account/user-vcs-access-token?expiryDate=" + expiryDate, null, UserDTO.class, HttpStatus.OK);
         user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(user.getVcsAccessToken()).isEqualTo(userDTO.getVcsAccessToken());
         assertThat(user.getVcsAccessTokenExpiryDate()).isEqualTo(userDTO.getVcsAccessTokenExpiryDate());
 
         // Delete token
-        request.delete("/api/account/account/user-vcs-access-token", HttpStatus.OK);
+        request.delete("/api/account/user-vcs-access-token", HttpStatus.OK);
         user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(user.getVcsAccessToken()).isNull();
         assertThat(user.getVcsAccessTokenExpiryDate()).isNull();

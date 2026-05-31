@@ -46,7 +46,7 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
-            .post<TextExercise>(`${this.resourceUrl}/import/${adaptedSourceTextExercise.id}`, copy, { observe: 'response' })
+            .post<TextExercise>(`${this.resourceUrl}/import?sourceExerciseId=${adaptedSourceTextExercise.id}`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
