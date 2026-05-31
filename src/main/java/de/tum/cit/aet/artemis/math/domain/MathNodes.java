@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.math.domain;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -120,7 +121,7 @@ public final class MathNodes {
         if (left == null || right == null || left.isEmpty() || right.isEmpty()) {
             return false;
         }
-        return left.get(0).equals(right.get(0));
+        return left.getFirst().equals(right.getFirst());
     }
 
     /**
@@ -192,7 +193,7 @@ public final class MathNodes {
         if (operands.isEmpty()) {
             return new MathNode(type, null, null);
         }
-        MathNode acc = operands.get(0);
+        MathNode acc = operands.getFirst();
         for (int i = 1; i < operands.size(); i++) {
             acc = new MathNode(type, null, Map.of("left", List.of(acc), "right", List.of(operands.get(i))));
         }
@@ -263,7 +264,7 @@ public final class MathNodes {
                 return "0";
             }
             if (bd.scale() < 0) {
-                bd = bd.setScale(0);
+                bd = bd.setScale(0, RoundingMode.HALF_UP);
             }
             return bd.toPlainString();
         }

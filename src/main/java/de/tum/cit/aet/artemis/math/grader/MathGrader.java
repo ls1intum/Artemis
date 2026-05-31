@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.math.grader;
 import java.util.List;
 import java.util.Optional;
 
-import de.tum.cit.aet.artemis.math.domain.DerivationStep;
 import de.tum.cit.aet.artemis.math.domain.MathExercise;
 import de.tum.cit.aet.artemis.math.domain.MathNode;
 import de.tum.cit.aet.artemis.math.domain.MathSubmission;
@@ -12,7 +11,7 @@ import de.tum.cit.aet.artemis.math.domain.MathSubmission;
  * Strategy interface implemented by every math-grading backend.
  * <p>
  * The current step-by-step engine is exposed as {@code RewriteChainGrader}.
- * Future M3 graders (Lean, Isabelle, egg e-graphs) plug in by adding a new Spring bean
+ * Future M3 graders (egg e-graphs) plug in by adding a new Spring bean
  * with the appropriate {@link GraderType}; the dispatcher in
  * {@code MathGradingService} routes per-exercise.
  * <p>
@@ -35,19 +34,6 @@ public interface MathGrader {
      * @return a {@link GradingResult} with score in [0, 100] and per-step status
      */
     GradingResult grade(MathExercise exercise, MathSubmission submission);
-
-    /**
-     * Validate a single proposed step against the current math state, without persisting.
-     * Optional — not every grader can answer this incrementally.
-     *
-     * @param exercise     the exercise being worked on
-     * @param currentState the math state immediately before the proposed step
-     * @param proposedStep the step the student is about to add
-     * @return validation result, or empty if this grader does not support incremental validation
-     */
-    default Optional<StepValidation> validateStep(MathExercise exercise, MathNode currentState, DerivationStep proposedStep) {
-        return Optional.empty();
-    }
 
     /**
      * Suggest possible next steps the student could take from the current state.

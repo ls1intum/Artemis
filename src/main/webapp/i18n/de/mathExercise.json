@@ -79,7 +79,7 @@
             "partialCreditEnabled": "Teilpunkte",
             "partialCreditEnabledHint": "Vergibt anteilige Punkte für gültige Schritte bei unvollständigem Mathematik. Erfordert mindestens eine Beispielherleitung zur Bestimmung der erwarteten Schrittanzahl.",
             "graderType": "Bewertungs-Backend",
-            "graderTypeHint": "Schritt-für-Schritt ist derzeit das einzige verfügbare Backend. Lean / Isabelle / egg e-graph folgen in Meilenstein 3.",
+            "graderTypeHint": "Schritt-für-Schritt ist derzeit das einzige verfügbare Backend.",
             "direction": {
                 "toggle": "Anwendungsrichtung umschalten (vorwärts / rückwärts)",
                 "forward": "Vorwärts",

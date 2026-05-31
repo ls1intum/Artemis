@@ -212,7 +212,7 @@ public class RewriteChainGrader implements MathGrader {
             return 0.0;
         }
         double ratio = 1.0 - (double) currentDist / initialDist;
-        return Math.max(0.0, Math.min(99.0, ratio * 100.0));
+        return Math.clamp(ratio * 100.0, 0.0, 99.0);
     }
 
     @Override
@@ -349,7 +349,7 @@ public class RewriteChainGrader implements MathGrader {
         if (left == null || right == null || left.isEmpty() || right.isEmpty()) {
             return 0;
         }
-        return comparableDistance(left.get(0), right.get(0), ac);
+        return comparableDistance(left.getFirst(), right.getFirst(), ac);
     }
 
     private record ReplayResult(MathNode current, int validSteps) {

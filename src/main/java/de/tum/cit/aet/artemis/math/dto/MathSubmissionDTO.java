@@ -8,6 +8,7 @@ import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -98,8 +99,8 @@ public record MathSubmissionDTO(Long id, Boolean submitted, ZonedDateTime submis
             if (Hibernate.isInitialized(participation.getExercise()) && participation.getExercise() instanceof MathExercise pe && Hibernate.isInitialized(pe.getCategories())) {
                 exerciseDTO = MathExerciseDTO.of(pe);
             }
-            String login = participation.getStudent().map(u -> u.getLogin()).orElse(null);
-            String name = participation.getStudent().map(u -> u.getName()).orElse(null);
+            String login = participation.getStudent().map(User::getLogin).orElse(null);
+            String name = participation.getStudent().map(User::getName).orElse(null);
             return new MathParticipationDTO(participation.getId(), exerciseDTO, login, name);
         }
     }

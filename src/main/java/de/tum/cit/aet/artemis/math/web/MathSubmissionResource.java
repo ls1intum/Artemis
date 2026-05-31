@@ -157,12 +157,8 @@ public class MathSubmissionResource {
         Optional<MathSubmission> latestSubmission = participation.findLatestSubmission().filter(s -> s instanceof MathSubmission).map(s -> (MathSubmission) s);
 
         MathSubmission submission;
-        if (latestSubmission.isPresent()) {
-            submission = mathSubmissionRepository.findByIdWithStepsAndResults(latestSubmission.get().getId()).orElseThrow();
-        }
-        else {
-            submission = new MathSubmission();
-        }
+        submission = latestSubmission.map(mathSubmission -> mathSubmissionRepository.findByIdWithStepsAndResults(mathSubmission.getId()).orElseThrow())
+                .orElseGet(MathSubmission::new);
         submission.setParticipation(participation);
         return ResponseEntity.ok(MathSubmissionDTO.of(submission));
     }

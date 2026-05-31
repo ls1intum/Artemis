@@ -5,7 +5,7 @@
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
 
     <!-- Adds grader_type to math_exercise_details so the math feature can dispatch to
-         different graders (rewrite-chain today; Lean / Isabelle / egg e-graphs in M3+). -->
+         different graders (rewrite-chain today; egg e-graphs in M3+). -->
     <changeSet id="20260526120000-1" author="KilianSen">
         <preConditions onFail="MARK_RAN">
             <not><columnExists tableName="math_exercise_details" columnName="grader_type"/></not>

@@ -6,7 +6,7 @@ import de.tum.cit.aet.artemis.math.domain.MathNode;
  * Result of validating a single proposed step without persisting it. Used for inline UX:
  * the workspace can ask the grader "is this step valid right now?" before the student commits.
  * <p>
- * Not every grader can support this — Lean / Isabelle typically grade the whole math at submit time.
+ * Not every grader can support this.
  * Returned wrapped in {@code Optional} from {@link MathGrader#validateStep}.
  *
  * @param valid          whether the proposed step is structurally valid

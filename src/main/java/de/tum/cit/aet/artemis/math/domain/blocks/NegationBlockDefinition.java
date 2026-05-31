@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.math.config.MathEnabled;
-import de.tum.cit.aet.artemis.math.domain.Associativity;
 import de.tum.cit.aet.artemis.math.domain.BlockDefinition;
 import de.tum.cit.aet.artemis.math.domain.LayoutCategory;
 import de.tum.cit.aet.artemis.math.domain.MathNodes;
@@ -53,11 +52,6 @@ public class NegationBlockDefinition implements BlockDefinition {
     public int getPrecedence() {
         // Higher than +/− but lower than ·, matching standard convention -a · b → (-a) · b.
         return 30;
-    }
-
-    @Override
-    public Associativity getAssociativity() {
-        return Associativity.NONE;
     }
 
     @Override

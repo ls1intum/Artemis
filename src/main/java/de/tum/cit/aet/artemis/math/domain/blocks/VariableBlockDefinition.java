@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.math.config.MathEnabled;
-import de.tum.cit.aet.artemis.math.domain.Associativity;
 import de.tum.cit.aet.artemis.math.domain.BlockDefinition;
 import de.tum.cit.aet.artemis.math.domain.LayoutCategory;
 import de.tum.cit.aet.artemis.math.domain.RewriteRule;
@@ -45,11 +44,6 @@ public class VariableBlockDefinition implements BlockDefinition {
     @Override
     public int getPrecedence() {
         return 100;
-    }
-
-    @Override
-    public Associativity getAssociativity() {
-        return Associativity.NONE;
     }
 
     @Override

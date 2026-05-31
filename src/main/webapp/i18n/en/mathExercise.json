@@ -79,7 +79,7 @@
             "partialCreditEnabled": "Partial Credit",
             "partialCreditEnabledHint": "Award proportional points for valid steps when the math is incomplete. Requires at least one example derivation to determine the expected step count.",
             "graderType": "Grader",
-            "graderTypeHint": "Step-by-step is the only grader available today. Lean / Isabelle / egg e-graph backends arrive in milestone 3.",
+            "graderTypeHint": "Step-by-step is the only grader available today.",
             "direction": {
                 "toggle": "Toggle rule direction (forward / reverse)",
                 "forward": "Forward",

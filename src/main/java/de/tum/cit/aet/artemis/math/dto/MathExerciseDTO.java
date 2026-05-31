@@ -47,7 +47,7 @@ import de.tum.cit.aet.artemis.math.grader.GraderType;
  * @param allowVerification                      whether students may trigger math verification
  * @param onlyShowApplicableRules                whether the rule palette shows only rules applicable at the selected node
  * @param partialCreditEnabled                   whether partial credit is awarded proportionally based on valid steps completed
- * @param graderType                             which {@link GraderType} backend grades this exercise (only REWRITE_CHAIN is wired today; M3+ adds Lean / Isabelle / egg)
+ * @param graderType                             which {@link GraderType} backend grades this exercise (only REWRITE_CHAIN is wired today; M3+ adds egg)
  * @param goalMode                               how the goal is encoded: TRANSFORMATION (source→target) or EQUATION (single goal tree closed by tautology)
  * @param goalExpression                         the goal tree for EQUATION mode (typically an {@code equality(LHS, RHS)}); {@code null} in TRANSFORMATION mode
  * @param acNormalization                        whether the grader treats {@code +} and {@code ·} as commutative/associative for equality comparisons

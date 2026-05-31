@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.math.config.MathEnabled;
-import de.tum.cit.aet.artemis.math.domain.Associativity;
 import de.tum.cit.aet.artemis.math.domain.BlockDefinition;
 import de.tum.cit.aet.artemis.math.domain.LayoutCategory;
 import de.tum.cit.aet.artemis.math.domain.MathNodes;
@@ -42,16 +41,6 @@ public class EqualityBlockDefinition implements BlockDefinition {
     @Override
     public List<String> getSlots() {
         return List.of("left", "right");
-    }
-
-    @Override
-    public int getPrecedence() {
-        return 0;
-    }
-
-    @Override
-    public Associativity getAssociativity() {
-        return Associativity.NONE;
     }
 
     @Override

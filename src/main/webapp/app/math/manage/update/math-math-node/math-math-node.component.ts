@@ -19,7 +19,7 @@ export interface MathNodeContext {
     selector: 'jhi-math-node',
     templateUrl: './math-math-node.component.html',
     styleUrl: './math-math-node.component.scss',
-    imports: [FormsModule, TagModule, MathNodeComponent],
+    imports: [FormsModule, TagModule],
 })
 export class MathNodeComponent {
     node = input.required<MathNode>();

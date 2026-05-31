@@ -60,7 +60,7 @@ public class MathExerciseImportService extends ExerciseImportService {
         MathExercise savedExercise = mathExerciseRepository.save(newExercise);
 
         channelService.createExerciseChannel(savedExercise, Optional.ofNullable(importedExercise.getChannelName()));
-        newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
+        newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise));
 
         return newExercise;
     }
@@ -86,12 +86,11 @@ public class MathExerciseImportService extends ExerciseImportService {
     /**
      * This functions does a hard copy of the example submissions contained in {@code templateExercise}.
      *
-     * @param templateExercise              The original exercise from which to fetch the example submissions
-     * @param newExercise                   The new exercise in which we will insert the example submissions
-     * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
+     * @param templateExercise The original exercise from which to fetch the example submissions
+     * @param newExercise      The new exercise in which we will insert the example submissions
      * @return The cloned set of example submissions
      */
-    private Set<ExampleSubmission> copyExampleSubmission(Exercise templateExercise, Exercise newExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+    private Set<ExampleSubmission> copyExampleSubmission(Exercise templateExercise, Exercise newExercise) {
         log.debug("Copying the ExampleSubmissions to new Exercise: {}", newExercise);
         Set<ExampleSubmission> newExampleSubmissions = new HashSet<>();
         for (ExampleSubmission originalExampleSubmission : templateExercise.getExampleSubmissions()) {

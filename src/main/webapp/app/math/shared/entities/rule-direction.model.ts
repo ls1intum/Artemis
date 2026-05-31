@@ -6,8 +6,6 @@ export type RuleDirection = 'FORWARD_ONLY' | 'BIDIRECTIONAL';
 
 /**
  * Mirror of the backend {@code StepDirection} enum.
- * Selected by the student when applying a {@link RuleDirection#BIDIRECTIONAL} rule.
+ * Selected by the student when applying a {@link RuleDirection} rule.
  */
 export type StepDirection = 'FORWARD' | 'REVERSE';
-
-export const DEFAULT_STEP_DIRECTION: StepDirection = 'FORWARD';

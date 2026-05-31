@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.math.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
@@ -35,6 +36,7 @@ public interface MathExerciseRepository extends JpaRepository<MathExercise, Long
     @Query("SELECT e FROM MathExercise e LEFT JOIN FETCH e.categories WHERE e.course.id = :courseId")
     List<MathExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
+    @NonNull
     @EntityGraph(attributePaths = "categories")
-    Page<MathExercise> findAll(Specification<MathExercise> spec, Pageable pageable);
+    Page<MathExercise> findAll(@NonNull Specification<MathExercise> spec, @NonNull Pageable pageable);
 }

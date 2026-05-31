@@ -46,9 +46,9 @@ public class MathExerciseUtilService {
     @Autowired
     private ParticipationUtilService participationUtilService;
 
-    public MathExercise addMathExerciseToCourse(Course course) {
+    public void addMathExerciseToCourse(Course course) {
         MathExercise exercise = MathExerciseFactory.generateMathExercise(PAST, FUTURE, FAR_FUTURE, course);
-        return exerciseRepository.save(exercise);
+        exerciseRepository.save(exercise);
     }
 
     public Course addCourseWithMathExercise() {
@@ -58,8 +58,8 @@ public class MathExerciseUtilService {
         return course;
     }
 
-    public MathExercise saveExercise(MathExercise exercise) {
-        return mathExerciseRepository.save(exercise);
+    public void saveExercise(MathExercise exercise) {
+        mathExerciseRepository.save(exercise);
     }
 
     public MathSubmission createAndSaveSubmissionForExercise(MathExercise exercise, String login, boolean submitted) {
