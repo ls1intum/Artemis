@@ -73,7 +73,12 @@
                     </div>
                 } @else if (playlistUrl() && hasTranscript()) {
                     <div #videoContainer class="video-container-wrapper" [class.video-container-wrapper--fullscreen]="isFullscreen()">
-                        <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" [initialTimestamp]="targetTimestamp()" />
+                        <jhi-video-player
+                            [videoUrl]="playlistUrl()!"
+                            [transcriptSegments]="transcriptSegments()"
+                            [initialTimestamp]="targetTimestamp()"
+                            (activeSlideNumberChange)="onVideoSlideNumberChange($event)"
+                        />
                     </div>
                 } @else if (youtubeVideoId() && !youtubePlayerFailed()) {
                     <div #videoContainer class="video-player-container" [class.video-player-container--fullscreen]="isFullscreen()">
@@ -81,6 +86,7 @@
                             [videoId]="youtubeVideoId()!"
                             [transcriptSegments]="transcriptSegments()"
                             [initialTimestamp]="targetTimestamp()"
+                            (activeSlideNumberChange)="onVideoSlideNumberChange($event)"
                             (playerFailed)="onYouTubePlayerFailed()"
                         />
                     </div>
@@ -121,6 +127,7 @@
                             [uploadDate]="lectureUnit().attachment?.uploadDate"
                             [version]="lectureUnit().attachment?.version"
                             [initialPage]="validatedPdfPage()"
+                            (currentPageChange)="onPdfCurrentPageChange($event)"
                             (pageRendered)="onPdfPageRendered($event)"
                             (loadError)="onPdfLoadError($event)"
                             (downloadRequested)="handleDownload()"
@@ -133,10 +140,21 @@
 
         <div content-sidebar class="sidebar-content">
             @if (showIrisSidebar()) {
+                <div class="iris-sidebar__header">
+                    <label class="lecture-sync-toggle" for="lecture-sync-toggle">
+                        <span class="lecture-sync-toggle__label" jhiTranslate="artemisApp.attachmentVideoUnit.videoSlideSync.toggle"> Synchronize Video and Slides </span>
+                        <p-toggleswitch
+                            inputId="lecture-sync-toggle"
+                            [ngModel]="synchronizeVideoAndSlides()"
+                            [disabled]="!synchronizationAvailable()"
+                            (ngModelChange)="onSynchronizationToggleChange($event)"
+                        />
+                    </label>
+                    <button class="iris-sidebar__close-button" type="button" [attr.aria-label]="closeFullscreenAriaLabel()" (click)="closeFullscreen()">
+                        <fa-icon [icon]="faXmark" />
+                    </button>
+                </div>
                 <jhi-lecture-chatbot [lectureId]="lectureId()" />
-                <button class="iris-sidebar__close-button" type="button" [attr.aria-label]="closeFullscreenAriaLabel()" (click)="closeFullscreen()">
-                    <fa-icon [icon]="faXmark" />
-                </button>
             }
         </div>
     </jhi-lecture-unit-fullscreen-layout>

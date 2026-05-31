@@ -22,4 +22,5 @@ export class Attachment implements BaseEntity {
     exercise?: Exercise;
     attachmentVideoUnit?: AttachmentVideoUnit;
     studentVersion?: string;
+    slidePageNumbers?: number[];
 }

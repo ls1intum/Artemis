@@ -191,7 +191,7 @@ describe('VideoPlayerComponent', () => {
 
     it('timeupdate sets active segment and scrolls the element into view', async () => {
         const segments: TranscriptSegment[] = [
-            { startTime: 10, endTime: 12, text: 'A' },
+            { startTime: 10, endTime: 12, text: 'A', slideNumber: 7 },
             { startTime: 20, endTime: 22, text: 'B' },
         ];
         setInputs('https://cdn.example.com/m.m3u8', segments);
@@ -207,6 +207,7 @@ describe('VideoPlayerComponent', () => {
         component.updateCurrentSegment(10.1);
 
         expect(getIndex()).toBe(0);
+        expect(component.getCurrentSlideNumber()).toBe(7);
     });
 
     it('timeupdate outside any segment leaves index at -1', async () => {
@@ -243,6 +244,18 @@ describe('VideoPlayerComponent', () => {
 
         expect(videoElement.currentTime).toBe(42);
         expect(playSpy).toHaveBeenCalled();
+    });
+
+    it('seekTo can update the position without resuming playback', async () => {
+        setInputs('https://cdn.example.com/m.m3u8', []);
+        await render();
+
+        const playSpy = vi.spyOn(videoElement, 'play').mockResolvedValue(undefined);
+
+        component.seekTo(21, false);
+
+        expect(videoElement.currentTime).toBe(21);
+        expect(playSpy).not.toHaveBeenCalled();
     });
 
     it('applies initial timestamp after metadata is available', async () => {

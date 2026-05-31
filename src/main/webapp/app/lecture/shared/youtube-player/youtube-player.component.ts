@@ -33,6 +33,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     initialTimestamp = input<number | undefined>(undefined);
 
     playerFailed = output<void>();
+    activeSlideNumberChange = output<number | undefined>();
 
     protected readonly playerVars = { origin: typeof window !== 'undefined' ? window.location.origin : undefined };
     protected readonly startSeconds = computed(() => {
@@ -40,6 +41,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         return timestamp !== undefined && Number.isFinite(timestamp) && timestamp >= 0 ? Math.floor(timestamp) : undefined;
     });
     protected readonly currentSegmentIndex = signal<number>(-1);
+    private readonly currentSlideNumber = signal<number | undefined>(undefined);
 
     playerComponent = viewChild(YouTubePlayer);
 
@@ -60,6 +62,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     private resizeObserver: ResizeObserver | undefined;
     private lastInitialTimestamp: number | undefined;
     protected readonly isResizing = signal<boolean>(false);
+    private playerState?: number;
 
     constructor() {
         // Resync the active segment when transcript segments arrive asynchronously
@@ -210,6 +213,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     }
 
     onStateChange(event: { data: number }): void {
+        this.playerState = event.data;
         if (!this.youtubePlayer) return;
         if (event.data === YT_STATE_PLAYING) {
             this.startPolling();
@@ -223,10 +227,18 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         this.playerFailed.emit();
     }
 
-    seekTo(seconds: number): void {
+    seekTo(seconds: number, _resumePlayback = true): void {
         if (!this.youtubePlayer) return;
         this.youtubePlayer.seekTo(seconds, true);
         this.updateCurrentSegment(seconds);
+    }
+
+    getCurrentSlideNumber(): number | undefined {
+        return this.currentSlideNumber();
+    }
+
+    isPlaying(): boolean {
+        return this.playerState === YT_STATE_PLAYING;
     }
 
     private startPolling(): void {
@@ -256,5 +268,15 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         const segments = this.transcriptSegments();
         const idx = segments.findIndex((s) => currentTime >= s.startTime && currentTime < s.endTime);
         this.currentSegmentIndex.set(idx);
+        this.updateActiveSlideNumber(idx >= 0 ? segments[idx].slideNumber : undefined);
+    }
+
+    private updateActiveSlideNumber(slideNumber: number | undefined): void {
+        if (this.currentSlideNumber() === slideNumber) {
+            return;
+        }
+
+        this.currentSlideNumber.set(slideNumber);
+        this.activeSlideNumberChange.emit(slideNumber);
     }
 }

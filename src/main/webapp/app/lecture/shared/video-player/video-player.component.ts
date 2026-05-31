@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, effect, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, effect, input, output, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranscriptViewerComponent } from '../transcript-viewer/transcript-viewer.component';
 import Hls from 'hls.js';
@@ -38,11 +38,15 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** Optional timestamp to seek to once the player is ready */
     initialTimestamp = input<number | undefined>(undefined);
 
+    /** Active slide/page number inferred from the transcript */
+    activeSlideNumberChange = output<number | undefined>();
+
     /** The HLS.js instance */
     private hls: Hls | undefined = undefined;
 
     /** Track the index of the currently active transcript segment */
     currentSegmentIndex = signal<number>(-1);
+    private readonly currentSlideNumber = signal<number | undefined>(undefined);
 
     /** Reference to the transcript viewer component */
     transcriptViewer = viewChild(TranscriptViewerComponent);
@@ -243,8 +247,8 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         transcriptColumnEl.style.maxHeight = `${targetHeight}px`;
     }
 
-    /** Seek the video to the given time and resume playback. */
-    seekTo(seconds: number): void {
+    /** Seek the video to the given time and optionally resume playback. */
+    seekTo(seconds: number, resumePlayback = true): void {
         const elRef = this.videoRef();
         const videoElement = elRef ? elRef.nativeElement : undefined;
 
@@ -253,7 +257,19 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         }
 
         videoElement.currentTime = seconds;
-        videoElement.play();
+        if (resumePlayback) {
+            void videoElement.play();
+        }
+        this.updateCurrentSegment(seconds);
+    }
+
+    getCurrentSlideNumber(): number | undefined {
+        return this.currentSlideNumber();
+    }
+
+    isPlaying(): boolean {
+        const videoElement = this.videoRef()?.nativeElement;
+        return !!videoElement && !videoElement.paused && !videoElement.ended;
     }
 
     private queueInitialSeek(videoElement: HTMLVideoElement, seconds: number): void {
@@ -304,6 +320,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
 
         if (index !== -1 && index !== this.currentSegmentIndex()) {
             this.currentSegmentIndex.set(index);
+            this.updateActiveSlideNumber(segments[index].slideNumber);
 
             // Scroll to the active segment in the transcript viewer
             const viewer = this.transcriptViewer();
@@ -311,6 +328,15 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
                 viewer.scrollToSegment(index);
             }
         }
+    }
+
+    private updateActiveSlideNumber(slideNumber: number | undefined): void {
+        if (this.currentSlideNumber() === slideNumber) {
+            return;
+        }
+
+        this.currentSlideNumber.set(slideNumber);
+        this.activeSlideNumberChange.emit(slideNumber);
     }
 
     /** Clean up on destroy. */

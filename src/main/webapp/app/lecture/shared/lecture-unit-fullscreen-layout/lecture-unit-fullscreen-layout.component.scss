@@ -41,7 +41,6 @@
             flex-direction: column;
             background-color: var(--lecture-combined-view-surface);
             overflow: hidden;
-            padding-top: 2.5rem;
 
             > [content-sidebar] {
                 display: flex;
@@ -52,11 +51,16 @@
         }
     }
 
+    .iris-sidebar__header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.25rem 0.25rem 0.5rem 0.25rem;
+        flex-shrink: 0;
+    }
+
     .iris-sidebar__close-button {
-        position: absolute;
-        top: 0.0625rem;
-        right: 0.125rem;
-        z-index: 1000;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -69,6 +73,7 @@
         cursor: pointer;
         transition: opacity 0.2s ease;
         border-radius: 0.25rem;
+        flex-shrink: 0;
 
         &:hover,
         &:active {

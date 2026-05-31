@@ -74,10 +74,12 @@ describe('PdfViewerComponent', () => {
         const loadErrorSpy = vi.fn();
         const pageRenderedSpy = vi.fn();
         const downloadSpy = vi.fn();
+        const currentPageSpy = vi.fn();
 
         component.loadError.subscribe(loadErrorSpy);
         component.pageRendered.subscribe(pageRenderedSpy);
         component.downloadRequested.subscribe(downloadSpy);
+        component.currentPageChange.subscribe(currentPageSpy);
 
         fixture.componentRef.setInput('pdfUrl', 'test.pdf');
         fixture.detectChanges();
@@ -90,6 +92,9 @@ describe('PdfViewerComponent', () => {
 
         sendIframeMessage('download');
         expect(downloadSpy).toHaveBeenCalledOnce();
+
+        sendIframeMessage('pageChange', { page: 7 });
+        expect(currentPageSpy).toHaveBeenCalledWith(7);
     });
 
     it('should enter fullscreen on openFullscreen message without triggering PDF reload', () => {
@@ -200,5 +205,22 @@ describe('PdfViewerComponent', () => {
         fixture.detectChanges();
 
         expect(postMessageSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'languageChange', data: { languageKey: 'de' } }), window.location.origin);
+    });
+
+    it('goToPage posts a setPage message to the iframe when ready', () => {
+        fixture.componentRef.setInput('pdfUrl', 'test.pdf');
+        fixture.detectChanges();
+
+        sendIframeMessage('ready');
+        fixture.detectChanges();
+
+        const iframe = component.pdfIframe()?.nativeElement;
+        const postMessageSpy = vi.spyOn(iframe!.contentWindow!, 'postMessage');
+        postMessageSpy.mockClear();
+
+        component.goToPage(4);
+
+        expect(component.getCurrentPage()).toBe(4);
+        expect(postMessageSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'setPage', data: { page: 4 } }), window.location.origin);
     });
 });

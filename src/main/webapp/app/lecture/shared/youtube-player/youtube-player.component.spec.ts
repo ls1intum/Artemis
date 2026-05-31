@@ -122,6 +122,17 @@ describe('YouTubePlayerComponent', () => {
 
         expect((component as any).youtubePlayer).toBe(viewChildPlayer);
         expect(component['currentSegmentIndex']()).toBe(1);
+        expect(component.getCurrentSlideNumber()).toBeUndefined();
+    });
+
+    it('tracks the active slide number from transcript segments', () => {
+        fixture.componentRef.setInput('transcriptSegments', [
+            { startTime: 0, endTime: 10, text: 'a', slideNumber: 3 },
+            { startTime: 10, endTime: 20, text: 'b', slideNumber: 4 },
+        ]);
+        (component as any).updateCurrentSegment(15);
+
+        expect(component.getCurrentSlideNumber()).toBe(4);
     });
 
     it('applies initialTimestamp on ready and updates segment immediately', () => {

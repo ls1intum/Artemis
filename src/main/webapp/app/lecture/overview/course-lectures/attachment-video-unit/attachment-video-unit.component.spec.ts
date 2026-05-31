@@ -711,6 +711,53 @@ describe('AttachmentVideoUnitComponent', () => {
     });
 
     describe('Fullscreen behavior', () => {
+        it('disables video-slide synchronization when slide page numbers are duplicated', () => {
+            component.lectureUnit().attachment!.slidePageNumbers = [7, 8, 8];
+            component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+            component.transcriptSegments.set([{ startTime: 0, endTime: 5, text: 'Slide 7', slideNumber: 7 }]);
+
+            expect(component.synchronizationAvailable()).toBe(false);
+        });
+
+        it('disables video-slide synchronization when transcript pages are not in the attachment mapping', () => {
+            component.lectureUnit().attachment!.slidePageNumbers = [7, 8, 9];
+            component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+            component.transcriptSegments.set([{ startTime: 0, endTime: 5, text: 'Slide 11', slideNumber: 11 }]);
+
+            expect(component.synchronizationAvailable()).toBe(false);
+        });
+
+        it('syncs the PDF viewer when the active video slide changes', () => {
+            component.lectureUnit().attachment!.slidePageNumbers = [7, 8, 9];
+            component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+            component.transcriptSegments.set([{ startTime: 0, endTime: 5, text: 'Slide 8', slideNumber: 8 }]);
+
+            const goToPage = vi.fn();
+            (component as any).pdfViewer = () => ({ getCurrentPage: () => 1, goToPage });
+
+            component['onSynchronizationToggleChange'](true);
+            component['onVideoSlideNumberChange'](8);
+
+            expect(goToPage).toHaveBeenCalledWith(2);
+        });
+
+        it('seeks the video when the PDF page changes', () => {
+            component.lectureUnit().attachment!.slidePageNumbers = [7, 8, 9];
+            component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+            component.transcriptSegments.set([
+                { startTime: 2, endTime: 5, text: 'Slide 7', slideNumber: 7 },
+                { startTime: 9, endTime: 12, text: 'Slide 8', slideNumber: 8 },
+            ]);
+
+            const seekTo = vi.fn();
+            (component as any).videoPlayer = () => ({ seekTo, isPlaying: () => false, getCurrentSlideNumber: () => undefined });
+
+            component['onSynchronizationToggleChange'](true);
+            component['onPdfCurrentPageChange'](2);
+
+            expect(seekTo).toHaveBeenCalledWith(9, false);
+        });
+
         it('openFullscreen: returns immediately when no fullscreen content is available', () => {
             component.lectureUnit().videoSource = undefined;
             component.lectureUnit().attachment = undefined;

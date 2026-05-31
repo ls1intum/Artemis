@@ -329,7 +329,7 @@ public class LectureService {
 
     private LectureDetailsDTO.AttachmentDTO mapAttachment(Attachment attachment) {
         return new LectureDetailsDTO.AttachmentDTO(attachment.getId(), attachment.getName(), attachment.getLink(), attachment.getReleaseDate(), attachment.getUploadDate(),
-                attachment.getVersion(), attachment.getAttachmentType(), attachment.getStudentVersion());
+                attachment.getVersion(), attachment.getAttachmentType(), attachment.getStudentVersion(), attachment.getSlidePageNumbers());
     }
 
     private LectureDetailsDTO.LectureUnitDetailsDTO mapLectureUnit(LectureUnit lectureUnit) {

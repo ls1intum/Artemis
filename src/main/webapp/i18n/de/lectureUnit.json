@@ -102,6 +102,9 @@
             "processingIngesting": "Indizierung läuft",
             "processingComplete": "Verarbeitung abgeschlossen",
             "processingFailed": "Verarbeitung fehlgeschlagen",
+            "videoSlideSync": {
+                "toggle": "Video und Folien synchronisieren"
+            },
             "processing": {
                 "cancelled": "Verarbeitung wurde abgebrochen",
                 "error": {

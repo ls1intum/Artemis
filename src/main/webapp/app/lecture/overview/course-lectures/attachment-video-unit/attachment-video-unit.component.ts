@@ -58,6 +58,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { LectureUnitFullscreenLayoutComponent } from 'app/lecture/shared/lecture-unit-fullscreen-layout/lecture-unit-fullscreen-layout.component';
+import { FormsModule } from '@angular/forms';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
 type SplitSizes = [number, number];
 
@@ -76,6 +78,8 @@ type SplitSizes = [number, number];
         LectureChatbotComponent,
         FaIconComponent,
         LectureUnitFullscreenLayoutComponent,
+        FormsModule,
+        ToggleSwitchModule,
     ],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
@@ -102,6 +106,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly fullscreenLayout = viewChild(LectureUnitFullscreenLayoutComponent);
     readonly videoContainerElement = viewChild<ElementRef>('videoContainer');
     readonly pdfContainerElement = viewChild<ElementRef>('pdfContainer');
+    readonly videoPlayer = viewChild(VideoPlayerComponent);
+    readonly youtubePlayer = viewChild(YouTubePlayerComponent);
+    readonly pdfViewer = viewChild(PdfViewerComponent);
 
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
@@ -141,8 +148,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly pdfUrl = signal<string | undefined>(undefined);
     readonly isPdfLoading = signal<boolean>(false);
     readonly pdfLoadError = signal<boolean>(false);
+    readonly synchronizeVideoAndSlides = signal(false);
     private readonly isBlobLoadInProgress = signal<boolean>(false);
     private blobLoadSubscription?: Subscription;
+    private pendingPdfTargetPage?: number;
+    private pendingVideoTargetSlideNumber?: number;
 
     readonly validatedPdfPage = computed(() => {
         const page = this.targetPdfPage();
@@ -152,6 +162,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly showPdfSpinner = computed(() => this.isPdfLoading() && !!this.pdfUrl() && !this.pdfLoadError());
 
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
+    readonly hasSyncCapableVideo = computed(() => !!this.playlistUrl() || (!!this.youtubeVideoId() && !this.youtubePlayerFailed()));
+    readonly synchronizationState = computed(() => this.computeSynchronizationState());
+    readonly synchronizationAvailable = computed(() => this.synchronizationState().available);
 
     readonly hasPdf = computed(() => {
         const attachment = this.lectureUnit().attachment;
@@ -219,6 +232,13 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         // Update dark-mode class based on theme
         effect(() => {
             this.hostElement.nativeElement.classList.toggle('dark-mode', this.themeService.currentTheme() === Theme.DARK);
+        });
+
+        effect(() => {
+            if (!this.synchronizationAvailable() && this.synchronizeVideoAndSlides()) {
+                this.synchronizeVideoAndSlides.set(false);
+                this.clearSynchronizationTargets();
+            }
         });
     }
 
@@ -317,6 +337,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             this.cancelPdfLoad();
             this.isPdfLoading.set(false);
             this.clearPdfState();
+            this.synchronizeVideoAndSlides.set(false);
+            this.clearSynchronizationTargets();
         }
     }
 
@@ -448,6 +470,58 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this.fullscreenState.set(isFullscreen);
     }
 
+    protected onSynchronizationToggleChange(enabled: boolean): void {
+        if (!enabled || !this.synchronizationAvailable()) {
+            this.synchronizeVideoAndSlides.set(false);
+            this.clearSynchronizationTargets();
+            return;
+        }
+
+        this.synchronizeVideoAndSlides.set(true);
+        this.synchronizeCurrentState();
+    }
+
+    protected onPdfCurrentPageChange(page: number): void {
+        if (this.pendingPdfTargetPage === page) {
+            this.pendingPdfTargetPage = undefined;
+            return;
+        }
+
+        if (!this.synchronizeVideoAndSlides()) {
+            return;
+        }
+
+        const displayedPageNumber = this.synchronizationState().pdfPageToDisplayedPageNumber.get(page);
+        if (displayedPageNumber === undefined) {
+            return;
+        }
+
+        this.seekVideoToDisplayedPageNumber(displayedPageNumber);
+    }
+
+    protected onVideoSlideNumberChange(slideNumber: number | undefined): void {
+        if (slideNumber === undefined) {
+            return;
+        }
+
+        if (this.pendingVideoTargetSlideNumber === slideNumber) {
+            this.pendingVideoTargetSlideNumber = undefined;
+            return;
+        }
+
+        if (!this.synchronizeVideoAndSlides()) {
+            return;
+        }
+
+        const targetPdfPage = this.synchronizationState().displayedPageNumberToPdfPage.get(slideNumber);
+        if (targetPdfPage === undefined || this.pdfViewer()?.getCurrentPage() === targetPdfPage) {
+            return;
+        }
+
+        this.pendingPdfTargetPage = targetPdfPage;
+        this.pdfViewer()?.goToPage(targetPdfPage);
+    }
+
     private shouldShowIrisSidebarInFullscreen(): boolean {
         const settings = this.irisSettings();
         const lecId = this.lectureId();
@@ -486,6 +560,102 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
      */
     protected onPdfFullscreenChange(isFullscreen: boolean): void {
         this.pdfFullscreenState.set(isFullscreen);
+    }
+
+    private synchronizeCurrentState(): void {
+        const activeSlideNumber = this.getActiveVideoSlideNumber();
+        if (activeSlideNumber !== undefined) {
+            this.onVideoSlideNumberChange(activeSlideNumber);
+            return;
+        }
+
+        const currentPdfPage = this.pdfViewer()?.getCurrentPage();
+        if (currentPdfPage !== undefined) {
+            this.onPdfCurrentPageChange(currentPdfPage);
+        }
+    }
+
+    private seekVideoToDisplayedPageNumber(displayedPageNumber: number): void {
+        const timestamp = this.synchronizationState().displayedPageNumberToVideoTimestamp.get(displayedPageNumber);
+        if (timestamp === undefined) {
+            return;
+        }
+
+        const shouldResumePlayback = this.isVideoCurrentlyPlaying();
+        this.pendingVideoTargetSlideNumber = displayedPageNumber;
+
+        const videoPlayer = this.videoPlayer();
+        if (videoPlayer) {
+            videoPlayer.seekTo(timestamp, shouldResumePlayback);
+            return;
+        }
+
+        this.youtubePlayer()?.seekTo(timestamp, shouldResumePlayback);
+    }
+
+    private isVideoCurrentlyPlaying(): boolean {
+        return this.videoPlayer()?.isPlaying() ?? this.youtubePlayer()?.isPlaying() ?? false;
+    }
+
+    private getActiveVideoSlideNumber(): number | undefined {
+        return this.videoPlayer()?.getCurrentSlideNumber() ?? this.youtubePlayer()?.getCurrentSlideNumber();
+    }
+
+    private clearSynchronizationTargets(): void {
+        this.pendingPdfTargetPage = undefined;
+        this.pendingVideoTargetSlideNumber = undefined;
+    }
+
+    private computeSynchronizationState(): {
+        available: boolean;
+        displayedPageNumberToPdfPage: Map<number, number>;
+        pdfPageToDisplayedPageNumber: Map<number, number>;
+        displayedPageNumberToVideoTimestamp: Map<number, number>;
+    } {
+        const displayedPageNumbers = this.lectureUnit().attachment?.slidePageNumbers ?? [];
+        const transcriptSegments = this.transcriptSegments();
+
+        const displayedPageNumberToPdfPage = new Map<number, number>();
+        const pdfPageToDisplayedPageNumber = new Map<number, number>();
+        const displayedPageNumberToVideoTimestamp = new Map<number, number>();
+
+        if (!this.hasPdf() || !this.hasTranscript() || !this.hasSyncCapableVideo() || displayedPageNumbers.length === 0) {
+            return { available: false, displayedPageNumberToPdfPage, pdfPageToDisplayedPageNumber, displayedPageNumberToVideoTimestamp };
+        }
+
+        const distinctDisplayedPageNumbers = new Set<number>();
+        for (const [index, displayedPageNumber] of displayedPageNumbers.entries()) {
+            if (!Number.isInteger(displayedPageNumber) || distinctDisplayedPageNumbers.has(displayedPageNumber)) {
+                return { available: false, displayedPageNumberToPdfPage, pdfPageToDisplayedPageNumber, displayedPageNumberToVideoTimestamp };
+            }
+
+            distinctDisplayedPageNumbers.add(displayedPageNumber);
+            displayedPageNumberToPdfPage.set(displayedPageNumber, index + 1);
+            pdfPageToDisplayedPageNumber.set(index + 1, displayedPageNumber);
+        }
+
+        let hasTranscriptSlideNumber = false;
+        for (const segment of transcriptSegments) {
+            const slideNumber = segment.slideNumber;
+            if (slideNumber === undefined) {
+                continue;
+            }
+
+            hasTranscriptSlideNumber = true;
+            if (!displayedPageNumberToPdfPage.has(slideNumber)) {
+                return { available: false, displayedPageNumberToPdfPage, pdfPageToDisplayedPageNumber, displayedPageNumberToVideoTimestamp };
+            }
+
+            if (!displayedPageNumberToVideoTimestamp.has(slideNumber)) {
+                displayedPageNumberToVideoTimestamp.set(slideNumber, segment.startTime);
+            }
+        }
+
+        if (!hasTranscriptSlideNumber || displayedPageNumberToVideoTimestamp.size === 0) {
+            return { available: false, displayedPageNumberToPdfPage, pdfPageToDisplayedPageNumber, displayedPageNumberToVideoTimestamp };
+        }
+
+        return { available: true, displayedPageNumberToPdfPage, pdfPageToDisplayedPageNumber, displayedPageNumberToVideoTimestamp };
     }
 
     /**

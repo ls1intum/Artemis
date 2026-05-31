@@ -376,10 +376,10 @@ public class LectureResource {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record AttachmentDTO(Long id, String link, String name, ZonedDateTime releaseDate) {
+    public record AttachmentDTO(Long id, String link, String name, ZonedDateTime releaseDate, @Nullable List<Integer> slidePageNumbers) {
 
         public static AttachmentDTO from(Attachment attachment) {
-            return new AttachmentDTO(attachment.getId(), attachment.getLink(), attachment.getName(), attachment.getReleaseDate());
+            return new AttachmentDTO(attachment.getId(), attachment.getLink(), attachment.getName(), attachment.getReleaseDate(), attachment.getSlidePageNumbers());
         }
     }
 

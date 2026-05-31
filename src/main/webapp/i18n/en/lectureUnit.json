@@ -102,6 +102,9 @@
             "processingIngesting": "Indexing",
             "processingComplete": "Processing complete",
             "processingFailed": "Processing Failed",
+            "videoSlideSync": {
+                "toggle": "Synchronize Video and Slides"
+            },
             "processing": {
                 "cancelled": "Processing was cancelled",
                 "error": {

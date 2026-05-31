@@ -27,7 +27,7 @@ public record LectureDetailsDTO(Long id, String title, String description, Zoned
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record AttachmentDTO(Long id, String name, String link, ZonedDateTime releaseDate, ZonedDateTime uploadDate, Integer version, AttachmentType attachmentType,
-            String studentVersion) {
+            String studentVersion, @Nullable List<Integer> slidePageNumbers) {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
