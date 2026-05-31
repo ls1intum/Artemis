@@ -20,7 +20,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { MockProvider } from 'ng-mocks';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { EventManager } from 'app/shared/service/event-manager.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ExamExerciseRowButtonsComponent } from 'app/exercise/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 

@@ -13,7 +13,7 @@ import { ExampleSubmissionImportComponent } from 'app/exercise/example-submissio
 import { ExampleSubmissionImportPagingService } from 'app/exercise/example-submission/example-submission-import/example-submission-import-paging.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
-import { SearchResult } from 'app/shared/table/pageable-table';
+import { SearchResult } from 'app/foundation/pagination/pageable-table';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 

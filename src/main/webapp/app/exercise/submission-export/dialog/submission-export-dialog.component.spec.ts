@@ -7,8 +7,8 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
 import { SubmissionExportOptions, SubmissionExportService } from 'app/exercise/submission-export/submission-export.service';
 import { HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/shared/service/alert.service';
-import * as DownloadUtil from 'app/shared/util/download.util';
+import { AlertService } from 'app/foundation/service/alert.service';
+import * as DownloadUtil from 'app/foundation/util/download.util';
 import { Subject, of } from 'rxjs';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 

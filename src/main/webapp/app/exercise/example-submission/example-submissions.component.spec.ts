@@ -15,7 +15,7 @@ import { ExampleSubmissionService } from 'app/assessment/shared/services/example
 import { ExampleSubmissionsComponent } from 'app/exercise/example-submission/example-submissions.component';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

@@ -17,8 +17,8 @@ import { ProgrammingExercisePagingService } from 'app/programming/manage/service
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { QuizExercisePagingService } from 'app/quiz/manage/service/quiz-exercise-paging.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { SortService } from 'app/shared/service/sort.service';
-import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
+import { SortService } from 'app/foundation/service/sort.service';
+import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { TextExercisePagingService } from 'app/text/manage/text-exercise/service/text-exercise-paging.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 

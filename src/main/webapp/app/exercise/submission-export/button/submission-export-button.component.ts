@@ -1,10 +1,10 @@
 import { Component, inject, input } from '@angular/core';
-import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { SubmissionExportDialogComponent } from '../dialog/submission-export-dialog.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 

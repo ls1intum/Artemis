@@ -11,7 +11,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExampleSolutionComponent } from 'app/exercise/example-solution/example-solution.component';
 import { ExampleSolutionInfo, ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

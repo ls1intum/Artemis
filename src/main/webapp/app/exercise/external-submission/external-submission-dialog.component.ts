@@ -8,13 +8,13 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExternalSubmissionService } from 'app/exercise/external-submission/external-submission.service';
 import { SCORE_PATTERN } from 'app/app.constants';
 import { User } from 'app/account/user/user.model';
-import { EventManager } from 'app/shared/service/event-manager.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 
 @Component({

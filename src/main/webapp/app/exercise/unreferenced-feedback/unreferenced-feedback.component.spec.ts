@@ -13,7 +13,7 @@ import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.servic
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('UnreferencedFeedbackComponent', () => {

@@ -13,7 +13,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockDirective } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockRatingService } from 'test/helpers/mocks/service/mock-rating.service';
 
 @Component({

@@ -2,8 +2,8 @@ import { Component, inject, input } from '@angular/core';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExternalSubmissionDialogComponent } from 'app/exercise/external-submission/external-submission-dialog.component';
-import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
 
