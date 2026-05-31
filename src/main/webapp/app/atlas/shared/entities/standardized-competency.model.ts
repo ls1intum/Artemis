@@ -78,6 +78,8 @@ export interface KnowledgeAreasForImportDTO {
     sources: Source[];
 }
 
+export type StandardizedCompetencyCatalogDTO = KnowledgeAreasForImportDTO;
+
 /**
  * StandardizedCompetencyDTO with additional information for the tree view
  * isVisible: if it should be shown or not (used for filters)
