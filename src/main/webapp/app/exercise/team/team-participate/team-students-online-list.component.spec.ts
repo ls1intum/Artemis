@@ -215,16 +215,18 @@ describe('TeamStudentsOnlineListComponent', () => {
         expect(captureExceptionMock).toHaveBeenNthCalledWith(2, typingError);
     });
 
-    it('unsubscribes from the websocket topic on destroy so the server can mark the user offline', async () => {
+    it('ignores later websocket updates after destroy', async () => {
         vi.useFakeTimers();
 
         await setInputsAndInitialize(false);
 
-        const onlineStudentsChannel = (websocketService as unknown as { channels: Map<string, Subject<OnlineTeamStudent[]>> }).channels.get(websocketTopic)!;
-        expect(onlineStudentsChannel.observers).toHaveLength(1);
+        const initialOnlineStudent = recentTypingStudent();
+        websocketService.emit(websocketTopic, [initialOnlineStudent]);
+        expect(component.onlineTeamStudents).toEqual([expect.objectContaining({ login: initialOnlineStudent.login })]);
 
         component.ngOnDestroy();
+        websocketService.emit(websocketTopic, [staleTypingStudent()]);
 
-        expect(onlineStudentsChannel.observers).toHaveLength(0);
+        expect(component.onlineTeamStudents).toEqual([expect.objectContaining({ login: initialOnlineStudent.login })]);
     });
 });
