@@ -193,7 +193,7 @@ describe('Lecture Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `${resourceUrl}/import/${lectureId}?courseId=${courseId}`,
+                url: `${resourceUrl}/import?courseId=${courseId}&sourceLectureId=${lectureId}`,
                 method: 'POST',
             });
 

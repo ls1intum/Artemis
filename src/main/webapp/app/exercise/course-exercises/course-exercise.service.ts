@@ -106,7 +106,7 @@ export class CourseExerciseService {
      * @param participationId - the unique identifier of the participation to continue
      */
     resumeProgrammingExercise(exerciseId: number, participationId: number): Observable<StudentParticipation> {
-        return this.http.put<StudentParticipation>(`api/exercise/exercises/${exerciseId}/resume-programming-participation/${participationId}`, {}).pipe(
+        return this.http.put<StudentParticipation>(`api/exercise/exercises/${exerciseId}/participations/${participationId}/resume-programming-participation`, {}).pipe(
             map((participation: StudentParticipation) => {
                 return this.handleParticipation(participation);
             }),
