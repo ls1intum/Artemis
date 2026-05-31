@@ -33,7 +33,7 @@ describe('FormDateTimePickerComponent', () => {
     });
 
     it('should emit if a value is changed', () => {
-        const emitStub = vi.spyOn(component.valueChange, 'emit').mockImplementation();
+        const emitStub = vi.spyOn(component.valueChange, 'emit').mockImplementation(() => {});
 
         component.valueChanged();
 
@@ -92,7 +92,7 @@ describe('FormDateTimePickerComponent', () => {
     it('should update field', () => {
         const onChangeSpy = vi.fn();
         component.registerOnChange(onChangeSpy);
-        const valueChangedStub = vi.spyOn(component, 'valueChanged').mockImplementation();
+        const valueChangedStub = vi.spyOn(component, 'valueChanged').mockImplementation(() => {});
         const newDate = normalDate.add(2, 'days');
         fixture.componentRef.setInput('value', normalDate);
         fixture.changeDetectorRef.detectChanges();
@@ -122,8 +122,8 @@ describe('FormDateTimePickerComponent', () => {
     });
 
     it('should clear the datepicker value', () => {
-        const resetSpy = vi.spyOn(component.dateInput, 'reset').mockImplementation();
-        const updateSignalsSpy = vi.spyOn(component, 'updateSignals').mockImplementation();
+        const resetSpy = vi.spyOn(component.dateInput, 'reset').mockImplementation(() => {});
+        const updateSignalsSpy = vi.spyOn(component, 'updateSignals').mockImplementation(() => {});
 
         component.clearDate();
 
