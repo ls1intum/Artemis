@@ -15,9 +15,19 @@ package de.tum.cit.aet.artemis.account.config;
  */
 public final class AccountLegacyRestPaths {
 
-    /** Legacy class-level prefix used by AccountResource, TokenResource, and UserResource. */
+    /** Legacy class-level prefix used by TokenResource and UserResource. */
     @Deprecated(forRemoval = true, since = "9.3")
     public static final String CORE_PREFIX = "api/core/";
+
+    /**
+     * Legacy class-level prefix used by AccountResource. It folds in the former {@code account/}
+     * resource segment so the canonical paths drop the confusing {@code api/account/account/...}
+     * duplication: the successor paths are now {@code api/account/...} (e.g.
+     * {@code api/account/profile-picture}, {@code api/account/basic-information}) while the legacy
+     * {@code api/core/account/...} paths are unchanged.
+     */
+    @Deprecated(forRemoval = true, since = "9.3")
+    public static final String CORE_ACCOUNT_PREFIX = "api/core/account/";
 
     /** Legacy class-level prefix used by AdminUserResource (admin user management). */
     @Deprecated(forRemoval = true, since = "9.3")

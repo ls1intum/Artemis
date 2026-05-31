@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -66,13 +67,16 @@ public class CourseMaterialImportResource {
      * GET /courses/{courseId}/import-summary/{sourceCourseId} : Get summary of what can be imported from the source course.
      * This returns the counts of exercises, lectures, exams, competencies, tutorial groups, and FAQs.
      *
-     * @param courseId       the ID of the target course (for authorization)
-     * @param sourceCourseId the ID of the source course to get summary from
+     * @param courseId            the ID of the target course (for authorization)
+     * @param sourceCourseIdQuery the ID of the source course to get summary from (provided as a query parameter; preferred)
+     * @param sourceCourseIdPath  the ID of the source course to get summary from (provided as a legacy path variable; deprecated)
      * @return the ResponseEntity with status 200 (OK) and the course summary in the body
      */
-    @GetMapping("courses/{courseId}/import-summary/{sourceCourseId}")
+    @GetMapping({ "courses/{courseId}/import-summary", "courses/{courseId}/import-summary/{sourceCourseId}" })
     @EnforceAtLeastInstructor
-    public ResponseEntity<CourseSummaryDTO> getImportSummary(@PathVariable long courseId, @PathVariable long sourceCourseId) {
+    public ResponseEntity<CourseSummaryDTO> getImportSummary(@PathVariable long courseId, @RequestParam(name = "sourceCourseId", required = false) Long sourceCourseIdQuery,
+            @PathVariable(name = "sourceCourseId", required = false) Long sourceCourseIdPath) {
+        long sourceCourseId = sourceCourseIdQuery != null ? sourceCourseIdQuery : (sourceCourseIdPath != null ? sourceCourseIdPath : -1L);
         log.debug("REST request to get import summary for source course {}", sourceCourseId);
 
         if (courseId == sourceCourseId) {

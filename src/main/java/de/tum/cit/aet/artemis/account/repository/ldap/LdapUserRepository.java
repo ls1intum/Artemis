@@ -5,8 +5,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.ldap.repository.LdapRepository;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.account.config.LdapEnabled;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
-import de.tum.cit.aet.artemis.core.config.LdapEnabled;
 
 @Lazy
 @Repository

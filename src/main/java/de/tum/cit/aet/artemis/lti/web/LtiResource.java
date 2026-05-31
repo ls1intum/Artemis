@@ -156,7 +156,7 @@ public class LtiResource {
      * @throws BadRequestAlertException If LTI is not configured for the course, if no valid deep linking type is provided,
      *                                      or if content IDs are required but not provided for the specified resource type.
      */
-    @PostMapping("lti13/deep-linking/{courseId}")
+    @PostMapping({ "lti13/courses/{courseId}/deep-linking", "lti13/deep-linking/{courseId}" })
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<String> lti13DeepLinking(@PathVariable Long courseId, @RequestParam(name = "resourceType") DeepLinkingType resourceType,
             @RequestParam(name = "contentIds", required = false) Set<Long> contentIds, @RequestParam(name = "ltiIdToken") String ltiIdToken,
