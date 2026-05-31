@@ -53,7 +53,7 @@ export const MODULE_FEATURE_MODELING = 'modeling';
 
 export const MODULE_FEATURE_FILEUPLOAD = 'fileupload';
 
-export const MODULE_FEATURE_PROOF = 'proof';
+export const MODULE_FEATURE_MATH = 'math';
 
 export const MODULE_FEATURE_LECTURE = 'lecture';
 
@@ -84,7 +84,7 @@ export type ModuleFeature =
     | typeof MODULE_FEATURE_TEXT
     | typeof MODULE_FEATURE_MODELING
     | typeof MODULE_FEATURE_FILEUPLOAD
-    | typeof MODULE_FEATURE_PROOF
+    | typeof MODULE_FEATURE_MATH
     | typeof MODULE_FEATURE_LECTURE
     | typeof MODULE_FEATURE_TUTORIALGROUP
     | typeof MODULE_FEATURE_SHARING

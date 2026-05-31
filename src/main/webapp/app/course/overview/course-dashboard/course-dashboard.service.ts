@@ -102,8 +102,8 @@ export class CourseDashboardService {
                 return ExerciseType.TEXT;
             case 'de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise':
                 return ExerciseType.FILE_UPLOAD;
-            case 'de.tum.cit.aet.artemis.proof.domain.ProofExercise':
-                return ExerciseType.PROOF;
+            case 'de.tum.cit.aet.artemis.math.domain.MathExercise':
+                return ExerciseType.MATH;
             default:
                 throw new Error(`Unknown exercise type: ${type}`);
         }

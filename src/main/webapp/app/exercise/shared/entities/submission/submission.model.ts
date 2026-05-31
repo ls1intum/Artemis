@@ -19,7 +19,7 @@ export const enum SubmissionExerciseType {
     QUIZ = 'quiz',
     TEXT = 'text',
     FILE_UPLOAD = 'file-upload',
-    PROOF = 'proof',
+    MATH = 'math',
 }
 
 export abstract class Submission implements BaseEntity {

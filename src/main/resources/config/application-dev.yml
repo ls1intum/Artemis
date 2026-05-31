@@ -162,7 +162,7 @@ artemis:
         # open-ai-base-url: http://host.docker.internal:11434        # Base URL for the OpenAI-compatible API (e.g. Ollama); note: no /v1 suffix; use https://gpu.aet.cit.tum.de/ for the GPU server
         # gpu-api-key: yourApiKey                                    # API key for GPU server (use any non-empty value for Ollama)
 
-    proof:
+    math:
       enabled: true
 
 # Needs to be provided so Sentry's LogbackAppender picks up a sensible configuration

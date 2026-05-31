@@ -86,7 +86,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly MODELING = ExerciseType.MODELING;
     readonly TEXT = ExerciseType.TEXT;
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
-    readonly PROOF = ExerciseType.PROOF;
+    readonly MATH = ExerciseType.MATH;
     readonly dayjs = dayjs;
     readonly ChatServiceMode = ChatServiceMode;
 
@@ -482,7 +482,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             },
         });
 
-        if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT || this.exercise!.type === ExerciseType.PROOF) {
+        if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT || this.exercise!.type === ExerciseType.MATH) {
             return;
         }
 
@@ -635,8 +635,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             exerciseTypePath = 'text-exercises';
         } else if (this.exercise.type === ExerciseType.MODELING) {
             exerciseTypePath = 'modeling-exercises';
-        } else if (this.exercise.type === ExerciseType.PROOF) {
-            exerciseTypePath = 'proof-exercises';
+        } else if (this.exercise.type === ExerciseType.MATH) {
+            exerciseTypePath = 'math-exercises';
         } else {
             return;
         }

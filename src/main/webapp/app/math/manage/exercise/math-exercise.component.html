@@ -1,0 +1,91 @@
+@if (internalMathExercises() && filteredMathExercises.length > 0) {
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
+                    <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dates"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th class="d-md-table-cell"><span jhiTranslate="artemisApp.exercise.categories"></span></th>
+                    <th style="width: 1%"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (mathExercise of filteredMathExercises; track trackId($index, mathExercise)) {
+                    <tr id="exercise-card-{{ mathExercise.id }}">
+                        <td>
+                            @if (mathExercise.isAtLeastTutor) {
+                                <a [routerLink]="['/course-management', course.id, 'math-exercises', mathExercise.id]">{{ mathExercise.title }}</a>
+                            } @else {
+                                {{ mathExercise.title }}
+                            }
+                        </td>
+                        <td style="white-space: nowrap">
+                            <div class="d-flex flex-column small">
+                                @if (mathExercise.releaseDate) {
+                                    <div>
+                                        <span class="text-secondary" jhiTranslate="artemisApp.exercise.release"></span>:
+                                        {{ mathExercise.releaseDate | artemisDate }}
+                                    </div>
+                                }
+                                @if (mathExercise.dueDate) {
+                                    <div>
+                                        <span class="text-secondary" jhiTranslate="artemisApp.exercise.due"></span>:
+                                        {{ mathExercise.dueDate | artemisDate }}
+                                    </div>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                {{ mathExercise.maxPoints }}
+                            </div>
+                        </td>
+                        <td class="d-md-table-cell"><jhi-exercise-categories [exercise]="mathExercise" /></td>
+                        <td class="text-end" style="white-space: nowrap">
+                            <div class="d-flex gap-1 justify-content-end flex-wrap">
+                                @if (mathExercise.isAtLeastTutor) {
+                                    <a pButton size="small" severity="info" [routerLink]="['/course-management', course.id, 'math-exercises', mathExercise.id, 'scores']">
+                                        <fa-icon [icon]="faTable" />
+                                        <span class="d-none d-md-inline ms-1" jhiTranslate="entity.action.scores">Scores</span>
+                                    </a>
+                                }
+                                @if (mathExercise.isAtLeastTutor) {
+                                    <a
+                                        pButton
+                                        size="small"
+                                        severity="primary"
+                                        [routerLink]="['/course-management', course.id, 'math-exercises', mathExercise.id, 'participations']"
+                                    >
+                                        <fa-icon [icon]="faListAlt" />
+                                        <span class="d-none d-md-inline ms-1" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+                                    </a>
+                                }
+                                @if (mathExercise.isAtLeastTutor) {
+                                    <a pButton size="small" severity="success" [routerLink]="['/course-management', course.id, 'math-exercises', mathExercise.id, 'submissions']">
+                                        <fa-icon [icon]="faBook" />
+                                        <span class="d-none d-md-inline ms-1" jhiTranslate="todoSubmissions">Submissions</span>
+                                    </a>
+                                }
+                                <a pButton size="small" severity="warn" [routerLink]="['/course-management', course.id, 'math-exercises', mathExercise.id, 'edit']">
+                                    <fa-icon [icon]="faWrench" />
+                                    <span class="d-none d-md-inline ms-1" jhiTranslate="entity.action.edit">Edit</span>
+                                </a>
+                                <button
+                                    jhiDeleteButton
+                                    [entityTitle]="mathExercise.title!"
+                                    deleteQuestion="artemisApp.exercise.delete.question"
+                                    deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                                    (delete)="deleteExercise(mathExercise.id!)"
+                                    [dialogError]="dialogError$"
+                                >
+                                    <fa-icon [icon]="faTrash" />
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

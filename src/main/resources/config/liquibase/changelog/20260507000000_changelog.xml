@@ -7,10 +7,10 @@
     <changeSet id="20260507000000-1" author="KilianSen">
         <preConditions onFail="MARK_RAN">
             <not>
-                <columnExists tableName="proof_exercise_details" columnName="source_expression"/>
+                <columnExists tableName="math_exercise_details" columnName="source_expression"/>
             </not>
         </preConditions>
-        <addColumn tableName="proof_exercise_details">
+        <addColumn tableName="math_exercise_details">
             <column name="source_expression" type="longtext"/>
         </addColumn>
     </changeSet>
@@ -18,10 +18,10 @@
     <changeSet id="20260507000000-2" author="KilianSen">
         <preConditions onFail="MARK_RAN">
             <not>
-                <columnExists tableName="proof_exercise_details" columnName="target_expression"/>
+                <columnExists tableName="math_exercise_details" columnName="target_expression"/>
             </not>
         </preConditions>
-        <addColumn tableName="proof_exercise_details">
+        <addColumn tableName="math_exercise_details">
             <column name="target_expression" type="longtext"/>
         </addColumn>
     </changeSet>
@@ -29,10 +29,10 @@
     <changeSet id="20260507000000-3" author="KilianSen">
         <preConditions onFail="MARK_RAN">
             <not>
-                <tableExists tableName="proof_derivation_step"/>
+                <tableExists tableName="math_derivation_step"/>
             </not>
         </preConditions>
-        <createTable tableName="proof_derivation_step">
+        <createTable tableName="math_derivation_step">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
@@ -48,9 +48,9 @@
         </createTable>
 
         <addForeignKeyConstraint
-            baseTableName="proof_derivation_step"
+            baseTableName="math_derivation_step"
             baseColumnNames="submission_id"
-            constraintName="fk_proof_derivation_step_submission_id"
+            constraintName="fk_math_derivation_step_submission_id"
             referencedTableName="submission"
             referencedColumnNames="id"
             onDelete="CASCADE"/>
@@ -59,10 +59,10 @@
     <changeSet id="20260507000000-4" author="KilianSen">
         <preConditions onFail="MARK_RAN">
             <not>
-                <columnExists tableName="proof_exercise_details" columnName="example_solution"/>
+                <columnExists tableName="math_exercise_details" columnName="example_solution"/>
             </not>
         </preConditions>
-        <addColumn tableName="proof_exercise_details">
+        <addColumn tableName="math_exercise_details">
             <column name="example_solution" type="longtext"/>
         </addColumn>
     </changeSet>

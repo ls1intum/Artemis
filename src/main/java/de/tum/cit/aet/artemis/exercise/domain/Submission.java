@@ -43,9 +43,9 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
+import de.tum.cit.aet.artemis.math.domain.MathSubmission;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.proof.domain.ProofSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
@@ -67,7 +67,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
     @JsonSubTypes.Type(value = QuizSubmission.class, name = "quiz"),
     @JsonSubTypes.Type(value = TextSubmission.class, name = "text"),
     @JsonSubTypes.Type(value = FileUploadSubmission.class, name = "file-upload"),
-    @JsonSubTypes.Type(value = ProofSubmission.class, name = "proof")
+    @JsonSubTypes.Type(value = MathSubmission.class, name = "math")
 })
 // @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

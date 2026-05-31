@@ -125,7 +125,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     WHEN ModelingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MODELING
                     WHEN TextExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.TEXT
                     WHEN FileUploadExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.FILE_UPLOAD
-                    WHEN ProofExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROOF
+                    WHEN MathExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MATH
                     ELSE de.tum.cit.aet.artemis.exercise.domain.ExerciseType.QUIZ
                 END)
             FROM StudentParticipation p
@@ -154,7 +154,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     WHEN ModelingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MODELING
                     WHEN TextExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.TEXT
                     WHEN FileUploadExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.FILE_UPLOAD
-                    WHEN ProofExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROOF
+                    WHEN MathExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MATH
                     ELSE de.tum.cit.aet.artemis.exercise.domain.ExerciseType.QUIZ
                 END)
             FROM StudentParticipation p
@@ -202,7 +202,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     WHEN ModelingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MODELING
                     WHEN TextExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.TEXT
                     WHEN FileUploadExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.FILE_UPLOAD
-                    WHEN ProofExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROOF
+                    WHEN MathExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MATH
                     ELSE de.tum.cit.aet.artemis.exercise.domain.ExerciseType.QUIZ
                 END)
             FROM StudentParticipation p
@@ -231,7 +231,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     WHEN ModelingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MODELING
                     WHEN TextExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.TEXT
                     WHEN FileUploadExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.FILE_UPLOAD
-                    WHEN ProofExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROOF
+                    WHEN MathExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MATH
                     ELSE de.tum.cit.aet.artemis.exercise.domain.ExerciseType.QUIZ
                 END)
             FROM StudentParticipation p

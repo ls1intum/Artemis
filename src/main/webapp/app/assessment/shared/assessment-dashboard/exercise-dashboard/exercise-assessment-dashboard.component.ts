@@ -11,7 +11,7 @@ import { TextSubmissionService } from 'app/text/overview/service/text-submission
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { ProofExercise } from 'app/proof/shared/entities/proof-exercise.model';
+import { MathExercise } from 'app/math/shared/entities/math-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { UMLModel, importDiagram } from '@tumaet/apollon';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
@@ -334,9 +334,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                         const fileUploadExercise = this.exercise as FileUploadExercise;
                         this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(fileUploadExercise.exampleSolution);
                         break;
-                    case ExerciseType.PROOF:
-                        const proofExercise = this.exercise as ProofExercise;
-                        this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(proofExercise.exampleSolution);
+                    case ExerciseType.MATH:
+                        const mathExercise = this.exercise as MathExercise;
+                        this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(mathExercise.exampleSolution);
                         break;
                     case ExerciseType.PROGRAMMING:
                         this.programmingExercise = this.exercise as ProgrammingExercise;
@@ -523,7 +523,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 case ExerciseType.PROGRAMMING:
                     submissionsObservable = this.programmingSubmissionService.getSubmissions(this.exerciseId, { assessedByTutor: true }, correctionRound);
                     break;
-                case ExerciseType.PROOF:
+                case ExerciseType.MATH:
                     // Use a dummy observable for now, or implement a generic one in SubmissionService
                     submissionsObservable = of(new HttpResponse({ body: [] }));
                     break;
@@ -605,8 +605,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             case ExerciseType.PROGRAMMING:
                 submissionObservable = this.programmingSubmissionService.getSubmissionWithoutAssessment(this.exerciseId, undefined, correctionRound);
                 break;
-            case ExerciseType.PROOF:
-                // For now, Proof exercises are automatically graded, so there are no submissions without assessment.
+            case ExerciseType.MATH:
+                // For now, Math exercises are automatically graded, so there are no submissions without assessment.
                 submissionObservable = of(undefined);
                 break;
         }

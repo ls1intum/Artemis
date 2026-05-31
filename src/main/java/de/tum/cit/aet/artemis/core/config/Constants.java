@@ -415,9 +415,9 @@ public final class Constants {
     public static final String MODULE_FEATURE_FILEUPLOAD = "fileupload";
 
     /**
-     * The name of the module feature used for Proof Exercise functionality.
+     * The name of the module feature used for Math Exercise functionality.
      */
-    public static final String MODULE_FEATURE_PROOF = "proof";
+    public static final String MODULE_FEATURE_MATH = "math";
 
     /**
      * The name of the module feature used for Lecture functionality.
@@ -570,9 +570,9 @@ public final class Constants {
     public static final String WEAVIATE_ENABLED_PROPERTY_NAME = "artemis.weaviate.enabled";
 
     /**
-     * The name of the property used to enable or disable proof exercise functionality.
+     * The name of the property used to enable or disable math exercise functionality.
      */
-    public static final String PROOF_ENABLED_PROPERTY_NAME = "artemis.proof.enabled";
+    public static final String MATH_ENABLED_PROPERTY_NAME = "artemis.math.enabled";
 
     /**
      * The name of the property used to define the directories for file uploads.

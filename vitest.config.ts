@@ -85,7 +85,7 @@ export default defineConfig({
             'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**/*.spec.ts', // include build phases editor tests
             'src/main/webapp/app/programming/manage/version-history/**/*.spec.ts', // include programming version history tests
             'src/main/webapp/app/communication/**/*.spec.ts', // include all communication module tests
-            'src/main/webapp/app/proof/**/*.spec.ts', // include all proof module tests
+            'src/main/webapp/app/math/**/*.spec.ts', // include all math module tests
             'src/main/webapp/app/exercise/participation/**/*.spec.ts', // include participation tests
             'src/main/webapp/app/exercise/participation-submission/**/*.spec.ts', // include participation-submission tests
             'src/main/webapp/app/exercise/exercise-scores/**/*.spec.ts', // include exercise-scores tests

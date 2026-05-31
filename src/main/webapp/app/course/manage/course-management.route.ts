@@ -283,7 +283,7 @@ export const courseManagementRoutes: Routes = [
                         redirectTo: 'exercises',
                     },
                     {
-                        path: 'proof-exercises',
+                        path: 'math-exercises',
                         redirectTo: 'exercises',
                     },
                     {
@@ -292,7 +292,7 @@ export const courseManagementRoutes: Routes = [
                     },
                     {
                         path: '',
-                        loadChildren: () => import('app/proof/proof.route').then((m) => m.proofExerciseRoute),
+                        loadChildren: () => import('app/math/math.route').then((m) => m.mathExerciseRoute),
                     },
                     {
                         path: '',

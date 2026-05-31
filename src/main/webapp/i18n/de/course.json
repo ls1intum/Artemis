@@ -44,7 +44,7 @@
                     "numberOfModelingExercises": "Modellierungsaufgaben",
                     "numberOfQuizExercises": "Quizaufgaben",
                     "numberOfFileUploadExercises": "Dateiupload-Aufgaben",
-                    "numberOfProofExercises": "Beweisaufgaben",
+                    "numberOfMathExercises": "Mathematikaufgaben",
                     "numberOfParticipations": "Teilnahmen",
                     "numberOfSubmissions": "Abgaben",
                     "numberOfResults": "Ergebnisse",
@@ -275,7 +275,7 @@
             "quizExercises": "Quizaufgaben",
             "modelingExercises": "Modellierungsaufgaben",
             "textExercises": "Textaufgabe",
-            "proofExercises": "Beweisaufgaben",
+            "mathExercises": "Mathematikaufgaben",
             "upload": "Hochladen",
             "uploading": "Lade hoch...",
             "fileUploadExercises": "Dateiupload-Aufgabe",
@@ -302,7 +302,7 @@
                         "modeling": "Modellierungsaufgaben",
                         "text": "Textaufgaben",
                         "file-upload": "Dateiupload-Aufgaben",
-                        "proof": "Beweisaufgaben"
+                        "math": "Mathematikaufgaben"
                     }
                 }
             },
@@ -514,7 +514,7 @@
             "modeling": "Modellierung",
             "text": "Text",
             "file-upload": "Dateiupload",
-            "proof": "Beweis",
+            "math": "Mathematik",
             "chartLegend": {
                 "lowest": "Unteres Performance-Drittel",
                 "average": "Durchschnittliches Performance-Drittel",

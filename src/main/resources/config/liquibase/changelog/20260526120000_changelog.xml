@@ -4,13 +4,13 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
 
-    <!-- Adds grader_type to proof_exercise_details so the proof feature can dispatch to
+    <!-- Adds grader_type to math_exercise_details so the math feature can dispatch to
          different graders (rewrite-chain today; Lean / Isabelle / egg e-graphs in M3+). -->
     <changeSet id="20260526120000-1" author="KilianSen">
         <preConditions onFail="MARK_RAN">
-            <not><columnExists tableName="proof_exercise_details" columnName="grader_type"/></not>
+            <not><columnExists tableName="math_exercise_details" columnName="grader_type"/></not>
         </preConditions>
-        <addColumn tableName="proof_exercise_details">
+        <addColumn tableName="math_exercise_details">
             <column name="grader_type" type="varchar(32)" defaultValue="REWRITE_CHAIN">
                 <constraints nullable="false"/>
             </column>

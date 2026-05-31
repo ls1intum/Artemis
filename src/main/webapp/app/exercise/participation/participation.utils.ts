@@ -59,7 +59,7 @@ export const isModelingOrTextOrFileUpload = (participation: Participation) => {
     const exercise = getExercise(participation);
     return (
         exercise &&
-        (exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.FILE_UPLOAD || exercise.type === ExerciseType.PROOF)
+        (exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.FILE_UPLOAD || exercise.type === ExerciseType.MATH)
     );
 };
 /**

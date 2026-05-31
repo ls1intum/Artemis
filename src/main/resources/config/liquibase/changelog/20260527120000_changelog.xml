@@ -5,20 +5,20 @@
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
 
     <!--
-        Phase 3 of the proof rewrite work: introduce bidirectional rules.
+        Phase 3 of the math rewrite work: introduce bidirectional rules.
 
-        1. Truncate proof_derivation_step + proof_submission and reset proof_exercise_details
+        1. Truncate math_derivation_step + math_submission and reset math_exercise_details
            fields that depend on retired rule ids (add_assoc_left, add_assoc_right, mul_assoc_left,
            mul_assoc_right). No production data to preserve; cleaner than a data migration.
-        2. Add direction column to proof_derivation_step.
+        2. Add direction column to math_derivation_step.
     -->
     <changeSet id="20260527120000-1" author="KilianSen">
         <preConditions onFail="MARK_RAN">
-            <not><columnExists tableName="proof_derivation_step" columnName="direction"/></not>
+            <not><columnExists tableName="math_derivation_step" columnName="direction"/></not>
         </preConditions>
-        <sql>DELETE FROM proof_derivation_step;</sql>
-        <sql>UPDATE proof_exercise_details SET example_derivations = NULL;</sql>
-        <addColumn tableName="proof_derivation_step">
+        <sql>DELETE FROM math_derivation_step;</sql>
+        <sql>UPDATE math_exercise_details SET example_derivations = NULL;</sql>
+        <addColumn tableName="math_derivation_step">
             <column name="direction" type="varchar(8)" defaultValue="FORWARD">
                 <constraints nullable="false"/>
             </column>

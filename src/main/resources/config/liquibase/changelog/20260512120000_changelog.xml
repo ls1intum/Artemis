@@ -13,9 +13,9 @@
 
     <changeSet id="20260512120000-2" author="KilianSen">
         <preConditions onFail="MARK_RAN">
-            <columnExists tableName="proof_exercise_details" columnName="predefined_checkbox_state"/>
+            <columnExists tableName="math_exercise_details" columnName="predefined_checkbox_state"/>
         </preConditions>
-        <dropColumn tableName="proof_exercise_details" columnName="predefined_checkbox_state"/>
+        <dropColumn tableName="math_exercise_details" columnName="predefined_checkbox_state"/>
     </changeSet>
 
 </databaseChangeLog>

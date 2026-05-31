@@ -6,7 +6,7 @@ import { ModelingExercisePagingService } from 'app/modeling/manage/services/mode
 import { CodeAnalysisPagingService } from 'app/programming/manage/services/code-analysis-paging.service';
 import { ProgrammingExercisePagingService } from 'app/programming/manage/services/programming-exercise-paging.service';
 import { QuizExercisePagingService } from 'app/quiz/manage/service/quiz-exercise-paging.service';
-import { ProofExercisePagingService } from 'app/proof/manage/service/proof-exercise-paging.service';
+import { MathExercisePagingService } from 'app/math/manage/service/math-exercise-paging.service';
 import { ExercisePagingService } from 'app/exercise/services/exercise-paging.service';
 import { TextExercisePagingService } from 'app/text/manage/text-exercise/service/text-exercise-paging.service';
 import { ImportComponent } from 'app/shared/import/import.component';
@@ -94,8 +94,8 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
                 return this.injector.get(TextExercisePagingService);
             case ExerciseType.FILE_UPLOAD:
                 return this.injector.get(FileUploadExercisePagingService);
-            case ExerciseType.PROOF:
-                return this.injector.get(ProofExercisePagingService);
+            case ExerciseType.MATH:
+                return this.injector.get(MathExercisePagingService);
             default:
                 throw new Error('Unsupported exercise type: ' + this.exerciseType);
         }

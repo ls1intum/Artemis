@@ -367,7 +367,7 @@ public class ExamImportService {
                     yield Optional.of(quizExerciseImportService.importQuizExercise(originalQuizExercise, quizSkeleton, null));
                 }
 
-                case PROOF -> throw new BadRequestAlertException("Proof exercises cannot be imported into an exam", "exam", "proofNotAllowedInExam");
+                case MATH -> throw new BadRequestAlertException("Math exercises cannot be imported into an exam", "exam", "mathNotAllowedInExam");
             };
             // Attach the newly created Exercise to the new Exercise Group only if the importing was successful
             exerciseCopied.ifPresent(exerciseGroupCopied::addExercise);

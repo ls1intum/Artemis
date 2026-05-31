@@ -124,7 +124,7 @@ public class ExerciseVersionUtilService {
             case TEXT -> textExerciseRepository.findForVersioningById(exerciseId).orElse(null);
             case MODELING -> modelingExerciseRepository.findForVersioningById(exerciseId).orElse(null);
             case FILE_UPLOAD -> fileUploadExerciseRepository.findForVersioningById(exerciseId).orElse(null);
-            case PROOF -> null;
+            case MATH -> null;
         };
         if (fetchedExercise != null) {
             var channel = channelRepository.findChannelByExerciseId(fetchedExercise.getId());

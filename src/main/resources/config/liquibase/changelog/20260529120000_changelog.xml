@@ -12,9 +12,9 @@
     -->
     <changeSet id="20260529120000-1" author="KilianSen">
         <preConditions onFail="MARK_RAN">
-            <not><columnExists tableName="proof_exercise_details" columnName="ac_normalization"/></not>
+            <not><columnExists tableName="math_exercise_details" columnName="ac_normalization"/></not>
         </preConditions>
-        <addColumn tableName="proof_exercise_details">
+        <addColumn tableName="math_exercise_details">
             <column name="ac_normalization" type="boolean" defaultValueBoolean="false">
                 <constraints nullable="false"/>
             </column>

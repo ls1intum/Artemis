@@ -59,7 +59,7 @@
             },
             "goToBuildPlan": "Go to build plan",
             "openTextEditor": "Open text editor",
-            "openProofEditor": "Open proof editor",
+            "openMathEditor": "Open math editor",
             "copyUrl": "Copy URL",
             "copiedUrl": "Copied URL",
             "uploadFile": "Upload a file",

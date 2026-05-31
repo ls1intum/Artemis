@@ -134,8 +134,8 @@ export class ResultHistoryDropdownComponent {
         let exerciseTypePath: string;
         if (exercise.type === ExerciseType.TEXT) {
             exerciseTypePath = 'text-exercises';
-        } else if (exercise.type === ExerciseType.PROOF) {
-            exerciseTypePath = 'proof-exercises';
+        } else if (exercise.type === ExerciseType.MATH) {
+            exerciseTypePath = 'math-exercises';
         } else {
             exerciseTypePath = 'modeling-exercises';
         }
@@ -260,8 +260,8 @@ export class ResultHistoryDropdownComponent {
         let exerciseTypePath: string;
         if (exercise.type === ExerciseType.TEXT) {
             exerciseTypePath = 'text-exercises';
-        } else if (exercise.type === ExerciseType.PROOF) {
-            exerciseTypePath = 'proof-exercises';
+        } else if (exercise.type === ExerciseType.MATH) {
+            exerciseTypePath = 'math-exercises';
         } else {
             exerciseTypePath = 'modeling-exercises';
         }

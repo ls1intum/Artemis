@@ -11,7 +11,7 @@ export class CourseForDashboardDTO {
     modelingScores: CourseScores;
     fileUploadScores: CourseScores;
     quizScores: CourseScores;
-    proofScores: CourseScores;
+    mathScores: CourseScores;
 
     participationResults: ParticipationResultDTO[];
 

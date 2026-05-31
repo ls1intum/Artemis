@@ -34,7 +34,7 @@ export class ResultHistoryComponent implements OnChanges {
 
     ngOnChanges() {
         this.showPreviousDivider = this.results().length > MAX_RESULT_HISTORY_LENGTH;
-        if (this.exercise()?.type === ExerciseType.TEXT || this.exercise()?.type === ExerciseType.MODELING || this.exercise()?.type === ExerciseType.PROOF) {
+        if (this.exercise()?.type === ExerciseType.TEXT || this.exercise()?.type === ExerciseType.MODELING || this.exercise()?.type === ExerciseType.MATH) {
             this.displayedResults = this.results().filter((result) => result.successful !== undefined);
         } else {
             this.displayedResults = this.results();

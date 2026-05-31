@@ -7,10 +7,10 @@
     <changeSet id="20260507100000-1" author="KilianSen">
         <preConditions onFail="MARK_RAN">
             <not>
-                <columnExists tableName="proof_exercise_details" columnName="example_derivations"/>
+                <columnExists tableName="math_exercise_details" columnName="example_derivations"/>
             </not>
         </preConditions>
-        <addColumn tableName="proof_exercise_details">
+        <addColumn tableName="math_exercise_details">
             <column name="example_derivations" type="longtext"/>
         </addColumn>
     </changeSet>

@@ -360,7 +360,7 @@ class SubmissionFilterServiceTest extends AbstractSpringIntegrationIndependentTe
             case QUIZ -> new QuizSubmission();
             case FILE_UPLOAD -> new FileUploadSubmission();
             case PROGRAMMING -> new ProgrammingSubmission();
-            case PROOF -> new de.tum.cit.aet.artemis.proof.domain.ProofSubmission();
+            case MATH -> new de.tum.cit.aet.artemis.math.domain.MathSubmission();
         };
     }
 }

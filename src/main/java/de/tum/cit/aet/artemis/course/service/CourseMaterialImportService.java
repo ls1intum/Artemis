@@ -265,7 +265,7 @@ public class CourseMaterialImportService {
             case MODELING -> importModelingExercise((ModelingExercise) exercise, targetCourse);
             case TEXT -> importTextExercise((TextExercise) exercise, targetCourse);
             case FILE_UPLOAD -> importFileUploadExercise((FileUploadExercise) exercise, targetCourse);
-            case PROOF -> Optional.empty(); // TODO: Implement importProofExercise
+            case MATH -> Optional.empty(); // TODO: Implement importMathExercise
         };
     }
 

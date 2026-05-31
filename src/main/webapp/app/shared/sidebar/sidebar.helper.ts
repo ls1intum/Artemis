@@ -22,7 +22,7 @@ const DEFAULT_EXERCISE_TYPES_FILTER: ExerciseTypeFilterOption[] = [
     { name: 'artemisApp.courseStatistics.modeling', value: ExerciseType.MODELING, checked: false, icon: getIcon(ExerciseType.MODELING) },
     { name: 'artemisApp.courseStatistics.text', value: ExerciseType.TEXT, checked: false, icon: getIcon(ExerciseType.TEXT) },
     { name: 'artemisApp.courseStatistics.file-upload', value: ExerciseType.FILE_UPLOAD, checked: false, icon: getIcon(ExerciseType.FILE_UPLOAD) },
-    { name: 'artemisApp.courseStatistics.proof', value: ExerciseType.PROOF, checked: false, icon: getIcon(ExerciseType.PROOF) },
+    { name: 'artemisApp.courseStatistics.math', value: ExerciseType.MATH, checked: false, icon: getIcon(ExerciseType.MATH) },
 ];
 
 function getAvailableCategoriesAsFilterOptions(sidebarData?: SidebarData): ExerciseCategoryFilterOption[] | undefined {

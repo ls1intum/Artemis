@@ -235,7 +235,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
             case QUIZ -> createQuizExercise();
             case MODELING -> createModelingExercise();
             case FILE_UPLOAD -> createFileUploadExercise();
-            case PROOF -> throw new UnsupportedOperationException("Proof exercise versioning is not yet implemented");
+            case MATH -> throw new UnsupportedOperationException("Math exercise versioning is not yet implemented");
         };
     }
 

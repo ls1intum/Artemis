@@ -1,0 +1,94 @@
+@if (mathExercise && course) {
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <div class="d-flex align-items-center mb-2">
+                <h2 jhiTranslate="artemisApp.mathExercise.detail.title">Math Exercise Detail</h2>
+                <jhi-documentation-button [type]="'Text'" />
+                <!-- TODO: Update to Math when documentation exists -->
+            </div>
+            <jhi-non-programming-exercise-detail-common-actions [exercise]="mathExercise" [course]="course" (onExerciseRefresh)="load(mathExercise.id!)" />
+            <div class="row mt-3">
+                <div class="col-12 col-md-4">
+                    <jhi-exercise-detail-statistics [exercise]="mathExercise" [doughnutStats]="doughnutStats" />
+                </div>
+                <div class="col-12 col-md-8">
+                    <jhi-detail-overview-list [sections]="detailOverviewSections" />
+                </div>
+            </div>
+
+            @if (submissions.length > 0) {
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <p-card>
+                            <ng-template pTemplate="header">
+                                <div class="d-flex align-items-center justify-content-between px-3 pt-3">
+                                    <h4 class="mb-0" jhiTranslate="artemisApp.mathExercise.detail.submittedMaths">Submitted Maths</h4>
+                                    <p-tag severity="secondary" [value]="submissions.length.toString()" />
+                                </div>
+                            </ng-template>
+                            <p-table [value]="submissions" styleClass="p-datatable-sm p-datatable-hover">
+                                <ng-template pTemplate="header">
+                                    <tr>
+                                        <th jhiTranslate="artemisApp.mathExercise.detail.tableStudent">Student</th>
+                                        <th jhiTranslate="artemisApp.mathExercise.detail.tableSubmitted">Submitted</th>
+                                        <th jhiTranslate="artemisApp.mathExercise.detail.tableSteps">Steps</th>
+                                        <th jhiTranslate="artemisApp.mathExercise.detail.tableScore">Score</th>
+                                        <th></th>
+                                    </tr>
+                                </ng-template>
+                                <ng-template pTemplate="body" let-sub>
+                                    <tr>
+                                        <td>{{ sub.participation?.studentName ?? sub.participation?.studentLogin ?? '—' }}</td>
+                                        <td>{{ sub.submissionDate | artemisDate }}</td>
+                                        <td>{{ sub.steps?.length ?? 0 }}</td>
+                                        <td>
+                                            @if (sub.results && sub.results.length > 0) {
+                                                {{ sub.results[sub.results.length - 1].score | number: '1.0-1' }}%
+                                            } @else {
+                                                <span class="text-muted">—</span>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            <a
+                                                pButton
+                                                size="small"
+                                                severity="primary"
+                                                [outlined]="true"
+                                                [routerLink]="['/course-management', course!.id, 'math-exercises', mathExercise.id, 'submissions', sub.id, 'assessment']"
+                                            >
+                                                <span jhiTranslate="artemisApp.mathExercise.detail.assess">Assess</span>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </ng-template>
+                            </p-table>
+                        </p-card>
+                    </div>
+                </div>
+            }
+
+            @if (mathExercise.sourceExpression && mathExercise.targetExpression) {
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <p-card>
+                            <ng-template pTemplate="header">
+                                <h4 class="px-3 pt-3 mb-0" jhiTranslate="artemisApp.mathExercise.expressionsTitle">Math Expressions</h4>
+                            </ng-template>
+                            <div class="d-flex gap-4 align-items-center flex-wrap">
+                                <div>
+                                    <small class="text-muted d-block mb-1" jhiTranslate="artemisApp.mathExercise.sourceExpression">Source</small>
+                                    <span class="fs-5" [innerHTML]="mathExercise.sourceExpression | mathNodeLatex"></span>
+                                </div>
+                                <div class="fs-3 text-muted">→</div>
+                                <div>
+                                    <small class="text-muted d-block mb-1" jhiTranslate="artemisApp.mathExercise.targetExpression">Target</small>
+                                    <span class="fs-5" [innerHTML]="mathExercise.targetExpression | mathNodeLatex"></span>
+                                </div>
+                            </div>
+                        </p-card>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}

@@ -1,0 +1,64 @@
+package de.tum.cit.aet.artemis.math.domain.blocks;
+
+import java.util.List;
+
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
+
+import de.tum.cit.aet.artemis.math.config.MathEnabled;
+import de.tum.cit.aet.artemis.math.domain.Associativity;
+import de.tum.cit.aet.artemis.math.domain.BlockDefinition;
+import de.tum.cit.aet.artemis.math.domain.LayoutCategory;
+import de.tum.cit.aet.artemis.math.domain.RewriteRule;
+
+@Lazy
+@Conditional(MathEnabled.class)
+@Component
+public class VariableBlockDefinition implements BlockDefinition {
+
+    @Override
+    public String getType() {
+        return "variable";
+    }
+
+    @Override
+    public String getCategory() {
+        return "terminal";
+    }
+
+    @Override
+    public String getLabel() {
+        return "Variable";
+    }
+
+    @Override
+    public String getPaletteLatex() {
+        return "x";
+    }
+
+    @Override
+    public List<String> getSlots() {
+        return List.of();
+    }
+
+    @Override
+    public int getPrecedence() {
+        return 100;
+    }
+
+    @Override
+    public Associativity getAssociativity() {
+        return Associativity.NONE;
+    }
+
+    @Override
+    public LayoutCategory getLayoutCategory() {
+        return LayoutCategory.TERMINAL_VARIABLE;
+    }
+
+    @Override
+    public List<RewriteRule> getRules() {
+        return List.of();
+    }
+}

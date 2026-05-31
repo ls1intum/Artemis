@@ -6,9 +6,9 @@
 
     <changeSet id="20260515120000-1" author="KilianSen">
         <preConditions onFail="MARK_RAN">
-            <not><columnExists tableName="proof_exercise_details" columnName="partial_credit_enabled"/></not>
+            <not><columnExists tableName="math_exercise_details" columnName="partial_credit_enabled"/></not>
         </preConditions>
-        <addColumn tableName="proof_exercise_details">
+        <addColumn tableName="math_exercise_details">
             <column name="partial_credit_enabled" type="boolean" defaultValueBoolean="false">
                 <constraints nullable="false"/>
             </column>

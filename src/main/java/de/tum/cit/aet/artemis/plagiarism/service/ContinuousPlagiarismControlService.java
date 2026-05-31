@@ -127,7 +127,7 @@ public class ContinuousPlagiarismControlService {
         return switch (exercise.getExerciseType()) {
             case TEXT -> plagiarismDetectionService.checkTextExercise((TextExercise) exercise);
             case PROGRAMMING -> plagiarismDetectionService.checkProgrammingExercise((ProgrammingExercise) exercise);
-            case MODELING, FILE_UPLOAD, QUIZ, PROOF -> null;
+            case MODELING, FILE_UPLOAD, QUIZ, MATH -> null;
         };
     }
 

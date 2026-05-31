@@ -7,18 +7,18 @@
     <changeSet id="20260428103000-1-v2" author="gemini-cli">
         <preConditions onFail="MARK_RAN">
             <not>
-                <tableExists tableName="proof_exercise_details"/>
+                <tableExists tableName="math_exercise_details"/>
             </not>
         </preConditions>
-        <createTable tableName="proof_exercise_details">
+        <createTable tableName="math_exercise_details">
             <column name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
         </createTable>
 
         <addForeignKeyConstraint baseColumnNames="id"
-                                 baseTableName="proof_exercise_details"
-                                 constraintName="fk_proof_exercise_details_id"
+                                 baseTableName="math_exercise_details"
+                                 constraintName="fk_math_exercise_details_id"
                                  referencedColumnNames="id"
                                  referencedTableName="exercise"
                                  onDelete="CASCADE"/>
@@ -49,10 +49,10 @@
     <changeSet id="20260428103000-4-v2" author="gemini-cli">
         <preConditions onFail="MARK_RAN">
             <not>
-                <columnExists tableName="proof_exercise_details" columnName="description"/>
+                <columnExists tableName="math_exercise_details" columnName="description"/>
             </not>
         </preConditions>
-        <addColumn tableName="proof_exercise_details">
+        <addColumn tableName="math_exercise_details">
             <column name="description" type="longtext"/>
         </addColumn>
     </changeSet>
@@ -60,10 +60,10 @@
     <changeSet id="20260428103000-5-v2" author="gemini-cli">
         <preConditions onFail="MARK_RAN">
             <not>
-                <columnExists tableName="proof_exercise_details" columnName="predefined_checkbox_state"/>
+                <columnExists tableName="math_exercise_details" columnName="predefined_checkbox_state"/>
             </not>
         </preConditions>
-        <addColumn tableName="proof_exercise_details">
+        <addColumn tableName="math_exercise_details">
             <column name="predefined_checkbox_state" type="boolean" defaultValueBoolean="false"/>
         </addColumn>
     </changeSet>

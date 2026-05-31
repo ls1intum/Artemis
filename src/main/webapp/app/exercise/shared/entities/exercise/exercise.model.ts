@@ -37,7 +37,7 @@ export enum ExerciseType {
     QUIZ = 'quiz',
     TEXT = 'text',
     FILE_UPLOAD = 'file-upload',
-    PROOF = 'proof',
+    MATH = 'math',
 }
 
 export type ScoresPerExerciseType = Map<ExerciseType, CourseScores>;
@@ -65,7 +65,7 @@ export const DEFAULT_PLAGIARISM_DETECTION_CONFIG: PlagiarismDetectionConfig = {
     minimumScore: 0,
 };
 
-export const exerciseTypes: ExerciseType[] = [ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.PROGRAMMING, ExerciseType.FILE_UPLOAD, ExerciseType.QUIZ, ExerciseType.PROOF];
+export const exerciseTypes: ExerciseType[] = [ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.PROGRAMMING, ExerciseType.FILE_UPLOAD, ExerciseType.QUIZ, ExerciseType.MATH];
 
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java
 export enum IncludedInOverallScore {
@@ -190,7 +190,7 @@ export function getIcon(exerciseType?: ExerciseType): IconProp {
         [ExerciseType.QUIZ]: faCheckDouble,
         [ExerciseType.TEXT]: faFont,
         [ExerciseType.FILE_UPLOAD]: faFileUpload,
-        [ExerciseType.PROOF]: faFlask,
+        [ExerciseType.MATH]: faFlask,
     };
 
     return icons[exerciseType] ?? (faQuestion as IconProp);
@@ -206,7 +206,7 @@ export function getIconTooltip(exerciseType?: ExerciseType): string {
         [ExerciseType.QUIZ]: 'artemisApp.exercise.isQuiz',
         [ExerciseType.TEXT]: 'artemisApp.exercise.isText',
         [ExerciseType.FILE_UPLOAD]: 'artemisApp.exercise.isFileUpload',
-        [ExerciseType.PROOF]: 'artemisApp.exercise.isProof',
+        [ExerciseType.MATH]: 'artemisApp.exercise.isMath',
     };
 
     return tooltips[exerciseType];

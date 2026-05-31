@@ -142,7 +142,7 @@ export class ExerciseGroupsComponent implements OnInit {
         if (!this.fileUploadExerciseEnabled()) {
             this.disabledExerciseTypes.push(ExerciseType.FILE_UPLOAD);
         }
-        this.disabledExerciseTypes.push(ExerciseType.PROOF);
+        this.disabledExerciseTypes.push(ExerciseType.MATH);
     }
 
     /**

@@ -213,7 +213,7 @@ public class ExerciseVersionService {
             case TEXT -> textExerciseRepository.findForVersioningById(exercise.getId()).orElse(null);
             case MODELING -> modelingRepositoryApi.flatMap(api -> api.findForVersioningById(exercise.getId())).orElse(null);
             case FILE_UPLOAD -> fileUploadApi.flatMap(api -> api.findForVersioningById(exercise.getId())).orElse(null);
-            case PROOF -> null; // TODO: Implement proofExerciseRepository.findForVersioningById
+            case MATH -> null; // TODO: Implement mathExerciseRepository.findForVersioningById
         };
         if (fetched != null) {
             Channel channel = channelRepository.findChannelByExerciseId(fetched.getId());

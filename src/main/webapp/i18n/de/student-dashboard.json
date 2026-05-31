@@ -253,7 +253,7 @@
                 "modelingPointLabel": "Modellierungsaufgaben Punkte",
                 "textPointLabel": "Textaufgaben Punkte",
                 "fileUploadPointLabel": "Dateiupload-Aufgaben Punkte",
-                "proofPointLabel": "Beweis-Aufgaben Punkte",
+                "mathPointLabel": "Mathematik-Aufgaben Punkte",
                 "presentationPointsLabel": "Präsentationspunkte",
                 "missingPointsLabel": "Fehlende Punkte",
                 "achievedPointsLabel": "Erreichte Punkte",
@@ -309,7 +309,7 @@
                 "modelingEditor": "Modellierungs-Editor",
                 "fileUploadEditor": "Datei-Upload",
                 "quizEditor": "Quiz",
-                "proofEditor": "Beweis-Editor",
+                "mathEditor": "Mathematik-Editor",
                 "iris": "Iris",
                 "noResults": "Du hast noch keine Ergebnisse",
                 "instructorActions": {

@@ -14,7 +14,7 @@ export const QUIZ_EXERCISE_BASE_CREATION = new RegExp(`${BASE_API}/quiz/(courses
 export const TEXT_EXERCISE_BASE = `${BASE_API}/text/text-exercises`;
 export const MODELING_EXERCISE_BASE = `${BASE_API}/modeling/modeling-exercises`;
 export const UPLOAD_EXERCISE_BASE = `${BASE_API}/fileupload/file-upload-exercises`;
-export const PROOF_EXERCISE_BASE = `${BASE_API}/proof/proof-exercises`;
+export const MATH_EXERCISE_BASE = `${BASE_API}/math/math-exercises`;
 
 // Timeformat
 export const TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss.SSS';
