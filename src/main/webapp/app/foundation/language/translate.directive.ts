@@ -62,7 +62,9 @@ export class TranslateDirective implements OnInit, OnDestroy {
                 next: (value) => {
                     this.el.nativeElement.innerHTML = value;
                 },
-                error: () => `${translationNotFoundMessage}[${key}]`,
+                error: () => {
+                    this.el.nativeElement.textContent = `${translationNotFoundMessage}[${key}]`;
+                },
             });
     }
 }

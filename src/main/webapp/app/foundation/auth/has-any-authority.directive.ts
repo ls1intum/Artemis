@@ -1,4 +1,5 @@
-import { Directive, TemplateRef, ViewContainerRef, effect, inject, input } from '@angular/core';
+import { DestroyRef, Directive, TemplateRef, ViewContainerRef, effect, inject, input } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/foundation/constants/authority.constants';
 
@@ -18,19 +19,25 @@ export class HasAnyAuthorityDirective {
     private accountService = inject(AccountService);
     private templateRef = inject<TemplateRef<any>>(TemplateRef);
     private viewContainerRef = inject(ViewContainerRef);
+    private readonly destroyRef = inject(DestroyRef);
 
     readonly jhiHasAnyAuthority = input.required<string | string[] | readonly Authority[]>();
 
     private authorities: readonly Authority[];
 
     constructor() {
+        // Re-derive the authorities and re-render whenever the input changes.
         effect(() => {
             const value = this.jhiHasAnyAuthority();
             this.authorities = typeof value === 'string' ? [value as Authority] : (value as readonly Authority[]);
             this.updateView();
-            // Get notified each time authentication state changes.
-            this.accountService.getAuthenticationState().subscribe(() => this.updateView());
         });
+        // Get notified each time authentication state changes. Subscribe exactly once so the subscription is not
+        // re-created on every input change (the authentication state observable never completes).
+        this.accountService
+            .getAuthenticationState()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(() => this.updateView());
     }
 
     private updateView(): void {

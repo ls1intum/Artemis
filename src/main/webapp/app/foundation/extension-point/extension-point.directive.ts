@@ -60,7 +60,9 @@ export class ExtensionPointDirective {
                     }
 
                     this.viewRef = extensionPoint ? viewContainerRef.createEmbeddedView(extensionPoint, context) : viewContainerRef.createEmbeddedView(this.templateRef, context);
-                } else if (this.viewRef && context) {
+                } else if (this.viewRef) {
+                    // Propagate the new context even when it is falsy, so resetting jhiExtensionPointContext clears
+                    // the previously rendered context instead of leaving the stale one attached.
                     this.viewRef.context = context;
                 }
             });
