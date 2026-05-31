@@ -1,35 +1,34 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { vi } from 'vitest';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MonacoDiffEditorComponent } from 'app/editor/monaco-editor/diff-editor/monaco-diff-editor.component';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 
 describe('MonacoDiffEditorComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<MonacoDiffEditorComponent>;
     let comp: MonacoDiffEditorComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [MonacoDiffEditorComponent],
             providers: [{ provide: ThemeService, useClass: MockThemeService }],
-        })
-            .compileComponents()
-            .then(() => {
-                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-                    return new MockResizeObserver(callback);
-                });
-                fixture = TestBed.createComponent(MonacoDiffEditorComponent);
-                comp = fixture.componentInstance;
-            });
+        }).compileComponents();
+        global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+        fixture = TestBed.createComponent(MonacoDiffEditorComponent);
+        comp = fixture.componentInstance;
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should dispose its listeners and subscriptions when destroyed', () => {
         fixture.detectChanges();
-        const listenerDisposeSpies = comp.listeners.map((listener) => jest.spyOn(listener, 'dispose'));
+        const listenerDisposeSpies = comp.listeners.map((listener) => vi.spyOn(listener, 'dispose'));
         comp.ngOnDestroy();
         for (const spy of listenerDisposeSpies) {
             expect(spy).toHaveBeenCalledOnce();
@@ -83,33 +82,33 @@ describe('MonacoDiffEditorComponent', () => {
         expect(comp.getText()).toEqual({ original: 'content', modified: 'content' });
     });
 
-    it('should handle getLineChanges returning null in setupDiffListener', async () => {
+    it('should handle getLineChanges returning null in setupDiffListener', () => {
         fixture.detectChanges();
 
         // Mock getLineChanges to return null to test the ?? [] fallback
         const mockEditor = comp['_editor'];
-        jest.spyOn(mockEditor, 'getLineChanges').mockReturnValue(null);
+        vi.spyOn(mockEditor, 'getLineChanges').mockReturnValue(null as any);
 
-        const readyCallbackStub = jest.fn();
+        const readyCallbackStub = vi.fn();
         comp.onReadyForDisplayChange.subscribe(readyCallbackStub);
 
-        // Trigger the diff listener by calling the internal method that would be called
+        // Trigger the diff listener (fired synchronously by the mock when the model is set).
         comp.setFileContents('original', 'modified');
-
-        // Wait for async operations
-        await new Promise((r) => setTimeout(r, 100));
 
         // Should handle null getLineChanges gracefully
         expect(readyCallbackStub).toHaveBeenCalled();
     });
 
-    it('should notify about its readiness to display', async () => {
-        const readyCallbackStub = jest.fn();
-        comp.onReadyForDisplayChange.subscribe(readyCallbackStub);
+    it('should notify about its readiness to display', () => {
+        const readyCallbackStub = vi.fn();
         fixture.detectChanges();
+        // The mock diff editor does not compute real diffs; provide a synthetic single-line change so the
+        // converted LineChange is deterministic (1 added, 1 removed).
+        vi.spyOn(comp['_editor'], 'getLineChanges').mockReturnValue([
+            { originalStartLineNumber: 1, originalEndLineNumber: 1, modifiedStartLineNumber: 1, modifiedEndLineNumber: 1, charChanges: undefined },
+        ] as any);
+        comp.onReadyForDisplayChange.subscribe(readyCallbackStub);
         comp.setFileContents('original', 'file', 'modified', 'file');
-        // Wait for the diff computation, which is handled by Monaco.
-        await new Promise((r) => setTimeout(r, 200));
         expect(readyCallbackStub).toHaveBeenCalledTimes(2);
         expect(readyCallbackStub).toHaveBeenNthCalledWith(1, { ready: false, lineChange: { addedLineCount: 0, removedLineCount: 0 } });
         expect(readyCallbackStub).toHaveBeenNthCalledWith(2, { ready: true, lineChange: { addedLineCount: 1, removedLineCount: 1 } });

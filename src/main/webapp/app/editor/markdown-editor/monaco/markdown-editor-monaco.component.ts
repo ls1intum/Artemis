@@ -4,11 +4,8 @@ import {
     ChangeDetectionStrategy,
     Component,
     ElementRef,
-    EventEmitter,
     Injector,
-    Input,
     OnDestroy,
-    Output,
     Signal,
     ViewContainerRef,
     afterNextRender,
@@ -26,19 +23,11 @@ import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.co
 import { MonacoEditorMode } from 'app/editor/monaco-editor/model/monaco-editor.types';
 import { EditorRange } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
-import {
-    NgbDropdown,
-    NgbDropdownMenu,
-    NgbDropdownToggle,
-    NgbNav,
-    NgbNavChangeEvent,
-    NgbNavContent,
-    NgbNavItem,
-    NgbNavLink,
-    NgbNavLinkBase,
-    NgbNavOutlet,
-    NgbTooltip,
-} from '@ng-bootstrap/ng-bootstrap';
+import { Tab, TabList, Tabs } from 'primeng/tabs';
+import { Popover } from 'primeng/popover';
+import { TieredMenu } from 'primeng/tieredmenu';
+import { Tooltip } from 'primeng/tooltip';
+import { MenuItem } from 'primeng/api';
 import { TextEditorAction, TextStyleTextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/editor/monaco-editor/model/actions/bold.action';
 import { ItalicAction } from 'app/editor/monaco-editor/model/actions/italic.action';
@@ -75,8 +64,6 @@ import { EmojiAction } from 'app/editor/monaco-editor/model/actions/emoji.action
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
-import { MatButton } from '@angular/material/button';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Tag } from 'primeng/tag';
 import { TranslateService } from '@ngx-translate/core';
@@ -134,34 +121,31 @@ const REVIEW_COMMENT_HOVER_BUTTON_CLASS = 'monaco-add-review-comment-button';
 /** Vertical offset (in px) applied below the selection end position for the floating action button. */
 const FLOATING_BUTTON_VERTICAL_OFFSET = 5;
 
+/** Identifiers for the editor tabs. Exposed as static fields on the component and as the active-tab signal value. */
+const TAB_EDIT_ID = 'editor_edit';
+const TAB_PREVIEW_ID = 'editor_preview';
+const TAB_VISUAL_ID = 'editor_visual';
+
 @Component({
     selector: 'jhi-markdown-editor-monaco',
     templateUrl: './markdown-editor-monaco.component.html',
     styleUrls: ['./markdown-editor-monaco.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
-        NgbNav,
-        NgbNavItem,
-        NgbNavLink,
-        NgbNavLinkBase,
+        Tabs,
+        TabList,
+        Tab,
         TranslateDirective,
-        NgbNavContent,
         NgClass,
         MonacoEditorComponent,
         FaIconComponent,
-        NgbTooltip,
+        Tooltip,
         NgTemplateOutlet,
-        NgbDropdown,
-        NgbDropdownToggle,
-        NgbDropdownMenu,
+        Popover,
+        TieredMenu,
         ColorSelectorComponent,
         PostingButtonComponent,
-        MatMenuTrigger,
-        MatMenu,
-        MatMenuItem,
-        NgbNavOutlet,
         CdkDrag,
-        MatButton,
         ArtemisTranslatePipe,
         RedirectToIrisButtonComponent,
         Tag,
@@ -177,6 +161,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     protected readonly artemisIntelligenceService = inject(ArtemisIntelligenceService); // used in template
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly exerciseReviewCommentService = inject(ExerciseReviewCommentService);
+    private readonly injector = inject(Injector);
 
     readonly monacoEditor = viewChild(MonacoEditorComponent);
     readonly fullElement = viewChild.required<ElementRef<HTMLDivElement>>('fullElement');
@@ -188,64 +173,50 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly diffHeader = viewChild<ElementRef<HTMLDivElement>>('diffHeader');
     readonly colorSelector = viewChild(ColorSelectorComponent);
 
-    @Input()
-    set markdown(value: string | undefined) {
-        this._markdown = value;
-        this.monacoEditor()?.setText(value ?? '');
-    }
+    /**
+     * The incoming markdown content. Supports one-way `[markdown]` and two-way `[(markdown)]` bindings (the latter
+     * pairs with the {@link markdownChange} output). Changes to this input are synced into the editor via an effect.
+     * To read or imperatively change the live content, use {@link currentMarkdown} / {@link setMarkdown}.
+     */
+    readonly markdown = input<string>();
+    /** Emitted whenever the user edits the content in the editor (not for programmatic/binding updates). */
+    readonly markdownChange = output<string>();
+    /**
+     * The live markdown content. Updated by the {@link markdown} input binding, by user edits ({@link onTextChanged}),
+     * and by imperative {@link setMarkdown} calls. Replaces the former private `_markdown` field.
+     */
+    readonly currentMarkdown = signal<string | undefined>(undefined);
 
-    _markdown?: string;
-
-    @Input()
-    enableFileUpload = true;
-
-    @Input()
-    enableResize = true;
-
-    @Input()
-    showPreviewButton = true;
-
-    @Input()
-    showVisualButton = false;
-
-    @Input()
-    showDefaultPreview = true;
-
-    @Input()
-    useDefaultMarkdownEditorOptions = true;
-
-    @Input()
-    showEditButton = true;
+    readonly enableFileUpload = input<boolean>(true);
+    readonly enableResize = input<boolean>(true);
+    readonly showPreviewButton = input<boolean>(true);
+    readonly showVisualButton = input<boolean>(false);
+    readonly showDefaultPreview = input<boolean>(true);
+    readonly useDefaultMarkdownEditorOptions = input<boolean>(true);
+    readonly showEditButton = input<boolean>(true);
 
     /**
      * If set to true, the editor will grow and shrink to fit its content. However, the height will still be constrained by {@link resizableMinHeight} and {@link resizableMaxHeight}.
      * In particular, an empty editor will have the height of {@link resizableMinHeight} upon initialization, no matter what value {@link initialEditorHeight} has.
      */
-    @Input()
-    linkEditorHeightToContentHeight = false;
+    readonly linkEditorHeightToContentHeight = input<boolean>(false);
 
     /**
      * The initial height the editor should have.
      */
-    @Input()
-    initialEditorHeight: MarkdownEditorHeight = MarkdownEditorHeight.SMALL;
+    readonly initialEditorHeight = input<MarkdownEditorHeight>(MarkdownEditorHeight.SMALL);
 
     /**
      * If true, the editor height is managed externally by the parent container.
      * The editor will try to grow to fill the available space rather than managing its own height.
      * Use this when embedding the editor in a container that controls layout (e.g., code editor view).
      */
-    @Input()
-    externalHeight = false;
+    readonly externalHeight = input<boolean>(false);
 
-    @Input()
-    resizableMaxHeight = MarkdownEditorHeight.LARGE;
+    readonly resizableMaxHeight = input<MarkdownEditorHeight>(MarkdownEditorHeight.LARGE);
+    readonly resizableMinHeight = input<MarkdownEditorHeight>(MarkdownEditorHeight.SMALL);
 
-    @Input()
-    resizableMinHeight = MarkdownEditorHeight.SMALL;
-
-    @Input()
-    defaultActions: TextEditorAction[] = [
+    readonly defaultActions = input<TextEditorAction[]>([
         new BoldAction(),
         new ItalicAction(),
         new UnderlineAction(),
@@ -257,77 +228,55 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         new AttachmentAction(),
         new OrderedListAction(),
         new BulletedListAction(),
-    ];
+    ]);
 
-    @Input()
-    headerActions?: TextEditorActionGroup<HeadingAction> = new TextEditorActionGroup<HeadingAction>(
-        'artemisApp.multipleChoiceQuestion.editor.style',
-        [1, 2, 3].map((level) => new HeadingAction(level)),
-        undefined,
+    readonly headerActions = input<TextEditorActionGroup<HeadingAction> | undefined>(
+        new TextEditorActionGroup<HeadingAction>(
+            'artemisApp.multipleChoiceQuestion.editor.style',
+            [1, 2, 3].map((level) => new HeadingAction(level)),
+            undefined,
+        ),
     );
 
-    @Input()
-    lectureReferenceAction?: LectureAttachmentReferenceAction = undefined;
-
-    @Input()
-    colorAction?: ColorAction = new ColorAction();
-
-    @Input()
-    domainActions: TextEditorDomainAction[] = [];
-
-    @Input()
-    artemisIntelligenceActions: TextEditorAction[] = [];
-
-    @Input()
-    metaActions: TextEditorAction[] = [new FullscreenAction()];
+    readonly lectureReferenceAction = input<LectureAttachmentReferenceAction | undefined>(undefined);
+    readonly colorAction = input<ColorAction | undefined>(new ColorAction());
+    readonly domainActions = input<TextEditorDomainAction[]>([]);
+    readonly artemisIntelligenceActions = input<TextEditorAction[]>([]);
+    readonly metaActions = input<TextEditorAction[]>([new FullscreenAction()]);
 
     readonly enableExerciseReviewComments = input<boolean>(false);
     readonly showLocationWarning = input<boolean>(false);
 
-    isButtonLoading = input<boolean>(false);
+    readonly isButtonLoading = input<boolean>(false);
     readonly isAiLoading = input<boolean>(false);
-    isFormGroupValid = input<boolean>(false);
-    isInCommunication = input<boolean>(false);
-    showMarkdownInfoText = input<boolean>(true);
-    editType = input<PostingEditType>();
-    course = input<Course>();
+    readonly isFormGroupValid = input<boolean>(false);
+    readonly isInCommunication = input<boolean>(false);
+    readonly showMarkdownInfoText = input<boolean>(true);
+    readonly editType = input<PostingEditType>();
+    readonly course = input<Course>();
 
     readonly useCommunicationForFileUpload = input<boolean>(false);
     readonly fallbackConversationId = input<number>();
 
-    showCloseButton = input<boolean>(false);
+    readonly showCloseButton = input<boolean>(false);
     /** Whether the editor is read-only */
-    isReadOnly = input<boolean>(false);
+    readonly isReadOnly = input<boolean>(false);
 
-    mode = input<MonacoEditorMode>('normal');
+    readonly mode = input<MonacoEditorMode>('normal');
 
-    renderSideBySide = input<boolean>(true);
+    readonly renderSideBySide = input<boolean>(true);
 
-    closeEditor = output<void>();
+    readonly closeEditor = output<void>();
 
     /** Emits diff line change information when in diff mode */
-    diffLineChange = output<{ ready: boolean; lineChange: LineChange }>();
+    readonly diffLineChange = output<{ ready: boolean; lineChange: LineChange }>();
 
-    @Output()
-    markdownChange = new EventEmitter<string>();
-
-    @Output()
-    onPreviewSelect = new EventEmitter<void>();
-
-    @Output()
-    onEditSelect = new EventEmitter<void>();
-
-    @Output()
-    onBlurEditor = new EventEmitter<void>();
-
-    @Output()
-    textWithDomainActionsFound = new EventEmitter<TextWithDomainAction[]>();
-
-    @Output()
-    onDefaultPreviewHtmlChanged = new EventEmitter<SafeHtml | undefined>();
-
-    @Output()
-    onLeaveVisualTab = new EventEmitter<void>();
+    readonly onPreviewSelect = output<void>();
+    readonly onEditSelect = output<void>();
+    readonly onBlurEditor = output<void>();
+    readonly textWithDomainActionsFound = output<TextWithDomainAction[]>();
+    readonly onDefaultPreviewHtmlChanged = output<SafeHtml | undefined>();
+    readonly onLeaveVisualTab = output<void>();
 
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     readonly onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
@@ -336,11 +285,16 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     /** Emits when user selects lines in the editor (includes selectedText, position, and column info for inline refinement) */
     readonly onSelectionChange = output<EditorSelectionWithPosition | undefined>();
 
-    defaultPreviewHtml: SafeHtml | undefined;
-    inPreviewMode = false;
-    inVisualMode = false;
-    inEditMode = true;
-    uniqueMarkdownEditorId: string;
+    readonly defaultPreviewHtml = signal<SafeHtml | undefined>(undefined);
+    /** The id of the currently active tab. */
+    readonly activeTab = signal<string>(TAB_EDIT_ID);
+    readonly inPreviewMode = signal<boolean>(false);
+    readonly inVisualMode = signal<boolean>(false);
+    readonly inEditMode = signal<boolean>(true);
+    /** Tracks whether the visual/preview content has been activated at least once, mirroring ngbNav's lazy `destroyOnHide=false` behavior. */
+    protected readonly visualTabActivated = signal<boolean>(false);
+    protected readonly previewTabActivated = signal<boolean>(false);
+    readonly uniqueMarkdownEditorId: string;
     resizeObserver?: ResizeObserver;
     /** Disposable for the selection change listener */
     private selectionChangeDisposable?: { dispose: () => void };
@@ -350,6 +304,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private cachedSelection?: CachedSelectionWithText;
     /** Window scroll handler reference, stored so it can be removed in ngOnDestroy. */
     private windowScrollHandler?: () => void;
+    /** Emits whenever the active language changes, used to re-evaluate translated menu labels. */
+    private readonly languageChange = toSignal(this.translateService.onLangChange);
     /** Reactive translated label for the "Your Original" diff-pane header (updates on language change). */
     protected readonly diffOriginalLabel = toSignal(this.translateService.stream('artemisApp.programmingExercise.problemStatement.diffView.originalLabel'), { initialValue: '' });
     /** Reactive translated label for the "AI Suggestion" diff-pane header (updates on language change). */
@@ -359,23 +315,49 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     /** Reactive translated hint text for the unified diff view (updates on language change). */
     protected readonly diffUnifiedHint = toSignal(this.translateService.stream('artemisApp.programmingExercise.problemStatement.diffView.unifiedHint'), { initialValue: '' });
     /** Pixel width of the original (left) pane in the diff editor, used to align header labels with the sash. */
-    protected diffOriginalPaneWidth: number | undefined;
-    targetWrapperHeight?: number;
-    minWrapperHeight?: number;
-    constrainDragPositionFn?: (pointerPosition: Point) => Point;
-    isResizing = false;
-    displayedActions: MarkdownActionsByGroup = {
-        style: [],
-        standard: [],
-        header: [],
-        color: undefined,
-        domain: { withoutOptions: [], withOptions: [] },
-        lecture: undefined,
-        artemisIntelligence: [],
-        meta: [],
-    };
-    readonly showTextStyleActions = signal<boolean>(true);
-    readonly showNonTextStyleActions = signal<boolean>(true);
+    protected readonly diffOriginalPaneWidth = signal<number | undefined>(undefined);
+    readonly targetWrapperHeight = signal<number | undefined>(undefined);
+    readonly minWrapperHeight = signal<number | undefined>(undefined);
+    readonly isResizing = signal<boolean>(false);
+    /**
+     * The actions to display in the editor, grouped by type and derived reactively from the action inputs.
+     */
+    readonly displayedActions = computed<MarkdownActionsByGroup>(() => {
+        const domainActions = this.domainActions();
+        return {
+            style: this.filterDisplayedActions(this.defaultActions()).filter((action) => action instanceof TextStyleTextEditorAction) as TextStyleTextEditorAction[],
+            standard: this.filterDisplayedActions(this.defaultActions()).filter((action) => !(action instanceof TextStyleTextEditorAction)),
+            header: this.filterDisplayedActions(this.headerActions()?.actions ?? []),
+            color: this.filterDisplayedAction(this.colorAction()),
+            domain: {
+                withoutOptions: this.filterDisplayedActions(domainActions.filter((action) => !(action instanceof TextEditorDomainActionWithOptions))),
+                withOptions: this.filterDisplayedActions(
+                    domainActions.filter((action) => action instanceof TextEditorDomainActionWithOptions),
+                ) as TextEditorDomainActionWithOptions[],
+            },
+            lecture: this.filterDisplayedAction(this.lectureReferenceAction()),
+            artemisIntelligence: this.filterDisplayedActions(this.artemisIntelligenceActions() ?? []),
+            meta: this.filterDisplayedActions(this.metaActions()),
+        };
+    });
+
+    /**
+     * The PrimeNG TieredMenu model for the lecture attachment reference picker, derived from the available lectures,
+     * their attachment/video units, and slides. Recomputed when the lecture action or the active language changes.
+     */
+    protected readonly lectureMenuModel = computed<MenuItem[]>(() => {
+        // Touch the language signal so translated labels (e.g. slide numbers) refresh on language change.
+        this.languageChange();
+        const lectureAction = this.displayedActions().lecture;
+        if (!lectureAction) {
+            return [];
+        }
+        const lectures = lectureAction.lecturesWithDetails ?? [];
+        if (!lectures.length) {
+            return [{ label: this.translateService.instant('global.generic.emptyList'), disabled: true }];
+        }
+        return lectures.map((lecture) => this.buildLectureMenuItem(lectureAction, lecture));
+    });
 
     /**
      * Color mapping from hex codes to CSS class names.
@@ -394,9 +376,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     colorSignal: Signal<string[]> = computed(() => [...this.colorToClassMap.keys()]);
     allowedFileExtensions = signal<string>(UPLOAD_MARKDOWN_FILE_EXTENSIONS.map((ext) => `.${ext}`).join(', ')).asReadonly();
 
-    static readonly TAB_EDIT = 'editor_edit';
-    static readonly TAB_PREVIEW = 'editor_preview';
-    static readonly TAB_VISUAL = 'editor_visual';
+    static readonly TAB_EDIT = TAB_EDIT_ID;
+    static readonly TAB_PREVIEW = TAB_PREVIEW_ID;
+    static readonly TAB_VISUAL = TAB_VISUAL_ID;
     readonly colorPickerMarginTop = 35;
     readonly colorPickerHeight = 110;
     // Icons
@@ -420,7 +402,17 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     constructor() {
         this.uniqueMarkdownEditorId = 'markdown-editor-' + window.crypto.randomUUID().toString();
-        const injector = inject(Injector);
+
+        // Keep the live content and the Monaco editor in sync with the markdown input. This mirrors the previous
+        // `set markdown(...)` side effect: an incoming binding value updates the editor (where `setText` guards
+        // against redundant updates and performs emoji conversion) WITHOUT emitting markdownChange. The editor is read
+        // untracked so this only reacts to input changes, not to the editor first becoming available (initial content
+        // is set in {@link ngAfterViewInit}).
+        effect(() => {
+            const value = this.markdown();
+            this.currentMarkdown.set(value);
+            untracked(() => this.applyMarkdownToEditor(value));
+        });
 
         effect(() => {
             this.enableExerciseReviewComments();
@@ -450,7 +442,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                                 this.adjustEditorDimensions();
                             }
                         },
-                        { injector },
+                        { injector: this.injector },
                     );
                 });
             }
@@ -478,24 +470,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     ngAfterContentInit(): void {
         // Affects the template - done in this method to avoid ExpressionChangedAfterItHasBeenCheckedErrors.
-        this.targetWrapperHeight = !this.externalHeight ? this.initialEditorHeight.valueOf() : undefined;
-        this.minWrapperHeight = this.resizableMinHeight.valueOf();
-        this.constrainDragPositionFn = this.constrainDragPosition.bind(this);
-        this.displayedActions = {
-            style: this.filterDisplayedActions(this.defaultActions).filter((action) => action instanceof TextStyleTextEditorAction) as TextStyleTextEditorAction[],
-            standard: this.filterDisplayedActions(this.defaultActions).filter((action) => !(action instanceof TextStyleTextEditorAction)),
-            header: this.filterDisplayedActions(this.headerActions?.actions ?? []),
-            color: this.filterDisplayedAction(this.colorAction),
-            domain: {
-                withoutOptions: this.filterDisplayedActions(this.domainActions.filter((action) => !(action instanceof TextEditorDomainActionWithOptions))),
-                withOptions: this.filterDisplayedActions(
-                    this.domainActions.filter((action) => action instanceof TextEditorDomainActionWithOptions),
-                ) as TextEditorDomainActionWithOptions[],
-            },
-            lecture: this.filterDisplayedAction(this.lectureReferenceAction),
-            artemisIntelligence: this.filterDisplayedActions(this.artemisIntelligenceActions ?? []),
-            meta: this.filterDisplayedActions(this.metaActions),
-        };
+        this.targetWrapperHeight.set(!this.externalHeight() ? this.initialEditorHeight().valueOf() : undefined);
+        this.minWrapperHeight.set(this.resizableMinHeight().valueOf());
     }
 
     filterDisplayedActions<T extends TextEditorAction>(actions: T[]): T[] {
@@ -504,6 +480,67 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     filterDisplayedAction<T extends TextEditorAction>(action?: T): T | undefined {
         return action?.hideInEditor ? undefined : action;
+    }
+
+    /**
+     * Builds the PrimeNG menu item for a lecture. Lectures without referencable attachments insert a lecture
+     * reference directly; otherwise the lecture exposes a submenu with its units, slides, and attachments.
+     */
+    private buildLectureMenuItem(lectureAction: LectureAttachmentReferenceAction, lecture: LectureWithDetails): MenuItem {
+        if (!this.hasReferencableAttachments(lecture)) {
+            return {
+                label: lecture.title,
+                command: () => lectureAction.executeInCurrentEditor({ reference: ReferenceType.LECTURE, lecture }),
+            };
+        }
+
+        const items: MenuItem[] = [{ label: lecture.title, command: () => lectureAction.executeInCurrentEditor({ reference: ReferenceType.LECTURE, lecture }) }];
+
+        for (const unit of lecture.attachmentVideoUnits ?? []) {
+            // Only show attachment units with an attachment.
+            if (unit.attachment && unit.attachment.link) {
+                items.push(this.buildAttachmentVideoUnitMenuItem(lectureAction, lecture, unit));
+            }
+        }
+
+        for (const attachment of lecture.attachments ?? []) {
+            items.push({
+                label: attachment.name,
+                command: () => lectureAction.executeInCurrentEditor({ reference: ReferenceType.ATTACHMENT, lecture, attachment }),
+            });
+        }
+
+        return { label: lecture.title, items };
+    }
+
+    /**
+     * Builds the menu item for an attachment video unit. Units without slides insert a unit reference directly;
+     * otherwise the unit exposes a submenu listing its individual slides.
+     */
+    private buildAttachmentVideoUnitMenuItem(
+        lectureAction: LectureAttachmentReferenceAction,
+        lecture: LectureWithDetails,
+        unit: NonNullable<LectureWithDetails['attachmentVideoUnits']>[number],
+    ): MenuItem {
+        if (!unit.slides?.length) {
+            return {
+                label: unit.name,
+                command: () => lectureAction.executeInCurrentEditor({ reference: ReferenceType.ATTACHMENT_UNITS, lecture, attachmentVideoUnit: unit }),
+            };
+        }
+
+        const items: MenuItem[] = [
+            { label: unit.name, command: () => lectureAction.executeInCurrentEditor({ reference: ReferenceType.ATTACHMENT_UNITS, lecture, attachmentVideoUnit: unit }) },
+        ];
+        unit.slides.forEach((slide, index) => {
+            const slideNumber = index + 1;
+            items.push({
+                label: this.translateService.instant('artemisApp.markdownEditor.slideWithNumber', { number: slideNumber }),
+                command: () => lectureAction.executeInCurrentEditor({ reference: ReferenceType.SLIDE, lecture, slide, attachmentVideoUnit: unit, slideIndex: slideNumber }),
+            });
+        });
+
+        return { label: unit.name, items };
     }
 
     /**
@@ -527,7 +564,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     ngAfterViewInit(): void {
         this.adjustEditorDimensions();
         this.monacoEditor()!.setWordWrap(true);
-        this.monacoEditor()!.changeModel('markdown-content.custom-md', this._markdown ?? '', 'custom-md');
+        this.monacoEditor()!.changeModel('markdown-content.custom-md', this.markdown() ?? '', 'custom-md');
         this.resizeObserver = new ResizeObserver(() => {
             this.adjustEditorDimensions();
         });
@@ -540,27 +577,27 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.resizeObserver.observe(this.actionPalette()!.nativeElement);
         }
         [
-            this.defaultActions,
-            this.headerActions?.actions ?? [],
-            this.domainActions,
-            ...(this.colorAction ? [this.colorAction] : []),
-            ...(this.lectureReferenceAction ? [this.lectureReferenceAction] : []),
-            ...this.artemisIntelligenceActions,
-            this.metaActions,
+            this.defaultActions(),
+            this.headerActions()?.actions ?? [],
+            this.domainActions(),
+            ...(this.colorAction() ? [this.colorAction()!] : []),
+            ...(this.lectureReferenceAction() ? [this.lectureReferenceAction()!] : []),
+            ...this.artemisIntelligenceActions(),
+            this.metaActions(),
         ]
             .flat()
             .forEach((action) => {
                 if (action instanceof FullscreenAction) {
                     // We include the full element if the initial height is set to 'external' so the editor is resized to fill the screen.
                     action.element = this.isHeightManagedExternally() ? this.fullElement().nativeElement : this.wrapper().nativeElement;
-                } else if (this.enableFileUpload && action instanceof AttachmentAction) {
+                } else if (this.enableFileUpload() && action instanceof AttachmentAction) {
                     action.setUploadCallback(this.embedFiles.bind(this));
                     action.setOpenFileDialogCallback(this.openFilePicker.bind(this));
                 }
                 this.monacoEditor()!.registerAction(action);
             });
 
-        if (this.useDefaultMarkdownEditorOptions) {
+        if (this.useDefaultMarkdownEditorOptions()) {
             this.monacoEditor()!.applyOptionPreset(DEFAULT_MARKDOWN_EDITOR_OPTIONS);
         }
 
@@ -649,16 +686,16 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * Constrains the drag position of the resize handle.
      * @param pointerPosition The current mouse position while dragging.
      */
-    constrainDragPosition(pointerPosition: Point): Point {
+    constrainDragPosition = (pointerPosition: Point): Point => {
         // We do not want to drag past the minimum or maximum height.
         // x is not used, so we can ignore it.
-        const minY = this.wrapper().nativeElement.getBoundingClientRect().top + this.resizableMinHeight;
-        const maxY = this.wrapper().nativeElement.getBoundingClientRect().top + this.resizableMaxHeight;
+        const minY = this.wrapper().nativeElement.getBoundingClientRect().top + this.resizableMinHeight();
+        const maxY = this.wrapper().nativeElement.getBoundingClientRect().top + this.resizableMaxHeight();
         return {
             x: pointerPosition.x,
             y: Math.min(maxY, Math.max(minY, pointerPosition.y)),
         };
-    }
+    };
 
     ngOnDestroy(): void {
         this.resizeObserver?.disconnect();
@@ -674,9 +711,35 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     onTextChanged(event: { text: string; fileName: string }): void {
-        this.markdown = event.text;
+        // A user edit updates the live content, re-applies it to the editor (handling emoji conversion), and notifies
+        // bound parents via markdownChange. Programmatic updates go through the input effect / setMarkdown and do NOT
+        // emit, preserving the legacy distinction between binding updates and user edits.
+        this.currentMarkdown.set(event.text);
+        this.applyMarkdownToEditor(event.text);
         this.markdownChange.emit(event.text);
     }
+
+    /**
+     * Imperatively sets the markdown content (live value + editor), WITHOUT emitting markdownChange. This mirrors the
+     * legacy `editor.markdown = value` input setter and is intended for consumers holding a reference to this editor.
+     * @param value The markdown content to apply.
+     */
+    setMarkdown(value: string | undefined): void {
+        this.currentMarkdown.set(value);
+        this.applyMarkdownToEditor(value);
+    }
+
+    /**
+     * Pushes the given content into the Monaco editor if it is available. setText guards against redundant updates
+     * and performs emoji conversion.
+     * @param value The content to apply.
+     */
+    private applyMarkdownToEditor(value: string | undefined): void {
+        this.monacoEditor()?.setText(value ?? '');
+    }
+
+    readonly showTextStyleActions = signal<boolean>(true);
+    readonly showNonTextStyleActions = signal<boolean>(true);
 
     /**
      * Hides actions that are not applicable in the given context, and shows actions that can be used.
@@ -699,7 +762,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         // This prevents the element from escaping its boundaries when being dragged. This is necessary because
         event.source.reset();
         // The editor's bottom edge becomes the top edge of the handle.
-        this.targetWrapperHeight = event.pointerPosition.y - this.wrapper().nativeElement.getBoundingClientRect().top - this.getElementClientHeight(this.resizePlaceholder()) / 2;
+        this.targetWrapperHeight.set(
+            event.pointerPosition.y - this.wrapper().nativeElement.getBoundingClientRect().top - this.getElementClientHeight(this.resizePlaceholder()) / 2,
+        );
     }
 
     /**
@@ -708,10 +773,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     onContentHeightChanged(newContentHeight: number | undefined): void {
         // Upon switching back from the preview tab, the file upload footer will briefly have a height of 0. We ignore this case to avoid an incorrect height.
-        if (this.linkEditorHeightToContentHeight && !(this.enableFileUpload && this.getElementClientHeight(this.fileUploadFooter()) === 0)) {
+        if (this.linkEditorHeightToContentHeight() && !(this.enableFileUpload() && this.getElementClientHeight(this.fileUploadFooter()) === 0)) {
             const totalHeight = (newContentHeight ?? 0) + this.getElementClientHeight(this.fileUploadFooter()) + this.getElementClientHeight(this.actionPalette());
             // Clamp the height so it is between the minimum and maximum height.
-            this.targetWrapperHeight = Math.max(this.resizableMinHeight, Math.min(this.resizableMaxHeight, totalHeight));
+            this.targetWrapperHeight.set(Math.max(this.resizableMinHeight(), Math.min(this.resizableMaxHeight(), totalHeight)));
         }
     }
 
@@ -758,35 +823,55 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * Called when a nav tab is shown. Adjusts editor dimensions and focuses the editor if the edit tab is active.
      */
     onTabShown(): void {
-        if (this.inEditMode) {
+        if (this.inEditMode()) {
             this.adjustEditorDimensions();
             this.monacoEditor()!.focus();
         }
     }
 
     /**
-     * Called when the user changes the active tab. If the preview tab is selected, emits the onPreviewSelect event.
-     * @param event The event that contains the new active tab.
+     * Called when the user changes the active tab. Tracks the active tab and the resulting mode, emits the
+     * appropriate selection events, parses the markdown when leaving the edit/visual tab, and re-lays out and
+     * focuses the editor once the edit tab has been rendered.
+     * @param nextId The id of the newly activated tab.
      */
-    onNavChanged(event: NgbNavChangeEvent) {
-        this.inPreviewMode = event.nextId === this.TAB_PREVIEW;
-        this.inVisualMode = event.nextId === this.TAB_VISUAL;
-        this.inEditMode = event.nextId === this.TAB_EDIT;
-        if (this.inEditMode) {
+    onTabChange(nextId: string | number | undefined): void {
+        const previousId = this.activeTab();
+        const newId = `${nextId}`;
+        if (previousId === newId) {
+            return;
+        }
+        this.activeTab.set(newId);
+        this.inPreviewMode.set(newId === this.TAB_PREVIEW);
+        this.inVisualMode.set(newId === this.TAB_VISUAL);
+        this.inEditMode.set(newId === this.TAB_EDIT);
+        if (newId === this.TAB_VISUAL) {
+            this.visualTabActivated.set(true);
+        }
+        if (newId === this.TAB_PREVIEW) {
+            this.previewTabActivated.set(true);
+        }
+
+        if (this.inEditMode()) {
             this.onEditSelect.emit();
-        } else if (this.inPreviewMode) {
+        } else if (this.inPreviewMode()) {
             this.onPreviewSelect.emit();
         }
         this.updateReviewCommentButton();
 
         // Some components need to know when the user leaves the visual tab, as it might make changes to the underlying data.
-        if (event.activeId === this.TAB_VISUAL) {
+        if (previousId === this.TAB_VISUAL) {
             this.onLeaveVisualTab.emit();
         }
 
         // Parse the markdown when switching away from the edit tab or from visual to preview mode, as the visual mode may make changes to the markdown.
-        if (event.activeId === this.TAB_EDIT || (event.activeId === this.TAB_VISUAL && this.inPreviewMode)) {
+        if (previousId === this.TAB_EDIT || (previousId === this.TAB_VISUAL && this.inPreviewMode())) {
             this.parseMarkdown();
+        }
+
+        // Mirror ngbNav's `(shown)` event: re-layout and focus the editor once the edit tab content is visible.
+        if (this.inEditMode()) {
+            afterNextRender(() => this.onTabShown(), { injector: this.injector });
         }
     }
 
@@ -795,16 +880,17 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     onDiffOriginalPaneLayoutChanged(originalWidth: number): void {
-        this.diffOriginalPaneWidth = originalWidth;
+        this.diffOriginalPaneWidth.set(originalWidth);
     }
 
-    parseMarkdown(domainActionsToCheck: TextEditorDomainAction[] = this.domainActions): void {
-        if (this.showDefaultPreview) {
-            this.defaultPreviewHtml = this.artemisMarkdown.safeHtmlForMarkdown(this._markdown);
-            this.onDefaultPreviewHtmlChanged.emit(this.defaultPreviewHtml);
+    parseMarkdown(domainActionsToCheck: TextEditorDomainAction[] = this.domainActions()): void {
+        const markdown = this.currentMarkdown();
+        if (this.showDefaultPreview()) {
+            this.defaultPreviewHtml.set(this.artemisMarkdown.safeHtmlForMarkdown(markdown));
+            this.onDefaultPreviewHtmlChanged.emit(this.defaultPreviewHtml());
         }
-        if (domainActionsToCheck.length && this._markdown) {
-            this.textWithDomainActionsFound.emit(parseMarkdownForDomainActions(this._markdown, domainActionsToCheck));
+        if (domainActionsToCheck.length && markdown) {
+            this.textWithDomainActionsFound.emit(parseMarkdownForDomainActions(markdown, domainActionsToCheck));
         }
     }
 
@@ -843,7 +929,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * @param inputElement The input element that contains the files. If provided, the input element will be reset.
      */
     embedFiles(files: File[], inputElement?: HTMLInputElement): void {
-        if (!this.enableFileUpload) {
+        if (!this.enableFileUpload()) {
             return;
         }
         files.forEach((file) => {
@@ -872,8 +958,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private processFileUploadResponse(response: FileUploadResponse, file: File): void {
         const extension = file.name.split('.').last()?.toLocaleLowerCase();
 
-        const attachmentAction: AttachmentAction | undefined = this.defaultActions.find((action) => action instanceof AttachmentAction) as AttachmentAction;
-        const urlAction: UrlAction | undefined = this.defaultActions.find((action) => action instanceof UrlAction);
+        const attachmentAction: AttachmentAction | undefined = this.defaultActions().find((action) => action instanceof AttachmentAction) as AttachmentAction;
+        const urlAction: UrlAction | undefined = this.defaultActions().find((action) => action instanceof UrlAction);
         if (!attachmentAction || !urlAction || !response.path) {
             throw new Error('Cannot process file upload.');
         }
@@ -910,7 +996,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     onSelectColor(color: string): void {
         const colorName = this.colorToClassMap.get(color);
         if (colorName) {
-            this.colorAction?.executeInCurrentEditor({ color: colorName });
+            this.colorAction()?.executeInCurrentEditor({ color: colorName });
         }
     }
 
@@ -919,7 +1005,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * @private
      */
     private isHeightManagedExternally(): boolean {
-        return this.externalHeight;
+        return this.externalHeight();
     }
 
     /**
@@ -962,8 +1048,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (!this.reviewCommentManager) {
             this.reviewCommentManager = new ReviewCommentWidgetManager(this.monacoEditor()!, this.viewContainerRef, {
                 hoverButtonClass: REVIEW_COMMENT_HOVER_BUTTON_CLASS,
-                shouldShowHoverButton: () => this.enableExerciseReviewComments() && this.inEditMode,
-                canSubmit: () => this.inEditMode && !this.showLocationWarning(),
+                shouldShowHoverButton: () => this.enableExerciseReviewComments() && this.inEditMode(),
+                canSubmit: () => this.inEditMode() && !this.showLocationWarning(),
                 getDraftFileName: () => PROBLEM_STATEMENT_FILE_PATH,
                 getDraftContext: () => ({
                     targetType: CommentThreadLocationType.PROBLEM_STATEMENT,

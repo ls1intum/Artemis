@@ -136,7 +136,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/**', // checklist-panel uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.ts', // problem-statement service uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts', // problem-statement utils uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/editor/monaco-editor/inline-refinement-button/', // inline-refinement-button uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/editor/**', // editor module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/hyperion/**', // hyperion module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**', // build phases editor uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/version-history/**', // programming version history module uses Vitest (see vitest.config.ts)
@@ -198,7 +198,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/shared-ui/image-cropper/', // image cropper uses Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.ts',
         '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts',
-        '<rootDir>/src/main/webapp/app/editor/monaco-editor/inline-refinement-button/',
+        '<rootDir>/src/main/webapp/app/editor/', // editor module uses Vitest (see vitest.config.ts)
         '<rootDir>/src/main/webapp/app/exercise/exercise-headers/', // exercise headers module uses Vitest
         '<rootDir>/src/main/webapp/app/exercise/synchronization/', // exercise synchronization module uses Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/', // build phases editor uses Vitest
@@ -229,9 +229,11 @@ module.exports = {
         global: {
             statements: 83,
             branches: 72.9,
-            // Lowered (72.2 -> 72) after moving the well-covered foundation module fully out of Jest (now under Vitest),
-            // which removed those functions from the Jest denominator and nudged the global average down.
-            functions: 72,
+            // Lowered (72 -> 70) after moving the editor module (markdown/monaco editor) out of Jest (now under
+            // Vitest). The monaco editor component's many small, well-covered methods left the Jest denominator,
+            // nudging the global functions average down (actual 70.17% at the time of the move). The other metrics
+            // stayed comfortably above their thresholds (statements 83.5, branches 75.13, lines 84.81).
+            functions: 70,
             lines: 84,
         },
     },
@@ -305,7 +307,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/shared-ui/image-cropper/', // image cropper (vitest)
         '<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts', // migrated to Vitest
-        '<rootDir>/src/main/webapp/app/editor/monaco-editor/inline-refinement-button/', // migrated to Vitest
+        '<rootDir>/src/main/webapp/app/editor/', // editor module migrated to Vitest
         '<rootDir>/src/main/webapp/app/exercise/exercise-headers/', // exercise headers module
         '<rootDir>/src/main/webapp/app/exercise/synchronization/', // exercise synchronization module
         '<rootDir>/src/main/webapp/app/exercise/version-history/', // exercise version history module

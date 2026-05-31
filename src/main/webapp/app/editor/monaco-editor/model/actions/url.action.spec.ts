@@ -1,4 +1,5 @@
 import { UrlAction } from './url.action';
+import { vi } from 'vitest';
 import { TextEditorPosition } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-position.model';
 import { TextEditorRange } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-range.model';
 import { MonacoTextEditorAdapter } from 'app/editor/monaco-editor/model/actions/adapter/monaco-text-editor.adapter';
@@ -10,20 +11,20 @@ describe('UrlAction', () => {
     const editor = new MonacoTextEditorAdapter({} as monaco.editor.IStandaloneCodeEditor);
 
     beforeEach(() => {
-        jest.spyOn(editor, 'replaceTextAtRange').mockReturnValue(undefined);
-        jest.spyOn(editor, 'focus').mockReturnValue(undefined);
-        jest.spyOn(editor, 'setSelection').mockReturnValue(undefined);
+        vi.spyOn(editor, 'replaceTextAtRange').mockReturnValue(undefined);
+        vi.spyOn(editor, 'focus').mockReturnValue(undefined);
+        vi.spyOn(editor, 'setSelection').mockReturnValue(undefined);
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should add a placeholder at cursor position if no text is selected', () => {
         const currentPosition = new TextEditorPosition(1, 50);
-        jest.spyOn(editor, 'getSelection').mockReturnValue(new TextEditorRange(currentPosition, currentPosition));
-        jest.spyOn(editor, 'getPosition').mockReturnValue(currentPosition);
-        jest.spyOn(editor, 'getTextAtRange').mockReturnValue('');
+        vi.spyOn(editor, 'getSelection').mockReturnValue(new TextEditorRange(currentPosition, currentPosition));
+        vi.spyOn(editor, 'getPosition').mockReturnValue(currentPosition);
+        vi.spyOn(editor, 'getTextAtRange').mockReturnValue('');
 
         action.run(editor);
 
@@ -35,9 +36,9 @@ describe('UrlAction', () => {
         const currentPosition = new TextEditorPosition(1, 36);
         const selectionStart = new TextEditorPosition(1, 15);
         const mockText = 'something interesting';
-        jest.spyOn(editor, 'getSelection').mockReturnValue(new TextEditorRange(selectionStart, currentPosition));
-        jest.spyOn(editor, 'getPosition').mockReturnValue(currentPosition);
-        jest.spyOn(editor, 'getTextAtRange').mockReturnValue(mockText);
+        vi.spyOn(editor, 'getSelection').mockReturnValue(new TextEditorRange(selectionStart, currentPosition));
+        vi.spyOn(editor, 'getPosition').mockReturnValue(currentPosition);
+        vi.spyOn(editor, 'getTextAtRange').mockReturnValue(mockText);
 
         action.run(editor);
 
