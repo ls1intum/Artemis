@@ -600,12 +600,6 @@ public class Course extends DomainObject {
         this.onboardingDone = onboardingDone;
     }
 
-    // TODO: Remove this method once the mobile iOS app no longer reads faqEnabled and all users have updated to the latest app version.
-    @JsonProperty("faqEnabled")
-    public boolean isFaqEnabled() {
-        return true;
-    }
-
     public String getEnrollmentConfirmationMessage() {
         return enrollmentConfirmationMessage;
     }
