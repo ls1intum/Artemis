@@ -236,7 +236,8 @@ public class ParticipationResource {
      * @param participationId of the participation that should be resumed
      * @return ResponseEntity with status 200 (OK) and with updated participation as a body, or with status 500 (Internal Server Error)
      */
-    @PutMapping("exercises/{exerciseId}/resume-programming-participation/{participationId}")
+    @PutMapping({ "exercises/{exerciseId}/participations/{participationId}/resume-programming-participation",
+            "exercises/{exerciseId}/resume-programming-participation/{participationId}" })
     @EnforceAtLeastStudent
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExerciseStudentParticipation> resumeParticipation(@PathVariable Long exerciseId, @PathVariable Long participationId) {
