@@ -1,11 +1,5 @@
-<div class="modal-content">
-    <div class="modal-header">
-        <h5 class="modal-title">
-            <span jhiTranslate="artemisApp.buildQueue.filter.title"></span>
-        </h5>
-        <button type="button" class="btn-close" aria-label="Close" (click)="cancel()"></button>
-    </div>
-    <div class="modal-body">
+<div>
+    <div>
         <div class="container-fluid">
             <div class="row finished-build-jobs-filter-border-bottom">
                 <div class="col d-flex flex-row pb-1">
@@ -127,7 +121,7 @@
             </div>
         </div>
     </div>
-    <div class="modal-footer">
+    <div class="d-flex justify-content-end gap-2 mt-3">
         <button type="button" class="btn btn-secondary" (click)="cancel()">
             <span jhiTranslate="artemisApp.buildQueue.filter.close"></span>
         </button>

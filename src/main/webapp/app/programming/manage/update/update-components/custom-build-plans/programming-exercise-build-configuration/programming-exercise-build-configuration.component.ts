@@ -159,11 +159,11 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     }
 
     addEnvVar() {
-        this.envVars.push(['', '']);
+        this.envVars = [...this.envVars, ['', '']];
     }
 
     removeEnvVar(index: number) {
-        this.envVars.splice(index, 1);
+        this.envVars = this.envVars.filter((_, envVarIndex) => envVarIndex !== index);
         this.parseDockerFlagsToString();
     }
 
