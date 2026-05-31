@@ -19,6 +19,8 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { HttpResponse } from '@angular/common/http';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('CommitHistoryComponent', () => {
     let component: CommitHistoryComponent;
@@ -116,6 +118,7 @@ describe('CommitHistoryComponent', () => {
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: DialogService, useClass: MockDialogService },
             ],
         }).compileComponents();
     });
