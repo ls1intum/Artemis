@@ -74,6 +74,9 @@ export default defineConfig({
             'src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts', // include problem statement utils tests
             'src/main/webapp/app/editor/**/*.spec.ts', // include all editor module tests (markdown/monaco editor)
             'src/main/webapp/app/programming/manage/exercise/programming-exercise.component.spec.ts', // include programming exercise component tests
+            'src/main/webapp/app/exercise/synchronization/**/*.spec.ts', // include exercise synchronization tests
+            'src/main/webapp/app/exercise/version-history/**/*.spec.ts', // include exercise version history tests
+            'src/main/webapp/app/exercise/review/**/*.spec.ts', // include review module tests
             'src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/**/*.spec.ts', // include checklist-panel tests
             'src/main/webapp/app/hyperion/**/*.spec.ts', // include hyperion module tests
             'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**/*.spec.ts', // include build phases editor tests
@@ -256,11 +259,10 @@ export default defineConfig({
                 'src/main/webapp/app/core/config/prod.config.ts', // exclude dayjs configuration file (not really testable)
             ],
             thresholds: {
-                // Tuned slightly below current actuals to absorb further Jest→Vitest migration drift.
-                lines: 89.2,
-                statements: 89.0,
-                branches: 73.6,
-                functions: 86.6,
+                lines: 88.8,
+                statements: 88.7,
+                branches: 73.7,
+                functions: 86.2,
             },
         },
     },

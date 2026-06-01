@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
@@ -19,11 +20,9 @@ import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('TeamParticipationTableComponent', () => {
     setupTestBed({ zoneless: true });
-
     let comp: TeamParticipationTableComponent;
     let fixture: ComponentFixture<TeamParticipationTableComponent>;
     let debugElement: DebugElement;
@@ -183,15 +182,14 @@ describe('TeamParticipationTableComponent', () => {
         fixture.componentRef.setInput('course', course);
         fixture.componentRef.setInput('exercise', exercise4);
         fixture.componentRef.setInput('team', mockTeam);
-        vi.spyOn(router, 'navigate').mockResolvedValue(true);
-
-        fixture.detectChanges();
+        vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
+        comp.ngOnInit();
         await fixture.whenStable();
     });
 
     it('Exercises for one team are loaded correctly', () => {
         // Make sure that all 3 exercises were received for exercise
-        expect(comp.exercises).toHaveLength(course.exercises!.length);
+        expect(comp.exercises()).toHaveLength(course.exercises!.length);
 
         // Check that ngx-datatable is present
         const datatable = debugElement.query(By.css('jhi-data-table'));
@@ -215,10 +213,8 @@ describe('TeamParticipationTableComponent', () => {
 
     it('Navigate to assessment editor when opening exercise submission', async () => {
         const participation = exercise2.studentParticipations![0];
-
         await comp.openAssessmentEditor(exercise2, participation, 'new');
-
-        expect(router.navigate).toHaveBeenCalledTimes(1);
+        expect(router.navigate).toHaveBeenCalledOnce();
         expect(router.navigate).toHaveBeenCalledWith([
             '/course-management',
             course.id!.toString(),

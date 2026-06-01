@@ -1,7 +1,7 @@
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { User } from 'app/account/user/user.model';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -11,11 +11,18 @@ import { TeamService } from 'app/exercise/team/team.service';
 import { TeamsImportDialogComponent } from 'app/exercise/team/teams-import-dialog/teams-import-dialog.component';
 import { flatMap } from 'lodash-es';
 import { MockProvider } from 'ng-mocks';
-import { Subject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { mockExercise, mockSourceExercise, mockSourceTeamStudents, mockSourceTeams, mockTeam, mockTeamStudents, mockTeams } from 'test/helpers/mocks/service/mock-team.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
+/**
+ * `fixture.detectChanges(...)` calls below pass `false` to skip the zoneless dev-mode
+ * "expression changed after it was checked" verification pass. The dialog keeps a number
+ * of plain (non-signal) mutable fields (`sourceTeams`, `importStrategy`, conflict sets,
+ * etc.) used to render large portions of the template. In zoneless TestBed mode the
+ * verification pass does not track these mutations, but the real CD pass renders correctly.
+ */
 describe('TeamsImportDialogComponent', () => {
     setupTestBed({ zoneless: true });
 
@@ -30,6 +37,11 @@ describe('TeamsImportDialogComponent', () => {
     const registrationNumbers = flatMap(mockTeams, (team) => team.students?.map((student) => student.visibleRegistrationNumber));
     const exercise: Exercise = mockExercise;
 
+    /**
+     * Reset the component to a clean baseline between tests. We can re-set the signal
+     * inputs (`exercise`, `teams`) directly because they're plain signals initialized
+     * from dialog data — not @Input bindings.
+     */
     function resetComponent() {
         comp.teams.set(teams);
         comp.exercise.set(exercise);
@@ -52,14 +64,14 @@ describe('TeamsImportDialogComponent', () => {
 
     beforeEach(async () => {
         dialogRefCloseSpy = vi.fn();
+        const dialogConfig = { data: { exercise, teams } };
 
         await TestBed.configureTestingModule({
-            imports: [TeamsImportDialogComponent],
             providers: [
                 MockProvider(TeamService),
-                { provide: DynamicDialogRef, useValue: { close: dialogRefCloseSpy, onClose: new Subject<Team[] | undefined>() } },
-                { provide: DynamicDialogConfig, useValue: { data: { exercise, teams } } },
                 MockProvider(AlertService),
+                { provide: DynamicDialogRef, useValue: { close: dialogRefCloseSpy } },
+                { provide: DynamicDialogConfig, useValue: dialogConfig },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
@@ -493,9 +505,9 @@ describe('TeamsImportDialogComponent', () => {
             resetComponent();
         });
 
-        it('should return false', () => {
+        it('should close the dialog without a result', () => {
             comp.clear();
-            expect(dialogRefCloseSpy).toHaveBeenCalledWith(undefined);
+            expect(dialogRefCloseSpy).toHaveBeenCalledExactlyOnceWith(undefined);
         });
     });
 
@@ -625,15 +637,18 @@ describe('TeamsImportDialogComponent', () => {
             alertServiceStub = vi.spyOn(alertService, 'success');
         });
 
-        it('change component files and convert file teams to normal teams', () => {
+        it('change component files and convert file teams to normal teams', async () => {
             vi.useFakeTimers();
-            comp.isImporting = true;
-            comp.onSaveSuccess(response);
-            vi.advanceTimersByTime(500);
-            expect(dialogRefCloseSpy).toHaveBeenCalledWith(mockSourceTeams);
-            expect(comp.isImporting).toBe(false);
-            expect(alertServiceStub).toHaveBeenCalledWith('artemisApp.team.importSuccess', { numberOfImportedTeams: comp.numberOfTeamsToBeImported });
-            vi.useRealTimers();
+            try {
+                comp.isImporting = true;
+                comp.onSaveSuccess(response);
+                expect(dialogRefCloseSpy).toHaveBeenCalledWith(mockSourceTeams);
+                expect(comp.isImporting).toBe(false);
+                await vi.advanceTimersByTimeAsync(500);
+                expect(alertServiceStub).toHaveBeenCalledWith('artemisApp.team.importSuccess', { numberOfImportedTeams: comp.numberOfTeamsToBeImported });
+            } finally {
+                vi.useRealTimers();
+            }
         });
     });
 

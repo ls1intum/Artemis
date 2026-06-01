@@ -1,5 +1,6 @@
 import { Component, inject, input, output } from '@angular/core';
 import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
@@ -21,13 +22,14 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
     imports: [ButtonComponent],
 })
 export class TeamsImportButtonComponent {
-    private dialogService = inject(DialogService);
+    private readonly dialogService = inject(DialogService);
+    private readonly translateService = inject(TranslateService);
 
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
-    readonly exercise = input<Exercise>(undefined!);
-    readonly teams = input<Team[]>(undefined!);
+    readonly exercise = input.required<Exercise>();
+    readonly teams = input.required<Team[]>();
     readonly buttonSize = input<ButtonSize>(ButtonSize.SMALL);
 
     readonly save = output<Team[]>();
@@ -41,17 +43,20 @@ export class TeamsImportButtonComponent {
      */
     openTeamsImportDialog(event: MouseEvent) {
         event.stopPropagation();
-        const dialogRef = this.dialogService.open(TeamsImportDialogComponent, {
-            showHeader: false,
+        const exercise = this.exercise();
+        const titleLabel = this.translateService.instant('artemisApp.team.importTeams.buttonLabel');
+        const exerciseTitle = exercise.title;
+        const header = exerciseTitle ? `${titleLabel} (${exerciseTitle})` : titleLabel;
+        const ref = this.dialogService.open(TeamsImportDialogComponent, {
+            header,
             width: '50rem',
             modal: true,
             closable: true,
             closeOnEscape: true,
             dismissableMask: false,
-            data: { exercise: this.exercise(), teams: this.teams() },
+            data: { exercise, teams: this.teams() },
         });
-
-        dialogRef?.onClose.subscribe((teams: Team[] | undefined) => {
+        ref?.onClose.subscribe((teams: Team[] | undefined) => {
             if (teams) {
                 this.save.emit(teams);
             }

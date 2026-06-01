@@ -31,15 +31,15 @@ export type StudentTeamConflict = { studentLogin: string; teamId: string };
 })
 export class TeamUpdateDialogComponent implements OnInit {
     private teamService = inject(TeamService);
-    private dialogRef = inject(DynamicDialogRef);
-    private dialogConfig = inject(DynamicDialogConfig);
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig);
 
     readonly editForm = viewChild.required<NgForm>('editForm');
 
-    team: Team = new Team();
-    readonly exercise = signal<Exercise>(undefined!);
+    team = signal<Team>(this.dialogConfig.data.team);
+    exercise = signal<Exercise>(this.dialogConfig.data.exercise);
 
-    pendingTeam: Team = new Team();
+    pendingTeam: Team = cloneDeep(this.team());
     isSaving = false;
 
     searchingStudents = false;
@@ -70,17 +70,7 @@ export class TeamUpdateDialogComponent implements OnInit {
      * Life cycle hook to indicate component creation is done
      */
     ngOnInit(): void {
-        const data = this.dialogConfig.data as { team?: Team; exercise?: Exercise } | undefined;
-        this.team = data?.team ?? new Team();
-        if (data?.exercise) {
-            this.exercise.set(data.exercise);
-        }
-        this.initPendingTeam();
         this.shortNameValidation(this.shortNameValidator);
-    }
-
-    private initPendingTeam() {
-        this.pendingTeam = cloneDeep(this.team);
     }
 
     /**
@@ -204,12 +194,12 @@ export class TeamUpdateDialogComponent implements OnInit {
             return;
         }
 
-        this.team = cloneDeep(this.pendingTeam);
+        const teamToSave = cloneDeep(this.pendingTeam);
 
-        if (this.team.id !== undefined) {
-            this.subscribeToSaveResponse(this.teamService.update(this.exercise(), this.team));
+        if (teamToSave.id !== undefined) {
+            this.subscribeToSaveResponse(this.teamService.update(this.exercise(), teamToSave));
         } else {
-            this.subscribeToSaveResponse(this.teamService.create(this.exercise(), this.team));
+            this.subscribeToSaveResponse(this.teamService.create(this.exercise(), teamToSave));
         }
     }
 

@@ -24,8 +24,8 @@ export class TeamExerciseSearchComponent {
     focus$ = new Subject<string>();
     click$ = new Subject<string>();
 
-    readonly course = input<Course>(undefined!);
-    readonly ignoreExercises = input<Exercise[]>(undefined!);
+    readonly course = input.required<Course>();
+    readonly ignoreExercises = input<Exercise[]>([]);
 
     readonly selectExercise = output<Exercise>();
     readonly searching = output<boolean>();

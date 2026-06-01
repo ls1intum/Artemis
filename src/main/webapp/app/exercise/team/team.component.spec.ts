@@ -1,6 +1,6 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
@@ -22,6 +22,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 
+/**
+ * The component under test uses signal-based state (`team`, `exercise`, `isLoading`, ...).
+ * Lifecycle is driven via `fixture.detectChanges()` rather than calling `comp.ngOnInit()`
+ * manually, because Angular's auto-detected zoneless change detection invokes lifecycle
+ * hooks automatically when CD runs. Calling `ngOnInit()` manually in addition would cause
+ * duplicate subscriptions / spy invocations.
+ */
 describe('TeamComponent', () => {
     setupTestBed({ zoneless: true });
 
@@ -37,7 +44,6 @@ describe('TeamComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TeamComponent],
             providers: [
                 MockProvider(SessionStorageService),
                 MockProvider(LocalStorageService),
@@ -46,7 +52,7 @@ describe('TeamComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(AlertService),
-                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ exerciseId: 1, teamId: 1 }) },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -67,75 +73,68 @@ describe('TeamComponent', () => {
     });
 
     describe('ngOnInit', () => {
-        it('should set team and exercise from services and call find on exerciseService to retrieve exercise', () => {
-            const exerciseStub = vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse<Exercise>({ body: mockExercise })));
+        it('should set team and exercise from services and call find on exerciseService to retreive exercise', async () => {
+            const findSpy = vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse<Exercise>({ body: mockExercise })));
             vi.spyOn(teamService, 'find').mockReturnValue(of(new HttpResponse<Team>({ body: mockTeam })));
-
-            comp.ngOnInit();
-
-            expect(comp.exercise).toEqual(mockExercise);
-            expect(comp.team).toEqual(mockTeam);
-            expect(comp.isTeamOwner).toBe(false);
-            expect(exerciseStub).toHaveBeenCalledOnce();
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(comp.exercise()).toEqual(mockExercise);
+            expect(comp.team()).toEqual(mockTeam);
+            expect(comp.isTeamOwner()).toBe(false);
+            expect(findSpy).toHaveBeenCalledOnce();
         });
 
-        it('should call alert service error when exercise service fails', () => {
-            const exerciseStub = vi.spyOn(exerciseService, 'find').mockReturnValue(throwError(() => ({ message: 'exercise failed' })));
+        it('should call alert service error when exercise service fails', async () => {
+            const exerciseStub = vi.spyOn(exerciseService, 'find').mockReturnValue(throwError(() => ({ status: 404, message: 'not found' })));
             const alertServiceStub = vi.spyOn(alertService, 'error');
-
-            comp.ngOnInit();
-
+            fixture.detectChanges();
+            await fixture.whenStable();
             expect(exerciseStub).toHaveBeenCalledOnce();
             expect(alertServiceStub).toHaveBeenCalledOnce();
-            expect(comp.isLoading).toBe(false);
+            expect(comp.isLoading()).toBe(false);
         });
 
-        it('should call alert service error when team service fails', () => {
+        it('should call alert service error when team service fails', async () => {
             vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse<Exercise>({ body: mockExercise })));
-            const teamStub = vi.spyOn(teamService, 'find').mockReturnValue(throwError(() => ({ message: 'team failed' })));
+            const teamStub = vi.spyOn(teamService, 'find').mockReturnValue(throwError(() => ({ status: 404, message: 'not found' })));
             const alertServiceStub = vi.spyOn(alertService, 'error');
-
-            comp.ngOnInit();
-
+            fixture.detectChanges();
+            await fixture.whenStable();
             expect(teamStub).toHaveBeenCalledOnce();
             expect(alertServiceStub).toHaveBeenCalledOnce();
-            expect(comp.isLoading).toBe(false);
+            expect(comp.isLoading()).toBe(false);
         });
     });
 
     describe('ngOnInit with team owner', () => {
         it('should set team owner true if user is team owner', async () => {
-            identityStub.mockReturnValue(Promise.resolve({ ...user, id: 1 }));
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse<Exercise>({ body: mockExercise })));
-            vi.spyOn(teamService, 'find').mockReturnValue(of(new HttpResponse<Team>({ body: mockTeam })));
+            identityStub.mockReturnValue(Promise.resolve({ ...user, id: 1 } as User));
             fixture = TestBed.createComponent(TeamComponent);
             comp = fixture.componentInstance;
-
-            comp.ngOnInit();
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse<Exercise>({ body: mockExercise })));
+            vi.spyOn(teamService, 'find').mockReturnValue(of(new HttpResponse<Team>({ body: mockTeam })));
+            fixture.detectChanges();
             await fixture.whenStable();
-
-            expect(comp.isTeamOwner).toBe(true);
+            expect(comp.isTeamOwner()).toBe(true);
         });
     });
 
     describe('onTeamUpdate', () => {
         it('should update team to given team', () => {
             comp.onTeamUpdate(mockTeams[1]);
-            expect(comp.team).toEqual(mockTeams[1]);
+            expect(comp.team()).toEqual(mockTeams[1]);
         });
     });
 
     describe('onTeamDelete', () => {
-        it('should go to teams overview on delete', () => {
+        it('should go to teams overview on delete', async () => {
             vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse<Exercise>({ body: mockExercise })));
             vi.spyOn(teamService, 'find').mockReturnValue(of(new HttpResponse<Team>({ body: mockTeam })));
+            fixture.detectChanges();
+            await fixture.whenStable();
             const navigateSpy = vi.spyOn(router, 'navigate');
-
-            comp.ngOnInit();
             comp.onTeamDelete();
-
-            expect(navigateSpy).toHaveBeenCalledOnce();
-            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', mockExercise.course?.id, 'exercises', mockExercise.id, 'teams']);
+            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/course-management', mockExercise.course?.id, 'exercises', mockExercise.id, 'teams']);
         });
     });
 });

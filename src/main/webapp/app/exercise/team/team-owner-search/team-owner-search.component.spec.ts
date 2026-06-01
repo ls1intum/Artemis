@@ -1,27 +1,25 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
-import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { TeamOwnerSearchComponent } from 'app/exercise/team/team-owner-search/team-owner-search.component';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { User } from 'app/account/user/user.model';
-import { firstValueFrom, of, throwError } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Team Owner Search Component', () => {
     setupTestBed({ zoneless: true });
-
     let comp: TeamOwnerSearchComponent;
     let fixture: ComponentFixture<TeamOwnerSearchComponent>;
     let courseService: CourseManagementService;
 
     const owner = { login: 'userLogin', name: 'name' } as User;
 
-    beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            imports: [TeamOwnerSearchComponent],
+    beforeEach(() => {
+        TestBed.configureTestingModule({
             providers: [
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -31,10 +29,6 @@ describe('Team Owner Search Component', () => {
         fixture = TestBed.createComponent(TeamOwnerSearchComponent);
         comp = fixture.componentInstance;
         courseService = TestBed.inject(CourseManagementService);
-
-        fixture.componentRef.setInput('course', { id: 1 });
-        fixture.componentRef.setInput('exercise', {});
-        fixture.componentRef.setInput('team', {});
     });
 
     afterEach(() => {
@@ -52,7 +46,7 @@ describe('Team Owner Search Component', () => {
         expect(comp.inputDisplayValue).toBe(`${owner.name} (${owner.login})`);
     });
 
-    it('should search on input change and find a matching result', async () => {
+    it('should search on input change and find a matching result', () => {
         const searchFailedSpy = vi.spyOn(comp.searchFailed, 'emit');
         const searchingSpy = vi.spyOn(comp.searching, 'emit');
         const searchNoResultsSpy = vi.spyOn(comp.searchNoResults, 'emit');
@@ -62,7 +56,10 @@ describe('Team Owner Search Component', () => {
 
         const searchText = owner.login!;
 
-        const onSearchResult = await firstValueFrom(comp.onSearch(of(searchText)));
+        fixture.componentRef.setInput('course', { id: 1 });
+
+        let onSearchResult: User[] | undefined = undefined;
+        comp.onSearch(of(searchText)).subscribe((result) => (onSearchResult = result));
 
         expect(searchFailedSpy).toHaveBeenCalledOnce();
         expect(searchFailedSpy).toHaveBeenCalledWith(false);
@@ -77,7 +74,7 @@ describe('Team Owner Search Component', () => {
         expect(onSearchResult).toEqual([owner]);
     });
 
-    it('should search on input change and find no result', async () => {
+    it('should search on input change and find no result', () => {
         const searchFailedSpy = vi.spyOn(comp.searchFailed, 'emit');
         const searchingSpy = vi.spyOn(comp.searching, 'emit');
         const searchNoResultsSpy = vi.spyOn(comp.searchNoResults, 'emit');
@@ -87,7 +84,10 @@ describe('Team Owner Search Component', () => {
 
         const searchText = 'SearchText';
 
-        const onSearchResult = await firstValueFrom(comp.onSearch(of(searchText)));
+        fixture.componentRef.setInput('course', { id: 1 });
+
+        let onSearchResult: User[] | undefined = undefined;
+        comp.onSearch(of(searchText)).subscribe((result) => (onSearchResult = result));
 
         expect(searchFailedSpy).toHaveBeenCalledOnce();
         expect(searchFailedSpy).toHaveBeenCalledWith(false);
@@ -108,6 +108,8 @@ describe('Team Owner Search Component', () => {
 
         const courseServiceSpy = vi.spyOn(courseService, 'getAllUsersInCourseGroup');
         courseServiceSpy.mockReturnValue(throwError(() => new Error('getAllUsersInCourseGroup failed')));
+
+        fixture.componentRef.setInput('course', { id: 1 });
 
         let loadOwnerOptionsResult: User[] | undefined = [owner];
         comp.loadOwnerOptions().subscribe((result) => (loadOwnerOptionsResult = result));

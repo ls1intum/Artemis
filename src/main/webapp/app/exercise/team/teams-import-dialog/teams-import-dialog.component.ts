@@ -1,5 +1,5 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal, viewChild } from '@angular/core';
-import { FormsModule, NgForm } from '@angular/forms';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -41,17 +41,17 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 })
 export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     private teamService = inject(TeamService);
-    private dialogRef = inject(DynamicDialogRef);
-    private dialogConfig = inject(DynamicDialogConfig);
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig);
     private alertService = inject(AlertService);
 
     readonly ImportStrategy = ImportStrategy;
     readonly ActionType = ActionType;
 
-    readonly importForm = viewChild.required<NgForm>('importForm');
-
-    readonly exercise = signal<Exercise>(undefined!);
-    readonly teams = signal<Team[]>(undefined!); // existing teams already in exercise
+    // Inputs come from DynamicDialogConfig.data. Initialize at field declaration to
+    // avoid ExpressionChangedAfterItHasBeenCheckedError in zoneless dev mode.
+    readonly exercise = signal<Exercise>(this.dialogConfig.data.exercise);
+    readonly teams = signal<Team[]>(this.dialogConfig.data.teams); // existing teams already in exercise
 
     sourceExercise?: Exercise;
 
@@ -92,13 +92,6 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
      * Life cycle hook to indicate component creation is done
      */
     ngOnInit() {
-        const data = this.dialogConfig.data as { exercise?: Exercise; teams?: Team[] } | undefined;
-        if (data?.exercise) {
-            this.exercise.set(data.exercise);
-        }
-        if (data?.teams) {
-            this.teams.set(data.teams);
-        }
         this.computePotentialConflictsBasedOnExistingTeams();
     }
 
