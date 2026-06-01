@@ -48,7 +48,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private router = inject(Router);
 
-    readonly codeEditorContainer = viewChild.required(CodeEditorContainerComponent);
+    readonly codeEditorContainer = viewChild(CodeEditorContainerComponent);
 
     PROGRAMMING = ExerciseType.PROGRAMMING;
     protected readonly FeatureToggle = FeatureToggle;

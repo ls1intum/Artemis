@@ -51,6 +51,7 @@ import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 import { ProblemStatementSyncService } from 'app/exercise/synchronization/services/problem-statement-sync.service';
 import { DialogService } from 'primeng/dynamicdialog';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 jest.mock('y-monaco', () => ({
     MonacoBinding: jest.fn().mockImplementation(() => ({
@@ -262,6 +263,30 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             // THEN
             expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity);
             expect(entity.title).toBe('My Exercise');
+        }));
+
+        it('should send the assessmentType on saving', fakeAsync(() => {
+            const entity = new ProgrammingExercise(new Course(), undefined);
+            entity.id = 1;
+            entity.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+            entity.releaseDate = dayjs();
+            jest.spyOn(programmingExerciseService, 'update').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: entity,
+                    }),
+                ),
+            );
+
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.programmingExercise.course = course;
+
+            comp.save();
+            tick();
+
+            expect(programmingExerciseService.update).toHaveBeenCalledWith(entity, {});
+            expect(comp.programmingExercise.assessmentType).toBe(AssessmentType.SEMI_AUTOMATIC);
         }));
 
         it('should fail on error', async () => {

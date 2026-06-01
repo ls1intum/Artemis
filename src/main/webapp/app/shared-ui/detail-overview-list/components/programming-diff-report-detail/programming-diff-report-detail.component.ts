@@ -1,6 +1,4 @@
-import { Component, OnDestroy, inject, input } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { Component, OnDestroy, computed, inject, input } from '@angular/core';
 import type { ProgrammingDiffReportDetail } from 'app/shared-ui/detail-overview-list/detail.model';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared-ui/components/buttons/button/button.component';
@@ -8,6 +6,7 @@ import { faCodeCompare, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { GitDiffReportModalComponent } from 'app/programming/shared/git-diff-report/git-diff-report-modal/git-diff-report-modal.component';
 
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -27,21 +26,22 @@ export class ProgrammingDiffReportDetailComponent implements OnDestroy {
     protected readonly faSpinner = faSpinner;
 
     private readonly dialogService = inject(DialogService);
-    private readonly translateService = inject(TranslateService);
     private dialogRef?: DynamicDialogRef;
 
-    readonly detail = input.required<ProgrammingDiffReportDetail>();
+    detail = input.required<ProgrammingDiffReportDetail>();
+
+    private readonly detailData = computed(() => this.detail().data);
 
     get addedLineCount(): number {
-        return this.detail().data.repositoryDiffInformation?.totalLineChange?.addedLineCount ?? 0;
+        return this.detailData().repositoryDiffInformation?.totalLineChange?.addedLineCount ?? 0;
     }
 
     get removedLineCount(): number {
-        return this.detail().data.repositoryDiffInformation?.totalLineChange?.removedLineCount ?? 0;
+        return this.detailData().repositoryDiffInformation?.totalLineChange?.removedLineCount ?? 0;
     }
 
     get lineChangesLoading(): boolean {
-        return this.detail().data.lineChangesLoading ?? false;
+        return this.detailData().lineChangesLoading ?? false;
     }
 
     ngOnDestroy() {
@@ -49,19 +49,18 @@ export class ProgrammingDiffReportDetailComponent implements OnDestroy {
     }
 
     showGitDiff() {
-        const repositoryDiffInformation = this.detail().data.repositoryDiffInformation;
+        const repositoryDiffInformation = this.detailData().repositoryDiffInformation;
         if (!repositoryDiffInformation) {
             return;
         }
 
         this.dialogRef =
             this.dialogService.open(GitDiffReportModalComponent, {
-                header: this.translateService.instant('artemisApp.programmingExercise.diffReport.title'),
-                width: '90vw',
                 modal: true,
-                closable: true,
-                closeOnEscape: true,
+                closable: false,
                 dismissableMask: false,
+                // Render the comparison wide so side-by-side diffs are readable without horizontal scrolling.
+                width: '90vw',
                 styleClass: GitDiffReportModalComponent.WINDOW_CLASS,
                 data: {
                     repositoryDiffInformation,

@@ -8,10 +8,8 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/instructor/programming-exercise-instructor-trigger-build-button.component';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
@@ -19,6 +17,7 @@ import { SubmissionType } from 'app/exercise/shared/entities/submission/submissi
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
+import { DialogService } from 'primeng/dynamicdialog';
 
 describe('ProgrammingExercise Instructor Trigger Build Component', () => {
     setupTestBed({ zoneless: true });
@@ -33,12 +32,14 @@ describe('ProgrammingExercise Instructor Trigger Build Component', () => {
     let comp: ProgrammingExerciseInstructorTriggerBuildButtonComponent;
     let fixture: ComponentFixture<ProgrammingExerciseInstructorTriggerBuildButtonComponent>;
     let submissionService: ProgrammingSubmissionService;
-    let modalService: NgbModal;
+    let dialogService: DialogService;
+    let dialogClose: Subject<any>;
 
     beforeEach(() => {
+        dialogClose = new Subject<any>();
         TestBed.configureTestingModule({
             providers: [
-                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: dialogClose })) } },
                 LocalStorageService,
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -50,7 +51,7 @@ describe('ProgrammingExercise Instructor Trigger Build Component', () => {
         fixture = TestBed.createComponent(ProgrammingExerciseInstructorTriggerBuildButtonComponent);
         comp = fixture.componentInstance;
         submissionService = TestBed.inject(ProgrammingSubmissionService);
-        modalService = TestBed.inject(NgbModal);
+        dialogService = TestBed.inject(DialogService);
 
         fixture.componentRef.setInput('exercise', programmingExercise);
         fixture.componentRef.setInput('participation', participation);
@@ -61,25 +62,24 @@ describe('ProgrammingExercise Instructor Trigger Build Component', () => {
         vi.restoreAllMocks();
     });
 
-    it('should trigger build', async () => {
-        const mockReturnValue = {
-            result: Promise.resolve(),
-            componentInstance: {},
-        } as NgbModalRef;
-        vi.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+    it('should trigger build', () => {
+        vi.spyOn(dialogService, 'open');
         vi.spyOn(submissionService, 'triggerBuild').mockReturnValue(of());
 
         comp.triggerBuild({ stopPropagation: vi.fn() } as unknown as MouseEvent);
 
-        expect(modalService.open).toHaveBeenCalledOnce();
-        expect(modalService.open).toHaveBeenCalledWith(ConfirmAutofocusModalComponent, {
-            size: 'lg',
-            keyboard: true,
-        });
+        expect(dialogService.open).toHaveBeenCalledOnce();
+        expect(dialogService.open).toHaveBeenCalledWith(
+            ConfirmAutofocusModalComponent,
+            expect.objectContaining({
+                width: '50rem',
+                data: expect.objectContaining({
+                    title: 'artemisApp.programmingExercise.resubmitSingle',
+                }),
+            }),
+        );
 
-        // Allow the modal's `result` promise to resolve so the trigger callback runs.
-        await Promise.resolve();
-        await Promise.resolve();
+        dialogClose.next({ confirmed: true });
 
         expect(submissionService.triggerBuild).toHaveBeenCalledOnce();
         expect(submissionService.triggerBuild).toHaveBeenCalledWith(participation.id, SubmissionType.INSTRUCTOR);

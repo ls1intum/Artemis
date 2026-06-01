@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 
 import org.springframework.web.util.UriComponentsBuilder;
 
-import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
+import de.tum.cit.aet.artemis.localvc.exception.LocalVCInternalException;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 
 /**

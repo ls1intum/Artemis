@@ -109,8 +109,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/text/**', // text module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/tutorialgroup/**', // tutorialgroup module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/atlas/**', // atlas module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/shared-ui/table-view/**', // table view module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/shared-ui/components/buttons/**', // buttons module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/shared-ui/**', // shared-ui module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/manage/students/**', // exam manage students module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/overview/summary/exam-request-ai-feedback-button/**', // exam request AI feedback button uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/manage/student-exams/**', // exam manage student-exams module uses Vitest (see vitest.config.ts)
@@ -124,12 +123,8 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/exam/manage/exams/**', // exam manage exams (detail/import/update/checklist/mode-picker) uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/shared/**', // exam shared module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/overview/**', // exam overview module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/foundation/feature-toggle/**', // feature-toggle service uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/foundation/sort/**', // sort directives use vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/shared-ui/user-import/util/**', // user import utils use Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/shared-ui/range-slider/**', // range slider uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/foundation/**', // foundation module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/dashboards/**', // dashboards uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/shared-ui/image-cropper/**', // image cropper uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/exercise-headers/**', // exercise headers module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/synchronization/**', // exercise synchronization module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/version-history/**', // exercise version history module uses Vitest (see vitest.config.ts)
@@ -137,7 +132,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/**', // checklist-panel uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.ts', // problem-statement service uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts', // problem-statement utils uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/editor/monaco-editor/inline-refinement-button/', // inline-refinement-button uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/editor/**', // editor module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/hyperion/**', // hyperion module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**', // build phases editor uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/version-history/**', // programming version history module uses Vitest (see vitest.config.ts)
@@ -148,6 +143,9 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/shared-ui/search-filter/**', // search-filter component uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/shared/**', // programming shared uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared-ui/detail-overview-list/components/programming-diff-report-detail/**', // programming diff report detail uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/logos/**', // logos module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/sharing/**', // sharing module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/app.component.ts', // app-shell (app.component) uses Vitest (see vitest.config.ts)
         '<rootDir>/src/main/webapp/**/*.ts',
     ],
     // Each entry below excludes a module that has been migrated to Vitest.
@@ -172,7 +170,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/text/', // text module uses Vitest
         '<rootDir>/src/main/webapp/app/tutorialgroup/', // tutorialgroup module uses Vitest
         '<rootDir>/src/main/webapp/app/atlas/', // atlas module uses Vitest
-        '<rootDir>/src/main/webapp/app/shared-ui/components/buttons/', // buttons module uses Vitest
+        '<rootDir>/src/main/webapp/app/shared-ui/', // shared-ui module uses Vitest
         '<rootDir>/src/main/webapp/app/exam/manage/students/', // exam manage students module uses Vitest
         '<rootDir>/src/main/webapp/app/exam/overview/summary/exam-request-ai-feedback-button/', // exam request AI feedback button uses Vitest
         '<rootDir>/src/main/webapp/app/exam/manage/student-exams/', // exam manage student-exams module uses Vitest
@@ -186,15 +184,11 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exam/manage/exams/', // exam manage exams uses Vitest
         '<rootDir>/src/main/webapp/app/exam/shared/', // exam shared module uses Vitest
         '<rootDir>/src/main/webapp/app/exam/overview/', // exam overview module uses Vitest
-        '<rootDir>/src/main/webapp/app/foundation/sort/', // sort directives use Vitest
-        '<rootDir>/src/main/webapp/app/shared-ui/user-import/util/', // user import utils use Vitest
-        '<rootDir>/src/main/webapp/app/shared-ui/table-view/', // table view module uses Vitest
-        '<rootDir>/src/main/webapp/app/shared-ui/range-slider/', // range slider uses Vitest
+        '<rootDir>/src/main/webapp/app/foundation/', // foundation module uses Vitest
         '<rootDir>/src/main/webapp/app/exercise/dashboards/', // dashboards uses Vitest
-        '<rootDir>/src/main/webapp/app/shared-ui/image-cropper/', // image cropper uses Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.ts',
         '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts',
-        '<rootDir>/src/main/webapp/app/editor/monaco-editor/inline-refinement-button/',
+        '<rootDir>/src/main/webapp/app/editor/', // editor module uses Vitest (see vitest.config.ts)
         '<rootDir>/src/main/webapp/app/exercise/exercise-headers/', // exercise headers module uses Vitest
         '<rootDir>/src/main/webapp/app/exercise/synchronization/', // exercise synchronization module uses Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/', // build phases editor uses Vitest
@@ -210,6 +204,9 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/shared-ui/search-filter/', // search-filter uses Vitest
         '<rootDir>/src/main/webapp/app/programming/shared/', // programming shared uses Vitest
         '<rootDir>/src/main/webapp/app/shared-ui/detail-overview-list/components/programming-diff-report-detail/', // programming diff report detail uses Vitest
+        '<rootDir>/src/main/webapp/app/logos/', // logos module uses Vitest
+        '<rootDir>/src/main/webapp/app/sharing/', // sharing module uses Vitest
+        '<rootDir>/src/main/webapp/app/app.component.ts', // app-shell (app.component) uses Vitest
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
@@ -219,9 +216,9 @@ module.exports = {
     coverageThreshold: {
         global: {
             statements: 82.5,
-            branches: 71.3,
-            functions: 71.5,
-            lines: 83.6,
+            branches: 72.9,
+            functions: 69,
+            lines: 84,
         },
     },
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
@@ -285,17 +282,12 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exam/manage/exams/', // exam manage exams (detail/import/update/checklist/mode-picker) (vitest)
         '<rootDir>/src/main/webapp/app/exam/shared/', // exam shared module (vitest)
         '<rootDir>/src/main/webapp/app/exam/overview/', // exam overview module (vitest)
-        '<rootDir>/src/main/webapp/app/shared-ui/components/buttons/', // shared/buttons components
-        '<rootDir>/src/main/webapp/app/shared-ui/table-view/', // shared/table-view component
-        '<rootDir>/src/main/webapp/app/foundation/feature-toggle/', // feature-toggle service (vitest)
-        '<rootDir>/src/main/webapp/app/foundation/sort/', // sort directives
-        '<rootDir>/src/main/webapp/app/shared-ui/user-import/util/', // user import utils
-        '<rootDir>/src/main/webapp/app/shared-ui/range-slider/', // range slider (vitest)
+        '<rootDir>/src/main/webapp/app/shared-ui/', // shared-ui module (Vitest)
+        '<rootDir>/src/main/webapp/app/foundation/', // foundation module uses Vitest
         '<rootDir>/src/main/webapp/app/exercise/dashboards/', // dashboards (vitest)
-        '<rootDir>/src/main/webapp/app/shared-ui/image-cropper/', // image cropper (vitest)
         '<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts', // migrated to Vitest
-        '<rootDir>/src/main/webapp/app/editor/monaco-editor/inline-refinement-button/', // migrated to Vitest
+        '<rootDir>/src/main/webapp/app/editor/', // editor module migrated to Vitest
         '<rootDir>/src/main/webapp/app/exercise/exercise-headers/', // exercise headers module
         '<rootDir>/src/main/webapp/app/exercise/synchronization/', // exercise synchronization module
         '<rootDir>/src/main/webapp/app/exercise/version-history/', // exercise version history module
@@ -312,6 +304,9 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/programming/shared/', // programming shared uses Vitest
         '<rootDir>/src/main/webapp/app/shared-ui/detail-overview-list/components/programming-diff-report-detail/', // programming diff report detail uses Vitest
         '<rootDir>/src/test/javascript/spec/integration/code-editor/code-editor-container.integration.spec.ts', // migrated to Vitest
+        '<rootDir>/src/main/webapp/app/logos/', // logos module (Vitest)
+        '<rootDir>/src/main/webapp/app/sharing/', // sharing module (Vitest)
+        '<rootDir>/src/main/webapp/app/app.component.spec.ts', // app-shell (app.component) (Vitest)
     ],
     testTimeout: 3000,
     testMatch: ['<rootDir>/src/main/webapp/app/**/*.spec.ts', '<rootDir>/src/test/javascript/spec/**/*.integration.spec.ts'],

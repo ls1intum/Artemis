@@ -30,6 +30,7 @@ import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container
 import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
+import { DialogService } from 'primeng/dynamicdialog';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -90,6 +91,8 @@ describe('ExampleTextSubmissionComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
+                // The component renders the real ConfirmAutofocusButtonComponent, which injects PrimeNG DialogService.
+                { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: of(undefined) })) } },
                 {
                     provide: ActivatedRoute,
                     useValue: route,

@@ -1,7 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ProgrammingDiffReportDetailComponent } from 'app/shared-ui/detail-overview-list/components/programming-diff-report-detail/programming-diff-report-detail.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -11,10 +10,10 @@ import { ProgrammingExerciseParticipationService } from 'app/programming/manage/
 import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 import { ProgrammingDiffReportDetail } from 'app/shared-ui/detail-overview-list/detail.model';
 import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 
 describe('ProgrammingDiffReportDetailComponent', () => {
     setupTestBed({ zoneless: true });
-
     let component: ProgrammingDiffReportDetailComponent;
     let fixture: ComponentFixture<ProgrammingDiffReportDetailComponent>;
     let dialogService: DialogService;
@@ -23,12 +22,12 @@ describe('ProgrammingDiffReportDetailComponent', () => {
     beforeEach(async () => {
         mockDialogRef = {
             close: vi.fn(),
-        } as unknown as DynamicDialogRef;
+        } as any;
 
         await TestBed.configureTestingModule({
             imports: [ProgrammingDiffReportDetailComponent],
             providers: [
-                DialogService,
+                { provide: DialogService, useValue: { open: vi.fn().mockReturnValue(mockDialogRef) } },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
@@ -40,11 +39,7 @@ describe('ProgrammingDiffReportDetailComponent', () => {
         component = fixture.componentInstance;
     });
 
-    afterEach(() => {
-        vi.restoreAllMocks();
-    });
-
-    it('should open git diff dialog when repository diff information exists', () => {
+    it('should open git diff modal when repository diff information exists', () => {
         const dialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
         fixture.componentRef.setInput('detail', {
             type: DetailType.ProgrammingDiffReport,
@@ -63,12 +58,23 @@ describe('ProgrammingDiffReportDetailComponent', () => {
         component.showGitDiff();
 
         expect(dialogSpy).toHaveBeenCalled();
-        const passedConfig = dialogSpy.mock.calls[0][1] as { data?: { repositoryDiffInformation?: unknown; diffForTemplateAndSolution?: boolean } } | undefined;
-        expect(passedConfig?.data?.repositoryDiffInformation).toBeDefined();
-        expect(passedConfig?.data?.diffForTemplateAndSolution).toBe(true);
+        expect(dialogSpy).toHaveBeenCalledWith(
+            expect.any(Function),
+            expect.objectContaining({
+                data: expect.objectContaining({
+                    repositoryDiffInformation: expect.objectContaining({
+                        totalLineChange: expect.objectContaining({
+                            addedLineCount: 10,
+                            removedLineCount: 5,
+                        }),
+                    }),
+                    diffForTemplateAndSolution: true,
+                }),
+            }),
+        );
     });
 
-    it('should not open git diff dialog when repository diff information is missing', () => {
+    it('should not open git diff modal when repository diff information is missing', () => {
         const dialogSpy = vi.spyOn(dialogService, 'open');
         fixture.componentRef.setInput('detail', {
             type: DetailType.ProgrammingDiffReport,
@@ -103,7 +109,7 @@ describe('ProgrammingDiffReportDetailComponent', () => {
     });
 
     it('should handle ngOnDestroy lifecycle method', () => {
-        // Test that ngOnDestroy doesn't throw when dialogRef is undefined
+        // Test that ngOnDestroy doesn't throw when modalRef is undefined
         expect(() => component.ngOnDestroy()).not.toThrow();
     });
 });
