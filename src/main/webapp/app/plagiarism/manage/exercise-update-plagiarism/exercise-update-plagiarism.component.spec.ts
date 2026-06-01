@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
@@ -9,6 +11,8 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('Exercise Update Plagiarism Component', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: ExerciseUpdatePlagiarismComponent;
     let fixture: ComponentFixture<ExerciseUpdatePlagiarismComponent>;
 
@@ -66,20 +70,20 @@ describe('Exercise Update Plagiarism Component', () => {
 
     it('should enable cpc', () => {
         comp.form.patchValue({ continuousPlagiarismControlEnabled: false });
-        expect(comp.form.get('continuousPlagiarismControlEnabled')?.value).toBeFalse();
+        expect(comp.form.get('continuousPlagiarismControlEnabled')?.value).toBe(false);
 
         comp.form.patchValue({ continuousPlagiarismControlEnabled: true });
-        expect(comp.form.get('continuousPlagiarismControlEnabled')?.value).toBeTrue();
-        expect(comp.form.get('continuousPlagiarismControlPostDueDateChecksEnabled')?.enabled).toBeTrue();
+        expect(comp.form.get('continuousPlagiarismControlEnabled')?.value).toBe(true);
+        expect(comp.form.get('continuousPlagiarismControlPostDueDateChecksEnabled')?.enabled).toBe(true);
     });
 
     it('should disable cpc', () => {
         comp.form.patchValue({ continuousPlagiarismControlEnabled: true });
-        expect(comp.form.get('continuousPlagiarismControlEnabled')?.value).toBeTrue();
+        expect(comp.form.get('continuousPlagiarismControlEnabled')?.value).toBe(true);
 
         comp.form.patchValue({ continuousPlagiarismControlEnabled: false });
-        expect(comp.form.get('continuousPlagiarismControlEnabled')?.value).toBeFalse();
-        expect(comp.form.get('continuousPlagiarismControlPostDueDateChecksEnabled')?.disabled).toBeTrue();
+        expect(comp.form.get('continuousPlagiarismControlEnabled')?.value).toBe(false);
+        expect(comp.form.get('continuousPlagiarismControlPostDueDateChecksEnabled')?.disabled).toBe(true);
     });
 
     it('should get correct minimumSizeTooltip for programming exercises', () => {
@@ -126,7 +130,7 @@ describe('Exercise Update Plagiarism Component', () => {
 
         fixture.detectChanges();
 
-        expect(comp.isFormValid()).toBeTrue();
+        expect(comp.isFormValid()).toBe(true);
     });
 
     it('should mark form invalid for out-of-range similarityThreshold', () => {
@@ -141,16 +145,16 @@ describe('Exercise Update Plagiarism Component', () => {
             continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 7,
         });
 
-        expect(comp.form.valid).toBeFalse();
-        expect(comp.isFormValid()).toBeFalse();
+        expect(comp.form.valid).toBe(false);
+        expect(comp.isFormValid()).toBe(false);
 
         // above range
         comp.form.patchValue({
             similarityThreshold: 101,
         });
 
-        expect(comp.form.valid).toBeFalse();
-        expect(comp.isFormValid()).toBeFalse();
+        expect(comp.form.valid).toBe(false);
+        expect(comp.isFormValid()).toBe(false);
     });
 
     it('should mark form invalid for out-of-range minimumScore', () => {
@@ -164,15 +168,15 @@ describe('Exercise Update Plagiarism Component', () => {
             continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 7,
         });
 
-        expect(comp.form.valid).toBeFalse();
-        expect(comp.isFormValid()).toBeFalse();
+        expect(comp.form.valid).toBe(false);
+        expect(comp.isFormValid()).toBe(false);
 
         comp.form.patchValue({
             minimumScore: 101,
         });
 
-        expect(comp.form.valid).toBeFalse();
-        expect(comp.isFormValid()).toBeFalse();
+        expect(comp.form.valid).toBe(false);
+        expect(comp.isFormValid()).toBe(false);
     });
 
     it('should allow minimumSize to be large and disallow negative values', () => {
@@ -190,8 +194,8 @@ describe('Exercise Update Plagiarism Component', () => {
         });
         fixture.detectChanges();
 
-        expect(comp.form.valid).toBeFalse();
-        expect(comp.isFormValid()).toBeFalse();
+        expect(comp.form.valid).toBe(false);
+        expect(comp.isFormValid()).toBe(false);
 
         // large value (e.g. > 100) is allowed
         comp.form.patchValue({
@@ -199,8 +203,8 @@ describe('Exercise Update Plagiarism Component', () => {
         });
         fixture.detectChanges();
 
-        expect(comp.form.valid).toBeTrue();
-        expect(comp.isFormValid()).toBeTrue();
+        expect(comp.form.valid).toBe(true);
+        expect(comp.isFormValid()).toBe(true);
     });
 
     it('should mark form invalid for out-of-range response period', () => {
@@ -214,15 +218,15 @@ describe('Exercise Update Plagiarism Component', () => {
             continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 6, // below min 7
         });
 
-        expect(comp.form.valid).toBeFalse();
-        expect(comp.isFormValid()).toBeFalse();
+        expect(comp.form.valid).toBe(false);
+        expect(comp.isFormValid()).toBe(false);
 
         comp.form.patchValue({
             continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 32, // above max 31
         });
 
-        expect(comp.form.valid).toBeFalse();
-        expect(comp.isFormValid()).toBeFalse();
+        expect(comp.form.valid).toBe(false);
+        expect(comp.isFormValid()).toBe(false);
     });
 
     it('should propagate form values into exercise.plagiarismDetectionConfig', () => {
@@ -238,7 +242,7 @@ describe('Exercise Update Plagiarism Component', () => {
             continuousPlagiarismControlEnabled: true,
         });
 
-        expect(comp.exercise()?.plagiarismDetectionConfig?.continuousPlagiarismControlEnabled).toBeTrue();
+        expect(comp.exercise()?.plagiarismDetectionConfig?.continuousPlagiarismControlEnabled).toBe(true);
 
         comp.form.patchValue({
             similarityThreshold: 42,
@@ -267,11 +271,11 @@ describe('Exercise Update Plagiarism Component', () => {
 
         comp.form.patchValue({ continuousPlagiarismControlEnabled: false });
 
-        expect(comp.form.get('continuousPlagiarismControlPostDueDateChecksEnabled')?.disabled).toBeTrue();
-        expect(comp.form.get('similarityThreshold')?.disabled).toBeTrue();
-        expect(comp.form.get('minimumScore')?.disabled).toBeTrue();
-        expect(comp.form.get('minimumSize')?.disabled).toBeTrue();
-        expect(comp.form.get('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod')?.disabled).toBeTrue();
+        expect(comp.form.get('continuousPlagiarismControlPostDueDateChecksEnabled')?.disabled).toBe(true);
+        expect(comp.form.get('similarityThreshold')?.disabled).toBe(true);
+        expect(comp.form.get('minimumScore')?.disabled).toBe(true);
+        expect(comp.form.get('minimumSize')?.disabled).toBe(true);
+        expect(comp.form.get('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod')?.disabled).toBe(true);
     });
 
     it('should accept boundary values for all fields', () => {
@@ -286,10 +290,10 @@ describe('Exercise Update Plagiarism Component', () => {
             continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 7,
         });
 
-        expect(comp.form.valid).toBeTrue();
+        expect(comp.form.valid).toBe(true);
 
         fixture.detectChanges();
-        expect(comp.isFormValid()).toBeTrue();
+        expect(comp.isFormValid()).toBe(true);
 
         comp.form.patchValue({
             similarityThreshold: 100,
@@ -298,9 +302,9 @@ describe('Exercise Update Plagiarism Component', () => {
             continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 31,
         });
 
-        expect(comp.form.valid).toBeTrue();
+        expect(comp.form.valid).toBe(true);
         fixture.detectChanges();
-        expect(comp.isFormValid()).toBeTrue();
+        expect(comp.isFormValid()).toBe(true);
     });
 
     it('should require all fields when CPC is enabled', () => {
@@ -314,12 +318,12 @@ describe('Exercise Update Plagiarism Component', () => {
             continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: null,
         });
 
-        expect(comp.form.valid).toBeFalse();
-        expect(comp.isFormValid()).toBeFalse();
-        expect(comp.form.get('similarityThreshold')?.hasError('required')).toBeTrue();
-        expect(comp.form.get('minimumScore')?.hasError('required')).toBeTrue();
-        expect(comp.form.get('minimumSize')?.hasError('required')).toBeTrue();
-        expect(comp.form.get('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod')?.hasError('required')).toBeTrue();
+        expect(comp.form.valid).toBe(false);
+        expect(comp.isFormValid()).toBe(false);
+        expect(comp.form.get('similarityThreshold')?.hasError('required')).toBe(true);
+        expect(comp.form.get('minimumScore')?.hasError('required')).toBe(true);
+        expect(comp.form.get('minimumSize')?.hasError('required')).toBe(true);
+        expect(comp.form.get('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod')?.hasError('required')).toBe(true);
     });
 
     describe('integer validator', () => {
@@ -329,8 +333,8 @@ describe('Exercise Update Plagiarism Component', () => {
 
             comp.form.patchValue({ similarityThreshold: 50.5 });
 
-            expect(comp.form.get('similarityThreshold')?.hasError('notInteger')).toBeTrue();
-            expect(comp.form.valid).toBeFalse();
+            expect(comp.form.get('similarityThreshold')?.hasError('notInteger')).toBe(true);
+            expect(comp.form.valid).toBe(false);
         });
 
         it('should reject non-integer minimumScore', () => {
@@ -339,8 +343,8 @@ describe('Exercise Update Plagiarism Component', () => {
 
             comp.form.patchValue({ minimumScore: 22.5 });
 
-            expect(comp.form.get('minimumScore')?.hasError('notInteger')).toBeTrue();
-            expect(comp.form.valid).toBeFalse();
+            expect(comp.form.get('minimumScore')?.hasError('notInteger')).toBe(true);
+            expect(comp.form.valid).toBe(false);
         });
 
         it('should reject non-integer minimumSize', () => {
@@ -349,8 +353,8 @@ describe('Exercise Update Plagiarism Component', () => {
 
             comp.form.patchValue({ minimumSize: 50.5 });
 
-            expect(comp.form.get('minimumSize')?.hasError('notInteger')).toBeTrue();
-            expect(comp.form.valid).toBeFalse();
+            expect(comp.form.get('minimumSize')?.hasError('notInteger')).toBe(true);
+            expect(comp.form.valid).toBe(false);
         });
 
         it('should reject non-integer response period', () => {
@@ -359,8 +363,8 @@ describe('Exercise Update Plagiarism Component', () => {
 
             comp.form.patchValue({ continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 7.5 });
 
-            expect(comp.form.get('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod')?.hasError('notInteger')).toBeTrue();
-            expect(comp.form.valid).toBeFalse();
+            expect(comp.form.get('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod')?.hasError('notInteger')).toBe(true);
+            expect(comp.form.valid).toBe(false);
         });
 
         it('should accept integer values', () => {
@@ -374,11 +378,11 @@ describe('Exercise Update Plagiarism Component', () => {
                 continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 7,
             });
 
-            expect(comp.form.get('similarityThreshold')?.hasError('notInteger')).toBeFalse();
-            expect(comp.form.get('minimumScore')?.hasError('notInteger')).toBeFalse();
-            expect(comp.form.get('minimumSize')?.hasError('notInteger')).toBeFalse();
-            expect(comp.form.get('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod')?.hasError('notInteger')).toBeFalse();
-            expect(comp.form.valid).toBeTrue();
+            expect(comp.form.get('similarityThreshold')?.hasError('notInteger')).toBe(false);
+            expect(comp.form.get('minimumScore')?.hasError('notInteger')).toBe(false);
+            expect(comp.form.get('minimumSize')?.hasError('notInteger')).toBe(false);
+            expect(comp.form.get('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod')?.hasError('notInteger')).toBe(false);
+            expect(comp.form.valid).toBe(true);
         });
 
         it('should return null for empty value (let required validator handle it)', () => {
