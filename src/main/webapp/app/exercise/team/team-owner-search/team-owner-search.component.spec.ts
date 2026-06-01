@@ -1,6 +1,6 @@
-import { expect, vi } from 'vitest';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { TeamOwnerSearchComponent } from 'app/exercise/team/team-owner-search/team-owner-search.component';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
@@ -20,7 +20,6 @@ describe('Team Owner Search Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TeamOwnerSearchComponent],
             providers: [
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -33,12 +32,11 @@ describe('Team Owner Search Component', () => {
     });
 
     afterEach(() => {
-        vi.useRealTimers();
         vi.restoreAllMocks();
     });
 
     it('should initialize with team owner', () => {
-        comp.team = { owner };
+        fixture.componentRef.setInput('team', { owner });
 
         fixture.detectChanges();
 
@@ -58,22 +56,20 @@ describe('Team Owner Search Component', () => {
 
         const searchText = owner.login!;
 
-        comp.course = { id: 1 };
-        vi.useFakeTimers();
+        fixture.componentRef.setInput('course', { id: 1 });
 
         let onSearchResult: User[] | undefined = undefined;
         comp.onSearch(of(searchText)).subscribe((result) => (onSearchResult = result));
 
-        // The text$ stream is debounced (200 ms) to coalesce rapid keystrokes.
-        vi.advanceTimersByTime(200);
-
-        expect(searchFailedSpy).toHaveBeenCalledExactlyOnceWith(false);
+        expect(searchFailedSpy).toHaveBeenCalledOnce();
+        expect(searchFailedSpy).toHaveBeenCalledWith(false);
 
         expect(searchingSpy).toHaveBeenCalledTimes(2);
         expect(searchingSpy).toHaveBeenNthCalledWith(1, true);
         expect(searchingSpy).toHaveBeenNthCalledWith(2, false);
 
-        expect(searchNoResultsSpy).toHaveBeenCalledExactlyOnceWith(undefined);
+        expect(searchNoResultsSpy).toHaveBeenCalledOnce();
+        expect(searchNoResultsSpy).toHaveBeenCalledWith(undefined);
 
         expect(onSearchResult).toEqual([owner]);
     });
@@ -88,16 +84,13 @@ describe('Team Owner Search Component', () => {
 
         const searchText = 'SearchText';
 
-        comp.course = { id: 1 };
-        vi.useFakeTimers();
+        fixture.componentRef.setInput('course', { id: 1 });
 
         let onSearchResult: User[] | undefined = undefined;
         comp.onSearch(of(searchText)).subscribe((result) => (onSearchResult = result));
 
-        // The text$ stream is debounced (200 ms) to coalesce rapid keystrokes.
-        vi.advanceTimersByTime(200);
-
-        expect(searchFailedSpy).toHaveBeenCalledExactlyOnceWith(false);
+        expect(searchFailedSpy).toHaveBeenCalledOnce();
+        expect(searchFailedSpy).toHaveBeenCalledWith(false);
 
         expect(searchingSpy).toHaveBeenCalledTimes(2);
         expect(searchingSpy).toHaveBeenNthCalledWith(1, true);
@@ -116,12 +109,13 @@ describe('Team Owner Search Component', () => {
         const courseServiceSpy = vi.spyOn(courseService, 'getAllUsersInCourseGroup');
         courseServiceSpy.mockReturnValue(throwError(() => new Error('getAllUsersInCourseGroup failed')));
 
-        comp.course = { id: 1 };
+        fixture.componentRef.setInput('course', { id: 1 });
 
         let loadOwnerOptionsResult: User[] | undefined = [owner];
         comp.loadOwnerOptions().subscribe((result) => (loadOwnerOptionsResult = result));
 
-        expect(searchFailedSpy).toHaveBeenCalledExactlyOnceWith(true);
+        expect(searchFailedSpy).toHaveBeenCalledOnce();
+        expect(searchFailedSpy).toHaveBeenCalledWith(true);
 
         expect(comp.ownerOptionsLoaded).toBe(false);
         expect(loadOwnerOptionsResult).toBeUndefined();
