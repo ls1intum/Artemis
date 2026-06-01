@@ -59,6 +59,8 @@ export class ProgrammingDiffReportDetailComponent implements OnDestroy {
                 modal: true,
                 closable: false,
                 dismissableMask: false,
+                // Render the comparison wide so side-by-side diffs are readable without horizontal scrolling.
+                width: '90vw',
                 styleClass: GitDiffReportModalComponent.WINDOW_CLASS,
                 data: {
                     repositoryDiffInformation,
