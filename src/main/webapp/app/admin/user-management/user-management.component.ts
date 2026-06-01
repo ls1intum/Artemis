@@ -13,7 +13,8 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angul
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/foundation/constants/pagination.constants';
 import { faEye, faFilter, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { PaginatorModule, PaginatorState } from 'primeng/paginator';
+import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -121,9 +122,9 @@ type Filter = typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter
         SortDirective,
         SortByDirective,
         ProfilePictureComponent,
-        NgbHighlight,
+        SearchHighlightComponent,
         ItemCountComponent,
-        NgbPagination,
+        PaginatorModule,
         HelpIconComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
@@ -564,6 +565,12 @@ export class UserManagementComponent implements OnInit, OnDestroy {
                 sort: `${this.predicate()},${this.ascending() ? ASC : DESC}`,
             },
         });
+    }
+
+    /** Handles a PrimeNG paginator page change by converting the 0-indexed event page to the 1-indexed page and navigating. */
+    onPageChange(event: PaginatorState): void {
+        this.page.set((event.page ?? 0) + 1);
+        this.transition();
     }
 
     private handleNavigation(): void {

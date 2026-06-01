@@ -1,24 +1,24 @@
 <div class="modal-header">
-    <h4 class="modal-title">{{ title | artemisTranslate: titleTranslationParams }}</h4>
-    <button type="button" class="btn-close" aria-label="Close button" aria-describedby="modal-title" (click)="modal.dismiss('Cross click')"></button>
+    <h4 class="modal-title">{{ data.title | artemisTranslate: data.titleTranslationParams }}</h4>
+    <button type="button" class="btn-close" aria-label="Close button" aria-describedby="modal-title" (click)="cancel()"></button>
 </div>
 <div class="modal-body">
-    @if (textIsMarkdown) {
-        <div [innerHTML]="text"></div>
+    @if (data.textIsMarkdown) {
+        <div [innerHTML]="data.text"></div>
     }
-    @if (!textIsMarkdown) {
-        @if (translateText) {
-            <p style="white-space: pre-line">{{ text | artemisTranslate }}</p>
+    @if (!data.textIsMarkdown) {
+        @if (data.translateText) {
+            <p style="white-space: pre-line">{{ data.text | artemisTranslate }}</p>
         }
-        @if (!translateText) {
-            <p style="white-space: pre-line">{{ text }}</p>
+        @if (!data.translateText) {
+            <p style="white-space: pre-line">{{ data.text }}</p>
         }
     }
-    @if (contentRef) {
-        <ng-container [ngTemplateOutlet]="contentRef" />
+    @if (data.contentRef) {
+        <ng-container [ngTemplateOutlet]="data.contentRef" />
     }
 </div>
 <div class="modal-footer">
-    <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss('cancel click')" jhiTranslate="global.form.cancel"></button>
-    <button type="button" ngbAutofocus class="btn btn-danger" (click)="modal.close('Ok click')" jhiTranslate="global.form.confirm" [disabled]="confirmDisabled"></button>
+    <button type="button" class="btn btn-outline-secondary" (click)="cancel()" jhiTranslate="global.form.cancel"></button>
+    <button #confirmButton type="button" class="btn btn-danger" (click)="confirm()" jhiTranslate="global.form.confirm" [disabled]="data.confirmDisabled"></button>
 </div>

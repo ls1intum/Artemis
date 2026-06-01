@@ -1,8 +1,11 @@
+import { vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 
 describe('ColorSelectorComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: ColorSelectorComponent;
     let fixture: ComponentFixture<ColorSelectorComponent>;
 
@@ -23,7 +26,7 @@ describe('ColorSelectorComponent', () => {
 
     it('should register click event listener on init', () => {
         //@ts-ignore spying on private method
-        const addEventListenerSpy = jest.spyOn(component, 'addEventListenerToCloseComponentOnClickOutside');
+        const addEventListenerSpy = vi.spyOn(component, 'addEventListenerToCloseComponentOnClickOutside');
 
         component.ngOnInit();
 
@@ -31,8 +34,8 @@ describe('ColorSelectorComponent', () => {
     });
 
     it('should stop event propagation on openSelector', () => {
-        const event = { stopPropagation: jest.fn(), target: { closest: jest.fn() } };
-        const eventStopPropagationSpy = jest.spyOn(event, 'stopPropagation');
+        const event = { stopPropagation: vi.fn(), target: { closest: vi.fn() } };
+        const eventStopPropagationSpy = vi.spyOn(event, 'stopPropagation');
         component.colorSelectorPosition = { left: 0, top: 0 };
         component.openColorSelector(event as unknown as MouseEvent, 0, 0);
 
@@ -43,7 +46,7 @@ describe('ColorSelectorComponent', () => {
         const target = document.createElement('div');
         const event = {
             target,
-            stopPropagation: jest.fn(),
+            stopPropagation: vi.fn(),
         } as unknown as MouseEvent;
         component.ngOnInit();
 
@@ -51,7 +54,7 @@ describe('ColorSelectorComponent', () => {
 
         expect(component.colorSelectorPosition).toEqual({ left: 0, top: 10 });
         expect(component.height).toBe(7);
-        expect(component.showColorSelector).toBeTrue();
+        expect(component.showColorSelector).toBeTruthy();
 
         component.showColorSelector = false;
 
@@ -59,11 +62,11 @@ describe('ColorSelectorComponent', () => {
 
         expect(component.colorSelectorPosition).toEqual({ left: 0, top: 65 });
         expect(component.height).toBe(7);
-        expect(component.showColorSelector).toBeTrue();
+        expect(component.showColorSelector).toBeTruthy();
     });
 
     it('should set the tag colors correctly', () => {
-        const emitMock = jest.spyOn(component.selectedColor, 'emit').mockImplementation();
+        const emitMock = vi.spyOn(component.selectedColor, 'emit').mockImplementation(() => undefined);
         // copy of the colors declared in the component since the array is not exported
         const DEFAULT_COLORS = [
             ARTEMIS_DEFAULT_COLOR,
@@ -87,7 +90,7 @@ describe('ColorSelectorComponent', () => {
         DEFAULT_COLORS.forEach((color) => {
             component.showColorSelector = true;
             component.selectColorForTag(color);
-            expect(component.showColorSelector).toBeFalse();
+            expect(component.showColorSelector).toBeFalsy();
             expect(emitMock).toHaveBeenCalledWith(color);
         });
     });
@@ -96,7 +99,7 @@ describe('ColorSelectorComponent', () => {
         component.showColorSelector = true;
         component.cancelColorSelector();
 
-        expect(component.showColorSelector).toBeFalse();
+        expect(component.showColorSelector).toBeFalsy();
     });
 
     describe('should handle close actions properly', () => {
@@ -111,11 +114,11 @@ describe('ColorSelectorComponent', () => {
             const clickEvent = new Event('click');
             document.dispatchEvent(clickEvent);
 
-            expect(component.showColorSelector).toBeFalse();
+            expect(component.showColorSelector).toBeFalsy();
         });
 
         it('and stay open when clicked inside but not clicking a color', () => {
-            expect(component.showColorSelector).toBeTrue();
+            expect(component.showColorSelector).toBeTruthy();
 
             const insideDummyElement = document.createElement('div');
             fixture.nativeElement.appendChild(insideDummyElement);
@@ -123,7 +126,7 @@ describe('ColorSelectorComponent', () => {
             const clickEvent = new MouseEvent('click', { bubbles: true });
             insideDummyElement.dispatchEvent(clickEvent);
 
-            expect(component.showColorSelector).toBeTrue();
+            expect(component.showColorSelector).toBeTruthy();
         });
     });
 });

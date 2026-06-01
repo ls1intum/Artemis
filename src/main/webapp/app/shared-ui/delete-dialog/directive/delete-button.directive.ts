@@ -1,5 +1,5 @@
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
-import { DestroyRef, Directive, ElementRef, EventEmitter, OnInit, Output, Renderer2, inject, input } from '@angular/core';
+import { DestroyRef, Directive, ElementRef, OnInit, Renderer2, inject, input, output } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionType, DeleteDialogData, EntitySummary, EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -29,9 +29,7 @@ export class DeleteButtonDirective implements OnInit {
     renderButtonText = input<boolean>(true);
     requireConfirmationOnlyForAdditionalChecks = input<boolean>(false);
     dialogError = input<Observable<string>>();
-    // Note: Using @Output here because the EventEmitter is passed through the service to DeleteDialogComponent
-    // which calls .emit() on it. Signal outputs (OutputEmitterRef) don't support this pattern.
-    @Output() delete = new EventEmitter<{ [key: string]: boolean }>();
+    delete = output<{ [key: string]: boolean }>();
     animation = input<boolean>(true);
 
     deleteTextSpan: HTMLElement;
@@ -83,7 +81,7 @@ export class DeleteButtonDirective implements OnInit {
             fetchCategorizedEntitySummary: this.fetchCategorizedEntitySummary(),
             actionType: this.actionType(),
             buttonType: this.buttonType(),
-            delete: this.delete,
+            delete: (additionalChecksValues) => this.delete.emit(additionalChecksValues),
             dialogError: this.dialogError(),
             requireConfirmationOnlyForAdditionalChecks: this.requireConfirmationOnlyForAdditionalChecks(),
         };

@@ -38,7 +38,6 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -63,6 +62,7 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPena
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseGradingStatisticsDTO;
+import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;

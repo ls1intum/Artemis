@@ -18,11 +18,11 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.exception.QuizJoinException;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.quiz.exception.QuizJoinException;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 
