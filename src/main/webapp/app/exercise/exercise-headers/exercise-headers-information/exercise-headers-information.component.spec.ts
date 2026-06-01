@@ -8,14 +8,13 @@ import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-heade
 import { MockProvider } from 'ng-mocks';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { DifficultyLevel, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { LockRepositoryPolicy, SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
-import { SubmissionType, getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { DateContent, InformationBox, StringNumberContent } from 'app/shared-ui/information-box/information-box.component';
 import { provideHttpClient } from '@angular/common/http';
@@ -358,5 +357,57 @@ describe('ExerciseHeadersInformationComponent', () => {
         const newFixture = TestBed.createComponent(ExerciseHeadersInformationComponent);
         const newComponent = newFixture.componentInstance;
         expect(newComponent.sortedHistoryResults()).toEqual([]);
+    });
+
+    it('should render the remaining-time box in the due-date slot and results-available last', () => {
+        fixture.componentRef.setInput('quizLiveHeaderInfo', {
+            showRemainingTime: true,
+            remainingTimeText: '5 min',
+            remainingTimeColor: 'warning',
+            showResultsAvailable: true,
+            resultsAvailableDate: dayjs(),
+        });
+        fixture.detectChanges();
+
+        const items = component.informationBoxItems();
+        const titles = items.map((item) => item.title);
+
+        // Remaining time takes the due-date slot: it sits before the submission status, not at the very end.
+        const remainingTimeBox = items.find((item) => item.title === 'artemisApp.quizExercise.remainingTime')!;
+        expect((remainingTimeBox.content as { value: string }).value).toBe('5 min');
+        expect(remainingTimeBox.contentColor).toBe('warning');
+        expect(titles.indexOf('artemisApp.quizExercise.remainingTime')).toBeLessThan(titles.indexOf('artemisApp.courseOverview.exerciseDetails.status'));
+
+        // Results available stays last.
+        const lastItem = items[items.length - 1];
+        expect(lastItem.title).toBe('artemisApp.quizExercise.resultsAvailable');
+        expect(lastItem.content.type).toBe('dateTime');
+    });
+
+    it('should not add quiz live-info boxes when quizLiveHeaderInfo is undefined', () => {
+        const titles = component.informationBoxItems().map((item) => item.title);
+        expect(titles).not.toContain('artemisApp.quizExercise.remainingTime');
+        expect(titles).not.toContain('artemisApp.quizExercise.resultsAvailable');
+    });
+
+    it('should suppress the generic submission-due box only while the live quiz countdown is shown', () => {
+        // Without quiz info, the (past) due date renders the submission-due-over box.
+        expect(component.informationBoxItems().some((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.submissionDueOver')).toBe(true);
+
+        // Countdown active: the due-date box is replaced by the live "time left" box.
+        fixture.componentRef.setInput('quizLiveHeaderInfo', { showRemainingTime: true, remainingTimeText: '5 min', showResultsAvailable: false });
+        fixture.detectChanges();
+
+        let titles = component.informationBoxItems().map((item) => item.title);
+        expect(titles).not.toContain('artemisApp.courseOverview.exerciseDetails.submissionDueOver');
+        expect(titles).not.toContain('artemisApp.courseOverview.exerciseDetails.submissionDue');
+        expect(titles).toContain('artemisApp.quizExercise.remainingTime');
+
+        // Quiz info present but countdown not shown (e.g. before start / results / preview): the due date is shown again.
+        fixture.componentRef.setInput('quizLiveHeaderInfo', { showRemainingTime: false, showResultsAvailable: false });
+        fixture.detectChanges();
+
+        titles = component.informationBoxItems().map((item) => item.title);
+        expect(titles).toContain('artemisApp.courseOverview.exerciseDetails.submissionDueOver');
     });
 });

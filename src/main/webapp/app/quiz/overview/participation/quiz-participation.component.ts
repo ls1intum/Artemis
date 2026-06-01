@@ -46,6 +46,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
+import { QuizLiveHeaderInfo } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 
 @Component({
     selector: 'jhi-quiz',
@@ -148,6 +149,13 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     readonly submitTitleKey = this._submitTitleKey.asReadonly();
     private readonly _shouldTreatAsSubmittedForUi = signal(false);
     readonly shouldTreatAsSubmittedForUi = this._shouldTreatAsSubmittedForUi.asReadonly();
+
+    /**
+     * Live quiz info (remaining time, results-available date, score) rendered in the exercise header during
+     * live/practice participation instead of in a dedicated quiz header row, so the questions can move up.
+     */
+    private readonly _liveHeaderInfo = signal<QuizLiveHeaderInfo | undefined>(undefined);
+    readonly liveHeaderInfo = this._liveHeaderInfo.asReadonly();
 
     quizId: number;
     courseId: number;
@@ -879,6 +887,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 // limit decimal places
                 this.questionScores[submittedAnswer.quizQuestion!.id!] = roundValueSpecifiedByCourseSettings(submittedAnswer.scoreInPoints!, course);
             }, this);
+            this.updateLiveHeaderInfo();
         }
     }
 
@@ -1208,6 +1217,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this._isSubmitDisabled.set(disabled);
         this._submitTitleKey.set(submittedForUi ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit');
         this.emitLiveQuizStatus(submittedForUi);
+        this.updateLiveHeaderInfo();
     }
 
     /**
@@ -1234,5 +1244,44 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             this.lastEmittedLiveQuizStatus = status;
             this.liveQuizStatusChange.emit(status);
         }
+    }
+
+    /**
+     * Recomputes the live header info (remaining time / results-available date / score) consumed by the exercise header.
+     * Mirrors the visibility logic that used to live in the quiz header template. Called whenever the relevant state
+     * changes: every UI tick (via {@link updateDisplayedTimes} → {@link syncSubmitState}) and when results are shown.
+     */
+    private updateLiveHeaderInfo(): void {
+        if (!this.quizExercise) {
+            this._liveHeaderInfo.set(undefined);
+            return;
+        }
+        const info: QuizLiveHeaderInfo = { showRemainingTime: false, showResultsAvailable: false };
+        if (!this.showingResult) {
+            if (!this.waitingForQuizStart && !this.quizExercise.quizEnded && !this.submission.submitted && this.remainingTimeSeconds >= 0) {
+                info.showRemainingTime = true;
+                info.remainingTimeText = this.remainingTimeText;
+                info.remainingTimeColor = this.remainingTimeColor();
+            } else if (this.quizExercise.dueDate && ((!this.quizExercise.quizEnded && this.submission.submitted) || (this.remainingTimeSeconds < 0 && this.hasAnyAnswer()))) {
+                info.showResultsAvailable = true;
+                info.resultsAvailableDate = this.quizExercise.dueDate;
+            }
+        }
+        this._liveHeaderInfo.set(info);
+    }
+
+    /**
+     * Maps the remaining seconds to a bootstrap text color, mirroring the time-warning / time-critical thresholds
+     * that were applied in the quiz header template. Returns undefined for the default (non-urgent) color.
+     */
+    private remainingTimeColor(): string | undefined {
+        const duration = this.quizExercise.duration ?? 0;
+        if (this.remainingTimeSeconds < 60 || this.remainingTimeSeconds < duration / 4) {
+            return 'danger';
+        }
+        if (this.remainingTimeSeconds < 120 || this.remainingTimeSeconds < duration / 2) {
+            return 'warning';
+        }
+        return undefined;
     }
 }
