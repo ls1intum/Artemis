@@ -121,7 +121,9 @@ export class ExerciseSplitPanelComponent {
         return this.irisEnabled() && !!ExerciseSplitPanelComponent.getChatMode(exercise.type!) && !exercise.exerciseGroup;
     });
 
-    readonly irisPanelStartsCollapsed = computed(() => this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.NO_AI);
+    readonly irisPanelStartsCollapsed = computed(
+        () => this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.NO_AI && this.showIris() && !this.showEditorPanel(),
+    );
 
     readonly showCodeEditor = computed(() => {
         const exercise = this.exercise();

@@ -67,11 +67,11 @@ describe('ResizablePanelsComponent', () => {
         expect(fixture.nativeElement.textContent).toContain('Right Content');
     });
 
-    it('should start collapsed with the marked right panel active', () => {
+    it('should start collapsed without changing the active right panel', () => {
         const component = createFixture(true);
 
         expect(component.isRightPanelCollapsed()).toBe(true);
-        expect(component.activeRightIndex()).toBe(1);
+        expect(component.activeRightIndex()).toBe(0);
         expect(fixture.nativeElement.querySelector('.collapsed-right-panel')).not.toBeNull();
         expect(fixture.nativeElement.textContent).not.toContain('Iris Content');
     });

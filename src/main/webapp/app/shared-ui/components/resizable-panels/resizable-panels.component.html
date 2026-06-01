@@ -43,7 +43,7 @@
             } @else {
                 <div class="d-flex flex-column overflow-hidden rounded-3 module-bg" jhiSplitPane>
                     <div class="right-panel-header d-flex align-items-center">
-                        <p-tabs [value]="activeRightIndex()" (valueChange)="setActiveRight($event)" class="flex-grow-1 min-width-0">
+                        <p-tabs [value]="activeRightIndex()" (valueChange)="setActiveRight($event)" class="right-panel-tabs flex-grow-1">
                             <p-tablist>
                                 @for (panel of rightPanels(); track panel; let i = $index) {
                                     <p-tab [value]="i">

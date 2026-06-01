@@ -105,7 +105,6 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
                     return;
                 }
                 if (collapsedPanelIndex >= 0) {
-                    this._activeRightIndex.set(collapsedPanelIndex);
                     this._isRightPanelCollapsed.set(true);
                 } else {
                     this._isRightPanelCollapsed.set(false);
