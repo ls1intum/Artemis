@@ -97,7 +97,7 @@ public class PlagiarismCaseResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<PlagiarismCaseOverviewDTO>> getPlagiarismCasesForCourseForInstructor(@PathVariable long courseId) {
         log.debug("REST request to get all plagiarism cases for instructor in course with id: {}", courseId);
-        var plagiarismCases = plagiarismCaseRepository.findByCourseIdWithPlagiarismSubmissionsAndComparison(courseId);
+        var plagiarismCases = plagiarismCaseRepository.findOverviewDtosByCourseId(courseId);
         return getPlagiarismCaseOverviewResponseEntity(plagiarismCases);
     }
 
@@ -115,12 +115,11 @@ public class PlagiarismCaseResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
-        var plagiarismCases = plagiarismCaseRepository.findByExamIdWithPlagiarismSubmissionsAndComparison(examId);
+        var plagiarismCases = plagiarismCaseRepository.findOverviewDtosByExamId(examId);
         if (!plagiarismCases.isEmpty()) {
-            var plagiarismCase = plagiarismCases.getFirst();
-            var exam = plagiarismCase.getExercise().getExerciseGroup().getExam();
-            if (!exam.getCourse().getId().equals(courseId)) {
-                throw new ConflictException("Exam with id " + exam.getId() + " is not related to the given course id " + courseId, ENTITY_NAME, "courseMismatch");
+            var plagiarismCaseExercise = plagiarismCases.getFirst().exercise();
+            if (plagiarismCaseExercise == null || !Long.valueOf(courseId).equals(plagiarismCaseExercise.courseId())) {
+                throw new ConflictException("Exam with id " + examId + " is not related to the given course id " + courseId, ENTITY_NAME, "courseMismatch");
             }
         }
         return getPlagiarismCaseOverviewResponseEntity(plagiarismCases);
@@ -141,8 +140,8 @@ public class PlagiarismCaseResource {
         if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
             throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
         }
-        var plagiarismCase = plagiarismCaseRepository.findByIdWithFullDetailsForDTOElseThrow(plagiarismCaseId);
-        return ResponseEntity.ok(PlagiarismCaseDetailDTO.ofForInstructor(plagiarismCase));
+        var plagiarismCase = plagiarismCaseRepository.findDetailDtoByIdElseThrow(plagiarismCaseId);
+        return ResponseEntity.ok(getPlagiarismCaseDetailResponse(plagiarismCase));
     }
 
     /**
@@ -236,8 +235,15 @@ public class PlagiarismCaseResource {
         return ResponseEntity.ok(plagiarismCaseInfoDTOs);
     }
 
-    private ResponseEntity<List<PlagiarismCaseOverviewDTO>> getPlagiarismCaseOverviewResponseEntity(List<PlagiarismCase> plagiarismCases) {
-        return ResponseEntity.ok(plagiarismCases.stream().map(PlagiarismCaseOverviewDTO::ofOverview).toList());
+    private ResponseEntity<List<PlagiarismCaseOverviewDTO>> getPlagiarismCaseOverviewResponseEntity(List<PlagiarismCaseOverviewDTO> plagiarismCases) {
+        return ResponseEntity.ok(plagiarismCases);
+    }
+
+    private PlagiarismCaseDetailDTO getPlagiarismCaseDetailResponse(PlagiarismCaseDetailDTO plagiarismCase) {
+        var plagiarismSubmissions = plagiarismCaseRepository.findSubmissionDtosByPlagiarismCaseId(plagiarismCase.id());
+        return new PlagiarismCaseDetailDTO(plagiarismCase.id(), plagiarismCase.exercise(), plagiarismCase.student(), plagiarismCase.post(), plagiarismCase.verdict(),
+                plagiarismCase.verdictDate(), plagiarismCase.verdictBy(), plagiarismCase.plagiarismSubmissionCount(), plagiarismCase.createdByContinuousPlagiarismControl(),
+                plagiarismCase.verdictMessage(), plagiarismCase.verdictPointDeduction(), plagiarismSubmissions);
     }
 
     /**
@@ -255,11 +261,11 @@ public class PlagiarismCaseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
-        var plagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsAndPlagiarismDetectionConfigElseThrow(plagiarismCaseId);
-        if (!plagiarismCase.getStudent().getLogin().equals(user.getLogin())) {
+        var plagiarismCase = plagiarismCaseRepository.findDetailDtoByIdElseThrow(plagiarismCaseId);
+        if (plagiarismCase.student() == null || !plagiarismCase.student().login().equals(user.getLogin())) {
             throw new AccessForbiddenException("Students only have access to plagiarism cases by which they are affected");
         }
 
-        return ResponseEntity.ok(PlagiarismCaseDetailDTO.ofForStudent(plagiarismCase));
+        return ResponseEntity.ok(getPlagiarismCaseDetailResponse(plagiarismCase));
     }
 }
