@@ -352,11 +352,15 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                 });
             }
 
+            // File fetch is async; if the user switched files while it was in flight, ignore the result
+            // entirely — otherwise a slow (binary) load would set binaryFileSelected and hide Monaco for the
+            // now-selected file.
+            if (this.selectedFile() !== fileName) {
+                return;
+            }
             const code = this.fileSession()[fileName].code;
             this.binaryFileSelected.set(this.fileTypeService.isBinaryContent(code));
-
-            // File fetch is async; ignore the result if the user switched files in the meantime.
-            if (!this.binaryFileSelected() && this.selectedFile() === fileName) {
+            if (!this.binaryFileSelected()) {
                 this.switchToSelectedFile(fileName, code);
             }
         } finally {

@@ -511,6 +511,21 @@ describe('CodeEditorMonacoComponent', () => {
         expect(comp.binaryFileSelected()).toBe(true);
     });
 
+    it('should ignore a stale binary-file load once the selection moved to a text file', async () => {
+        const binaryFile = 'binary-file';
+        const textFile = 'text-file';
+        comp.fileSession.set({
+            [binaryFile]: { code: '\0\0\0\0 (binary content)', loadingError: false, cursor: { lineNumber: 0, column: 0 }, scrollTop: 0 },
+            [textFile]: { code: 'plain text', loadingError: false, cursor: { lineNumber: 0, column: 0 }, scrollTop: 0 },
+        });
+        fixture.changeDetectorRef.detectChanges();
+        // The user has already switched to the text file when the slow binary load resolves.
+        fixture.componentRef.setInput('selectedFile', textFile);
+        await comp.selectFileInEditor(binaryFile);
+        // The stale binary load must not flip binaryFileSelected, which would hide Monaco for the text file.
+        expect(comp.binaryFileSelected()).toBe(false);
+    });
+
     it.each([
         [new ConnectionError(), 'loadingFailedInternetDisconnected'],
         [new Error(), 'loadingFailed'],
