@@ -65,9 +65,9 @@ describe('Plagiarism Cases Instructor View Component', () => {
         verdictDate: date,
         post: {
             id: 1,
-            answerAuthorIds: [1],
         },
         plagiarismSubmissionCount: 1,
+        hasStudentAnswer: true,
     } as PlagiarismCase;
     const plagiarismCase2 = {
         id: 2,

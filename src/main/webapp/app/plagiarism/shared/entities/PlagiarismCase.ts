@@ -16,6 +16,7 @@ export class PlagiarismCase {
     public verdictBy?: PlagiarismCaseUser;
     public verdictPointDeduction?: number;
     public createdByContinuousPlagiarismControl?: boolean;
+    public hasStudentAnswer?: boolean;
 }
 
 export class PlagiarismCaseDTO {
@@ -46,7 +47,6 @@ export class PlagiarismCaseExercise {
 export class PlagiarismCasePostSummary {
     public id?: number;
     public creationDate?: dayjs.Dayjs;
-    public answerAuthorIds?: number[];
 }
 
 export class PlagiarismCaseVerdictResponse {

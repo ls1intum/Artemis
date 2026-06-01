@@ -161,7 +161,7 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
      * @return whether the student has responded or not
      */
     hasStudentAnswer(plagiarismCase: PlagiarismCase): boolean {
-        return !!plagiarismCase.post?.answerAuthorIds?.some((authorId) => authorId === plagiarismCase.student?.id);
+        return !!plagiarismCase.hasStudentAnswer;
     }
 
     /**
