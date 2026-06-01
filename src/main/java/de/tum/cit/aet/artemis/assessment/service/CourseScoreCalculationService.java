@@ -33,7 +33,6 @@ import de.tum.cit.aet.artemis.assessment.dto.BonusSourceResultDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
 import de.tum.cit.aet.artemis.assessment.dto.MaxAndReachablePointsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoresDTO;
-import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationStatusRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseScoresDTO;
@@ -48,6 +47,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
+import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationStatusRepository;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
 import de.tum.cit.aet.artemis.plagiarism.api.dtos.PlagiarismMapping;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
@@ -553,7 +553,7 @@ public class CourseScoreCalculationService {
     }
 
     private boolean isAssessedAutomatically(ExerciseCourseScoreDTO exercise) {
-        return exercise.exerciseType() == ExerciseType.PROGRAMMING && exercise.assessmentType() == AssessmentType.AUTOMATIC;
+        return exercise.type() == ExerciseType.PROGRAMMING && exercise.assessmentType() == AssessmentType.AUTOMATIC;
     }
 
     private boolean isAutomaticAssessmentDone(ExerciseCourseScoreDTO exercise) {

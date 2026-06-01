@@ -1,11 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
 import { ImportCourseCompetenciesComponent } from 'app/atlas/manage/import/import-course-competencies.component';
-import { onError } from 'app/shared/util/global.utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ImportCompetenciesTableComponent } from 'app/atlas/manage/import/import-competencies-table.component';
 import { CompetencySearchComponent } from 'app/atlas/manage/import/competency-search.component';

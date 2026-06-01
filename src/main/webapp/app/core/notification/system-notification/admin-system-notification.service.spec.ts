@@ -65,7 +65,7 @@ describe('AdminSystemNotificationService', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
 
-            const req = httpMock.expectOne({ method: 'POST', url: 'api/communication/admin/system-notifications' });
+            const req = httpMock.expectOne({ method: 'POST', url: 'api/notification/admin/system-notifications' });
             req.flush(returnedFromService);
 
             expect(convertDatesFromClientSpy).toHaveBeenCalledOnce();
@@ -122,7 +122,7 @@ describe('AdminSystemNotificationService', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
 
-            const req = httpMock.expectOne({ method: 'PUT', url: 'api/communication/admin/system-notifications' });
+            const req = httpMock.expectOne({ method: 'PUT', url: 'api/notification/admin/system-notifications' });
             req.flush(returnedFromService);
 
             expect(convertDatesFromClientSpy).toHaveBeenCalledOnce();
@@ -168,7 +168,7 @@ describe('AdminSystemNotificationService', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (result = resp));
 
-            const req = httpMock.expectOne({ method: 'DELETE', url: 'api/communication/admin/system-notifications/1' });
+            const req = httpMock.expectOne({ method: 'DELETE', url: 'api/notification/admin/system-notifications/1' });
             req.flush(null);
 
             expect(result).toBeDefined();
@@ -183,7 +183,7 @@ describe('AdminSystemNotificationService', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (result = resp));
 
-            const req = httpMock.expectOne({ method: 'DELETE', url: 'api/communication/admin/system-notifications/42' });
+            const req = httpMock.expectOne({ method: 'DELETE', url: 'api/notification/admin/system-notifications/42' });
             req.flush(null);
 
             expect(result).toBeDefined();
@@ -192,7 +192,7 @@ describe('AdminSystemNotificationService', () => {
 
     describe('resourceUrl', () => {
         it('should have the correct resource URL', () => {
-            expect(service.resourceUrl).toBe('api/communication/admin/system-notifications');
+            expect(service.resourceUrl).toBe('api/notification/admin/system-notifications');
         });
     });
 });

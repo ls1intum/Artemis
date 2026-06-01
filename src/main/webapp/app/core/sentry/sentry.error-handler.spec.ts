@@ -16,7 +16,7 @@ vi.mock('@sentry/angular', async (importOriginal) => {
 import { TestBed } from '@angular/core/testing';
 import * as Sentry from '@sentry/angular';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { ProfileInfo, SentryConfig } from 'app/core/layouts/profiles/profile-info.model';
 import { PROFILE_PROD, PROFILE_TEST } from 'app/app.constants';
 import { MockProvider } from 'ng-mocks';

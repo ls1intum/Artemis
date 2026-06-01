@@ -25,14 +25,14 @@ import { PageType, PostContextFilter, PostSortCriterion, SortDirection, getUnrea
 import { MetisService } from 'app/communication/service/metis.service';
 import { Channel, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { GroupChat, isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { OneToOneChat, isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { User } from 'app/account/user/user.model';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { NgClass } from '@angular/common';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
@@ -42,7 +42,7 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { Posting, PostingType } from 'app/communication/shared/entities/posting.model';
 import { canCreateNewMessageInConversation } from 'app/communication/conversations/conversation-permissions.utils';
 import { AccountService } from 'app/core/auth/account.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 
 interface PostGroup {
     author: User | undefined;

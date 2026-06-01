@@ -12,7 +12,7 @@ import { DatePipe } from '@angular/common';
 import { AuditsComponent } from 'app/admin/audits/audits.component';
 import { AuditsService } from 'app/admin/audits/audits.service';
 import { Audit } from 'app/admin/audits/audit.model';
-import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
+import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 
 function build2DigitsDatePart(datePart: number) {

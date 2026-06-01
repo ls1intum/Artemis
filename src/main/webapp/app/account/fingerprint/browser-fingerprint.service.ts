@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { BehaviorSubject } from 'rxjs';
 import FingerprintJS, { GetResult } from '@fingerprintjs/fingerprintjs';
 

@@ -74,7 +74,7 @@ import com.zaxxer.hikari.metrics.micrometer.MicrometerMetricsTrackerFactory;
 
 import de.tum.cit.aet.artemis.core.config.cache.PrefixedKeyGenerator;
 import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.programming.service.localci.LocalCIPriorityQueueComparator;
+import de.tum.cit.aet.artemis.localci.service.LocalCIPriorityQueueComparator;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.cache.HazelcastCacheMetrics;
 

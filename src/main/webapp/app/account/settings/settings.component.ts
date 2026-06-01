@@ -5,9 +5,9 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { LANGUAGES } from 'app/core/language/shared/language.constants';
 import { User } from 'app/account/user/user.model';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FindLanguageFromKeyPipe } from 'app/foundation/language/find-language-from-key.pipe';
 import { MODULE_FEATURE_SAML2 } from 'app/app.constants';
 import { MessageModule } from 'primeng/message';
 

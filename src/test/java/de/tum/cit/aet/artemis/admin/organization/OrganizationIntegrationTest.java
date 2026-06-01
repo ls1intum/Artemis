@@ -18,17 +18,17 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.OrganizationCourseDTO;
+import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
+import de.tum.cit.aet.artemis.account.dto.OrganizationMemberDTO;
+import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.admin.dto.OrganizationCountDTO;
 import de.tum.cit.aet.artemis.admin.organization.util.OrganizationUtilService;
-import de.tum.cit.aet.artemis.core.domain.Organization;
-import de.tum.cit.aet.artemis.core.dto.OrganizationCourseDTO;
-import de.tum.cit.aet.artemis.core.dto.OrganizationDTO;
-import de.tum.cit.aet.artemis.core.dto.OrganizationMemberDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -98,7 +98,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course1 = courseRepository.save(course1);
         course2 = courseRepository.save(course2);
 
-        List<Course> coursesToEnroll = request.getList("/api/core/courses/for-enrollment", HttpStatus.OK, Course.class);
+        List<Course> coursesToEnroll = request.getList("/api/course/courses/for-enrollment", HttpStatus.OK, Course.class);
         assertThat(coursesToEnroll).contains(course1).contains(course2);
     }
 
@@ -137,13 +137,13 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course2 = courseRepository.save(course2);
         course3 = courseRepository.save(course3);
 
-        Set<String> updatedGroups = request.postWithResponseBody("/api/core/courses/" + course1.getId() + "/enroll", null, Set.class, HttpStatus.OK);
+        Set<String> updatedGroups = request.postWithResponseBody("/api/course/courses/" + course1.getId() + "/enroll", null, Set.class, HttpStatus.OK);
         assertThat(updatedGroups).as("User is enrolled in course").contains(course1.getStudentGroupName());
 
-        updatedGroups = request.postWithResponseBody("/api/core/courses/" + course2.getId() + "/enroll", null, Set.class, HttpStatus.OK);
+        updatedGroups = request.postWithResponseBody("/api/course/courses/" + course2.getId() + "/enroll", null, Set.class, HttpStatus.OK);
         assertThat(updatedGroups).as("User is enrolled in course").contains(course2.getStudentGroupName());
 
-        request.postWithResponseBody("/api/core/courses/" + course3.getId() + "/enroll", null, Set.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/course/courses/" + course3.getId() + "/enroll", null, Set.class, HttpStatus.FORBIDDEN);
     }
 
     /**

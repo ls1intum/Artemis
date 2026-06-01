@@ -4,7 +4,7 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
@@ -13,16 +13,16 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { FaqUpdateComponent } from 'app/communication/faq/faq-update.component';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { Faq } from 'app/communication/shared/entities/faq.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FaqConsistencyComponent } from './faq-consistency.component';
-import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
+import { RewriteAction } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
 import { ModuleFeature } from 'app/app.constants';
 
 describe('FaqUpdateComponent', () => {

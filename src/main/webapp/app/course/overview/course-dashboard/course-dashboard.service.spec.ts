@@ -39,14 +39,14 @@ describe('CourseDashboardService', () => {
                         shortName: 'E1',
                         start: '2024-01-01T00:00:00Z',
                         due: '2024-01-10T00:00:00Z',
-                        type: 'de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise',
+                        type: 'programming',
                     },
                     2: {
                         id: 2,
                         title: 'Exercise 2',
                         shortName: 'E2',
                         start: '2024-01-02T00:00:00Z',
-                        type: 'de.tum.cit.aet.artemis.modeling.domain.ModelingExercise',
+                        type: 'modeling',
                     },
                     3: {
                         id: 3,
@@ -54,7 +54,7 @@ describe('CourseDashboardService', () => {
                         shortName: 'E3',
                         start: '2024-01-03T00:00:00Z',
                         due: '2024-01-12T00:00:00Z',
-                        type: 'de.tum.cit.aet.artemis.quiz.domain.QuizExercise',
+                        type: 'quiz',
                     },
                     4: {
                         id: 4,
@@ -62,7 +62,7 @@ describe('CourseDashboardService', () => {
                         shortName: 'E4',
                         start: '2024-01-04T00:00:00Z',
                         due: '2024-01-14T00:00:00Z',
-                        type: 'de.tum.cit.aet.artemis.text.domain.TextExercise',
+                        type: 'text',
                     },
                     5: {
                         id: 5,
@@ -70,7 +70,7 @@ describe('CourseDashboardService', () => {
                         shortName: 'E5',
                         start: '2024-01-05T00:00:00Z',
                         due: '2024-01-15T00:00:00Z',
-                        type: 'de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise',
+                        type: 'file-upload',
                     },
                 },
                 categories: {
@@ -87,25 +87,25 @@ describe('CourseDashboardService', () => {
                         id: 10,
                         name: 'Attachment',
                         releaseDate: '2024-02-01T00:00:00Z',
-                        type: 'de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit',
+                        type: LectureUnitType.ATTACHMENT_VIDEO,
                     },
                     11: {
                         id: 11,
                         name: 'Exercise',
                         releaseDate: '2024-02-02T00:00:00Z',
-                        type: 'de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit',
+                        type: LectureUnitType.EXERCISE,
                     },
                     12: {
                         id: 12,
                         name: 'Text',
                         releaseDate: '2024-02-03T00:00:00Z',
-                        type: 'de.tum.cit.aet.artemis.lecture.domain.TextUnit',
+                        type: LectureUnitType.TEXT,
                     },
                     13: {
                         id: 13,
                         name: 'Online',
                         releaseDate: '2024-02-04T00:00:00Z',
-                        type: 'de.tum.cit.aet.artemis.lecture.domain.OnlineUnit',
+                        type: LectureUnitType.ONLINE,
                     },
                 },
             },
@@ -161,7 +161,7 @@ describe('CourseDashboardService', () => {
                 expect(competencies?.['6'].softDueDate).toBeUndefined();
             });
 
-        const req = httpMock.expectOne({ method: 'GET', url: 'api/atlas/metrics/course/123/student' });
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/atlas/metrics/courses/123/student' });
         req.flush(rawResponse);
     });
 
@@ -173,7 +173,7 @@ describe('CourseDashboardService', () => {
                 expect(response.body).toBeNull();
             });
 
-        const req = httpMock.expectOne({ method: 'GET', url: 'api/atlas/metrics/course/321/student' });
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/atlas/metrics/courses/321/student' });
         req.flush(null);
     });
 
@@ -195,7 +195,7 @@ describe('CourseDashboardService', () => {
 
         service.getCourseMetricsForUser(10).subscribe({ error: errorSpy });
 
-        const req = httpMock.expectOne({ method: 'GET', url: 'api/atlas/metrics/course/10/student' });
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/atlas/metrics/courses/10/student' });
         req.flush(rawResponse);
 
         expect(errorSpy).toHaveBeenCalledOnce();
@@ -219,7 +219,7 @@ describe('CourseDashboardService', () => {
 
         service.getCourseMetricsForUser(11).subscribe({ error: errorSpy });
 
-        const req = httpMock.expectOne({ method: 'GET', url: 'api/atlas/metrics/course/11/student' });
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/atlas/metrics/courses/11/student' });
         req.flush(rawResponse);
 
         expect(errorSpy).toHaveBeenCalledOnce();

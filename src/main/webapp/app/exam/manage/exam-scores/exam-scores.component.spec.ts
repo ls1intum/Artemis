@@ -13,13 +13,14 @@ import {
 import { MockProvider } from 'ng-mocks';
 import { ExamScoresComponent, MedianType } from 'app/exam/manage/exam-scores/exam-scores.component';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
+import { ParticipantScoresService, ScoresDTO } from 'app/course/participant-scores/participant-scores.service';
 import { cloneDeep } from 'lodash-es';
 import { EMPTY, of } from 'rxjs';
+import { DialogService } from 'primeng/dynamicdialog';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
-import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/modal/export-modal.component';
+import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared-ui/export/modal/export-modal.component';
 import {
     BONUS_GRADE_KEY,
     EMAIL_KEY,
@@ -35,7 +36,7 @@ import {
     PLAGIARISM_VERDICT_KEY,
     REGISTRATION_NUMBER_KEY,
     USERNAME_KEY,
-} from 'app/shared/export/export-constants';
+} from 'app/shared-ui/export/export-constants';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
@@ -43,7 +44,7 @@ import { ActivatedRoute } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideNoopAnimationsForTests } from 'test/helpers/animations';
@@ -273,6 +274,8 @@ describe('ExamScoresComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
+                // ExamScoresComponent renders the real ExportButtonComponent, which injects PrimeNG DialogService.
+                { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: of(undefined) })) } },
                 MockProvider(GradingService, {
                     findGradingScaleForExam: () => {
                         return of(
