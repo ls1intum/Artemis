@@ -52,8 +52,8 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
                 ),
                 student.id,
                 student.login,
-                student.name,
-                student.visibleRegistrationNumber,
+                CONCAT(student.firstName, ' ', student.lastName),
+                student.registrationNumber,
                 post.id,
                 post.creationDate,
                 COUNT(DISTINCT studentAnswer.id) > 0,
@@ -61,8 +61,8 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
                 plagiarismCase.verdictDate,
                 verdictBy.id,
                 verdictBy.login,
-                verdictBy.name,
-                verdictBy.visibleRegistrationNumber,
+                CONCAT(verdictBy.firstName, ' ', verdictBy.lastName),
+                verdictBy.registrationNumber,
                 COUNT(DISTINCT plagiarismSubmission.id),
                 plagiarismCase.createdByContinuousPlagiarismControl
             )
@@ -80,9 +80,9 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
                 LEFT JOIN plagiarismCase.plagiarismSubmissions plagiarismSubmission
             WHERE exercise.course.id = :courseId
             GROUP BY plagiarismCase.id, exercise.id, exercise.title, TYPE(exercise), exercise.dueDate, course.id, examCourse.id, course.title, examCourse.title, exam.id,
-                exam.title, plagiarismDetectionConfig.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod, student.id, student.login, student.name,
-                student.visibleRegistrationNumber, post.id, post.creationDate, plagiarismCase.verdict, plagiarismCase.verdictDate, verdictBy.id, verdictBy.login,
-                verdictBy.name, verdictBy.visibleRegistrationNumber, plagiarismCase.createdByContinuousPlagiarismControl
+                exam.title, plagiarismDetectionConfig.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod, student.id, student.login, student.firstName, student.lastName,
+                student.registrationNumber, post.id, post.creationDate, plagiarismCase.verdict, plagiarismCase.verdictDate, verdictBy.id, verdictBy.login,
+                verdictBy.firstName, verdictBy.lastName, verdictBy.registrationNumber, plagiarismCase.createdByContinuousPlagiarismControl
             """)
     List<PlagiarismCaseOverviewDTO> findOverviewDtosByCourseId(@Param("courseId") Long courseId);
 
@@ -102,8 +102,8 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
                 ),
                 student.id,
                 student.login,
-                student.name,
-                student.visibleRegistrationNumber,
+                CONCAT(student.firstName, ' ', student.lastName),
+                student.registrationNumber,
                 post.id,
                 post.creationDate,
                 COUNT(DISTINCT studentAnswer.id) > 0,
@@ -111,8 +111,8 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
                 plagiarismCase.verdictDate,
                 verdictBy.id,
                 verdictBy.login,
-                verdictBy.name,
-                verdictBy.visibleRegistrationNumber,
+                CONCAT(verdictBy.firstName, ' ', verdictBy.lastName),
+                verdictBy.registrationNumber,
                 COUNT(DISTINCT plagiarismSubmission.id),
                 plagiarismCase.createdByContinuousPlagiarismControl
             )
@@ -130,9 +130,9 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
                 LEFT JOIN plagiarismCase.plagiarismSubmissions plagiarismSubmission
             WHERE exam.id = :examId
             GROUP BY plagiarismCase.id, exercise.id, exercise.title, TYPE(exercise), exercise.dueDate, course.id, examCourse.id, course.title, examCourse.title, exam.id,
-                exam.title, plagiarismDetectionConfig.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod, student.id, student.login, student.name,
-                student.visibleRegistrationNumber, post.id, post.creationDate, plagiarismCase.verdict, plagiarismCase.verdictDate, verdictBy.id, verdictBy.login,
-                verdictBy.name, verdictBy.visibleRegistrationNumber, plagiarismCase.createdByContinuousPlagiarismControl
+                exam.title, plagiarismDetectionConfig.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod, student.id, student.login, student.firstName, student.lastName,
+                student.registrationNumber, post.id, post.creationDate, plagiarismCase.verdict, plagiarismCase.verdictDate, verdictBy.id, verdictBy.login,
+                verdictBy.firstName, verdictBy.lastName, verdictBy.registrationNumber, plagiarismCase.createdByContinuousPlagiarismControl
             """)
     List<PlagiarismCaseOverviewDTO> findOverviewDtosByExamId(@Param("examId") Long examId);
 
@@ -244,16 +244,16 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
                 ),
                 student.id,
                 student.login,
-                student.name,
-                student.visibleRegistrationNumber,
+                CONCAT(student.firstName, ' ', student.lastName),
+                student.registrationNumber,
                 post.id,
                 post.creationDate,
                 plagiarismCase.verdict,
                 plagiarismCase.verdictDate,
                 verdictBy.id,
                 verdictBy.login,
-                verdictBy.name,
-                verdictBy.visibleRegistrationNumber,
+                CONCAT(verdictBy.firstName, ' ', verdictBy.lastName),
+                verdictBy.registrationNumber,
                 COUNT(DISTINCT plagiarismSubmission.id),
                 plagiarismCase.createdByContinuousPlagiarismControl,
                 plagiarismCase.verdictMessage,
@@ -272,9 +272,9 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
                 LEFT JOIN plagiarismCase.plagiarismSubmissions plagiarismSubmission
             WHERE plagiarismCase.id = :plagiarismCaseId
             GROUP BY plagiarismCase.id, exercise.id, exercise.title, TYPE(exercise), exercise.dueDate, course.id, examCourse.id, course.title, examCourse.title, exam.id,
-                exam.title, plagiarismDetectionConfig.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod, student.id, student.login, student.name,
-                student.visibleRegistrationNumber, post.id, post.creationDate, plagiarismCase.verdict, plagiarismCase.verdictDate, verdictBy.id, verdictBy.login,
-                verdictBy.name, verdictBy.visibleRegistrationNumber, plagiarismCase.createdByContinuousPlagiarismControl, plagiarismCase.verdictMessage,
+                exam.title, plagiarismDetectionConfig.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod, student.id, student.login, student.firstName, student.lastName,
+                student.registrationNumber, post.id, post.creationDate, plagiarismCase.verdict, plagiarismCase.verdictDate, verdictBy.id, verdictBy.login,
+                verdictBy.firstName, verdictBy.lastName, verdictBy.registrationNumber, plagiarismCase.createdByContinuousPlagiarismControl, plagiarismCase.verdictMessage,
                 plagiarismCase.verdictPointDeduction
             """)
     Optional<PlagiarismCaseDetailDTO> findDetailDtoById(@Param("plagiarismCaseId") long plagiarismCaseId);
