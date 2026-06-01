@@ -103,7 +103,7 @@
             "processingComplete": "Verarbeitung abgeschlossen",
             "processingFailed": "Verarbeitung fehlgeschlagen",
             "videoSlideSync": {
-                "toggle": "Video und Folien synchronisieren"
+                "toggle": "Folien und Video synchronisieren"
             },
             "processing": {
                 "cancelled": "Verarbeitung wurde abgebrochen",

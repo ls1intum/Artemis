@@ -103,7 +103,7 @@
             "processingComplete": "Processing complete",
             "processingFailed": "Processing Failed",
             "videoSlideSync": {
-                "toggle": "Synchronize Video and Slides"
+                "toggle": "Synchronize slides and video"
             },
             "processing": {
                 "cancelled": "Processing was cancelled",
