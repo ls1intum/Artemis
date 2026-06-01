@@ -77,6 +77,7 @@ export default defineConfig({
             'src/main/webapp/app/exercise/synchronization/**/*.spec.ts', // include exercise synchronization tests
             'src/main/webapp/app/exercise/version-history/**/*.spec.ts', // include exercise version history tests
             'src/main/webapp/app/exercise/review/**/*.spec.ts', // include review module tests
+            'src/main/webapp/app/exercise/team/**/*.spec.ts', // include exercise team tests
             'src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/**/*.spec.ts', // include checklist-panel tests
             'src/main/webapp/app/hyperion/**/*.spec.ts', // include hyperion module tests
             'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**/*.spec.ts', // include build phases editor tests
@@ -94,6 +95,7 @@ export default defineConfig({
             'src/main/webapp/app/logos/**/*.spec.ts', // include logos tests
             'src/main/webapp/app/sharing/**/*.spec.ts', // include sharing tests
             'src/main/webapp/app/app.component.spec.ts', // include app-shell (app.component) tests
+            'src/main/webapp/app/plagiarism/**/*.spec.ts', // include all plagiarism tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -150,6 +152,7 @@ export default defineConfig({
                 'src/main/webapp/app/exercise/synchronization/**/*.ts', // include exercise synchronization for code coverage
                 'src/main/webapp/app/exercise/version-history/**/*.ts', // include exercise version history for code coverage
                 'src/main/webapp/app/exercise/review/**/*.ts', // include review module for code coverage
+                'src/main/webapp/app/exercise/team/**/*.ts', // include exercise team for code coverage
                 'src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/**/*.ts', // include checklist-panel for code coverage
                 'src/main/webapp/app/hyperion/**/*.ts', // include hyperion module for code coverage
                 'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**/*.ts', // include build phases editor for code coverage
@@ -166,6 +169,7 @@ export default defineConfig({
                 'src/main/webapp/app/logos/**/*.ts', // include logos for code coverage
                 'src/main/webapp/app/sharing/**/*.ts', // include sharing for code coverage
                 'src/main/webapp/app/app.component.ts', // include app-shell (app.component) for code coverage
+                'src/main/webapp/app/plagiarism/**/*.ts', // include all plagiarism for code coverage
             ],
             exclude: [
                 '**/node_modules/**', // exclude node_modules with third-party code
@@ -178,12 +182,12 @@ export default defineConfig({
                 'src/main/webapp/app/core/config/prod.config.ts', // exclude dayjs configuration file (not really testable)
             ],
             thresholds: {
-                // Tuned slightly below current actuals to absorb further Jest→Vitest migration drift.
-                // Re-tune when migration completes. Adjusted when the editor module (markdown/monaco editor)
-                // moved from Jest to Vitest, which shifted the aggregate by ~0.2pp on lines/functions/statements
-                // (branches rose). Actuals at that point: lines 89.41, statements 89.21, branches 73.83, functions 87.17.
-                lines: 89.2,
-                statements: 89.0,
+                // Tuned slightly below current actuals to absorb Jest→Vitest migration drift; re-tune when migration completes.
+                // Merge of develop (lines 88.8 / statements 88.7 / branches 73.7 / functions 86.2) with this branch
+                // (89.2 / 89.0 / 73.6 / 86.0): each floor is the lower of the two so the merged aggregate (develop's
+                // Vitest modules plus this branch's programming/shared additions) clears the gate.
+                lines: 88.8,
+                statements: 88.7,
                 branches: 73.6,
                 functions: 86.0,
             },

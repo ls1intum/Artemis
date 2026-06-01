@@ -139,6 +139,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/logos/**', // logos module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/sharing/**', // sharing module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/app.component.ts', // app-shell (app.component) uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/plagiarism/**', // plagiarism module uses Vitest (see vitest.config.ts)
     ],
     // Each entry below excludes a module that has been migrated to Vitest.
     coveragePathIgnorePatterns: [
@@ -191,6 +192,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/logos/', // logos module uses Vitest
         '<rootDir>/src/main/webapp/app/sharing/', // sharing module uses Vitest
         '<rootDir>/src/main/webapp/app/app.component.ts', // app-shell (app.component) uses Vitest
+        '<rootDir>/src/main/webapp/app/plagiarism/', // plagiarism module uses Vitest
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
@@ -199,10 +201,14 @@ module.exports = {
     // Re-tune when migration completes.
     coverageThreshold: {
         global: {
-            statements: 82.5,
+            // Lowered as foundation, shared-ui, editor (markdown/monaco), plagiarism (develop) and programming/shared
+            // (this branch) moved out of Jest to Vitest, shrinking the Jest denominator. Each floor is the lower of
+            // develop (statements 81.9 / branches 72.9 / functions 68 / lines 83.4) and this branch (82.5 / 72.9 / 69 / 84),
+            // staying conservatively below the merged actual. Re-tune when migration completes.
+            statements: 81.9,
             branches: 72.9,
-            functions: 69,
-            lines: 84,
+            functions: 68,
+            lines: 83.4,
         },
     },
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
@@ -284,6 +290,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/logos/', // logos module (Vitest)
         '<rootDir>/src/main/webapp/app/sharing/', // sharing module (Vitest)
         '<rootDir>/src/main/webapp/app/app.component.spec.ts', // app-shell (app.component) (Vitest)
+        '<rootDir>/src/main/webapp/app/plagiarism/', // plagiarism module (vitest)
     ],
     testTimeout: 3000,
     testMatch: ['<rootDir>/src/main/webapp/app/**/*.spec.ts', '<rootDir>/src/test/javascript/spec/**/*.integration.spec.ts'],
