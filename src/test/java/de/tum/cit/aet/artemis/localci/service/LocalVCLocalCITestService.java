@@ -16,6 +16,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
@@ -55,6 +56,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStu
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.util.ShortNameGenerator;
 
 /**
  * This class contains helper methods for all tests of the local VC and local CI system..
@@ -183,8 +185,19 @@ public class LocalVCLocalCITestService {
      * @param repositorySlug the repository slug of the repository to be created (e.g. "someprojectkey-solution" or "someprojectkey-practice-student1").
      * @return the configured LocalRepository that contains Git handles to the remote and local repository.
      */
-    public LocalRepository createAndConfigureLocalRepository(String projectKey, String repositorySlug) throws GitAPIException, IOException, URISyntaxException {
+    public synchronized LocalRepository createAndConfigureLocalRepository(String projectKey, String repositorySlug) throws GitAPIException, IOException, URISyntaxException {
         Path localRepositoryFolder = createRepositoryFolder(projectKey, repositorySlug);
+        if (isExistingBareRepository(localRepositoryFolder)) {
+            try {
+                return cloneExistingLocalRepository(localRepositoryFolder);
+            }
+            catch (GitAPIException | IOException e) {
+                log.warn("Failed to clone existing LocalVC repository at {}, recreating it", localRepositoryFolder, e);
+                FileUtils.deleteDirectory(localRepositoryFolder.toFile());
+                Files.createDirectories(localRepositoryFolder);
+            }
+        }
+
         LocalRepository repository = new LocalRepository(defaultBranch);
         repository.configureRepos(localVCBasePath, "localRepo", localRepositoryFolder);
 
@@ -193,6 +206,25 @@ public class LocalVCLocalCITestService {
         de.tum.cit.aet.artemis.localvc.service.GitService.commit(repository.workingCopyGitRepo).setMessage("Initial commit").setAllowEmpty(true).call();
         repository.workingCopyGitRepo.push().call();
 
+        return repository;
+    }
+
+    private boolean isExistingBareRepository(Path repositoryFolder) {
+        return Files.exists(repositoryFolder.resolve("HEAD")) && Files.exists(repositoryFolder.resolve("objects"));
+    }
+
+    private LocalRepository cloneExistingLocalRepository(Path repositoryFolder) throws GitAPIException, IOException {
+        String tempPrefix = ShortNameGenerator.generateRandomShortName(6);
+        Path workingCopyPath = localVCBasePath.resolve(tempPrefix).resolve(tempPrefix + "-localRepo");
+        Files.createDirectories(workingCopyPath);
+
+        Git workingCopyGit = Git.cloneRepository().setURI(repositoryFolder.toUri().toString()).setDirectory(workingCopyPath.toFile()).setBranch(defaultBranch).call();
+
+        LocalRepository repository = new LocalRepository(defaultBranch);
+        repository.workingCopyGitRepoFile = workingCopyPath.toFile();
+        repository.workingCopyGitRepo = workingCopyGit;
+        repository.remoteBareGitRepoFile = repositoryFolder.toAbsolutePath().toFile();
+        repository.remoteBareGitRepo = Git.open(repository.remoteBareGitRepoFile);
         return repository;
     }
 
