@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.quiz.web;
+package de.tum.cit.aet.artemis.quiz.web.training;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -96,8 +97,8 @@ public class QuizTrainingResource {
      */
     @PostMapping("courses/{courseId}/training-questions")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<List<QuizQuestionTrainingDTO>> getQuizQuestionsForPractice(@PathVariable long courseId, Pageable pageable, @RequestParam boolean isNewSession,
-            @RequestBody Set<Long> questionIds) {
+    public ResponseEntity<List<QuizQuestionTrainingDTO>> getQuizQuestionsForPractice(@PathVariable long courseId, @ParameterObject Pageable pageable,
+            @RequestParam boolean isNewSession, @RequestBody Set<Long> questionIds) {
         log.info("REST request to get quiz questions for course with id : {}", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
