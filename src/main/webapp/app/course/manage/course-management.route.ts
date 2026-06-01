@@ -283,8 +283,16 @@ export const courseManagementRoutes: Routes = [
                         redirectTo: 'exercises',
                     },
                     {
+                        path: 'math-exercises',
+                        redirectTo: 'exercises',
+                    },
+                    {
                         path: '',
                         loadChildren: () => import('app/text/manage/text-exercise/text-exercise.route').then((m) => m.textExerciseRoute),
+                    },
+                    {
+                        path: '',
+                        loadChildren: () => import('app/math/math.route').then((m) => m.mathExerciseRoute),
                     },
                     {
                         path: '',

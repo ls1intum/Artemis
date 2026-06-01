@@ -157,7 +157,8 @@
                     "modeling": "Modellierung",
                     "text": "Text",
                     "fileUpload": "Datei-Upload",
-                    "quiz": "Quiz"
+                    "quiz": "Quiz",
+                    "math": "Mathematik"
                 },
                 "metis": {
                     "post": "Beitrag",

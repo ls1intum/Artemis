@@ -19,6 +19,8 @@ export class ExerciseTypePipe implements PipeTransform {
                 return 'Text';
             case ExerciseType.FILE_UPLOAD:
                 return 'File Upload';
+            case ExerciseType.MATH:
+                return 'Math';
             default:
                 return 'Exercise';
         }

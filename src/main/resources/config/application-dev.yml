@@ -140,6 +140,8 @@ artemis:
     continuous-integration:
         build-job:
           retention-period: 365 # Number of days before build job entries are deleted
+    math:
+      enabled: true
     security:
         internal:
             allowed-cidrs:

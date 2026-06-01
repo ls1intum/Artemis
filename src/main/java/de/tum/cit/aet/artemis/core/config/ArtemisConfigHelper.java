@@ -149,6 +149,16 @@ public class ArtemisConfigHelper {
     }
 
     /**
+     * Check if the math module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the math module is enabled, false otherwise
+     */
+    public boolean isMathEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(Constants.MATH_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
      * Check if the lecture module is enabled.
      *
      * @param environment the Spring environment
@@ -275,6 +285,9 @@ public class ArtemisConfigHelper {
         }
         if (isFileUploadEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_FILEUPLOAD);
+        }
+        if (isMathEnabled(environment)) {
+            enabledFeatures.add(Constants.MODULE_FEATURE_MATH);
         }
         if (isLectureEnabled(environment)) {
             enabledFeatures.add(Constants.MODULE_FEATURE_LECTURE);

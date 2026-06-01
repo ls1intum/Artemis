@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Scaffold for the math exercise type. Creates the secondary tables holding the math-specific
+         exercise and submission fields. The structured derivation/grading model is added in later changes. -->
+
+    <changeSet id="20260601000000-1" author="kilian">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="math_exercise_details"/>
+            </not>
+        </preConditions>
+        <createTable tableName="math_exercise_details">
+            <column name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="description" type="longtext"/>
+            <column name="example_solution" type="longtext"/>
+            <column name="manual_derivation" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="id"
+                                 baseTableName="math_exercise_details"
+                                 constraintName="fk_math_exercise_details_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="exercise"
+                                 onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet id="20260601000000-2" author="kilian">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="math_submission_details"/>
+            </not>
+        </preConditions>
+        <createTable tableName="math_submission_details">
+            <column name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="content" type="longtext"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="id"
+                                 baseTableName="math_submission_details"
+                                 constraintName="fk_math_submission_details_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="submission"
+                                 onDelete="CASCADE"/>
+    </changeSet>
+
+</databaseChangeLog>

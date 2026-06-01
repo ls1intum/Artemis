@@ -5,6 +5,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
+import { MathExercise } from 'app/math/shared/entities/math-exercise.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Observable, map } from 'rxjs';
@@ -60,6 +61,17 @@ export class CourseExerciseService {
         return this.http
             .get<FileUploadExercise[]>(`api/fileupload/courses/${courseId}/file-upload-exercises`, { observe: 'response' })
             .pipe(map((res: HttpResponse<FileUploadExercise[]>) => this.processExercisesHttpResponses(res)));
+    }
+
+    /**
+     * returns all math exercises for the course corresponding to courseId
+     * Note: the exercises in the response do not contain participations and do not contain the course to save network bandwidth
+     * @param courseId - the unique identifier of the course
+     */
+    findAllMathExercisesForCourse(courseId: number): Observable<HttpResponse<MathExercise[]>> {
+        return this.http
+            .get<MathExercise[]>(`api/math/courses/${courseId}/math-exercises`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<MathExercise[]>) => this.processExercisesHttpResponses(res)));
     }
 
     /**

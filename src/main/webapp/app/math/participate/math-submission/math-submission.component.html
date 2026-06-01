@@ -1,0 +1,23 @@
+<p-card>
+    <ng-template pTemplate="header">
+        <h4 class="px-3 pt-3 mb-0">{{ exercise()?.title }}</h4>
+    </ng-template>
+
+    @if (exercise()?.problemStatement) {
+        <p class="text-muted">{{ exercise()?.problemStatement }}</p>
+    }
+
+    <div class="form-group">
+        <label for="math-content" jhiTranslate="artemisApp.mathExercise.editor.content">Your solution</label>
+        <textarea id="math-content" pTextarea class="form-control w-100" rows="10" [ngModel]="content()" (ngModelChange)="content.set($event)"></textarea>
+    </div>
+
+    <div class="d-flex gap-2 mt-2">
+        <button pButton type="button" id="save-submission" severity="secondary" [disabled]="isSaving()" (click)="save()">
+            <span jhiTranslate="entity.action.save">Save</span>
+        </button>
+        <button pButton type="button" id="submit-submission" [disabled]="isSaving()" (click)="submit()">
+            <span jhiTranslate="entity.action.submit">Submit</span>
+        </button>
+    </div>
+</p-card>

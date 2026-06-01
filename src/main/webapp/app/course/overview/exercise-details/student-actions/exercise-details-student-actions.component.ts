@@ -143,6 +143,8 @@ export class ExerciseDetailsStudentActionsComponent {
             this._editorLabel.set('openTextEditor');
         } else if (exercise.type === ExerciseType.FILE_UPLOAD) {
             this._editorLabel.set('uploadFile');
+        } else if (exercise.type === ExerciseType.MATH) {
+            this._editorLabel.set('openMathEditor');
         }
     }
 
