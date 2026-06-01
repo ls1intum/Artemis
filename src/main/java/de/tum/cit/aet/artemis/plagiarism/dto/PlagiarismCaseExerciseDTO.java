@@ -12,14 +12,15 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismCaseExerciseDTO(Long id, String title, ExerciseType type, ZonedDateTime dueDate, Long courseId, String courseTitle, Long examId, String examTitle,
-        Integer continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod) {
+public record PlagiarismCaseExerciseDTO(Long id, String title, String shortName, ExerciseType type, ZonedDateTime dueDate, Long courseId, String courseTitle, Long examId,
+        String examTitle, Integer continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod) {
 
     /**
      * JPQL constructor that accepts the raw entity class produced by Hibernate's {@code TYPE(...)} function.
      *
      * @param id                                                             the exercise id
      * @param title                                                          the exercise title
+     * @param shortName                                                      the exercise short name
      * @param type                                                           the concrete exercise entity class
      * @param dueDate                                                        the exercise due date
      * @param courseId                                                       the course id
@@ -28,9 +29,9 @@ public record PlagiarismCaseExerciseDTO(Long id, String title, ExerciseType type
      * @param examTitle                                                      the exam title
      * @param continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod the response period configured for continuous plagiarism control cases
      */
-    public PlagiarismCaseExerciseDTO(Long id, String title, Class<? extends Exercise> type, ZonedDateTime dueDate, Long courseId, String courseTitle, Long examId, String examTitle,
-            Integer continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod) {
-        this(id, title, ExerciseType.getExerciseTypeFromClass(type), dueDate, courseId, courseTitle, examId, examTitle,
+    public PlagiarismCaseExerciseDTO(Long id, String title, String shortName, Class<? extends Exercise> type, ZonedDateTime dueDate, Long courseId, String courseTitle, Long examId,
+            String examTitle, Integer continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod) {
+        this(id, title, shortName, ExerciseType.getExerciseTypeFromClass(type), dueDate, courseId, courseTitle, examId, examTitle,
                 continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod);
     }
 
@@ -50,7 +51,8 @@ public record PlagiarismCaseExerciseDTO(Long id, String title, ExerciseType type
         Integer studentResponsePeriod = Optional.ofNullable(exercise.getPlagiarismDetectionConfig())
                 .map(PlagiarismDetectionConfig::getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod).orElse(null);
 
-        return new PlagiarismCaseExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getExerciseType(), exercise.getDueDate(), course != null ? course.getId() : null,
-                course != null ? course.getTitle() : null, exam != null ? exam.getId() : null, exam != null ? exam.getTitle() : null, studentResponsePeriod);
+        return new PlagiarismCaseExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getExerciseType(), exercise.getDueDate(),
+                course != null ? course.getId() : null, course != null ? course.getTitle() : null, exam != null ? exam.getId() : null, exam != null ? exam.getTitle() : null,
+                studentResponsePeriod);
     }
 }

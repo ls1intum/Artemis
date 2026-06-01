@@ -20,7 +20,8 @@ public record PlagiarismCaseOverviewDTO(Long id, PlagiarismCaseExerciseDTO exerc
      * @param exercise                             the exercise DTO
      * @param studentId                            the affected student id
      * @param studentLogin                         the affected student login
-     * @param studentName                          the affected student name
+     * @param studentFirstName                     the affected student's first name
+     * @param studentLastName                      the affected student's last name
      * @param studentVisibleRegistrationNumber     the affected student's visible registration number
      * @param postId                               the post id
      * @param postCreationDate                     the post creation date
@@ -29,16 +30,17 @@ public record PlagiarismCaseOverviewDTO(Long id, PlagiarismCaseExerciseDTO exerc
      * @param verdictDate                          the verdict date
      * @param verdictById                          the verdict author id
      * @param verdictByLogin                       the verdict author login
-     * @param verdictByName                        the verdict author name
-     * @param verdictByVisibleRegistrationNumber   the verdict author's visible registration number
+     * @param verdictByFirstName                   the verdict author's first name
+     * @param verdictByLastName                    the verdict author's last name
      * @param plagiarismSubmissionCount            the number of submissions attached to the plagiarism case
      * @param createdByContinuousPlagiarismControl whether the case was created by continuous plagiarism control
      */
-    public PlagiarismCaseOverviewDTO(Long id, PlagiarismCaseExerciseDTO exercise, Long studentId, String studentLogin, String studentName, String studentVisibleRegistrationNumber,
-            Long postId, ZonedDateTime postCreationDate, boolean hasStudentAnswer, PlagiarismVerdict verdict, ZonedDateTime verdictDate, Long verdictById, String verdictByLogin,
-            String verdictByName, String verdictByVisibleRegistrationNumber, long plagiarismSubmissionCount, boolean createdByContinuousPlagiarismControl) {
-        this(id, exercise, userOrNull(studentId, studentLogin, studentName, studentVisibleRegistrationNumber), postOrNull(postId, postCreationDate), verdict, verdictDate,
-                userOrNull(verdictById, verdictByLogin, verdictByName, verdictByVisibleRegistrationNumber), Math.toIntExact(plagiarismSubmissionCount),
+    public PlagiarismCaseOverviewDTO(Long id, PlagiarismCaseExerciseDTO exercise, Long studentId, String studentLogin, String studentFirstName, String studentLastName,
+            String studentVisibleRegistrationNumber, Long postId, ZonedDateTime postCreationDate, boolean hasStudentAnswer, PlagiarismVerdict verdict, ZonedDateTime verdictDate,
+            Long verdictById, String verdictByLogin, String verdictByFirstName, String verdictByLastName, long plagiarismSubmissionCount,
+            boolean createdByContinuousPlagiarismControl) {
+        this(id, exercise, userOrNull(studentId, studentLogin, fullName(studentFirstName, studentLastName), studentVisibleRegistrationNumber), postOrNull(postId, postCreationDate),
+                verdict, verdictDate, userOrNull(verdictById, verdictByLogin, fullName(verdictByFirstName, verdictByLastName), null), Math.toIntExact(plagiarismSubmissionCount),
                 createdByContinuousPlagiarismControl, hasStudentAnswer);
     }
 
@@ -69,6 +71,13 @@ public record PlagiarismCaseOverviewDTO(Long id, PlagiarismCaseExerciseDTO exerc
             return null;
         }
         return new PlagiarismCaseUserDTO(id, login, name, visibleRegistrationNumber);
+    }
+
+    private static String fullName(String firstName, String lastName) {
+        if (lastName != null && !lastName.isEmpty()) {
+            return firstName + " " + lastName;
+        }
+        return firstName;
     }
 
     private static PlagiarismCasePostSummaryDTO postOrNull(Long id, ZonedDateTime creationDate) {

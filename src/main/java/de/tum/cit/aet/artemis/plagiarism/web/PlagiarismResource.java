@@ -30,8 +30,8 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismComparisonDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismComparisonStatusDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
@@ -136,31 +136,31 @@ public class PlagiarismResource {
             throw new BadRequestAlertException("The courseId does not belong to the given comparisonId", "PlagiarismComparison", "idMismatch");
         }
 
-        comparisonA.setSubmissionB(comparisonB.getSubmissionB());
         if (authCheckService.isOnlyStudentInCourse(course, user)) {
             // Note: this calls also checks that the student is allowed to see the complaint, and throws otherwise
-            checkStudentAccess(comparisonA, user.getLogin());
+            checkStudentAccess(comparisonA.getSubmissionA(), comparisonB.getSubmissionB(), user.getLogin());
         }
 
-        return ResponseEntity.ok(PlagiarismComparisonDTO.fromComparison(comparisonA));
+        return ResponseEntity.ok(PlagiarismComparisonDTO.fromComparison(comparisonA, comparisonB));
     }
 
     /**
-     * Check if the passed userLogin is related to the plagiarism comparison. If this is not the case, the user is now allowed to access.
+     * Check if the passed userLogin is related to the plagiarism comparison. If this is not the case, the user is not allowed to access.
      * Also anonymizes the comparison for the student view.
      * A student should not have sensitive information (e.g. the userLogin of the other student)
      *
-     * @param comparison to anonymize.
-     * @param userLogin  of the student asking to see their plagiarism comparison.
+     * @param submissionA the first submission in the comparison
+     * @param submissionB the second submission in the comparison
+     * @param userLogin   of the student asking to see their plagiarism comparison.
      */
-    private void checkStudentAccess(PlagiarismComparison comparison, String userLogin) {
-        if (comparison.getSubmissionA().getStudentLogin().equals(userLogin)) {
-            comparison.getSubmissionA().setStudentLogin(YOUR_SUBMISSION);
-            comparison.getSubmissionB().setStudentLogin(OTHER_SUBMISSION);
+    private void checkStudentAccess(PlagiarismSubmission submissionA, PlagiarismSubmission submissionB, String userLogin) {
+        if (submissionA.getStudentLogin().equals(userLogin)) {
+            submissionA.setStudentLogin(YOUR_SUBMISSION);
+            submissionB.setStudentLogin(OTHER_SUBMISSION);
         }
-        else if (comparison.getSubmissionB().getStudentLogin().equals(userLogin)) {
-            comparison.getSubmissionA().setStudentLogin(OTHER_SUBMISSION);
-            comparison.getSubmissionB().setStudentLogin(YOUR_SUBMISSION);
+        else if (submissionB.getStudentLogin().equals(userLogin)) {
+            submissionA.setStudentLogin(OTHER_SUBMISSION);
+            submissionB.setStudentLogin(YOUR_SUBMISSION);
         }
         else {
             throw new AccessForbiddenException("This plagiarism comparison is not related to the requesting user.");

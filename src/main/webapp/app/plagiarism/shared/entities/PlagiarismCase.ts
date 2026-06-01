@@ -35,6 +35,7 @@ export class PlagiarismCaseUser {
 export class PlagiarismCaseExercise {
     public id?: number;
     public title?: string;
+    public shortName?: string;
     public type?: ExerciseType;
     public dueDate?: dayjs.Dayjs;
     public courseId?: number;

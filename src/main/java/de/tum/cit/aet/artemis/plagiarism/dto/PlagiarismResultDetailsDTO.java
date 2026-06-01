@@ -10,8 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismResultDetailsDTO(Long id, List<PlagiarismComparisonDTO> comparisons, long duration, List<Integer> similarityDistribution, Instant createdDate,
-        String createdBy) {
+public record PlagiarismResultDetailsDTO(Long id, List<PlagiarismComparisonDTO> comparisons, long duration, List<Integer> similarityDistribution, Instant createdDate) {
 
     /**
      * Maps a plagiarism result entity to the DTO returned by plagiarism result endpoints.
@@ -37,7 +36,6 @@ public record PlagiarismResultDetailsDTO(Long id, List<PlagiarismComparisonDTO> 
             // Older tests and partially initialized results may not carry a distribution yet.
         }
 
-        return new PlagiarismResultDetailsDTO(plagiarismResult.getId(), comparisons, plagiarismResult.getDuration(), similarityDistribution, plagiarismResult.getCreatedDate(),
-                plagiarismResult.getCreatedBy());
+        return new PlagiarismResultDetailsDTO(plagiarismResult.getId(), comparisons, plagiarismResult.getDuration(), similarityDistribution, plagiarismResult.getCreatedDate());
     }
 }

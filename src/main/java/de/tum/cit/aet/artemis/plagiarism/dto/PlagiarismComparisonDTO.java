@@ -24,13 +24,28 @@ public record PlagiarismComparisonDTO(Long id, PlagiarismSubmissionDTO submissio
         if (comparison == null) {
             return null;
         }
+        return fromComparison(comparison, comparison);
+    }
 
-        Set<PlagiarismMatchDTO> matches = null;
-        if (comparison.getMatches() != null && Hibernate.isInitialized(comparison.getMatches())) {
-            matches = comparison.getMatches().stream().map(PlagiarismMatchDTO::fromMatch).collect(Collectors.toSet());
+    /**
+     * Maps a plagiarism comparison loaded in two steps to the DTO used by the split view.
+     *
+     * @param comparisonWithSubmissionA the comparison whose submission A elements are initialized
+     * @param comparisonWithSubmissionB the comparison whose submission B elements are initialized
+     * @return the DTO representation
+     */
+    public static PlagiarismComparisonDTO fromComparison(PlagiarismComparison comparisonWithSubmissionA, PlagiarismComparison comparisonWithSubmissionB) {
+        if (comparisonWithSubmissionA == null) {
+            return null;
         }
 
-        return new PlagiarismComparisonDTO(comparison.getId(), PlagiarismSubmissionDTO.fromSubmission(comparison.getSubmissionA()),
-                PlagiarismSubmissionDTO.fromSubmission(comparison.getSubmissionB()), matches, comparison.getSimilarity(), comparison.getStatus());
+        Set<PlagiarismMatchDTO> matches = null;
+        if (comparisonWithSubmissionA.getMatches() != null && Hibernate.isInitialized(comparisonWithSubmissionA.getMatches())) {
+            matches = comparisonWithSubmissionA.getMatches().stream().map(PlagiarismMatchDTO::fromMatch).collect(Collectors.toSet());
+        }
+
+        return new PlagiarismComparisonDTO(comparisonWithSubmissionA.getId(), PlagiarismSubmissionDTO.fromSubmission(comparisonWithSubmissionA.getSubmissionA()),
+                PlagiarismSubmissionDTO.fromSubmission(comparisonWithSubmissionB != null ? comparisonWithSubmissionB.getSubmissionB() : null), matches,
+                comparisonWithSubmissionA.getSimilarity(), comparisonWithSubmissionA.getStatus());
     }
 }

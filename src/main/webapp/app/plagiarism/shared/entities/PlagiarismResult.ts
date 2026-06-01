@@ -32,9 +32,4 @@ export class PlagiarismResult {
      * Time when the plagiarism checks started.
      */
     createdDate: dayjs.Dayjs;
-
-    /**
-     * User or entity which started the plagiarism check.
-     */
-    createdBy?: string;
 }
