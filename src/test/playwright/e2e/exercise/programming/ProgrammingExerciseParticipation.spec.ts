@@ -4,6 +4,7 @@ import cBuildErrorSubmission from '../../../fixtures/exercise/programming/c/buil
 import cPartiallySuccessfulSubmission from '../../../fixtures/exercise/programming/c/partially_successful/submission.json';
 import { ExerciseCommit, ExerciseMode, ProgrammingLanguage } from '../../../support/constants';
 import { test } from '../../../support/fixtures';
+import { expect } from '@playwright/test';
 import { SshEncryptionAlgorithm } from '../../../support/pageobjects/exercises/programming/GitClient';
 import cAllSuccessful from '../../../fixtures/exercise/programming/c/all_successful/submission.json';
 import { admin, instructor, studentFour, studentOne, studentTwo, tutor } from '../../../support/users';
