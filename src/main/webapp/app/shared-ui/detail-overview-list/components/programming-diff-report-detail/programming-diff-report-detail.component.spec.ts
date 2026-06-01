@@ -61,6 +61,8 @@ describe('ProgrammingDiffReportDetailComponent', () => {
         expect(dialogSpy).toHaveBeenCalledWith(
             expect.any(Function),
             expect.objectContaining({
+                // Guard the close-affordance fix: PrimeNG only renders the X and binds Escape when closable is true.
+                closable: true,
                 data: expect.objectContaining({
                     repositoryDiffInformation: expect.objectContaining({
                         totalLineChange: expect.objectContaining({

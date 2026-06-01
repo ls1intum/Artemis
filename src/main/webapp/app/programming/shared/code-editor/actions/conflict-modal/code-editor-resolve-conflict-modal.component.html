@@ -7,9 +7,7 @@
         </span>
     </div>
     <div class="d-flex justify-content-end gap-2 p-3 border-top">
-        <button class="btn btn-secondary" type="button" data-dismiss="modal" (click)="closeModal()">
-            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
-        </button>
+        <button class="btn btn-secondary" type="button" (click)="closeModal()"><fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span></button>
         <button type="submit" class="btn btn-danger" [disabled]="!deleteForm.valid">
             <fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="artemisApp.editor.conflict.resolveConflict"></span>
         </button>

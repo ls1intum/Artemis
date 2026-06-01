@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, Renderer2, ViewEncapsulation, contentChild, inject, input, output, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, Renderer2, ViewEncapsulation, inject, input, output, viewChild } from '@angular/core';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { InteractableEvent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
@@ -16,10 +16,6 @@ import { ResizeType } from 'app/programming/shared/code-editor/model/code-editor
 })
 export class CodeEditorGridComponent implements AfterViewInit, OnDestroy {
     private renderer = inject(Renderer2);
-
-    readonly editorSidebarRight = contentChild.required<ElementRef>('editorSidebarRight');
-    readonly editorSidebarLeft = contentChild.required<ElementRef>('editorSidebarLeft');
-    readonly editorBottomArea = contentChild.required<ElementRef>('editorBottomArea');
 
     readonly buildOutputElement = viewChild.required<ElementRef>('buildOutput');
     readonly fileBrowserElement = viewChild.required<ElementRef>('fileBrowser');
