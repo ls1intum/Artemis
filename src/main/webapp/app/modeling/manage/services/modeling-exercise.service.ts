@@ -58,7 +58,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
-            .post<ModelingExercise>(`${this.resourceUrl}/import/${adaptedSourceModelingExercise.id}`, copy, { observe: 'response' })
+            .post<ModelingExercise>(`${this.resourceUrl}/import?sourceExerciseId=${adaptedSourceModelingExercise.id}`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 

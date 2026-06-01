@@ -77,7 +77,7 @@ public class AdminLtiConfigurationResource {
      * @param platformId The ID of the LTI platform to retrieve configuration for.
      * @return a {@code ResponseEntity} with an {@code Optional<LtiPlatformConfiguration>} and HTTP status.
      */
-    @GetMapping("lti-platform/{platformId}")
+    @GetMapping({ "lti-platforms/{platformId}", "lti-platform/{platformId}" })
     public ResponseEntity<LtiPlatformConfiguration> getLtiPlatformConfiguration(@PathVariable("platformId") String platformId) {
         log.debug("REST request to configured lti platform");
         LtiPlatformConfiguration platform = ltiPlatformConfigurationRepository.findByIdElseThrow(Long.parseLong(platformId));
@@ -90,7 +90,7 @@ public class AdminLtiConfigurationResource {
      * @param platformId the ID of the platform configuration to delete.
      * @return a {@code ResponseEntity<Void>} with status {@code 200 (OK)} and a header indicating the deletion.
      */
-    @DeleteMapping("lti-platform/{platformId}")
+    @DeleteMapping({ "lti-platforms/{platformId}", "lti-platform/{platformId}" })
     public ResponseEntity<Void> deleteLtiPlatformConfiguration(@PathVariable("platformId") String platformId) {
         log.debug("REST request to delete configured LTI platform");
         LtiPlatformConfiguration platform = ltiPlatformConfigurationRepository.findByIdElseThrow(Long.parseLong(platformId));
@@ -108,7 +108,7 @@ public class AdminLtiConfigurationResource {
      * @return a {@link ResponseEntity} with status 200 (OK) if the update was successful,
      *         or with status 400 (Bad Request) if the provided platform configuration is invalid (e.g., missing ID)
      */
-    @PutMapping("lti-platform")
+    @PutMapping({ "lti-platforms", "lti-platform" })
     public ResponseEntity<Void> updateLtiPlatformConfiguration(@RequestBody LtiPlatformConfigurationUpdateDTO updateDTO) {
         log.debug("REST request to update configured LTI platform");
 
@@ -136,7 +136,7 @@ public class AdminLtiConfigurationResource {
      * @param dto the LTI platform configuration DTO containing the new values.
      * @return a {@link ResponseEntity} with status 200 (OK) if the creation was successful
      */
-    @PostMapping("lti-platform")
+    @PostMapping({ "lti-platforms", "lti-platform" })
     public ResponseEntity<Void> addLtiPlatformConfiguration(@RequestBody LtiPlatformConfigurationUpdateDTO dto) {
         log.debug("REST request to add new LTI platform");
 

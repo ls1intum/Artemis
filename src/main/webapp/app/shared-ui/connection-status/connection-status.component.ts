@@ -1,4 +1,4 @@
-import { Component, ContentChild, ElementRef, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { faCircle, faExclamation, faTowerBroadcast } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -15,8 +15,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 export class JhiConnectionStatusComponent implements OnInit, OnDestroy {
     private websocketService = inject(WebsocketService);
 
-    @ContentChild('innerContent', { static: false }) innerContent: ElementRef;
-    @Input() isExamMode = false;
+    isExamMode = input(false);
     disconnected = true;
     websocketStatusSubscription: Subscription;
 

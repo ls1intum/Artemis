@@ -130,8 +130,8 @@ describe('ModelingExamSubmissionComponent', () => {
             expect(el).not.toBeNull();
 
             const directiveInstance = el.injector.get(TranslateDirective);
-            expect(directiveInstance.jhiTranslate).toBe('artemisApp.examParticipation.points');
-            expect(directiveInstance.translateValues).toEqual({ points: maxScore, bonusPoints: 0 });
+            expect(directiveInstance.jhiTranslate()).toBe('artemisApp.examParticipation.points');
+            expect(directiveInstance.translateValues()).toEqual({ points: maxScore, bonusPoints: 0 });
         });
 
         it('should show exercise bonus score if any', () => {
@@ -144,8 +144,8 @@ describe('ModelingExamSubmissionComponent', () => {
             expect(el).not.toBeNull();
 
             const directiveInstance = el.injector.get(TranslateDirective);
-            expect(directiveInstance.jhiTranslate).toBe('artemisApp.examParticipation.bonus');
-            expect(directiveInstance.translateValues).toEqual({ points: maxScore, bonusPoints: bonusPoints });
+            expect(directiveInstance.jhiTranslate()).toBe('artemisApp.examParticipation.bonus');
+            expect(directiveInstance.translateValues()).toEqual({ points: maxScore, bonusPoints: bonusPoints });
         });
 
         it('should call triggerSave if save exercise button is clicked', () => {

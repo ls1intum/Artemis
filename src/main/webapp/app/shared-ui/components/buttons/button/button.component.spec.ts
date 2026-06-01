@@ -111,7 +111,7 @@ describe('ButtonComponent', () => {
 
         const button = getButton();
         expect(button).not.toBeNull();
-        expect(button.disabled).toBe(true);
+        expect(button.disabled).toBeTruthy();
         button.click();
 
         expect(clickSpy).not.toHaveBeenCalled();
@@ -126,7 +126,7 @@ describe('ButtonComponent', () => {
 
         const button = getButton();
         expect(button).not.toBeNull();
-        expect(button.disabled).toBe(false);
+        expect(button.disabled).toBeFalsy();
         button.click();
 
         expect(clickSpy).toHaveBeenCalledOnce();
@@ -141,7 +141,7 @@ describe('ButtonComponent', () => {
 
         const button = getButton();
         expect(button).not.toBeNull();
-        expect(button.disabled).toBe(true);
+        expect(button.disabled).toBeTruthy();
         const loadingIcon = getLoading();
         expect(loadingIcon).not.toBeNull();
 

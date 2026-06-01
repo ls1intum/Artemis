@@ -6,11 +6,10 @@ import { TextBlockFeedbackEditorComponent } from 'app/text/manage/assess/textblo
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlock, TextBlockType } from 'app/text/shared/entities/text-block.model';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { ChangeDetectorRef } from '@angular/core';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
@@ -42,7 +41,6 @@ describe('TextBlockFeedbackEditorComponent', () => {
             imports: [TranslateModule.forRoot(), MockDirective(NgbTooltip), FaIconComponent, TextBlockFeedbackEditorComponent, AssessmentCorrectionRoundBadgeComponent],
             providers: [
                 MockProvider(ChangeDetectorRef),
-                { provide: NgbModal, useClass: MockNgbModalService },
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 LocalStorageService,

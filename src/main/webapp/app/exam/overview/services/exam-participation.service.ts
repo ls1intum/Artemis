@@ -149,7 +149,7 @@ export class ExamParticipationService {
     }
 
     public loadTestRunWithExercisesForConduction(courseId: number, examId: number, testRunId: number): Observable<StudentExam> {
-        const url = this.getResourceURL(courseId, examId) + '/test-run/' + testRunId + '/conduction';
+        const url = this.getResourceURL(courseId, examId) + '/test-runs/' + testRunId + '/conduction';
         return this.httpClient.get<StudentExam>(url).pipe(
             map((studentExam: StudentExam) => {
                 const convertedStudentExam = ExamParticipationService.convertStudentExamDateFromServer(studentExam);
