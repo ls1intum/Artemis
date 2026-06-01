@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { type MockInstance, vi } from 'vitest';
 import * as monaco from 'monaco-editor';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { MonacoEditorService } from 'app/editor/monaco-editor/service/monaco-editor.service';
@@ -8,10 +10,15 @@ import { MONACO_LIGHT_THEME_DEFINITION } from 'app/editor/monaco-editor/model/th
 import { MONACO_DARK_THEME_DEFINITION } from 'app/editor/monaco-editor/model/themes/monaco-dark.theme';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 
+// Capture the global ResizeObserver provided by the test setup so it can be restored after each test.
+const originalResizeObserver = globalThis.ResizeObserver;
+
 describe('MonacoEditorService', () => {
+    setupTestBed({ zoneless: true });
+
     let monacoEditorService: MonacoEditorService;
-    let setThemeSpy: jest.SpyInstance;
-    let registerLanguageSpy: jest.SpyInstance;
+    let setThemeSpy: MockInstance;
+    let registerLanguageSpy: MockInstance;
 
     let themeService: ThemeService;
 
@@ -20,17 +27,16 @@ describe('MonacoEditorService', () => {
             providers: [{ provide: ThemeService, useClass: MockThemeService }],
         });
         // Avoids an error with the diff editor, which uses a ResizeObserver.
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-            return new MockResizeObserver(callback);
-        });
-        registerLanguageSpy = jest.spyOn(monaco.languages, 'register');
-        setThemeSpy = jest.spyOn(monaco.editor, 'setTheme');
+        global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+        registerLanguageSpy = vi.spyOn(monaco.languages, 'register');
+        setThemeSpy = vi.spyOn(monaco.editor, 'setTheme');
         themeService = TestBed.inject(ThemeService);
         monacoEditorService = TestBed.inject(MonacoEditorService);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
+        globalThis.ResizeObserver = originalResizeObserver;
     });
 
     it('should register the custom markdown language', () => {
