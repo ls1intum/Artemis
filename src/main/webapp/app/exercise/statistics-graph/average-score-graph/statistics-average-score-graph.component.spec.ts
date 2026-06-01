@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockProvider } from 'ng-mocks';
 import { PerformanceInterval, StatisticsAverageScoreGraphComponent } from 'app/exercise/statistics-graph/average-score-graph/statistics-average-score-graph.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -10,16 +11,19 @@ import { ChartCategoryFilter } from 'app/exercise/chart/chart-category-filter';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { provideNoopAnimationsForTests } from 'test/helpers/animations';
+import { vi } from 'vitest';
 
 describe('StatisticsAverageScoreGraphComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<StatisticsAverageScoreGraphComponent>;
     let component: StatisticsAverageScoreGraphComponent;
-    let routingStub: jest.SpyInstance;
+    let routingStub: ReturnType<typeof vi.spyOn>;
     let typeFilter: ChartExerciseTypeFilter;
     let categoryFilter: ChartCategoryFilter;
 
-    let applyTypeFilterMock: jest.SpyInstance;
-    let applyCategoryFilterMock: jest.SpyInstance;
+    let applyTypeFilterMock: ReturnType<typeof vi.spyOn>;
+    let applyCategoryFilterMock: ReturnType<typeof vi.spyOn>;
 
     const exercise1 = {
         exerciseId: 1,
@@ -73,32 +77,30 @@ describe('StatisticsAverageScoreGraphComponent', () => {
     const categorySet = new Set<string>(categories);
     const exerciseTypeStrings = ['text', 'programming', 'file-upload', 'quiz', 'modeling', 'quiz', 'programming', 'text', 'file-upload', 'programming', 'modeling'];
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            providers: [MockProvider(ArtemisNavigationUtilService), { provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(StatisticsAverageScoreGraphComponent);
-                component = fixture.componentInstance;
-                const routingService = TestBed.inject(ArtemisNavigationUtilService);
-                routingStub = jest.spyOn(routingService, 'routeInNewTab');
-                typeFilter = TestBed.inject(ChartExerciseTypeFilter);
-                typeFilter.typeSet = typeSet;
-                categoryFilter = TestBed.inject(ChartCategoryFilter);
-                categoryFilter.exerciseCategories = categorySet;
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [StatisticsAverageScoreGraphComponent],
+            providers: [MockProvider(ArtemisNavigationUtilService), { provide: TranslateService, useClass: MockTranslateService }, provideNoopAnimationsForTests()],
+        }).compileComponents();
+        fixture = TestBed.createComponent(StatisticsAverageScoreGraphComponent);
+        component = fixture.componentInstance;
+        const routingService = TestBed.inject(ArtemisNavigationUtilService);
+        routingStub = vi.spyOn(routingService, 'routeInNewTab');
+        typeFilter = TestBed.inject(ChartExerciseTypeFilter);
+        typeFilter.typeSet = typeSet;
+        categoryFilter = TestBed.inject(ChartCategoryFilter);
+        categoryFilter.exerciseCategories = categorySet;
 
-                applyTypeFilterMock = jest.spyOn(typeFilter, 'applyCurrentFilter').mockReturnValue(returnValue);
-                applyCategoryFilterMock = jest.spyOn(categoryFilter, 'applyCurrentFilter').mockReturnValue(returnValue);
+        applyTypeFilterMock = vi.spyOn(typeFilter, 'applyCurrentFilter').mockReturnValue(returnValue);
+        applyCategoryFilterMock = vi.spyOn(categoryFilter, 'applyCurrentFilter').mockReturnValue(returnValue);
 
-                component.exerciseAverageScores = returnValue;
-                component.courseAverage = courseAverageScore;
-                fixture.detectChanges();
-            });
+        component.exerciseAverageScores = returnValue;
+        component.courseAverage = courseAverageScore;
+        fixture.detectChanges();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -183,7 +185,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
         let expectedScores: CourseManagementStatisticsModel[];
 
         it.each(exerciseTypes)('should filter for type correctly if only one type is selected', (type: ExerciseType) => {
-            const toggleTypeMock = jest.spyOn(typeFilter, 'toggleExerciseType').mockReturnValue(returnValue);
+            const toggleTypeMock = vi.spyOn(typeFilter, 'toggleExerciseType').mockReturnValue(returnValue);
 
             component.toggleType(type);
 
@@ -197,7 +199,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
         });
 
         it.each(categories)('should filter for category correctly if only one category is selected', (category: string) => {
-            const toggleCategoryMock = jest.spyOn(categoryFilter, 'toggleCategory').mockReturnValue(returnValue);
+            const toggleCategoryMock = vi.spyOn(categoryFilter, 'toggleCategory').mockReturnValue(returnValue);
 
             component.toggleCategory(category);
 
@@ -211,7 +213,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
         });
 
         it('should filter all categories', () => {
-            const toggleAllCategoriesMock = jest.spyOn(categoryFilter, 'toggleAllCategories').mockReturnValue(returnValue);
+            const toggleAllCategoriesMock = vi.spyOn(categoryFilter, 'toggleAllCategories').mockReturnValue(returnValue);
 
             component.toggleAllCategories();
 
@@ -225,7 +227,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
         });
 
         it('should filter exercises with no category', () => {
-            const toggleExercisesWithNoCategoryMock = jest.spyOn(categoryFilter, 'toggleExercisesWithNoCategory').mockReturnValue(returnValue);
+            const toggleExercisesWithNoCategoryMock = vi.spyOn(categoryFilter, 'toggleExercisesWithNoCategory').mockReturnValue(returnValue);
 
             component.toggleExercisesWithNoCategory();
 
