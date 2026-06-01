@@ -115,6 +115,24 @@ describe('MonacoEditorComponent', () => {
         expect(mockDiffEditor.layout).toHaveBeenCalledWith({ width: 600, height: 400 });
     });
 
+    it('should keep the requested side-by-side diff layout and honor toggling it off', () => {
+        fixture.componentRef.setInput('renderSideBySide', true);
+        fixture.detectChanges();
+        const mockDiffEditor = createMockDiffEditor();
+        vi.spyOn(comp['monacoEditorService'], 'createStandaloneDiffEditor').mockReturnValue(mockDiffEditor as any);
+
+        fixture.componentRef.setInput('mode', 'diff');
+        fixture.detectChanges();
+        // With side-by-side requested, Monaco must NOT fall back to the inline (unified) view in narrow
+        // containers, otherwise the split-view toggle appears to do nothing.
+        expect(mockDiffEditor.updateOptions).toHaveBeenCalledWith(expect.objectContaining({ renderSideBySide: true, useInlineViewWhenSpaceIsLimited: false }));
+
+        // Toggling side-by-side off restores the inline view.
+        fixture.componentRef.setInput('renderSideBySide', false);
+        fixture.detectChanges();
+        expect(mockDiffEditor.updateOptions).toHaveBeenCalledWith(expect.objectContaining({ renderSideBySide: false, useInlineViewWhenSpaceIsLimited: true }));
+    });
+
     it('should extract file path from model uri on change', () => {
         fixture.detectChanges();
         const emitSpy = vi.spyOn(comp.textChanged, 'emit');

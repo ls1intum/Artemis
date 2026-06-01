@@ -47,6 +47,20 @@ describe('MonacoDiffEditorComponent', () => {
         expect(element.style.height).toBe('100px');
     });
 
+    it('should keep the split view enabled when allowed and honor toggling it off', () => {
+        const updateOptionsSpy = vi.spyOn(comp['_editor'], 'updateOptions');
+        fixture.componentRef.setInput('allowSplitView', true);
+        fixture.componentRef.setInput('forceSideBySide', false);
+        fixture.detectChanges();
+        // An explicitly enabled split view must not collapse to inline (unified) in a narrow container.
+        expect(updateOptionsSpy).toHaveBeenCalledWith(expect.objectContaining({ renderSideBySide: true, useInlineViewWhenSpaceIsLimited: false }));
+
+        updateOptionsSpy.mockClear();
+        fixture.componentRef.setInput('allowSplitView', false);
+        fixture.detectChanges();
+        expect(updateOptionsSpy).toHaveBeenCalledWith(expect.objectContaining({ renderSideBySide: false, useInlineViewWhenSpaceIsLimited: true }));
+    });
+
     it('should set the text of the editor', () => {
         const original = 'some original content';
         const modified = 'some modified content';

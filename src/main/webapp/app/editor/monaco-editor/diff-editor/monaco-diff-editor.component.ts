@@ -48,7 +48,9 @@ export class MonacoDiffEditorComponent implements OnDestroy {
         effect(() => {
             this._editor.updateOptions({
                 renderSideBySide: this.allowSplitView(),
-                useInlineViewWhenSpaceIsLimited: !this.forceSideBySide(),
+                // Honor an explicitly enabled split view: only let Monaco collapse to the inline (unified)
+                // view in narrow containers when side-by-side is neither requested via allowSplitView nor forced.
+                useInlineViewWhenSpaceIsLimited: !this.allowSplitView() && !this.forceSideBySide(),
             });
         });
 
