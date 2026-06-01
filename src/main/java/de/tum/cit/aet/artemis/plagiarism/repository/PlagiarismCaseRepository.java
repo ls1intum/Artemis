@@ -56,6 +56,7 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
                 student.visibleRegistrationNumber,
                 post.id,
                 post.creationDate,
+                COUNT(DISTINCT studentAnswer.id) > 0,
                 plagiarismCase.verdict,
                 plagiarismCase.verdictDate,
                 verdictBy.id,
@@ -75,6 +76,7 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
                 LEFT JOIN exerciseGroup.exam exam
                 LEFT JOIN exam.course examCourse
                 LEFT JOIN plagiarismCase.post post
+                LEFT JOIN post.answers studentAnswer ON studentAnswer.author.id = student.id
                 LEFT JOIN plagiarismCase.plagiarismSubmissions plagiarismSubmission
             WHERE exercise.course.id = :courseId
             GROUP BY plagiarismCase.id, exercise.id, exercise.title, TYPE(exercise), exercise.dueDate, course.id, examCourse.id, course.title, examCourse.title, exam.id,
@@ -104,6 +106,7 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
                 student.visibleRegistrationNumber,
                 post.id,
                 post.creationDate,
+                COUNT(DISTINCT studentAnswer.id) > 0,
                 plagiarismCase.verdict,
                 plagiarismCase.verdictDate,
                 verdictBy.id,
@@ -123,6 +126,7 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
                 LEFT JOIN exerciseGroup.exam exam
                 LEFT JOIN exam.course examCourse
                 LEFT JOIN plagiarismCase.post post
+                LEFT JOIN post.answers studentAnswer ON studentAnswer.author.id = student.id
                 LEFT JOIN plagiarismCase.plagiarismSubmissions plagiarismSubmission
             WHERE exam.id = :examId
             GROUP BY plagiarismCase.id, exercise.id, exercise.title, TYPE(exercise), exercise.dueDate, course.id, examCourse.id, course.title, examCourse.title, exam.id,
