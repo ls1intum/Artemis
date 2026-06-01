@@ -46,6 +46,7 @@ export default defineConfig({
             'src/main/webapp/app/localvc/**/*.spec.ts', // include localvc tests
             'src/main/webapp/app/text/**/*.spec.ts', // include text module tests
             'src/main/webapp/app/assessment/**/*.spec.ts', // include assessment tests
+            'src/main/webapp/app/exercise/**/*.spec.ts', // include exercise tests
             'src/main/webapp/app/tutorialgroup/**/*.spec.ts', // include tutorial group tests
             'src/main/webapp/app/quiz/**/*.spec.ts', // include quiz tests
             'src/main/webapp/app/lecture/**/*.spec.ts', // include lecture tests
@@ -122,6 +123,7 @@ export default defineConfig({
                 'src/main/webapp/app/lecture/**/*.ts', // include lecture for code coverage
                 'src/main/webapp/app/quiz/**/*.ts', // include quiz for code coverage
                 'src/main/webapp/app/text/**/*.ts', // include text module for code coverage
+                'src/main/webapp/app/exercise/**/*.ts', // include exercise for code coverage
                 'src/main/webapp/app/tutorialgroup/**/*.ts', // include tutorial group for code coverage
                 'src/main/webapp/app/lti/**/*.ts', // include lti for code coverage
                 'src/main/webapp/app/modeling/**/*.ts', // include modeling for code coverage
@@ -185,10 +187,11 @@ export default defineConfig({
                 // Re-tune when migration completes. Adjusted when the editor module (markdown/monaco editor)
                 // moved from Jest to Vitest, which shifted the aggregate by ~0.2pp on lines/functions/statements
                 // (branches rose). Actuals at that point: lines 89.41, statements 89.21, branches 73.83, functions 87.17.
+                // Functions reduced for exercise module migration from Jest->Vitest (before: 87.0)
                 lines: 89.2,
                 statements: 89.0,
                 branches: 73.6,
-                functions: 87.0,
+                functions: 86.6,
             },
         },
     },
