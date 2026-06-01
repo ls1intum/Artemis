@@ -21,13 +21,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
@@ -51,14 +52,15 @@ import io.weaviate.client6.v1.api.collections.query.Filter;
 @Conditional(WeaviateEnabled.class)
 @RestController
 @RequestMapping("api/")
-@Tag(name = "Global Search Resource", description = "Weaviate-based semantic search across exercises, lectures, lecture units, exams, FAQs, and public communication channels")
+@Tag(name = "Global Search Resource", description = "Weaviate-based semantic search across courses, exercises, lectures, lecture units, exams, FAQs, and public communication channels including their messages and replies")
 public class GlobalSearchResource {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalSearchResource.class);
 
     private static final Set<String> VALID_TYPES = Set.of(SearchableEntitySchema.TypeValues.EXERCISE, SearchableEntitySchema.TypeValues.LECTURE,
             SearchableEntitySchema.TypeValues.LECTURE_UNIT, SearchableEntitySchema.TypeValues.EXAM, SearchableEntitySchema.TypeValues.FAQ,
-            SearchableEntitySchema.TypeValues.CHANNEL);
+            SearchableEntitySchema.TypeValues.CHANNEL, SearchableEntitySchema.TypeValues.COURSE, SearchableEntitySchema.TypeValues.POST,
+            SearchableEntitySchema.TypeValues.ANSWER_POST);
 
     private final SearchableEntityWeaviateService searchableEntityWeaviateService;
 
@@ -70,13 +72,16 @@ public class GlobalSearchResource {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final ChannelRepository channelRepository;
+
     public GlobalSearchResource(SearchableEntityWeaviateService searchableEntityWeaviateService, CourseRepository courseRepository, UserRepository userRepository,
-            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository) {
+            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, ChannelRepository channelRepository) {
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.exerciseRepository = exerciseRepository;
+        this.channelRepository = channelRepository;
     }
 
     /**
@@ -86,7 +91,7 @@ public class GlobalSearchResource {
      * compound {@code OR}-of-{@code AND}s filter so access control cannot leak across types.
      *
      * @param query    the search query (may be empty to browse recent items)
-     * @param types    optional comma-separated list of types to include ({@code exercise,lecture,lecture_unit,exam,faq,channel}
+     * @param types    optional comma-separated list of types to include ({@code exercise,lecture,lecture_unit,exam,faq,channel,course,post,answer_post}
      *                     or {@code all}; default {@code all})
      * @param courseId optional course id to scope the search to a single course
      * @param limit    maximum number of results (default 10, max 25)
@@ -96,14 +101,14 @@ public class GlobalSearchResource {
     @GetMapping("search")
     @EnforceAtLeastStudent
     @Operation(summary = "Perform a unified semantic search across entity types", description = """
-            Searches across multiple entity types (exercises, lectures, lecture units, exams, FAQs, channels)
+            Searches across multiple entity types (exercises, lectures, lecture units, exams, FAQs, channels, courses, posts, answer posts)
             with a consistent response format. When courseId is not specified, the search is performed
             globally across all courses the authenticated user has access to. Per-type access rules are
             enforced server-side via compound Weaviate filters.""")
     @ApiResponse(responseCode = "200", description = "Search results matching the query")
     @ApiResponse(responseCode = "400", description = "Unsupported entity type requested")
     public ResponseEntity<List<GlobalSearchResultDTO>> globalSearch(@RequestParam("q") @Parameter(description = "Search query; can be empty to retrieve recent items") String query,
-            @RequestParam(value = "types", required = false) @Parameter(description = "Comma-separated entity type filter (exercise, lecture, lecture_unit, exam, faq, channel) or 'all'; default 'all'") String types,
+            @RequestParam(value = "types", required = false) @Parameter(description = "Comma-separated entity type filter (exercise, lecture, lecture_unit, exam, faq, channel, course, post, answer_post) or 'all'; default 'all'") String types,
             @RequestParam(value = "courseId", required = false) @Parameter(description = "Course ID to restrict the search to a single course") Long courseId,
             @RequestParam(value = "limit", defaultValue = "10") @Parameter(description = "Maximum number of results (1–25, default 10)") int limit) {
         log.debug("REST request for global search with query: '{}', types: {}, courseId: {}, limit: {}", query, types, courseId, limit);
@@ -139,9 +144,11 @@ public class GlobalSearchResource {
         coursesById.forEach((id, course) -> courseNameById.put(id, course.getTitle()));
 
         Map<Long, Long> exerciseGroupIdByExerciseId = resolveExerciseGroupIds(rawResults);
+        Map<Long, String> channelNameById = resolveChannelNames(rawResults);
         List<GlobalSearchResultDTO> resultDTOs = new ArrayList<>();
         for (Map<String, Object> properties : rawResults) {
-            GlobalSearchResultDTO dto = GlobalSearchResultDTO.fromSearchableItemProperties(properties, courseNameById, exerciseGroupIdByExerciseId, staffCourseIds);
+            GlobalSearchResultDTO dto = GlobalSearchResultDTO.fromSearchableItemProperties(properties, courseNameById, exerciseGroupIdByExerciseId, staffCourseIds,
+                    channelNameById);
             if (dto != null) {
                 resultDTOs.add(dto);
             }
@@ -221,6 +228,29 @@ public class GlobalSearchResource {
         for (var dto : exerciseRepository.findExerciseAndGroupIdsByExerciseIds(examExerciseIds)) {
             result.put(dto.exerciseId(), dto.exerciseGroupId());
         }
+        return result;
+    }
+
+    /**
+     * Resolves channel names for all post and answer_post results in the Weaviate results.
+     */
+    private Map<Long, String> resolveChannelNames(List<Map<String, Object>> rawResults) {
+        Set<Long> channelIds = new HashSet<>();
+        for (Map<String, Object> properties : rawResults) {
+            Object type = properties.get(SearchableEntitySchema.Properties.TYPE);
+            if (!SearchableEntitySchema.TypeValues.POST.equals(type) && !SearchableEntitySchema.TypeValues.ANSWER_POST.equals(type)) {
+                continue;
+            }
+            Object rawId = properties.get(SearchableEntitySchema.Properties.CHANNEL_ID);
+            if (rawId instanceof Number number) {
+                channelIds.add(number.longValue());
+            }
+        }
+        if (channelIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, String> result = new HashMap<>();
+        channelRepository.findAllById(channelIds).forEach(channel -> result.put(channel.getId(), channel.getName()));
         return result;
     }
 
@@ -306,6 +336,24 @@ public class GlobalSearchResource {
         }
         if (requestedTypes.contains(SearchableEntitySchema.TypeValues.CHANNEL)) {
             Filter disjunct = buildChannelDisjunct(roleSets);
+            if (disjunct != null) {
+                disjuncts.add(disjunct);
+            }
+        }
+        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.COURSE)) {
+            Filter disjunct = buildCourseDisjunct(roleSets);
+            if (disjunct != null) {
+                disjuncts.add(disjunct);
+            }
+        }
+        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.POST)) {
+            Filter disjunct = buildPostDisjunct(roleSets);
+            if (disjunct != null) {
+                disjuncts.add(disjunct);
+            }
+        }
+        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.ANSWER_POST)) {
+            Filter disjunct = buildAnswerPostDisjunct(roleSets);
             if (disjunct != null) {
                 disjuncts.add(disjunct);
             }
@@ -457,6 +505,35 @@ public class GlobalSearchResource {
         Filter visibility = Filter.or(Filter.property(SearchableEntitySchema.Properties.CHANNEL_IS_COURSE_WIDE).eq(true),
                 Filter.property(SearchableEntitySchema.Properties.CHANNEL_IS_PUBLIC).eq(true));
         return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.CHANNEL), courseScope, visibility);
+    }
+
+    // -- Course disjunct --
+
+    private Filter buildCourseDisjunct(CourseRoleSets roleSets) {
+        if (roleSets.allAccessibleCourseIds().isEmpty()) {
+            return null;
+        }
+        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.COURSE), courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
+    }
+
+    // -- Post disjunct --
+
+    private Filter buildPostDisjunct(CourseRoleSets roleSets) {
+        if (roleSets.allAccessibleCourseIds().isEmpty()) {
+            return null;
+        }
+        // Posts are only indexed for public channels, so course membership is sufficient for access
+        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.POST), courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
+    }
+
+    // -- Answer Post disjunct --
+
+    private Filter buildAnswerPostDisjunct(CourseRoleSets roleSets) {
+        if (roleSets.allAccessibleCourseIds().isEmpty()) {
+            return null;
+        }
+        // Answer posts are only indexed for public channels, so course membership is sufficient for access
+        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.ANSWER_POST), courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
     }
 
     // -- Shared helpers --

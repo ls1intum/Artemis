@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';
@@ -451,7 +451,7 @@ describe('Exam Management Service Tests', () => {
         // THEN
         const req = httpMock.expectOne({
             method: 'POST',
-            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/test-run`,
+            url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/test-runs`,
         });
         req.flush(expected);
         await Promise.resolve();
@@ -468,7 +468,7 @@ describe('Exam Management Service Tests', () => {
         // THEN
         const req = httpMock.expectOne({
             method: 'DELETE',
-            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/test-run/${mockStudentExam.id}`,
+            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/test-runs/${mockStudentExam.id}`,
         });
         req.flush(expected);
         await Promise.resolve();

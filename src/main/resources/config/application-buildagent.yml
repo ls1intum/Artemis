@@ -28,8 +28,16 @@ artemis:
         enabled: false
     tutorialgroup:
         enabled: false
+    athena:
+        enabled: false
+    apollon:
+        enabled: false
     user-management:
         passkey:
+            enabled: false
+        ldap:
+            enabled: false
+        saml2:
             enabled: false
     weaviate:
         enabled: false
@@ -135,8 +143,8 @@ management:
     endpoint:
         health:
             show-details: never
-        probes:
-            enabled: false
+            probes:
+                enabled: true
         artemismetrics:
             access: none
     metrics:

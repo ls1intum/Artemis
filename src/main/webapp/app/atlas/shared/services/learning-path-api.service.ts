@@ -12,9 +12,9 @@ import {
     LearningPathsConfigurationDTO,
 } from 'app/atlas/shared/entities/learning-path.model';
 import { HttpParams } from '@angular/common/http';
-import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
+import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
 import { LearningPathHealthDTO } from 'app/atlas/shared/entities/learning-path-health.model';
-import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
 
 @Injectable({
     providedIn: 'root',
@@ -25,11 +25,11 @@ export class LearningPathApiService extends BaseApiHttpService {
     }
 
     async startLearningPathForCurrentUser(learningPathId: number): Promise<void> {
-        return await this.patch<void>(`atlas/learning-path/${learningPathId}/start`);
+        return await this.patch<void>(`atlas/learning-paths/${learningPathId}/start`);
     }
 
     async getLearningPathNavigation(learningPathId: number): Promise<LearningPathNavigationDTO> {
-        return await this.get<LearningPathNavigationDTO>(`atlas/learning-path/${learningPathId}/navigation`);
+        return await this.get<LearningPathNavigationDTO>(`atlas/learning-paths/${learningPathId}/navigation`);
     }
 
     async getRelativeLearningPathNavigation(
@@ -42,7 +42,7 @@ export class LearningPathApiService extends BaseApiHttpService {
         params = params.set('learningObjectId', learningObjectId.toString());
         params = params.set('learningObjectType', learningObjectType);
         params = params.set('competencyId', competencyId.toString());
-        return await this.get<LearningPathNavigationDTO>(`atlas/learning-path/${learningPathId}/relative-navigation`, { params: params });
+        return await this.get<LearningPathNavigationDTO>(`atlas/learning-paths/${learningPathId}/relative-navigation`, { params: params });
     }
 
     async generateLearningPathForCurrentUser(courseId: number): Promise<LearningPathDTO> {
@@ -50,11 +50,11 @@ export class LearningPathApiService extends BaseApiHttpService {
     }
 
     async getLearningPathNavigationOverview(learningPathId: number): Promise<LearningPathNavigationOverviewDTO> {
-        return await this.get<LearningPathNavigationOverviewDTO>(`atlas/learning-path/${learningPathId}/navigation-overview`);
+        return await this.get<LearningPathNavigationOverviewDTO>(`atlas/learning-paths/${learningPathId}/navigation-overview`);
     }
 
     async getLearningPathCompetencyGraph(learningPathId: number): Promise<CompetencyGraphDTO> {
-        return await this.get<CompetencyGraphDTO>(`atlas/learning-path/${learningPathId}/competency-graph`);
+        return await this.get<CompetencyGraphDTO>(`atlas/learning-paths/${learningPathId}/competency-graph`);
     }
 
     async getLearningPathInstructorCompetencyGraph(courseId: number): Promise<CompetencyGraphDTO> {
@@ -62,11 +62,11 @@ export class LearningPathApiService extends BaseApiHttpService {
     }
 
     async getLearningPathCompetencies(learningPathId: number): Promise<LearningPathCompetencyDTO[]> {
-        return await this.get<LearningPathCompetencyDTO[]>(`atlas/learning-path/${learningPathId}/competencies`);
+        return await this.get<LearningPathCompetencyDTO[]>(`atlas/learning-paths/${learningPathId}/competencies`);
     }
 
     async getLearningPathCompetencyLearningObjects(learningPathId: number, competencyId: number): Promise<LearningPathNavigationObjectDTO[]> {
-        return await this.get<LearningPathNavigationObjectDTO[]>(`atlas/learning-path/${learningPathId}/competencies/${competencyId}/learning-objects`);
+        return await this.get<LearningPathNavigationObjectDTO[]>(`atlas/learning-paths/${learningPathId}/competencies/${competencyId}/learning-objects`);
     }
 
     async getLearningPathsConfiguration(courseId: number): Promise<LearningPathsConfigurationDTO> {

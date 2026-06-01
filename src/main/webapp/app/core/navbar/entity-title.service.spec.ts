@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import 'app/shared/util/map.extension';
+import 'app/foundation/util/map.extension';
 
 vi.mock('@sentry/angular', async (importOriginal) => {
     const originalModule = await importOriginal<typeof import('@sentry/angular')>();
@@ -15,7 +15,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { BehaviorSubject, Subject, distinctUntilChanged, firstValueFrom, of } from 'rxjs';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import * as Sentry from '@sentry/angular';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -54,7 +54,7 @@ describe('EntityTitleService', () => {
     it.each([
         { type: EntityType.EXERCISE, ids: [1], url: 'exercise/exercises/1' },
         { type: EntityType.LECTURE, ids: [1], url: 'lecture/lectures/1' },
-        { type: EntityType.COURSE, ids: [1], url: 'core/courses/1' },
+        { type: EntityType.COURSE, ids: [1], url: 'course/courses/1' },
         { type: EntityType.DIAGRAM, ids: [1], url: 'modeling/apollon-diagrams/1' },
         { type: EntityType.EXAM, ids: [1], url: 'exam/exams/1' },
         { type: EntityType.ORGANIZATION, ids: [1], url: 'core/organizations/1' },

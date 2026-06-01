@@ -25,7 +25,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
@@ -185,7 +185,7 @@ class LectureWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         Lecture sourceLecture = lectureUtilService.createLecture(course);
         TextUnit textUnit = lectureUtilService.createTextUnit(sourceLecture);
 
-        var importedLectureDto = request.postWithResponseBody("/api/lecture/lectures/import/" + sourceLecture.getId() + "?courseId=" + course.getId(), null,
+        var importedLectureDto = request.postWithResponseBody("/api/lecture/lectures/import?sourceLectureId=" + sourceLecture.getId() + "&courseId=" + course.getId(), null,
                 LectureResource.SimpleLectureDTO.class, HttpStatus.CREATED);
 
         Lecture newlyImportedLecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(importedLectureDto.id());

@@ -7,10 +7,10 @@ import { Posting, SavedPostStatus } from 'app/communication/shared/entities/post
 import { EMPTY, of, throwError } from 'rxjs';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { HttpResponse } from '@angular/common/http';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingSummaryComponent } from 'app/communication/course-conversations-components/posting-summary/posting-summary.component';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 

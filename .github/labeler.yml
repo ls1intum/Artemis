@@ -35,6 +35,20 @@ template:
       - any-glob-to-any-file: src/main/resources/templates/**/*
 
 # module labels
+account:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/account/**/*
+          - src/test/java/de/tum/cit/aet/artemis/account/**/*
+          - src/main/webapp/app/account/**/*
+
+admin:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/admin/**/*
+          - src/test/java/de/tum/cit/aet/artemis/admin/**/*
+          - src/main/webapp/app/admin/**/*
+
 assessment:
   - changed-files:
       - any-glob-to-any-file:
@@ -60,7 +74,14 @@ buildagent:
       - any-glob-to-any-file:
           - src/main/java/de/tum/cit/aet/artemis/buildagent/**/*
           - src/test/java/de/tum/cit/aet/artemis/buildagent/**/*
-          - src/main/webapp/app/buildagent/**/*
+          - src/main/webapp/app/localci/**/*
+
+calendar:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/calendar/**/*
+          - src/test/java/de/tum/cit/aet/artemis/calendar/**/*
+          - src/main/webapp/app/calendar/**/*
 
 communication:
   - changed-files:
@@ -75,6 +96,13 @@ core:
           - src/main/java/de/tum/cit/aet/artemis/core/**/*
           - src/test/java/de/tum/cit/aet/artemis/core/**/*
           - src/main/webapp/app/core/**/*
+
+course:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/course/**/*
+          - src/test/java/de/tum/cit/aet/artemis/course/**/*
+          - src/main/webapp/app/course/**/*
 
 exam:
   - changed-files:
@@ -96,6 +124,12 @@ fileupload:
           - src/main/java/de/tum/cit/aet/artemis/fileupload/**/*
           - src/test/java/de/tum/cit/aet/artemis/fileupload/**/*
           - src/main/webapp/app/fileupload/**/*
+
+globalsearch:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/globalsearch/**/*
+          - src/test/java/de/tum/cit/aet/artemis/globalsearch/**/*
 
 iris:
   - changed-files:
@@ -145,6 +179,11 @@ programming:
           - src/main/java/de/tum/cit/aet/artemis/programming/**/*
           - src/test/java/de/tum/cit/aet/artemis/programming/**/*
           - src/main/webapp/app/programming/**/*
+          - src/main/java/de/tum/cit/aet/artemis/localci/**/*
+          - src/test/java/de/tum/cit/aet/artemis/localci/**/*
+          - src/main/java/de/tum/cit/aet/artemis/localvc/**/*
+          - src/test/java/de/tum/cit/aet/artemis/localvc/**/*
+          - src/main/webapp/app/localvc/**/*
 
 quiz:
   - changed-files:
@@ -166,3 +205,9 @@ tutorialgroup:
           - src/main/java/de/tum/cit/aet/artemis/tutorialgroup/**/*
           - src/test/java/de/tum/cit/aet/artemis/tutorialgroup/**/*
           - src/main/webapp/app/tutorialgroup/**/*
+
+videosource:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/main/java/de/tum/cit/aet/artemis/videosource/**/*
+          - src/test/java/de/tum/cit/aet/artemis/videosource/**/*

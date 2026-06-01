@@ -1,0 +1,87 @@
+<div>
+    <h5 *adminTitleBarTitle id="system-notification-management-page-heading" class="mb-0" jhiTranslate="artemisApp.systemNotification.systemNotifications"></h5>
+    <div *adminTitleBarActions>
+        <a class="btn btn-primary btn-sm jh-create-entity" [routerLink]="['./new']">
+            <fa-icon [icon]="faPlus" /> <span jhiTranslate="artemisApp.systemNotification.createLabel"></span>
+        </a>
+    </div>
+    @if (notifications(); as notificationList) {
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr
+                        jhiSort
+                        [predicate]="predicate()"
+                        (predicateChange)="predicate.set($event!)"
+                        [ascending]="reverse()"
+                        (ascendingChange)="reverse.set($event)"
+                        (sortChange)="transition()"
+                    >
+                        <th jhiSortBy="id"><span jhiTranslate="global.field.id"></span> <fa-icon [icon]="faSort" /></th>
+                        <th jhiSortBy="title"><span jhiTranslate="artemisApp.systemNotification.title"></span> <fa-icon [icon]="faSort" /></th>
+                        <th jhiSortBy="text"><span jhiTranslate="artemisApp.systemNotification.text"></span> <fa-icon [icon]="faSort" /></th>
+                        <th jhiSortBy="type"><span jhiTranslate="artemisApp.systemNotification.type"></span> <fa-icon [icon]="faSort" /></th>
+                        <th></th>
+                        <th jhiSortBy="notificationDate"><span jhiTranslate="artemisApp.systemNotification.notificationDate"></span> <fa-icon [icon]="faSort" /></th>
+                        <th jhiSortBy="expireDate"><span jhiTranslate="artemisApp.systemNotification.expireDate"></span> <fa-icon [icon]="faSort" /></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (notification of notificationList; track trackIdentity($index, notification)) {
+                        <tr>
+                            <td>{{ notification.id }}</td>
+                            <td>{{ notification.title }}</td>
+                            <td>{{ notification.text }}</td>
+                            <td>{{ notification.type }}</td>
+                            <td>
+                                @switch (getNotificationState(notification)) {
+                                    @case (ACTIVE) {
+                                        <span class="badge bg-success" jhiTranslate="artemisApp.systemNotification.active"></span>
+                                    }
+                                    @case (EXPIRED) {
+                                        <span class="badge bg-danger" jhiTranslate="artemisApp.systemNotification.expired"></span>
+                                    }
+                                    @case (SCHEDULED) {
+                                        <span class="badge bg-info" jhiTranslate="artemisApp.systemNotification.scheduled"></span>
+                                    }
+                                }
+                            </td>
+                            <td>{{ notification.notificationDate | artemisDate }}</td>
+                            <td>{{ notification.expireDate | artemisDate }}</td>
+                            <td class="text-end">
+                                <div class="btn-group flex-btn-group-container">
+                                    <a id="viewButton" [routerLink]="['./', notification.id]" class="btn btn-info btn-sm">
+                                        <fa-icon [icon]="faEye" />
+                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.view"></span>
+                                    </a>
+                                    <a id="editButton" [routerLink]="['./', notification.id, 'edit']" queryParamsHandling="merge" class="btn btn-warning btn-sm">
+                                        <fa-icon [icon]="faWrench" />
+                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+                                    </a>
+                                    <button
+                                        jhiDeleteButton
+                                        [entityTitle]="!!notification.title ? notification.title : ''"
+                                        deleteQuestion="artemisApp.systemNotification.delete.question"
+                                        (delete)="deleteNotification(notification.id!)"
+                                        [dialogError]="dialogError$"
+                                    >
+                                        <fa-icon [icon]="faTimes" />
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div>
+            <div class="row justify-content-center">
+                <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
+            </div>
+            <div class="row justify-content-center">
+                <p-paginator id="pagination" [first]="(page() - 1) * itemsPerPage" [rows]="itemsPerPage" [totalRecords]="totalItems()" (onPageChange)="onPageChange($event)" />
+            </div>
+        </div>
+    }
+</div>

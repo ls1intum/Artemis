@@ -12,20 +12,61 @@ import { SearchOverlayService } from '../../services/search-overlay.service';
 import { OsDetectorService } from '../../services/os-detector.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
 import { GlobalSearchApiService } from 'app/openapi/api/globalSearchApi.service';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { GlobalSearchNavigationViewComponent } from '../views/navigation-view/global-search-navigation-view.component';
+import { GlobalSearchActionItemComponent } from '../action-item/global-search-action-item.component';
+import { GlobalSearchIrisAnswerComponent } from '../views/iris-answer/global-search-iris-answer.component';
 
 describe('GlobalSearchModalComponent', () => {
     setupTestBed({ zoneless: true });
     let component: GlobalSearchModalComponent;
     let fixture: ComponentFixture<GlobalSearchModalComponent>;
     let searchOverlayService: SearchOverlayService;
+
+    // JSDOM does not implement scrollIntoView; mock it to prevent TypeError in the navigation-view effect
+    const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+
+    // JSDOM's CSSStyleDeclaration proxy rejects CSS custom property assignments via index notation
+    // (e.g. el.style['--p-dialog-border-radius'] = '…') — Angular's NoneEncapsulationDomRenderer uses
+    // that path, and PrimeNG's Dialog applies its design tokens this way when visible=true.
+    // Wrapping the style getter redirects custom-property assignments through setProperty() instead.
+    const originalStyleDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'style')!;
+    beforeAll(() => {
+        HTMLElement.prototype.scrollIntoView = vi.fn();
+        Object.defineProperty(HTMLElement.prototype, 'style', {
+            get() {
+                const style = originalStyleDescriptor.get!.call(this) as CSSStyleDeclaration;
+                return new Proxy(style, {
+                    set(target, prop, value) {
+                        if (typeof prop === 'string' && prop.startsWith('--')) {
+                            // CSS custom properties must go through setProperty in JSDOM
+                            target.setProperty(prop, String(value));
+                        } else if (typeof prop === 'string' && /^\d+$/.test(prop)) {
+                            // Numeric indices (el.style[0], el.style[1], …) are read-only
+                            // in the CSS spec; silently swallow assignments (e.g. from NgStyle
+                            // receiving a plain string instead of a style object).
+                        } else {
+                            (target as unknown as Record<string, unknown>)[prop as string] = value;
+                        }
+                        return true;
+                    },
+                });
+            },
+            configurable: true,
+        });
+    });
+
+    afterAll(() => {
+        HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+        Object.defineProperty(HTMLElement.prototype, 'style', originalStyleDescriptor);
+    });
 
     const mockSearchOverlayService = {
         isOpen: signal(false),
@@ -59,6 +100,14 @@ describe('GlobalSearchModalComponent', () => {
                 { provide: GlobalSearchApiService, useValue: mockSearchService },
                 { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(true) } },
             ],
+        });
+
+        // GlobalSearchActionItemComponent uses CSS custom-property bindings ([style.--accent]) that
+        // JSDOM's CSSStyleDeclaration proxy rejects. Mock it (and GlobalSearchIrisAnswerComponent)
+        // inside the navigation view so the modal spec is isolated from their rendering details.
+        TestBed.overrideComponent(GlobalSearchNavigationViewComponent, {
+            remove: { imports: [GlobalSearchActionItemComponent, GlobalSearchIrisAnswerComponent] },
+            add: { imports: [MockComponent(GlobalSearchActionItemComponent), MockComponent(GlobalSearchIrisAnswerComponent)] },
         });
 
         fixture = TestBed.createComponent(GlobalSearchModalComponent);
@@ -307,7 +356,7 @@ describe('GlobalSearchModalComponent', () => {
 
             // Now toggle a filter with the same query — should still re-trigger
             mockSearchService.globalSearch.mockReturnValue(of(filteredResults));
-            component['addFilter']('exercise');
+            component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
 
             expect(mockSearchService.globalSearch).toHaveBeenCalledWith('test', 'exercise');
@@ -344,7 +393,7 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchService.globalSearch.mockReturnValue(of(filteredResults));
 
             // Add exercise filter → triggers search → shows results
-            component['addFilter']('exercise');
+            component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
             expect(component['results']()).toEqual(filteredResults);
             expect(component['isLoading']()).toBe(false);
@@ -358,7 +407,7 @@ describe('GlobalSearchModalComponent', () => {
             expect(component['isLoading']()).toBe(false);
 
             // Re-add exercise filter → must use cached results, no new HTTP call
-            component['addFilter']('exercise');
+            component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
             expect(component['results']()).toEqual(filteredResults);
             expect(component['isLoading']()).toBe(false);
@@ -370,7 +419,7 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchService.globalSearch.mockReturnValue(of(filteredResults));
 
             // Add exercise filter and let it complete
-            component['addFilter']('exercise');
+            component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
             expect(component['results']()).toEqual(filteredResults);
             expect(component['isLoading']()).toBe(false);
@@ -378,7 +427,7 @@ describe('GlobalSearchModalComponent', () => {
             // Remove and immediately re-add (within 300ms debounce)
             component['removeFilter']('exercise');
             // Don't wait for debounce — immediately re-add
-            component['addFilter']('exercise');
+            component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
 
             // Must not be stuck loading — should show cached results
@@ -390,7 +439,7 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchService.globalSearch.mockReturnValue(of(filteredResults));
 
             // Populate cache
-            component['addFilter']('exercise');
+            component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
             expect(component['results']()).toEqual(filteredResults);
             expect(mockSearchService.globalSearch).toHaveBeenCalledOnce();
@@ -400,7 +449,7 @@ describe('GlobalSearchModalComponent', () => {
 
             // Re-add filter — cache was cleared, so a new HTTP call should happen
             mockSearchService.globalSearch.mockReturnValue(of(queryResults));
-            component['addFilter']('exercise');
+            component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
             expect(component['results']()).toEqual(queryResults);
             expect(mockSearchService.globalSearch).toHaveBeenCalledTimes(2);
@@ -409,7 +458,7 @@ describe('GlobalSearchModalComponent', () => {
         it('should route onEntityClick through the main pipeline instead of a separate subscription', () => {
             mockSearchService.globalSearch.mockReturnValue(of(filteredResults));
 
-            component['onEntityClick']({ id: 'ex', title: 'Exercises', description: '', icon: {} as any, type: 'feature', enabled: true, filterTag: 'exercise' });
+            component['onEntityClick']({ id: 'ex', title: 'Exercises', description: '', icon: {} as any, type: 'feature', enabled: true, filterTags: ['exercise'] });
             vi.advanceTimersByTime(300);
 
             expect(mockSearchService.globalSearch).toHaveBeenCalledOnce();
@@ -421,7 +470,7 @@ describe('GlobalSearchModalComponent', () => {
             mockSearchService.globalSearch.mockReturnValue(of(filteredResults));
 
             // First add: needs debounce + HTTP
-            component['addFilter']('exercise');
+            component['addFilter'](['exercise']);
             vi.advanceTimersByTime(300);
             expect(component['results']()).toEqual(filteredResults);
             expect(mockSearchService.globalSearch).toHaveBeenCalledOnce();
@@ -434,7 +483,7 @@ describe('GlobalSearchModalComponent', () => {
             expect(component['hasSearched']()).toBe(false);
 
             // Re-add filter — cached branch should also run synchronously
-            component['addFilter']('exercise');
+            component['addFilter'](['exercise']);
             // At time 0 (no timer advancement), results should already appear from cache
             expect(component['results']()).toEqual(filteredResults);
             expect(component['isLoading']()).toBe(false);
@@ -538,133 +587,6 @@ describe('GlobalSearchModalComponent', () => {
             component.handleKeyboardEvent(event);
 
             expect((component as any).selectedIndex()).toBe(-1);
-        });
-    });
-
-    describe('Iris navigation', () => {
-        it('should set irisSourceView to current view when navigating to Iris for the first time', () => {
-            (component as any).currentView.set(SearchView.Lecture);
-
-            (component as any).navigateTo(SearchView.Iris);
-
-            expect((component as any).irisSourceView()).toBe(SearchView.Lecture);
-            expect((component as any).currentView()).toBe(SearchView.Iris);
-        });
-
-        it('should do nothing when navigateTo(Iris) is called while already on Iris', () => {
-            (component as any).currentView.set(SearchView.Iris);
-            (component as any).irisSourceView.set(SearchView.Lecture);
-
-            (component as any).navigateTo(SearchView.Iris);
-
-            // irisSourceView must not be overwritten
-            expect((component as any).irisSourceView()).toBe(SearchView.Lecture);
-            expect((component as any).currentView()).toBe(SearchView.Iris);
-        });
-
-        it('should update irisSourceView and reset selectedIndex via updateIrisSource', () => {
-            (component as any).selectedIndex.set(3);
-
-            (component as any).updateIrisSource(SearchView.Lecture);
-
-            expect((component as any).irisSourceView()).toBe(SearchView.Lecture);
-            expect((component as any).selectedIndex()).toBe(-1);
-        });
-    });
-
-    describe('Split panel navigation', () => {
-        beforeEach(() => {
-            mockSearchOverlayService.isOpen.set(true);
-            (component as any).currentView.set(SearchView.Iris);
-            fixture.detectChanges();
-            // Set selectedIndex after detectChanges so the scroll effect sees the rendered items
-            (component as any).selectedIndex.set(0);
-        });
-
-        it('should switch to right panel on ArrowRight when on Iris left panel with a selection', () => {
-            (component as any).activeSplitPanel.set('left');
-            const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
-
-            component.handleKeyboardEvent(event);
-
-            expect((component as any).activeSplitPanel()).toBe('right');
-            expect((component as any).selectedIndex()).toBe(0);
-        });
-
-        it('should switch to left panel on ArrowLeft when on Iris right panel', () => {
-            (component as any).activeSplitPanel.set('right');
-            const event = new KeyboardEvent('keydown', { key: 'ArrowLeft' });
-
-            component.handleKeyboardEvent(event);
-
-            expect((component as any).activeSplitPanel()).toBe('left');
-            expect((component as any).selectedIndex()).toBe(0);
-        });
-
-        it('should not switch panel on ArrowRight when selectedIndex is -1', () => {
-            (component as any).activeSplitPanel.set('left');
-            (component as any).selectedIndex.set(-1);
-            const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
-
-            component.handleKeyboardEvent(event);
-
-            expect((component as any).activeSplitPanel()).toBe('left');
-        });
-
-        it('should not switch panel on ArrowRight when not on Iris view', () => {
-            (component as any).currentView.set(SearchView.Lecture);
-            const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
-
-            component.handleKeyboardEvent(event);
-
-            expect((component as any).activeSplitPanel()).toBe('left');
-        });
-    });
-
-    describe('Input keydown handler', () => {
-        it('should prevent ArrowRight default when on Iris left panel with a selection', () => {
-            (component as any).currentView.set(SearchView.Iris);
-            (component as any).activeSplitPanel.set('left');
-            (component as any).selectedIndex.set(0);
-            const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
-            const preventSpy = vi.spyOn(event, 'preventDefault');
-
-            (component as any).onInputKeydown(event);
-
-            expect(preventSpy).toHaveBeenCalled();
-        });
-
-        it('should prevent ArrowLeft default when on Iris right panel with a selection', () => {
-            (component as any).currentView.set(SearchView.Iris);
-            (component as any).activeSplitPanel.set('right');
-            (component as any).selectedIndex.set(0);
-            const event = new KeyboardEvent('keydown', { key: 'ArrowLeft' });
-            const preventSpy = vi.spyOn(event, 'preventDefault');
-
-            (component as any).onInputKeydown(event);
-
-            expect(preventSpy).toHaveBeenCalled();
-        });
-
-        it('should not prevent default when not on Iris view', () => {
-            (component as any).currentView.set(SearchView.Lecture);
-            const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
-            const preventSpy = vi.spyOn(event, 'preventDefault');
-
-            (component as any).onInputKeydown(event);
-
-            expect(preventSpy).not.toHaveBeenCalled();
-        });
-
-        it('should not prevent default when selectedIndex is -1 (cursor navigation mode)', () => {
-            (component as any).currentView.set(SearchView.Iris);
-            (component as any).selectedIndex.set(-1);
-            const event = new KeyboardEvent('keydown', { key: 'ArrowRight' });
-            const preventSpy = vi.spyOn(event, 'preventDefault');
-
-            (component as any).onInputKeydown(event);
-
-            expect(preventSpy).not.toHaveBeenCalled();
         });
     });
 });

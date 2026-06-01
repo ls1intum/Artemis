@@ -1,10 +1,10 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -12,7 +12,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
-import { UserService } from 'app/core/user/shared/user.service';
+import { UserService } from 'app/account/user/shared/user.service';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
@@ -20,7 +20,7 @@ import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.
 import { BehaviorSubject, Subject, of } from 'rxjs';
 import { signal } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import {
     mockClientMessage,
     mockClientMessageWithMemories,
@@ -33,27 +33,28 @@ import {
     mockWebsocketServerMessage,
 } from 'test/helpers/sample/iris-sample-data';
 import { By } from '@angular/platform-browser';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { IrisAssistantMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
+import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
 import { IrisJsonMessageContent, IrisMessageContentType, IrisTextMessageContent, getMcqData, isMcqContent } from 'app/iris/shared/entities/iris-content-type.model';
 import dayjs from 'dayjs/esm';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisThinkingBubbleComponent } from 'app/iris/overview/base-chatbot/iris-thinking-bubble/iris-thinking-bubble.component';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { User } from 'app/core/user/user.model';
-import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { User } from 'app/account/user/user.model';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { ConfirmationService } from 'primeng/api';
 import { DialogService } from 'primeng/dynamicdialog';
 import { IrisOnboardingService } from 'app/iris/overview/iris-onboarding-modal/iris-onboarding.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { COURSE_SUGGESTION_CHIPS } from 'app/iris/overview/base-chatbot/iris-chatbot-suggestion-chips';
 
 // Must match the constants in the component
@@ -314,6 +315,163 @@ describe('IrisBaseChatbotComponent', () => {
         expect(component.newMessageTextContent()).toBe('');
     });
 
+    it('should scroll to bottom and pin to bottom when sending a non-empty message', async () => {
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+
+        const content = 'Hello';
+        const createdMessage = mockUserMessageWithContent(content);
+        vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
+
+        const scrollSpy = vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+
+        component.newMessageTextContent.set(content);
+        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        await fixture.whenStable();
+
+        // isolate scroll triggered by onSend from scrolls caused by session switch / effects
+        component.isScrolledToBottom.set(false);
+        scrollSpy.mockClear();
+
+        // when – assert synchronously so async session effects don't interfere
+        component.onSend();
+
+        // then – instant scroll (no smooth-scroll race) and view pinned to the bottom
+        expect(scrollSpy).toHaveBeenCalledWith('auto');
+        expect(component.isScrolledToBottom()).toBe(true);
+    });
+
+    it('should keep the view pinned to the bottom after sending even when intermediate scroll events fire', async () => {
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+
+        const content = 'Hello';
+        const createdMessage = mockUserMessageWithContent(content);
+        vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
+        vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+
+        component.newMessageTextContent.set(content);
+        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        await fixture.whenStable();
+
+        // when – send, then simulate an intermediate (not-yet-at-bottom) scroll reading
+        component.onSend();
+        const messagesElement = fixture.nativeElement.querySelector('.messages') as HTMLElement | null;
+        if (messagesElement) {
+            Object.defineProperty(messagesElement, 'scrollTop', { value: 0, configurable: true });
+            Object.defineProperty(messagesElement, 'scrollHeight', { value: 1000, configurable: true });
+            Object.defineProperty(messagesElement, 'clientHeight', { value: 200, configurable: true });
+        }
+        component.checkChatScroll();
+
+        // then – the intermediate reading must not un-pin the view
+        expect(component.isScrolledToBottom()).toBe(true);
+    });
+
+    it('should release the bottom pin on an upward wheel gesture', async () => {
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+
+        const content = 'Hello';
+        const createdMessage = mockUserMessageWithContent(content);
+        vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
+        vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+
+        component.newMessageTextContent.set(content);
+        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        await fixture.whenStable();
+
+        component.onSend();
+
+        // when – the user scrolls up while not at the bottom
+        const messagesElement = fixture.nativeElement.querySelector('.messages') as HTMLElement | null;
+        if (messagesElement) {
+            Object.defineProperty(messagesElement, 'scrollTop', { value: 0, configurable: true });
+            Object.defineProperty(messagesElement, 'scrollHeight', { value: 1000, configurable: true });
+            Object.defineProperty(messagesElement, 'clientHeight', { value: 200, configurable: true });
+        }
+        component.onMessagesUserScroll(new WheelEvent('wheel', { deltaY: -50 }));
+
+        // then – pin is released, so the scroll-to-bottom state reflects the real position
+        expect(component.isScrolledToBottom()).toBe(false);
+    });
+
+    it('should keep scrolling to the bottom frame-by-frame while pinned after a send', async () => {
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+
+        const content = 'Hello';
+        const createdMessage = mockUserMessageWithContent(content);
+        vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
+
+        component.newMessageTextContent.set(content);
+        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        await fixture.whenStable();
+
+        const messagesElement = fixture.nativeElement.querySelector('.messages') as HTMLElement;
+        Object.defineProperty(messagesElement, 'scrollHeight', { value: 1000, configurable: true });
+        messagesElement.scrollTop = 0;
+
+        // Queue rAF callbacks instead of running them synchronously. Invoking the callback inside
+        // requestAnimationFrame re-enters the component (which schedules from within an Angular
+        // effect) and trips the zoneless scheduler on teardown. We flush the queued frames
+        // explicitly, outside the current effect execution.
+        const rafQueue: FrameRequestCallback[] = [];
+        const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
+            rafQueue.push(cb);
+            return rafQueue.length;
+        });
+        vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+
+        // when
+        component.onSend();
+
+        // flush a bounded number of frames outside Angular's effect execution
+        for (let i = 0; i < 3 && rafQueue.length > 0; i++) {
+            rafQueue.shift()!(0);
+        }
+
+        // then – the pin loop pushed scrollTop to the bottom (scrollHeight)
+        expect(messagesElement.scrollTop).toBe(1000);
+
+        rafSpy.mockRestore();
+    });
+
+    it('should release the bottom pin if an error arrives before the stream starts', async () => {
+        // given – the chat service surfaces an error before any stage goes active
+        const errorSubject = new Subject<IrisErrorMessageKey | undefined>();
+        vi.spyOn(chatService, 'currentError').mockReturnValue(errorSubject as any);
+
+        fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+        component = fixture.componentInstance;
+        fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+        fixture.detectChanges();
+
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: mockUserMessageWithContent('Hello') } as HttpResponse<IrisMessageResponseDTO>));
+        vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+
+        component.newMessageTextContent.set('Hello');
+        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        await fixture.whenStable();
+
+        // when – send pins to the bottom, then an error arrives without any stage starting
+        component.onSend();
+        expect(component['forcePinToBottom']).toBe(true);
+        errorSubject.next(IrisErrorMessageKey.SESSION_LOAD_FAILED);
+        fixture.detectChanges();
+
+        // then – the pin is released and the RAF loop is stopped
+        expect(component['forcePinToBottom']).toBe(false);
+        expect(component['pinScrollRafId']).toBeUndefined();
+    });
+
     it('should set the appropriate message styles based on the sender', async () => {
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
@@ -380,10 +538,16 @@ describe('IrisBaseChatbotComponent', () => {
         component = fixture.componentInstance;
         fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
 
-        // Set up spy on scrollToBottom after component is created but before switchTo
-        const scrollSpy = vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
-
         fixture.detectChanges();
+
+        // Queue the initial-load settle loop's rAF callbacks rather than running them
+        // synchronously: the settle loop runs from inside an Angular effect, and re-entering it
+        // synchronously from requestAnimationFrame trips the zoneless scheduler on teardown.
+        const rafQueue: FrameRequestCallback[] = [];
+        const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
+            rafQueue.push(cb);
+            return rafQueue.length;
+        });
 
         chatService.switchTo(ChatServiceMode.COURSE, 123);
 
@@ -391,10 +555,75 @@ describe('IrisBaseChatbotComponent', () => {
         component.ngAfterViewInit();
         await fixture.whenStable();
 
-        // then
+        // flush a bounded number of settle frames outside Angular's effect execution
+        for (let i = 0; i < 2 && rafQueue.length > 0; i++) {
+            rafQueue.shift()!(0);
+        }
+
+        // then – the initial batch settles the view at the bottom
         expect(component.numNewMessages()).toBe(1);
-        expect(scrollSpy).toHaveBeenCalled();
+        expect(component.isScrolledToBottom()).toBe(true);
         expect(getChatSessionsSpy).toHaveBeenCalledOnce();
+
+        rafSpy.mockRestore();
+    });
+
+    it('should settle exactly at the bottom on initial history load despite late layout growth', async () => {
+        // given – an initial batch of messages arrives at once (e.g. after a page refresh)
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithEmptyConversation));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketServerMessage));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+
+        fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+        component = fixture.componentInstance;
+        fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+        fixture.detectChanges();
+
+        const messagesElement = fixture.nativeElement.querySelector('.messages') as HTMLElement | undefined;
+
+        // drive requestAnimationFrame synchronously; grow scrollHeight while the settle loop runs
+        // to emulate content (markdown / code / KaTeX) laying out across several frames
+        let scrollHeight = 500;
+        let scrollTop = 0;
+        if (messagesElement) {
+            Object.defineProperty(messagesElement, 'scrollHeight', { get: () => scrollHeight, configurable: true });
+            Object.defineProperty(messagesElement, 'scrollTop', {
+                get: () => scrollTop,
+                set: (v: number) => {
+                    scrollTop = v;
+                },
+                configurable: true,
+            });
+        }
+        // Queue the settle loop's rAF callbacks rather than running them synchronously (the loop
+        // runs from inside an Angular effect; re-entering it synchronously trips the zoneless
+        // scheduler on teardown). We flush them below, emulating late layout growth per frame.
+        const rafQueue: FrameRequestCallback[] = [];
+        const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
+            rafQueue.push(cb);
+            return rafQueue.length;
+        });
+
+        // when – initial messages load
+        component.isScrolledToBottom.set(true);
+        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        component.ngAfterViewInit();
+        await fixture.whenStable();
+
+        // flush the settle frames outside Angular's effect execution, growing scrollHeight each
+        // frame to emulate content (markdown / code / KaTeX) laying out across several frames
+        for (let i = 0; i < 25 && rafQueue.length > 0; i++) {
+            scrollHeight += 100; // late layout growth between frames
+            rafQueue.shift()!(0);
+        }
+
+        // then – the settle loop kept correcting, landing exactly at the final bottom
+        if (messagesElement) {
+            expect(scrollTop).toBe(scrollHeight);
+        }
+        expect(component.isScrolledToBottom()).toBe(true);
+
+        rafSpy.mockRestore();
     });
 
     it('should disable enter key if isLoading and active', () => {

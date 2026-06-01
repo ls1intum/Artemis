@@ -71,7 +71,10 @@ export class StudentExamManagementPage {
 
     async checkExamStudent(username: string) {
         const studentInfo = await users.getUserInfo(username, this.page);
-        await expect(this.page.locator('p-table tbody tr', { hasText: studentInfo.name! }).first()).toBeVisible();
+        // Extend the default 10s expect timeout to 30s. Callers run this immediately after
+        // `typeSearchText`, which fires a server-side filter request — under multi-node CI
+        // load that round trip + the PrimeNG p-table re-render can exceed the default.
+        await expect(this.page.locator('p-table tbody tr', { hasText: studentInfo.name! }).first()).toBeVisible({ timeout: 30000 });
     }
 
     async typeSearchText(text: string) {

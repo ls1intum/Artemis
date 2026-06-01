@@ -1,18 +1,19 @@
-import { Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBars, faFlag, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { MenuModule } from 'primeng/menu';
-import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
+import { FindLanguageFromKeyPipe } from 'app/foundation/language/find-language-from-key.pipe';
 import { LANGUAGES } from 'app/core/language/shared/language.constants';
 import { MenuItem } from 'primeng/api';
 
 @Component({
     selector: 'jhi-landing-navbar',
     standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FaIconComponent, ArtemisTranslatePipe, ThemeSwitchComponent, MenuModule],
     styles: `
         :host {
@@ -44,6 +45,9 @@ import { MenuItem } from 'primeng/api';
         .logo img {
             height: 30px;
             width: 32px;
+            /* Natural asset aspect ratio differs from displayed size; pin it so the browser
+               matches natural ratio (Lighthouse "Image aspect ratio" audit). */
+            object-fit: contain;
         }
 
         .logo-text {
@@ -93,20 +97,30 @@ import { MenuItem } from 'primeng/api';
             color: var(--navbar-foreground);
         }
 
+        /* Darker primary + bold text pushes contrast past WCAG AA (≥ 4.5:1) on the navy navbar. */
         .login-btn {
-            background: var(--primary);
+            background-color: var(--primary-dark, var(--primary));
             color: var(--white);
             border: none;
             padding: 6px 16px;
             border-radius: 8px;
             font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
             line-height: 1.6;
-            transition: opacity 0.2s;
+            transition:
+                background-color 0.2s,
+                opacity 0.2s;
         }
 
         .login-btn:hover {
-            opacity: 0.9;
+            background-color: var(--primary);
+            opacity: 0.95;
+        }
+
+        .login-btn:focus-visible {
+            outline: 2px solid var(--white);
+            outline-offset: 2px;
         }
 
         .mobile-menu-btn {
@@ -155,7 +169,7 @@ import { MenuItem } from 'primeng/api';
     template: `
         <nav class="landing-navbar">
             <div class="logo" (click)="scrollToTop()">
-                <img src="public/images/logo.png" alt="Artemis Logo" />
+                <img src="public/images/logo.svg" alt="Artemis Logo" width="32" height="30" />
                 <span class="logo-text">Artemis</span>
             </div>
 

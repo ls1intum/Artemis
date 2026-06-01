@@ -13,13 +13,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Rating;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.dashboard.RatingListItemDTO;
 import de.tum.cit.aet.artemis.assessment.service.RatingService;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
@@ -154,7 +154,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
 
         // Test paginated endpoint - response is a list with pagination info in headers
-        List<RatingListItemDTO> ratings = request.getList("/api/assessment/course/" + course.getId() + "/rating", HttpStatus.OK, RatingListItemDTO.class);
+        List<RatingListItemDTO> ratings = request.getList("/api/assessment/courses/" + course.getId() + "/rating", HttpStatus.OK, RatingListItemDTO.class);
 
         assertThat(ratings).hasSize(1);
 
@@ -176,7 +176,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
         ratingService.saveRating(result.getId(), rating.getRating());
 
         // Test with explicit pagination and sorting parameters
-        List<RatingListItemDTO> ratings = request.getList("/api/assessment/course/" + course.getId() + "/rating?page=0&size=10&sort=id,desc", HttpStatus.OK,
+        List<RatingListItemDTO> ratings = request.getList("/api/assessment/courses/" + course.getId() + "/rating?page=0&size=10&sort=id,desc", HttpStatus.OK,
                 RatingListItemDTO.class);
 
         assertThat(ratings).hasSize(1);
@@ -185,18 +185,18 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetRatingForInstructorDashboard_asTutor_FORBIDDEN() throws Exception {
-        request.get("/api/assessment/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/assessment/courses/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetRatingForInstructorDashboard_asStudent_FORBIDDEN() throws Exception {
-        request.get("/api/assessment/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/assessment/courses/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testGetRatingForInstructorDashboard_asInstructor_FORBIDDEN() throws Exception {
-        request.get("/api/assessment/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/assessment/courses/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, List.class);
     }
 }

@@ -4,7 +4,7 @@ import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mappin
 import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
 import { cloneDeep } from 'lodash-es';
-import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 
 @Injectable({ providedIn: 'root' })
 export class ShortAnswerQuestionUtil {
@@ -404,7 +404,7 @@ export class ShortAnswerQuestionUtil {
     addIndentationToTextParts(originalTextParts: string[][], formattedTextParts: string[][]): string[][] {
         for (let i = 0; i < formattedTextParts.length; i++) {
             const element = formattedTextParts[i][0];
-            let firstWord = '';
+            let firstWord: string;
             // check if first word is a spot (first array element will be an empty string)
             if (originalTextParts[i].length > 1) {
                 firstWord =
