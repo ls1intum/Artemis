@@ -129,7 +129,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/**', // checklist-panel uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.ts', // problem-statement service uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts', // problem-statement utils uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/editor/monaco-editor/inline-refinement-button/', // inline-refinement-button uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/editor/**', // editor module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/hyperion/**', // hyperion module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**', // build phases editor uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/version-history/**', // programming version history module uses Vitest (see vitest.config.ts)
@@ -182,7 +182,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exercise/', // exercise module uses Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.ts',
         '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts',
-        '<rootDir>/src/main/webapp/app/editor/monaco-editor/inline-refinement-button/',
+        '<rootDir>/src/main/webapp/app/editor/', // editor module uses Vitest (see vitest.config.ts)
         '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/', // build phases editor uses Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/', // checklist-panel uses Vitest
         '<rootDir>/src/main/webapp/app/hyperion/', // hyperion module uses Vitest
@@ -207,10 +207,11 @@ module.exports = {
             // and merging develop, which dropped the global statements average to ~82.95.
             statements: 82.5,
             branches: 72.9,
-            // Lowered (->71) after moving BOTH the well-covered foundation and shared-ui modules fully out of
-            // Jest (now under Vitest), which removed those functions from the Jest denominator. Measured global
-            // functions ~71.43 with both modules excluded, so the floor is set just below that.
-            functions: 71,
+            // Lowered after moving the foundation, shared-ui AND editor (markdown/monaco) modules out of Jest
+            // (now under Vitest). Each removed a set of well-covered functions from the Jest denominator. Re-measured
+            // after merging develop with this branch; see comment near the top of this block. Floor set just below
+            // the measured global functions average.
+            functions: 69,
             lines: 84,
         },
     },
@@ -280,7 +281,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/exercise/dashboards/', // dashboards (vitest)
         '<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts', // migrated to Vitest
-        '<rootDir>/src/main/webapp/app/editor/monaco-editor/inline-refinement-button/', // migrated to Vitest
+        '<rootDir>/src/main/webapp/app/editor/', // editor module migrated to Vitest
         '<rootDir>/src/main/webapp/app/exercise/', // exercise module
         '<rootDir>/src/main/webapp/app/hyperion/', // hyperion module
         '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/', // migrated to Vitest
