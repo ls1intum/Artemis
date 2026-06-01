@@ -1,8 +1,5 @@
-@if (hasAutomaticFeedback() && isAssessor() && !resultCompletionDate() && !isFeedbackSuggestionsEnabled()) {
-    <p-tag severity="info" styleClass="text-wrap" [value]="'artemisApp.assessment.feedbackSuggestions.automaticAssessmentAvailable' | artemisTranslate" />
-}
 @if (!isLoading() && hasAutomaticFeedback() && isAssessor() && !resultCompletionDate() && isFeedbackSuggestionsEnabled()) {
-    <p-tag severity="info" class="d-flex align-items-center gap-1 text-wrap">
+    <p-message severity="info" class="d-flex align-items-center gap-1">
         <span>{{ 'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentAvailable' | artemisTranslate }}</span>
         <fa-icon
             [icon]="faQuestionCircle"
@@ -12,11 +9,11 @@
             tooltipPosition="left"
             tooltipStyleClass="feedback-suggestions-ai-tooltip"
         />
-    </p-tag>
+    </p-message>
 }
 @if (isLoading() && isFeedbackSuggestionsEnabled()) {
-    <p-tag severity="secondary" class="d-flex align-items-center gap-1 text-wrap">
+    <p-message severity="secondary" class="d-flex align-items-center gap-1">
         <fa-icon [icon]="faCircleNotch" animation="spin" />
         <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"></span>
-    </p-tag>
+    </p-message>
 }

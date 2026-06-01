@@ -2,7 +2,7 @@ import { Component, input } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleNotch, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { Tag } from 'primeng/tag';
+import { Message } from 'primeng/message';
 import { TooltipModule } from 'primeng/tooltip';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -10,7 +10,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-feedback-suggestions-banner',
     templateUrl: './feedback-suggestions-banner.component.html',
-    imports: [Tag, TooltipModule, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [Message, TooltipModule, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class FeedbackSuggestionsBannerComponent {
     readonly isLoading = input.required<boolean>();
