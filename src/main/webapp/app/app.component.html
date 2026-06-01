@@ -25,7 +25,9 @@
     }
     <jhi-course-notification-popup-overlay />
     <jhi-llm-selection-modal />
-    <jhi-setup-passkey-modal />
+    @if (showSkeleton) {
+        <jhi-setup-passkey-modal />
+    }
     @if (showSkeleton && !isShownViaLti) {
         @if (isTestRunExam || !isExamStarted) {
             <jhi-footer />

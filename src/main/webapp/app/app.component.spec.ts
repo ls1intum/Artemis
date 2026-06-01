@@ -104,4 +104,13 @@ describe('AppComponent', () => {
 
         expect(footerElement).toBeNull();
     });
+
+    it('should not render the passkey modal on routes without skeleton', () => {
+        comp.showSkeleton = false;
+        fixture.changeDetectorRef.detectChanges();
+
+        const passkeyModalElement = fixture.debugElement.query(By.css('jhi-setup-passkey-modal'));
+
+        expect(passkeyModalElement).toBeNull();
+    });
 });
