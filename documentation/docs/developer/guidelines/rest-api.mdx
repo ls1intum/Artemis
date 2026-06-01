@@ -537,6 +537,10 @@ These conventions follow widely adopted industry REST guidelines:
 * Verify consistency of user input (e.g., check if IDs in body and path match, compare course in `@RequestBody` with the one referenced by ID in the path)
 * Check for user input consistency first, then check authorization (mismatched course IDs could lead to unauthorized access)
 * Handle exceptions and errors with a standard response
+* Express the HTTP verb with the dedicated shortcut annotations (`@GetMapping`, `@PostMapping`, `@PutMapping`, `@PatchMapping`, `@DeleteMapping`); `@RequestMapping` is reserved for the class-level path prefix and must not carry a `method = ...` attribute on an endpoint. Enforced by `AbstractModuleResourceArchitectureTest#endpointsShouldUseHttpMethodShortcutAnnotations`.
+* The handler method name must match its HTTP verb: a `@GetMapping` must read (`get*`/`list*`/`find*`/…) and must not be named like a mutation; a `@DeleteMapping` must delete (`delete*`/`remove*`/…) and must not be named like a read or a create. Enforced by `AbstractModuleResourceArchitectureTest#endpointMethodNamesShouldMatchTheirHttpVerb`.
+* `GET` endpoints must not declare a `@RequestBody` — a GET request body has no defined semantics (RFC 9110) and is dropped by many proxies and clients; pass data via path or query parameters instead. Enforced by `AbstractModuleResourceArchitectureTest#getEndpointsShouldNotDeclareRequestBody`.
+* Endpoints must return `ResponseEntity`, never `ModelAndView`. `ModelAndView` is being phased out (the two remaining server-side `forward:` endpoints are baselined); any new usage is rejected. Enforced by `AbstractModuleResourceArchitectureTest#restEndpointsShouldNotReturnModelAndView`.
 
 ### Request Validation
 

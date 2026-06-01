@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
@@ -53,6 +54,24 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
      */
     private static final Set<String> PATH_VARIABLE_COLLECTION_BASELINE = Set.of();
 
+    /**
+     * REST endpoints that still return {@link ModelAndView} instead of {@link ResponseEntity}, keyed as
+     * {@code SimpleClassName#methodName}.
+     * <p>
+     * {@code ModelAndView} is being phased out (see the {@code TODO}s in the listed endpoints): the two remaining
+     * usages are server-side {@code forward:} endpoints that should be migrated to a {@link ResponseEntity}-returning
+     * service call. {@link #restEndpointsShouldNotReturnModelAndView()} fails for any NEW {@code ModelAndView} return,
+     * so this baseline can only shrink. When an entry is migrated, remove it here; the goal is an empty set.
+     */
+    private static final Set<String> MODEL_AND_VIEW_BASELINE = Set.of("ProgrammingExerciseRetrievalResource#redirectGetSolutionRepositoryFiles",
+            "ProgrammingExerciseRetrievalResource#redirectGetTemplateRepositoryFiles");
+
+    /** Method-name prefixes that contradict a {@code @GetMapping}: a GET handler must read, not mutate. */
+    private static final Set<String> GET_FORBIDDEN_NAME_PREFIXES = Set.of("create", "add", "update", "delete", "remove", "save", "register", "import", "upload", "put", "patch");
+
+    /** Method-name prefixes that contradict a {@code @DeleteMapping}: a DELETE handler must delete, not read or create. */
+    private static final Set<String> DELETE_FORBIDDEN_NAME_PREFIXES = Set.of("get", "list", "find", "fetch", "retrieve", "create", "add");
+
     @Test
     void shouldBeNamedResource() {
         ArchRule rule = classesOfThisModuleThat().areAnnotatedWith(RestController.class).should().haveSimpleNameEndingWith("Resource")
@@ -71,8 +90,9 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
 
     @Test
     void allPublicMethodsShouldReturnResponseEntity() {
-        // TODO: We want to move away from ModelAndView. Once all occurrences are removed, this test needs to be adjusted.
-        // REST controller methods should return ResponseEntity ("normal" endpoints) or ModelAndView (for redirects)
+        // REST controller methods should return ResponseEntity ("normal" endpoints) or ModelAndView (legacy forwards).
+        // ModelAndView is additionally being phased out by restEndpointsShouldNotReturnModelAndView() (baseline -> 0);
+        // once MODEL_AND_VIEW_BASELINE is empty, the ModelAndView branch below can be dropped.
         ArchRule rule = methodsOfThisModuleThat().areDeclaredInClassesThat().areAnnotatedWith(RestController.class).and().arePublic().should()
                 .haveRawReturnType(ResponseEntity.class).orShould().haveRawReturnType(ModelAndView.class);
         // We exclude the LinkPreviewResource from this check, as it is a special case that requires the serialization of the response which is not possible with ResponseEntities
@@ -286,6 +306,130 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
         ArchRule rule = methodsOfThisModuleThat().areDeclaredInClassesThat().areAnnotatedWith(EnforceAdmin.class).should().notBeAnnotatedWith(EnforceAdmin.class).andShould()
                 .notBeMetaAnnotatedWith(PreAuthorize.class);
         rule.allowEmptyShould(true).check(productionClasses);
+    }
+
+    /**
+     * REST endpoints must express the HTTP verb with the dedicated shortcut annotations
+     * ({@code @GetMapping}/{@code @PostMapping}/{@code @PutMapping}/{@code @PatchMapping}/{@code @DeleteMapping}).
+     * {@code @RequestMapping} is reserved for the class-level path prefix and must never carry a {@code method = ...}
+     * attribute on an endpoint method — a {@code @RequestMapping(method = ...)} method would also silently bypass the
+     * kebab-case and entity-id-pairing rules above, which only iterate the five shortcut annotations.
+     */
+    @Test
+    void endpointsShouldUseHttpMethodShortcutAnnotations() {
+        methodsOfThisModuleThat().areDeclaredInClassesThat().areAnnotatedWith(RestController.class).should(notUseRequestMappingMethodAttribute()).allowEmptyShould(true)
+                .check(productionClasses);
+    }
+
+    private ArchCondition<JavaMethod> notUseRequestMappingMethodAttribute() {
+        return new ArchCondition<>("use @GetMapping/@PostMapping/... instead of @RequestMapping(method = ...)") {
+
+            @Override
+            public void check(JavaMethod method, ConditionEvents events) {
+                boolean usesRequestMappingMethodAttribute = method.getAnnotations().stream()
+                        .filter(annotation -> ((JavaClass) annotation.getType()).getSimpleName().equals(RequestMapping.class.getSimpleName()))
+                        .anyMatch(annotation -> annotation.tryGetExplicitlyDeclaredProperty("method").isPresent());
+                if (usesRequestMappingMethodAttribute) {
+                    events.add(violated(method, method.getFullName()
+                            + " uses @RequestMapping(method = ...); use the dedicated @GetMapping/@PostMapping/@PutMapping/@PatchMapping/@DeleteMapping annotation instead."));
+                }
+            }
+        };
+    }
+
+    /**
+     * GET endpoints must not declare a {@code @RequestBody}: per RFC 9110 a GET request body has no defined semantics
+     * and is dropped by many proxies and clients. Pass data via path or query parameters instead.
+     */
+    @Test
+    void getEndpointsShouldNotDeclareRequestBody() {
+        methodsOfThisModuleThat().areDeclaredInClassesThat().areAnnotatedWith(RestController.class).and().areAnnotatedWith(GetMapping.class).should(notDeclareRequestBody())
+                .allowEmptyShould(true).check(productionClasses);
+    }
+
+    private ArchCondition<JavaMethod> notDeclareRequestBody() {
+        return new ArchCondition<>("not declare a @RequestBody parameter") {
+
+            @Override
+            public void check(JavaMethod method, ConditionEvents events) {
+                boolean declaresRequestBody = false;
+                for (var parameter : method.reflect().getParameters()) {
+                    if (parameter.isAnnotationPresent(RequestBody.class)) {
+                        declaresRequestBody = true;
+                        break;
+                    }
+                }
+                if (declaresRequestBody) {
+                    events.add(violated(method, method.getFullName()
+                            + " is a GET endpoint declaring a @RequestBody; a GET request must not carry a body (RFC 9110). Use path or query parameters instead."));
+                }
+            }
+        };
+    }
+
+    /**
+     * The handler method name must be consistent with its HTTP verb: a {@code @GetMapping} method must not be named
+     * like a mutation ({@code create*}/{@code update*}/{@code delete*}/...), and a {@code @DeleteMapping} method must
+     * not be named like a read or a create ({@code get*}/{@code find*}/{@code create*}/...). This catches endpoints
+     * accidentally wired to the wrong HTTP verb.
+     */
+    @Test
+    void endpointMethodNamesShouldMatchTheirHttpVerb() {
+        methodsOfThisModuleThat().areDeclaredInClassesThat().areAnnotatedWith(RestController.class).should(haveNameConsistentWithHttpVerb()).allowEmptyShould(true)
+                .check(productionClasses);
+    }
+
+    private ArchCondition<JavaMethod> haveNameConsistentWithHttpVerb() {
+        return new ArchCondition<>("have a method name consistent with the HTTP verb") {
+
+            @Override
+            public void check(JavaMethod method, ConditionEvents events) {
+                String name = method.getName();
+                if (method.isAnnotatedWith(GetMapping.class) && startsWithVerbPrefix(name, GET_FORBIDDEN_NAME_PREFIXES)) {
+                    events.add(violated(method, method.getFullName() + " is a @GetMapping but its name '" + name
+                            + "' suggests a mutation. A GET handler must read data — rename it (get/list/find/...) or use the correct HTTP verb."));
+                }
+                if (method.isAnnotatedWith(DeleteMapping.class) && startsWithVerbPrefix(name, DELETE_FORBIDDEN_NAME_PREFIXES)) {
+                    events.add(violated(method, method.getFullName() + " is a @DeleteMapping but its name '" + name
+                            + "' suggests a read or create. A DELETE handler must delete — rename it (delete/remove/...) or use the correct HTTP verb."));
+                }
+            }
+        };
+    }
+
+    /**
+     * Returns {@code true} if {@code methodName} starts with one of the {@code prefixes} at a camelCase word boundary
+     * (so {@code addressBook} does not match the prefix {@code add}, but {@code addUser} and {@code add} do).
+     */
+    private static boolean startsWithVerbPrefix(String methodName, Set<String> prefixes) {
+        return prefixes.stream()
+                .anyMatch(prefix -> methodName.startsWith(prefix) && (methodName.length() == prefix.length() || Character.isUpperCase(methodName.charAt(prefix.length()))));
+    }
+
+    /**
+     * REST endpoints must return {@link ResponseEntity}, never {@link ModelAndView}. The remaining server-side
+     * {@code forward:} endpoints are captured in {@link #MODEL_AND_VIEW_BASELINE} so the rule fails for any NEW
+     * {@code ModelAndView}; the goal is to migrate those and shrink the baseline to zero.
+     */
+    @Test
+    void restEndpointsShouldNotReturnModelAndView() {
+        methodsOfThisModuleThat().areDeclaredInClassesThat().areAnnotatedWith(RestController.class).should(notReturnModelAndView()).allowEmptyShould(true).check(productionClasses);
+    }
+
+    private ArchCondition<JavaMethod> notReturnModelAndView() {
+        return new ArchCondition<>("not return ModelAndView") {
+
+            @Override
+            public void check(JavaMethod method, ConditionEvents events) {
+                if (method.getRawReturnType().isEquivalentTo(ModelAndView.class)) {
+                    String key = method.getOwner().getSimpleName() + "#" + method.getName();
+                    if (!MODEL_AND_VIEW_BASELINE.contains(key)) {
+                        events.add(violated(method, method.getFullName()
+                                + " returns ModelAndView; REST endpoints must return ResponseEntity. ModelAndView is being phased out (see MODEL_AND_VIEW_BASELINE)."));
+                    }
+                }
+            }
+        };
     }
 
     protected Set<Class<?>> getIgnoredModulePathPrefixResources() {
