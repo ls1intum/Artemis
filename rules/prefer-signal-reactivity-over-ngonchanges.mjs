@@ -101,6 +101,11 @@ export default createRule({
     defaultOptions: [],
     create(context) {
         const report = (node) => {
+            // Static members are never Angular lifecycle hooks (Angular only invokes the instance `ngOnChanges`),
+            // so an unrelated `static ngOnChanges` helper must not be flagged.
+            if (node.static) {
+                return;
+            }
             // node.parent is the ClassBody; node.parent.parent is the class declaration/expression.
             const classNode = node.parent?.parent;
             if (!classNode || (classNode.type !== 'ClassDeclaration' && classNode.type !== 'ClassExpression')) {
