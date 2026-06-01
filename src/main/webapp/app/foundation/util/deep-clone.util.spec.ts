@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import dayjs from 'dayjs/esm';
 
@@ -13,7 +14,7 @@ describe('deepClone', () => {
     it('should clone primitive values', () => {
         expect(deepClone('test')).toBe('test');
         expect(deepClone(42)).toBe(42);
-        expect(deepClone(true)).toBeTrue();
+        expect(deepClone(true)).toBe(true);
     });
 
     it('should create a new object reference for plain objects', () => {
@@ -52,8 +53,8 @@ describe('deepClone', () => {
         const originalDate = dayjs('2024-01-15T10:30:00');
         const cloned = deepClone(originalDate);
 
-        expect(dayjs.isDayjs(cloned)).toBeTrue();
-        expect(cloned.isSame(originalDate)).toBeTrue();
+        expect(dayjs.isDayjs(cloned)).toBe(true);
+        expect(cloned.isSame(originalDate)).toBe(true);
         expect(cloned).not.toBe(originalDate);
     });
 
@@ -66,10 +67,10 @@ describe('deepClone', () => {
         const cloned = deepClone(original);
 
         expect(cloned.title).toBe(original.title);
-        expect(dayjs.isDayjs(cloned.startDate)).toBeTrue();
-        expect(dayjs.isDayjs(cloned.endDate)).toBeTrue();
-        expect(cloned.startDate.isSame(original.startDate)).toBeTrue();
-        expect(cloned.endDate.isSame(original.endDate)).toBeTrue();
+        expect(dayjs.isDayjs(cloned.startDate)).toBe(true);
+        expect(dayjs.isDayjs(cloned.endDate)).toBe(true);
+        expect(cloned.startDate.isSame(original.startDate)).toBe(true);
+        expect(cloned.endDate.isSame(original.endDate)).toBe(true);
         expect(cloned.startDate).not.toBe(original.startDate);
         expect(cloned.endDate).not.toBe(original.endDate);
     });
@@ -79,8 +80,8 @@ describe('deepClone', () => {
         const cloned = deepClone(original);
 
         expect(cloned).toHaveLength(2);
-        expect(dayjs.isDayjs(cloned[0])).toBeTrue();
-        expect(dayjs.isDayjs(cloned[1])).toBeTrue();
+        expect(dayjs.isDayjs(cloned[0])).toBe(true);
+        expect(dayjs.isDayjs(cloned[1])).toBe(true);
         expect(cloned[0]).not.toBe(original[0]);
     });
 
@@ -154,8 +155,8 @@ describe('deepClone', () => {
         const cloned = deepClone(original);
 
         expect(cloned).toBeInstanceOf(Map);
-        expect(dayjs.isDayjs(cloned.get('date1'))).toBeTrue();
-        expect(cloned.get('date1')!.isSame(original.get('date1'))).toBeTrue();
+        expect(dayjs.isDayjs(cloned.get('date1'))).toBe(true);
+        expect(cloned.get('date1')!.isSame(original.get('date1'))).toBe(true);
         expect(cloned.get('date1')).not.toBe(original.get('date1'));
     });
 
@@ -185,8 +186,8 @@ describe('deepClone', () => {
         expect(cloned).toBeInstanceOf(Set);
         expect(cloned.size).toBe(2);
         const clonedArray = Array.from(cloned);
-        expect(dayjs.isDayjs(clonedArray[0])).toBeTrue();
-        expect(dayjs.isDayjs(clonedArray[1])).toBeTrue();
+        expect(dayjs.isDayjs(clonedArray[0])).toBe(true);
+        expect(dayjs.isDayjs(clonedArray[1])).toBe(true);
     });
 
     it('should clone native Date objects', () => {
@@ -243,7 +244,7 @@ describe('deepClone', () => {
         const cloned = deepClone(original);
 
         expect(cloned).toBeInstanceOf(Set);
-        expect(cloned.has(cloned)).toBeTrue();
+        expect(cloned.has(cloned)).toBe(true);
         expect(cloned).not.toBe(original);
     });
 });

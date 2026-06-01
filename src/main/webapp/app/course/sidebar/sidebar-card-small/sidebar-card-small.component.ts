@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SidebarEventService } from '../service/sidebar-event.service';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
@@ -20,26 +20,26 @@ export class SidebarCardSmallComponent {
     private location = inject(Location);
 
     DifficultyLevel = DifficultyLevel;
-    @Output() onUpdateSidebar = new EventEmitter<void>();
-    @Input({ required: true }) sidebarItem: SidebarCardElement;
-    @Input() sidebarType?: SidebarTypes;
-    @Input() itemSelected?: boolean;
+    readonly onUpdateSidebar = output<void>();
+    readonly sidebarItem = input.required<SidebarCardElement>();
+    readonly sidebarType = input<SidebarTypes>();
+    readonly itemSelected = input<boolean>();
     /** Key used for grouping or categorizing sidebar items */
-    @Input() groupKey?: string;
+    readonly groupKey = input<string>();
 
     emitStoreAndRefresh(itemId: number | string) {
         this.sidebarEventService.emitSidebarCardEvent(itemId);
-        if (this.sidebarType !== 'conversation') {
+        if (this.sidebarType() !== 'conversation') {
             this.refreshChildComponent();
         }
     }
 
     refreshChildComponent(): void {
         this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route.firstChild }).then(() => {
-            if (this.itemSelected) {
-                this.router.navigate(['./' + this.sidebarItem?.id], { relativeTo: this.route });
+            if (this.itemSelected()) {
+                this.router.navigate(['./' + this.sidebarItem()?.id], { relativeTo: this.route });
             } else {
-                this.router.navigate([this.location.path(), this.sidebarItem?.id], { replaceUrl: true });
+                this.router.navigate([this.location.path(), this.sidebarItem()?.id], { replaceUrl: true });
             }
         });
     }

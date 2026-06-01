@@ -24,7 +24,7 @@ export class BonusService {
      * @param bonusId the id of the bonus which will be deleted
      */
     deleteBonus(courseId: number, examId: number, bonusId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonus/${bonusId}`, { observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonuses/${bonusId}`, { observe: 'response' });
     }
 
     /**
@@ -35,7 +35,7 @@ export class BonusService {
      * @param bonus the bonus to be created
      */
     createBonusForExam(courseId: number, examId: number, bonus: Bonus): Observable<EntityResponseType> {
-        return this.http.post<Bonus>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonus`, this.filterBonusForRequest(bonus), { observe: 'response' });
+        return this.http.post<Bonus>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonuses`, this.filterBonusForRequest(bonus), { observe: 'response' });
     }
 
     /**
@@ -46,7 +46,7 @@ export class BonusService {
      * @param bonus the bonus to be updated
      */
     updateBonus(courseId: number, examId: number, bonus: Bonus): Observable<EntityResponseType> {
-        return this.http.put<Bonus>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonus/${bonus.id}`, this.filterBonusForRequest(bonus), { observe: 'response' });
+        return this.http.put<Bonus>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonuses/${bonus.id}`, this.filterBonusForRequest(bonus), { observe: 'response' });
     }
 
     /**
@@ -58,7 +58,7 @@ export class BonusService {
      */
     findBonusForExam(courseId: number, examId: number, includeSourceGradeSteps?: boolean): Observable<EntityResponseType> {
         const params = includeSourceGradeSteps != undefined ? new HttpParams().set('includeSourceGradeSteps', includeSourceGradeSteps.toString()) : undefined;
-        return this.http.get<Bonus>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonus`, { observe: 'response', params });
+        return this.http.get<Bonus>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonuses`, { observe: 'response', params });
     }
 
     /**

@@ -62,26 +62,27 @@ class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getImportSummary_asStudent_shouldReturnForbidden() throws Exception {
-        request.get("/api/course/courses/" + targetCourse.getId() + "/import-summary/" + sourceCourse.getId(), HttpStatus.FORBIDDEN, CourseSummaryDTO.class);
+        request.get("/api/course/courses/" + targetCourse.getId() + "/import-summary?sourceCourseId=" + sourceCourse.getId(), HttpStatus.FORBIDDEN, CourseSummaryDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getImportSummary_asTutor_shouldReturnForbidden() throws Exception {
-        request.get("/api/course/courses/" + targetCourse.getId() + "/import-summary/" + sourceCourse.getId(), HttpStatus.FORBIDDEN, CourseSummaryDTO.class);
+        request.get("/api/course/courses/" + targetCourse.getId() + "/import-summary?sourceCourseId=" + sourceCourse.getId(), HttpStatus.FORBIDDEN, CourseSummaryDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void getImportSummary_asEditor_shouldReturnForbidden() throws Exception {
         // Editor can access source course but cannot access target course as instructor
-        request.get("/api/course/courses/" + targetCourse.getId() + "/import-summary/" + sourceCourse.getId(), HttpStatus.FORBIDDEN, CourseSummaryDTO.class);
+        request.get("/api/course/courses/" + targetCourse.getId() + "/import-summary?sourceCourseId=" + sourceCourse.getId(), HttpStatus.FORBIDDEN, CourseSummaryDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getImportSummary_asInstructor_shouldSucceed() throws Exception {
-        CourseSummaryDTO summary = request.get("/api/course/courses/" + targetCourse.getId() + "/import-summary/" + sourceCourse.getId(), HttpStatus.OK, CourseSummaryDTO.class);
+        CourseSummaryDTO summary = request.get("/api/course/courses/" + targetCourse.getId() + "/import-summary?sourceCourseId=" + sourceCourse.getId(), HttpStatus.OK,
+                CourseSummaryDTO.class);
 
         assertThat(summary).isNotNull();
         assertThat(summary.numberOfFaqs()).isEqualTo(2);
@@ -117,7 +118,7 @@ class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getImportSummary_sameCourse_shouldReturnBadRequest() throws Exception {
-        request.get("/api/course/courses/" + sourceCourse.getId() + "/import-summary/" + sourceCourse.getId(), HttpStatus.BAD_REQUEST, CourseSummaryDTO.class);
+        request.get("/api/course/courses/" + sourceCourse.getId() + "/import-summary?sourceCourseId=" + sourceCourse.getId(), HttpStatus.BAD_REQUEST, CourseSummaryDTO.class);
     }
 
     @Test
@@ -199,7 +200,8 @@ class CourseMaterialImportIntegrationTest extends AbstractSpringIntegrationIndep
         Course emptyCourse = courseUtilService.createCourse();
         emptyCourse = courseRepository.save(emptyCourse);
 
-        CourseSummaryDTO summary = request.get("/api/course/courses/" + targetCourse.getId() + "/import-summary/" + emptyCourse.getId(), HttpStatus.OK, CourseSummaryDTO.class);
+        CourseSummaryDTO summary = request.get("/api/course/courses/" + targetCourse.getId() + "/import-summary?sourceCourseId=" + emptyCourse.getId(), HttpStatus.OK,
+                CourseSummaryDTO.class);
 
         assertThat(summary).isNotNull();
         assertThat(summary.numberOfExercises()).isZero();

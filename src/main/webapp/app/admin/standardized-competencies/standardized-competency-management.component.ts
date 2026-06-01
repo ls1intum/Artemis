@@ -24,7 +24,7 @@ import { AdminStandardizedCompetencyService } from 'app/admin/standardized-compe
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Subject, forkJoin, map } from 'rxjs';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TooltipModule } from 'primeng/tooltip';
 import { getIcon } from 'app/atlas/shared/entities/competency.model';
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -61,7 +61,7 @@ import { DialogModule } from 'primeng/dialog';
         StandardizedCompetencyFilterComponent,
         ButtonComponent,
         KnowledgeAreaTreeComponent,
-        NgbTooltip,
+        TooltipModule,
         StandardizedCompetencyEditComponent,
         KnowledgeAreaEditComponent,
         ArtemisTranslatePipe,
@@ -101,7 +101,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     /** width of the detail panel in px, persisted across panel switches */
     protected readonly detailPanelWidth = signal<number | undefined>(undefined);
 
-    // Cancel confirmation dialog state (replaces NgbModal + ConfirmAutofocusModalComponent)
+    // Cancel confirmation dialog state (replaced the legacy ng-bootstrap confirm modal)
     protected readonly confirmDialogVisible = signal(false);
     protected readonly confirmDialogTitle = signal('');
     protected readonly confirmDialogTextKey = signal('');

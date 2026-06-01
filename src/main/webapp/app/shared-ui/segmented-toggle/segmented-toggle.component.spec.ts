@@ -1,3 +1,4 @@
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SegmentedToggleComponent } from './segmented-toggle.component';
 import { provideHttpClient } from '@angular/common/http';
@@ -5,6 +6,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateModule } from '@ngx-translate/core';
 
 describe('SegmentedToggleComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: SegmentedToggleComponent<number>;
     let fixture: ComponentFixture<SegmentedToggleComponent<number>>;
 

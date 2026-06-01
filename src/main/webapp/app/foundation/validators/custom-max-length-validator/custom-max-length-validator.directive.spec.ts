@@ -2,6 +2,8 @@ import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import { CustomMaxLengthDirective } from './custom-max-length-validator.directive';
 
@@ -15,6 +17,8 @@ class TestHostComponent {
 }
 
 describe('CustomMaxLengthDirective', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<TestHostComponent>;
     let host: TestHostComponent;
 
