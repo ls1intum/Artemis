@@ -27,6 +27,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.transport.RefSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -154,7 +155,7 @@ public final class RepositoryExportTestUtil {
         if (contentInitializer != null) {
             contentInitializer.accept(target.workingCopyGitRepo);
             // push initialized content so the bare repo has a default branch/history
-            target.workingCopyGitRepo.push().setRemote("origin").call();
+            pushCurrentBranch(target);
             // Wait for the bare repository to be fully ready
             waitForBareRepositoryReady(target);
         }
@@ -389,12 +390,17 @@ public final class RepositoryExportTestUtil {
         }
         repo.workingCopyGitRepo.add().addFilepattern(".").call();
         var commit = GitService.commit(repo.workingCopyGitRepo).setMessage(message).call();
-        repo.workingCopyGitRepo.push().setRemote("origin").call();
+        pushCurrentBranch(repo);
 
         // Wait for the bare repository to be fully ready for cloning operations
         waitForBareRepositoryReady(repo);
 
         return commit;
+    }
+
+    private static void pushCurrentBranch(LocalRepository repo) throws Exception {
+        var branch = repo.workingCopyGitRepo.getRepository().getBranch();
+        repo.workingCopyGitRepo.push().setRemote("origin").setRefSpecs(new RefSpec("refs/heads/" + branch + ":refs/heads/" + branch)).call();
     }
 
     /**
