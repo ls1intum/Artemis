@@ -1,7 +1,7 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { AlertService } from 'app/shared/service/alert.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 
 /**
  * WebSocket payload broadcast by `ContentChangeScheduler` after an automatic
