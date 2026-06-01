@@ -14,7 +14,7 @@ import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
-import { PaginatorModule } from 'primeng/paginator';
+import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 
@@ -96,6 +96,18 @@ export class AuditsComponent implements OnInit {
     /** Updates the current page */
     updatePage(value: number): void {
         this.page.set(value);
+    }
+
+    /**
+     * Handles a PrimeNG paginator page change. The event page is 0-indexed, so it is converted to the
+     * component's 1-indexed page. No-op while the date range is incomplete (mirrors the former disabled paginator).
+     */
+    onPageChange(event: PaginatorState): void {
+        if (!this.canLoad()) {
+            return;
+        }
+        this.updatePage((event.page ?? 0) + 1);
+        this.transition();
     }
 
     private previousMonth(): string {

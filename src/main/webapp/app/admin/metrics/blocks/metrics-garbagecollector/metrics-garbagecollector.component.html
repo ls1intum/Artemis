@@ -8,7 +8,7 @@
                     {{ garbageCollectorMetrics()['jvm.gc.max.data.size'] / 1048576 | number: '1.0-0' }}M)
                 </span>
                 <p-progressbar
-                    [value]="(100 * garbageCollectorMetrics()['jvm.gc.live.data.size']) / garbageCollectorMetrics()['jvm.gc.max.data.size']"
+                    [value]="toPercentage(garbageCollectorMetrics()['jvm.gc.live.data.size'], garbageCollectorMetrics()['jvm.gc.max.data.size'])"
                     [showValue]="false"
                     color="var(--bs-success, #28a745)"
                 >
@@ -28,7 +28,7 @@
                 {{ garbageCollectorMetrics()['jvm.gc.memory.allocated'] / 1048576 | number: '1.0-0' }}M)
             </span>
             <p-progressbar
-                [value]="(100 * garbageCollectorMetrics()['jvm.gc.memory.promoted']) / garbageCollectorMetrics()['jvm.gc.memory.allocated']"
+                [value]="toPercentage(garbageCollectorMetrics()['jvm.gc.memory.promoted'], garbageCollectorMetrics()['jvm.gc.memory.allocated'])"
                 [showValue]="false"
                 color="var(--bs-success, #28a745)"
             >

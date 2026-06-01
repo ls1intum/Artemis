@@ -69,4 +69,41 @@ describe('SearchHighlightComponent', () => {
         expect(textContent()).toBe('student');
         expect(highlightedParts()).toHaveLength(0);
     });
+
+    it('matches regex-special characters literally instead of as a pattern', () => {
+        fixture.componentRef.setInput('result', 'a.b.c');
+        fixture.componentRef.setInput('term', '.');
+        fixture.detectChanges();
+
+        // '.' must highlight only the literal dots, not every character
+        expect(highlightedParts()).toEqual(['.', '.']);
+        expect(textContent()).toBe('a.b.c');
+    });
+
+    it('renders HTML-special characters as text without injecting markup (XSS-safe)', () => {
+        fixture.componentRef.setInput('result', '<b>admin</b>');
+        fixture.componentRef.setInput('term', 'admin');
+        fixture.detectChanges();
+
+        expect((fixture.nativeElement as HTMLElement).querySelector('b')).toBeNull();
+        expect(textContent()).toBe('<b>admin</b>');
+        expect(highlightedParts()).toEqual(['admin']);
+    });
+
+    it('does not trim the term, so whitespace is matched (matches NgbHighlight)', () => {
+        fixture.componentRef.setInput('result', 'a b');
+        fixture.componentRef.setInput('term', ' ');
+        fixture.detectChanges();
+
+        expect(highlightedParts()).toEqual([' ']);
+    });
+
+    it('renders the full text unchanged when the term is longer than the text', () => {
+        fixture.componentRef.setInput('result', 'ab');
+        fixture.componentRef.setInput('term', 'abcd');
+        fixture.detectChanges();
+
+        expect(textContent()).toBe('ab');
+        expect(highlightedParts()).toHaveLength(0);
+    });
 });

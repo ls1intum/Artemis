@@ -1,6 +1,6 @@
 import { NgClass } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { PaginatorModule } from 'primeng/paginator';
+import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { DialogModule } from 'primeng/dialog';
 import { faCheck, faEdit, faExternalLinkAlt, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -125,6 +125,12 @@ export class CourseRequestsComponent implements OnInit {
 
     onDecidedPageChange() {
         this.load();
+    }
+
+    /** Handles a PrimeNG paginator page change for the decided requests by converting the 0-indexed event page to the 1-indexed page and reloading. */
+    onDecidedPaginatorChange(event: PaginatorState): void {
+        this.decidedPage.set((event.page ?? 0) + 1);
+        this.onDecidedPageChange();
     }
 
     accept(request: CourseRequest) {

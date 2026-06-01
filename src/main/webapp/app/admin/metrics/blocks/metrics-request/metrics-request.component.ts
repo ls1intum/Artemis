@@ -3,7 +3,7 @@ import { HttpServerRequests } from 'app/admin/metrics/metrics.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { DecimalPipe, KeyValuePipe } from '@angular/common';
-import { filterNaN } from 'app/admin/metrics/filterNaN-util';
+import { filterNaN, toPercentage } from 'app/admin/metrics/filterNaN-util';
 
 @Component({
     selector: 'jhi-metrics-request',
@@ -21,4 +21,5 @@ export class MetricsRequestComponent {
      */
     updating = input<boolean>(false);
     protected readonly filterNaN = filterNaN;
+    protected readonly toPercentage = toPercentage;
 }

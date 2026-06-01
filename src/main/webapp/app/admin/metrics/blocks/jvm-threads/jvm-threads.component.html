@@ -2,25 +2,25 @@
 
 <span><span jhiTranslate="metrics.jvm.threads.runnable"></span> {{ threadStats().runnable }}</span>
 
-<p-progressbar [value]="(100 * threadStats().runnable) / threadStats().all" [showValue]="false" color="var(--bs-success, #28a745)">
+<p-progressbar [value]="toPercentage(threadStats().runnable, threadStats().all)" [showValue]="false" color="var(--bs-success, #28a745)">
     <ng-template #content>{{ (threadStats().runnable * 100) / threadStats().all | number: '1.0-0' }}%</ng-template>
 </p-progressbar>
 
 <span><span jhiTranslate="metrics.jvm.threads.timedwaiting"></span> ({{ threadStats().timedWaiting }})</span>
 
-<p-progressbar [value]="(100 * threadStats().timedWaiting) / threadStats().all" [showValue]="false" color="var(--bs-warning, #ffc107)">
+<p-progressbar [value]="toPercentage(threadStats().timedWaiting, threadStats().all)" [showValue]="false" color="var(--bs-warning, #ffc107)">
     <ng-template #content>{{ (threadStats().timedWaiting * 100) / threadStats().all | number: '1.0-0' }}%</ng-template>
 </p-progressbar>
 
 <span><span jhiTranslate="metrics.jvm.threads.waiting"></span> ({{ threadStats().waiting }})</span>
 
-<p-progressbar [value]="(100 * threadStats().waiting) / threadStats().all" [showValue]="false" color="var(--bs-warning, #ffc107)">
+<p-progressbar [value]="toPercentage(threadStats().waiting, threadStats().all)" [showValue]="false" color="var(--bs-warning, #ffc107)">
     <ng-template #content>{{ (threadStats().waiting * 100) / threadStats().all | number: '1.0-0' }}%</ng-template>
 </p-progressbar>
 
 <span><span jhiTranslate="metrics.jvm.threads.blocked"></span> ({{ threadStats().blocked }})</span>
 
-<p-progressbar [value]="(100 * threadStats().blocked) / threadStats().all" [showValue]="false" color="var(--bs-success, #28a745)">
+<p-progressbar [value]="toPercentage(threadStats().blocked, threadStats().all)" [showValue]="false" color="var(--bs-success, #28a745)">
     <ng-template #content>{{ (threadStats().blocked * 100) / threadStats().all | number: '1.0-0' }}%</ng-template>
 </p-progressbar>
 

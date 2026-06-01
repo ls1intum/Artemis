@@ -13,7 +13,7 @@ import { combineLatest } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TabsModule } from 'primeng/tabs';
-import { PaginatorModule } from 'primeng/paginator';
+import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -111,6 +111,12 @@ export class LtiConfigurationComponent implements OnInit {
                 sort: this.predicate() + ',' + (this.ascending() ? 'asc' : 'desc'),
             },
         });
+    }
+
+    /** Handles a PrimeNG paginator page change by converting the 0-indexed event page to the 1-indexed page and navigating. */
+    onPageChange(event: PaginatorState): void {
+        this.page.set((event.page ?? 0) + 1);
+        this.transition();
     }
 
     /** Sets the active tab, coercing the PrimeNG tabs model value (string | number | undefined) to a number. */

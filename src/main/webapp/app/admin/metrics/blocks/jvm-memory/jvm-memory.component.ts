@@ -4,6 +4,7 @@ import { JvmMetrics } from 'app/admin/metrics/metrics.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { DecimalPipe, KeyValuePipe } from '@angular/common';
+import { toPercentage } from 'app/admin/metrics/filterNaN-util';
 
 @Component({
     selector: 'jhi-jvm-memory',
@@ -22,4 +23,6 @@ export class JvmMemoryComponent {
      * boolean field saying if the metrics are in the process of being updated
      */
     updating = input<boolean>(false);
+
+    protected readonly toPercentage = toPercentage;
 }

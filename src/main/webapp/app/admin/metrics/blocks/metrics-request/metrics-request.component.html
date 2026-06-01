@@ -14,7 +14,7 @@
                 <tr>
                     <td>{{ entry.key }}</td>
                     <td>
-                        <p-progressbar [value]="(100 * entry.value.count) / requestMetrics()['all'].count" [showValue]="false" color="var(--bs-success, #28a745)">
+                        <p-progressbar [value]="toPercentage(entry.value.count, requestMetrics()['all'].count)" [showValue]="false" color="var(--bs-success, #28a745)">
                             <ng-template #content>{{ entry.value.count }}</ng-template>
                         </p-progressbar>
                     </td>

@@ -80,13 +80,7 @@
                 <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
             </div>
             <div class="row justify-content-center">
-                <p-paginator
-                    id="pagination"
-                    [first]="(page() - 1) * itemsPerPage"
-                    [rows]="itemsPerPage"
-                    [totalRecords]="totalItems()"
-                    (onPageChange)="loadPage($event.page! + 1)"
-                />
+                <p-paginator id="pagination" [first]="(page() - 1) * itemsPerPage" [rows]="itemsPerPage" [totalRecords]="totalItems()" (onPageChange)="onPageChange($event)" />
             </div>
         </div>
     }

@@ -188,7 +188,7 @@
                 [first]="(decidedPage() - 1) * decidedPageSize"
                 [rows]="decidedPageSize"
                 [totalRecords]="totalDecidedCount()"
-                (onPageChange)="decidedPage.set($event.page! + 1); onDecidedPageChange()"
+                (onPageChange)="onDecidedPaginatorChange($event)"
             />
         </div>
     }
