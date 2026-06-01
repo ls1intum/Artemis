@@ -296,6 +296,7 @@ export class ResultHistoryDropdownComponent {
             closable: true,
             closeOnEscape: true,
             dismissableMask: false,
+            showHeader: false,
             inputValues,
         });
         dialogRef?.onChildComponentLoaded.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((component) => {
