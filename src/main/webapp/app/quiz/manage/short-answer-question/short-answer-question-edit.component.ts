@@ -799,6 +799,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
     }
 
     setQuestionEditorValue(text: string): void {
-        this.questionEditor().markdown = text;
+        this.questionEditor().setMarkdown(text);
     }
 }
