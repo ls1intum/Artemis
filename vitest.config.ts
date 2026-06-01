@@ -130,6 +130,7 @@ export default defineConfig({
             'src/main/webapp/app/logos/**/*.spec.ts', // include logos tests
             'src/main/webapp/app/sharing/**/*.spec.ts', // include sharing tests
             'src/main/webapp/app/app.component.spec.ts', // include app-shell (app.component) tests
+            'src/main/webapp/app/plagiarism/**/*.spec.ts', // include all plagiarism tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -242,6 +243,7 @@ export default defineConfig({
                 'src/main/webapp/app/logos/**/*.ts', // include logos for code coverage
                 'src/main/webapp/app/sharing/**/*.ts', // include sharing for code coverage
                 'src/main/webapp/app/app.component.ts', // include app-shell (app.component) for code coverage
+                'src/main/webapp/app/plagiarism/**/*.ts', // include all plagiarism for code coverage
             ],
             exclude: [
                 '**/node_modules/**', // exclude node_modules with third-party code
@@ -255,10 +257,10 @@ export default defineConfig({
             ],
             thresholds: {
                 // Tuned slightly below current actuals to absorb further Jest→Vitest migration drift.
-                lines: 89.0,
-                statements: 88.8,
-                branches: 73.8,
-                functions: 86.4,
+                lines: 89.2,
+                statements: 89.0,
+                branches: 73.6,
+                functions: 86.6,
             },
         },
     },
