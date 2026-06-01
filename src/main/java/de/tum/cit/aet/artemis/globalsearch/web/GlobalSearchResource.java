@@ -291,8 +291,8 @@ public class GlobalSearchResource {
                 return new FilterBuildResult(null, false, null, null);
             }
         }
-        List<Course> accessibleCoursesEnabledCommunication = accessibleCourses.stream().filter(course -> course.getCourseInformationSharingConfiguration().isMessagingEnabled())
-                .toList();
+        List<Course> accessibleCoursesEnabledCommunication = accessibleCourses.stream()
+                .filter(course -> course.getCourseInformationSharingConfiguration().isAnyCommunicationEnabled()).toList();
 
         CourseRoleSets roleSets = groupCoursesByRole(user, accessibleCourses);
         CourseRoleSets roleSetsEnabledCommunication = groupCoursesByRole(user, accessibleCoursesEnabledCommunication);

@@ -22,4 +22,8 @@ public enum CourseInformationSharingConfiguration {
     public boolean isMessagingEnabled() {
         return this == COMMUNICATION_AND_MESSAGING;
     }
+
+    public boolean isAnyCommunicationEnabled() {
+        return this != DISABLED;
+    }
 }
