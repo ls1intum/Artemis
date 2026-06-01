@@ -1,4 +1,5 @@
 import * as monaco from 'monaco-editor';
+import { vi } from 'vitest';
 import { EditorColors } from 'app/editor/monaco-editor/model/themes/editor-colors.interface';
 import { LanguageTokenStyleDefinition } from 'app/editor/monaco-editor/model/themes/language-token-style-definition.interface';
 import { MonacoThemeDefinition } from 'app/editor/monaco-editor/model/themes/monaco-theme-definition.interface';
@@ -37,7 +38,7 @@ describe('MonacoEditorTheme', () => {
 
     it('should correctly register a theme', () => {
         const theme = new MonacoEditorTheme(themeDefinition);
-        const defineThemeSpy = jest.spyOn(monaco.editor, 'defineTheme');
+        const defineThemeSpy = vi.spyOn(monaco.editor, 'defineTheme');
         theme.register();
         expect(defineThemeSpy).toHaveBeenCalledExactlyOnceWith('test-theme', {
             base: 'vs',

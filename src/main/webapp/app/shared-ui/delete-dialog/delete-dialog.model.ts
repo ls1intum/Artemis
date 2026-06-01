@@ -39,6 +39,16 @@ export interface EntitySummaryCategory {
     items: EntitySummaryItem[];
 }
 
+export type DeleteDialogDeleteHandler = EventEmitter<{ [key: string]: boolean }> | ((additionalChecksValues: { [key: string]: boolean }) => void);
+
+export function triggerDeleteDialogDelete(handler: DeleteDialogDeleteHandler, additionalChecksValues: { [key: string]: boolean } = {}): void {
+    if (handler instanceof EventEmitter) {
+        handler.emit(additionalChecksValues);
+        return;
+    }
+    handler(additionalChecksValues);
+}
+
 /**
  * Data that will be passed to the delete dialog component
  */
@@ -77,8 +87,8 @@ export class DeleteDialogData {
     //button type determining the style of the button
     buttonType: ButtonType;
 
-    // output event passed to the delete dialog component
-    delete: EventEmitter<any>;
+    // callback passed to the delete dialog component
+    delete: DeleteDialogDeleteHandler;
 
     // require the confirmation security check only when at least one additional check is selected
     requireConfirmationOnlyForAdditionalChecks: boolean;

@@ -31,7 +31,6 @@ import org.hibernate.Hibernate;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -598,12 +597,6 @@ public class Course extends DomainObject {
 
     public void setOnboardingDone(boolean onboardingDone) {
         this.onboardingDone = onboardingDone;
-    }
-
-    // TODO: Remove this method once the mobile iOS app no longer reads faqEnabled and all users have updated to the latest app version.
-    @JsonProperty("faqEnabled")
-    public boolean isFaqEnabled() {
-        return true;
     }
 
     public String getEnrollmentConfirmationMessage() {

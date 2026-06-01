@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 
 @Component({
     selector: 'jhi-side-panel',
@@ -6,6 +6,6 @@ import { Component, Input } from '@angular/core';
     styleUrls: ['./side-panel.scss'],
 })
 export class SidePanelComponent {
-    @Input() panelHeader: string;
-    @Input() panelDescriptionHeader?: string;
+    panelHeader = input<string>('');
+    panelDescriptionHeader = input<string>();
 }
