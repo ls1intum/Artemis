@@ -124,8 +124,8 @@ public class ParticipationFilterService {
         if (!(participation.getExercise() instanceof QuizExercise) || participation.getSubmissions() == null) {
             return Optional.empty();
         }
-        return participation.getSubmissions().stream().filter(submission -> submission instanceof QuizSubmission && submission.isSubmitted()).max(Comparator.naturalOrder())
-                .map(submission -> {
+        return participation.getSubmissions().stream().filter(submission -> submission instanceof QuizSubmission && submission.isSubmitted())
+                .max(Comparator.comparing(Submission::getSubmissionDate, Comparator.nullsFirst(Comparator.naturalOrder()))).map(submission -> {
                     QuizSubmission sanitizedSubmission = new QuizSubmission();
                     sanitizedSubmission.setId(submission.getId());
                     sanitizedSubmission.setSubmitted(true);

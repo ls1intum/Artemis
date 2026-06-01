@@ -1016,13 +1016,15 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.syncSubmitState();
         this.submission = result.submission as QuizSubmission;
         // make sure the additional information (explanations, correct answers) is available
-        const participation = this.submission.participation as StudentParticipation;
-        const quizExercise = participation.exercise as QuizExercise;
-        this.transferInformationToQuizExercise(quizExercise);
+        const participation = this.submission.participation as StudentParticipation | undefined;
+        const quizExercise = participation?.exercise as QuizExercise | undefined;
+        if (quizExercise) {
+            this.transferInformationToQuizExercise(quizExercise);
+        }
         this.applySubmission();
         this.showResult(result);
 
-        if (this.mode === 'practice') {
+        if (this.mode === 'practice' && participation) {
             // Surface the practice participation (with its result) to the surrounding exercise page so the status badge
             // shows the practice score immediately, without requiring a page refresh. The result payload omits the
             // practice flag, so set it explicitly and link the result to the submission for the badge to render it.

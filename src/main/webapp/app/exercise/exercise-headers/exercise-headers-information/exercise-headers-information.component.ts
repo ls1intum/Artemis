@@ -66,7 +66,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     readonly isPractice = input<boolean>(false);
     readonly athenaEnabled = input<boolean>(false);
     readonly feedbackRequestLimit = input<number>(DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT);
-    @Input() quizLiveStatus?: LiveQuizParticipationStatus;
+    readonly quizLiveStatus = input<LiveQuizParticipationStatus>();
 
     readonly sortedHistoryResults = computed(() => {
         const results = this.sortedHistoryResultsInput() ?? getAllResultsOfAllSubmissions(this.studentParticipation()?.submissions);

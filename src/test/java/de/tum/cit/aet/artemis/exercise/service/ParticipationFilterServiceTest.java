@@ -31,6 +31,8 @@ class ParticipationFilterServiceTest extends AbstractSpringIntegrationIndependen
 
     private static final String TEST_PREFIX = "participationfilterservice";
 
+    private static final ZonedDateTime FIXED_TIMESTAMP = ZonedDateTime.parse("2020-01-01T12:00:00Z");
+
     @Autowired
     private ParticipationFilterService participationFilterService;
 
@@ -85,7 +87,7 @@ class ParticipationFilterServiceTest extends AbstractSpringIntegrationIndependen
         var quizSubmission = new QuizSubmission();
         quizSubmission.setId(42L);
         quizSubmission.setSubmitted(true);
-        quizSubmission.setSubmissionDate(ZonedDateTime.now());
+        quizSubmission.setSubmissionDate(FIXED_TIMESTAMP);
         quizSubmission.setScoreInPoints(5.0);
         quizSubmission.setParticipation(participation);
         participation.setSubmissions(Set.of(quizSubmission));
@@ -108,7 +110,7 @@ class ParticipationFilterServiceTest extends AbstractSpringIntegrationIndependen
         var participation = new StudentParticipation().exercise(quizExercise);
         var quizSubmission = new QuizSubmission();
         quizSubmission.setSubmitted(false);
-        quizSubmission.setSubmissionDate(ZonedDateTime.now());
+        quizSubmission.setSubmissionDate(FIXED_TIMESTAMP);
         quizSubmission.setParticipation(participation);
         participation.setSubmissions(Set.of(quizSubmission));
 

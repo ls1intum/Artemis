@@ -502,7 +502,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             const submissions = existingSubmissions.some((existing) => existing.id === submission.id)
                 ? existingSubmissions.map((existing) => (existing.id === submission.id ? submission : existing))
                 : [...existingSubmissions, submission];
-            return { ...participation, submissions };
+            participation.submissions = submissions;
+            return participation;
         });
         this._studentParticipations.set(updatedParticipations);
     }
