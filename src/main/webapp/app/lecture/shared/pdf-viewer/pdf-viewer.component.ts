@@ -19,10 +19,10 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import type { Dayjs } from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { SafeResourceUrlPipe } from 'app/foundation/pipes/safe-resource-url.pipe';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import type { IframeMessage, IframeMessageData, IframeMessageType } from './pdf-viewer-iframe.types';
 

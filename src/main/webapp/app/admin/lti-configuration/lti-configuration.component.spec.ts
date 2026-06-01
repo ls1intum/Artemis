@@ -7,12 +7,13 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
+import { PaginatorState } from 'primeng/paginator';
 
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
-import { SortService } from 'app/shared/service/sort.service';
+import { SortService } from 'app/foundation/service/sort.service';
 import { LtiConfigurationComponent } from 'app/admin/lti-configuration/lti-configuration.component';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('LtiConfigurationComponent', () => {
     setupTestBed({ zoneless: true });
@@ -66,6 +67,35 @@ describe('LtiConfigurationComponent', () => {
         fixture.detectChanges();
         component.predicate.set('id');
         mockAlertService = TestBed.inject(AlertService);
+    });
+
+    describe('pagination (PrimeNG paginator)', () => {
+        it('converts the 0-indexed paginator event to the 1-indexed page and navigates', () => {
+            mockRouter.navigate.mockClear();
+
+            component.onPageChange({ page: 2 } as PaginatorState);
+
+            expect(component.page()).toBe(3);
+            expect(mockRouter.navigate).toHaveBeenCalledWith(['/admin/lti-configuration'], expect.objectContaining({ queryParams: expect.objectContaining({ page: 3 }) }));
+        });
+    });
+
+    describe('setActiveTab (PrimeNG tabs)', () => {
+        it('coerces the numeric tab value to the activeTab signal', () => {
+            component.setActiveTab(2);
+            expect(component.activeTab()).toBe(2);
+        });
+
+        it('coerces a string tab value to a number', () => {
+            component.setActiveTab('1');
+            expect(component.activeTab()).toBe(1);
+        });
+
+        it('ignores a non-numeric value and keeps the current tab (never sets NaN)', () => {
+            component.setActiveTab(2);
+            component.setActiveTab(undefined);
+            expect(component.activeTab()).toBe(2);
+        });
     });
 
     it('should create', () => {

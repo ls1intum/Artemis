@@ -3,10 +3,10 @@ import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { matchesRegexFully } from 'app/shared/util/regex.util';
-import { AlertService } from 'app/shared/service/alert.service';
-import { ConfirmAutofocusButtonComponent } from 'app/shared/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { matchesRegexFully } from 'app/foundation/util/regex.util';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ConfirmAutofocusButtonComponent } from 'app/shared-ui/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-course-registration-button',

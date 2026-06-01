@@ -96,7 +96,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
                 exercise.title,
                 exercise.releaseDate,
                 exercise.dueDate,
-                batch,
+                batch.startTime,
                 exercise.duration
             )
             FROM QuizExercise exercise
@@ -181,10 +181,16 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
     }
 
     /**
-     * Targeted UPDATE of releaseDate + dueDate, used by START_NOW. Bypasses the full-entity cascade on
-     * {@code saveAndFlush(quizExercise)} so the {@code @OneToMany + @OrderColumn + orphanRemoval} child collections
-     * (answerOptions / dragItems / dropLocations / correctMappings / spots / solutions) are not deleted and re-inserted.
-     * Prevents the {@code ObjectNotFoundException} on {@code AnswerOption} in live-submit merge for in-flight student tabs.
+     * Targeted UPDATE of releaseDate + dueDate, used by START_NOW. Issues a single-row UPDATE on
+     * {@code QuizExercise} instead of {@code saveAndFlush(quizExercise)}.
+     *
+     * <p>
+     * The original motivation was to bypass the DELETE+INSERT cascade on the unidirectional
+     * {@code @OneToMany + @JoinColumn + @OrderColumn} child collections — that bug class is fixed at the mapping
+     * level now (issues #12574 / #12584, bidirectional {@code mappedBy}), but this targeted UPDATE is retained
+     * because it remains the cheapest correct option for the lifecycle action: it avoids loading the full quiz
+     * graph, skips the {@code @PrePersist}/{@code @PreUpdate} hooks on every child question, and produces a
+     * single-row UPDATE that is atomic and easy to reason about.
      *
      * @param id          the id of the quiz exercise to update
      * @param releaseDate the new release date (may be {@code null})
@@ -201,7 +207,8 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
     void updateReleaseAndDueDate(@Param("id") Long id, @Param("releaseDate") ZonedDateTime releaseDate, @Param("dueDate") ZonedDateTime dueDate);
 
     /**
-     * Targeted UPDATE of releaseDate, used by SET_VISIBLE. See {@link #updateReleaseAndDueDate} for why this bypasses the cascade.
+     * Targeted UPDATE of releaseDate, used by SET_VISIBLE. See {@link #updateReleaseAndDueDate} for why this
+     * is preferred over a full {@code saveAndFlush(quizExercise)}.
      *
      * @param id          the id of the quiz exercise to update
      * @param releaseDate the new release date
@@ -216,7 +223,8 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
     void updateReleaseDate(@Param("id") Long id, @Param("releaseDate") ZonedDateTime releaseDate);
 
     /**
-     * Targeted UPDATE of dueDate, used by END_NOW. See {@link #updateReleaseAndDueDate} for why this bypasses the cascade.
+     * Targeted UPDATE of dueDate, used by END_NOW. See {@link #updateReleaseAndDueDate} for why this is
+     * preferred over a full {@code saveAndFlush(quizExercise)}.
      *
      * @param id      the id of the quiz exercise to update
      * @param dueDate the new due date

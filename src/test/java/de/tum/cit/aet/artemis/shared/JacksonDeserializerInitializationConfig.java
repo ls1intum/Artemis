@@ -20,11 +20,13 @@ import com.fasterxml.jackson.databind.deser.SettableBeanProperty;
 import com.fasterxml.jackson.databind.deser.impl.FailingDeserializer;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 
+import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.Reaction;
-import de.tum.cit.aet.artemis.core.domain.Organization;
+import de.tum.cit.aet.artemis.communication.dto.AnswerPostResponseDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
@@ -170,6 +172,50 @@ public class JacksonDeserializerInitializationConfig {
             assertNoFailingPlaceholders(bareDeser, entityType);
         }
         log.info("Jackson deserializer prime complete: {} bean types + {} collection wrappers", ENTITY_TYPES.size(), ENTITY_TYPES.size() * 2);
+
+        exerciseFailureChains(tf);
+    }
+
+    /**
+     * Actively deserialize the synthetic JSON shapes that match the previously failing chains
+     * documented above, for the cycle-free response DTOs that replaced the entity payloads.
+     * <p>
+     * The DTO chains must succeed by construction — the records carry no cyclic relations, so
+     * Jackson's {@code DeserializerCache._createAndCache2} window cannot be entered. A failure
+     * here means someone added a back-reference to a response DTO and re-opened the cycle this
+     * refactor was written to close. Surfacing that as a deterministic context-startup failure
+     * (instead of an intermittent integration-test flake whose stack trace points at a
+     * {@code FailingDeserializer} placeholder) is the goal of this probe.
+     * <p>
+     * We deliberately do <em>not</em> probe the entity-typed chains ({@code List<Post>} with a
+     * reactions/user sub-tree, etc.). Priming alone cannot close the race for those: the
+     * contextual variant captured inside {@code BeanPropertyMap} for the cross-entity field is
+     * built lazily on first deserialization, after priming has completed and released the lock.
+     * The refactor's fix is to route every Jackson-deserialized surface through the DTOs above;
+     * any caller still deserializing the entity types directly will hit the race and should be
+     * migrated. (Tutorial-group list endpoint migration is tracked in PR&nbsp;#12687.)
+     *
+     * @param tf the Jackson {@link TypeFactory} used to build parameterised collection types
+     */
+    private void exerciseFailureChains(TypeFactory tf) {
+        readValueOrThrow("[{\"id\":1,\"reactions\":[{\"id\":1,\"user\":{\"id\":1}}]}]", tf.constructCollectionType(List.class, PostResponseDTO.class),
+                "List<PostResponseDTO> with reaction-user chain");
+        readValueOrThrow("[{\"id\":1,\"reactions\":[{\"id\":1,\"user\":{\"id\":1}}]}]", tf.constructCollectionType(List.class, AnswerPostResponseDTO.class),
+                "List<AnswerPostResponseDTO> with reaction-user chain");
+        readValueOrThrow("{\"id\":1,\"reactions\":[{\"id\":1,\"user\":{\"id\":1}}],\"answers\":[{\"id\":2,\"reactions\":[{\"id\":3,\"user\":{\"id\":1}}]}]}",
+                tf.constructType(PostResponseDTO.class), "PostResponseDTO with answers and nested reactions");
+
+        log.info("Jackson DTO chain probe complete: 3 cycle-free chains deserialized");
+    }
+
+    private void readValueOrThrow(String json, JavaType type, String label) {
+        try {
+            objectMapper.readValue(json, type);
+        }
+        catch (Exception e) {
+            throw new IllegalStateException(
+                    "DTO chain probe failed for " + label + " — a back-reference was likely added to a response DTO and re-opened the cyclic-reference race: " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -196,11 +242,16 @@ public class JacksonDeserializerInitializationConfig {
     }
 
     /**
-     * Walk the bean's property table and refuse to start if any property still has a
-     * {@code FailingDeserializer} value deserializer. This is the exact condition that
-     * produces the {@code "No _valueDeserializer assigned"} error at deserialization
-     * time — surfacing it here turns a flaky test failure into a deterministic
-     * context-startup failure that points directly at the unresolved property.
+     * Walk the bare bean deserializer's property table and refuse to start if any property still
+     * has a {@code FailingDeserializer} value deserializer. This is the exact condition that
+     * produces the {@code "No _valueDeserializer assigned"} error at deserialization time —
+     * surfacing it here turns a flaky test failure into a deterministic context-startup failure
+     * that points directly at the unresolved property.
+     * <p>
+     * Note: this only inspects the bare-type {@link BeanDeserializerBase}. Contextual variants
+     * captured inside {@code CollectionDeserializer.valueDeserializer} are not walked here — the
+     * subsequent {@code exerciseFailureChains} probe deserializes representative Set/List shapes
+     * and catches that case via {@code readValue}.
      */
     private void assertNoFailingPlaceholders(JsonDeserializer<?> deser, Class<?> entityType) {
         if (!(deser instanceof BeanDeserializerBase beanDeser)) {
@@ -210,9 +261,9 @@ public class JacksonDeserializerInitializationConfig {
         while (properties.hasNext()) {
             SettableBeanProperty property = properties.next();
             if (!property.hasValueDeserializer()) {
-                throw new IllegalStateException("Jackson left a FailingDeserializer placeholder on " + entityType.getName() + "[\"" + property.getName()
-                        + "\"] after priming — the cyclic-reference race was not closed. " + "Add the property's type to ENTITY_TYPES (prime it BEFORE "
-                        + entityType.getSimpleName() + ") or check whether " + "a custom @JsonDeserialize on this property is preventing resolution.");
+                throw new IllegalStateException("Jackson left a FailingDeserializer placeholder on the bare-type deserializer for " + entityType.getName() + "[\""
+                        + property.getName() + "\"] after priming — the cyclic-reference race was not closed. " + "Add the property's type to ENTITY_TYPES (prime it BEFORE "
+                        + entityType.getSimpleName() + ") or check whether a custom @JsonDeserialize on this property is preventing resolution.");
             }
         }
     }

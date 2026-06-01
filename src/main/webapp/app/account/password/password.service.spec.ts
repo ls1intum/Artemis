@@ -15,7 +15,7 @@ describe('PasswordService', () => {
     let httpService: HttpClient;
     let postStub: ReturnType<typeof vi.spyOn>;
 
-    const postURL = 'api/core/account/change-password';
+    const postURL = 'api/account/change-password';
 
     beforeEach(async () => {
         TestBed.configureTestingModule({

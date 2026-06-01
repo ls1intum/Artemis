@@ -83,13 +83,35 @@ export class ProgrammingExerciseOverviewPage {
         await Commands.reloadUntilFound(this.page, codeButtonLocator, 10000, 40000);
         await codeButtonLocator.click();
         await this.page.locator('.popover-body').waitFor({ state: 'visible' });
-        await this.page.locator('.https-or-ssh-button').click();
-        // The clone-method dropdown re-renders after .https-or-ssh-button is clicked. Wait for the
-        // chosen option to be both attached and visible before clicking, otherwise Playwright
-        // occasionally hits the previous render and gets "element was detached from the DOM".
+
+        // The popover loads SSH-key / token status asynchronously after it opens (see
+        // code-button.component: getCachedSshKeys / getVcsAccessToken run in ngOnInit). As those
+        // signals resolve, the `@if` alert blocks appear/disappear, the popover height changes and
+        // ngb repositions it — so the `.https-or-ssh-button` toggle and the dropdown options
+        // re-render and briefly detach. Under heavy multi-node load this churn window is long
+        // enough that a single click races a detach ("element is not stable" / "element was
+        // detached from the DOM"). Retry the toggle + option selection as a unit, re-finding the
+        // elements each attempt and only re-toggling when the dropdown is not already open.
+        const toggle = this.page.locator('.https-or-ssh-button');
         const cloneMethodOption = this.page.locator(gitCloneMethodSelector[cloneMethod]);
-        await cloneMethodOption.waitFor({ state: 'visible' });
-        await cloneMethodOption.click();
+        const maxAttempts = 5;
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            try {
+                await toggle.waitFor({ state: 'visible', timeout: 15_000 });
+                if (!(await cloneMethodOption.isVisible())) {
+                    await toggle.click({ timeout: 10_000 });
+                }
+                await cloneMethodOption.waitFor({ state: 'visible', timeout: 10_000 });
+                await cloneMethodOption.click({ timeout: 10_000 });
+                return;
+            } catch (error) {
+                if (attempt === maxAttempts - 1) {
+                    throw error;
+                }
+                // Give the popover a moment to finish its async-driven re-render before retrying.
+                await this.page.waitForTimeout(1_000);
+            }
+        }
     }
 
     async getCloneUrl() {

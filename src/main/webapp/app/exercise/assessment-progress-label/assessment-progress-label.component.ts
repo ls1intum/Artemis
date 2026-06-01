@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { Submission, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { isManualResult } from 'app/exercise/result/result.utils';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DecimalPipe, NgClass } from '@angular/common';
 
 @Component({

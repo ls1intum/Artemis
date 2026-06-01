@@ -19,25 +19,25 @@ import {
     convertToKnowledgeAreaForTree,
     convertToStandardizedCompetencyForTree,
 } from 'app/atlas/shared/entities/standardized-competency.model';
-import { onError } from 'app/shared/util/global.utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { Subject, forkJoin, map } from 'rxjs';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TooltipModule } from 'primeng/tooltip';
 import { getIcon } from 'app/atlas/shared/entities/competency.model';
-import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateService } from '@ngx-translate/core';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
+import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { StandardizedCompetencyEditComponent } from './standardized-competency-edit.component';
 import { KnowledgeAreaEditComponent } from './knowledge-area-edit.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { StandardizedCompetencyFilterComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-filter.component';
 import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 import { StandardizedCompetencyFilterPageComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-filter-page.component';
@@ -61,7 +61,7 @@ import { DialogModule } from 'primeng/dialog';
         StandardizedCompetencyFilterComponent,
         ButtonComponent,
         KnowledgeAreaTreeComponent,
-        NgbTooltip,
+        TooltipModule,
         StandardizedCompetencyEditComponent,
         KnowledgeAreaEditComponent,
         ArtemisTranslatePipe,
@@ -101,7 +101,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     /** width of the detail panel in px, persisted across panel switches */
     protected readonly detailPanelWidth = signal<number | undefined>(undefined);
 
-    // Cancel confirmation dialog state (replaces NgbModal + ConfirmAutofocusModalComponent)
+    // Cancel confirmation dialog state (replaced the legacy ng-bootstrap confirm modal)
     protected readonly confirmDialogVisible = signal(false);
     protected readonly confirmDialogTitle = signal('');
     protected readonly confirmDialogTextKey = signal('');
