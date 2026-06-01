@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { Subscription, combineLatest, filter, interval, lastValueFrom } from 'rxjs';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, isTestExam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -125,7 +125,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         const currentCourse = this.course();
         if (currentCourse?.exams) {
             // The Map is ued to store the boolean value, if the attempt-List for one Exam has been expanded or collapsed
-            this.expandAttemptsMap = new Map(currentCourse.exams.filter((exam) => exam.testExam && this.isVisible(exam)).map((exam) => [exam.id!, false]));
+            this.expandAttemptsMap = new Map(currentCourse.exams.filter((exam) => isTestExam(exam) && this.isVisible(exam)).map((exam) => [exam.id!, false]));
             this.updateExams();
         }
 
@@ -155,10 +155,10 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             // Loading the exams from the course
             const exams = currentCourse.exams.filter((exam) => this.isVisible(exam)).sort((se1, se2) => this.sortExamsByStartDate(se1, se2));
             // add new exams to the attempt map
-            exams.filter((exam) => exam.testExam && !this.expandAttemptsMap.has(exam.id!)).forEach((exam) => this.expandAttemptsMap.set(exam.id!, false));
+            exams.filter((exam) => isTestExam(exam) && !this.expandAttemptsMap.has(exam.id!)).forEach((exam) => this.expandAttemptsMap.set(exam.id!, false));
 
-            this.realExamsOfCourse = exams.filter((exam) => !exam.testExam);
-            this.testExamsOfCourse = exams.filter((exam) => exam.testExam);
+            this.realExamsOfCourse = exams.filter((exam) => !isTestExam(exam));
+            this.testExamsOfCourse = exams.filter((exam) => isTestExam(exam));
             // get student exams for real exams
             lastValueFrom(this.examParticipationService.getRealExamSidebarData(this.courseId())).then((studentExams) => {
                 studentExams.forEach((exam) => {

@@ -32,7 +32,7 @@
                 </div>
                 <jhi-exam-mode-picker [exam]="exam" [disableInput]="isExamTypeReadonly" (examModeChanged)="onExamModeChange()" />
             </div>
-            @if (exam.testExam) {
+            @if (isTestExam(exam)) {
                 <div class="form-group mb-3">
                     <div>
                         <label class="form-check-label" for="examType" jhiTranslate="artemisApp.examManagement.testExam.modeLabel"></label>
@@ -83,7 +83,7 @@
                     }
                 </div>
             }
-            @if (!exam.testExam) {
+            @if (!isTestExam(exam)) {
                 <div class="form-check mb-3">
                     <input class="form-check-input" type="checkbox" id="examWithAttendanceCheck" name="examWithAttendanceCheck" [(ngModel)]="exam.examWithAttendanceCheck" />
                     <label class="form-check-label" for="examWithAttendanceCheck" jhiTranslate="artemisApp.examManagement.examWithAttendanceCheck"
@@ -167,7 +167,7 @@
                 </div>
                 <div class="col-sm-4">
                     <jhi-date-time-picker
-                        labelName="{{ 'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.startDate' | artemisTranslate }}"
+                        labelName="{{ 'artemisApp.examManagement' + (isTestExam(exam) ? '.testExam' : '') + '.startDate' | artemisTranslate }}"
                         labelTooltip="{{ 'artemisApp.examManagement.startDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.startDate"
                         (valueChange)="updateExamWorkingTime()"
@@ -183,7 +183,7 @@
                 </div>
                 <div class="col-sm-4">
                     <jhi-date-time-picker
-                        labelName="{{ 'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.endDate' | artemisTranslate }}"
+                        labelName="{{ 'artemisApp.examManagement' + (isTestExam(exam) ? '.testExam' : '') + '.endDate' | artemisTranslate }}"
                         labelTooltip="{{ 'artemisApp.examManagement.endDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.endDate"
                         (valueChange)="updateExamWorkingTime()"
@@ -290,12 +290,12 @@
             }
             <!-- Section exam assessment and student review
         Deactivated for test exam, as results are provided right after a test eam run and complaints are not possible  -->
-            @if (!exam.testExam) {
+            @if (!isTestExam(exam)) {
                 <div>
                     <hr />
                     <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.assessment"></h5>
                     <h6 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.assessmentEmptyDates"></h6>
-                    @if (!exam.testExam) {
+                    @if (!isTestExam(exam)) {
                         <div class="row mb-3">
                             <div class="col-sm-6">
                                 <label

@@ -10,7 +10,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExamPage } from 'app/exam/shared/entities/exam-page.model';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamType, isTestExam } from 'app/exam/shared/entities/exam.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
@@ -296,7 +296,7 @@ describe('ExamParticipationComponent', () => {
     it('should load new testExam if studentExam id is start', () => {
         const studentExam = new StudentExam();
         studentExam.exam = new Exam();
-        studentExam.exam.testExam = true;
+        studentExam.exam.examType = ExamType.PRACTICE;
         studentExam.exam.course = new Course();
         studentExam.workingTime = 100;
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', studentExamId: 'start' });
@@ -310,7 +310,7 @@ describe('ExamParticipationComponent', () => {
     it('should load existing testExam if studentExam id is start', () => {
         const studentExam = new StudentExam();
         studentExam.exam = new Exam();
-        studentExam.exam.testExam = true;
+        studentExam.exam.examType = ExamType.PRACTICE;
         studentExam.exam.startDate = dayjs().subtract(2000, 'seconds');
         studentExam.workingTime = 150;
         studentExam.id = 4;
@@ -331,7 +331,7 @@ describe('ExamParticipationComponent', () => {
     it('should load existing testExam for summary if studentExam id is defined', () => {
         const studentExam = new StudentExam();
         studentExam.exam = new Exam();
-        studentExam.exam.testExam = true;
+        studentExam.exam.examType = ExamType.PRACTICE;
         studentExam.exam.startDate = dayjs().subtract(2000, 'seconds');
         studentExam.workingTime = 100;
         studentExam.id = 3;
@@ -463,7 +463,7 @@ describe('ExamParticipationComponent', () => {
         expect(secondSubmission.isSynced).toBe(true);
         expect(secondSubmission.submitted).toBe(false);
 
-        if (studentExam.testRun || studentExam.exam?.testExam) {
+        if (studentExam.testRun || isTestExam(studentExam.exam)) {
             expect(comp.individualStudentEndDate).toEqual(comp.testStartTime!.add(studentExam.workingTime!, 'seconds'));
         } else {
             expect(comp.individualStudentEndDate).toEqual(comp.exam.startDate!.add(studentExam.workingTime!, 'seconds'));
@@ -486,7 +486,7 @@ describe('ExamParticipationComponent', () => {
     it('should initialize test exam', () => {
         const studentExam = new StudentExam();
         const exam = new Exam();
-        exam.testExam = true;
+        exam.examType = ExamType.PRACTICE;
         studentExam.exam = exam;
         studentExam.workingTime = 100;
         comp.testStartTime = dayjs().subtract(1000, 'seconds');
@@ -1004,7 +1004,7 @@ describe('ExamParticipationComponent', () => {
     describe('toggleHandInEarly', () => {
         it('should not fetch attendance check status if exam is a test exam', () => {
             comp.exam = new Exam();
-            comp.exam.testExam = true;
+            comp.exam.examType = ExamType.PRACTICE;
 
             // Spy on the method isAttendanceChecked
             const attendanceCheckSpy = vi.spyOn<any, any>(examManagementService, 'isAttendanceChecked');
@@ -1222,7 +1222,6 @@ describe('ExamParticipationComponent', () => {
         const now = dayjs();
         vi.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
         comp.exam.startDate = startDate.subtract(2, 'hours');
-        comp.exam.testExam = false;
         comp.studentExam.workingTime = 3600;
         comp.exam.gracePeriod = 1;
         comp.studentExam.submitted = false;
@@ -1232,7 +1231,7 @@ describe('ExamParticipationComponent', () => {
     it('should get whether student failed to submit a TestExam', () => {
         comp.studentExam = new StudentExam();
         comp.testRunId = 0;
-        comp.exam.testExam = true;
+        comp.exam.examType = ExamType.PRACTICE;
 
         comp.studentExam.started = false;
         expect(comp.studentFailedToSubmit).toBe(false);
@@ -1272,7 +1271,7 @@ describe('ExamParticipationComponent', () => {
         // Case test exam
         now = dayjs();
         comp.studentExam.workingTime = 1;
-        comp.exam.testExam = true;
+        comp.exam.examType = ExamType.PRACTICE;
         comp.exam.gracePeriod = 1;
         comp.exam.startDate = dayjs().subtract(4, 'hours');
 

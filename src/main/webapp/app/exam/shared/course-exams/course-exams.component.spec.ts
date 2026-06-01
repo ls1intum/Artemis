@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseExamsComponent } from 'app/exam/shared/course-exams/course-exams.component';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, Observable, Subject, of } from 'rxjs';
@@ -43,7 +43,6 @@ describe('CourseExamsComponent', () => {
         id: 1,
         visibleDate: dayjs().subtract(1, 'days'),
         startDate: dayjs().subtract(30, 'minutes'),
-        testExam: false,
     } as Exam;
 
     const visibleRealExam2 = {
@@ -51,35 +50,33 @@ describe('CourseExamsComponent', () => {
 
         visibleDate: dayjs().subtract(2, 'days'),
         startDate: dayjs().subtract(1, 'days'),
-        testExam: false,
     } as Exam;
 
     const notVisibleRealExam = {
         id: 3,
         visibleDate: dayjs().add(2, 'days'),
         startDate: dayjs().add(1, 'days'),
-        testExam: false,
     } as Exam;
 
     const visibleTestExam1 = {
         id: 11,
         visibleDate: dayjs().subtract(1, 'days'),
         startDate: dayjs().subtract(30, 'minutes'),
-        testExam: true,
+        examType: ExamType.PRACTICE,
     } as Exam;
 
     const visibleTestExam2 = {
         id: 12,
         visibleDate: dayjs().subtract(4, 'days'),
         startDate: dayjs().subtract(1, 'days'),
-        testExam: true,
+        examType: ExamType.PRACTICE,
     } as Exam;
 
     const notVisibleTestExam = {
         id: 13,
         visibleDate: dayjs().add(2, 'days'),
         startDate: dayjs().add(1, 'days'),
-        testExam: true,
+        examType: ExamType.PRACTICE,
     } as Exam;
 
     const studentExamForExam3AndSubmitted = {
@@ -249,9 +246,9 @@ describe('CourseExamsComponent', () => {
 
     it('should group all exams as test when all exams are test exams', () => {
         const testExams: Exam[] = [
-            { id: 1, title: 'Test Exam 1', testExam: true } as Exam,
-            { id: 2, title: 'Test Exam 2', testExam: true } as Exam,
-            { id: 3, title: 'Test Exam 3', testExam: true } as Exam,
+            { id: 1, title: 'Test Exam 1', examType: ExamType.PRACTICE } as Exam,
+            { id: 2, title: 'Test Exam 2', examType: ExamType.PRACTICE } as Exam,
+            { id: 3, title: 'Test Exam 3', examType: ExamType.PRACTICE } as Exam,
         ];
 
         vi.spyOn(courseOverviewService, 'mapExamToSidebarCardElement');
@@ -267,16 +264,12 @@ describe('CourseExamsComponent', () => {
 
     it('should group all exam types correctly and map to sidebar card elements', () => {
         const testExams: Exam[] = [
-            { id: 1, title: 'Test Exam 1', testExam: true } as Exam,
-            { id: 2, title: 'Test Exam 2', testExam: true } as Exam,
-            { id: 3, title: 'Test Exam 3', testExam: true } as Exam,
+            { id: 1, title: 'Test Exam 1', examType: ExamType.PRACTICE } as Exam,
+            { id: 2, title: 'Test Exam 2', examType: ExamType.PRACTICE } as Exam,
+            { id: 3, title: 'Test Exam 3', examType: ExamType.PRACTICE } as Exam,
         ];
 
-        const realExams: Exam[] = [
-            { id: 1, title: 'Real Exam 1', testExam: false } as Exam,
-            { id: 2, title: 'Real Exam 2', testExam: false } as Exam,
-            { id: 3, title: 'Real Exam 3', testExam: false } as Exam,
-        ];
+        const realExams: Exam[] = [{ id: 1, title: 'Real Exam 1' } as Exam, { id: 2, title: 'Real Exam 2' } as Exam, { id: 3, title: 'Real Exam 3' } as Exam];
 
         vi.spyOn(courseOverviewService, 'mapExamToSidebarCardElement');
         const groupedExams = component.groupExamsByRealOrTest(realExams, testExams);

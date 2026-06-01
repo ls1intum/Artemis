@@ -3,7 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, map } from 'rxjs';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, isTestExam } from 'app/exam/shared/entities/exam.model';
 import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
@@ -52,6 +52,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     private gradingService = inject(GradingService);
     private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
     private profileService = inject(ProfileService);
+    protected readonly isTestExam = isTestExam;
 
     exam: Exam;
     formattedStartText?: SafeHtml;
@@ -205,7 +206,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
         });
 
         const numberOfExerciseGroups = this.exam.exerciseGroups?.length ?? 0;
-        const isTestExam = this.exam.testExam ?? false;
+        const isTestExamValue = isTestExam(this.exam);
         const isTestCourse = this.exam.course?.testCourse ?? false;
 
         return {
@@ -216,7 +217,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
             'artemisApp.examManagement.delete.summary.numberFileUploadExercises': numberOfExercisesPerType.get(ExerciseType.FILE_UPLOAD),
             'artemisApp.examManagement.delete.summary.numberQuizExercises': numberOfExercisesPerType.get(ExerciseType.QUIZ),
             'artemisApp.examManagement.delete.summary.numberRepositories': numberOfProgrammingExerciseParticipations,
-            'artemisApp.examManagement.delete.summary.isTestExam': isTestExam,
+            'artemisApp.examManagement.delete.summary.isTestExam': isTestExamValue,
             'artemisApp.examManagement.delete.summary.isTestCourse': isTestCourse,
         };
     }

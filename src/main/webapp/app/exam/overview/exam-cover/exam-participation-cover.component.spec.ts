@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamParticipationCoverComponent } from 'app/exam/overview/exam-cover/exam-participation-cover.component';
@@ -57,7 +57,6 @@ describe('ExamParticipationCoverComponent', () => {
         exam = new Exam();
         exam.course = course;
         exam.id = 123;
-        exam.testExam = false;
         studentExam = new StudentExam();
         studentExam.testRun = false;
         studentExam.id = 1;
@@ -146,7 +145,6 @@ describe('ExamParticipationCoverComponent', () => {
         const examWithStartDate = new Exam();
         examWithStartDate.course = course;
         examWithStartDate.id = 123;
-        examWithStartDate.testExam = false;
         examWithStartDate.startDate = dayjs().subtract(1, 'days');
         fixture.componentRef.setInput('exam', examWithStartDate);
 
@@ -161,7 +159,6 @@ describe('ExamParticipationCoverComponent', () => {
         const examFutureStart = new Exam();
         examFutureStart.course = course;
         examFutureStart.id = 123;
-        examFutureStart.testExam = false;
         examFutureStart.startDate = startDate.add(1, 'hours');
         fixture.componentRef.setInput('exam', examFutureStart);
         vi.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
@@ -175,7 +172,6 @@ describe('ExamParticipationCoverComponent', () => {
         const examNoStart = new Exam();
         examNoStart.course = course;
         examNoStart.id = 123;
-        examNoStart.testExam = false;
         examNoStart.startDate = undefined;
         fixture.componentRef.setInput('exam', examNoStart);
         component.startExam();
@@ -195,7 +191,7 @@ describe('ExamParticipationCoverComponent', () => {
         const testExam = new Exam();
         testExam.course = course;
         testExam.id = 123;
-        testExam.testExam = true;
+        testExam.examType = ExamType.PRACTICE;
         testExam.startDate = dayjs().subtract(1, 'days');
         fixture.componentRef.setInput('exam', testExam);
 
@@ -210,7 +206,7 @@ describe('ExamParticipationCoverComponent', () => {
         const testExamFuture = new Exam();
         testExamFuture.course = course;
         testExamFuture.id = 123;
-        testExamFuture.testExam = true;
+        testExamFuture.examType = ExamType.PRACTICE;
         testExamFuture.startDate = startDate1.add(2, 'hours');
         fixture.componentRef.setInput('exam', testExamFuture);
         vi.spyOn(artemisServerDateService, 'now').mockReturnValue(now1);
@@ -224,7 +220,7 @@ describe('ExamParticipationCoverComponent', () => {
         const testExamNoStart = new Exam();
         testExamNoStart.course = course;
         testExamNoStart.id = 123;
-        testExamNoStart.testExam = true;
+        testExamNoStart.examType = ExamType.PRACTICE;
         testExamNoStart.startDate = undefined;
         fixture.componentRef.setInput('exam', testExamNoStart);
         component.startExam();
@@ -251,7 +247,6 @@ describe('ExamParticipationCoverComponent', () => {
         const examWithDate = new Exam();
         examWithDate.course = course;
         examWithDate.id = 123;
-        examWithDate.testExam = false;
         examWithDate.startDate = dayjs();
         fixture.componentRef.setInput('exam', examWithDate);
 
@@ -307,7 +302,6 @@ describe('ExamParticipationCoverComponent', () => {
         const examVisible = new Exam();
         examVisible.course = course;
         examVisible.id = 123;
-        examVisible.testExam = false;
         examVisible.visibleDate = dayjs().subtract(1, 'hours');
         fixture.componentRef.setInput('exam', examVisible);
         expect(component.startButtonEnabled).toBe(true);
@@ -338,7 +332,6 @@ describe('ExamParticipationCoverComponent', () => {
         const examFuture = new Exam();
         examFuture.course = course;
         examFuture.id = 123;
-        examFuture.testExam = false;
         examFuture.visibleDate = dayjs().add(1, 'hours');
         fixture.componentRef.setInput('exam', examFuture);
         expect(component.startButtonEnabled).toBe(false);

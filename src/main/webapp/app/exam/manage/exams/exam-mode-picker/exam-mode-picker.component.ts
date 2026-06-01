@@ -1,5 +1,5 @@
-import { Component, input, output } from '@angular/core';
-import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
+import { Component, computed, input, output } from '@angular/core';
+import { Exam, ExamType, isTestExam } from 'app/exam/shared/entities/exam.model';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
@@ -10,8 +10,9 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [NgClass, TranslateDirective],
 })
 export class ExamModePickerComponent {
-    exam = input.required<Exam>();
-    disableInput = input.required<boolean>();
+    readonly exam = input.required<Exam>();
+    readonly isTestExam = computed(() => isTestExam(this.exam()));
+    readonly disableInput = input.required<boolean>();
 
     examModeChanged = output();
 
@@ -20,8 +21,7 @@ export class ExamModePickerComponent {
      * @param testExam
      */
     setExamMode(testExam: boolean) {
-        if (!this.disableInput() && this.exam().testExam !== testExam) {
-            this.exam().testExam = testExam;
+        if (!this.disableInput() && this.isTestExam() !== testExam) {
             this.exam().examType = testExam ? ExamType.PRACTICE : ExamType.REAL;
             this.exam().numberOfCorrectionRoundsInExam = testExam ? 0 : 1;
             this.examModeChanged.emit();

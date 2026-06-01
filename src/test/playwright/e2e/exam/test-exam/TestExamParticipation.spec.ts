@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
 
 import { Exercise, ExerciseType } from '../../../support/constants';
 import { admin, studentFour, studentThree, studentTwo, users } from '../../../support/users';
@@ -26,7 +26,7 @@ test.describe('Test exam participation', { tag: '@slow' }, () => {
             const examConfig = {
                 course,
                 title: examTitle,
-                testExam: true,
+                examType: ExamType.PRACTICE,
                 startDate: dayjs().subtract(1, 'day'),
                 visibleDate: dayjs().subtract(2, 'days'),
                 examMaxPoints: 20,
@@ -92,7 +92,7 @@ test.describe('Test exam participation', { tag: '@slow' }, () => {
             const examConfig = {
                 course,
                 title: examTitle,
-                testExam: true,
+                examType: ExamType.PRACTICE,
                 startDate: dayjs().subtract(1, 'day'),
                 visibleDate: dayjs().subtract(2, 'days'),
                 workingTime: 15,

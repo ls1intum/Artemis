@@ -200,7 +200,7 @@
                 </div>
             </div>
         </div>
-        @if (!isExamMode || textExercise.exerciseGroup?.exam?.testExam) {
+        @if (!isExamMode || isTestExam(textExercise.exerciseGroup?.exam)) {
             <jhi-exercise-feedback-suggestion-options [exercise]="textExercise" [dueDate]="textExercise.dueDate" />
         }
         @if (!isExamMode) {

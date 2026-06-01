@@ -47,7 +47,7 @@ export function toExamUpdateDTO(exam: Exam): ExamUpdateDTO {
     return {
         id: exam.id,
         title: exam.title!,
-        examType: exam.examType ?? (exam.testExam ? ExamType.PRACTICE : ExamType.REAL),
+        examType: exam.examType,
         examWithAttendanceCheck: exam.examWithAttendanceCheck ?? false,
         visibleDate: convertDateFromClient(exam.visibleDate),
         startDate: convertDateFromClient(exam.startDate),

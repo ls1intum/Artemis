@@ -2,7 +2,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, isTestExam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
@@ -30,6 +30,7 @@ export interface ExamImportDialogData {
 export class ExamImportComponent extends ImportComponent<Exam> implements OnInit {
     private examManagementService = inject(ExamManagementService);
     private alertService = inject(AlertService);
+    protected readonly isTestExam = isTestExam;
 
     // boolean to indicate, if the import modal should include the exerciseGroup selection subsequently.
     subsequentExerciseGroupSelection = signal<boolean>(false);

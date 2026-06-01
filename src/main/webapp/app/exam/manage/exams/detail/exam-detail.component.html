@@ -3,10 +3,10 @@
         @if (exam) {
             <div>
                 <h2 id="exam-detail-title">
-                    @if (!exam.testExam) {
+                    @if (!isTestExam(exam)) {
                         <span class="badge bg-success" jhiTranslate="artemisApp.examManagement.testExam.realExam"></span>
                     }
-                    @if (exam.testExam) {
+                    @if (isTestExam(exam)) {
                         <span class="badge bg-primary" jhiTranslate="artemisApp.examManagement.testExam.testExam"></span>
                     }
                     {{ exam.title }}
@@ -26,13 +26,13 @@
                             <fa-icon [icon]="faFlaskVial" />
                             <span jhiTranslate="artemisApp.examManagement.testRun.testRun"></span>
                         </a>
-                        @if (!exam.testExam) {
+                        @if (!isTestExam(exam)) {
                             <a id="assessment-dashboard-button" [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')" class="btn btn-primary mt-1">
                                 <fa-icon [icon]="faThList" />
                                 <span jhiTranslate="artemisApp.examManagement.assessmentDashboard"></span>
                             </a>
                         }
-                        @if (!exam.testExam) {
+                        @if (!isTestExam(exam)) {
                             <a [routerLink]="getExamRoutesByIdentifier('grading')" class="btn btn-info mt-1">
                                 <fa-icon [icon]="faClipboard" />
                                 <span jhiTranslate="artemisApp.examManagement.gradingSystem"></span>

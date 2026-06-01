@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { EntityArrayResponseType as ExerciseEntityArrayResponseType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, isTestExam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterLink } from '@angular/router';
@@ -36,6 +36,7 @@ export class UpcomingExamsAndExercisesComponent implements OnInit {
 
     /** Get the tooltip for an exercise type */
     protected readonly getIconTooltip = getIconTooltip;
+    protected readonly isTestExam = isTestExam;
 
     ngOnInit(): void {
         this.exerciseService.getUpcomingExercises().subscribe((res: ExerciseEntityArrayResponseType) => {

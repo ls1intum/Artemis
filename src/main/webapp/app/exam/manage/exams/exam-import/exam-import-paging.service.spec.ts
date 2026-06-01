@@ -22,7 +22,6 @@ describe('Exam Import Paging Service', () => {
         id: 1,
         title: 'RealExam For Testing',
         course: undefined,
-        testExam: false,
     } as Exam;
 
     beforeEach(() => {

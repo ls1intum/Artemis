@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, effect, inject, input } from '@angular/core';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, isTestExam } from 'app/exam/shared/entities/exam.model';
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import { faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
@@ -117,7 +117,7 @@ export class ExamChecklistComponent implements OnInit, OnDestroy {
     }
 
     private updateChecklistState() {
-        this.isTestExam = this.exam().testExam!;
+        this.isTestExam = isTestExam(this.exam());
         this.pointsExercisesEqual = this.examChecklistService.checkPointsExercisesEqual(this.exam());
         this.totalPoints = this.examChecklistService.checkTotalPointsMandatory(this.pointsExercisesEqual, this.exam());
         this.allGroupsContainExercise = this.examChecklistService.checkEachGroupContainsExercise(this.exam());

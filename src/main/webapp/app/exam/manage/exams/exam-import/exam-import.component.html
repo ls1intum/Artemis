@@ -55,10 +55,10 @@
                                 <ngb-highlight [result]="exam.course!.title" [term]="searchTerm" />
                             </td>
                             <td class="text-break col-2">
-                                @if (!exam.testExam) {
+                                @if (!isTestExam(exam)) {
                                     <span class="badge bg-success" jhiTranslate="artemisApp.examManagement.testExam.realExam"></span>
                                 }
-                                @if (exam.testExam) {
+                                @if (isTestExam(exam)) {
                                     <span class="badge bg-primary" jhiTranslate="artemisApp.examManagement.testExam.testExam"></span>
                                 }
                             </td>

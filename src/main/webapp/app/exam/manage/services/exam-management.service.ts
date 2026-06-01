@@ -444,7 +444,7 @@ export class ExamManagementService {
     public static convertExamToImportDTO(exam: Exam, courseId: number): ExamImportDTO {
         return {
             title: exam.title,
-            examType: exam.examType ?? (exam.testExam ? ExamType.PRACTICE : ExamType.REAL),
+            examType: exam.examType,
             examWithAttendanceCheck: exam.examWithAttendanceCheck ?? false,
             visibleDate: convertDateFromClient(exam.visibleDate),
             startDate: convertDateFromClient(exam.startDate),

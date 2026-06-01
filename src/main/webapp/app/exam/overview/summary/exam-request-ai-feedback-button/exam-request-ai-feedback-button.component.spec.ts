@@ -18,7 +18,7 @@ import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shar
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -46,8 +46,8 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
     const user = { id: 1, name: 'Test User' } as User;
     const course = { id: 1, accuracyOfScores: 2 } as Course;
 
-    const exam = { id: 1, title: 'ExamForTesting', testExam: false, course } as Exam;
-    const testExam = { id: 2, title: 'TestExam for Testing', testExam: true, course } as Exam;
+    const exam = { id: 1, title: 'ExamForTesting', course } as Exam;
+    const testExam = { id: 2, title: 'TestExam for Testing', examType: ExamType.PRACTICE, course } as Exam;
     const exerciseGroup = { exam, title: 'exercise group' } as ExerciseGroup;
 
     const textSubmission = { id: 1, submitted: true } as TextSubmission;

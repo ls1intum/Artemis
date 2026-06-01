@@ -21,7 +21,7 @@
                         </button>
                     }
                 </div>
-                @if (exam() && !exam()?.testExam) {
+                @if (exam() && !isTestExam(exam())) {
                     <div [ngbTooltip]="'artemisApp.examManagement.testRun.assessTestRunDisabled' | artemisTranslate" [disableTooltip]="testRunCanBeAssessed()">
                         @if (course()?.isAtLeastInstructor) {
                             <a

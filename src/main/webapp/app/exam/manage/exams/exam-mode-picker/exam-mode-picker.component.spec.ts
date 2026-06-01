@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExamModePickerComponent } from 'app/exam/manage/exams/exam-mode-picker/exam-mode-picker.component';
+import { ExamType } from 'app/exam/shared/entities/exam.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -44,7 +45,7 @@ describe('ExamModePickerComponent', () => {
         fixture.componentRef.setInput('disableInput', false);
         fixture.detectChanges();
         component.setExamMode(true);
-        expect(component.exam().testExam).toBe(true);
+        expect(component.exam().examType).toBe(ExamType.PRACTICE);
         expect(component.exam().numberOfCorrectionRoundsInExam).toBe(0);
     });
 
@@ -53,7 +54,7 @@ describe('ExamModePickerComponent', () => {
         fixture.componentRef.setInput('disableInput', false);
         fixture.detectChanges();
         component.setExamMode(false);
-        expect(component.exam().testExam).toBe(false);
+        expect(component.exam().examType).toBe(ExamType.REAL);
         expect(component.exam().numberOfCorrectionRoundsInExam).toBe(1);
     });
 });

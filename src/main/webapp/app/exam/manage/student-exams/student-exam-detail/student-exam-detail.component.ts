@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { isTestExam } from 'app/exam/shared/entities/exam.model';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
@@ -86,7 +87,7 @@ export class StudentExamDetailComponent implements OnInit, OnDestroy {
                 this.courseId.set(params.courseId);
                 const studentExamWithGrade = data.studentExam as StudentExamWithGradeDTO;
                 this.setStudentExamWithGrade(studentExamWithGrade);
-                this.isTestExam.set(studentExamWithGrade.studentExam?.exam?.testExam || false);
+                this.isTestExam.set(isTestExam(studentExamWithGrade.studentExam?.exam));
                 this.isTestRun.set(url[1]?.toString() === 'test-runs');
             });
     }

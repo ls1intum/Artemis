@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ExamBarComponent } from 'app/exam/overview/exam-bar/exam-bar.component';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -90,7 +90,7 @@ describe('ExamBarComponent', () => {
         it('should derive exam properties from inputs', () => {
             const exam = new Exam();
             exam.title = 'Test Exam Title';
-            exam.testExam = true;
+            exam.examType = ExamType.PRACTICE;
             const studentExam = new StudentExam();
             studentExam.testRun = true;
             studentExam.exercises = [{ id: 1 } as Exercise];

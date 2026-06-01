@@ -8,7 +8,7 @@ import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialog } from 'primeng/confirmdialog';
 import { DialogService } from 'primeng/dynamicdialog';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, isTestExam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { AccountService } from 'app/core/auth/account.service';
@@ -194,7 +194,7 @@ export class ExamStudentsComponent implements OnDestroy {
     readonly hasExamStarted = signal(false);
     readonly hasExamEnded = signal(false);
     readonly isAdmin = signal(false);
-    readonly isTestExam = computed(() => this.exam()?.testExam ?? false);
+    readonly isTestExam = computed(() => isTestExam(this.exam()));
     readonly isLoading = signal(true);
     private removeAllStudentsEmitter = new EventEmitter<{ [key: string]: boolean }>();
     private reloadRequest$ = new Subject<void>();

@@ -5,7 +5,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { Subject, Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, isTestExam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -71,7 +71,7 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
             this.exam = exam;
             this.hasExamStarted.set(exam.startDate?.isBefore(dayjs()) || false);
             this.hasExamEnded.set(exam.endDate?.isBefore(dayjs()) || false);
-            this.isTestExam = this.exam.testExam!;
+            this.isTestExam = isTestExam(this.exam);
         });
         if (this.hasExamStarted()) {
             this.examManagementService.verifyExamUserAttendance(this.courseId, this.exam.id!).subscribe({

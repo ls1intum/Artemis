@@ -10,7 +10,7 @@ import { Dialog } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
-import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamType, isTestExam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -75,6 +75,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
     protected readonly ExamType = ExamType;
+    protected readonly isTestExam = isTestExam;
     protected testExamTypeOptions = this.buildTestExamTypeOptions();
 
     exam: Exam;
@@ -119,11 +120,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
                     exam.gracePeriod = 180;
                 }
 
-                exam.examType = exam.examType ?? (exam.testExam ? ExamType.PRACTICE : ExamType.REAL);
-                exam.testExam = exam.examType !== ExamType.REAL;
-
                 // test exam only feature automatic assessment
-                if (exam.testExam) {
+                if (isTestExam(exam)) {
                     exam.numberOfCorrectionRoundsInExam = 0;
                     exam.testExamPracticeStartDelay = exam.testExamPracticeStartDelay ?? 0;
                 } else if (!exam.numberOfCorrectionRoundsInExam) {
@@ -227,7 +225,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     onExamModeChange() {
-        if (this.exam.testExam) {
+        if (isTestExam(this.exam)) {
             // Preserve the rounded value
             this.exam.examWithAttendanceCheck = false;
             if (this.exam.examType === ExamType.REAL) {
@@ -255,7 +253,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     get usesExamWindowWorkingTime(): boolean {
-        return !this.exam.testExam || this.exam.examType === ExamType.SIMULATION;
+        return !isTestExam(this.exam) || this.exam.examType === ExamType.SIMULATION;
     }
 
     get isExamTypeReadonly(): boolean {
@@ -295,7 +293,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
      * Returns the maximum working time in minutes for test exams.
      */
     get maxWorkingTimeInMinutes(): number {
-        if (!this.exam.testExam) return 0;
+        if (!isTestExam(this.exam)) return 0;
 
         if (this.exam.startDate && this.exam.endDate) {
             // This considers decimal places as well.
@@ -481,7 +479,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     get isValidNumberOfCorrectionRounds(): boolean {
-        if (this.exam.testExam) {
+        if (isTestExam(this.exam)) {
             return this.exam.numberOfCorrectionRoundsInExam === 0;
         } else {
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
@@ -507,7 +505,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     get isValidTestExamPracticeStartDelay(): boolean {
-        if (!this.exam.testExam || this.exam.examType !== ExamType.SIMULATION_AND_PRACTICE) {
+        if (!isTestExam(this.exam) || this.exam.examType !== ExamType.SIMULATION_AND_PRACTICE) {
             return true;
         }
         return this.exam.testExamPracticeStartDelay !== undefined && this.exam.testExamPracticeStartDelay !== null && this.exam.testExamPracticeStartDelay >= 0;
@@ -538,7 +536,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
      */
     get isValidStartDate(): boolean {
         if (this.isVisibleDateSet && this.isValidVisibleDateValue) {
-            if (this.exam.testExam) {
+            if (isTestExam(this.exam)) {
                 return dayjs(this.exam.startDate).isSameOrAfter(this.exam.visibleDate);
             } else {
                 return dayjs(this.exam.startDate).isAfter(this.exam.visibleDate);

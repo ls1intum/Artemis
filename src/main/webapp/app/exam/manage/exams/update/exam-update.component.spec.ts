@@ -146,7 +146,7 @@ describe('ExamUpdateComponent', () => {
             expect(component.exam.course).toEqual(course);
             expect(component.exam.gracePeriod).toBe(180);
             expect(component.exam.numberOfCorrectionRoundsInExam).toBe(1);
-            expect(component.exam.testExam).toBe(false);
+            expect(component.exam.examType).toBe(ExamType.REAL);
             expect(component.exam.workingTime).toBe(0);
         });
 
@@ -200,7 +200,7 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should show channel name input for test exams', async () => {
-            examWithoutExercises.testExam = true;
+            examWithoutExercises.examType = ExamType.PRACTICE;
             examWithoutExercises.channelName = 'test-exam';
             component.ngOnInit();
             await Promise.resolve();
@@ -257,8 +257,6 @@ describe('ExamUpdateComponent', () => {
         it('should calculate the working time for real exams correctly', () => {
             fixture.detectChanges();
 
-            examWithoutExercises.testExam = false;
-
             examWithoutExercises.startDate = undefined;
             examWithoutExercises.endDate = dayjs().add(2, 'hours');
             component.updateExamWorkingTime();
@@ -284,7 +282,6 @@ describe('ExamUpdateComponent', () => {
 
         it('should not calculate the working time for practice test exams', () => {
             fixture.detectChanges();
-            examWithoutExercises.testExam = true;
             examWithoutExercises.examType = ExamType.PRACTICE;
             examWithoutExercises.workingTime = 3600;
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
@@ -296,7 +293,6 @@ describe('ExamUpdateComponent', () => {
 
         it('should calculate the working time for simulation test exams correctly', () => {
             fixture.detectChanges();
-            examWithoutExercises.testExam = true;
             examWithoutExercises.examType = ExamType.SIMULATION;
             examWithoutExercises.workingTime = 3600;
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
@@ -310,7 +306,6 @@ describe('ExamUpdateComponent', () => {
 
         it('should not calculate the working time for simulation and practice test exams', () => {
             fixture.detectChanges();
-            examWithoutExercises.testExam = true;
             examWithoutExercises.examType = ExamType.SIMULATION_AND_PRACTICE;
             examWithoutExercises.workingTime = 3600;
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
@@ -323,7 +318,6 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('validates the working time for test exams correctly', () => {
-            examWithoutExercises.testExam = true;
             examWithoutExercises.examType = ExamType.PRACTICE;
             examWithoutExercises.workingTime = undefined;
             fixture.changeDetectorRef.detectChanges();
@@ -349,7 +343,6 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('validates the working time for simulation test exams like real exams', () => {
-            examWithoutExercises.testExam = true;
             examWithoutExercises.examType = ExamType.SIMULATION;
             examWithoutExercises.workingTime = undefined;
             examWithoutExercises.startDate = undefined;
@@ -371,8 +364,6 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('validates the working time for real exams correctly', () => {
-            examWithoutExercises.testExam = false;
-
             examWithoutExercises.workingTime = undefined;
             examWithoutExercises.startDate = undefined;
             examWithoutExercises.endDate = undefined;
@@ -390,8 +381,6 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('validates the visible from for real exams correctly', () => {
-            examWithoutExercises.testExam = false;
-
             examWithoutExercises.visibleDate = undefined;
             fixture.changeDetectorRef.detectChanges();
 
@@ -402,8 +391,6 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('validates the start of working time for real exams correctly', () => {
-            examWithoutExercises.testExam = false;
-
             examWithoutExercises.startDate = undefined;
             examWithoutExercises.visibleDate = undefined;
             fixture.changeDetectorRef.detectChanges();
@@ -421,8 +408,6 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('validates the end of working time for real exams correctly', () => {
-            examWithoutExercises.testExam = false;
-
             examWithoutExercises.startDate = undefined;
             examWithoutExercises.endDate = undefined;
             fixture.changeDetectorRef.detectChanges();
@@ -440,8 +425,6 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('validates the visible from value for real exams correctly', () => {
-            examWithoutExercises.testExam = false;
-
             examWithoutExercises.visibleDate = dayjs('this is not a date');
             fixture.changeDetectorRef.detectChanges();
 
@@ -452,8 +435,6 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('validates the start of working time value for real exams correctly', () => {
-            examWithoutExercises.testExam = false;
-
             examWithoutExercises.startDate = dayjs('this is not a date');
             fixture.changeDetectorRef.detectChanges();
 
@@ -464,8 +445,6 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('validates the end of working time value for real exams correctly', () => {
-            examWithoutExercises.testExam = false;
-
             examWithoutExercises.endDate = dayjs('this is not a date');
             fixture.changeDetectorRef.detectChanges();
 
@@ -476,7 +455,6 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('exam visibility check returns false if the dates are not set', () => {
-            examWithoutExercises.testExam = false;
             examWithoutExercises.visibleDate = dayjs('this is not a date');
             fixture.changeDetectorRef.detectChanges();
             const result = component.checkExamVisibilityTime;
@@ -489,7 +467,6 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('exam visibility check returns true if the difference between dates are more than 4 hours', () => {
-            examWithoutExercises.testExam = false;
             examWithoutExercises.visibleDate = dayjs();
             examWithoutExercises.startDate = dayjs().add(240, 'minute');
             fixture.changeDetectorRef.detectChanges();
@@ -578,7 +555,6 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should correctly validate the number of correction rounds in a test Exams', () => {
-            examWithoutExercises.testExam = true;
             examWithoutExercises.examType = ExamType.PRACTICE;
             examWithoutExercises.numberOfCorrectionRoundsInExam = 1;
             fixture.changeDetectorRef.detectChanges();
@@ -591,8 +567,6 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should correctly validate the number of correction rounds in a realExam', () => {
-            examWithoutExercises.testExam = false;
-
             examWithoutExercises.numberOfCorrectionRoundsInExam = undefined;
             fixture.changeDetectorRef.detectChanges();
 
@@ -697,7 +671,7 @@ describe('ExamUpdateComponent', () => {
             fixture.detectChanges();
 
             // Set up exam as a test exam with a long exam window
-            examWithoutExercises.testExam = true;
+            examWithoutExercises.examType = ExamType.PRACTICE;
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
             examWithoutExercises.endDate = dayjs().add(35, 'days'); // Long exam window
 
@@ -949,7 +923,6 @@ describe('ExamUpdateComponent', () => {
         const examForImport = new Exam();
         examForImport.id = 3;
         examForImport.title = 'RealExam for Testing';
-        examForImport.testExam = false;
         examForImport.examiner = 'Bruegge';
         examForImport.moduleNumber = 'IN0006';
         examForImport.courseName = 'Artemis';
@@ -1038,7 +1011,7 @@ describe('ExamUpdateComponent', () => {
             expect(component.exam).not.toBeNull();
             expect(component.exam.id).toBeUndefined();
             expect(component.exam.title).toBe('RealExam for Testing');
-            expect(component.exam.testExam).toBe(false);
+            expect(component.exam.examType).toBe(ExamType.REAL);
             expect(component.exam.examiner).toBe('Bruegge');
             expect(component.exam.moduleNumber).toBe('IN0006');
             expect(component.exam.courseName).toBe('Artemis');

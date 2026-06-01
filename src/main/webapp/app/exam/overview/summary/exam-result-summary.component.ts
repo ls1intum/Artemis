@@ -4,7 +4,7 @@ import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/exe
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, isTestExam } from 'app/exam/shared/entities/exam.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
@@ -183,7 +183,7 @@ export class ExamResultSummaryComponent implements OnInit {
         const studentExam = this.studentExam();
         // flags required to display test runs correctly
         this.isTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
-        this.isTestExam = studentExam.exam!.testExam!;
+        this.isTestExam = isTestExam(studentExam.exam);
         this.testRunConduction = this.isTestRun && this.route.snapshot.url[3]?.toString() === 'conduction';
         this.testExamConduction = this.isTestExam && !studentExam.submitted;
         this.courseId = Number(this.route.snapshot?.paramMap?.get('courseId') || this.route.parent?.parent?.snapshot.paramMap.get('courseId'));

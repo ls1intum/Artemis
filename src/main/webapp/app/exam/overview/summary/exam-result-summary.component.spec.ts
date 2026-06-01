@@ -4,7 +4,7 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { User } from 'app/account/user/user.model';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
@@ -81,7 +81,6 @@ const exam = {
     publishResultsDate,
     examStudentReviewStart,
     examStudentReviewEnd,
-    testExam: false,
     course,
 } as Exam;
 
@@ -91,7 +90,7 @@ const testExam = {
     visibleDate,
     startDate,
     endDate,
-    testExam: true,
+    examType: ExamType.PRACTICE,
     course,
 } as Exam;
 

@@ -12,10 +12,13 @@ export enum ExamType {
     SIMULATION_AND_PRACTICE = 'SIMULATION_AND_PRACTICE',
 }
 
+export function isTestExam(exam?: { examType?: ExamType }): boolean {
+    return exam?.examType !== undefined && exam.examType !== ExamType.REAL;
+}
+
 export class Exam implements BaseEntity {
     public id?: number;
     public title?: string;
-    public testExam?: boolean;
     public examType?: ExamType;
     public examWithAttendanceCheck?: boolean;
     public visibleDate?: dayjs.Dayjs;
@@ -64,7 +67,6 @@ export class Exam implements BaseEntity {
         this.numberOfCorrectionRoundsInExam = 1; // default value
         this.examMaxPoints = 1; // default value
         this.workingTime = 0; // will be updated during creation
-        this.testExam = false; // default value
         this.examType = ExamType.REAL; // default value
         this.testExamPracticeStartDelay = 0; // default value
         this.examWithAttendanceCheck = false; // default value

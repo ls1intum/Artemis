@@ -60,10 +60,10 @@
                                                 {{ exam.title }}
                                             </span>
                                         }
-                                        @if (!exam.testExam) {
+                                        @if (!isTestExam(exam)) {
                                             <div class="badge bg-success" jhiTranslate="artemisApp.examManagement.testExam.realExam"></div>
                                         }
-                                        @if (exam.testExam) {
+                                        @if (isTestExam(exam)) {
                                             <div class="badge bg-primary" jhiTranslate="artemisApp.examManagement.testExam.testExam"></div>
                                         }
                                     </ng-container>
@@ -86,7 +86,7 @@
                                                     </div>
                                                 </a>
                                             }
-                                            @if (!exam.testExam && ((course.isAtLeastTutor && examHasFinished(exam)) || course.isAtLeastInstructor)) {
+                                            @if (!isTestExam(exam) && ((course.isAtLeastTutor && examHasFinished(exam)) || course.isAtLeastInstructor)) {
                                                 <a
                                                     [routerLink]="[exam.id, 'assessment-dashboard']"
                                                     class="btn btn-primary btn-sm me-1 mb-1 exercise-button d-flex align-items-center justify-content-center"
@@ -114,7 +114,7 @@
                                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.testRun.testRun"></span>
                                                 </a>
                                             }
-                                            @if (!exam.testExam && course.isAtLeastInstructor) {
+                                            @if (!isTestExam(exam) && course.isAtLeastInstructor) {
                                                 <a
                                                     [routerLink]="[exam.id, 'students']"
                                                     class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard"

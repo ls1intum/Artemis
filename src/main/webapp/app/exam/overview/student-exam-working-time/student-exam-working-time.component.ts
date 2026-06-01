@@ -1,5 +1,6 @@
 import { Component, OnInit, input } from '@angular/core';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { isTestExam } from 'app/exam/shared/entities/exam.model';
 import { getRelativeWorkingTimeExtension } from 'app/exam/overview/exam.utils';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 
@@ -18,7 +19,7 @@ export class StudentExamWorkingTimeComponent implements OnInit {
 
     ngOnInit() {
         this.isTestRun = this.studentExam().testRun ?? false;
-        this.isTestExam = this.studentExam().exam?.testExam ?? false;
+        this.isTestExam = isTestExam(this.studentExam().exam);
         const workingTime = this.studentExam().workingTime;
         const exam = this.studentExam().exam;
         if (exam && workingTime && !this.isTestRun && !this.isTestExam) {
