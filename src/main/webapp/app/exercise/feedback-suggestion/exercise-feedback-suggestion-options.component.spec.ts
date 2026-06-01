@@ -10,6 +10,7 @@ import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { SimpleChange } from '@angular/core';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 
 describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     setupTestBed({ zoneless: true });
@@ -223,5 +224,15 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         expect(component.exercise().feedbackSuggestionModule).toBe('initial-module');
         expect(component.modulesAvailable).toBe(true);
         expect(component.isAthenaEnabled).toBe(true);
+    });
+
+    it('should query the athena module feature flag in ngOnInit', () => {
+        athenaService.getAvailableModules.mockReturnValue(of([]));
+        profileService.isModuleFeatureActive.mockImplementation((feature) => feature === MODULE_FEATURE_ATHENA);
+
+        component.ngOnInit();
+
+        expect(component.isAthenaEnabled).toBe(true);
+        expect(profileService.isModuleFeatureActive).toHaveBeenCalledWith(MODULE_FEATURE_ATHENA);
     });
 });
