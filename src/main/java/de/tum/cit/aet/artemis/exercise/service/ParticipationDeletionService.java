@@ -118,6 +118,10 @@ public class ParticipationDeletionService {
             delete(participation.getId(), false);
         }
 
+        // A queued participant score update can run while participations/results are being deleted.
+        // Remove scores again so late updates cannot keep FK references to the exercise.
+        participantScoreRepository.deleteAllByExerciseId(exercise.getId());
+
         if (recalculateCompetencyProgress) {
             competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(exercise));
         }
@@ -138,6 +142,7 @@ public class ParticipationDeletionService {
         for (StudentParticipation participation : participationsToDelete) {
             delete(participation.getId(), false);
         }
+        teamScoreRepository.deleteAllByTeamId(teamId);
     }
 
     /**
@@ -192,8 +197,7 @@ public class ParticipationDeletionService {
 
         // delete the participant score with the combination (exerciseId, studentId) or (exerciseId, teamId)
         if (deleteParticipantScores && participation instanceof StudentParticipation studentParticipation) {
-            studentParticipation.getStudent().ifPresent(student -> studentScoreRepository.deleteByExerciseAndUser(participation.getExercise(), student));
-            studentParticipation.getTeam().ifPresent(team -> teamScoreRepository.deleteByExerciseAndTeam(participation.getExercise(), team));
+            deleteParticipantScores(studentParticipation);
         }
 
         Set<Submission> submissions = participation.getSubmissions();
@@ -202,6 +206,11 @@ public class ParticipationDeletionService {
         // By removing the participation, the ResultListener will ignore this result instead of scheduling a participant score update
         // This is okay here, because we delete the whole participation (no older results will exist for the score)
         resultsToBeDeleted.forEach(result -> resultService.deleteResult(result, false));
+
+        if (deleteParticipantScores && participation instanceof StudentParticipation studentParticipation) {
+            deleteParticipantScores(studentParticipation);
+        }
+
         // Delete all submissions for this participation
         submissions.forEach(submission -> {
             // We have to set the results to an empty list because otherwise clearing the build log entries does not work correctly
@@ -211,6 +220,11 @@ public class ParticipationDeletionService {
             }
             submissionRepository.deleteById(submission.getId());
         });
+    }
+
+    private void deleteParticipantScores(StudentParticipation participation) {
+        participation.getStudent().ifPresent(student -> studentScoreRepository.deleteByExerciseAndUser(participation.getExercise(), student));
+        participation.getTeam().ifPresent(team -> teamScoreRepository.deleteByExerciseAndTeam(participation.getExercise(), team));
     }
 
     /**

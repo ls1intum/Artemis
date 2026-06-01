@@ -230,15 +230,14 @@ public class ResultService {
      * (3) the {@code @PreRemove} lifecycle callback in {@link ResultListener} and which callers compensate for its absence.
      *
      * @param result                      the result to delete
-     * @param shouldClearParticipantScore true when deleting a single result (synchronously clears stale participant score
-     *                                        references via {@code clearAllByResultId}); false during bulk deletion when
+     * @param shouldClearParticipantScore true when deleting a single result; false during bulk deletion when
      *                                        participant scores are already handled by the caller
      */
     public void deleteResult(Result result, boolean shouldClearParticipantScore) {
         log.debug("Delete result {}", result.getId());
         Long resultId = result.getId();
-        // Delete references that are NOT cascade-reachable from Result (complaints, ratings, participant scores).
-        deleteNonCascadedResultReferences(resultId, shouldClearParticipantScore);
+        // Delete references that are NOT cascade-reachable from Result (complaints, ratings, participant score result references).
+        deleteNonCascadedResultReferences(resultId);
 
         if (Hibernate.isInitialized(result.getFeedbacks())) {
             // Path 1: Feedbacks were eagerly loaded. Let Hibernate cascade handle feedbacks and long feedback texts.
@@ -267,19 +266,21 @@ public class ResultService {
 
     /**
      * Deletes references to a result that are NOT cascade-deleted by Hibernate.
-     * Complaints, complaint responses, ratings, and participant scores have no cascade
-     * relationship from Result and must be explicitly deleted.
+     * Complaints, complaint responses, ratings, and participant score result references have no cascade
+     * relationship from Result and must be explicitly deleted or cleared.
+     * <p>
+     * Participant score result references are cleared even during bulk deletions where the score rows are
+     * deleted by the caller. Asynchronous participant score updates can race with deletion and recreate a
+     * score after the caller's initial cleanup; clearing the FK reference here prevents result deletion from
+     * failing while the caller finishes removing the score row.
      *
-     * @param resultId                    the id of the result
-     * @param shouldClearParticipantScore whether to clear participant scores
+     * @param resultId the id of the result
      */
-    private void deleteNonCascadedResultReferences(Long resultId, boolean shouldClearParticipantScore) {
+    private void deleteNonCascadedResultReferences(Long resultId) {
         complaintResponseRepository.deleteByComplaint_Result_Id(resultId);
         complaintRepository.deleteByResult_Id(resultId);
         ratingRepository.deleteByResult_Id(resultId);
-        if (shouldClearParticipantScore) {
-            participantScoreRepository.clearAllByResultId(resultId);
-        }
+        participantScoreRepository.clearAllByResultId(resultId);
     }
 
     /**
@@ -299,14 +300,11 @@ public class ResultService {
      * Also used standalone by {@link AssessmentService#deleteAssessment} where the result is deleted implicitly
      * via JPA orphan removal when it is removed from the submission's results list.
      *
-     * @param resultId                    the id of the result for which all references should be deleted
-     * @param shouldClearParticipantScore true when deleting a single result (synchronously nullifies stale references
-     *                                        in the participant_score table); false during bulk deletion when participant
-     *                                        scores are already handled by the caller
+     * @param resultId the id of the result for which all references should be deleted
      */
-    public void deleteResultReferences(Long resultId, boolean shouldClearParticipantScore) {
+    public void deleteResultReferences(Long resultId) {
         log.debug("Delete result references {}", resultId);
-        deleteNonCascadedResultReferences(resultId, shouldClearParticipantScore);
+        deleteNonCascadedResultReferences(resultId);
         // Order matters: long_feedback_text has a FK to feedback, so delete it first.
         longFeedbackTextRepository.deleteByFeedbackResultId(resultId);
         feedbackRepository.deleteByResult_Id(resultId);
