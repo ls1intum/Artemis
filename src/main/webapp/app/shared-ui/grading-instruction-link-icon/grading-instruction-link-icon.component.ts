@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -15,15 +15,15 @@ import { NgClass } from '@angular/common';
 export class GradingInstructionLinkIconComponent implements OnInit {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
 
-    @Input() linkIcon = faLink;
-    @Input() feedback: Feedback;
+    linkIcon = input(faLink);
+    feedback = input.required<Feedback>();
 
-    instruction: GradingInstruction | undefined;
+    instruction = signal<GradingInstruction | undefined>(undefined);
     confirmIcon = faTrash;
     showConfirm = false;
 
     ngOnInit(): void {
-        this.instruction = this.feedback.gradingInstruction;
+        this.instruction.set(this.feedback().gradingInstruction);
     }
 
     /**
@@ -31,7 +31,8 @@ export class GradingInstructionLinkIconComponent implements OnInit {
      */
     removeLink(): void {
         this.toggle();
-        this.feedback.gradingInstruction = undefined;
+        this.feedback().gradingInstruction = undefined;
+        this.instruction.set(undefined);
     }
 
     /**

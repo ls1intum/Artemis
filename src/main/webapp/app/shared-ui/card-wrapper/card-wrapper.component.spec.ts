@@ -1,3 +1,4 @@
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { CardWrapperComponent } from './card-wrapper.component';
@@ -7,6 +8,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CardWrapperComponent', () => {
+    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<CardWrapperComponent>;
 
     beforeEach(async () => {

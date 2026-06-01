@@ -24,7 +24,7 @@ import {
     faUser,
     faUserShield,
 } from '@fortawesome/free-solid-svg-icons';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TooltipModule } from 'primeng/tooltip';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -51,7 +51,7 @@ export interface AdminSidebarGroup {
     selector: 'jhi-admin-sidebar',
     templateUrl: './admin-sidebar.component.html',
     styleUrls: ['./admin-sidebar.component.scss'],
-    imports: [NgClass, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, NgbTooltip, RouterLink, RouterLinkActive],
+    imports: [NgClass, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TooltipModule, RouterLink, RouterLinkActive],
 })
 export class AdminSidebarComponent {
     protected readonly faChevronRight = faChevronRight;

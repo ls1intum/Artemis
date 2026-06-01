@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { NoDataComponent } from 'app/shared-ui/components/no-data/no-data-component';
 import { DateDetail } from 'app/shared-ui/detail-overview-list/detail.model';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -9,5 +9,5 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
     imports: [NoDataComponent, ArtemisDatePipe],
 })
 export class DateDetailComponent {
-    @Input() detail: DateDetail;
+    detail = input.required<DateDetail>();
 }
