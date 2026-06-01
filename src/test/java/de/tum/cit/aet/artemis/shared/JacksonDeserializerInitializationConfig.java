@@ -1,41 +1,152 @@
 package de.tum.cit.aet.artemis.shared;
 
-import jakarta.annotation.PostConstruct;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.event.EventListener;
 
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.deser.BeanDeserializerBase;
+import com.fasterxml.jackson.databind.deser.DefaultDeserializationContext;
+import com.fasterxml.jackson.databind.deser.SettableBeanProperty;
+import com.fasterxml.jackson.databind.deser.impl.FailingDeserializer;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.Organization;
+import de.tum.cit.aet.artemis.account.domain.Organization;
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.Reaction;
+import de.tum.cit.aet.artemis.communication.dto.AnswerPostResponseDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 
 /**
- * Test configuration to eagerly initialize Jackson deserializers.
+ * Test configuration that eagerly initialises Jackson deserializers for the entity types
+ * exercised by integration tests, so that no test ever drives the first concurrent
+ * construction of a deserializer through Jackson's cyclic-reference window.
+ *
+ * <h2>The race we are closing</h2>
+ *
+ * Jackson's {@code DeserializerCache} (see {@code _createAndCache2} in
+ * {@code com.fasterxml.jackson.databind.deser.DeserializerCache}) builds a bean
+ * deserializer in three phases under a single {@code ReentrantLock}:
+ *
+ * <ol>
+ * <li>Construct the {@code BeanDeserializer} — every property's value deserializer
+ * is initially the placeholder {@code FailingDeserializer} (Jackson uses it to
+ * break cycles and to detect un-resolved properties).</li>
+ * <li>Put the deserializer in {@code _incompleteDeserializers} so that recursive
+ * resolution of cyclic references can find the in-progress instance.</li>
+ * <li>Call {@code resolve(ctxt)} which walks the property table and replaces every
+ * {@code FailingDeserializer} with the real per-property deserializer. After this
+ * returns, the entry moves to the publicly visible {@code _cachedDeserializers}.</li>
+ * </ol>
+ *
+ * The lock keeps unrelated callers safe. The hole is in step&nbsp;2: if {@code resolve}
+ * of bean A walks into bean B, and bean B's {@code resolve} walks back into bean A
+ * (a cycle), the cyclic lookup returns A's partially-built deserializer from
+ * {@code _incompleteDeserializers}. B's resolve copies that partial reference onto its
+ * own property. Later, when B is asked to deserialize, it dereferences the partial A,
+ * hits the {@code FailingDeserializer} on one of A's properties, and throws
+ * {@code "No _valueDeserializer assigned"}.
+ *
  * <p>
- * This configuration addresses flaky test failures caused by race conditions in Jackson's
- * deserializer cache population. When tests run concurrently and trigger deserialization
- * of complex entity types (like Organization with nested User objects) for the first time,
- * Jackson may encounter "No _valueDeserializer assigned" errors due to incomplete
- * deserializer initialization.
- * <p>
- * By performing dummy deserializations at startup, we ensure the deserializer cache is
- * properly populated before any tests run, eliminating the race condition.
- * <p>
- * We focus on key "root" entities that:
+ * The failure modes we have observed all have this shape — the failing chain
+ * always terminates at a primitive-typed property of {@code User} (typically
+ * {@code User["id"]}), reached through a join entity:
+ * </p>
+ *
  * <ul>
- * <li>Have complex bidirectional relationships with {@code @JsonIgnoreProperties}</li>
- * <li>Are commonly returned in REST responses with nested data</li>
- * <li>Contain many nested entity types (initializing them also initializes their children)</li>
+ * <li>{@code Post.reactions → Reaction.user → User["id"]}</li>
+ * <li>{@code TutorialGroup.registrations → TutorialGroupRegistration.student → User["id"]}</li>
+ * <li>Organization indexing (same shape, different parent)</li>
  * </ul>
+ *
+ * <h2>How priming closes the race</h2>
+ *
+ * If we walk every entity type through {@code findRootValueDeserializer} on a single
+ * thread before any test runs, each type is constructed-and-resolved while no
+ * concurrent build is in flight. Cyclic references encountered during {@code resolve}
+ * are still handled via {@code _incompleteDeserializers}, but the resulting partial
+ * reference is replaced by the real, fully-resolved instance the moment the outer
+ * resolve completes — and because we do this single-threaded, no other thread ever
+ * captures a partial reference. After this method returns, {@code _cachedDeserializers}
+ * holds fully-resolved bean deserializers for every type we prime, and every later
+ * concurrent first-use is served from that cache without re-entering the construction
+ * path.
+ *
+ * <h2>What changed versus the previous implementation</h2>
+ *
+ * <ol>
+ * <li><b>{@code ObjectMapper#canDeserialize} replaced with
+ * {@link DeserializationContext#findRootValueDeserializer}.</b>
+ * {@code canDeserialize} was deprecated in Jackson 2.18 and removed in 3.x. More
+ * importantly, it <i>swallows</i> construction errors and silently returns false,
+ * leaving the cache empty — which produces a no-op prime whose absence we only
+ * discover later, at test time, as the race we set out to prevent.
+ * {@code findRootValueDeserializer} surfaces the same error path as a real
+ * deserialization and throws on failure.</li>
+ * <li><b>{@link ApplicationReadyEvent} instead of {@code @PostConstruct}.</b>
+ * {@code @PostConstruct} fires during bean initialisation. Later bean
+ * post-processors and Jackson customisers can still mutate the {@code ObjectMapper}
+ * after our {@code @PostConstruct} runs, invalidating priming. The
+ * {@code ApplicationReadyEvent} fires after the entire context is published and
+ * guarantees the {@code ObjectMapper} is in its final state.</li>
+ * <li><b>Join entities listed explicitly.</b> Even though resolving a parent
+ * (e.g. {@code TutorialGroup}) does walk into the element type of its
+ * {@code Set<>} properties, doing so re-enters the cyclic-reference window for the
+ * join entity. Priming the join entity ({@code TutorialGroupRegistration},
+ * {@code Reaction}) as a root instead caches it without any sibling resolve in
+ * flight.</li>
+ * <li><b>{@code Set<T>} variants in addition to {@code List<T>}.</b> Jackson caches
+ * the {@code CollectionDeserializer} keyed by the parameterised collection type;
+ * a {@code List<User>} entry does not satisfy a {@code Set<User>} lookup. The
+ * failing chains all go through {@code HashSet} (e.g. {@code Post.reactions}),
+ * so we explicitly prime both.</li>
+ * <li><b>Post-prime assertion.</b> After priming each entity we walk its
+ * {@link BeanDeserializerBase} property table and refuse to start the context if
+ * any property still has a {@code FailingDeserializer} value deserializer. This is
+ * the precise condition that produces the runtime error; failing here turns a
+ * flaky integration-test failure into a deterministic context-startup failure.</li>
+ * <li><b>Loud failures and INFO-level logging.</b> The previous implementation logged
+ * at {@code debug}, so no test log ever told us whether the prime ran — turning
+ * silent prime regressions into long debug sessions.</li>
+ * </ol>
  */
 @TestConfiguration
 public class JacksonDeserializerInitializationConfig {
 
     private static final Logger log = LoggerFactory.getLogger(JacksonDeserializerInitializationConfig.class);
+
+    /**
+     * Ordering matters: leaf-most types come first so that when a container type is
+     * primed, every cyclic lookup it issues during {@code resolve()} finds a fully
+     * resolved instance in {@code _cachedDeserializers} and never has to fall back to
+     * {@code _incompleteDeserializers}.
+     */
+    private static final List<Class<?>> ENTITY_TYPES = List.of(
+            // The leaf every failing chain terminates on. Must be first.
+            User.class,
+            // Top-level entities deserialized by integration tests.
+            Organization.class, Course.class, Exam.class,
+            // Communication join entity and parents:
+            // Post.reactions -> Reaction.user -> User["id"]
+            Reaction.class, Post.class, AnswerPost.class,
+            // Tutorial-group join entity and parent:
+            // TutorialGroup.registrations -> TutorialGroupRegistration.student -> User["id"]
+            TutorialGroupRegistration.class, TutorialGroup.class);
 
     private final ObjectMapper objectMapper;
 
@@ -43,136 +154,117 @@ public class JacksonDeserializerInitializationConfig {
         this.objectMapper = objectMapper;
     }
 
-    @PostConstruct
-    public void initializeDeserializers() {
-        log.debug("Eagerly initializing Jackson deserializers for entity types");
-
-        // Initialize Organization with nested User and Course
-        initializeOrganization();
-
-        // Initialize Course with nested relationships (exercises, lectures, etc.)
-        initializeCourse();
-
-        // Initialize Exam with nested relationships (exercise groups, student exams, etc.)
-        initializeExam();
-
-        // Initialize TutorialGroup with registrations → TutorialGroupRegistration → student → User["id"]
-        initializeTutorialGroup();
-
-        log.debug("Successfully initialized Jackson deserializers");
+    @EventListener
+    void primeOnApplicationReady(ApplicationReadyEvent event) {
+        prime();
     }
 
-    private void initializeOrganization() {
-        try {
-            String sampleJson = """
-                    {
-                        "id": 1,
-                        "name": "Test Organization",
-                        "shortName": "TO",
-                        "emailPattern": ".*@test.com",
-                        "users": [{
-                            "id": 1,
-                            "login": "testuser",
-                            "firstName": "Test",
-                            "lastName": "User",
-                            "email": "test@test.com",
-                            "activated": true
-                        }],
-                        "courses": [{
-                            "id": 1,
-                            "title": "Test Course",
-                            "shortName": "TC"
-                        }]
-                    }
-                    """;
-            objectMapper.readValue(sampleJson, Organization.class);
+    private void prime() {
+        TypeFactory tf = objectMapper.getTypeFactory();
+        DefaultDeserializationContext blueprint = (DefaultDeserializationContext) objectMapper.getDeserializationContext();
+        DeserializationContext ctxt = blueprint.createInstance(objectMapper.getDeserializationConfig(), null, objectMapper.getInjectableValues());
+
+        log.info("Priming Jackson deserializers for {} entity types", ENTITY_TYPES.size());
+        for (Class<?> entityType : ENTITY_TYPES) {
+            JsonDeserializer<?> bareDeser = forceConstruct(ctxt, tf.constructType(entityType), entityType.getSimpleName());
+            forceConstruct(ctxt, tf.constructCollectionType(Set.class, entityType), "Set<" + entityType.getSimpleName() + ">");
+            forceConstruct(ctxt, tf.constructCollectionType(List.class, entityType), "List<" + entityType.getSimpleName() + ">");
+            assertNoFailingPlaceholders(bareDeser, entityType);
         }
-        catch (Exception e) {
-            log.warn("Failed to pre-initialize Organization deserializer: {}", e.getMessage());
-        }
+        log.info("Jackson deserializer prime complete: {} bean types + {} collection wrappers", ENTITY_TYPES.size(), ENTITY_TYPES.size() * 2);
+
+        exerciseFailureChains(tf);
     }
 
-    private void initializeCourse() {
+    /**
+     * Actively deserialize the synthetic JSON shapes that match the previously failing chains
+     * documented above, for the cycle-free response DTOs that replaced the entity payloads.
+     * <p>
+     * The DTO chains must succeed by construction — the records carry no cyclic relations, so
+     * Jackson's {@code DeserializerCache._createAndCache2} window cannot be entered. A failure
+     * here means someone added a back-reference to a response DTO and re-opened the cycle this
+     * refactor was written to close. Surfacing that as a deterministic context-startup failure
+     * (instead of an intermittent integration-test flake whose stack trace points at a
+     * {@code FailingDeserializer} placeholder) is the goal of this probe.
+     * <p>
+     * We deliberately do <em>not</em> probe the entity-typed chains ({@code List<Post>} with a
+     * reactions/user sub-tree, etc.). Priming alone cannot close the race for those: the
+     * contextual variant captured inside {@code BeanPropertyMap} for the cross-entity field is
+     * built lazily on first deserialization, after priming has completed and released the lock.
+     * The refactor's fix is to route every Jackson-deserialized surface through the DTOs above;
+     * any caller still deserializing the entity types directly will hit the race and should be
+     * migrated. (Tutorial-group list endpoint migration is tracked in PR&nbsp;#12687.)
+     *
+     * @param tf the Jackson {@link TypeFactory} used to build parameterised collection types
+     */
+    private void exerciseFailureChains(TypeFactory tf) {
+        readValueOrThrow("[{\"id\":1,\"reactions\":[{\"id\":1,\"user\":{\"id\":1}}]}]", tf.constructCollectionType(List.class, PostResponseDTO.class),
+                "List<PostResponseDTO> with reaction-user chain");
+        readValueOrThrow("[{\"id\":1,\"reactions\":[{\"id\":1,\"user\":{\"id\":1}}]}]", tf.constructCollectionType(List.class, AnswerPostResponseDTO.class),
+                "List<AnswerPostResponseDTO> with reaction-user chain");
+        readValueOrThrow("{\"id\":1,\"reactions\":[{\"id\":1,\"user\":{\"id\":1}}],\"answers\":[{\"id\":2,\"reactions\":[{\"id\":3,\"user\":{\"id\":1}}]}]}",
+                tf.constructType(PostResponseDTO.class), "PostResponseDTO with answers and nested reactions");
+
+        log.info("Jackson DTO chain probe complete: 3 cycle-free chains deserialized");
+    }
+
+    private void readValueOrThrow(String json, JavaType type, String label) {
         try {
-            String sampleJson = """
-                    {
-                        "id": 1,
-                        "title": "Test Course",
-                        "shortName": "TC",
-                        "exercises": [{
-                            "id": 1,
-                            "title": "Test Exercise",
-                            "type": "text"
-                        }],
-                        "lectures": [{
-                            "id": 1,
-                            "title": "Test Lecture"
-                        }],
-                        "organizations": [{
-                            "id": 1,
-                            "name": "Test Org"
-                        }]
-                    }
-                    """;
-            objectMapper.readValue(sampleJson, Course.class);
+            objectMapper.readValue(json, type);
         }
         catch (Exception e) {
-            log.warn("Failed to pre-initialize Course deserializer: {}", e.getMessage());
+            throw new IllegalStateException(
+                    "DTO chain probe failed for " + label + " — a back-reference was likely added to a response DTO and re-opened the cyclic-reference race: " + e.getMessage(), e);
         }
     }
 
-    private void initializeExam() {
+    /**
+     * Force Jackson to construct, resolve, and cache the deserializer for {@code type}.
+     * Returns the cached instance so the caller can inspect its property table.
+     */
+    private JsonDeserializer<?> forceConstruct(DeserializationContext ctxt, JavaType type, String label) {
         try {
-            String sampleJson = """
-                    {
-                        "id": 1,
-                        "title": "Test Exam",
-                        "exerciseGroups": [{
-                            "id": 1,
-                            "title": "Test Group",
-                            "exercises": []
-                        }],
-                        "studentExams": [{
-                            "id": 1,
-                            "submitted": false
-                        }]
-                    }
-                    """;
-            objectMapper.readValue(sampleJson, Exam.class);
+            JsonDeserializer<?> deser = ctxt.findRootValueDeserializer(type);
+            if (deser == null) {
+                throw new IllegalStateException("findRootValueDeserializer returned null for " + label);
+            }
+            if (deser instanceof FailingDeserializer) {
+                throw new IllegalStateException("Got a FailingDeserializer placeholder as the root deserializer for " + label);
+            }
+            return deser;
+        }
+        catch (RuntimeException e) {
+            throw e;
         }
         catch (Exception e) {
-            log.warn("Failed to pre-initialize Exam deserializer: {}", e.getMessage());
+            throw new IllegalStateException("Failed to pre-initialize Jackson deserializer for " + label, e);
         }
     }
 
-    private void initializeTutorialGroup() {
-        try {
-            String sampleJson = """
-                    {
-                        "id": 1,
-                        "title": "Test Group",
-                        "isOnline": false,
-                        "registrations": [{
-                            "id": 1,
-                            "student": {
-                                "id": 1,
-                                "login": "student1",
-                                "firstName": "Student",
-                                "lastName": "One"
-                            }
-                        }],
-                        "teachingAssistant": {
-                            "id": 2,
-                            "login": "tutor1",
-                            "firstName": "Tutor",
-                            "lastName": "One"
-                        }
-                    }
-                    """;
-            objectMapper.readValue(sampleJson, TutorialGroup.class);
+    /**
+     * Walk the bare bean deserializer's property table and refuse to start if any property still
+     * has a {@code FailingDeserializer} value deserializer. This is the exact condition that
+     * produces the {@code "No _valueDeserializer assigned"} error at deserialization time —
+     * surfacing it here turns a flaky test failure into a deterministic context-startup failure
+     * that points directly at the unresolved property.
+     * <p>
+     * Note: this only inspects the bare-type {@link BeanDeserializerBase}. Contextual variants
+     * captured inside {@code CollectionDeserializer.valueDeserializer} are not walked here — the
+     * subsequent {@code exerciseFailureChains} probe deserializes representative Set/List shapes
+     * and catches that case via {@code readValue}.
+     */
+    private void assertNoFailingPlaceholders(JsonDeserializer<?> deser, Class<?> entityType) {
+        if (!(deser instanceof BeanDeserializerBase beanDeser)) {
+            return;
         }
-        catch (Exception e) {
-            log.warn("Failed to pre-initialize TutorialGroup deserializer: {}", e.getMessage());
+        Iterator<SettableBeanProperty> properties = beanDeser.properties();
+        while (properties.hasNext()) {
+            SettableBeanProperty property = properties.next();
+            if (!property.hasValueDeserializer()) {
+                throw new IllegalStateException("Jackson left a FailingDeserializer placeholder on the bare-type deserializer for " + entityType.getName() + "[\""
+                        + property.getName() + "\"] after priming — the cyclic-reference race was not closed. " + "Add the property's type to ENTITY_TYPES (prime it BEFORE "
+                        + entityType.getSimpleName() + ") or check whether a custom @JsonDeserialize on this property is preventing resolution.");
+            }
         }
     }
 }

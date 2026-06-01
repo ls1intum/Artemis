@@ -23,14 +23,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
-import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
@@ -39,8 +39,6 @@ import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
 class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "testrepositoryresourceint";
-
-    private final String testRepoBaseUrl = "/api/programming/test-repository/";
 
     private ProgrammingExercise programmingExercise;
 
@@ -92,7 +90,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFiles() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        var files = request.getMap(testRepoBaseUrl + programmingExercise.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        var files = request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/files", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).isNotEmpty();
 
         // Check if all files exist
@@ -105,7 +103,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetFilesAsStudent_accessForbidden() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        request.getMap(testRepoBaseUrl + programmingExercise.getId() + "/files", HttpStatus.FORBIDDEN, String.class, FileType.class);
+        request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/files", HttpStatus.FORBIDDEN, String.class, FileType.class);
     }
 
     @Test
@@ -114,7 +112,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
-        var file = request.get(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.OK, byte[].class, params);
+        var file = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/file", HttpStatus.OK, byte[].class, params);
         assertThat(file).isNotEmpty();
         assertThat(new String(file)).isEqualTo(currentLocalFileContent);
     }
@@ -126,10 +124,10 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/newFile")).doesNotExist();
         params.add("file", "newFile");
-        request.postWithoutResponseBody(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.OK, params);
+        request.postWithoutResponseBody("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/file", HttpStatus.OK, params);
         var getParams = new LinkedMultiValueMap<String, String>();
         getParams.add("file", "newFile");
-        request.get(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.OK, byte[].class, getParams);
+        request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/file", HttpStatus.OK, byte[].class, getParams);
     }
 
     @Test
@@ -139,8 +137,8 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", "newFile");
 
-        request.postWithoutResponseBody(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.OK, params);
-        request.postWithoutResponseBody(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.BAD_REQUEST, params);
+        request.postWithoutResponseBody("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/file", HttpStatus.OK, params);
+        request.postWithoutResponseBody("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/file", HttpStatus.BAD_REQUEST, params);
     }
 
     @Test
@@ -150,7 +148,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", ".git/config");
 
-        request.postWithoutResponseBody(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.BAD_REQUEST, params);
+        request.postWithoutResponseBody("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/file", HttpStatus.BAD_REQUEST, params);
     }
 
     @Test
@@ -160,8 +158,8 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/newFolder")).doesNotExist();
         params.add("folder", "newFolder");
-        request.postWithoutResponseBody(testRepoBaseUrl + programmingExercise.getId() + "/folder", HttpStatus.OK, params);
-        var files = request.getMap(testRepoBaseUrl + programmingExercise.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        request.postWithoutResponseBody("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/folder", HttpStatus.OK, params);
+        var files = request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/files", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).containsEntry("newFolder", FileType.FOLDER);
     }
 
@@ -173,8 +171,9 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         String newLocalFileName = "newFileName";
         assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + newLocalFileName)).doesNotExist();
         FileMove fileMove = new FileMove(currentLocalFileName, newLocalFileName);
-        request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
-        var filesAfter = request.getMap(testRepoBaseUrl + programmingExercise.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        request.postWithoutLocation("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/rename-file", fileMove, HttpStatus.OK, null);
+        var filesAfter = request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/files", HttpStatus.OK, String.class,
+                FileType.class);
         assertThat(filesAfter).doesNotContainKey(currentLocalFileName).containsKey(newLocalFileName);
     }
 
@@ -184,11 +183,12 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", "existingFile");
-        request.postWithoutResponseBody(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.OK, params);
+        request.postWithoutResponseBody("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/file", HttpStatus.OK, params);
 
         FileMove fileMove = new FileMove(currentLocalFileName, "existingFile");
 
-        request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/rename-file", fileMove, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/rename-file", fileMove, HttpStatus.BAD_REQUEST,
+                null);
     }
 
     @Test
@@ -197,7 +197,8 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         programmingExerciseRepository.save(programmingExercise);
         FileMove fileMove = new FileMove("../malicious", "newName");
 
-        request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/rename-file", fileMove, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/rename-file", fileMove, HttpStatus.BAD_REQUEST,
+                null);
     }
 
     @Test
@@ -208,8 +209,9 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         String newLocalFolderName = "newFolderName";
         assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + newLocalFolderName)).doesNotExist();
         FileMove fileMove = new FileMove(currentLocalFolderName, newLocalFolderName);
-        request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
-        var filesAfterFolder = request.getMap(testRepoBaseUrl + programmingExercise.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        request.postWithoutLocation("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/rename-file", fileMove, HttpStatus.OK, null);
+        var filesAfterFolder = request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/files", HttpStatus.OK, String.class,
+                FileType.class);
         assertThat(filesAfterFolder).doesNotContainKey(currentLocalFolderName).containsEntry(newLocalFolderName, FileType.FOLDER);
     }
 
@@ -220,8 +222,8 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFileName)).exists();
         params.add("file", currentLocalFileName);
-        request.delete(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.OK, params);
-        request.get(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.NOT_FOUND, byte[].class, params);
+        request.delete("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/file", HttpStatus.OK, params);
+        request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/file", HttpStatus.NOT_FOUND, byte[].class, params);
     }
 
     @Test
@@ -231,7 +233,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", "doesNotExist.txt");
 
-        request.delete(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.BAD_REQUEST, params);
+        request.delete("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/file", HttpStatus.BAD_REQUEST, params);
     }
 
     @Test
@@ -241,7 +243,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", "../malicious");
 
-        request.delete(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.BAD_REQUEST, params);
+        request.delete("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/file", HttpStatus.BAD_REQUEST, params);
     }
 
     @Test
@@ -251,8 +253,8 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFolderName);
 
-        request.delete(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.OK, params);
-        var files = request.getMap(testRepoBaseUrl + programmingExercise.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        request.delete("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/file", HttpStatus.OK, params);
+        var files = request.getMap("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/files", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).doesNotContainKey(currentLocalFolderName);
     }
 
@@ -261,10 +263,12 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCommitChanges() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        var receivedStatusBeforeCommit = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository", HttpStatus.OK,
+                RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
-        request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/commit", null, HttpStatus.OK, null);
-        var receivedStatusAfterCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        request.postWithoutLocation("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/commit", null, HttpStatus.OK, null);
+        var receivedStatusAfterCommit = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository", HttpStatus.OK,
+                RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
         var testRepoCommits = testRepo.getAllLocalCommits();
         assertThat(testRepoCommits).hasSize(1);
@@ -285,10 +289,10 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     void testSaveFiles() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFileName)).exists();
-        request.put(testRepoBaseUrl + programmingExercise.getId() + "/files?commit=false", getFileSubmissions(), HttpStatus.OK);
+        request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/files?commit=false", getFileSubmissions(), HttpStatus.OK);
         var params = new LinkedMultiValueMap<String, String>();
         params.add("file", currentLocalFileName);
-        var updated = request.get(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.OK, byte[].class, params);
+        var updated = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/file", HttpStatus.OK, byte[].class, params);
         assertThat(new String(updated)).isEqualTo("updatedFileContent");
     }
 
@@ -299,12 +303,14 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         programmingExerciseRepository.save(programmingExercise);
         assertThat(Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFileName)).exists();
 
-        var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        var receivedStatusBeforeCommit = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository", HttpStatus.OK,
+                RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
 
-        request.put(testRepoBaseUrl + programmingExercise.getId() + "/files?commit=true", getFileSubmissions(), HttpStatus.OK);
+        request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/files?commit=true", getFileSubmissions(), HttpStatus.OK);
 
-        var receivedStatusAfterCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        var receivedStatusAfterCommit = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository", HttpStatus.OK,
+                RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
 
         Path filePath = Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFileName);
@@ -320,7 +326,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     void testSaveFiles_accessForbidden() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         // student1 should not have access to instructor1's tests repository even if they assume an INSTRUCTOR role.
-        request.put(testRepoBaseUrl + programmingExercise.getId() + "/files?commit=true", List.of(), HttpStatus.FORBIDDEN);
+        request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/files?commit=true", List.of(), HttpStatus.FORBIDDEN);
     }
 
     @Disabled
@@ -331,7 +337,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         String fileName = "remoteFile";
 
         // Create a commit for the local and the remote repository
-        request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/commit", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/commit", null, HttpStatus.OK, null);
         try (var remoteRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.remoteBareGitRepoFile.toPath(), null)) {
 
             // Create file in the remote repository
@@ -350,7 +356,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
             assertThat(testRepo.getAllLocalCommits().getFirst()).isNotEqualTo(testRepo.getAllOriginCommits().getFirst());
 
             // Execute the Rest call
-            request.get(testRepoBaseUrl + programmingExercise.getId() + "/pull", HttpStatus.OK, Void.class);
+            request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/pull", HttpStatus.OK, Void.class);
 
             // Check if the current commit is the same on the local and the remote repository and if the file exists on the local repository
             assertThat(testRepo.getAllLocalCommits().getFirst()).isEqualTo(testRepo.getAllOriginCommits().getFirst());
@@ -368,14 +374,16 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
                 var remoteRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.remoteBareGitRepoFile.toPath(), null)) {
 
             // Check status of git before the commit
-            var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+            var receivedStatusBeforeCommit = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository", HttpStatus.OK,
+                    RepositoryStatusDTO.class);
             assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
 
             // Create a commit for the local and the remote repository
-            request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/commit", null, HttpStatus.OK, null);
+            request.postWithoutLocation("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/commit", null, HttpStatus.OK, null);
 
             // Check status of git after the commit
-            var receivedStatusAfterCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+            var receivedStatusAfterCommit = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository", HttpStatus.OK,
+                    RepositoryStatusDTO.class);
             assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
 
             // Create file in the local repository and commit it
@@ -403,13 +411,14 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
             assertThat(result.getMergeStatus()).isEqualTo(MergeResult.MergeStatus.CONFLICTING);
 
             // Execute the reset Rest call
-            request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/reset", null, HttpStatus.OK, null);
+            request.postWithoutLocation("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/reset", null, HttpStatus.OK, null);
 
             // Check the git status after the reset
             status = testRepo.workingCopyGitRepo.status().call();
             assertThat(status.getConflicting()).isEmpty();
             assertThat(testRepo.getAllLocalCommits().getFirst()).isEqualTo(testRepo.getAllOriginCommits().getFirst());
-            var receivedStatusAfterReset = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+            var receivedStatusAfterReset = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository", HttpStatus.OK,
+                    RepositoryStatusDTO.class);
             assertThat(receivedStatusAfterReset.repositoryStatus()).hasToString("CLEAN");
         }
     }
@@ -419,16 +428,18 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetStatus() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
-        var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        var receivedStatusBeforeCommit = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository", HttpStatus.OK,
+                RepositoryStatusDTO.class);
 
         // The current status is "uncommited changes", since we added files and folders, but we didn't commit yet
         assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
 
         // Perform a commit to check if the status changes
-        request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/commit", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/commit", null, HttpStatus.OK, null);
 
         // Check if the status of git is "clean" after the commit
-        var receivedStatusAfterCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        var receivedStatusAfterCommit = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository", HttpStatus.OK,
+                RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
     }
 
@@ -437,7 +448,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     void testGetStatus_cannotAccessRepository() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         // student1 should not have access to instructor1's tests repository even if they assume the role of an INSTRUCTOR.
-        request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.FORBIDDEN, RepositoryStatusDTO.class);
+        request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository", HttpStatus.FORBIDDEN, RepositoryStatusDTO.class);
     }
 
     @Test
@@ -445,8 +456,8 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
     void testRepositoryState() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         // Create uncommitted changes via API (no commit)
-        request.put(testRepoBaseUrl + programmingExercise.getId() + "/files?commit=false", getFileSubmissions(), HttpStatus.OK);
-        var status = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository/files?commit=false", getFileSubmissions(), HttpStatus.OK);
+        var status = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-repository", HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(status.repositoryStatus()).isEqualTo(RepositoryStatusDTOType.UNCOMMITTED_CHANGES);
         // TODO: also test other states
     }

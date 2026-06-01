@@ -1,8 +1,7 @@
 import '@angular/compiler';
 import { setupZoneTestEnv } from 'jest-preset-angular/setup-env/zone';
-import 'app/shared/util/map.extension';
-import 'app/shared/util/string.extension';
-import 'app/shared/util/array.extension';
+import 'app/foundation/util/map.extension';
+import 'app/foundation/util/array.extension';
 import 'app/core/config/dayjs';
 import 'jest-canvas-mock';
 import 'jest-extended';

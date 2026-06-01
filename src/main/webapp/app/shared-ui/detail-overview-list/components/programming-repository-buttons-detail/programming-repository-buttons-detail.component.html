@@ -1,0 +1,9 @@
+@let data = detail().data;
+@if (data.participation?.repositoryUri && data.exerciseId) {
+    <div class="clone-buttons">
+        <jhi-code-button [smallButtons]="true" [repositoryUri]="data.participation?.repositoryUri!" [routerLinkForRepositoryView]="['.', 'repository', data.type]" />
+        <jhi-programming-exercise-instructor-repo-download class="ms-2" [exerciseId]="data.exerciseId" [repositoryType]="data.type" />
+    </div>
+} @else {
+    <jhi-no-data />
+}

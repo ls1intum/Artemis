@@ -1,26 +1,26 @@
 import { Component, HostListener, OnDestroy, OnInit, inject, viewChild } from '@angular/core';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { onError } from 'app/shared/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Competency, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
+import { ConfirmAutofocusModalResult, openConfirmAutofocusDialog } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
+import { DialogService } from 'primeng/dynamicdialog';
 import { Observable, Subscription, firstValueFrom, map } from 'rxjs';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
-import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseDescriptionFormComponent } from 'app/atlas/manage/generate-competencies/course-description-form.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CompetencyRecommendationDetailComponent } from 'app/atlas/manage/generate-competencies/competency-recommendation-detail.component';
 
 export type CompetencyFormControlsWithViewed = {
@@ -66,7 +66,7 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
     private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
     private formBuilder = inject(FormBuilder);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private translateService = inject(TranslateService);
     private websocketService = inject(WebsocketService);
@@ -186,10 +186,19 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
      */
     onDelete(index: number) {
         const competencyTitle = this.competencies.at(index).controls.competency.controls.title.getRawValue() ?? '';
-        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'md' });
-        modalRef.componentInstance.title = 'artemisApp.competency.generate.deleteModalTitle';
-        modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.competency.generate.deleteModalText', { title: competencyTitle });
-        modalRef.result.then(() => this.competencies.removeAt(index));
+        const dialogRef = openConfirmAutofocusDialog(
+            this.dialogService,
+            {
+                title: 'artemisApp.competency.generate.deleteModalTitle',
+                text: this.artemisTranslatePipe.transform('artemisApp.competency.generate.deleteModalText', { title: competencyTitle }),
+            },
+            { width: '30rem' },
+        );
+        dialogRef?.onClose.subscribe((result: ConfirmAutofocusModalResult | undefined) => {
+            if (result?.confirmed) {
+                this.competencies.removeAt(index);
+            }
+        });
     }
 
     /**
@@ -204,10 +213,19 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
      */
     onSubmit() {
         if (!this.isSubmitPossibleWithoutConfirmation()) {
-            const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'md' });
-            modalRef.componentInstance.title = 'artemisApp.competency.generate.saveModalTitle';
-            modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.competency.generate.saveModalText');
-            modalRef.result.then(this.save.bind(this));
+            const dialogRef = openConfirmAutofocusDialog(
+                this.dialogService,
+                {
+                    title: 'artemisApp.competency.generate.saveModalTitle',
+                    text: this.artemisTranslatePipe.transform('artemisApp.competency.generate.saveModalText'),
+                },
+                { width: '30rem' },
+            );
+            dialogRef?.onClose.subscribe((result: ConfirmAutofocusModalResult | undefined) => {
+                if (result?.confirmed) {
+                    this.save();
+                }
+            });
         } else {
             this.save();
         }

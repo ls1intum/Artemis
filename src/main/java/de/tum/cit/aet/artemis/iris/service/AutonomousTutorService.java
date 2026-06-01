@@ -13,6 +13,8 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
@@ -20,23 +22,21 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.IrisResponseNeedsReviewNotification;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnswerNotification;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
-import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
-import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.IrisResponseNeedsReviewNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewAnswerNotification;
+import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
 
 /**
  * Service that handles the autonomous tutor pipeline status updates.
@@ -63,7 +63,13 @@ public class AutonomousTutorService {
 
     private static final Logger log = LoggerFactory.getLogger(AutonomousTutorService.class);
 
-    private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
+    private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/communication/";
+
+    // Legacy STOMP destination kept in parallel during the migration to /topic/communication/...
+    // TODO: Remove once external clients have migrated. Target sunset: 2026-09-30 — keep in sync with
+    // LegacyApiPathDeprecationInterceptor.SUNSET_DATE.
+    @Deprecated(forRemoval = true, since = "9.3")
+    private static final String LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
 
     /** Iris replies at or above this confidence are auto-verified and visible to students. */
     public static final double AUTO_VERIFY_CONFIDENCE_THRESHOLD = 0.95;
@@ -245,6 +251,7 @@ public class AutonomousTutorService {
         }).collect(Collectors.toSet());
     }
 
+    @SuppressWarnings("deprecation")
     private void broadcastAnswer(AnswerPost answerPost, Post originalPost, Conversation conversation, Long courseId,
             Set<ConversationNotificationRecipientSummary> recipientSummaries, boolean broadcastToStudents) {
         // Assemble the parent post with the new answer
@@ -254,21 +261,24 @@ public class AutonomousTutorService {
         broadcastPost.setIsSaved(false);
         broadcastPost.getAnswers().forEach(answer -> answer.setIsSaved(false));
 
-        // Reduce payload for websocket
-        conversation.hideDetails();
-        broadcastPost.getAnswers().forEach(answer -> answer.setPost(new Post(answer.getPost().getId())));
-
+        // Never broadcast other unverified Iris replies alongside this answer
         broadcastPost.getAnswers().removeIf(answer -> !answer.getId().equals(answerPost.getId()) && answer.isUnverifiedIrisReply());
-        PostDTO postDTO = new PostDTO(broadcastPost, MetisCrudAction.UPDATE);
+
+        // Build a cycle-free wire payload — same reason as PostingService.broadcastForPost: sending the raw Post
+        // entity over STOMP previously walked the cyclic reactions → user → User chain that fires Jackson's
+        // DeserializerCache race on the receive side.
+        PostBroadcastDTO broadcastPayload = PostBroadcastDTO.from(broadcastPost, MetisCrudAction.UPDATE);
+        String coursePathSuffix = "courses/" + courseId;
 
         if (broadcastToStudents && conversation instanceof Channel channel && channel.getIsCourseWide()) {
-            String courseConversationTopic = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId;
-            websocketMessagingService.sendMessage(courseConversationTopic, postDTO);
+            websocketMessagingService.sendMessage(METIS_WEBSOCKET_CHANNEL_PREFIX + coursePathSuffix, broadcastPayload);
+            // Mirror to the legacy destination so older subscribers still receive updates during the migration window.
+            websocketMessagingService.sendMessage(LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX + coursePathSuffix, broadcastPayload);
             return;
         }
 
         // For private channels OR unverified Iris replies: send per-user, optionally skipping students
         recipientSummaries.stream().filter(recipient -> broadcastToStudents || recipient.isAtLeastTutorInCourse())
-                .forEach(recipient -> websocketMessagingService.sendMessage("/topic/user/" + recipient.userId() + "/notifications/conversations", postDTO));
+                .forEach(recipient -> websocketMessagingService.sendMessage("/topic/user/" + recipient.userId() + "/notifications/conversations", broadcastPayload));
     }
 }

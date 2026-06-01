@@ -5,9 +5,9 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
-import de.tum.cit.aet.artemis.core.domain.User;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record AnswerMessageDTO(Long id, AuthorDTO author, UserRole authorRole, ZonedDateTime creationDate, ZonedDateTime updatedDate, String content, boolean isSaved,

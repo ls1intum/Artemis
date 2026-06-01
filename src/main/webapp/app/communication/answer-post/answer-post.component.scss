@@ -65,6 +65,10 @@
             background-color: rgba(var(--bs-warning-rgb), 0.14);
         }
     }
+
+    &.highlight-reply {
+        animation: highlight-fade 2s ease-in-out;
+    }
 }
 
 .iris-action-btn {
@@ -131,6 +135,20 @@
         &:not(:disabled):hover {
             background: var(--bs-secondary-bg);
         }
+    }
+}
+
+@keyframes highlight-fade {
+    0% {
+        background-color: rgba($primary, 0.25);
+    }
+
+    70% {
+        background-color: rgba($primary, 0.15);
+    }
+
+    100% {
+        background-color: transparent;
     }
 }
 

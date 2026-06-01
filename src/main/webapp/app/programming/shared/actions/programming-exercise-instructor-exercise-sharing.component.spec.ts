@@ -3,13 +3,13 @@ import { By } from '@angular/platform-browser';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { provideHttpClient } from '@angular/common/http';
 import { ProgrammingExerciseInstructorExerciseSharingComponent } from './programming-exercise-instructor-exercise-sharing.component';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { Component, signal } from '@angular/core';
 
 @Component({
@@ -70,7 +70,7 @@ describe('ProgrammingExercise Instructor Exercise Sharing', () => {
                 focus: () => {},
             } as WindowProxy;
             comp.exportExerciseToSharing();
-            const req = httpMock.expectOne((request) => request.method === 'POST' && request.url.includes('/programming/sharing/export/5'));
+            const req = httpMock.expectOne((request) => request.method === 'POST' && request.url.includes('/programming/sharing/export?exerciseId=5'));
             expect(req.request.body).toBe(window.location.href);
             req.flush('returnURL');
             tick();
@@ -81,7 +81,7 @@ describe('ProgrammingExercise Instructor Exercise Sharing', () => {
             const errorSpy = jest.spyOn(alertService, 'error');
 
             comp.exportExerciseToSharing();
-            const req = httpMock.expectOne((request) => request.method === 'POST' && request.url.includes('/programming/sharing/export/5'));
+            const req = httpMock.expectOne((request) => request.method === 'POST' && request.url.includes('/programming/sharing/export?exerciseId=5'));
             req.flush('Exercise not found', { status: 404, statusText: 'Not Found' });
 
             tick();

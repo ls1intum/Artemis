@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SearchInputComponent } from './search-input.component';
 import { MockPipe } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
@@ -34,7 +34,7 @@ describe('SearchInputComponent', () => {
 
     it('should compute hasActiveFilters correctly', () => {
         expect(component['hasActiveFilters']()).toBe(false);
-        fixture.componentRef.setInput('activeFilters', ['filter1']);
+        fixture.componentRef.setInput('activeFilters', ['exercise']);
         fixture.detectChanges();
         expect(component['hasActiveFilters']()).toBe(true);
     });
@@ -68,7 +68,7 @@ describe('SearchInputComponent', () => {
 
     it('should emit filterRemoved on filter remove', () => {
         const spy = vi.spyOn(component.filterRemoved, 'emit');
-        component['onFilterRemove']('filter1');
-        expect(spy).toHaveBeenCalledWith('filter1');
+        component['onFilterRemove']('exercise');
+        expect(spy).toHaveBeenCalledWith('exercise');
     });
 });

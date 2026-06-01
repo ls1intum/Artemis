@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.dto.AnswerMessageDTO;
+import de.tum.cit.aet.artemis.communication.dto.AnswerPostResponseDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.dto.VerifyAnswerMessageDTO;
@@ -58,13 +59,14 @@ public class AnswerMessageResource {
      */
     @PostMapping("courses/{courseId}/answer-messages")
     @EnforceAtLeastStudent
-    public ResponseEntity<AnswerPost> createAnswerMessage(@PathVariable Long courseId, @RequestBody CreateAnswerPostDTO answerMessage) throws URISyntaxException {
+    public ResponseEntity<AnswerPostResponseDTO> createAnswerMessage(@PathVariable Long courseId, @RequestBody CreateAnswerPostDTO answerMessage) throws URISyntaxException {
         log.debug("POST createAnswerMessage invoked for course {} with message {}", courseId, answerMessage.content());
         long start = System.nanoTime();
         AnswerPost createdAnswerMessage = answerMessageService.createAnswerMessage(courseId, answerMessage);
         // creation of answerMessage should not trigger alert
         log.debug("createAnswerMessage took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.created(new URI("/api/communication/courses" + courseId + "/answer-messages/" + createdAnswerMessage.getId())).body(createdAnswerMessage);
+        return ResponseEntity.created(new URI("/api/communication/courses/" + courseId + "/answer-messages/" + createdAnswerMessage.getId()))
+                .body(AnswerPostResponseDTO.from(createdAnswerMessage));
     }
 
     /**
@@ -78,12 +80,12 @@ public class AnswerMessageResource {
      */
     @PutMapping("courses/{courseId}/answer-messages/{answerMessageId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<AnswerPost> updateAnswerMessage(@PathVariable Long courseId, @PathVariable Long answerMessageId, @RequestBody UpdatePostingDTO updatedAnswer) {
+    public ResponseEntity<AnswerPostResponseDTO> updateAnswerMessage(@PathVariable Long courseId, @PathVariable Long answerMessageId, @RequestBody UpdatePostingDTO updatedAnswer) {
         log.debug("PUT updateAnswerMessage invoked for course {} with message {}", courseId, updatedAnswer.content());
         long start = System.nanoTime();
         AnswerPost updatedAnswerMessage = answerMessageService.updateAnswerMessage(courseId, answerMessageId, updatedAnswer);
         log.debug("updateAnswerMessage took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.ok(updatedAnswerMessage);
+        return ResponseEntity.ok(AnswerPostResponseDTO.from(updatedAnswerMessage));
     }
 
     /**
@@ -117,7 +119,7 @@ public class AnswerMessageResource {
      */
     @GetMapping("courses/{courseId}/answer-messages-source-posts")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<List<AnswerPost>> getSourceAnswerPostsByIds(@PathVariable Long courseId, @RequestParam List<Long> answerPostIds) {
+    public ResponseEntity<List<AnswerPostResponseDTO>> getSourceAnswerPostsByIds(@PathVariable Long courseId, @RequestParam List<Long> answerPostIds) {
         log.debug("GET getSourceAnswerPostsByIds invoked for course {} with {} posts", courseId, answerPostIds == null ? 0 : answerPostIds.size());
         long start = System.nanoTime();
 
@@ -136,7 +138,8 @@ public class AnswerMessageResource {
         }
 
         log.debug("getSourceAnswerPostsByIds took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.ok().body(answerPosts);
+        List<AnswerPostResponseDTO> body = answerPosts.stream().map(AnswerPostResponseDTO::from).toList();
+        return ResponseEntity.ok().body(body);
     }
 
     /**

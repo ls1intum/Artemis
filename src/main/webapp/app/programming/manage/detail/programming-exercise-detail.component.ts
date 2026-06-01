@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -18,11 +18,13 @@ import {
     faUndo,
     faUserCheck,
     faUsers,
+    faWandMagicSparkles,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
+import { TooltipModule } from 'primeng/tooltip';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -41,22 +43,24 @@ import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
 import { RepositoryDiffInformation, processRepositoryDiff } from 'app/programming/shared/utils/diff.utils';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
-import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
-import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
-import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
-import { Detail, ProgrammingDiffReportDetail } from 'app/shared/detail-overview-list/detail.model';
-import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AlertService, AlertType } from 'app/shared/service/alert.service';
-import { EventManager } from 'app/shared/service/event-manager.service';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
-import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
+import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
+import { Detail, ProgrammingDiffReportDetail } from 'app/shared-ui/detail-overview-list/detail.model';
+import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
+import { FeatureToggleLinkDirective } from 'app/foundation/feature-toggle/feature-toggle-link.directive';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import dayjs from 'dayjs/esm';
 import { Observable, Subject, Subscription, forkJoin, from, of } from 'rxjs';
 import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
@@ -64,6 +68,9 @@ import { ProgrammingExerciseInstructorExerciseSharingComponent } from '../../sha
 import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
+import { CompetencyOrchestrationResultDTO } from 'app/atlas/shared/dto/competency-orchestration-dto';
+import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestration-result-dialog/orchestration-result-dialog.component';
 import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 
 @Component({
@@ -80,6 +87,7 @@ import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan
         NgbTooltip,
         ProgrammingExerciseInstructorExerciseDownloadComponent,
         FeatureToggleDirective,
+        FeatureToggleHideDirective,
         ProgrammingExerciseResetButtonDirective,
         DeleteButtonDirective,
         ExerciseDetailStatisticsComponent,
@@ -87,6 +95,8 @@ import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan
         ArtemisTranslatePipe,
         FeatureOverlayComponent,
         ProgrammingExerciseInstructorExerciseSharingComponent,
+        OrchestrationResultDialogComponent,
+        TooltipModule,
     ],
 })
 export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
@@ -106,6 +116,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
     private consistencyCheckService = inject(ConsistencyCheckService);
     private sharingService = inject(ProgrammingExerciseSharingService);
+    private competencyOrchestrationApiService = inject(CompetencyOrchestrationApiService);
+
+    protected readonly orchestrationDialogVisible = signal(false);
+    protected readonly orchestrationDialogSummary = signal('');
+    protected readonly orchestrationRunning = signal(false);
+    protected readonly atlasModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
 
     protected readonly dayjs = dayjs;
     protected readonly ActionType = ActionType;
@@ -132,6 +148,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     protected readonly faEye = faEye;
     protected readonly faHistory = faHistory;
     protected readonly faUserCheck = faUserCheck;
+    protected readonly faWandMagicSparkles = faWandMagicSparkles;
 
     programmingExercise: ProgrammingExercise;
     programmingExerciseBuildConfig?: ProgrammingExerciseBuildConfig;
@@ -196,7 +213,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.isBuildPlanEditable = this.profileService.isProfileActive(PROFILE_JENKINS);
         this.isExportToSharingEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_SHARING);
-
         // Get route data directly from snapshot - no subscription needed
         const programmingExercise = this.activatedRoute.snapshot.data?.programmingExercise;
         if (programmingExercise) {
@@ -697,7 +713,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.showTestNamesToStudents', data: { boolean: exercise.showTestNamesToStudents } },
                 {
                     type: DetailType.Boolean,
-                    title: 'artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolution',
+                    title: 'artemisApp.programmingExercise.timeline.includeTestsIntoExampleSolution',
                     data: { boolean: exercise.releaseTestsWithExampleSolution },
                 },
                 { type: DetailType.Boolean, title: 'artemisApp.exercise.feedbackSuggestionsEnabled', data: { boolean: !!exercise.feedbackSuggestionModule } },
@@ -772,6 +788,39 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     checkConsistencies(exercise: ProgrammingExercise) {
         const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.exercisesToCheck = Array.of(exercise);
+    }
+
+    async triggerAtlasOrchestrator() {
+        const exerciseId = this.programmingExercise?.id;
+        if (!exerciseId || this.orchestrationRunning()) {
+            return;
+        }
+        this.orchestrationRunning.set(true);
+        try {
+            // Backend returns 2xx only for SUCCESS; IN_PROGRESS (409) and FAILED (422/502/503)
+            // surface as HttpErrorResponse and are handled in the catch block below.
+            const result = await this.competencyOrchestrationApiService.runForProgrammingExercise(exerciseId);
+            const summary = result.summary?.trim() || '';
+            this.orchestrationDialogSummary.set(summary);
+            this.orchestrationDialogVisible.set(true);
+        } catch (err) {
+            const httpErr = err as HttpErrorResponse;
+            const body = httpErr?.error as CompetencyOrchestrationResultDTO | undefined;
+            const summary = body?.summary?.trim() || '';
+            if (httpErr?.status === 409) {
+                this.alertService.warning('artemisApp.atlasOrchestrator.inProgress');
+            } else if (httpErr?.status === 422 || httpErr?.status === 502 || httpErr?.status === 503) {
+                this.alertService.addAlert({
+                    type: AlertType.DANGER,
+                    message: summary || 'artemisApp.atlasOrchestrator.error',
+                    disableTranslation: summary.length > 0,
+                });
+            } else {
+                onError(this.alertService, httpErr);
+            }
+        } finally {
+            this.orchestrationRunning.set(false);
+        }
     }
 
     /**

@@ -34,7 +34,13 @@ public interface LectureUnitMetricsRepository extends ArtemisJpaRepository<Lectu
                 lectureUnit.lecture.title,
                 COALESCE(lectureUnit.name, attachment.name),
                 lectureUnit.releaseDate,
-                TYPE(lectureUnit)
+                CASE TYPE(lectureUnit)
+                    WHEN AttachmentVideoUnit THEN 'attachment'
+                    WHEN ExerciseUnit THEN 'exercise'
+                    WHEN TextUnit THEN 'text'
+                    WHEN OnlineUnit THEN 'online'
+                    ELSE NULL
+                END
             )
             FROM LectureUnit lectureUnit
                 LEFT JOIN Attachment attachment ON attachment.attachmentVideoUnit.id = lectureUnit.id
