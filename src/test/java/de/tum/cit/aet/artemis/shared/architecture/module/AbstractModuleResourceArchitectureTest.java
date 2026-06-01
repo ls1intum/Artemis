@@ -36,6 +36,7 @@ import com.tngtech.archunit.lang.ConditionEvents;
 import de.tum.cit.aet.artemis.athena.web.AthenaResource;
 import de.tum.cit.aet.artemis.communication.web.LinkPreviewResource;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
 
 public abstract class AbstractModuleResourceArchitectureTest extends AbstractArchitectureTest implements ModuleArchitectureTest {
@@ -71,6 +72,13 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
 
     /** Method-name prefixes that contradict a {@code @DeleteMapping}: a DELETE handler must delete, not read or create. */
     private static final Set<String> DELETE_FORBIDDEN_NAME_PREFIXES = Set.of("get", "list", "find", "fetch", "retrieve", "create", "add");
+
+    /**
+     * DELETE endpoints that still declare a {@code @RequestBody}, keyed as {@code SimpleClassName#methodName}. Both pass
+     * a list/record of identifiers in the body; {@link #deleteEndpointsShouldNotDeclareRequestBody()} fails for any NEW
+     * DELETE-with-body endpoint, so this baseline can only shrink.
+     */
+    private static final Set<String> DELETE_REQUEST_BODY_BASELINE = Set.of("PushNotificationResource#unregister", "AdminUserResource#deleteUsers");
 
     @Test
     void shouldBeNamedResource() {
@@ -311,30 +319,27 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
     /**
      * REST endpoints must express the HTTP verb with the dedicated shortcut annotations
      * ({@code @GetMapping}/{@code @PostMapping}/{@code @PutMapping}/{@code @PatchMapping}/{@code @DeleteMapping}).
-     * {@code @RequestMapping} is reserved for the class-level path prefix and must never carry a {@code method = ...}
-     * attribute on an endpoint method — a {@code @RequestMapping(method = ...)} method would also silently bypass the
-     * kebab-case and entity-id-pairing rules above, which only iterate the five shortcut annotations.
+     * {@code @RequestMapping} is reserved for the class-level path prefix and must never annotate an endpoint method —
+     * a method-level {@code @RequestMapping} would also silently bypass the kebab-case and entity-id-pairing rules
+     * above, which only iterate the five shortcut annotations.
      */
     @Test
     void endpointsShouldUseHttpMethodShortcutAnnotations() {
-        methodsOfThisModuleThat().areDeclaredInClassesThat().areAnnotatedWith(RestController.class).should(notUseRequestMappingMethodAttribute()).allowEmptyShould(true)
-                .check(productionClasses);
+        methodsOfThisModuleThat().areDeclaredInClassesThat().areAnnotatedWith(RestController.class).should().notBeAnnotatedWith(RequestMapping.class)
+                .because("endpoints must use @GetMapping/@PostMapping/@PutMapping/@PatchMapping/@DeleteMapping; @RequestMapping is only allowed as the class-level path prefix")
+                .allowEmptyShould(true).check(productionClasses);
     }
 
-    private ArchCondition<JavaMethod> notUseRequestMappingMethodAttribute() {
-        return new ArchCondition<>("use @GetMapping/@PostMapping/... instead of @RequestMapping(method = ...)") {
-
-            @Override
-            public void check(JavaMethod method, ConditionEvents events) {
-                boolean usesRequestMappingMethodAttribute = method.getAnnotations().stream()
-                        .filter(annotation -> ((JavaClass) annotation.getType()).getSimpleName().equals(RequestMapping.class.getSimpleName()))
-                        .anyMatch(annotation -> annotation.tryGetExplicitlyDeclaredProperty("method").isPresent());
-                if (usesRequestMappingMethodAttribute) {
-                    events.add(violated(method, method.getFullName()
-                            + " uses @RequestMapping(method = ...); use the dedicated @GetMapping/@PostMapping/@PutMapping/@PatchMapping/@DeleteMapping annotation instead."));
-                }
-            }
-        };
+    /**
+     * Endpoint methods must be {@code public}. A package-private or protected mapping method would silently escape the
+     * other Resource rules (several only inspect public methods) and is almost always a mistake.
+     */
+    @Test
+    void endpointsMustBePublic() {
+        for (var annotation : annotationClasses) {
+            methodsOfThisModuleThat().areDeclaredInClassesThat().areAnnotatedWith(RestController.class).and().areAnnotatedWith(annotation).should().bePublic()
+                    .allowEmptyShould(true).check(productionClasses);
+        }
     }
 
     /**
@@ -343,25 +348,61 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
      */
     @Test
     void getEndpointsShouldNotDeclareRequestBody() {
-        methodsOfThisModuleThat().areDeclaredInClassesThat().areAnnotatedWith(RestController.class).and().areAnnotatedWith(GetMapping.class).should(notDeclareRequestBody())
+        methodsOfThisModuleThat().areDeclaredInClassesThat().areAnnotatedWith(RestController.class).and().areAnnotatedWith(GetMapping.class)
+                .should(notDeclareRequestBody(Set.of(), "a GET request must not carry a body (RFC 9110); use path or query parameters instead")).allowEmptyShould(true)
+                .check(productionClasses);
+    }
+
+    /**
+     * DELETE endpoints should not declare a {@code @RequestBody}: a DELETE body is discouraged and ignored by many
+     * intermediaries. Pass identifiers via the path or query parameters. The two current exceptions (which pass a list
+     * of identifiers in the body) are baselined, so the rule fails for any NEW DELETE-with-body endpoint.
+     */
+    @Test
+    void deleteEndpointsShouldNotDeclareRequestBody() {
+        methodsOfThisModuleThat().areDeclaredInClassesThat().areAnnotatedWith(RestController.class).and().areAnnotatedWith(DeleteMapping.class)
+                .should(notDeclareRequestBody(DELETE_REQUEST_BODY_BASELINE, "a DELETE request should not carry a body; pass identifiers via the path or query parameters"))
                 .allowEmptyShould(true).check(productionClasses);
     }
 
-    private ArchCondition<JavaMethod> notDeclareRequestBody() {
+    private ArchCondition<JavaMethod> notDeclareRequestBody(Set<String> baseline, String rationale) {
         return new ArchCondition<>("not declare a @RequestBody parameter") {
 
             @Override
             public void check(JavaMethod method, ConditionEvents events) {
-                boolean declaresRequestBody = false;
+                if (baseline.contains(method.getOwner().getSimpleName() + "#" + method.getName())) {
+                    return;
+                }
                 for (var parameter : method.reflect().getParameters()) {
                     if (parameter.isAnnotationPresent(RequestBody.class)) {
-                        declaresRequestBody = true;
-                        break;
+                        events.add(violated(method, method.getFullName() + " declares a @RequestBody; " + rationale + "."));
+                        return;
                     }
                 }
-                if (declaresRequestBody) {
+            }
+        };
+    }
+
+    /**
+     * {@code @ManualConfig} is the authorization escape hatch (it tells the authorization architecture tests that the
+     * endpoint secures itself in its body). It must therefore only ever sit on an actual REST endpoint method, so it
+     * cannot be used to silence the authorization rules on a non-endpoint.
+     */
+    @Test
+    void manualConfigMustBeDeclaredOnEndpointMethods() {
+        methodsOfThisModuleThat().areDeclaredInClassesThat().areAnnotatedWith(RestController.class).and().areAnnotatedWith(ManualConfig.class).should(beAMappingMethod())
+                .allowEmptyShould(true).check(productionClasses);
+    }
+
+    private ArchCondition<JavaMethod> beAMappingMethod() {
+        return new ArchCondition<>("be a REST endpoint (carry an HTTP-method mapping annotation)") {
+
+            @Override
+            public void check(JavaMethod method, ConditionEvents events) {
+                boolean isEndpoint = annotationClasses.stream().anyMatch(method::isAnnotatedWith);
+                if (!isEndpoint) {
                     events.add(violated(method, method.getFullName()
-                            + " is a GET endpoint declaring a @RequestBody; a GET request must not carry a body (RFC 9110). Use path or query parameters instead."));
+                            + " is annotated with @ManualConfig but is not a REST endpoint. @ManualConfig is the authorization escape hatch and must only annotate mapping methods."));
                 }
             }
         };
