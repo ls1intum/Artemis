@@ -1,70 +1,117 @@
-import { expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
+import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { TeamService } from 'app/exercise/team/team.service';
 import { TeamsImportButtonComponent } from 'app/exercise/team/teams-import-dialog/teams-import-button.component';
+import { TeamsImportDialogComponent } from 'app/exercise/team/teams-import-dialog/teams-import-dialog.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { mockExercise, mockSourceTeams, mockTeams } from 'test/helpers/mocks/service/mock-team.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+
 describe('TeamsImportButtonComponent', () => {
     setupTestBed({ zoneless: true });
+
     let comp: TeamsImportButtonComponent;
     let fixture: ComponentFixture<TeamsImportButtonComponent>;
     let debugElement: DebugElement;
-    let modalService: NgbModal;
-
-    function resetComponent() {
-        comp.teams = mockTeams;
-        comp.exercise = mockExercise;
-    }
+    let dialogServiceOpenSpy: ReturnType<typeof vi.fn>;
 
     beforeEach(async () => {
+        dialogServiceOpenSpy = vi.fn().mockReturnValue({ onClose: of(mockSourceTeams) });
+
         await TestBed.configureTestingModule({
-            imports: [ButtonComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), MockModule(NgbModule), MockDirective(FeatureToggleDirective)],
-            providers: [MockProvider(TeamService), MockProvider(NgbModal), { provide: TranslateService, useClass: MockTranslateService }],
+            imports: [
+                MockModule(NgbModule),
+                MockDirective(FeatureToggleDirective),
+                TeamsImportButtonComponent,
+                ButtonComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(TranslateDirective),
+            ],
+            providers: [
+                MockProvider(TeamService),
+                { provide: DialogService, useValue: { open: dialogServiceOpenSpy } },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         }).compileComponents();
-    });
-    beforeEach(() => {
+
         fixture = TestBed.createComponent(TeamsImportButtonComponent);
         comp = fixture.componentInstance;
         debugElement = fixture.debugElement;
-        modalService = TestBed.inject(NgbModal);
+        fixture.componentRef.setInput('exercise', mockExercise);
+        fixture.componentRef.setInput('teams', mockTeams);
+        fixture.detectChanges(false);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     describe('openTeamsImportDialog', () => {
-        let modalServiceStub: ReturnType<typeof vi.spyOn>;
-        let componentInstance: any;
-
-        let teams: Team[] = [];
-
-        beforeEach(() => {
-            resetComponent();
+        it('should open teams import dialog with correct config when clicked', () => {
+            let emittedTeams: Team[] | undefined;
             comp.save.subscribe((value: Team[]) => {
-                teams = value;
+                emittedTeams = value;
             });
-            componentInstance = { teams: [], exercise: undefined };
-            const result = new Promise((resolve) => resolve(mockSourceTeams));
-            modalServiceStub = vi.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance, result });
-        });
-        afterEach(() => {
-            vi.restoreAllMocks();
-        });
-        it('should open teams import dialog when called', async () => {
+
             const button = debugElement.nativeElement.querySelector('button');
             button.click();
-            expect(modalServiceStub).toHaveBeenCalledOnce();
-            expect(componentInstance.exercise).toEqual(mockExercise);
-            expect(componentInstance.teams).toEqual(mockTeams);
-            await Promise.resolve();
-            expect(teams).toEqual(mockSourceTeams);
+
+            expect(dialogServiceOpenSpy).toHaveBeenCalledOnce();
+            const [openedComponent, openedConfig] = dialogServiceOpenSpy.mock.calls[0];
+            expect(openedComponent).toBe(TeamsImportDialogComponent);
+            expect(openedConfig.data).toEqual({ exercise: mockExercise, teams: mockTeams });
+            expect(openedConfig.width).toBe('50rem');
+            expect(openedConfig.modal).toBe(true);
+            expect(openedConfig.closable).toBe(true);
+            expect(openedConfig.closeOnEscape).toBe(true);
+            expect(openedConfig.dismissableMask).toBe(false);
+            // Header includes the exercise title parenthetically when the exercise has one.
+            expect(openedConfig.header).toContain(mockExercise.title);
+            expect(openedConfig.header).toContain('(');
+            expect(openedConfig.header).toContain(')');
+
+            expect(emittedTeams).toEqual(mockSourceTeams);
+        });
+
+        it('should fall back to translated label only when exercise has no title', () => {
+            const titlelessExercise = { ...mockExercise, title: undefined };
+            fixture.componentRef.setInput('exercise', titlelessExercise);
+            fixture.detectChanges(false);
+
+            const button = debugElement.nativeElement.querySelector('button');
+            button.click();
+
+            expect(dialogServiceOpenSpy).toHaveBeenCalledOnce();
+            const [, openedConfig] = dialogServiceOpenSpy.mock.calls[0];
+            // Without an exercise title the header degrades gracefully to just the translated label
+            // (no stray "(undefined)" rendered).
+            expect(openedConfig.header).not.toContain('(');
+            expect(openedConfig.header).not.toContain('undefined');
+        });
+
+        it('should not emit save when dialog is dismissed (undefined result)', () => {
+            dialogServiceOpenSpy.mockReturnValueOnce({ onClose: of(undefined) });
+            let saveCalled = false;
+            comp.save.subscribe(() => {
+                saveCalled = true;
+            });
+
+            const button = debugElement.nativeElement.querySelector('button');
+            button.click();
+
+            expect(dialogServiceOpenSpy).toHaveBeenCalledOnce();
+            expect(saveCalled).toBe(false);
         });
     });
 });

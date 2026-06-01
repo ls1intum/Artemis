@@ -133,14 +133,13 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/hyperion/**', // hyperion module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**', // build phases editor uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/version-history/**', // programming version history module uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/programming/shared/services/build-phases-template.service.ts', // build-phases-template uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts', // legacy converter uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // build-plan-phases model uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/programming/shared/git-diff-report/git-diff-report-modal/git-diff-report-modal.component.ts', // git diff dialog uses Vitest (see vitest.config.ts)
-        '!<rootDir>/src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**', // programming exercise update timeline uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/shared-ui/search-filter/**', // search-filter component uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/programming/shared/**', // programming shared uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/shared-ui/detail-overview-list/components/programming-diff-report-detail/**', // programming diff report detail uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/logos/**', // logos module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/sharing/**', // sharing module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/app.component.ts', // app-shell (app.component) uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/plagiarism/**', // plagiarism module uses Vitest (see vitest.config.ts)
     ],
     // Each entry below excludes a module that has been migrated to Vitest.
     coveragePathIgnorePatterns: [
@@ -187,14 +186,13 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/', // checklist-panel uses Vitest
         '<rootDir>/src/main/webapp/app/hyperion/', // hyperion module uses Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/version-history/', // programming version history module uses Vitest
-        '<rootDir>/src/main/webapp/app/programming/shared/services/build-phases-template.service.ts',
-        '<rootDir>/src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts',
-        '<rootDir>/src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts',
-        '<rootDir>/src/main/webapp/app/programming/shared/git-diff-report/git-diff-report-modal/git-diff-report-modal.component.ts',
-        '<rootDir>/src/main/webapp/app/programming/shared/programming-exercise-update-timeline/',
+        '<rootDir>/src/main/webapp/app/shared-ui/search-filter/', // search-filter uses Vitest
+        '<rootDir>/src/main/webapp/app/programming/shared/', // programming shared uses Vitest
+        '<rootDir>/src/main/webapp/app/shared-ui/detail-overview-list/components/programming-diff-report-detail/', // programming diff report detail uses Vitest
         '<rootDir>/src/main/webapp/app/logos/', // logos module uses Vitest
         '<rootDir>/src/main/webapp/app/sharing/', // sharing module uses Vitest
         '<rootDir>/src/main/webapp/app/app.component.ts', // app-shell (app.component) uses Vitest
+        '<rootDir>/src/main/webapp/app/plagiarism/', // plagiarism module uses Vitest
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
@@ -203,16 +201,12 @@ module.exports = {
     // Re-tune when migration completes.
     coverageThreshold: {
         global: {
-            // Lowered (83 -> 82.5) after moving the well-covered shared-ui module fully out of Jest (now under Vitest)
-            // and merging develop, which dropped the global statements average to ~82.95.
-            statements: 82.5,
+            // Floors drop as modules migrate out of Jest (each removes well-covered files from the denominator).
+            // Last full run: statements 82.37, branches 74.69, functions 68.49, lines 83.8 — floors set ~0.4-0.5pp below.
+            statements: 81.9,
             branches: 72.9,
-            // Lowered after moving the foundation, shared-ui AND editor (markdown/monaco) modules out of Jest
-            // (now under Vitest). Each removed a set of well-covered functions from the Jest denominator. Re-measured
-            // after merging develop with this branch; see comment near the top of this block. Floor set just below
-            // the measured global functions average.
-            functions: 69,
-            lines: 84,
+            functions: 68,
+            lines: 83.4,
         },
     },
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
@@ -287,14 +281,14 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/', // checklist-panel (vitest)
         '<rootDir>/src/main/webapp/app/programming/manage/version-history/', // programming version history module
-        '<rootDir>/src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.spec.ts', // implemented with Vitest
-        '<rootDir>/src/main/webapp/app/programming/shared/services/build-phases-template.service.spec.ts', // migrated to Vitest
-        '<rootDir>/src/main/webapp/app/programming/shared/entities/build-plan-phases.model.spec.ts', // migrated to Vitest
-        '<rootDir>/src/main/webapp/app/programming/shared/git-diff-report/git-diff-report-modal/git-diff-modal.component.spec.ts', // migrated to Vitest
-        '<rootDir>/src/main/webapp/app/programming/shared/programming-exercise-update-timeline/', // migrated to Vitest
+        '<rootDir>/src/main/webapp/app/shared-ui/search-filter/', // search-filter (Vitest)
+        '<rootDir>/src/main/webapp/app/programming/shared/', // programming shared uses Vitest
+        '<rootDir>/src/main/webapp/app/shared-ui/detail-overview-list/components/programming-diff-report-detail/', // programming diff report detail uses Vitest
+        '<rootDir>/src/test/javascript/spec/integration/code-editor/code-editor-container.integration.spec.ts', // migrated to Vitest
         '<rootDir>/src/main/webapp/app/logos/', // logos module (Vitest)
         '<rootDir>/src/main/webapp/app/sharing/', // sharing module (Vitest)
         '<rootDir>/src/main/webapp/app/app.component.spec.ts', // app-shell (app.component) (Vitest)
+        '<rootDir>/src/main/webapp/app/plagiarism/', // plagiarism module (vitest)
     ],
     testTimeout: 3000,
     testMatch: ['<rootDir>/src/main/webapp/app/**/*.spec.ts', '<rootDir>/src/test/javascript/spec/**/*.integration.spec.ts'],

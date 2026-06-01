@@ -77,6 +77,7 @@ export default defineConfig({
             'src/main/webapp/app/exercise/synchronization/**/*.spec.ts', // include exercise synchronization tests
             'src/main/webapp/app/exercise/version-history/**/*.spec.ts', // include exercise version history tests
             'src/main/webapp/app/exercise/review/**/*.spec.ts', // include review module tests
+            'src/main/webapp/app/exercise/team/**/*.spec.ts', // include exercise team tests
             'src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/**/*.spec.ts', // include checklist-panel tests
             'src/main/webapp/app/hyperion/**/*.spec.ts', // include hyperion module tests
             'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**/*.spec.ts', // include build phases editor tests
@@ -87,14 +88,14 @@ export default defineConfig({
             'src/main/webapp/app/exercise/participation-submission/**/*.spec.ts', // include participation-submission tests
             'src/main/webapp/app/exercise/exercise-scores/**/*.spec.ts', // include exercise-scores tests
             'src/main/webapp/app/exercise/shared/filter-dropdown/**/*.spec.ts', // include filter-dropdown component tests
-            'src/main/webapp/app/programming/shared/services/build-phases-template.service.spec.ts', // include build phases template service tests
-            'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.spec.ts', // include build plan phases model tests
-            'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.spec.ts', // include legacy build plan converter service tests
-            'src/main/webapp/app/programming/shared/git-diff-report/git-diff-report-modal/git-diff-modal.component.spec.ts', // include git diff dialog tests
-            'src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**/*.spec.ts', // include programming exercise update timeline tests
+            'src/main/webapp/app/shared-ui/search-filter/**/*.spec.ts', // include search-filter component tests
+            'src/main/webapp/app/programming/shared/**/*.spec.ts', // include programming shared tests
+            'src/main/webapp/app/shared-ui/detail-overview-list/components/programming-diff-report-detail/**/*.spec.ts', // include programming diff report detail tests
+            'src/test/javascript/spec/integration/code-editor/code-editor-container.integration.spec.ts', // migrated to Vitest
             'src/main/webapp/app/logos/**/*.spec.ts', // include logos tests
             'src/main/webapp/app/sharing/**/*.spec.ts', // include sharing tests
             'src/main/webapp/app/app.component.spec.ts', // include app-shell (app.component) tests
+            'src/main/webapp/app/plagiarism/**/*.spec.ts', // include all plagiarism tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -151,6 +152,7 @@ export default defineConfig({
                 'src/main/webapp/app/exercise/synchronization/**/*.ts', // include exercise synchronization for code coverage
                 'src/main/webapp/app/exercise/version-history/**/*.ts', // include exercise version history for code coverage
                 'src/main/webapp/app/exercise/review/**/*.ts', // include review module for code coverage
+                'src/main/webapp/app/exercise/team/**/*.ts', // include exercise team for code coverage
                 'src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/**/*.ts', // include checklist-panel for code coverage
                 'src/main/webapp/app/hyperion/**/*.ts', // include hyperion module for code coverage
                 'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**/*.ts', // include build phases editor for code coverage
@@ -161,14 +163,13 @@ export default defineConfig({
                 'src/main/webapp/app/exercise/participation-submission/**/*.ts', // include participation-submission for code coverage
                 'src/main/webapp/app/exercise/exercise-scores/**/*.ts', // include exercise-scores for code coverage
                 'src/main/webapp/app/exercise/shared/filter-dropdown/**/*.ts', // include filter-dropdown component for code coverage
-                'src/main/webapp/app/programming/shared/services/build-phases-template.service.ts', // include build phases template service for code coverage
-                'src/main/webapp/app/programming/shared/services/legacy-build-plan-converter.service.ts', // include legacy build plan converter service for code coverage
-                'src/main/webapp/app/programming/shared/entities/build-plan-phases.model.ts', // include build plan phases model for code coverage
-                'src/main/webapp/app/programming/shared/git-diff-report/git-diff-report-modal/git-diff-report-modal.component.ts', // include git diff dialog for code coverage
-                'src/main/webapp/app/programming/shared/programming-exercise-update-timeline/**/*.ts', // include programming exercise update timeline for code coverage
+                'src/main/webapp/app/shared-ui/search-filter/**/*.ts', // include search-filter component for code coverage
+                'src/main/webapp/app/programming/shared/**/*.ts', // include programming shared for code coverage
+                'src/main/webapp/app/shared-ui/detail-overview-list/components/programming-diff-report-detail/**/*.ts', // include programming diff report detail for code coverage
                 'src/main/webapp/app/logos/**/*.ts', // include logos for code coverage
                 'src/main/webapp/app/sharing/**/*.ts', // include sharing for code coverage
                 'src/main/webapp/app/app.component.ts', // include app-shell (app.component) for code coverage
+                'src/main/webapp/app/plagiarism/**/*.ts', // include all plagiarism for code coverage
             ],
             exclude: [
                 '**/node_modules/**', // exclude node_modules with third-party code
@@ -181,15 +182,11 @@ export default defineConfig({
                 'src/main/webapp/app/core/config/prod.config.ts', // exclude dayjs configuration file (not really testable)
             ],
             thresholds: {
-                // Tuned slightly below current actuals to absorb further Jest→Vitest migration drift.
-                // Re-tune when migration completes. Adjusted when the editor module (markdown/monaco editor)
-                // moved from Jest to Vitest, which shifted the aggregate by ~0.2pp on lines/functions/statements
-                // (branches rose). Actuals at that point: lines 89.41, statements 89.21, branches 73.83, functions 87.17.
-                // Functions reduced for exercise module migration from Jest->Vitest (before: 87.0)
-                lines: 89.2,
-                statements: 89.0,
+                // Floors set just below current actuals to absorb Jest→Vitest migration drift; re-tune when migration completes.
+                lines: 88.8,
+                statements: 88.7,
                 branches: 73.6,
-                functions: 86.6,
+                functions: 86.0,
             },
         },
     },

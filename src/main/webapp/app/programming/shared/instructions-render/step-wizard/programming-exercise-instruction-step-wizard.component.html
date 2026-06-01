@@ -1,9 +1,9 @@
-<div [hidden]="!steps?.length">
+<div [hidden]="!steps().length">
     <div class="stepwizard">
         <div class="stepwizard-title pe-3" jhiTranslate="artemisApp.programmingExercise.problemStatement.tasksOfExercise"></div>
         <div class="stepwizard-row position-relative">
             <hr class="stepwizard-row-line" />
-            @for (step of steps; let i = $index; track i) {
+            @for (step of steps(); let i = $index; track i) {
                 <div class="stepwizard-step">
                     <!--The css class test-passing removes the cursor icon and the hover effects from passing test circles-->
                     <div
