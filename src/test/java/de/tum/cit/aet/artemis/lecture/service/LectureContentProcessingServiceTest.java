@@ -87,8 +87,8 @@ class LectureContentProcessingServiceTest {
         when(featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
 
         websocketMessagingService = mock(WebsocketMessagingService.class);
-        callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentVideoUnitRepository, attachmentRepository,
-                Optional.of(irisLectureApi), websocketMessagingService);
+        callbackService = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository, Optional.of(irisLectureApi),
+                websocketMessagingService);
 
         service = new LectureContentProcessingService(processingStateRepository, Optional.of(irisLectureApi), featureToggleService, callbackService);
 
@@ -153,8 +153,8 @@ class LectureContentProcessingServiceTest {
             // Given: No Iris API
             FeatureToggleService fts = mock(FeatureToggleService.class);
             when(fts.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
-            ProcessingStateCallbackService noIrisCallback = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentVideoUnitRepository,
-                    attachmentRepository, Optional.empty(), mock(WebsocketMessagingService.class));
+            ProcessingStateCallbackService noIrisCallback = new ProcessingStateCallbackService(processingStateRepository, transcriptionRepository, attachmentRepository,
+                    Optional.empty(), mock(WebsocketMessagingService.class));
             service = new LectureContentProcessingService(processingStateRepository, Optional.empty(), fts, noIrisCallback);
 
             service.triggerProcessing(testUnit);

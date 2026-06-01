@@ -34,7 +34,6 @@ import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
-import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 
@@ -80,8 +79,6 @@ public class ProcessingStateCallbackService {
 
     private final LectureTranscriptionRepository transcriptionRepository;
 
-    private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
-
     private final AttachmentRepository attachmentRepository;
 
     private final Optional<IrisLectureApi> irisLectureApi;
@@ -89,11 +86,9 @@ public class ProcessingStateCallbackService {
     private final WebsocketMessagingService websocketMessagingService;
 
     public ProcessingStateCallbackService(LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            AttachmentVideoUnitRepository attachmentVideoUnitRepository, AttachmentRepository attachmentRepository, Optional<IrisLectureApi> irisLectureApi,
-            WebsocketMessagingService websocketMessagingService) {
+            AttachmentRepository attachmentRepository, Optional<IrisLectureApi> irisLectureApi, WebsocketMessagingService websocketMessagingService) {
         this.processingStateRepository = processingStateRepository;
         this.transcriptionRepository = transcriptionRepository;
-        this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.irisLectureApi = irisLectureApi;
         this.websocketMessagingService = websocketMessagingService;

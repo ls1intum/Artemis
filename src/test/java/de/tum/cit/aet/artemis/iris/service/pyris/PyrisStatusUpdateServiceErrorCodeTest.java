@@ -5,6 +5,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -91,7 +92,7 @@ class PyrisStatusUpdateServiceErrorCodeTest {
 
         service.handleStatusUpdate(job, statusUpdate);
 
-        verify(callbackApi).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(true), eq(null), eq(java.util.Arrays.asList(1, null, 0, -2, -1, 10)));
+        verify(callbackApi).handleIngestionComplete(eq(42L), eq("job-token-abc"), eq(true), eq(null), eq(Arrays.asList(1, null, 0, -2, -1, 10)));
     }
 
     @Test

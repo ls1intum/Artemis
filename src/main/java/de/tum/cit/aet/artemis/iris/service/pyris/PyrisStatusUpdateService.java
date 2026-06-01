@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
@@ -48,7 +49,7 @@ public class PyrisStatusUpdateService {
 
     private static final String GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC = "global-search-answer";
 
-    private static final com.fasterxml.jackson.databind.ObjectMapper objectMapper = JsonObjectMapper.get();
+    private static final ObjectMapper objectMapper = JsonObjectMapper.get();
 
     private static final TypeReference<List<Integer>> INTEGER_LIST_TYPE = new TypeReference<>() {
     };
