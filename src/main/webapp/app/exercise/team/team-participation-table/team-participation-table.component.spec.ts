@@ -1,6 +1,6 @@
-import { expect, vi } from 'vitest';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { TeamService } from 'app/exercise/team/team.service';
@@ -148,15 +148,11 @@ describe('TeamParticipationTableComponent', () => {
     course.exercises = [exercise1, exercise2, exercise3, exercise4, exercise5];
 
     let router: Router;
-    let routerMock: { navigate: ReturnType<typeof vi.fn> };
 
     beforeEach(async () => {
-        routerMock = { navigate: vi.fn().mockResolvedValue(true) };
         await TestBed.configureTestingModule({
-            imports: [TeamParticipationTableComponent],
             providers: [
                 MockProvider(TranslateService),
-                { provide: Router, useValue: routerMock },
                 { provide: TeamService, useClass: MockTeamService },
                 LocalStorageService,
                 { provide: AccountService, useClass: MockAccountService },
@@ -168,32 +164,32 @@ describe('TeamParticipationTableComponent', () => {
                     schemas: [NO_ERRORS_SCHEMA],
                 },
             })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TeamParticipationTableComponent);
-                comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-                teamService = TestBed.inject(TeamService);
-                router = TestBed.inject(Router);
-            });
+            .compileComponents();
+
+        fixture = TestBed.createComponent(TeamParticipationTableComponent);
+        comp = fixture.componentInstance;
+        debugElement = fixture.debugElement;
+        teamService = TestBed.inject(TeamService);
+        router = TestBed.inject(Router);
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
     });
 
-    beforeEach(() => {
+    beforeEach(async () => {
         vi.spyOn(teamService, 'findCourseWithExercisesAndParticipationsForTeam').mockReturnValue(of(new HttpResponse({ body: course })));
-        comp.course = course;
-        comp.exercise = exercise4;
-        comp.team = mockTeam;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('exercise', exercise4);
+        fixture.componentRef.setInput('team', mockTeam);
+        vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
         comp.ngOnInit();
-        fixture.detectChanges();
+        await fixture.whenStable();
     });
 
     it('Exercises for one team are loaded correctly', () => {
         // Make sure that all 3 exercises were received for exercise
-        expect(comp.exercises).toHaveLength(course.exercises!.length);
+        expect(comp.exercises()).toHaveLength(course.exercises!.length);
 
         // Check that ngx-datatable is present
         const datatable = debugElement.query(By.css('jhi-data-table'));
@@ -218,7 +214,8 @@ describe('TeamParticipationTableComponent', () => {
     it('Navigate to assessment editor when opening exercise submission', async () => {
         const participation = exercise2.studentParticipations![0];
         await comp.openAssessmentEditor(exercise2, participation, 'new');
-        expect(router.navigate).toHaveBeenCalledExactlyOnceWith([
+        expect(router.navigate).toHaveBeenCalledOnce();
+        expect(router.navigate).toHaveBeenCalledWith([
             '/course-management',
             course.id!.toString(),
             exercise2.type! + '-exercises',
