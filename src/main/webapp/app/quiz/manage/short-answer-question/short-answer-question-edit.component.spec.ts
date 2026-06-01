@@ -658,6 +658,32 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(titleInput?.getAttribute('maxlength')).toBe(String(MAX_QUIZ_QUESTION_LENGTH_THRESHOLD - 1));
     });
 
+    it('should show visual feedback when the short answer question title limit is reached', () => {
+        component.shortAnswerQuestion.title = 'a'.repeat(MAX_QUIZ_QUESTION_LENGTH_THRESHOLD - 1);
+        fixture.detectChanges();
+
+        const titleInput: HTMLInputElement | null = fixture.nativeElement.querySelector('#short-answer-question-title');
+        const feedback: HTMLElement | null = fixture.nativeElement.querySelector('.question-title small');
+
+        expect(titleInput?.classList.contains('ng-invalid')).toBe(true);
+        expect(feedback).not.toBeNull();
+    });
+
+    it('should show visual feedback when the re-evaluation short answer question title limit is reached', () => {
+        vi.advanceTimersToNextFrame();
+        fixture.componentRef.setInput('reEvaluationInProgress', true);
+        component.shortAnswerQuestion.title = 'a'.repeat(MAX_QUIZ_QUESTION_LENGTH_THRESHOLD - 1);
+        fixture.detectChanges();
+
+        const titleInput: HTMLInputElement | null = fixture.nativeElement.querySelector('.question-reevaluation-title input');
+        const feedback: HTMLElement | null = fixture.nativeElement.querySelector('.question-reevaluation-title small');
+
+        expect(titleInput).not.toBeNull();
+        expect(titleInput?.getAttribute('maxlength')).toBe(String(MAX_QUIZ_QUESTION_LENGTH_THRESHOLD - 1));
+        expect(titleInput?.classList.contains('ng-invalid')).toBe(true);
+        expect(feedback).not.toBeNull();
+    });
+
     it('should return highest spot number', () => {
         expect(component.getHighestSpotNumbers(`[-spot 1]`)).toBe(1);
         expect(component.getHighestSpotNumbers(`hello [-spot 1] [-spot 3] [-spot 2]`)).toBe(3);

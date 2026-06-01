@@ -103,6 +103,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
     readonly questionMoveDown = output<void>();
 
     readonly MAX_CHARACTER_COUNT = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
+    // Existing quiz validation rejects titles whose length reaches the shared threshold.
     readonly MAX_QUESTION_TITLE_LENGTH = MAX_QUIZ_QUESTION_LENGTH_THRESHOLD - 1;
 
     questionEditorText = '';
@@ -183,6 +184,10 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
         if (!this.reEvaluationInProgress()) {
             requestAnimationFrame(this.setupQuestionEditor.bind(this));
         }
+    }
+
+    isQuestionTitleLengthLimitReached(): boolean {
+        return (this.shortAnswerQuestion.title?.length ?? 0) >= this.MAX_QUESTION_TITLE_LENGTH;
     }
 
     /**

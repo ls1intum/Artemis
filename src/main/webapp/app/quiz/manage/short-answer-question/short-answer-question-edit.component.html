@@ -14,14 +14,14 @@
                     #titleInput="ngModel"
                     id="short-answer-question-title"
                     pInputText
-                    [class.ng-invalid]="titleInput.errors?.maxlength"
+                    [class.ng-invalid]="isQuestionTitleLengthLimitReached()"
                     [(ngModel)]="shortAnswerQuestion.title"
                     (ngModelChange)="questionUpdated.emit()"
                     [maxlength]="MAX_QUESTION_TITLE_LENGTH"
                     name="short-answer-question-title-{{ questionIndex() }}"
                     placeholder="{{ 'artemisApp.quizExercise.placeholder.questionTitle' | artemisTranslate }}"
                 />
-                @if (titleInput.errors?.maxlength) {
+                @if (isQuestionTitleLengthLimitReached()) {
                     <small class="form-text text-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: MAX_QUESTION_TITLE_LENGTH }"></small>
                 }
             </div>
@@ -68,14 +68,14 @@
                     <input
                         #reEvaluateTitleInput="ngModel"
                         pInputText
-                        [class.ng-invalid]="reEvaluateTitleInput.errors?.maxlength"
+                        [class.ng-invalid]="isQuestionTitleLengthLimitReached()"
                         [(ngModel)]="shortAnswerQuestion.title"
                         [maxlength]="MAX_QUESTION_TITLE_LENGTH"
                         name="short-answer-question-title-reevaluate-{{ questionIndex() }}"
                         placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
                         attr.aria-label="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
                     />
-                    @if (reEvaluateTitleInput.errors?.maxlength) {
+                    @if (isQuestionTitleLengthLimitReached()) {
                         <small class="form-text text-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: MAX_QUESTION_TITLE_LENGTH }"></small>
                     }
                 </div>
