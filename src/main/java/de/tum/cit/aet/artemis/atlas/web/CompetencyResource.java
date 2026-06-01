@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyWithTailRelatio
 import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -381,6 +382,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with body the suggested competencies
      */
     @PostMapping("competencies/suggest")
+    @EnforceAtLeastEditor
     @FeatureToggle(Feature.AtlasML)
     public ResponseEntity<SuggestCompetencyResponseDTO> suggestCompetencies(@RequestBody SuggestCompetencyRequestDTO request) {
         log.debug("REST request to suggest competencies using AtlasML with description: {}", request.description());

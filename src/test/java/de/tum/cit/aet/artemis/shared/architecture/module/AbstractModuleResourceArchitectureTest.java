@@ -359,8 +359,9 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
 
     /**
      * DELETE endpoints should not declare a {@code @RequestBody}: a DELETE body is discouraged and ignored by many
-     * intermediaries. Pass identifiers via the path or query parameters. The two current exceptions (which pass a list
-     * of identifiers in the body) are baselined, so the rule fails for any NEW DELETE-with-body endpoint.
+     * intermediaries. Pass identifiers via the path or query parameters. The one current exception
+     * ({@code PushNotificationResource#unregister}, which keeps an optional deprecated body for older mobile clients) is
+     * baselined, so the rule fails for any NEW DELETE-with-body endpoint.
      */
     @Test
     void deleteEndpointsShouldNotDeclareRequestBody() {
@@ -452,9 +453,9 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
     }
 
     /**
-     * REST endpoints must return {@link ResponseEntity}, never {@link ModelAndView}. The remaining server-side
-     * {@code forward:} endpoints are captured in {@link #MODEL_AND_VIEW_BASELINE} so the rule fails for any NEW
-     * {@code ModelAndView}; the goal is to migrate those and shrink the baseline to zero.
+     * REST endpoints must return {@link ResponseEntity}, never {@link ModelAndView}. No endpoint returns
+     * {@link ModelAndView} anymore, so {@link #MODEL_AND_VIEW_BASELINE} is empty and the type is fully forbidden: any
+     * new {@code ModelAndView} return fails the build.
      */
     @Test
     void restEndpointsShouldNotReturnModelAndView() {

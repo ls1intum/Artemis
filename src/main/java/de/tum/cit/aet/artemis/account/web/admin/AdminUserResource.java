@@ -33,7 +33,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -392,14 +391,17 @@ public class AdminUserResource {
 
     /**
      * Delete users: deletes the provided users
+     * <p>
+     * The logins are passed in the request body on purpose: this is an internal admin bulk operation over an
+     * unbounded list of identifiers (e.g. "delete all not-enrolled users"), which would otherwise overflow the
+     * request-line / query-parameter limits if sent as query parameters. This endpoint is therefore intentionally
+     * exempt from the "DELETE must not carry a body" convention.
      *
-     * @param loginsToDelete user logins to delete
+     * @param logins user logins to delete
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("users")
-    public ResponseEntity<List<String>> deleteUsers(@RequestParam("login") List<String> loginsToDelete) {
-        // Copy into a mutable list since the @RequestParam-bound list may be immutable (protected/current users are removed below).
-        List<String> logins = new ArrayList<>(loginsToDelete);
+    public ResponseEntity<List<String>> deleteUsers(@RequestBody List<String> logins) {
         log.debug("REST request to delete {} users", logins.size());
         List<String> deletedUsers = Collections.synchronizedList(new ArrayList<>());
 

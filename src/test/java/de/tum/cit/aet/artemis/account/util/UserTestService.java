@@ -236,9 +236,7 @@ public class UserTestService {
         }).collect(Collectors.toSet());
 
         var logins = users.stream().map(User::getLogin).toList();
-        var params = new LinkedMultiValueMap<String, String>();
-        params.addAll("login", logins);
-        request.delete("/api/account/admin/users", HttpStatus.OK, params);
+        request.delete("/api/account/admin/users", HttpStatus.OK, logins);
 
         for (var user : users) {
             final var deletedUser = userTestRepository.findById(user.getId()).orElseThrow();

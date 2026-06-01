@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -505,7 +506,8 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             userUtilService.addAdmin(TEST_PREFIX + "adminuser6");
             User adminUser2 = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser6admin");
 
-            mockMvc.perform(delete("/api/account/admin/users").param("login", adminUser1.getLogin(), adminUser2.getLogin())).andExpect(status().isForbidden());
+            mockMvc.perform(delete("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(List.of(adminUser1.getLogin(), adminUser2.getLogin())))).andExpect(status().isForbidden());
 
             // Verify users were not deleted
             User unchangedUser1 = userTestRepository.findById(adminUser1.getId()).orElseThrow();
@@ -612,7 +614,8 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             userUtilService.addAdmin(TEST_PREFIX + "adminuser12");
             User adminUser2 = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser12admin");
 
-            mockMvc.perform(delete("/api/account/admin/users").param("login", adminUser1.getLogin(), adminUser2.getLogin())).andExpect(status().isOk());
+            mockMvc.perform(delete("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(List.of(adminUser1.getLogin(), adminUser2.getLogin())))).andExpect(status().isOk());
 
             // Verify users were soft deleted
             User deletedUser1 = userTestRepository.findById(adminUser1.getId()).orElseThrow();

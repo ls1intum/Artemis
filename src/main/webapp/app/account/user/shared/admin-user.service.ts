@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { createRequestOption } from 'app/foundation/util/request.util';
@@ -112,7 +112,7 @@ export class AdminUserService {
      * @return Observable<HttpResponse<void>>
      */
     deleteUsers(logins: string[]): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}`, { params: new HttpParams({ fromObject: { login: logins } }), observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}`, { body: logins, observe: 'response' });
     }
 
     /**

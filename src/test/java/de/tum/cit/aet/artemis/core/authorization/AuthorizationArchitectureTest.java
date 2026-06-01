@@ -135,7 +135,7 @@ class AuthorizationArchitectureTest extends AbstractArchitectureTest {
             "de.tum.cit.aet.artemis.core.web.SharingSupportResource#isSharingEnabled",
             "de.tum.cit.aet.artemis.iris.web.IrisTutorSuggestionSessionResource#getCurrentSessionOrCreateIfNotExists",
             "de.tum.cit.aet.artemis.iris.web.IrisTutorSuggestionSessionResource#createSessionForPost",
-            "de.tum.cit.aet.artemis.programming.web.ExerciseSharingResource#exportExerciseToSharing", "de.tum.cit.aet.artemis.atlas.web.CompetencyResource#suggestCompetencies");
+            "de.tum.cit.aet.artemis.programming.web.ExerciseSharingResource#exportExerciseToSharing");
 
     /**
      * Every REST endpoint must declare an Artemis authorization annotation so authorization can never be silently
