@@ -89,6 +89,15 @@ describe('TriggerBuildButtonSpec', () => {
         return triggerButton ? triggerButton.nativeElement : null;
     };
 
+    it('should not crash or enable triggering when no participation is provided (e.g. auxiliary repository)', () => {
+        fixture.componentRef.setInput('exercise', { id: 7 } as ProgrammingExercise);
+        // Intentionally leave `participation` unset — mirrors the instructor editor binding an undefined
+        // participation for an auxiliary repository. The effect must not dereference the missing participation.
+        expect(() => fixture.detectChanges()).not.toThrow();
+        expect(comp.participationBuildCanBeTriggered()).toBe(false);
+        expect(getTriggerButton()).toBeNull();
+    });
+
     it('should not show the trigger button if there is no pending submission and no build is running', () => {
         const newParticipation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
         fixture.componentRef.setInput('exercise', { id: 4 } as ProgrammingExercise);

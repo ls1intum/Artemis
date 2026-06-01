@@ -29,7 +29,9 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     private participationWebsocketService = inject(ParticipationWebsocketService);
 
     readonly exercise = input.required<ProgrammingExercise>();
-    readonly participation = input.required<Participation>();
+    // Optional: the button is rendered for repositories that may have no participation (e.g. an auxiliary
+    // repository in the instructor editor binds `selectedParticipation!`, which is undefined at runtime).
+    readonly participation = input<Participation>();
     readonly btnSize = input(ButtonSize.SMALL);
     readonly title = input('');
 
@@ -53,6 +55,17 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
     constructor() {
         effect(() => {
             const participation = this.participation();
+            // Mirror the previous ngOnChanges/hasParticipationChanged guard: with no participation, do nothing
+            // and tear down any stale subscriptions instead of dereferencing an undefined participation.
+            if (!participation?.id) {
+                this.previousParticipationId = undefined;
+                this.submissionSubscription?.unsubscribe();
+                this.resultSubscription?.unsubscribe();
+                this.participationBuildCanBeTriggered.set(false);
+                this.isBuilding.set(false);
+                this.participationHasLatestSubmissionWithoutResult.set(false);
+                return;
+            }
             if (participation.id === this.previousParticipationId) {
                 return;
             }
