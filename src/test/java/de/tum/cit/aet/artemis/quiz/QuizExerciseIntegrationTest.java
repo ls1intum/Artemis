@@ -1222,7 +1222,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.BATCHED);
 
         QuizBatch batch = request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, OK);
-        request.put("/api/quiz/quiz-exercises/" + batch.getId() + "/start-batch", null, OK);
+        request.put("/api/quiz/quiz-batches/" + batch.getId() + "/start-batch", null, OK);
     }
 
     @Test
@@ -1231,7 +1231,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.BATCHED);
 
         request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, FORBIDDEN);
-        request.put("/api/quiz/quiz-exercises/" + null + "/start-batch", null, HttpStatus.BAD_REQUEST);
+        request.put("/api/quiz/quiz-batches/" + null + "/start-batch", null, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -1857,7 +1857,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         // As instructor, add and start batch
         SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "instructor1"));
         QuizBatch batch = request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, OK);
-        request.put("/api/quiz/quiz-exercises/" + batch.getId() + "/start-batch", null, OK);
+        request.put("/api/quiz/quiz-batches/" + batch.getId() + "/start-batch", null, OK);
 
         // As student, join batch
         SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "student1"));

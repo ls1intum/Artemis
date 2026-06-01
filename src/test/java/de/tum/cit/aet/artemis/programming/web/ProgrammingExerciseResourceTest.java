@@ -242,7 +242,8 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, studentParticipation);
         programmingExerciseStudentParticipationTestRepository.save(studentParticipation);
 
-        byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-repository/" + studentParticipation.getId(),
+        byte[] result = request.get(
+                "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-repository?participationId=" + studentParticipation.getId(),
                 HttpStatus.OK, byte[].class);
 
         assertThat(result).isNotNull();

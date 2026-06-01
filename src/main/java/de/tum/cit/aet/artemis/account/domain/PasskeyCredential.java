@@ -19,11 +19,11 @@ import org.springframework.security.web.webauthn.api.ImmutableCredentialRecord;
 import org.springframework.security.web.webauthn.api.PublicKeyCose;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialType;
 
+import de.tum.cit.aet.artemis.account.dto.PasskeyDTO;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
 import de.tum.cit.aet.artemis.core.domain.converter.AuthenticatorTransportConverter;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.domain.converter.PublicKeyCoseConverter;
-import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;
 
 @Entity
 @Table(name = "passkey_credential")

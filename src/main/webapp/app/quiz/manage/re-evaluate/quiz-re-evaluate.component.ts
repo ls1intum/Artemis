@@ -162,6 +162,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
      */
     resetAll(): void {
         this.quizExercise = cloneDeep(this.savedEntity);
+        this.cacheValidation(this.changeDetector);
     }
 
     /**

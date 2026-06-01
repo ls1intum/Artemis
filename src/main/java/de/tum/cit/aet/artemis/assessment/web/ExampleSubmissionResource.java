@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
@@ -193,14 +194,21 @@ public class ExampleSubmissionResource {
     /**
      * POST exercises/:exerciseId/example-submissions/import/:sourceSubmissionId : Imports an existing student submission as an example submission.
      *
-     * @param exerciseId         the id of the corresponding exercise
-     * @param sourceSubmissionId the submission id to be imported as an example submission
+     * @param exerciseId              the id of the corresponding exercise
+     * @param sourceSubmissionIdQuery the submission id to be imported as an example submission (provided as a query parameter; preferred)
+     * @param sourceSubmissionIdPath  the submission id to be imported as an example submission (provided as a legacy path variable; deprecated)
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
-    @PostMapping("exercises/{exerciseId}/example-submissions/import/{sourceSubmissionId}")
+    @PostMapping({ "exercises/{exerciseId}/example-submissions/import", "exercises/{exerciseId}/example-submissions/import/{sourceSubmissionId}" })
     @EnforceAtLeastInstructor
-    public ResponseEntity<ExampleSubmission> importExampleSubmission(@PathVariable Long exerciseId, @PathVariable Long sourceSubmissionId) {
+    public ResponseEntity<ExampleSubmission> importExampleSubmission(@PathVariable Long exerciseId,
+            @RequestParam(name = "sourceSubmissionId", required = false) Long sourceSubmissionIdQuery,
+            @PathVariable(name = "sourceSubmissionId", required = false) Long sourceSubmissionIdPath) {
+        long sourceSubmissionId = sourceSubmissionIdQuery != null ? sourceSubmissionIdQuery : (sourceSubmissionIdPath != null ? sourceSubmissionIdPath : -1L);
         log.debug("REST request to import Student Submission as ExampleSubmission : {}", sourceSubmissionId);
+        if (sourceSubmissionId <= 0) {
+            throw new BadRequestAlertException("A valid sourceSubmissionId must be provided to import an example submission", ENTITY_NAME, "sourceSubmissionIdMissing");
+        }
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         ExampleSubmission exampleSubmission = exampleSubmissionService.importStudentSubmissionAsExampleSubmission(sourceSubmissionId, exercise);

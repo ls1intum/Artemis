@@ -450,7 +450,7 @@ public final class Constants {
     public static final String MODULE_FEATURE_LDAP = "ldap";
 
     /**
-     * The name of the module feature used for SAML2-based single sign-on, see {@link de.tum.cit.aet.artemis.core.service.connectors.SAML2Service}.
+     * The name of the module feature used for SAML2-based single sign-on, see {@link de.tum.cit.aet.artemis.account.security.SAML2Service}.
      */
     public static final String MODULE_FEATURE_SAML2 = "saml2";
 

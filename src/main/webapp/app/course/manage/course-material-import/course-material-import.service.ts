@@ -21,7 +21,7 @@ export class CourseMaterialImportService {
      * @returns Observable with the course summary
      */
     getImportSummary(targetCourseId: number, sourceCourseId: number): Observable<CourseSummaryDTO> {
-        return this.http.get<CourseSummaryDTO>(`${this.resourceUrl}/${targetCourseId}/import-summary/${sourceCourseId}`);
+        return this.http.get<CourseSummaryDTO>(`${this.resourceUrl}/${targetCourseId}/import-summary?sourceCourseId=${sourceCourseId}`);
     }
 
     /**

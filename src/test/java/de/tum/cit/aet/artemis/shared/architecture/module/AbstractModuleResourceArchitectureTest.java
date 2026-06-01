@@ -5,6 +5,7 @@ import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 
 import java.lang.annotation.Annotation;
+import java.util.Locale;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
@@ -39,6 +40,18 @@ import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
 public abstract class AbstractModuleResourceArchitectureTest extends AbstractArchitectureTest implements ModuleArchitectureTest {
 
     private static final Pattern KEBAB_CASE_PATH_PATTERN = Pattern.compile("^(\\.?[a-z0-9]+(-[a-z0-9]+)*|\\{[^}]+})(/(([a-z0-9]+(-[a-z0-9]+)*|\\{[^}]+})))*(\\.json|/\\*)?$");
+
+    /** A path-variable segment that names an entity id, e.g. {@code {courseId}} or {@code {exerciseId:\\d+}}. */
+    private static final Pattern ENTITY_ID_VARIABLE = Pattern.compile("\\{([a-zA-Z]+Id)(?::.*)?}");
+
+    /**
+     * REST paths exempted from {@link #restPathVariablesMustBePairedWithTheirCollection()}.
+     * <p>
+     * This set is now empty: every REST path follows {@code api/<module>/<plural-collection>/{<collection-singular>Id}} (or uses a query parameter where the id is only a filter).
+     * The rule still enforces the convention for all controllers, so any NEW violation fails the build. Only add an entry here together with a documented follow-up plan to migrate
+     * it, keeping the old path as a deprecated alias.
+     */
+    private static final Set<String> PATH_VARIABLE_COLLECTION_BASELINE = Set.of();
 
     @Test
     void shouldBeNamedResource() {
@@ -86,6 +99,93 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
         for (var annotation : annotationClasses) {
             methods().should(useKebabCaseForRestAnnotations(annotation)).check(productionClasses);
         }
+    }
+
+    /**
+     * Enforces the REST path convention documented in
+     * <a href="https://docs.artemis.tum.de/developer/guidelines/rest-api">the REST API guidelines</a>:
+     * a path that identifies an entity must pair the id with its (plural) collection, i.e.
+     * {@code api/<module>/<collection>/{<collection-singular>Id}} (for example
+     * {@code api/course/courses/{courseId}} or {@code api/exam/courses/{courseId}/exams/{examId}}).
+     * <p>
+     * Concretely, every path variable whose name ends with {@code Id} must be immediately preceded by a
+     * literal collection segment whose pluralized singular matches the id (exactly, or as a subtype
+     * suffix so that {@code programming-exercises/{exerciseId}} is accepted). A floating id directly
+     * after the module ({@code api/notification/{courseId}}) or after another variable is forbidden;
+     * use a query parameter instead when the entity is only a filter and not a sub-resource.
+     * <p>
+     * Existing deviations are captured in {@link #PATH_VARIABLE_COLLECTION_BASELINE} so the rule fails
+     * for any NEW violation. When a baselined path is fixed, remove it from the set; the goal is to
+     * shrink the baseline to zero.
+     */
+    @Test
+    void restPathVariablesMustBePairedWithTheirCollection() {
+        for (var annotation : annotationClasses) {
+            methods().should(pairEntityIdsWithTheirCollection(annotation)).check(productionClasses);
+        }
+    }
+
+    private ArchCondition<JavaMethod> pairEntityIdsWithTheirCollection(Class<? extends Annotation> annotationClass) {
+        return new ArchCondition<>("pair every {entityId} path variable with its plural collection") {
+
+            @Override
+            public void check(JavaMethod method, ConditionEvents events) {
+                String methodPath = firstMappingValue(method, annotationClass);
+                if (methodPath == null) {
+                    return;
+                }
+                String classPrefix = firstMappingValue(method.getOwner(), RequestMapping.class);
+                String canonicalPath = ((classPrefix == null ? "" : classPrefix) + "/" + methodPath).replaceAll("/{2,}", "/").replaceAll("(^/|/$)", "");
+                String[] segments = canonicalPath.split("/");
+                for (int i = 0; i < segments.length; i++) {
+                    var matcher = ENTITY_ID_VARIABLE.matcher(segments[i]);
+                    if (!matcher.matches()) {
+                        continue;
+                    }
+                    String idName = matcher.group(1);
+                    String expectedCollection = pluralize(camelToKebab(idName.substring(0, idName.length() - 2)));
+                    String previous = i > 0 ? segments[i - 1] : "";
+                    boolean pairedWithCollection = !previous.isEmpty() && !previous.startsWith("{")
+                            && (previous.equals(expectedCollection) || previous.endsWith(expectedCollection));
+                    if (!pairedWithCollection && !PATH_VARIABLE_COLLECTION_BASELINE.contains(canonicalPath)) {
+                        events.add(violated(method,
+                                String.format(
+                                        "REST path \"%s\" uses the entity id {%s} without its collection: it must be preceded by the plural collection \"%s\" (e.g. .../%s/{%s}). "
+                                                + "Use api/<module>/<plural-collection>/{<collection-singular>Id}, or a query parameter when the entity is only a filter. "
+                                                + "See https://docs.artemis.tum.de/developer/guidelines/rest-api",
+                                        canonicalPath, idName, expectedCollection, expectedCollection, idName)));
+                        return;
+                    }
+                }
+            }
+        };
+    }
+
+    private String firstMappingValue(HasAnnotations<?> item, Class<? extends Annotation> annotationClass) {
+        var annotation = item.getAnnotations().stream().filter(candidate -> ((JavaClass) candidate.getType()).getSimpleName().equals(annotationClass.getSimpleName())).findFirst();
+        if (annotation.isEmpty()) {
+            return null;
+        }
+        var value = annotation.get().tryGetExplicitlyDeclaredProperty("value");
+        if (value.isEmpty()) {
+            return null;
+        }
+        String[] values = (String[]) value.get();
+        return values.length > 0 ? values[0] : null;
+    }
+
+    private static String camelToKebab(String camelCase) {
+        return camelCase.replaceAll("(?<!^)(?=[A-Z])", "-").toLowerCase(Locale.ROOT);
+    }
+
+    private static String pluralize(String kebabSingular) {
+        if (kebabSingular.matches(".*[^aeiou]y")) {
+            return kebabSingular.substring(0, kebabSingular.length() - 1) + "ies";
+        }
+        if (kebabSingular.matches(".*(s|x|z|ch|sh)")) {
+            return kebabSingular + "es";
+        }
+        return kebabSingular + "s";
     }
 
     protected ArchCondition<JavaMethod> useKebabCaseForRestAnnotations(Class<?> annotationClass) {

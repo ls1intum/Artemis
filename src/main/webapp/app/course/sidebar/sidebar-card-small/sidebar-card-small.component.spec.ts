@@ -50,13 +50,13 @@ describe('SidebarCardSmallComponent', () => {
 
         fixture = TestBed.createComponent(SidebarCardSmallComponent);
         component = fixture.componentInstance;
-        component.sidebarItem = {
+        fixture.componentRef.setInput('sidebarItem', {
             title: 'testTitle',
             id: 'testId',
             size: 'S',
-        };
+        });
 
-        component.itemSelected = true;
+        fixture.componentRef.setInput('itemSelected', true);
         fixture.detectChanges();
     });
 
@@ -70,7 +70,7 @@ describe('SidebarCardSmallComponent', () => {
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-small');
         element.click();
         fixture.changeDetectorRef.detectChanges();
-        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith(component.sidebarItem.id);
+        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith(component.sidebarItem().id);
     });
 
     /*
@@ -80,7 +80,7 @@ describe('SidebarCardSmallComponent', () => {
 
     it('should navigate to the item URL on click', async () => {
         vi.spyOn(component, 'emitStoreAndRefresh');
-        component.itemSelected = true;
+        fixture.componentRef.setInput('itemSelected', true);
         fixture.changeDetectorRef.detectChanges();
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-small');
         itemElement.click();
@@ -93,7 +93,7 @@ describe('SidebarCardSmallComponent', () => {
 
     it('should navigate to the when no item was selected before', async () => {
         vi.spyOn(component, 'emitStoreAndRefresh');
-        component.itemSelected = false;
+        fixture.componentRef.setInput('itemSelected', false);
         fixture.changeDetectorRef.detectChanges();
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-small');
         itemElement.click();
@@ -105,24 +105,24 @@ describe('SidebarCardSmallComponent', () => {
     });
 
     it('should not have border-primary for muted conversations with unread', () => {
-        component.sidebarItem = {
+        fixture.componentRef.setInput('sidebarItem', {
             title: 'testTitle',
             id: 'testId',
             size: 'S',
             conversation: { hasUnreadMessage: true, isMuted: true },
-        };
+        });
         fixture.changeDetectorRef.detectChanges();
         const card = fixture.nativeElement.querySelector('#test-sidebar-card-small');
         expect(card.classList.contains('border-primary')).toBe(false);
     });
 
     it('should have border-primary for non-muted conversations with unread', () => {
-        component.sidebarItem = {
+        fixture.componentRef.setInput('sidebarItem', {
             title: 'testTitle',
             id: 'testId',
             size: 'S',
             conversation: { hasUnreadMessage: true, isMuted: false },
-        };
+        });
         fixture.changeDetectorRef.detectChanges();
         const card = fixture.nativeElement.querySelector('#test-sidebar-card-small');
         expect(card.classList.contains('border-primary')).toBe(true);
