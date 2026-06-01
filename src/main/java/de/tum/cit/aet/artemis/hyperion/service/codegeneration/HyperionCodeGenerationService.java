@@ -152,7 +152,7 @@ public abstract class HyperionCodeGenerationService {
         return coreLogicResponse;
     }
 
-    public List<GeneratedFileDTO> generateCode(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
+    public CodeGenerationResponseDTO generateCode(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
             String buildEnvironmentContext, String consistencyIssues) throws NetworkingException {
         return generateCode(user, exercise, courseId, previousBuildLogs, repositoryStructure, buildEnvironmentContext, consistencyIssues, DEFAULT_SELECTED_FEEDBACK_THREADS);
     }
