@@ -1593,6 +1593,49 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     transition: max-width 250ms ease-out;
 }
 
+// Global search result description: reset styles for markdown rendered via innerHTML (outside component scope)
+.result-description {
+    p,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        margin: 0;
+        padding: 0;
+        font-size: inherit;
+        font-weight: inherit;
+        line-height: inherit;
+    }
+
+    ul,
+    ol {
+        margin: 0;
+        padding-left: 1.2em;
+    }
+
+    code {
+        font-size: 0.85em;
+        padding: 0.1em 0.3em;
+        background-color: var(--bs-tertiary-bg);
+        border-radius: 0.2em;
+    }
+
+    pre {
+        margin: 0;
+
+        code {
+            padding: 0;
+            background: none;
+        }
+    }
+
+    img {
+        display: none;
+    }
+}
+
 // ng-bootstrap typeahead: ensure long suggestion lists are scrollable
 ngb-typeahead-window.dropdown-menu.show {
     max-height: min(40dvh, 22rem);
