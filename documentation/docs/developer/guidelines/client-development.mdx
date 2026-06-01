@@ -90,6 +90,56 @@ This also includes getter functions. The only exception is the use of [signals](
 If you need more information/examples or methods to avoid function calls, have a look at this [article](https://dev.to/sandrocagara/angular-avoid-function-calls-in-templates-1mfa).
 </Callout>
 
+### Reacting to input changes & lifecycle hooks
+
+Prefer reactive primitives over the `ngOnChanges` lifecycle hook in signal-based components.
+
+<Callout variant={CalloutVariant.info}>
+**`ngOnChanges` is _not_ dead code in Angular 21 — but `computed()` / `effect()` are the preferred, more consistent choice.**
+
+A belief carried over from Angular 17–18 holds that `ngOnChanges` is never called for signal inputs. **That is no longer true.** In Angular 21, `ngOnChanges` **does** fire for signal inputs (`input()` / `input.required()` / `model()`) with a full `SimpleChanges` record, and the first `ngOnChanges` still runs before `ngOnInit`. (Internally, signal-input writes are routed through `NgOnChangesFeature` → `ngOnChangesSetInput`, which records a `SimpleChange` and applies the value to the input signal; `ngOnChanges` is registered as a per-change-detection pre-order check hook. See [`OnChanges`](https://angular.dev/api/core/OnChanges).)
+
+So `ngOnChanges` is functional and not a correctness bug — but the Angular docs still recommend `computed`/`effect`, and a signal-first code base avoids a whole class of "I forgot to keep the derived field in sync" bugs.
+</Callout>
+
+**Pick the right reactive primitive.** Angular's guidance is `computed` first, `effect` last — [effects are for syncing signals to non-reactive APIs](https://angular.dev/guide/signals/effect), not for general reactivity:
+
+| Old `ngOnChanges` shape | Idiomatic signal replacement |
+| --- | --- |
+| Recompute a value derived from inputs/state | `computed()` — lazy, memoised, cannot go stale |
+| Derived value that can also be set locally | `linkedSignal()` |
+| Genuine side effect (subscribe, imperative / 3rd-party API, DOM) | `effect()` — use sparingly; it is the *last* API to reach for |
+| Need `SimpleChanges.previousValue` or `isFirstChange()` | keep `ngOnChanges` (signals don't expose these directly) |
+| Logic that must run **before** child components initialise | keep `ngOnChanges` (it runs before `ngOnInit`; an `effect()` runs afterwards) |
+
+```ts
+// Don't - derive state imperatively in ngOnChanges (has to be kept in sync by hand)
+@Component({ /* ... */ })
+export class ExampleComponent implements OnChanges {
+    value = input.required<number>();
+    doubled = 0;
+    ngOnChanges() {
+        this.doubled = this.value() * 2;
+    }
+}
+
+// Do - derive declaratively; it can never go stale
+@Component({ /* ... */ })
+export class ExampleComponent {
+    value = input.required<number>();
+    doubled = computed(() => this.value() * 2);
+}
+```
+
+An ESLint rule (`localRules/prefer-signal-reactivity-over-ngonchanges`) **warns** on `ngOnChanges` in `@Component` / `@Directive` classes. It is enabled for modules that are fully migrated to signals **and** already free of `ngOnChanges` (see `signalReactivityModules` in `eslint.config.mjs`); that list grows as the remaining migrated modules are cleaned up. The rule is intentionally a warning, not an error — for the legitimate cases above, keep `ngOnChanges` and silence the rule on the line with a short justification:
+
+```ts
+// eslint-disable-next-line localRules/prefer-signal-reactivity-over-ngonchanges -- needs SimpleChanges.previousValue
+ngOnChanges(changes: SimpleChanges) { /* ... */ }
+```
+
+`ngOnInit` and `ngOnDestroy` are **not** affected by signals — they fire regardless of the input mechanism and remain valid. For teardown, prefer `DestroyRef` + `takeUntilDestroyed()` or an `effect()` (which cleans itself up) over manual `ngOnDestroy` bookkeeping where practical; the `localRules/enforce-cleanup-on-destroy` rule already guards subscription cleanup.
+
 ### Naming Conventions
 
 * Use PascalCase for type and enum names.

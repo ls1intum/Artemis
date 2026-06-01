@@ -26,6 +26,39 @@ const blockLayerImportPatterns = (layer) => [
     `../../../../../../${layer}/**`,
 ];
 
+// Modules that are fully migrated to signal-based APIs AND currently contain no `ngOnChanges`.
+// In these we discourage NEW `ngOnChanges` (warn) and steer towards computed() / effect().
+// `ngOnChanges` still works in Angular 21 (it fires for signal inputs), so this is a consistency
+// preference, not a correctness rule — hence `warn` plus a line-level disable escape hatch for the
+// legitimate cases (SimpleChanges.previousValue / isFirstChange(), or logic that must run before
+// child components initialise). Full rationale + decision table:
+// documentation/docs/developer/guidelines/client-development.mdx ("Reacting to input changes & lifecycle hooks").
+//
+// The client has been fully migrated to signal APIs (enforced globally by rules/enforce-signal-apis.mjs). This is the
+// subset of modules already free of convertible `ngOnChanges`; expand it as the remaining modules are cleaned up.
+// Still excluded because they contain `ngOnChanges` today: assessment, atlas, lecture, plagiarism, quiz, shared-ui.
+const signalReactivityModules = [
+    'account',
+    'admin',
+    'calendar',
+    'communication',
+    'core',
+    'exam',
+    'fileupload',
+    'foundation',
+    'hyperion',
+    'iris',
+    'localci',
+    'localvc',
+    'logos',
+    'lti',
+    'modeling',
+    'notification',
+    'sharing',
+    'text',
+    'tutorialgroup',
+];
+
 export default tseslint.config(
     {
         // Only src/main/webapp/ and src/test/javascript/ contain lintable client code.
@@ -175,6 +208,16 @@ export default tseslint.config(
             'localRules/require-signal-reference-ngb-modal-input': 'error',
             'localRules/enforce-signal-apis': 'error',
             'localRules/enforce-cleanup-on-destroy': 'warn',
+        },
+    },
+    // Discourage `ngOnChanges` in fully-migrated, signal-based modules that are already free of it.
+    // Prefer computed() for derived state and effect() for genuine side effects. Warn-level with a
+    // line-level disable escape hatch — see `signalReactivityModules` above for scope and rationale.
+    {
+        files: signalReactivityModules.map((module) => `src/main/webapp/app/${module}/**/*.ts`),
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            'localRules/prefer-signal-reactivity-over-ngonchanges': 'warn',
         },
     },
     // Module-boundary rules: enforce the foundation ← shared-ui ← editor layering.
