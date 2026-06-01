@@ -88,7 +88,7 @@
                     @for (exercise of upcomingExercises(); track trackByExercise($index, exercise)) {
                         <tr>
                             <td>
-                                <fa-icon [icon]="getIcon(exercise.type)" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" />
+                                <fa-icon [icon]="getIcon(exercise.type)" [pTooltip]="getIconTooltip(exercise.type) | artemisTranslate" />
                             </td>
                             <td>
                                 <a [routerLink]="['/course-management', exercise.course?.id, exercise.type + '-exercises', exercise.id]">{{ exercise.title }}</a>

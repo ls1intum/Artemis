@@ -10,10 +10,13 @@
         ></a
         >.
     </div>
-    <nav ngbNav #nav="ngbNav" [activeId]="activeTab()" (activeIdChange)="activeTab.set($event)" class="nav-tabs mt-4">
-        <ng-container ngbNavItem [ngbNavItem]="1">
-            <a ngbNavLink jhiTranslate="artemisApp.lti.platformRegistration"></a>
-            <ng-template ngbNavContent>
+    <p-tabs [value]="activeTab()" (valueChange)="setActiveTab($event)" class="mt-4">
+        <p-tablist>
+            <p-tab [value]="1"><span jhiTranslate="artemisApp.lti.platformRegistration"></span></p-tab>
+            <p-tab [value]="2"><span jhiTranslate="artemisApp.lti.serviceUrls"></span></p-tab>
+        </p-tablist>
+        <p-tabpanels>
+            <p-tabpanel [value]="1">
                 <dt></dt>
                 <dt style="display: flex; align-items: center">
                     <h4 class="modal-title" jhiTranslate="artemisApp.lti.dynamicRegistrationUrl"></h4>
@@ -125,25 +128,13 @@
                                 <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
                             </div>
                             <div class="row justify-content-center">
-                                <ngb-pagination
-                                    [collectionSize]="totalItems()"
-                                    [page]="page()"
-                                    (pageChange)="page.set($event); transition()"
-                                    [pageSize]="itemsPerPage"
-                                    [maxSize]="5"
-                                    [rotate]="true"
-                                    [boundaryLinks]="true"
-                                    [disabled]="false"
-                                />
+                                <p-paginator [first]="(page() - 1) * itemsPerPage" [rows]="itemsPerPage" [totalRecords]="totalItems()" (onPageChange)="onPageChange($event)" />
                             </div>
                         </div>
                     </div>
                 </div>
-            </ng-template>
-        </ng-container>
-        <ng-container ngbNavItem [ngbNavItem]="2">
-            <a ngbNavLink jhiTranslate="artemisApp.lti.serviceUrls"></a>
-            <ng-template ngbNavContent>
+            </p-tabpanel>
+            <p-tabpanel [value]="2">
                 <dt>
                     <span jhiTranslate="artemisApp.lti.deepLinkingUrl"></span>
                 </dt>
@@ -179,10 +170,7 @@
                     <span>{{ getRedirectUri() }}</span>
                     <jhi-copy-to-clipboard-button [copyText]="getRedirectUri()" />
                 </dd>
-            </ng-template>
-        </ng-container>
-    </nav>
-    <div class="modal-body">
-        <div [ngbNavOutlet]="nav" class="mt-2"></div>
-    </div>
+            </p-tabpanel>
+        </p-tabpanels>
+    </p-tabs>
 </form>

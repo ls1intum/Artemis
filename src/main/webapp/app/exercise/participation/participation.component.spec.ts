@@ -94,8 +94,7 @@ describe('ParticipationComponent', () => {
 
             component.ngOnInit();
 
-            expect(exerciseFindStub).toHaveBeenCalledOnce();
-            expect(exerciseFindStub).toHaveBeenCalledWith(1);
+            expect(exerciseFindStub).toHaveBeenCalledExactlyOnceWith(1);
             expect(component.exercise()).toEqual(exercise);
         });
     });
