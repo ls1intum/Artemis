@@ -59,6 +59,12 @@ describe('MonacoDiffEditorComponent', () => {
         fixture.componentRef.setInput('allowSplitView', false);
         fixture.detectChanges();
         expect(updateOptionsSpy).toHaveBeenCalledWith(expect.objectContaining({ renderSideBySide: false, useInlineViewWhenSpaceIsLimited: true }));
+
+        // forceSideBySide must force the split view even when allowSplitView is false.
+        updateOptionsSpy.mockClear();
+        fixture.componentRef.setInput('forceSideBySide', true);
+        fixture.detectChanges();
+        expect(updateOptionsSpy).toHaveBeenCalledWith(expect.objectContaining({ renderSideBySide: true, useInlineViewWhenSpaceIsLimited: false }));
     });
 
     it('should set the text of the editor', () => {
