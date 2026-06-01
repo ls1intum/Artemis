@@ -19,6 +19,7 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { CollapseState } from 'app/foundation/types/sidebar';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
@@ -146,6 +147,22 @@ describe('SidebarAccordionComponent', () => {
 
         expect(component.setStoredCollapseState).toHaveBeenCalledOnce();
         expect(component.collapseStateInternal()).toEqual(expectedStateAfterClear);
+    });
+
+    it('should reload the stored collapse state when the course key changes', () => {
+        fixture.changeDetectorRef.detectChanges();
+        // Persist a collapse state for a different course key, then switch to it: the effect must reload it
+        // (mirrors the former ngOnChanges, which reacted to courseId/storageId changes too).
+        const newCourseId = 999;
+        const storedState = { current: true, past: true, future: true, noDate: true } as CollapseState;
+        localStorageService.store(`sidebar.accordion.collapseState.${component.storageId()}.byCourse.${newCourseId}`, storedState);
+        const setStoredSpy = vi.spyOn(component, 'setStoredCollapseState');
+
+        fixture.componentRef.setInput('courseId', newCourseId);
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(setStoredSpy).toHaveBeenCalled();
+        expect(component.collapseStateInternal()).toEqual(storedState);
     });
 
     it('should correctly add the d-none class when searchValue is set', () => {

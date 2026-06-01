@@ -59,6 +59,10 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
         // create an infinite reactive loop).
         effect(() => {
             const shouldExpandAll = !!this.searchValue() || this.isFilterActive();
+            // Track the storage-key inputs too: mirroring the former ngOnChanges, a change of course/storage key must
+            // reload the stored collapse state for that key (setStoredCollapseState reads them inside untracked()).
+            this.courseId();
+            this.storageId();
             untracked(() => {
                 if (shouldExpandAll) {
                     this.expandAll();
