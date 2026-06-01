@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ResultComponent } from 'app/exercise/result/result.component';
@@ -24,6 +24,7 @@ import { ParticipationType } from 'app/exercise/shared/entities/participation/pa
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ResultTemplateStatus } from 'app/exercise/result/result.utils';
 import { ResultProgressBarComponent } from 'app/exercise/result/result-progress-bar/result-progress-bar.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -34,7 +35,6 @@ import { provideHttpClient } from '@angular/common/http';
 
 describe('ResultComponent', () => {
     setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ResultComponent>;
     let component: ResultComponent;
 
@@ -67,8 +67,8 @@ describe('ResultComponent', () => {
 
     const textParticipation: StudentParticipation = { id: 6, type: ParticipationType.STUDENT, exercise: textExercise };
 
-    beforeEach(async () => {
-        await TestBed.configureTestingModule({
+    beforeEach(() => {
+        TestBed.configureTestingModule({
             imports: [ResultComponent],
             providers: [
                 LocalStorageService,
@@ -80,7 +80,7 @@ describe('ResultComponent', () => {
             ],
         })
             .overrideComponent(ResultComponent, {
-                remove: { imports: [ResultProgressBarComponent, ArtemisTranslatePipe, ArtemisTimeAgoPipe, ArtemisDatePipe, TranslateDirective] },
+                remove: { imports: [ResultProgressBarComponent, ArtemisTranslatePipe, ArtemisTimeAgoPipe, ArtemisDatePipe, TranslateDirective, NgbTooltip] },
                 add: {
                     imports: [
                         MockComponent(ResultProgressBarComponent),
@@ -88,6 +88,7 @@ describe('ResultComponent', () => {
                         MockPipe(ArtemisTimeAgoPipe),
                         MockPipe(ArtemisDatePipe),
                         MockDirective(TranslateDirective),
+                        MockDirective(NgbTooltip),
                     ],
                 },
             })

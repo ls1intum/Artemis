@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ResultProgressBarComponent } from 'app/exercise/result/result-progress-bar/result-progress-bar.component';
@@ -7,7 +7,6 @@ import { TranslateService } from '@ngx-translate/core';
 
 describe('ResultProgressBarComponent', () => {
     setupTestBed({ zoneless: true });
-
     let component: ResultProgressBarComponent;
     let fixture: ComponentFixture<ResultProgressBarComponent>;
     let clearIntervalSpy: ReturnType<typeof vi.spyOn>;
@@ -34,7 +33,6 @@ describe('ResultProgressBarComponent', () => {
     afterEach(() => {
         vi.clearAllTimers();
         vi.useRealTimers();
-        vi.restoreAllMocks();
     });
 
     it('should clear interval when not queued or building', () => {

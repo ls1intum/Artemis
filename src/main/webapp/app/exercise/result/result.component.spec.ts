@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ResultComponent } from 'app/exercise/result/result.component';
@@ -82,7 +82,6 @@ const participationServiceMock = {
 
 describe('ResultComponent', () => {
     setupTestBed({ zoneless: true });
-
     let comp: ResultComponent;
     let fixture: ComponentFixture<ResultComponent>;
     let dialogService: DialogService;

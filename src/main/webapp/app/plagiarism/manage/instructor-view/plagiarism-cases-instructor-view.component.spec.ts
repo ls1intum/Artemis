@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PlagiarismCasesInstructorViewComponent } from 'app/plagiarism/manage/instructor-view/plagiarism-cases-instructor-view.component';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { ActivatedRoute, ActivatedRouteSnapshot, RouterModule, convertToParamMap } from '@angular/router';
@@ -26,11 +28,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 @Component({ template: '' })
 class DummyComponent {}
 
-jest.mock('app/foundation/util/download.util', () => ({
-    downloadFile: jest.fn(),
+vi.mock('app/foundation/util/download.util', () => ({
+    downloadFile: vi.fn(),
 }));
 
 describe('Plagiarism Cases Instructor View Component', () => {
+    setupTestBed({ zoneless: true });
+
     let component: PlagiarismCasesInstructorViewComponent;
     let fixture: ComponentFixture<PlagiarismCasesInstructorViewComponent>;
     let plagiarismCasesService: PlagiarismCasesService;
@@ -115,8 +119,6 @@ describe('Plagiarism Cases Instructor View Component', () => {
                     },
                 ]),
                 FaIconComponent,
-            ],
-            declarations: [
                 PlagiarismCasesInstructorViewComponent,
                 MockComponent(DocumentationButtonComponent),
                 MockComponent(ProgressBarComponent),
@@ -133,18 +135,18 @@ describe('Plagiarism Cases Instructor View Component', () => {
         fixture = TestBed.createComponent(PlagiarismCasesInstructorViewComponent);
         component = fixture.componentInstance;
         plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
-        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(
+        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(
             of({ body: [plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4] }) as Observable<HttpResponse<PlagiarismCase[]>>,
         );
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should set plagiarism cases and exercises on initialization', fakeAsync(() => {
+    it('should set plagiarism cases and exercises on initialization', async () => {
         component.ngOnInit();
-        tick();
+        await Promise.resolve();
         expect(component.courseId).toBe(1);
         expect(component.examId).toBe(0);
         expect(component.plagiarismCases).toEqual([plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4]);
@@ -153,34 +155,34 @@ describe('Plagiarism Cases Instructor View Component', () => {
             1: [plagiarismCase1, plagiarismCase2],
             2: [plagiarismCase3, plagiarismCase4],
         });
-    }));
+    });
 
-    it('should get plagiarism cases for course when exam id is not set', fakeAsync(() => {
-        jest.spyOn(plagiarismCasesService, 'getExamPlagiarismCasesForInstructor');
+    it('should get plagiarism cases for course when exam id is not set', async () => {
+        vi.spyOn(plagiarismCasesService, 'getExamPlagiarismCasesForInstructor');
         component.ngOnInit();
-        tick();
+        await Promise.resolve();
 
         expect(component.courseId).toBe(1);
         expect(component.examId).toBe(0);
         expect(plagiarismCasesService.getCoursePlagiarismCasesForInstructor).toHaveBeenCalledOnce();
         expect(plagiarismCasesService.getExamPlagiarismCasesForInstructor).not.toHaveBeenCalled();
-    }));
+    });
 
-    it('should get plagiarism cases for exam when exam id is set', fakeAsync(() => {
-        jest.spyOn(plagiarismCasesService, 'getExamPlagiarismCasesForInstructor');
+    it('should get plagiarism cases for exam when exam id is set', async () => {
+        vi.spyOn(plagiarismCasesService, 'getExamPlagiarismCasesForInstructor');
 
         const newSnapshot = { paramMap: convertToParamMap({ courseId: 1, examId: 1 }) } as ActivatedRouteSnapshot;
         const activatedRoute: ActivatedRoute = TestBed.inject(ActivatedRoute);
         activatedRoute.snapshot = newSnapshot;
 
         component.ngOnInit();
-        tick();
+        await Promise.resolve();
 
         expect(component.courseId).toBe(1);
         expect(component.examId).toBe(1);
         expect(plagiarismCasesService.getCoursePlagiarismCasesForInstructor).not.toHaveBeenCalled();
         expect(plagiarismCasesService.getExamPlagiarismCasesForInstructor).toHaveBeenCalledOnce();
-    }));
+    });
 
     it('should calculate number of plagiarism cases', () => {
         const plagiarismCases = [plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4, plagiarismCase5];
@@ -218,13 +220,13 @@ describe('Plagiarism Cases Instructor View Component', () => {
     });
 
     it('should check if student has responded for a plagiarism case', () => {
-        expect(component.hasStudentAnswer(plagiarismCase1)).toBeTrue();
-        expect(component.hasStudentAnswer(plagiarismCase2)).toBeFalse();
-        expect(component.hasStudentAnswer(plagiarismCase3)).toBeFalse();
+        expect(component.hasStudentAnswer(plagiarismCase1)).toBe(true);
+        expect(component.hasStudentAnswer(plagiarismCase2)).toBe(false);
+        expect(component.hasStudentAnswer(plagiarismCase3)).toBe(false);
     });
 
     it('should export plagiarism cases as CSV', () => {
-        const downloadSpy = jest.spyOn(DownloadUtil, 'downloadFile');
+        const downloadSpy = vi.spyOn(DownloadUtil, 'downloadFile');
         component.plagiarismCases = [plagiarismCase1, plagiarismCase4];
         const expectedBlob = [
             'Student Login; Matr. Nr.; Exercise;Verdict; Verdict Date\n',
@@ -236,7 +238,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
         expect(downloadSpy).toHaveBeenCalledWith(new Blob(expectedBlob, { type: 'text/csv' }), 'plagiarism-cases.csv');
     });
 
-    it('should navigate to plagiarism detection page on click', fakeAsync(() => {
+    it('should navigate to plagiarism detection page on click', async () => {
         const location = TestBed.inject(Location);
         const courseId = route.snapshot.paramMap.get('courseId');
         // exercise id = exercise1.id for first element of first group (0-0)
@@ -246,9 +248,9 @@ describe('Plagiarism Cases Instructor View Component', () => {
         const plagiarismDetectionLink = fixture.debugElement.nativeElement.querySelector('#plagiarism-detection-link-' + exercise1.id);
         expect(plagiarismDetectionLink).toBeTruthy();
         plagiarismDetectionLink.click();
-        tick();
+        await fixture.whenStable();
         expect(location.path()).toBe(`/course-management/${courseId}/${exercise1.type}-exercises/${exerciseId}/plagiarism`);
-    }));
+    });
 
     it('should handle empty plagiarism cases list', () => {
         const emptyPlagiarismCases: PlagiarismCase[] = [];
@@ -262,8 +264,8 @@ describe('Plagiarism Cases Instructor View Component', () => {
     });
 
     it('should scroll to the correct exercise element when scrollToExercise is called', () => {
-        const nativeElement1 = { id: 'exercise-with-plagiarism-case-1', scrollIntoView: jest.fn() };
-        const nativeElement2 = { id: 'exercise-with-plagiarism-case-2', scrollIntoView: jest.fn() };
+        const nativeElement1 = { id: 'exercise-with-plagiarism-case-1', scrollIntoView: vi.fn() };
+        const nativeElement2 = { id: 'exercise-with-plagiarism-case-2', scrollIntoView: vi.fn() };
 
         const elementRef1 = new ElementRef(nativeElement1);
         const elementRef2 = new ElementRef(nativeElement2);

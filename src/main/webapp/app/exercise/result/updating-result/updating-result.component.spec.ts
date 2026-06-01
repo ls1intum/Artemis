@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { PROFILE_LOCALCI } from 'app/app.constants';
@@ -16,9 +16,7 @@ import {
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockProgrammingSubmissionService } from 'test/helpers/mocks/service/mock-programming-submission.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService } from 'primeng/dynamicdialog';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
@@ -33,7 +31,6 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 
 describe('UpdatingResultComponent', () => {
     setupTestBed({ zoneless: true });
-
     let comp: UpdatingResultComponent;
     let fixture: ComponentFixture<UpdatingResultComponent>;
     let participationWebsocketService: ParticipationWebsocketService;
@@ -64,15 +61,14 @@ describe('UpdatingResultComponent', () => {
         estimatedCompletionDate: dayjs().add(10, 'second'),
     };
 
-    beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            imports: [UpdatingResultComponent],
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [MockComponent(ResultComponent), UpdatingResultComponent],
             providers: [
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DialogService, useClass: MockDialogService },
             ],
         })
             .overrideComponent(UpdatingResultComponent, {
@@ -130,15 +126,13 @@ describe('UpdatingResultComponent', () => {
 
     it('should use the newest rated result of the provided participation and subscribe for new results', () => {
         cleanInitializeGraded();
-        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
-        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(initialParticipation.id, true, undefined);
+        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledExactlyOnceWith(initialParticipation.id, true, undefined);
         expect(comp.result!.id).toBe(gradedResult2.id);
     });
 
     it('should use the newest (un)rated result of the provided participation and subscribe for new results', () => {
         cleanInitializeUngraded();
-        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
-        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(initialParticipation.id, true, undefined);
+        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledExactlyOnceWith(initialParticipation.id, true, undefined);
         expect(comp.result!.id).toBe(ungradedResult2.id);
     });
 
@@ -177,8 +171,7 @@ describe('UpdatingResultComponent', () => {
     it('should subscribe to fetching the latest pending submission when the exerciseType is PROGRAMMING', () => {
         fixture.componentRef.setInput('exercise', { id: 99, type: ExerciseType.PROGRAMMING } as Exercise);
         cleanInitializeGraded();
-        expect(getLatestPendingSubmissionStub).toHaveBeenCalledOnce();
-        expect(getLatestPendingSubmissionStub).toHaveBeenCalledWith(comp.participation()?.id, comp.exercise()?.id, true);
+        expect(getLatestPendingSubmissionStub).toHaveBeenCalledExactlyOnceWith(comp.participation()?.id, comp.exercise()?.id, true);
         expect(comp.isBuilding).toBe(false);
     });
 
@@ -190,8 +183,7 @@ describe('UpdatingResultComponent', () => {
             of({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: 3, buildTimingInfo }),
         );
         cleanInitializeGraded();
-        expect(getLatestPendingSubmissionStub).toHaveBeenCalledOnce();
-        expect(getLatestPendingSubmissionStub).toHaveBeenCalledWith(comp.participation()?.id, comp.exercise()?.id, true);
+        expect(getLatestPendingSubmissionStub).toHaveBeenCalledExactlyOnceWith(comp.participation()?.id, comp.exercise()?.id, true);
         expect(comp.isBuilding).toBe(true);
         expect(comp.missingResultInfo).toBe(MissingResultInformation.NONE);
         // LocalCI is not enabled, so the buildStartDate and estimatedCompletionDate should not be set
@@ -204,8 +196,7 @@ describe('UpdatingResultComponent', () => {
         comp.isBuilding = true;
         getLatestPendingSubmissionStub.mockReturnValue(of({ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId: 3 }));
         cleanInitializeGraded();
-        expect(getLatestPendingSubmissionStub).toHaveBeenCalledOnce();
-        expect(getLatestPendingSubmissionStub).toHaveBeenCalledWith(comp.participation()?.id, comp.exercise()?.id, true);
+        expect(getLatestPendingSubmissionStub).toHaveBeenCalledExactlyOnceWith(comp.participation()?.id, comp.exercise()?.id, true);
         expect(comp.isBuilding).toBe(false);
         expect(comp.missingResultInfo).toBe(MissingResultInformation.NONE);
     });
@@ -215,8 +206,7 @@ describe('UpdatingResultComponent', () => {
         comp.isBuilding = true;
         getLatestPendingSubmissionStub.mockReturnValue(of({ submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: undefined, participationId: 3 }));
         cleanInitializeGraded();
-        expect(getLatestPendingSubmissionStub).toHaveBeenCalledOnce();
-        expect(getLatestPendingSubmissionStub).toHaveBeenCalledWith(comp.participation()?.id, comp.exercise()?.id, true);
+        expect(getLatestPendingSubmissionStub).toHaveBeenCalledExactlyOnceWith(comp.participation()?.id, comp.exercise()?.id, true);
         expect(comp.isBuilding).toBe(false);
         expect(comp.missingResultInfo).toBe(MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE);
     });
@@ -225,8 +215,7 @@ describe('UpdatingResultComponent', () => {
         fixture.componentRef.setInput('exercise', { id: 99, type: ExerciseType.PROGRAMMING, allowOfflineIde: false } as ProgrammingExercise);
         getLatestPendingSubmissionStub.mockReturnValue(of({ submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: undefined, participationId: 3 }));
         cleanInitializeGraded();
-        expect(getLatestPendingSubmissionStub).toHaveBeenCalledOnce();
-        expect(getLatestPendingSubmissionStub).toHaveBeenCalledWith(comp.participation()?.id, comp.exercise()?.id, true);
+        expect(getLatestPendingSubmissionStub).toHaveBeenCalledExactlyOnceWith(comp.participation()?.id, comp.exercise()?.id, true);
         expect(comp.missingResultInfo).toBe(MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE);
     });
 
@@ -269,8 +258,7 @@ describe('UpdatingResultComponent', () => {
         const queueReleaseDate = dayjs().add(3, 'second');
         fetchQueueReleaseDateEstimationByParticipationIdStub.mockReturnValue(of(queueReleaseDate));
         cleanInitializeGraded();
-        expect(getLatestPendingSubmissionStub).toHaveBeenCalledOnce();
-        expect(getLatestPendingSubmissionStub).toHaveBeenCalledWith(comp.participation()?.id, comp.exercise()?.id, true);
+        expect(getLatestPendingSubmissionStub).toHaveBeenCalledExactlyOnceWith(comp.participation()?.id, comp.exercise()?.id, true);
 
         expect(comp.isBuilding).toBeFalsy();
         expect(comp.isQueued).toBeTruthy();
