@@ -25,7 +25,7 @@ import org.w3c.dom.Document;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.exception.JenkinsException;
+import de.tum.cit.aet.artemis.jenkins.exception.JenkinsException;
 import de.tum.cit.aet.artemis.jenkins.service.JenkinsEndpoints;
 import de.tum.cit.aet.artemis.jenkins.service.JenkinsXmlFileUtils;
 

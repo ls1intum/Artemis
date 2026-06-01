@@ -9,8 +9,8 @@ import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
-import { ConfirmAutofocusModalComponent } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ConfirmAutofocusModalResult, openConfirmAutofocusDialog } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
+import { DialogService } from 'primeng/dynamicdialog';
 import { Observable, Subscription, firstValueFrom, map } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
@@ -66,7 +66,7 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
     private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
     private formBuilder = inject(FormBuilder);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private translateService = inject(TranslateService);
     private websocketService = inject(WebsocketService);
@@ -186,10 +186,19 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
      */
     onDelete(index: number) {
         const competencyTitle = this.competencies.at(index).controls.competency.controls.title.getRawValue() ?? '';
-        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'md' });
-        modalRef.componentInstance.title = 'artemisApp.competency.generate.deleteModalTitle';
-        modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.competency.generate.deleteModalText', { title: competencyTitle });
-        modalRef.result.then(() => this.competencies.removeAt(index));
+        const dialogRef = openConfirmAutofocusDialog(
+            this.dialogService,
+            {
+                title: 'artemisApp.competency.generate.deleteModalTitle',
+                text: this.artemisTranslatePipe.transform('artemisApp.competency.generate.deleteModalText', { title: competencyTitle }),
+            },
+            { width: '30rem' },
+        );
+        dialogRef?.onClose.subscribe((result: ConfirmAutofocusModalResult | undefined) => {
+            if (result?.confirmed) {
+                this.competencies.removeAt(index);
+            }
+        });
     }
 
     /**
@@ -204,10 +213,19 @@ export class GenerateCompetenciesComponent implements OnInit, OnDestroy, Compone
      */
     onSubmit() {
         if (!this.isSubmitPossibleWithoutConfirmation()) {
-            const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'md' });
-            modalRef.componentInstance.title = 'artemisApp.competency.generate.saveModalTitle';
-            modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.competency.generate.saveModalText');
-            modalRef.result.then(this.save.bind(this));
+            const dialogRef = openConfirmAutofocusDialog(
+                this.dialogService,
+                {
+                    title: 'artemisApp.competency.generate.saveModalTitle',
+                    text: this.artemisTranslatePipe.transform('artemisApp.competency.generate.saveModalText'),
+                },
+                { width: '30rem' },
+            );
+            dialogRef?.onClose.subscribe((result: ConfirmAutofocusModalResult | undefined) => {
+                if (result?.confirmed) {
+                    this.save();
+                }
+            });
         } else {
             this.save();
         }

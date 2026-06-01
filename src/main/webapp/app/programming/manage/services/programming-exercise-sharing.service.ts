@@ -115,7 +115,7 @@ export class ProgrammingExerciseSharingService {
      * @param callBackUrl used to redirect back after export has been completed
      */
     exportProgrammingExerciseToSharing(programmingExerciseId: number, callBackUrl: string): Observable<HttpResponse<string>> {
-        return this.http.post<string>(this.resourceUrlExport + `/${programmingExerciseId}`, callBackUrl, {
+        return this.http.post<string>(`${this.resourceUrlExport}?exerciseId=${programmingExerciseId}`, callBackUrl, {
             observe: 'response',
         });
     }

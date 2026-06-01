@@ -154,7 +154,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
 
         // Test paginated endpoint - response is a list with pagination info in headers
-        List<RatingListItemDTO> ratings = request.getList("/api/assessment/course/" + course.getId() + "/rating", HttpStatus.OK, RatingListItemDTO.class);
+        List<RatingListItemDTO> ratings = request.getList("/api/assessment/courses/" + course.getId() + "/rating", HttpStatus.OK, RatingListItemDTO.class);
 
         assertThat(ratings).hasSize(1);
 
@@ -176,7 +176,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
         ratingService.saveRating(result.getId(), rating.getRating());
 
         // Test with explicit pagination and sorting parameters
-        List<RatingListItemDTO> ratings = request.getList("/api/assessment/course/" + course.getId() + "/rating?page=0&size=10&sort=id,desc", HttpStatus.OK,
+        List<RatingListItemDTO> ratings = request.getList("/api/assessment/courses/" + course.getId() + "/rating?page=0&size=10&sort=id,desc", HttpStatus.OK,
                 RatingListItemDTO.class);
 
         assertThat(ratings).hasSize(1);
@@ -185,18 +185,18 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetRatingForInstructorDashboard_asTutor_FORBIDDEN() throws Exception {
-        request.get("/api/assessment/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/assessment/courses/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetRatingForInstructorDashboard_asStudent_FORBIDDEN() throws Exception {
-        request.get("/api/assessment/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/assessment/courses/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testGetRatingForInstructorDashboard_asInstructor_FORBIDDEN() throws Exception {
-        request.get("/api/assessment/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/assessment/courses/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, List.class);
     }
 }

@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import {
     convertDateFromClient,
     convertDateFromServer,
@@ -80,17 +81,17 @@ describe('DateUtils', () => {
     describe('isDateLessThanAWeekInTheFuture', () => {
         it('should return true if date is less than a week away', () => {
             const date = dayjs().add(6, 'days');
-            expect(isDateLessThanAWeekInTheFuture(date)).toBeTrue();
+            expect(isDateLessThanAWeekInTheFuture(date)).toBe(true);
         });
 
         it('should return false if date is more than a week away', () => {
             const date = dayjs().add(8, 'days');
-            expect(isDateLessThanAWeekInTheFuture(date)).toBeFalse();
+            expect(isDateLessThanAWeekInTheFuture(date)).toBe(false);
         });
 
         it('should return false if date is more than a week ago', () => {
             const date = dayjs().subtract(8, 'days');
-            expect(isDateLessThanAWeekInTheFuture(date)).toBeFalse();
+            expect(isDateLessThanAWeekInTheFuture(date)).toBe(false);
         });
     });
 });
