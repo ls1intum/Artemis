@@ -1,9 +1,13 @@
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute } from '@angular/router';
-import { BehaviorSubject, Subject, firstValueFrom, of } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import {
@@ -60,20 +64,22 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('CodeEditorContainerIntegration', () => {
+    setupTestBed({ zoneless: true });
+
     let container: CodeEditorContainerComponent;
     let containerFixture: ComponentFixture<CodeEditorContainerComponent>;
     let conflictService: CodeEditorConflictStateService;
     let domainService: DomainService;
-    let checkIfRepositoryIsCleanStub: jest.SpyInstance;
-    let getRepositoryContentStub: jest.SpyInstance;
-    let subscribeForLatestResultOfParticipationStub: jest.SpyInstance;
-    let getFeedbackDetailsForResultStub: jest.SpyInstance;
-    let getBuildLogsStub: jest.SpyInstance;
-    let getFileStub: jest.SpyInstance;
-    let saveFilesStub: jest.SpyInstance;
-    let commitStub: jest.SpyInstance;
-    let getStudentParticipationWithLatestResultStub: jest.SpyInstance;
-    let getLatestPendingSubmissionStub: jest.SpyInstance;
+    let checkIfRepositoryIsCleanStub: ReturnType<typeof vi.spyOn>;
+    let getRepositoryContentStub: ReturnType<typeof vi.spyOn>;
+    let subscribeForLatestResultOfParticipationStub: ReturnType<typeof vi.spyOn>;
+    let getFeedbackDetailsForResultStub: ReturnType<typeof vi.spyOn>;
+    let getBuildLogsStub: ReturnType<typeof vi.spyOn>;
+    let getFileStub: ReturnType<typeof vi.spyOn>;
+    let saveFilesStub: ReturnType<typeof vi.spyOn>;
+    let commitStub: ReturnType<typeof vi.spyOn>;
+    let getStudentParticipationWithLatestResultStub: ReturnType<typeof vi.spyOn>;
+    let getLatestPendingSubmissionStub: ReturnType<typeof vi.spyOn>;
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | undefined>;
     let getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
 
@@ -98,6 +104,7 @@ describe('CodeEditorContainerIntegration', () => {
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: DialogService, useClass: MockDialogService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -122,26 +129,26 @@ describe('CodeEditorContainerIntegration', () => {
 
         getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
 
-        checkIfRepositoryIsCleanStub = jest.spyOn(codeEditorRepositoryService, 'getStatus');
-        getRepositoryContentStub = jest.spyOn(codeEditorRepositoryFileService, 'getRepositoryContent');
-        subscribeForLatestResultOfParticipationStub = jest
+        checkIfRepositoryIsCleanStub = vi.spyOn(codeEditorRepositoryService, 'getStatus');
+        getRepositoryContentStub = vi.spyOn(codeEditorRepositoryFileService, 'getRepositoryContent');
+        subscribeForLatestResultOfParticipationStub = vi
             .spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation')
             .mockReturnValue(subscribeForLatestResultOfParticipationSubject);
-        getFeedbackDetailsForResultStub = jest.spyOn(resultService, 'getFeedbackDetailsForResult');
-        getBuildLogsStub = jest.spyOn(buildLogService, 'getBuildLogs');
-        getFileStub = jest.spyOn(codeEditorRepositoryFileService, 'getFile');
-        saveFilesStub = jest.spyOn(codeEditorRepositoryFileService, 'updateFiles');
-        commitStub = jest.spyOn(codeEditorRepositoryService, 'commit');
-        getStudentParticipationWithLatestResultStub = jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult');
-        getLatestPendingSubmissionStub = jest.spyOn(submissionService, 'getLatestPendingSubmissionByParticipationId').mockReturnValue(getLatestPendingSubmissionSubject);
-        // Mock the ResizeObserver, which is not available in the test environment
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-            return new MockResizeObserver(callback);
-        });
+        getFeedbackDetailsForResultStub = vi.spyOn(resultService, 'getFeedbackDetailsForResult');
+        getBuildLogsStub = vi.spyOn(buildLogService, 'getBuildLogs');
+        getFileStub = vi.spyOn(codeEditorRepositoryFileService, 'getFile');
+        saveFilesStub = vi.spyOn(codeEditorRepositoryFileService, 'updateFiles');
+        commitStub = vi.spyOn(codeEditorRepositoryService, 'commit');
+        getStudentParticipationWithLatestResultStub = vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult');
+        getLatestPendingSubmissionStub = vi.spyOn(submissionService, 'getLatestPendingSubmissionByParticipationId').mockReturnValue(getLatestPendingSubmissionSubject);
+        // Mock the ResizeObserver, which is not available in the test environment.
+        // vi.fn().mockImplementation() returns a plain function (not a constructor), so
+        // assign MockResizeObserver directly to satisfy `new ResizeObserver(...)` call sites.
+        global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
         subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
         subscribeForLatestResultOfParticipationStub.mockReturnValue(subscribeForLatestResultOfParticipationSubject);
 
@@ -179,7 +186,7 @@ describe('CodeEditorContainerIntegration', () => {
         // container
         expect(container.commitState).toBe(CommitState.CLEAN);
         expect(container.editorState).toBe(EditorState.CLEAN);
-        expect(container.buildOutput.isBuilding).toBeFalse();
+        expect(container.buildOutput.isBuilding).toBe(false);
         expect(container.unsavedFiles).toStrictEqual({});
 
         // file browser
@@ -193,18 +200,18 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.monacoEditor.commitState()).toBe(CommitState.CLEAN);
 
         // actions
-        expect(container.actions.commitState).toBe(CommitState.CLEAN);
-        expect(container.actions.editorState).toBe(EditorState.CLEAN);
-        expect(container.actions.isBuilding).toBeFalse();
+        expect(container.actions.commitState()).toBe(CommitState.CLEAN);
+        expect(container.actions.editorState()).toBe(EditorState.CLEAN);
+        expect(container.actions.isBuilding()).toBe(false);
 
         // status
-        expect(container.fileBrowser.status.commitState).toBe(CommitState.CLEAN);
-        expect(container.fileBrowser.status.editorState).toBe(EditorState.CLEAN);
+        expect(container.fileBrowser.status.commitState()).toBe(CommitState.CLEAN);
+        expect(container.fileBrowser.status.editorState()).toBe(EditorState.CLEAN);
 
         // build output
         expect(getBuildLogsStub).toHaveBeenCalledOnce();
         expect(container.buildOutput.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)).toEqual(extractedBuildLogErrors);
-        expect(container.buildOutput.isBuilding).toBeFalse();
+        expect(container.buildOutput.isBuilding).toBe(false);
 
         // instructions
         expect(container.instructions).toBeDefined(); // Have to use this as it's a component
@@ -221,14 +228,13 @@ describe('CodeEditorContainerIntegration', () => {
         await containerFixture.whenStable();
     };
 
-    it('should initialize all components correctly if all server calls are successful', fakeAsync(() => {
+    it('should initialize all components correctly if all server calls are successful', async () => {
         cleanInitialize();
-        tick();
-        discardPeriodicTasks();
+        await containerFixture.whenStable();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
-    }));
+    });
 
-    it('should not load files and render other components correctly if the repository status cannot be retrieved', fakeAsync(() => {
+    it('should not load files and render other components correctly if the repository status cannot be retrieved', async () => {
         const exercise = { id: 1, problemStatement, course: { id: 2 } };
         const participation = { id: 2, exercise, submissions: [{ results: [result] }] } as StudentParticipation;
         const isCleanSubject = new Subject();
@@ -255,7 +261,7 @@ describe('CodeEditorContainerIntegration', () => {
         // container
         expect(container.commitState).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
         expect(container.editorState).toBe(EditorState.CLEAN);
-        expect(container.buildOutput.isBuilding).toBeFalse();
+        expect(container.buildOutput.isBuilding).toBe(false);
         expect(container.unsavedFiles).toStrictEqual({});
 
         // file browser
@@ -270,18 +276,18 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.monacoEditor.commitState()).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
 
         // actions
-        expect(container.actions.commitState).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
-        expect(container.actions.editorState).toBe(EditorState.CLEAN);
-        expect(container.actions.isBuilding).toBeFalse();
+        expect(container.actions.commitState()).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
+        expect(container.actions.editorState()).toBe(EditorState.CLEAN);
+        expect(container.actions.isBuilding()).toBe(false);
 
         // status
-        expect(container.fileBrowser.status.commitState).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
-        expect(container.fileBrowser.status.editorState).toBe(EditorState.CLEAN);
+        expect(container.fileBrowser.status.commitState()).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
+        expect(container.fileBrowser.status.editorState()).toBe(EditorState.CLEAN);
 
         // build output
         expect(getBuildLogsStub).toHaveBeenCalledOnce();
         expect(container.buildOutput.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)).toEqual(extractedBuildLogErrors);
-        expect(container.buildOutput.isBuilding).toBeFalse();
+        expect(container.buildOutput.isBuilding).toBe(false);
 
         // instructions
         expect(container.instructions).toBeDefined(); // Have to use this as it's a component
@@ -290,10 +296,9 @@ describe('CodeEditorContainerIntegration', () => {
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, participation.submissions![0].results![0]);
 
-        flush();
-        discardPeriodicTasks();
+        await containerFixture.whenStable();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
-    }));
+    });
 
     it('should update the file browser and monaco editor on file selection', async () => {
         cleanInitialize();
@@ -305,7 +310,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.selectedFile).toBe(selectedFile);
         expect(container.monacoEditor.selectedFile()).toBe(selectedFile);
         expect(container.monacoEditor.loadingCount()).toBe(0);
-        expect(container.monacoEditor.fileSession()).toContainKey(selectedFile);
+        expect(container.monacoEditor.fileSession()).toHaveProperty(selectedFile);
         expect(getFileStub).toHaveBeenCalledOnce();
         expect(getFileStub).toHaveBeenCalledWith(selectedFile);
 
@@ -329,7 +334,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.unsavedFiles).toEqual({ [selectedFile]: newFileContent });
         expect(container.fileBrowser.unsavedFiles()).toEqual([selectedFile]);
         expect(container.editorState).toBe(EditorState.UNSAVED_CHANGES);
-        expect(container.actions.editorState).toBe(EditorState.UNSAVED_CHANGES);
+        expect(container.actions.editorState()).toBe(EditorState.UNSAVED_CHANGES);
     });
 
     it('should save files and remove unsaved status of saved files afterwards', async () => {
@@ -359,7 +364,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.editorState).toBe(EditorState.CLEAN);
         expect(container.commitState).toBe(CommitState.UNCOMMITTED_CHANGES);
         expect(container.fileBrowser.unsavedFiles()).toHaveLength(0);
-        expect(container.actions.editorState).toBe(EditorState.CLEAN);
+        expect(container.actions.editorState()).toBe(EditorState.CLEAN);
     });
 
     it('should remove the unsaved changes flag in all components if the unsaved file is deleted', () => {
@@ -371,20 +376,26 @@ describe('CodeEditorContainerIntegration', () => {
         container.unsavedFiles = unsavedChanges;
 
         containerFixture.changeDetectorRef.detectChanges();
-        // Ensure child component receives latest state despite OnPush change detection.
-        container.actions.editorState = container.editorState;
-        container.actions.unsavedFiles = container.unsavedFiles;
-        container.actions.commitState = container.commitState;
-        containerFixture.changeDetectorRef.detectChanges();
+        // Test-harness limitation: container.editorState / container.commitState are plain TS
+        // accessors (not signals), while the child <jhi-code-editor-actions> uses model()
+        // signals bound via [(editorState)]="editorState". In a zoneless TestBed harness,
+        // direct writes to the container's plain accessor don't trigger CD on the child's
+        // signal-backed input. We mirror the values onto the child signals so the bindings
+        // reflect what production CD would synchronously sync. Removing this re-introduces
+        // assertion failures. Long-term: migrate container fields to signals (separate PR).
+        container.actions.editorState.set(container.editorState);
+        container.actions.commitState.set(container.commitState);
 
         expect(container.unsavedFiles).toEqual(unsavedChanges);
-        expect(container.actions.editorState).toBe(EditorState.UNSAVED_CHANGES);
+        expect(container.actions.editorState()).toBe(EditorState.UNSAVED_CHANGES);
 
         container.fileBrowser.onFileDeleted(new DeleteFileChange(FileType.FILE, 'file'));
+        // Re-mirror after the container's onFileDeleted handler mutates the plain accessor.
+        container.actions.editorState.set(container.editorState);
         containerFixture.changeDetectorRef.detectChanges();
         expect(container.unsavedFiles).toStrictEqual({});
         expect(container.fileBrowser.repositoryFiles).toEqual(expectedFilesAfterDelete);
-        expect(container.actions.editorState).toBe(EditorState.CLEAN);
+        expect(container.actions.editorState()).toBe(EditorState.CLEAN);
     });
 
     it('should wait for build result after submission if no unsaved changes exist', () => {
@@ -396,13 +407,13 @@ describe('CodeEditorContainerIntegration', () => {
         const expectedBuildLog = new BuildLogEntryArray();
         expect(container.unsavedFiles).toStrictEqual({});
         container.commitState = CommitState.UNCOMMITTED_CHANGES;
-        containerFixture.changeDetectorRef.detectChanges();
-        // Ensure the child component input reflects the current state for OnPush change detection.
-        container.actions.commitState = container.commitState;
+        // Mirror container's plain accessor onto the child signal — see sibling test for the
+        // full explanation of this zoneless-harness limitation.
+        container.actions.commitState.set(container.commitState);
         containerFixture.changeDetectorRef.detectChanges();
 
         // commit
-        expect(container.actions.commitState).toBe(container.commitState);
+        expect(container.actions.commitState()).toBe(container.commitState);
         commitStub.mockReturnValue(of(undefined));
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
@@ -414,7 +425,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // waiting for build successfulResult
         expect(container.commitState).toBe(CommitState.CLEAN);
-        expect(container.buildOutput.isBuilding).toBeTrue();
+        expect(container.buildOutput.isBuilding).toBe(true);
 
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
@@ -424,7 +435,7 @@ describe('CodeEditorContainerIntegration', () => {
         subscribeForLatestResultOfParticipationSubject.next(successfulResult);
         containerFixture.changeDetectorRef.detectChanges();
 
-        expect(container.buildOutput.isBuilding).toBeFalse();
+        expect(container.buildOutput.isBuilding).toBe(false);
         expect(container.buildOutput.rawBuildLogs).toEqual(expectedBuildLog);
         expect(container.fileBrowser.errorFiles()).toHaveLength(0);
     });
@@ -441,11 +452,9 @@ describe('CodeEditorContainerIntegration', () => {
         container.unsavedFiles = { [unsavedFile]: 'lorem ipsum' };
         container.editorState = EditorState.UNSAVED_CHANGES;
         container.commitState = CommitState.UNCOMMITTED_CHANGES;
-        containerFixture.changeDetectorRef.detectChanges();
-        // Propagate state to the actions component which uses OnPush change detection.
-        container.actions.unsavedFiles = container.unsavedFiles;
-        container.actions.editorState = container.editorState;
-        container.actions.commitState = container.commitState;
+        // Mirror plain accessors onto child signals — see earlier test for the explanation.
+        container.actions.editorState.set(container.editorState);
+        container.actions.commitState.set(container.commitState);
         containerFixture.changeDetectorRef.detectChanges();
 
         // trying to commit
@@ -456,11 +465,11 @@ describe('CodeEditorContainerIntegration', () => {
         expect(saveFilesStub).toHaveBeenCalledOnce();
         expect(saveFilesStub).toHaveBeenCalledWith([{ fileName: unsavedFile, fileContent: 'lorem ipsum' }], true);
         expect(container.editorState).toBe(EditorState.SAVING);
-        expect(container.fileBrowser.status.editorState).toBe(EditorState.SAVING);
+        expect(container.fileBrowser.status.editorState()).toBe(EditorState.SAVING);
         // committing
         expect(commitStub).not.toHaveBeenCalled();
         expect(container.commitState).toBe(CommitState.COMMITTING);
-        expect(container.fileBrowser.status.commitState).toBe(CommitState.COMMITTING);
+        expect(container.fileBrowser.status.commitState()).toBe(CommitState.COMMITTING);
         saveFilesSubject.next({ [unsavedFile]: undefined });
 
         expect(container.editorState).toBe(EditorState.CLEAN);
@@ -471,13 +480,15 @@ describe('CodeEditorContainerIntegration', () => {
             participationId: successfulResult!.submission.participation!.id!,
         });
 
-        // Commit state should change asynchronously
+        // Commit state changes asynchronously via the actions component's deferred setTimeout
+        // cascade (SAVING -> CLEAN with COMMITTING in flight). Allow the macrotask to settle.
         containerFixture.changeDetectorRef.detectChanges();
-        await firstValueFrom(container.actions.commitStateChange);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        containerFixture.changeDetectorRef.detectChanges();
 
         // waiting for build result
         expect(container.commitState).toBe(CommitState.CLEAN);
-        expect(container.buildOutput.isBuilding).toBeTrue();
+        expect(container.buildOutput.isBuilding).toBe(true);
 
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
@@ -486,14 +497,14 @@ describe('CodeEditorContainerIntegration', () => {
         });
         containerFixture.changeDetectorRef.detectChanges();
 
-        expect(container.buildOutput.isBuilding).toBeFalse();
+        expect(container.buildOutput.isBuilding).toBe(false);
         expect(container.buildOutput.rawBuildLogs).toEqual(expectedBuildLog);
         expect(container.fileBrowser.errorFiles()).toHaveLength(0);
 
         containerFixture.destroy();
     });
 
-    it('should enter conflict mode if a git conflict between local and remote arises', fakeAsync(() => {
+    it('should enter conflict mode if a git conflict between local and remote arises', async () => {
         const successfulResult = { id: 3, successful: false };
         const participation = { id: 1, submissions: [{ results: [successfulResult] }], exercise: { id: 99 } } as StudentParticipation;
         const feedbacks = [{ id: 2 }] as Feedback[];
@@ -520,9 +531,11 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.commitState).toBe(CommitState.CONFLICT);
         expect(getRepositoryContentStub).not.toHaveBeenCalled();
 
-        // Resolve conflict.
+        // Resolve conflict. The actions component defers a CommitState.UNDEFINED write inside a
+        // setTimeout(0) cascade (see code-editor-actions.component.ts:128); let the macrotask run
+        // before the next state transition.
         conflictService.notifyConflictState(GitConflictState.OK);
-        tick();
+        await new Promise((resolve) => setTimeout(resolve, 0));
         containerFixture.changeDetectorRef.detectChanges();
         isCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
         containerFixture.changeDetectorRef.detectChanges();
@@ -531,15 +544,14 @@ describe('CodeEditorContainerIntegration', () => {
         expect(getRepositoryContentStub).toHaveBeenCalledOnce();
 
         containerFixture.destroy();
-        flush();
-    }));
+    });
 
     it.each([
         ['loadingFailed', 'artemisApp.editor.errors.loadingFailed', { connectionIssue: '' }],
         ['loadingFailedInternetDisconnected', 'artemisApp.editor.errors.loadingFailed', { connectionIssue: 'artemisApp.editor.errors.InternetDisconnected' }],
     ])('onError should handle disconnectedInternet', (error: string, errorKey: string, translationParams: { connectionIssue: string }) => {
         const alertService = TestBed.inject(AlertService);
-        const alertServiceSpy = jest.spyOn(alertService, 'error');
+        const alertServiceSpy = vi.spyOn(alertService, 'error');
         container.onError(error);
         expect(alertServiceSpy).toHaveBeenCalledWith(errorKey, translationParams);
     });

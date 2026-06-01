@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import type { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
 import { faAngleDown, faAngleLeft } from '@fortawesome/free-solid-svg-icons';
@@ -16,18 +16,18 @@ import { TruncatePipe } from 'app/foundation/pipes/truncate.pipe';
     imports: [RouterLink, NgbTooltip, ResultComponent, FaIconComponent, TranslateDirective, ArtemisDatePipe, TruncatePipe],
 })
 export class CommitsInfoRowComponent {
-    @Input() commit: CommitInfo;
-    @Input() currentSubmissionHash?: string;
-    @Input() previousSubmissionHash?: string;
-    @Input() exerciseProjectKey?: string;
-    @Input() isRepositoryView = false;
-    @Input() rowNumber: number;
-    @Input() isExpanded: boolean;
-    @Input() pushNumber: number;
-    @Input() firstCommit: boolean;
-    @Input() groupCommitCount: number;
-    @Input() groupCommitIndex: number;
-    @Output() toggleExpandEvent = new EventEmitter<void>();
+    readonly commit = input.required<CommitInfo>();
+    readonly currentSubmissionHash = input<string>();
+    readonly previousSubmissionHash = input<string>();
+    readonly exerciseProjectKey = input<string>();
+    readonly isRepositoryView = input(false);
+    readonly rowNumber = input<number>();
+    readonly isExpanded = input.required<boolean>();
+    readonly pushNumber = input.required<number>();
+    readonly firstCommit = input.required<boolean>();
+    readonly groupCommitCount = input.required<number>();
+    readonly groupCommitIndex = input.required<number>();
+    readonly toggleExpandEvent = output<void>();
 
     onToggleExpand() {
         this.toggleExpandEvent.emit();
