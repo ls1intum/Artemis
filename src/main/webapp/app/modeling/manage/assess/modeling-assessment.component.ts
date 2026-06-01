@@ -3,12 +3,12 @@ import { ApollonEditor, ApollonMode, Assessment, UMLDiagramType, UMLModel } from
 import { captureException } from '@sentry/angular';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ModelElementCount } from 'app/modeling/shared/entities/modeling-submission.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { Course } from 'app/course/shared/entities/course.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { ModelingComponent } from 'app/modeling/shared/modeling/modeling.component';
 import { filterInvalidFeedback } from 'app/modeling/manage/assess/modeling-assessment.util';
-import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
+import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
 

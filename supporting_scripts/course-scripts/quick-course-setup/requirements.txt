@@ -1,2 +1,2 @@
-requests==2.33.0
-urllib3==2.6.3
+requests==2.34.2
+urllib3==2.7.0

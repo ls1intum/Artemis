@@ -4,12 +4,12 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-headers/with-details/header-exercise-page-with-details.component';
-import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag/not-released-tag.component';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NotReleasedTagComponent } from 'app/shared-ui/components/not-released-tag/not-released-tag.component';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
-import { ExerciseTypePipe } from 'app/shared/pipes/exercise-type.pipe';
+import { ExerciseTypePipe } from 'app/foundation/pipes/exercise-type.pipe';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -18,7 +18,7 @@ import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Submission, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { LockRepositoryPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 describe('HeaderExercisePageWithDetails', () => {

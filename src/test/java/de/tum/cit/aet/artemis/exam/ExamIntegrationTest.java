@@ -47,18 +47,18 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.user.PasswordService;
+import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.CourseWithIdDTO;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.service.user.PasswordService;
-import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseWithIdDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -92,7 +92,8 @@ import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
-import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -161,7 +162,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     private WeaviateService weaviateService;
 
     @Autowired(required = false)
-    private ExerciseWeaviateService exerciseWeaviateService;
+    private SearchableEntityWeaviateService searchableEntityWeaviateService;
 
     private Course course1;
 
@@ -725,8 +726,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         var exam = modelingExercise.getExerciseGroup().getExam();
 
         // Insert the exercise into Weaviate with initial dates
-        if (exerciseWeaviateService != null) {
-            exerciseWeaviateService.upsertExerciseAsync(modelingExercise);
+        if (searchableEntityWeaviateService != null) {
+            searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(modelingExercise));
 
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> WeaviateTestUtil.assertExerciseExamDatesInWeaviate(weaviateService, modelingExercise.getId(), exam));
         }
@@ -864,8 +865,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExamWithExerciseGroupAndTextExercise_asInstructor() throws Exception {
         final TextExercise textExercise = exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(exam2.getExerciseGroups().getFirst()));
-        if (exerciseWeaviateService != null) {
-            exerciseWeaviateService.upsertExerciseAsync(textExercise);
+        if (searchableEntityWeaviateService != null) {
+            searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(textExercise));
 
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise));
         }
@@ -1257,7 +1258,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         course.setEndDate(now().minusMinutes(5));
         course = courseRepository.save(course);
 
-        request.put("/api/core/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
+        request.put("/api/course/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
 
         final var courseId = course.getId();
         await().atMost(Duration.ofSeconds(30)).until(() -> courseRepository.findById(courseId).orElseThrow().getCourseArchivePath() != null);
@@ -2016,10 +2017,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         Exam exam = examUtilService.addExamWithExerciseGroup(course1, false);
         ExerciseGroup quizGroup = exam.getExerciseGroups().getFirst();
         QuizExercise quiz = QuizExerciseFactory.generateQuizExerciseForExam(quizGroup);
-        quiz.addQuestions(QuizExerciseFactory.createMultipleChoiceQuestionWithAllTypesOfAnswerOptions());
-        quiz.addQuestions(QuizExerciseFactory.createShortAnswerQuestionWithRealisticText());
-        quiz.addQuestions(QuizExerciseFactory.createSingleChoiceQuestion());
-        quiz.addQuestions(QuizExerciseFactory.createDragAndDropQuestion());
+        quiz.addQuestion(QuizExerciseFactory.createMultipleChoiceQuestionWithAllTypesOfAnswerOptions());
+        quiz.addQuestion(QuizExerciseFactory.createShortAnswerQuestionWithRealisticText());
+        quiz.addQuestion(QuizExerciseFactory.createSingleChoiceQuestion());
+        quiz.addQuestion(QuizExerciseFactory.createDragAndDropQuestion());
         quizGroup.addExercise(quiz);
         exerciseRepository.save(quiz);
 

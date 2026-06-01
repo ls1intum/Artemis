@@ -10,7 +10,7 @@ import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-
 import { VcsRepositoryAccessLogViewComponent } from 'app/programming/manage/vcs-repository-access-log-view/vcs-repository-access-log-view.component';
 import { VcsAccessLogDTO } from 'app/programming/shared/entities/vcs-access-log-entry.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';

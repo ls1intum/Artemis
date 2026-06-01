@@ -39,6 +39,9 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.service.export.CourseExamExportService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.BonusStrategy;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
@@ -55,29 +58,26 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.BonusService;
 import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.dto.ExamCalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
-import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
-import de.tum.cit.aet.artemis.core.dto.calendar.ExamCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
-import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -101,7 +101,9 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
-import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
@@ -199,7 +201,7 @@ public class ExamService {
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
-    private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
+    private final Optional<SearchableEntityWeaviateService> searchableItemWeaviateService;
 
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, TutorLeaderboardService tutorLeaderboardService,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
@@ -210,7 +212,8 @@ public class ExamService {
             SubmittedAnswerRepository submittedAnswerRepository, AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService,
             QuizResultService quizResultService, ExerciseRepository exerciseRepository, QuizQuestionRepository quizQuestionRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, Optional<ExerciseWeaviateService> exerciseWeaviateService) {
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+            Optional<SearchableEntityWeaviateService> searchableItemWeaviateService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -238,7 +241,7 @@ public class ExamService {
         this.quizQuestionRepository = quizQuestionRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
-        this.exerciseWeaviateService = exerciseWeaviateService;
+        this.searchableItemWeaviateService = searchableItemWeaviateService;
     }
 
     private static boolean isSecondCorrectionEnabled(Exam exam) {
@@ -1587,17 +1590,29 @@ public class ExamService {
      */
     public void syncExamExercisesMetadata(Exam examWithExercises, boolean visibleOrStartDateChanged, boolean endDateChanged) {
         if (visibleOrStartDateChanged || endDateChanged) {
-            exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExamExercisesAsync(examWithExercises));
+            searchableItemWeaviateService.ifPresent(service -> {
+                examRepository.findWithExerciseGroupsAndExercisesById(examWithExercises.getId()).ifPresent(reloadedExam -> {
+                    service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(reloadedExam));
+                    service.updateExercisesAsync(reloadedExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+                            .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, reloadedExam)).toList(), reloadedExam.getId());
+                });
+            });
         }
     }
 
     /**
-     * Syncs exam exercises with Weaviate.
+     * Syncs exam and its exercises with Weaviate.
      *
-     * @param exam the exam whose exercises should be synced
+     * @param exam the exam whose metadata and exercises should be synced
      */
     public void syncExamExercisesMetadata(Exam exam) {
-        exerciseWeaviateService.ifPresent(weaviateService -> weaviateService.updateExamExercisesAsync(exam));
+        searchableItemWeaviateService.ifPresent(service -> {
+            examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).ifPresent(reloadedExam -> {
+                service.upsertExamAsync(ExamSearchableEntityDTO.fromExam(reloadedExam));
+                service.updateExercisesAsync(reloadedExam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+                        .map(exercise -> ExerciseSearchableEntityDTO.fromExerciseWithExam(exercise, reloadedExam)).toList(), reloadedExam.getId());
+            });
+        });
     }
 
     /**

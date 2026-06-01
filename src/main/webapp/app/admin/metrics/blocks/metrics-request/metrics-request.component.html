@@ -1,0 +1,29 @@
+<h3 id="requestMetrics" jhiTranslate="metrics.jvm.http.title"></h3>
+@if (!updating() && requestMetrics()) {
+    <table class="table table-striped" aria-describedby="requestMetrics">
+        <thead>
+            <tr>
+                <th scope="col" jhiTranslate="metrics.jvm.http.table.code"></th>
+                <th scope="col" jhiTranslate="metrics.jvm.http.table.count"></th>
+                <th scope="col" class="text-right" jhiTranslate="metrics.jvm.http.table.mean"></th>
+                <th scope="col" class="text-right" jhiTranslate="metrics.jvm.http.table.max"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (entry of requestMetrics()['percode'] | keyvalue; track entry) {
+                <tr>
+                    <td>{{ entry.key }}</td>
+                    <td>
+                        <p-progressbar [value]="toPercentage(entry.value.count, requestMetrics()['all'].count)" [showValue]="false" color="var(--bs-success, #28a745)">
+                            <ng-template #content>{{ entry.value.count }}</ng-template>
+                        </p-progressbar>
+                    </td>
+                    <td class="text-right">
+                        {{ filterNaN(entry.value.mean) | number: '1.0-2' }}
+                    </td>
+                    <td class="text-right">{{ entry.value.max | number: '1.0-2' }}</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

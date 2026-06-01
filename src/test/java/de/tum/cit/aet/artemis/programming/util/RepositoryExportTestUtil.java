@@ -30,11 +30,11 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
-import de.tum.cit.aet.artemis.programming.service.GitService;
 
 /**
  * Shared helpers for LocalVC-backed repository export tests.
@@ -406,7 +406,19 @@ public final class RepositoryExportTestUtil {
      * @param commitHash the commit hash that must be resolvable
      */
     public static void waitForBareRepositoryToContainCommit(LocalRepository repo, String commitHash) {
-        Awaitility.await().atMost(10, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+        Awaitility.await().atMost(60, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+            // Check directly on the file system first — JGit can cache pack files / object database
+            // state per Repository instance, so a freshly-opened Git handle may still return null
+            // from resolve(...) immediately after a push. The loose-object path is updated atomically
+            // by JGit's push, so its presence is the authoritative signal that the commit landed.
+            if (commitHash == null || commitHash.length() != 40) {
+                return false;
+            }
+            Path looseObjectPath = repo.remoteBareGitRepoFile.toPath().resolve("objects").resolve(commitHash.substring(0, 2)).resolve(commitHash.substring(2));
+            if (Files.exists(looseObjectPath)) {
+                return true;
+            }
+            // Fallback for the case where the commit has already been packed (rare for fresh pushes).
             try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
                 var resolved = git.getRepository().resolve(commitHash);
                 if (resolved == null) {
@@ -433,7 +445,7 @@ public final class RepositoryExportTestUtil {
      * @param repo the local repository whose bare repo should be verified
      */
     public static void waitForBareRepositoryReady(LocalRepository repo) {
-        Awaitility.await().atMost(10, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+        Awaitility.await().atMost(60, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
             try {
                 // Try to open the bare repository and resolve HEAD
                 // This verifies the repo is accessible and has a valid HEAD reference

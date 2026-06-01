@@ -4,13 +4,13 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { TranslateService } from '@ngx-translate/core';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { getUserLabel } from 'app/communication/course-conversations-components/other/conversation.util';
-import { convertDateFromServer } from 'app/shared/util/date.utils';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
 
 type EntityArrayResponseType = HttpResponse<ConversationDTO[]>;
 

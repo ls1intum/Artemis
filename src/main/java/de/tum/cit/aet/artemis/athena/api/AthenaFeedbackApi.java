@@ -1,14 +1,15 @@
 package de.tum.cit.aet.artemis.athena.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
-
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.athena.config.AthenaEnabled;
 import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
@@ -25,7 +26,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
-@Profile(PROFILE_ATHENA)
+@Conditional(AthenaEnabled.class)
 @Controller
 @Lazy
 public class AthenaFeedbackApi extends AbstractAthenaApi {
@@ -39,17 +40,18 @@ public class AthenaFeedbackApi extends AbstractAthenaApi {
         this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
     }
 
-    public List<TextFeedbackDTO> getTextFeedbackSuggestions(TextExercise exercise, TextSubmission submission, boolean isGraded) throws NetworkingException {
-        return athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(exercise, submission, isGraded);
+    public List<TextFeedbackDTO> getTextFeedbackSuggestions(TextExercise exercise, TextSubmission submission, boolean isGraded, @Nullable User user) throws NetworkingException {
+        return athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(exercise, submission, isGraded, user);
     }
 
-    public List<ProgrammingFeedbackDTO> getProgrammingFeedbackSuggestions(ProgrammingExercise exercise, ProgrammingSubmission submission, boolean isGraded)
+    public List<ProgrammingFeedbackDTO> getProgrammingFeedbackSuggestions(ProgrammingExercise exercise, ProgrammingSubmission submission, boolean isGraded, @Nullable User user)
             throws NetworkingException {
-        return athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(exercise, submission, isGraded);
+        return athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(exercise, submission, isGraded, user);
     }
 
-    public List<ModelingFeedbackDTO> getModelingFeedbackSuggestions(ModelingExercise exercise, ModelingSubmission submission, boolean isGraded) throws NetworkingException {
-        return athenaFeedbackSuggestionsService.getModelingFeedbackSuggestions(exercise, submission, isGraded);
+    public List<ModelingFeedbackDTO> getModelingFeedbackSuggestions(ModelingExercise exercise, ModelingSubmission submission, boolean isGraded, @Nullable User user)
+            throws NetworkingException {
+        return athenaFeedbackSuggestionsService.getModelingFeedbackSuggestions(exercise, submission, isGraded, user);
     }
 
     public void checkRateLimitOrThrow(StudentParticipation participation) {

@@ -1,15 +1,15 @@
 import { Component, OnInit, inject, input, output, viewChild } from '@angular/core';
 import { Observable, Subject, combineLatest, merge, of } from 'rxjs';
-import { User } from 'app/core/user/user.model';
-import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
-import { Course, CourseGroup } from 'app/core/course/shared/entities/course.model';
+import { User } from 'app/account/user/user.model';
+import { catchError, debounceTime, distinctUntilChanged, filter, map, switchMap, tap } from 'rxjs/operators';
+import { Course, CourseGroup } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { cloneDeep } from 'lodash-es';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-team-owner-search',
@@ -81,7 +81,12 @@ export class TeamOwnerSearchComponent implements OnInit {
         const clicksWithClosedPopup$ = this.click.pipe(filter(() => !this.ngbTypeahead().isPopupOpen()));
         const inputFocus$ = this.focus;
 
-        return merge(text$, inputFocus$, clicksWithClosedPopup$).pipe(
+        // Mirror the debounce/distinctUntilChanged pattern used in the sibling
+        // team-student-search component: under heavy typing each keystroke would otherwise
+        // fire an HTTP via switchMap and cancel the previous one, so the final response
+        // can take 10-30s under load and the listbox never appears. Coalesce rapid typing
+        // and drop duplicates before the request fires.
+        return merge(text$.pipe(debounceTime(200), distinctUntilChanged()), inputFocus$, clicksWithClosedPopup$).pipe(
             tap(() => {
                 this.searchNoResults.emit(undefined);
             }),

@@ -1,0 +1,13 @@
+{
+    "artemisApp": {
+        "atlasOrchestrator": {
+            "tooltip": "Run the Atlas competency orchestrator on this exercise",
+            "error": "Atlas orchestrator run failed. Please try again later.",
+            "inProgress": "Another Atlas orchestrator run is already in progress for this course. Please wait for it to finish.",
+            "resultDialog": {
+                "title": "Atlas orchestrator result",
+                "empty": "The orchestrator did not return a summary."
+            }
+        }
+    }
+}

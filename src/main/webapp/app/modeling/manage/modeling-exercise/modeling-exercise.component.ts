@@ -5,24 +5,24 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExerciseComponent } from 'app/exercise/exercise.component';
-import { onError } from 'app/shared/util/global.utils';
-import { SortService } from 'app/shared/service/sort.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { SortService } from 'app/foundation/service/sort.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { faBook, faPlus, faSort, faTable, faTimes, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { FormsModule } from '@angular/forms';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
-import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-modeling-exercise',

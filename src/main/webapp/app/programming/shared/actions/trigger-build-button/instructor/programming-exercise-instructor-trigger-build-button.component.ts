@@ -1,11 +1,11 @@
 import { Component, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExerciseTriggerBuildButtonComponent } from '../programming-exercise-trigger-build-button.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
+import { ConfirmAutofocusModalResult, openConfirmAutofocusDialog } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { DialogService } from 'primeng/dynamicdialog';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-trigger-build-button',
@@ -14,7 +14,7 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
 })
 export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends ProgrammingExerciseTriggerBuildButtonComponent {
     private translateService = inject(TranslateService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
 
     // Icons
     faRedo = faRedo;
@@ -37,13 +37,14 @@ export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends Pr
             return;
         }
         // The instructor needs to confirm overriding a manual result.
-        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.title = 'artemisApp.programmingExercise.resubmitSingle';
-        modalRef.componentInstance.text = this.translateService.instant('artemisApp.programmingExercise.resubmitConfirmManualResultOverride');
-        modalRef.result
-            .then(() => {
+        const dialogRef = openConfirmAutofocusDialog(this.dialogService, {
+            title: 'artemisApp.programmingExercise.resubmitSingle',
+            text: this.translateService.instant('artemisApp.programmingExercise.resubmitConfirmManualResultOverride'),
+        });
+        dialogRef?.onClose.subscribe((result: ConfirmAutofocusModalResult | undefined) => {
+            if (result?.confirmed) {
                 super.triggerWithType(SubmissionType.INSTRUCTOR).subscribe();
-            })
-            .catch(() => {});
+            }
+        });
     };
 }

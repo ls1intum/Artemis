@@ -24,9 +24,9 @@ import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.core.exception.ConflictingPasskeyConfigurationException;
 import de.tum.cit.aet.artemis.core.exception.InvalidAdminConfigurationException;
-import de.tum.cit.aet.artemis.core.exception.WeaviateConfigurationException;
 import de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
+import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateConfigurationException;
 
 /**
  * Validates application configuration at startup.
@@ -83,6 +83,8 @@ public class ConfigurationValidator {
 
     private final String serverUrl;
 
+    private final boolean isOpenApiDocsGeneration;
+
     public ConfigurationValidator(Environment environment,
             @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures,
             @Value("${artemis.user-management.internal-admin.username:#{null}}") String internalAdminUsername,
@@ -92,7 +94,7 @@ public class ConfigurationValidator {
             @Value("${artemis.weaviate.grpc-port:" + WeaviateConfigurationProperties.DEFAULT_GRPC_PORT + "}") int weaviateGrpcPort,
             @Value("${artemis.weaviate.scheme:#{null}}") String weaviateScheme, @Value("${artemis.weaviate.vectorizer-module:#{null}}") String weaviateVectorizerModule,
             @Value("${artemis.weaviate.open-ai-base-url:#{null}}") String weaviateOpenAiBaseUrl, @Value("${artemis.weaviate.gpu-api-key:#{null}}") String weaviateGpuApiKey,
-            @Value("${server.url:}") String serverUrl) {
+            @Value("${artemis.openapi-docs-generation:false}") boolean isOpenApiDocsGeneration, @Value("${server.url:}") String serverUrl) {
         this.environment = environment;
         this.artemisConfigHelper = new ArtemisConfigHelper();
         this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
@@ -108,6 +110,7 @@ public class ConfigurationValidator {
         this.weaviateVectorizerModule = weaviateVectorizerModule;
         this.weaviateOpenAiBaseUrl = weaviateOpenAiBaseUrl;
         this.weaviateGpuApiKey = weaviateGpuApiKey;
+        this.isOpenApiDocsGeneration = isOpenApiDocsGeneration;
         this.serverUrl = serverUrl;
     }
 
@@ -233,6 +236,10 @@ public class ConfigurationValidator {
      */
     private void validateWeaviateConfiguration() {
         if (!weaviateEnabled) {
+            return;
+        }
+        if (isOpenApiDocsGeneration) {
+            log.info("Skipping Weaviate configuration validation during OpenAPI docs generation");
             return;
         }
 

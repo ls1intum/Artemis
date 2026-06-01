@@ -1,16 +1,16 @@
 import { Component, DoCheck, Input, OnDestroy, inject } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { IS_AT_LEAST_EDITOR } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_EDITOR } from 'app/foundation/constants/authority.constants';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { Subscription } from 'rxjs';
 import { GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
-import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-presentation-score-checkbox',

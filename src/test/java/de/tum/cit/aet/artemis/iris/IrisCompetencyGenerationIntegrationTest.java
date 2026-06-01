@@ -15,9 +15,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyGenerationRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyGenerationRequestDTO.CompetencyRecommendationDTO;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionInputDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyRecommendationDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
@@ -59,8 +60,9 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
         });
 
         // Send a request to the Artemis server as if the user had clicked the button in the UI
-        request.postWithoutResponseBody("/api/atlas/courses/" + course.getId() + "/course-competencies/generate-from-description",
-                new PyrisCompetencyExtractionInputDTO(courseDescription, currentCompetencies), HttpStatus.ACCEPTED);
+        var requestBody = new CompetencyGenerationRequestDTO(courseDescription,
+                List.of(new CompetencyRecommendationDTO("test title", "test description", CompetencyTaxonomy.UNDERSTAND)));
+        request.postWithoutResponseBody("/api/atlas/courses/" + course.getId() + "/course-competencies/generate-from-description", requestBody, HttpStatus.ACCEPTED);
 
         PyrisCompetencyRecommendationDTO expected = new PyrisCompetencyRecommendationDTO("test title", "test description", CompetencyTaxonomy.UNDERSTAND);
         List<PyrisCompetencyRecommendationDTO> recommendations = List.of(expected, expected, expected);
@@ -86,6 +88,14 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void generateCompetencies_withNullCurrentCompetency_shouldReturnBadRequest() throws Exception {
+        String requestBody = "{\"courseDescription\":\"Cool course description\",\"currentCompetencies\":[null]}";
+
+        request.postStringWithoutLocation("/api/atlas/courses/" + course.getId() + "/course-competencies/generate-from-description", requestBody, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testAll_asStudent_shouldReturnForbidden() throws Exception {
         testAllPreAuthorize();
@@ -98,7 +108,7 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
     }
 
     void testAllPreAuthorize() throws Exception {
-        request.post("/api/atlas/courses/" + course.getId() + "/course-competencies/generate-from-description",
-                new PyrisCompetencyExtractionInputDTO("a", new PyrisCompetencyRecommendationDTO[] {}), HttpStatus.FORBIDDEN);
+        var requestBody = new CompetencyGenerationRequestDTO("a", List.of());
+        request.post("/api/atlas/courses/" + course.getId() + "/course-competencies/generate-from-description", requestBody, HttpStatus.FORBIDDEN);
     }
 }

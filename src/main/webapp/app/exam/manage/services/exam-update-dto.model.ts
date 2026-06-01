@@ -1,5 +1,5 @@
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { convertDateFromClient } from 'app/shared/util/date.utils';
+import { convertDateFromClient } from 'app/foundation/util/date.utils';
 
 /**
  * DTO for updating exams.

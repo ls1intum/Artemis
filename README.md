@@ -126,9 +126,13 @@ The following members of the project management team are responsible for specifi
 
 | Feature / Module      | Responsible maintainer                                                             |
 |-----------------------|------------------------------------------------------------------------------------|
+| Account               | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
 | Exercises             | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
 | Programming exercises | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
-| Build agents          | Robert Jandow ([@robertjndw](https://github.com/robertjndw))                       |
+| Build agents          | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
+| LocalVC               | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
+| LocalCI               | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
+| Jenkins               | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
 | Quiz exercises        | Maximilian Anzinger ([@maximiliananzinger](https://github.com/maximiliananzinger)) |
 | Modeling exercises    | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
 | Text exercises        | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
@@ -144,6 +148,12 @@ The following members of the project management team are responsible for specifi
 | Tutorial Groups       | Ramona Beinstingel ([@rabeatwork](https://github.com/rabeatwork))                  |
 | Plagiarism checks     | Markus Paulsen ([@MarkusPaulsen](https://github.com/MarkusPaulsen))                |
 | LTI                   | Maximilian Anzinger ([@maximiliananzinger](https://github.com/maximiliananzinger)) |
+| Calendar              | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
+| Global search         | Patrick Bassner ([@bassner](https://github.com/bassner))                           |
+| Video source          | Patrick Bassner ([@bassner](https://github.com/bassner))                           |
+| Course                | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
+| Admin                 | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
+| Notification          | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
 
 
 
@@ -199,7 +209,7 @@ Refer to [Using JHipster in production](http://www.jhipster.tech/production) for
 The following command can automate the deployment to a server. The example shows the deployment to the main Artemis test server (which runs a virtual machine):
 
 ```shell
-./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-9.1.3.war
+./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-9.3.war
 ```
 
 ## Architecture

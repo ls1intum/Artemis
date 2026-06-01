@@ -8,7 +8,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
@@ -123,6 +123,22 @@ describe('ProgrammingExercise Docker Image', () => {
         comp.onMemorySwapChange(mockEventMemorySwap);
         comp.parseDockerFlagsToString();
         expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{},"network":"custom","cpuCount":1,"memory":1024,"memorySwap":2048}');
+    });
+
+    it('should update environment variable rows with new array references when adding and removing rows', () => {
+        comp.envVars = [];
+
+        const envVarsBeforeAdd = comp.envVars;
+        comp.addEnvVar();
+
+        expect(comp.envVars).not.toBe(envVarsBeforeAdd);
+        expect(comp.envVars).toEqual([['', '']]);
+
+        const envVarsBeforeRemove = comp.envVars;
+        comp.removeEnvVar(0);
+
+        expect(comp.envVars).not.toBe(envVarsBeforeRemove);
+        expect(comp.envVars).toEqual([]);
     });
 
     it('should omit network when default is selected', () => {

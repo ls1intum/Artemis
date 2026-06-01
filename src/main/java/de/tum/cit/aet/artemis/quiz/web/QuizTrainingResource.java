@@ -26,15 +26,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.LeaderboardSettingDTO;
@@ -116,10 +116,10 @@ public class QuizTrainingResource {
      * @param submittedAnswerDTO the submitted answer payload by the user for the quiz question (rich entity-shaped JSON)
      * @return the ResponseEntity with status 200 (OK) and the result of the evaluated submitted answer as its body
      */
-    @PostMapping("courses/{courseId}/training-questions/{quizQuestionId}/submit")
+    @PostMapping("courses/{courseId}/training-questions/{trainingQuestionId}/submit")
     @EnforceAtLeastStudent
-    public ResponseEntity<SubmittedAnswerAfterEvaluationDTO> submitForTraining(@PathVariable long courseId, @PathVariable long quizQuestionId, @RequestParam boolean isRated,
-            @Valid @RequestBody SubmittedAnswerFromLiveClientDTO submittedAnswerDTO) {
+    public ResponseEntity<SubmittedAnswerAfterEvaluationDTO> submitForTraining(@PathVariable long courseId, @PathVariable("trainingQuestionId") long quizQuestionId,
+            @RequestParam boolean isRated, @Valid @RequestBody SubmittedAnswerFromLiveClientDTO submittedAnswerDTO) {
         log.debug("REST request to submit QuizQuestion for training, course {} question {}", courseId, quizQuestionId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();

@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.test_repository.PrerequisiteTestRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
  * Service responsible for initializing the database with specific test data related to prerequisites for use in integration tests.

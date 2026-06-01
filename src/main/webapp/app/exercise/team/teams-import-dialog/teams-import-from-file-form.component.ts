@@ -1,12 +1,12 @@
 import { Component, inject, output, signal } from '@angular/core';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { StudentWithTeam, Team } from 'app/exercise/shared/entities/team/team.model';
-import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
+import { SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
 import { parse } from 'papaparse';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 const csvColumns = Object.freeze({

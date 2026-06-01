@@ -1,2 +1,4 @@
-requests>=2.25.0
+requests==2.34.2
+urllib3==2.7.0
+idna>=3.15
 configparser>=5.0.0
