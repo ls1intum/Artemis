@@ -2,8 +2,8 @@ import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { By } from '@angular/platform-browser';
 import { SimpleChange } from '@angular/core';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { Subject } from 'rxjs';
 import { isEqual as _isEqual } from 'lodash-es';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
@@ -16,7 +16,7 @@ import { MockCodeEditorRepositoryService } from 'test/helpers/mocks/service/mock
 import { CommitState, EditorState, GitConflictState } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { MockModule } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';

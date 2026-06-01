@@ -17,7 +17,7 @@
 
    b) Create a new `child-settings-structure.ts` file and create your individual settings **based on the user-settings hierarchy**<br>
    * Add a new `X-Setting` interface that **extends** `Setting` and define the needed properties for `child-setting`
-   * Add the new `category` to `user-settings.constants.ts` *(under webapp/shared/constants)*
+   * Add the new `category` to `user-settings.constants.ts` *(under webapp/app/foundation/constants)*
                (look at `notification-settings-structure.ts` for an example)<br>
      ```ts
      // General Structure for child-settings-structure.ts

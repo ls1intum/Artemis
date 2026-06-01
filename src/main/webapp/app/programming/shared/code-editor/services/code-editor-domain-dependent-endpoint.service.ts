@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { inject } from '@angular/core';
 import { DomainDependentService } from 'app/programming/shared/code-editor/services/code-editor-domain-dependent.service';
 import { DomainChange, DomainType } from 'app/programming/shared/code-editor/model/code-editor.model';
@@ -30,11 +30,11 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
         const [domainType, domainValue] = domain;
         switch (domainType) {
             case DomainType.PARTICIPATION:
-                return `api/programming/repository/${domainValue.id}`;
+                return `api/programming/participations/${domainValue.id}/repository`;
             case DomainType.TEST_REPOSITORY:
-                return `api/programming/test-repository/${domainValue.id}`;
+                return `api/programming/programming-exercises/${domainValue.id}/test-repository`;
             case DomainType.AUXILIARY_REPOSITORY:
-                return `api/programming/auxiliary-repository/${domainValue.id}`;
+                return `api/programming/auxiliary-repositories/${domainValue.id}`;
         }
     }
 }

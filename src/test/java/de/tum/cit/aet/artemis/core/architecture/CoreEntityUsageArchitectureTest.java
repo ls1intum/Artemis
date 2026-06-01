@@ -15,10 +15,9 @@ class CoreEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitect
         return ARTEMIS_PACKAGE + ".core";
     }
 
-    // TODO: Reduce this to 0 by returning DTOs instead of entities
     @Override
     protected int getExpectedEntityReturnViolations() {
-        return 2;
+        return 0;
     }
 
     // TODO: Reduce this to 0 by accepting DTOs instead of entities in @RequestBody/@RequestPart

@@ -22,4 +22,9 @@ class AtlasEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitec
     protected int getExpectedEntityInputViolations() {
         return 0;
     }
+
+    @Override
+    protected int getExpectedDtoEntityFieldViolations() {
+        return 0;
+    }
 }

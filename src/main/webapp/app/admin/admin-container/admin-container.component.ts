@@ -8,11 +8,11 @@ import { AdminSidebarComponent } from 'app/admin/admin-sidebar/admin-sidebar.com
 import { AdminTitleBarComponent } from 'app/admin/shared/admin-title-bar/admin-title-bar.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LTI, MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN, PROFILE_LOCALCI } from 'app/app.constants';
-import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { LayoutService } from 'app/shared/breakpoints/layout.service';
-import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { LayoutService } from 'app/foundation/breakpoints/layout.service';
+import { CustomBreakpointNames } from 'app/foundation/breakpoints/breakpoints.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { IS_AT_LEAST_SUPER_ADMIN } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_SUPER_ADMIN } from 'app/foundation/constants/authority.constants';
 
 /**
  * Container component for the admin section.

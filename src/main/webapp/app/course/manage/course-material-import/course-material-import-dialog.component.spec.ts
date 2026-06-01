@@ -7,10 +7,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CourseMaterialImportService } from './course-material-import.service';
 import { CourseForImportDTOPagingService } from 'app/course/shared/services/course-for-import-dto-paging-service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { of, throwError } from 'rxjs';
 import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { CourseForImportDTO } from 'app/course/shared/entities/course.model';
 import { DialogModule } from 'primeng/dialog';
@@ -20,7 +20,7 @@ import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { PaginatorModule } from 'primeng/paginator';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 describe('CourseMaterialImportDialogComponent', () => {
     setupTestBed({ zoneless: true });

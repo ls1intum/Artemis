@@ -189,14 +189,17 @@ public class ExerciseSharingResource {
      * can follow. The method appends a {@code callBack} parameter (the UI-return URL) to the generated link.
      * </p>
      *
-     * @param callBackUrl URL the Sharing Platform should redirect to after export completes
-     * @param exerciseId  Artemis exercise identifier to export
+     * @param callBackUrl     URL the Sharing Platform should redirect to after export completes
+     * @param exerciseIdQuery Artemis exercise identifier to export (provided as a query parameter; preferred)
+     * @param exerciseIdPath  Artemis exercise identifier to export (provided as a legacy path variable; deprecated)
      * @return {@code 200 OK} with a JSON-quoted URL string pointing to the Sharing Platform;
      *         {@code 500 Internal Server Error} if export fails
      */
-    @PostMapping(SHARING_EXPORT_RESOURCE_PATH + "/{exerciseId}")
+    @PostMapping({ SHARING_EXPORT_RESOURCE_PATH, SHARING_EXPORT_RESOURCE_PATH + "/{exerciseId}" })
     @EnforceAtLeastEditor
-    public ResponseEntity<String> exportExerciseToSharing(@RequestBody String callBackUrl, @PathVariable("exerciseId") Long exerciseId) {
+    public ResponseEntity<String> exportExerciseToSharing(@RequestBody String callBackUrl, @RequestParam(name = "exerciseId", required = false) Long exerciseIdQuery,
+            @PathVariable(name = "exerciseId", required = false) Long exerciseIdPath) {
+        Long exerciseId = exerciseIdQuery != null ? exerciseIdQuery : exerciseIdPath;
         try {
             URI uriRedirect = exerciseSharingService.exportExerciseToSharing(exerciseId).toURI();
             uriRedirect = UriBuilder.fromUri(uriRedirect).queryParam("callBack", callBackUrl).build();

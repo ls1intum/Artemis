@@ -1,8 +1,8 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Directive, OnInit, inject } from '@angular/core';
 import { User } from 'app/account/user/user.model';
-import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
-import { AlertService } from 'app/shared/service/alert.service';
+import { UserSettingsCategory } from 'app/foundation/constants/user-settings.constants';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { UserSettingsService } from 'app/account/user/settings/directive/user-settings.service';
 import { Setting, UserSettingsStructure } from 'app/account/user/settings/user-settings.model';
 

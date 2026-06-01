@@ -5,7 +5,7 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import interact from 'interactjs';
 import { Interactable } from '@interactjs/core/Interactable';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AssessmentInstructionsComponent } from '../assessment-instructions/assessment-instructions.component';
 
 @Component({

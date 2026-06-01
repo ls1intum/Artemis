@@ -18,13 +18,13 @@ class ProgrammingEntityUsageArchitectureTest extends AbstractModuleEntityUsageAr
     // TODO: Reduce this to 0 by returning DTOs instead of entities
     @Override
     protected int getExpectedEntityReturnViolations() {
-        return 41;
+        return 39;
     }
 
     // TODO: Reduce this to 0 by accepting DTOs instead of entities in @RequestBody/@RequestPart
     @Override
     protected int getExpectedEntityInputViolations() {
-        return 8;
+        return 7;
     }
 
     // TODO: Reduce this to 0 by removing entity references from DTOs

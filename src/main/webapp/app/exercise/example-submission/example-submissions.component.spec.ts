@@ -9,14 +9,14 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { ExampleSubmissionsComponent } from 'app/exercise/example-submission/example-submissions.component';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';

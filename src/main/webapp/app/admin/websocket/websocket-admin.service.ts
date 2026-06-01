@@ -6,7 +6,7 @@ import { WebsocketNode } from 'app/admin/websocket/websocket-node.model';
 @Injectable({ providedIn: 'root' })
 export class WebsocketAdminService {
     private readonly http = inject(HttpClient);
-    private readonly resourceUrl = 'api/core/admin/websocket';
+    private readonly resourceUrl = 'api/admin/websocket';
 
     getNodes(): Observable<WebsocketNode[]> {
         return this.http.get<WebsocketNode[]>(`${this.resourceUrl}/nodes`);

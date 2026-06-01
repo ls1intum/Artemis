@@ -1,5 +1,7 @@
 import { expect, vi } from 'vitest';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
@@ -8,9 +10,7 @@ import { MockComponent, MockDirective } from 'ng-mocks';
 import { FormsModule } from '@angular/forms';
 import { ExerciseImportFromFileComponent } from 'app/exercise/import/from-file/exercise-import-from-file.component';
 import { ExerciseImportComponent } from 'app/exercise/import/exercise-import.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
 describe('ExerciseImportTabsComponent', () => {
     setupTestBed({ zoneless: true });

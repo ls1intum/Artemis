@@ -42,26 +42,26 @@ class BuildPlanIntegrationTest extends AbstractProgrammingIntegrationJenkinsLoca
     }
 
     private void testReadAccessForbidden() throws Exception {
-        request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.FORBIDDEN, BuildPlan.class);
+        request.get("/api/localci/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.FORBIDDEN, BuildPlan.class);
     }
 
     private void testWriteAccessForbidden() throws Exception {
         BuildPlan someOtherBuildPlan = new BuildPlan();
-        request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/build-plan", someOtherBuildPlan, HttpStatus.FORBIDDEN);
+        request.put("/api/localci/programming-exercises/" + programmingExercise.getId() + "/build-plan", someOtherBuildPlan, HttpStatus.FORBIDDEN);
     }
 
     private void testReadAccess() throws Exception {
         programmingExercise.getBuildConfig().generateAndSetBuildPlanAccessSecret();
         programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
 
-        request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.OK, BuildPlan.class);
+        request.get("/api/localci/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.OK, BuildPlan.class);
     }
 
     private void testWriteAccess() throws Exception {
         BuildPlan someOtherBuildPlan = new BuildPlan();
         someOtherBuildPlan.setBuildPlan("Content");
 
-        final BuildPlan newBuildPlan = request.putWithResponseBody("/api/programming/programming-exercises/" + programmingExercise.getId() + "/build-plan", someOtherBuildPlan,
+        final BuildPlan newBuildPlan = request.putWithResponseBody("/api/localci/programming-exercises/" + programmingExercise.getId() + "/build-plan", someOtherBuildPlan,
                 BuildPlan.class, HttpStatus.OK);
         final BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(programmingExercise.getId());
 
@@ -71,21 +71,20 @@ class BuildPlanIntegrationTest extends AbstractProgrammingIntegrationJenkinsLoca
 
     @Test
     void testPublicReadAccessWithSecret() throws Exception {
-        final String buildPlan = request.get("/api/programming/public/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret="
+        final String buildPlan = request.get("/api/localci/public/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret="
                 + programmingExercise.getBuildConfig().getBuildPlanAccessSecret(), HttpStatus.OK, String.class);
         assertThat(buildPlan).isNotEmpty();
     }
 
     @Test
     void testPublicReadAccessForbiddenWithoutSecret() throws Exception {
-        final String response = request.get("/api/programming/public/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret=", HttpStatus.FORBIDDEN,
-                String.class);
+        final String response = request.get("/api/localci/public/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret=", HttpStatus.FORBIDDEN, String.class);
         assertThat(response).isNull();
     }
 
     @Test
     void testPublicReadAccessForbiddenWithWrongSecret() throws Exception {
-        final String response = request.get("/api/programming/public/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret=randomWrongSecret",
+        final String response = request.get("/api/localci/public/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret=randomWrongSecret",
                 HttpStatus.FORBIDDEN, String.class);
         assertThat(response).isNull();
     }
@@ -141,7 +140,7 @@ class BuildPlanIntegrationTest extends AbstractProgrammingIntegrationJenkinsLoca
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetRequestResponse() throws Exception {
-        BuildPlan buildPlan = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.OK, BuildPlan.class);
+        BuildPlan buildPlan = request.get("/api/localci/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.OK, BuildPlan.class);
         assertThat(buildPlan.getId()).isNotNull();
         assertThat(buildPlan.getBuildPlan()).isNotNull();
     }
@@ -152,7 +151,7 @@ class BuildPlanIntegrationTest extends AbstractProgrammingIntegrationJenkinsLoca
         BuildPlan someOtherBuildPlan = new BuildPlan();
         someOtherBuildPlan.setBuildPlan("Content");
 
-        request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/build-plan", someOtherBuildPlan, HttpStatus.OK);
+        request.put("/api/localci/programming-exercises/" + programmingExercise.getId() + "/build-plan", someOtherBuildPlan, HttpStatus.OK);
         verify(programmingTriggerService).triggerTemplateAndSolutionBuild(programmingExercise.getId());
     }
 }

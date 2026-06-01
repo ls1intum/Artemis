@@ -27,9 +27,9 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -99,9 +99,10 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         mockTriggerFailedBuild(participation);
 
         // Try to access 5 different endpoints with programming feature toggle enabled
-        request.put("/api/exercise/exercises/" + programmingExercise1.getId() + "/resume-programming-participation/" + participation.getId(), null, HttpStatus.OK);
+        request.put("/api/exercise/exercises/" + programmingExercise1.getId() + "/participations/" + participation.getId() + "/resume-programming-participation", null,
+                HttpStatus.OK);
         request.put("/api/exercise/participations/" + participation.getId() + "/cleanup-build-plan", null, HttpStatus.OK);
-        request.postWithoutLocation("/api/programming/programming-submissions/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/programming/participations/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.OK, null);
         programmingExercise2.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise2.getBuildConfig()));
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
         request.delete("/api/programming/programming-exercises/" + programmingExercise2.getId(), HttpStatus.OK, deleteProgrammingExerciseParamsFalse());
@@ -113,9 +114,10 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).as("Feature was disabled").isFalse();
 
         // Try to access 5 different endpoints with programming feature toggle disabled
-        request.put("/api/exercise/exercises/" + programmingExercise1.getId() + "/resume-programming-participation/" + participation.getId(), null, HttpStatus.FORBIDDEN);
+        request.put("/api/exercise/exercises/" + programmingExercise1.getId() + "/participations/" + participation.getId() + "/resume-programming-participation", null,
+                HttpStatus.FORBIDDEN);
         request.put("/api/exercise/participations/" + participation.getId() + "/cleanup-build-plan", null, HttpStatus.FORBIDDEN);
-        request.postWithoutLocation("/api/programming/programming-submissions/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.FORBIDDEN, null);
+        request.postWithoutLocation("/api/programming/participations/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.FORBIDDEN, null);
         request.delete("/api/programming/programming-exercises/" + programmingExercise1.getId(), HttpStatus.FORBIDDEN);
 
         // Reset

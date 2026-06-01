@@ -7,7 +7,7 @@ import { Feedback, FeedbackSuggestionType } from 'app/assessment/shared/entities
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { MockDirective, MockModule } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 describe('FeedbackSuggestionBadgeComponent', () => {
     setupTestBed({ zoneless: true });

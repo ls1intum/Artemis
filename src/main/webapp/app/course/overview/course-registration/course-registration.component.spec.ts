@@ -7,7 +7,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { BehaviorSubject, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CoursePrerequisitesButtonComponent } from 'app/course/overview/course-registration/course-prerequisites-button/course-prerequisites-button.component';
 import { CourseRegistrationButtonComponent } from 'app/course/overview/course-registration/course-registration-button/course-registration-button.component';
 import { AccountService } from 'app/core/auth/account.service';

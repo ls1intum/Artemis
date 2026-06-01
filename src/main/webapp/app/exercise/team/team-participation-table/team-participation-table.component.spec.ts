@@ -4,7 +4,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { TeamService } from 'app/exercise/team/team.service';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { of } from 'rxjs';
 import { MockTeamService, mockTeam } from 'test/helpers/mocks/service/mock-team.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -18,8 +18,8 @@ import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities
 import { Router } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 describe('TeamParticipationTableComponent', () => {
     setupTestBed({ zoneless: true });

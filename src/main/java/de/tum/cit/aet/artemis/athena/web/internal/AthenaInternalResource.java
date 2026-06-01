@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.athena.web.internal;
 
-import static de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils.hashSha256;
+import static de.tum.cit.aet.artemis.localvc.service.ssh.HashUtils.hashSha256;
 
 import java.io.IOException;
 import java.security.MessageDigest;

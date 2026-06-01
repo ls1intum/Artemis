@@ -7,7 +7,7 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.programming.dto.BuildJobInterface;
+import de.tum.cit.aet.artemis.localci.dto.BuildJobInterface;
 
 /**
  * Represents all the information returned by the local CI system about a job.

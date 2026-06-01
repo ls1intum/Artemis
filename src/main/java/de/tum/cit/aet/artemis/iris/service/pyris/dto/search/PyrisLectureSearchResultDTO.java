@@ -1,5 +1,9 @@
 package de.tum.cit.aet.artemis.iris.service.pyris.dto.search;
 
+import java.util.Map;
+
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -14,6 +18,6 @@ public record PyrisLectureSearchResultDTO(CourseDTO course, LectureDTO lecture, 
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record LectureUnitDTO(long id, String name, String link, int pageNumber) {
+    public record LectureUnitDTO(long id, String name, String link, int pageNumber, String sourceType, Map<String, Object> queryParams, @Nullable String displayMeta) {
     }
 }
